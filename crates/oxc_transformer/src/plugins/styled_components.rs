@@ -881,7 +881,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: &AstBuilder<'
     /// to have this span, because it's always followed by (at minimum) a '`'.
     const REMOVE_SENTINEL: Span = Span::new(u32::MAX, u32::MAX);
 
-    debug_assert!(lit.quasis.len() == lit.expressions.len() + 1);
+    debug_assert_eq!(lit.quasis.len(), lit.expressions.len() + 1);
 
     // Type of comment currently in.
     // * `None` = not in a comment.
@@ -1178,7 +1178,7 @@ mod tests {
 
         minify_template_literal(&mut lit, &ast);
 
-        assert!(lit.quasis.len() == 1);
+        assert_eq!(lit.quasis.len(), 1);
 
         lit.quasis[0].value.raw.to_string()
     }

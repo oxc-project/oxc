@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 69/69 (100.00%)
-Positive Passed: 69/69 (100.00%)
-Negative Passed: 149/149 (100.00%)
+AST Parsed     : 71/71 (100.00%)
+Positive Passed: 71/71 (100.00%)
+Negative Passed: 150/150 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3642,6 +3642,89 @@ Negative Passed: 149/149 (100.00%)
     ·                     ╰── `{` expected
  39 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
     ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[misc/fail/oxc-24503.ts:2:20]
+ 1 │ class Basic {
+ 2 │     accessor noType!;
+   ·                    ─
+ 3 │     accessor initialized! = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[misc/fail/oxc-24503.ts:3:25]
+ 2 │     accessor noType!;
+ 3 │     accessor initialized! = 1;
+   ·                         ─
+ 4 │     accessor typed!: number;
+   ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+   ╭─[misc/fail/oxc-24503.ts:5:32]
+ 4 │     accessor typed!: number;
+ 5 │     static accessor staticTyped!: number;
+   ·                                ─
+ 6 │     static accessor staticNoType!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[misc/fail/oxc-24503.ts:6:33]
+ 5 │     static accessor staticTyped!: number;
+ 6 │     static accessor staticNoType!;
+   ·                                 ─
+ 7 │     static accessor staticInitialized! = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[misc/fail/oxc-24503.ts:7:38]
+ 6 │     static accessor staticNoType!;
+ 7 │     static accessor staticInitialized! = 1;
+   ·                                      ─
+ 8 │ }
+   ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[misc/fail/oxc-24503.ts:11:28]
+ 10 │ abstract class Abstract {
+ 11 │     abstract accessor value!: number;
+    ·                            ─
+ 12 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[misc/fail/oxc-24503.ts:15:19]
+ 14 │ declare class Ambient {
+ 15 │     accessor value!: number;
+    ·                   ─
+ 16 │ }
+    ╰────
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+    ╭─[misc/fail/oxc-24503.ts:19:5]
+ 18 │ class DeclareMember {
+ 19 │     declare accessor typed!: number;
+    ·     ───────
+ 20 │     declare accessor untyped!;
+    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+    ╭─[misc/fail/oxc-24503.ts:20:5]
+ 19 │     declare accessor typed!: number;
+ 20 │     declare accessor untyped!;
+    ·     ───────
+ 21 │     declare accessor initialized! = 1;
+    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+    ╭─[misc/fail/oxc-24503.ts:21:5]
+ 20 │     declare accessor untyped!;
+ 21 │     declare accessor initialized! = 1;
+    ·     ───────
+ 22 │ }
+    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]

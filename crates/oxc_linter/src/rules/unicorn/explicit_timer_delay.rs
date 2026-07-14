@@ -97,7 +97,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = ExplicitTimerDelayMode,
-    version = "next",
+    version = "1.73.0",
     short_description = "Enforce or disallow explicit `delay` argument for `setTimeout()` and `setInterval()`.",
 );
 

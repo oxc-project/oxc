@@ -16,8 +16,10 @@ use oxc_str::format_str;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{
-    generated::ancestor::Ancestor, options::CompressOptions, state::MinifierState,
-    symbol_value::SymbolValue,
+    generated::ancestor::Ancestor,
+    options::CompressOptions,
+    state::MinifierState,
+    symbol_value::{FreshValueKind, SymbolValue},
 };
 
 use oxc_ast_visit::Visit;
@@ -242,8 +244,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         &mut self,
         symbol_id: SymbolId,
         constant: Option<ConstantValue<'a>>,
-        is_fresh_value: bool,
+        kind: FreshValueKind,
         falsy_init: bool,
+        init_absent: bool,
     ) {
         let mut exported = false;
         if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
@@ -291,13 +294,19 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             && !scope_flags.contains(ScopeFlags::DirectEval)
             && !(self.source_type().is_script() && scope_id == self.scoping().root_scope_id());
 
+        // See `SymbolValue::implicit_undefined` — only meaningful when the
+        // recorded constant is the hoist-produced `undefined` of `let x;`.
+        let implicit_undefined =
+            init_absent && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
+
         let symbol_value = SymbolValue {
             initialized_constant,
+            implicit_undefined,
             exported,
             read_references_count,
             write_references_count,
             member_write_target_read_count,
-            is_fresh_value,
+            kind,
             boolean_falsy,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);

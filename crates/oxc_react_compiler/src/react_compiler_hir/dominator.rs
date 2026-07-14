@@ -11,7 +11,9 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::{BlockId, HirFunction, Terminal};
@@ -74,7 +76,7 @@ pub fn compute_post_dominator_tree(
     func: &HirFunction,
     next_block_id_counter: u32,
     include_throws_as_exit_node: bool,
-) -> Result<PostDominator, CompilerDiagnostic> {
+) -> Result<PostDominator, OxcDiagnostic> {
     let graph = build_reverse_graph(func, next_block_id_counter, include_throws_as_exit_node);
     let mut nodes = compute_immediate_dominators(&graph)?;
 
@@ -99,7 +101,7 @@ fn build_reverse_graph(
     next_block_id_counter: u32,
     include_throws_as_exit_node: bool,
 ) -> Graph {
-    let exit_id = BlockId(next_block_id_counter);
+    let exit_id = BlockId::from_usize(next_block_id_counter as usize);
 
     // Build initial nodes with reversed edges
     let mut raw_nodes: FxHashMap<BlockId, Node> = FxHashMap::default();
@@ -169,7 +171,7 @@ fn dfs_postorder(
 
 fn compute_immediate_dominators(
     graph: &Graph,
-) -> Result<FxHashMap<BlockId, BlockId>, CompilerDiagnostic> {
+) -> Result<FxHashMap<BlockId, BlockId>, OxcDiagnostic> {
     let mut doms: FxHashMap<BlockId, BlockId> = FxHashMap::default();
     doms.insert(graph.entry, graph.entry);
 
@@ -192,14 +194,10 @@ fn compute_immediate_dominators(
             let mut new_idom = match new_idom {
                 Some(idom) => idom,
                 None => {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        format!(
-                            "At least one predecessor must have been visited for block {:?}",
-                            node.id
-                        ),
-                        None,
-                    ));
+                    return Err(ErrorCategory::Invariant.diagnostic(format!(
+                        "At least one predecessor must have been visited for block {:?}",
+                        node.id
+                    )));
                 }
             };
 
@@ -312,7 +310,7 @@ pub fn post_dominators_of(
 pub fn compute_unconditional_blocks(
     func: &HirFunction,
     next_block_id_counter: u32,
-) -> Result<FxHashSet<BlockId>, CompilerDiagnostic> {
+) -> Result<FxHashSet<BlockId>, OxcDiagnostic> {
     let mut unconditional = FxHashSet::default();
     let dominators = compute_post_dominator_tree(func, next_block_id_counter, false)?;
     let exit = dominators.exit;

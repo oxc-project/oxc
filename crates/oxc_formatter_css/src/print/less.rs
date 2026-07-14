@@ -1,14 +1,16 @@
 //! Less-specific printing: variable declarations, mixins, lookups, guards.
 
 use oxc_css_parser::ast::{
-    ComponentValue, LessCondition, LessConditionalQualifiedRule, LessDetachedRuleset,
-    LessMixinArgument, LessMixinCall, LessMixinDefinition, LessMixinName, LessNamespaceValue,
-    LessNamespaceValueCallee, LessVariableDeclaration, SimpleBlock,
+    ComponentValue, LessCondition, LessConditionalQualifiedRule, LessDetachedRuleset, LessExtend,
+    LessExtendList, LessExtendRule, LessMixinArgument, LessMixinCall, LessMixinDefinition,
+    LessMixinName, LessNamespaceValue, LessNamespaceValueCallee, LessVariableDeclaration,
+    SimpleBlock,
 };
-
 use oxc_formatter_core::{
     Buffer, arena_cow_str,
-    builders::{hard_line_break, space, text},
+    builders::{
+        group, hard_line_break, soft_line_break_or_space, soft_line_indent_or_space, space, text,
+    },
     write,
 };
 
@@ -16,7 +18,7 @@ use crate::{
     comments::{last_line_has_inline_comment, write_single_comment},
     format::to_span,
     print::{
-        CssFormatter,
+        CssFormatter, format_with, selector,
         statement::write_block,
         value::{self, ValueContext},
     },
@@ -269,6 +271,47 @@ fn write_less_detached_ruleset<'a>(
     let was = f.context().in_less_detached().replace(true);
     write_block(&ruleset.block, f);
     f.context().in_less_detached().set(was);
+}
+
+/// Statement-position `&:extend(.a, .b)`.
+/// Prints the SAME pseudo-args layout as the selector-position form
+/// (inline when it fits; on overflow the parens take their own lines and the selectors break one per line).
+/// NOTE: Prettier ALWAYS breaks multiple selectors.
+pub(super) fn write_less_extend_rule<'a>(rule: &LessExtendRule<'a>, f: &mut CssFormatter<'_, 'a>) {
+    write!(f, "&");
+    if let Some(suffix) = &rule.nesting_selector.suffix {
+        selector::write_interpolable_ident(suffix, f);
+    }
+    write!(f, ":");
+    write!(f, text(rule.name_of_extend.raw));
+    selector::write_pseudo_args_group(|f| write_less_extend_list(&rule.extend, f), f);
+}
+
+/// The `:extend(...)` argument list, shared by both positions:
+/// selectors joined by `,` + breakable space.
+pub(super) fn write_less_extend_list<'a>(list: &LessExtendList<'a>, f: &mut CssFormatter<'_, 'a>) {
+    for (i, extend) in list.elements.iter().enumerate() {
+        if i > 0 {
+            write!(f, ",");
+            write!(f, soft_line_break_or_space());
+        }
+        write_less_extend(extend, f);
+    }
+}
+
+fn write_less_extend<'a>(extend: &LessExtend<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let Some(all) = &extend.all else {
+        selector::write_complex_selector(&extend.selector, f);
+        return;
+    };
+    // `all` acts as one more descendant term of the selector
+    // (Prettier's selector parser absorbs it into the selector-root):
+    // it breaks together with the selector, at the same +2.
+    let body = format_with(|f: &mut CssFormatter<'_, 'a>| {
+        selector::write_complex_selector(&extend.selector, f);
+        write!(f, soft_line_indent_or_space(&text(all.raw)));
+    });
+    write!(f, group(&body));
 }
 
 /// `value` of a ComponentValue that is Less-specific; returns false if not handled.

@@ -135,6 +135,45 @@ Accessing a global variable named `arguments` does not have a side effect. We in
 console.log(arguments); // ReferenceError: arguments is not defined
 ```
 
+### Property writes to provably-unused local bindings are effect-free
+
+In full-minify mode, a plain `=` write to a property of a local binding is
+dropped when the binding is provably unused: it holds a fresh value (object /
+array / function / class literal with no getters, setters, or `__proto__`), is
+not exported, and every reference to it is itself a property-write target
+(terser parity — `function A() {} A.from = () => {};` is removed entirely).
+
+This assumes `Object.prototype` / `Function.prototype` / `Array.prototype`
+properties are not setters with side effects that such writes would trigger (the
+same class of assumption as the `property_write_side_effects: false` tree-shaking
+option, but applied only to this narrow provably-unused case). This is the only
+unsoundness in this optimization.
+
+Writes that would themselves throw a strict-mode `TypeError` or have an
+observable value-domain effect are kept via a kind-aware key denylist: the
+non-writable own `name` / `length` and the `caller` / `arguments` poison of a
+function or class, a class's non-writable `prototype`, an instance-private
+brand-check write (`o.#x = 1`), and an `Array` `length` write (which can throw a
+`RangeError` or run a `valueOf` coercion). A plain function's `prototype` is
+writable, so `f.prototype = {...}` still drops.
+
+Writes are NOT dropped when any other operation on the binding could observe
+them: compound / logical assignments and updates (`o.x += 1` reads the
+property), chained writes (`a.b.c = 1` reads `a.b`), `delete` of a nested
+member, or writes through `__proto__` / non-literal computed keys (which may
+install setters).
+
+```javascript
+// The minifier assumes this never happens:
+Object.defineProperty(Object.prototype, "x", {
+  set() {
+    console.log("side effect!");
+  },
+});
+var o = {};
+o.x = 1; // dropped — would have logged
+```
+
 ### `Function.prototype.toString` is not relied on
 
 Code does not depend on [`Function.prototype.toString()`](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-function.prototype.tostring) returning specific source text. Minification renames variables and parameters, simplifies expressions (`true` → `!0`), restructures statements (fusing with the comma operator, converting `while` to `for`), removes whitespace, and may eliminate function bodies entirely (e.g. IIFE inlining). All of these change the string returned by `.toString()`.

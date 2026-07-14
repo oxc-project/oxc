@@ -357,6 +357,45 @@ fn keep_in_script_mode() {
 }
 
 #[test]
+fn keep_class_cycle_with_wrapped_arrow_heritage() {
+    // `classify_class_removability` must see the arrow heritage through a
+    // pure sequence/paren wrapper, so the classification cannot change when
+    // a fold surfaces the literal arrow between passes.
+    test_smallest(
+        "class A extends (0, () => {}) { m() { new B() } } class B { m() { new A() } } console.log(1);",
+        "class A extends (() => {}) {\n\tm() {\n\t\tnew B();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}\nconsole.log(1);",
+    );
+    // The single, fully-unused class is kept for the same reason a literal
+    // arrow heritage is kept: evaluating it is a guaranteed TypeError.
+    test_smallest("class C extends (0, () => {}) {}", "class C extends (() => {}) {}");
+}
+
+#[test]
+fn keep_class_with_tdz_or_undefined_heritage() {
+    // test262 language/statements/class/name-binding/in-extends-expression.js:
+    // the class's own name is in its TDZ while the heritage evaluates, so the
+    // declaration is a guaranteed ReferenceError that must survive.
+    test_same_smallest("class C extends C {}");
+    // The test262 shape: the class lives in a callback whose call is live.
+    // (A NAMED function wrapper additionally hits a pre-existing hole in the
+    // pure-function model — `may_have_side_effects` does not model heritage
+    // TDZ throws, so `f` reads as pure and the call is dropped on `main`
+    // too; that is a separate `oxc_ecmascript` issue, not covered here.)
+    test_same_smallest("g(function() {\n\tclass C extends C {}\n});");
+    // The wrapped variant classifies through the same heritage unwrap.
+    test_smallest("class C extends (0, C) {}", "class C extends C {}");
+    // A forward lexical heritage also evaluates in its TDZ; reference order
+    // cannot be proven mid-minification (transforms copy and move spans), so
+    // any class/lexical/`var` heritage keeps the class.
+    test_same_smallest(
+        "class A extends B {\n\tm() {\n\t\tnew A();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}",
+    );
+    // `var` heritage: a hoisted-but-unassigned binding is `undefined`, and
+    // `extends undefined` is a TypeError.
+    test_same_smallest("var B = class {};\nclass A extends B {\n\tm() {\n\t\tnew A();\n\t}\n}");
+}
+
+#[test]
 fn remove_unused_import_specifiers() {
     let options = CompressOptions::smallest();
 

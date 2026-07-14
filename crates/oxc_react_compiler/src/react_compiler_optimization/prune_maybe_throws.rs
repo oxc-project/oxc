@@ -12,10 +12,14 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, GENERATED_SOURCE,
+use oxc_index::IndexSlice;
+
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
+use crate::react_compiler_hir::{
+    BlockId, FunctionId, HirFunction, Instruction, InstructionValue, Terminal,
 };
-use crate::react_compiler_hir::{BlockId, HirFunction, Instruction, InstructionValue, Terminal};
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
     remove_unnecessary_try_catch, remove_unreachable_for_updates,
@@ -26,8 +30,8 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 /// Prune `MaybeThrow` terminals for blocks that cannot throw, then clean up the CFG.
 pub fn prune_maybe_throws(
     func: &mut HirFunction,
-    functions: &mut [HirFunction],
-) -> Result<(), CompilerDiagnostic> {
+    functions: &mut IndexSlice<FunctionId, [HirFunction]>,
+) -> Result<(), OxcDiagnostic> {
     let terminal_mapping = prune_maybe_throws_impl(func);
     if let Some(terminal_mapping) = terminal_mapping {
         // If terminals have changed then blocks may have become newly unreachable.
@@ -50,18 +54,12 @@ pub fn prune_maybe_throws(
                     if !preds.contains(predecessor) {
                         let mapped_terminal =
                             terminal_mapping.get(predecessor).copied().ok_or_else(|| {
-                                CompilerDiagnostic::new(
-                                    ErrorCategory::Invariant,
-                                    "Expected non-existing phi operand's predecessor to have been mapped to a new terminal",
-                                    Some(format!(
+                                ErrorCategory::Invariant
+                                    .diagnostic("Expected non-existing phi operand's predecessor to have been mapped to a new terminal")
+                                    .with_help(format!(
                                         "Could not find mapping for predecessor bb{} in block bb{}",
-                                        predecessor.0, block.id.0,
-                                    )),
-                                )
-                                .with_detail(CompilerDiagnosticDetail::Error {
-                                    loc: GENERATED_SOURCE,
-                                    message: None,
-                                })
+                                        predecessor.index(), block.id.index(),
+                                    ))
                             })?;
                         updates.push((*predecessor, mapped_terminal));
                     }
@@ -95,7 +93,7 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<FxHashMap<BlockId, 
         let can_throw = block
             .instructions
             .iter()
-            .any(|instr_id| instruction_may_throw(&instructions[instr_id.0 as usize]));
+            .any(|instr_id| instruction_may_throw(&instructions[instr_id.index()]));
 
         if !can_throw {
             let source = terminal_mapping.get(&block.id).copied().unwrap_or(block.id);

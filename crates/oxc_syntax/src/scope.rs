@@ -7,7 +7,6 @@ use oxc_ast_macros::ast;
 define_nonmax_u32_index_type! {
     #[ast]
     #[builder(default)]
-    #[clone_in(default)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct ScopeId;
@@ -16,15 +15,16 @@ define_nonmax_u32_index_type! {
 impl<'alloc> CloneIn<'alloc> for ScopeId {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self {
-        // `clone_in` should never reach this, because `CloneIn` skips scope_id field
-        unreachable!();
-    }
-
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
-        *self
+    fn clone_in_impl(&self, with_semantic_ids: bool, _: &'alloc Allocator) -> Self {
+        if with_semantic_ids {
+            *self
+        } else {
+            // `with_semantic_ids == false` should never reach this, because `CloneIn` skips
+            // `scope_id` field, filling it with its default instead.
+            unreachable!();
+        }
     }
 }
 
@@ -36,7 +36,7 @@ bitflags! {
         const Function         = 1 << 2;
         const Arrow            = 1 << 3;
         const ClassStaticBlock = 1 << 4;
-        const TsModuleBlock    = 1 << 5; // `declare namespace`
+        const TsModuleBlock    = 1 << 5; // `namespace`
         const Constructor      = 1 << 6;
         const GetAccessor      = 1 << 7;
         const SetAccessor      = 1 << 8;

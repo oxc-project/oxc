@@ -12,7 +12,9 @@
 //! inferMutationAliasingRanges, rewriteInstructionKindsBasedOnReassignment,
 //! and inferReactiveScopeVariables on each inner function.
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects;
 use crate::react_compiler_inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges;
@@ -43,7 +45,7 @@ pub fn analyse_functions<F>(
     func: &mut HirFunction,
     env: &mut Environment,
     debug_logger: &mut F,
-) -> Result<(), CompilerDiagnostic>
+) -> Result<(), OxcDiagnostic>
 where
     F: FnMut(&HirFunction, &Environment),
 {
@@ -52,7 +54,7 @@ where
     let mut inner_func_ids: Vec<FunctionId> = Vec::new();
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
@@ -66,14 +68,13 @@ where
     // Process each inner function
     for func_id in inner_func_ids {
         // Take the inner function out of the arena to avoid borrow conflicts
-        let mut inner_func =
-            replace(&mut env.functions[func_id.0 as usize], placeholder_function());
+        let mut inner_func = replace(&mut env.functions[func_id], placeholder_function());
 
         lower_with_mutation_aliasing(&mut inner_func, env, debug_logger)?;
 
         // If an invariant error was recorded, put the function back and stop processing
         if env.has_invariant_errors() {
-            env.functions[func_id.0 as usize] = inner_func;
+            env.functions[func_id] = inner_func;
             return Ok(());
         }
 
@@ -84,14 +85,14 @@ where
         // are stored in an arena, so we reset both the identifier's range
         // and clear its scope.
         for operand in &inner_func.context {
-            let new_range = env.new_mutable_range(EvaluationOrder(0), EvaluationOrder(0));
-            let ident = &mut env.identifiers[operand.identifier.0 as usize];
+            let new_range = env.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
+            let ident = &mut env.identifiers[operand.identifier];
             ident.mutable_range = new_range;
             ident.scope = None;
         }
 
         // Put the function back
-        env.functions[func_id.0 as usize] = inner_func;
+        env.functions[func_id] = inner_func;
     }
 
     Ok(())
@@ -100,11 +101,11 @@ where
 /// Run mutation/aliasing inference on an inner function.
 ///
 /// Corresponds to TS `lowerWithMutationAliasing(fn: HIRFunction): void`.
-fn lower_with_mutation_aliasing<F>(
-    func: &mut HirFunction,
-    env: &mut Environment,
+fn lower_with_mutation_aliasing<'a, F>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     debug_logger: &mut F,
-) -> Result<(), CompilerDiagnostic>
+) -> Result<(), OxcDiagnostic>
 where
     F: FnMut(&HirFunction, &Environment),
 {
@@ -129,7 +130,7 @@ where
 
     // rewriteInstructionKindsBasedOnReassignment
     if let Err(err) = rewrite_instruction_kinds_based_on_reassignment(func, env) {
-        env.errors.merge(err);
+        env.errors.push(err);
         return Ok(());
     }
 
@@ -167,10 +168,8 @@ where
                 // no-op
             }
             AliasingEffect::Apply { .. } => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
+                return Err(ErrorCategory::Invariant.diagnostic(
                     "[AnalyzeFunctions] Expected Apply effects to be replaced with more precise effects",
-                    None,
                 ));
             }
         }
@@ -195,19 +194,19 @@ where
 /// read — the real function is swapped back immediately after processing.
 fn placeholder_function<'a>() -> HirFunction<'a> {
     HirFunction {
-        loc: None,
+        span: None,
         id: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: Vec::new(),
         returns: Place {
-            identifier: IdentifierId(0),
+            identifier: IdentifierId::from_usize(0),
             effect: Effect::Unknown,
             reactive: false,
-            loc: None,
+            span: None,
         },
         context: Vec::new(),
-        body: HIR { entry: BlockId(0), blocks: FxIndexMap::default() },
+        body: HIR { entry: BlockId::ENTRY, blocks: FxIndexMap::default() },
         instructions: Vec::new(),
         generator: false,
         is_async: false,

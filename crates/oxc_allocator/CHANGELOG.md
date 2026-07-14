@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- 460176a track-memory-allocations: Exclude arena chunks from Sys allocs (#24292) (Dunqing)
+
+### ⚡ Performance
+
+- 3ff0234 allocator: Remove `unwrap` from `ReplaceWith` (#24365) (overlookmotel)
+
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 7db7a29 allocator: Add `ReplaceWith` trait (#24012) (overlookmotel)
+
+### 📚 Documentation
+
+- 30d17f5 allocator: Clarify docs for `TakeIn::take_in_box` (#24093) (overlookmotel)
+
 ## [0.138.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

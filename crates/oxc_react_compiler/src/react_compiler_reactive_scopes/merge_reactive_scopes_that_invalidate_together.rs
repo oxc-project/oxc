@@ -12,7 +12,9 @@ use std::mem::take;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, CompilerError, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, EvaluationOrder, InstructionKind, InstructionValue, Place,
     ReactiveBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveScopeDependency,
@@ -35,7 +37,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn merge_reactive_scopes_that_invalidate_together<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Pass 1: find last usage of each declaration
     let visitor = FindLastUsageVisitor { env: &*env };
     let mut last_usage: FxHashMap<DeclarationId, EvaluationOrder> = FxHashMap::default();
@@ -64,7 +66,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindLastUsageVisitor<'a, 'e> {
     }
 
     fn visit_place(&self, id: EvaluationOrder, place: &Place, state: &mut Self::State) {
-        let decl_id = self.env.identifiers[place.identifier.0 as usize].declaration_id;
+        let decl_id = self.env.identifiers[place.identifier].declaration_id;
         let entry = state.entry(decl_id).or_insert(id);
         if id > *entry {
             *entry = id;
@@ -84,7 +86,7 @@ struct MergeTransform<'a, 'e> {
 }
 
 impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
-    type State = Option<Vec<ReactiveScopeDependency>>;
+    type State = Option<Vec<ReactiveScopeDependency<'a>>>;
 
     fn env(&self) -> &Environment<'a> {
         self.env
@@ -95,8 +97,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
-        let scope_deps = self.env.scopes[scope.scope.0 as usize].dependencies.clone();
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
+        let scope_deps = self.env.scopes[scope.scope].dependencies.clone();
         // Save parent state and recurse with this scope's deps as state
         let parent_state = state.take();
         *state = Some(scope_deps.clone());
@@ -105,11 +107,11 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         *state = parent_state;
 
         // If parent has deps and they match, flatten the inner scope
-        if let Some(parent_deps) = state.as_ref() {
-            if are_equal_dependencies(parent_deps, &scope_deps, self.env) {
-                let instructions = take(&mut scope.instructions);
-                return Ok(Transformed::ReplaceMany(instructions));
-            }
+        if let Some(parent_deps) = state.as_ref()
+            && are_equal_dependencies(parent_deps, &scope_deps, self.env)
+        {
+            let instructions = take(&mut scope.instructions);
+            return Ok(Transformed::ReplaceMany(instructions));
         }
         Ok(Transformed::Keep)
     }
@@ -119,7 +121,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         &mut self,
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         // Pass 1: traverse nested (scope flattening handled by transform_scope)
         self.traverse_block(block, state)?;
         // Pass 2+3: merge consecutive scopes in this block
@@ -133,7 +135,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
     fn merge_scopes_in_block(
         &mut self,
         block: &mut ReactiveBlock<'a>,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         // Pass 2: identify scopes for merging
         struct MergedScope {
             scope_id: ScopeId,
@@ -149,18 +151,18 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             match statement {
                 ReactiveStatement::Terminal(_) => {
                     // Don't merge across terminals
-                    if let Some(c) = current.take() {
-                        if c.to > c.from + 1 {
-                            merged.push(c);
-                        }
+                    if let Some(c) = current.take()
+                        && c.to > c.from + 1
+                    {
+                        merged.push(c);
                     }
                 }
                 ReactiveStatement::PrunedScope(_) => {
                     // Don't merge across pruned scopes
-                    if let Some(c) = current.take() {
-                        if c.to > c.from + 1 {
-                            merged.push(c);
-                        }
+                    if let Some(c) = current.take()
+                        && c.to > c.from + 1
+                    {
+                        merged.push(c);
                     }
                 }
                 ReactiveStatement::Instruction(instr) => {
@@ -176,18 +178,16 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                 | InstructionValue::PropertyLoad { .. }
                                 | InstructionValue::TemplateLiteral { .. }
                                 | InstructionValue::UnaryExpression { .. } => {
-                                    if let Some(ref mut c) = current {
-                                        if let Some(lvalue) = &instr.lvalue {
-                                            let decl_id = self.env.identifiers
-                                                [lvalue.identifier.0 as usize]
+                                    if let Some(ref mut c) = current
+                                        && let Some(lvalue) = &instr.lvalue
+                                    {
+                                        let decl_id =
+                                            self.env.identifiers[lvalue.identifier].declaration_id;
+                                        c.lvalues.insert(decl_id);
+                                        if let InstructionValue::LoadLocal { place, .. } = iv {
+                                            let src_decl = self.env.identifiers[place.identifier]
                                                 .declaration_id;
-                                            c.lvalues.insert(decl_id);
-                                            if let InstructionValue::LoadLocal { place, .. } = iv {
-                                                let src_decl = self.env.identifiers
-                                                    [place.identifier.0 as usize]
-                                                    .declaration_id;
-                                                self.temporaries.insert(decl_id, src_decl);
-                                            }
+                                            self.temporaries.insert(decl_id, src_decl);
                                         }
                                     }
                                 }
@@ -197,18 +197,17 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                             // Add the instruction lvalue (if any)
                                             if let Some(instr_lvalue) = &instr.lvalue {
                                                 let decl_id = self.env.identifiers
-                                                    [instr_lvalue.identifier.0 as usize]
+                                                    [instr_lvalue.identifier]
                                                     .declaration_id;
                                                 c.lvalues.insert(decl_id);
                                             }
                                             // Add the StoreLocal's lvalue place
                                             let store_decl = self.env.identifiers
-                                                [lvalue.place.identifier.0 as usize]
+                                                [lvalue.place.identifier]
                                                 .declaration_id;
                                             c.lvalues.insert(store_decl);
                                             // Track temporary mapping
-                                            let value_decl = self.env.identifiers
-                                                [value.identifier.0 as usize]
+                                            let value_decl = self.env.identifiers[value.identifier]
                                                 .declaration_id;
                                             let mapped = self
                                                 .temporaries
@@ -227,20 +226,20 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                 }
                                 _ => {
                                     // Other instructions prevent merging
-                                    if let Some(c) = current.take() {
-                                        if c.to > c.from + 1 {
-                                            merged.push(c);
-                                        }
+                                    if let Some(c) = current.take()
+                                        && c.to > c.from + 1
+                                    {
+                                        merged.push(c);
                                     }
                                 }
                             }
                         }
                         _ => {
                             // Non-Instruction reactive values prevent merging
-                            if let Some(c) = current.take() {
-                                if c.to > c.from + 1 {
-                                    merged.push(c);
-                                }
+                            if let Some(c) = current.take()
+                                && c.to > c.from + 1
+                            {
+                                merged.push(c);
                             }
                         }
                     }
@@ -261,19 +260,16 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                             self.env,
                         ) {
                             // Merge: extend the current scope's range
-                            let next_range_end =
-                                self.env.scopes[next_scope_id.0 as usize].range.end;
-                            let current_range_end =
-                                self.env.scopes[current_scope_id.0 as usize].range.end;
-                            self.env.scopes[current_scope_id.0 as usize].range.end =
-                                EvaluationOrder(current_range_end.0.max(next_range_end.0));
+                            let next_range_end = self.env.scopes[next_scope_id].range.end;
+                            let current_range_end = self.env.scopes[current_scope_id].range.end;
+                            self.env.scopes[current_scope_id].range.end =
+                                current_range_end.max(next_range_end);
 
                             // Merge declarations from next into current
-                            let next_decls =
-                                self.env.scopes[next_scope_id.0 as usize].declarations.clone();
+                            let next_decls = self.env.scopes[next_scope_id].declarations.clone();
                             for (key, value) in next_decls {
                                 let current_decls =
-                                    &mut self.env.scopes[current_scope_id.0 as usize].declarations;
+                                    &mut self.env.scopes[current_scope_id].declarations;
                                 if let Some(existing) =
                                     current_decls.iter_mut().find(|(k, _)| *k == key)
                                 {
@@ -326,10 +322,10 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             }
         }
         // Flush remaining
-        if let Some(c) = current.take() {
-            if c.to > c.from + 1 {
-                merged.push(c);
-            }
+        if let Some(c) = current.take()
+            && c.to > c.from + 1
+        {
+            merged.push(c);
         }
 
         // Pass 3: apply merges
@@ -351,12 +347,8 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             let mut merged_scope = match &all_stmts[entry.from] {
                 ReactiveStatement::Scope(s) => s.clone(),
                 _ => {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        "MergeConsecutiveScopes: Expected scope at starting index",
-                        None,
-                    )
-                    .into());
+                    return Err(ErrorCategory::Invariant
+                        .diagnostic("MergeConsecutiveScopes: Expected scope at starting index"));
                 }
             };
             index += 1;
@@ -366,9 +358,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                 match stmt {
                     ReactiveStatement::Scope(inner_scope) => {
                         merged_scope.instructions.extend(inner_scope.instructions.clone());
-                        self.env.scopes[merged_scope.scope.0 as usize]
-                            .merged
-                            .push(inner_scope.scope);
+                        self.env.scopes[merged_scope.scope].merged.push(inner_scope.scope);
                     }
                     _ => {
                         merged_scope.instructions.push(stmt.clone());
@@ -398,9 +388,9 @@ fn update_scope_declarations<'a>(
     last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
     env: &mut Environment<'a>,
 ) {
-    let range_end = env.scopes[scope_id.0 as usize].range.end;
-    env.scopes[scope_id.0 as usize].declarations.retain(|(_id, decl)| {
-        let decl_declaration_id = env.identifiers[decl.identifier.0 as usize].declaration_id;
+    let range_end = env.scopes[scope_id].range.end;
+    env.scopes[scope_id].declarations.retain(|(_id, decl)| {
+        let decl_declaration_id = env.identifiers[decl.identifier].declaration_id;
         match last_usage.get(&decl_declaration_id) {
             Some(last_used_at) => *last_used_at >= range_end,
             // If not tracked, keep the declaration (conservative)
@@ -416,12 +406,12 @@ fn are_lvalues_last_used_by_scope<'a>(
     last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
     env: &Environment<'a>,
 ) -> bool {
-    let range_end = env.scopes[scope_id.0 as usize].range.end;
+    let range_end = env.scopes[scope_id].range.end;
     for lvalue in lvalues {
-        if let Some(&last_used_at) = last_usage.get(lvalue) {
-            if last_used_at >= range_end {
-                return false;
-            }
+        if let Some(&last_used_at) = last_usage.get(lvalue)
+            && last_used_at >= range_end
+        {
+            return false;
         }
     }
     true
@@ -434,8 +424,8 @@ fn can_merge_scopes<'a>(
     env: &Environment<'a>,
     temporaries: &FxHashMap<DeclarationId, DeclarationId>,
 ) -> bool {
-    let current = &env.scopes[current_id.0 as usize];
-    let next = &env.scopes[next_id.0 as usize];
+    let current = &env.scopes[current_id];
+    let next = &env.scopes[next_id];
 
     // Don't merge scopes with reassignments
     if !current.reassignments.is_empty() || !next.reassignments.is_empty() {
@@ -456,7 +446,7 @@ fn can_merge_scopes<'a>(
             identifier: decl.identifier,
             reactive: true,
             path: Vec::new(),
-            loc: None,
+            span: None,
         })
         .collect();
 
@@ -471,13 +461,13 @@ fn can_merge_scopes<'a>(
             if !dep.path.is_empty() {
                 return false;
             }
-            let dep_type = &env.types[env.identifiers[dep.identifier.0 as usize].type_.0 as usize];
+            let dep_type = &env.types[env.identifiers[dep.identifier].type_];
             if !is_always_invalidating_type(dep_type) {
                 return false;
             }
-            let dep_decl = env.identifiers[dep.identifier.0 as usize].declaration_id;
+            let dep_decl = env.identifiers[dep.identifier].declaration_id;
             current.declarations.iter().any(|(_key, decl)| {
-                let decl_decl_id = env.identifiers[decl.identifier.0 as usize].declaration_id;
+                let decl_decl_id = env.identifiers[decl.identifier].declaration_id;
                 decl_decl_id == dep_decl
                     || temporaries.get(&dep_decl).copied() == Some(decl_decl_id)
             })
@@ -515,9 +505,9 @@ fn are_equal_dependencies<'a>(
         return false;
     }
     for a_val in a {
-        let a_decl = env.identifiers[a_val.identifier.0 as usize].declaration_id;
+        let a_decl = env.identifiers[a_val.identifier].declaration_id;
         let found = b.iter().any(|b_val| {
-            let b_decl = env.identifiers[b_val.identifier.0 as usize].declaration_id;
+            let b_decl = env.identifiers[b_val.identifier].declaration_id;
             a_decl == b_decl && are_equal_paths(&a_val.path, &b_val.path)
         });
         if !found {
@@ -537,13 +527,13 @@ fn are_equal_paths(a: &[DependencyPathEntry], b: &[DependencyPathEntry]) -> bool
 
 /// Check if a scope is eligible for merging with subsequent scopes.
 fn scope_is_eligible_for_merging<'a>(scope_id: ScopeId, env: &Environment<'a>) -> bool {
-    let scope = &env.scopes[scope_id.0 as usize];
+    let scope = &env.scopes[scope_id];
     if scope.dependencies.is_empty() {
         // No dependencies means output never changes — eligible
         return true;
     }
     scope.declarations.iter().any(|(_key, decl)| {
-        let ty = &env.types[env.identifiers[decl.identifier.0 as usize].type_.0 as usize];
+        let ty = &env.types[env.identifiers[decl.identifier].type_];
         is_always_invalidating_type(ty)
     })
 }

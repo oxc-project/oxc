@@ -113,12 +113,12 @@ fn populate_macro_tags(
 
     for block in func.body.blocks.values() {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
                 InstructionValue::Primitive { value: PrimitiveValue::String(s), .. } => {
-                    if let Some(macro_def) = s.as_str().and_then(|utf8| macro_kinds.get(utf8)) {
+                    if let Some(macro_def) = macro_kinds.get(s.as_str()) {
                         // We don't distinguish between tag names and strings, so record
                         // all `fbt` string literals in case they are used as a jsx tag.
                         macro_tags.insert(lvalue_id, macro_def.clone());
@@ -126,7 +126,7 @@ fn populate_macro_tags(
                 }
                 InstructionValue::LoadGlobal { binding, .. } => {
                     let name = binding.name();
-                    if let Some(macro_def) = macro_kinds.get(name) {
+                    if let Some(macro_def) = macro_kinds.get(name.as_str()) {
                         macro_tags.insert(lvalue_id, macro_def.clone());
                     }
                 }
@@ -173,7 +173,7 @@ fn merge_macro_arguments(
 
         // Iterate instructions in reverse order
         for &instr_id in block.instructions.iter().rev() {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
@@ -192,7 +192,7 @@ fn merge_macro_arguments(
 
                 InstructionValue::CallExpression { callee, .. }
                 | InstructionValue::MethodCall { property: callee, .. } => {
-                    let scope_id = match env.identifiers[lvalue_id.0 as usize].scope {
+                    let scope_id = match env.identifiers[lvalue_id].scope {
                         Some(s) => s,
                         None => continue,
                     };
@@ -216,7 +216,7 @@ fn merge_macro_arguments(
                 }
 
                 InstructionValue::JsxExpression { tag, .. } => {
-                    let scope_id = match env.identifiers[lvalue_id.0 as usize].scope {
+                    let scope_id = match env.identifiers[lvalue_id].scope {
                         Some(s) => s,
                         None => continue,
                     };
@@ -243,7 +243,7 @@ fn merge_macro_arguments(
 
                 // Default case: check if lvalue is a macro tag
                 _ => {
-                    let scope_id = match env.identifiers[lvalue_id.0 as usize].scope {
+                    let scope_id = match env.identifiers[lvalue_id].scope {
                         Some(s) => s,
                         None => continue,
                     };
@@ -267,7 +267,7 @@ fn merge_macro_arguments(
         // Handle phis
         let block = &func.body.blocks[&block_id];
         for phi in &block.phis {
-            let scope_id = match env.identifiers[phi.place.identifier.0 as usize].scope {
+            let scope_id = match env.identifiers[phi.place.identifier].scope {
                 Some(s) => s,
                 None => continue,
             };
@@ -291,7 +291,7 @@ fn merge_macro_arguments(
                 .collect();
 
             for (operand_id, def) in operand_updates {
-                env.identifiers[operand_id.0 as usize].scope = Some(scope_id);
+                env.identifiers[operand_id].scope = Some(scope_id);
                 expand_fbt_scope_range(env, scope_id, operand_id);
                 macro_tags.insert(operand_id, def);
                 macro_values.insert(operand_id);
@@ -308,18 +308,18 @@ fn merge_macro_arguments(
 /// scope.range, so mutations are automatically visible; in Rust we must propagate.
 /// Equivalent to TS `expandFbtScopeRange`.
 fn expand_fbt_scope_range(env: &mut Environment, scope_id: ScopeId, operand_id: IdentifierId) {
-    let extend_start = env.identifiers[operand_id.0 as usize].mutable_range.start;
-    if extend_start.0 == 0 {
+    let extend_start = env.identifiers[operand_id].mutable_range.start;
+    if extend_start == 0 {
         return;
     }
-    let old_range_id = env.scopes[scope_id.0 as usize].range.id;
-    let old_start = env.scopes[scope_id.0 as usize].range.start;
-    let new_start = old_start.0.min(extend_start.0);
-    if new_start == old_start.0 {
+    let old_range_id = env.scopes[scope_id].range.id;
+    let old_start = env.scopes[scope_id].range.start;
+    let new_start = old_start.min(extend_start);
+    if new_start == old_start {
         return;
     }
-    env.scopes[scope_id.0 as usize].range.start.0 = new_start;
-    let new_range = env.scopes[scope_id.0 as usize].range.clone();
+    env.scopes[scope_id].range.start = new_start;
+    let new_range = env.scopes[scope_id].range.clone();
     for ident in &mut env.identifiers {
         if ident.scope == Some(scope_id) && ident.mutable_range.id == old_range_id {
             ident.mutable_range = new_range.clone();
@@ -348,7 +348,7 @@ fn visit_operands(
 
     for operand_id in operand_ids {
         if matches!(macro_def.level, InlineLevel::Transitive) {
-            env.identifiers[operand_id.0 as usize].scope = Some(scope_id);
+            env.identifiers[operand_id].scope = Some(scope_id);
             expand_fbt_scope_range(env, scope_id, operand_id);
             macro_tags.insert(operand_id, macro_def.clone());
         }

@@ -12,8 +12,10 @@ use crate::{
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     print::{
-        import_declaration::format_import_and_export_source_with_clause,
-        semicolon::OptionalSemicolon,
+        import_declaration::{
+            format_import_and_export_source_with_clause, import_and_export_source_with_clause_end,
+        },
+        semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
     },
     write,
 };
@@ -72,9 +74,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
             f,
         );
 
-        write!(f, self.declaration());
-        if self.declaration().is_expression() {
-            write!(f, OptionalSemicolon);
+        let declaration = self.declaration();
+        if declaration.is_expression() {
+            write!(
+                f,
+                FormatContentWithSemicolon::new(declaration, declaration.span().end, self.span.end)
+            );
+        } else {
+            write!(f, declaration);
         }
 
         self.format_trailing_comments(f);
@@ -83,14 +90,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, ["export", space(), self.export_kind(), "*", space()]);
-        if let Some(name) = &self.exported() {
-            write!(f, ["as", space(), name, space()]);
-        }
-        write!(f, ["from", space()]);
+        let content = format_with(|f| {
+            write!(f, ["export", space(), self.export_kind(), "*", space()]);
+            if let Some(name) = &self.exported() {
+                write!(f, ["as", space(), name, space()]);
+            }
+            write!(f, ["from", space()]);
 
-        format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
-        write!(f, [OptionalSemicolon]);
+            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
+        });
+        let content_end =
+            import_and_export_source_with_clause_end(self.source(), self.with_clause());
+        write!(f, FormatContentWithSemicolon::new(&content, content_end, self.span.end));
     }
 }
 
@@ -160,14 +171,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
 
             let with_clause = self.with_clause();
             if let Some(source) = source {
-                write!(f, [space(), "from", space()]);
-                format_import_and_export_source_with_clause(source, with_clause, f);
+                let content = format_with(|f| {
+                    write!(f, [space(), "from", space()]);
+                    format_import_and_export_source_with_clause(source, with_clause, f);
+                });
+                let content_end = import_and_export_source_with_clause_end(source, with_clause);
+                write!(f, FormatContentWithSemicolon::new(&content, content_end, self.span.end));
+            } else {
+                write!(f, OptionalSemicolon);
             }
         }
-
-        if declaration.is_none_or(|d| matches!(d.as_ref(), Declaration::VariableDeclaration(_))) {
-            write!(f, OptionalSemicolon);
-        }
+        // No semicolon when there is a declaration:
+        // an exported variable declaration prints it itself, together with its trailing comments
 
         self.format_trailing_comments(f);
     }

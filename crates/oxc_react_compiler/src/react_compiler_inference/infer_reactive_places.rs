@@ -14,12 +14,11 @@
 //! 4. Mutation with reactive operands
 //! 5. Conditional assignment based on reactive control flow
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
-use crate::react_compiler_hir::dominator::{
-    PostDominator, compute_post_dominator_tree, post_dominator_frontier,
-};
+use crate::diagnostics::ErrorCategory;
+use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
@@ -42,7 +41,7 @@ use crate::react_compiler_inference::infer_reactive_scope_variables::find_disjoi
 pub fn infer_reactive_places(
     func: &mut HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut aliased_identifiers = find_disjoint_mutable_values(func, env);
     let mut reactive_map = ReactivityMap::new(&mut aliased_identifiers);
     let mut stable_sidemap = StableSidemap::new();
@@ -57,10 +56,21 @@ pub fn infer_reactive_places(
     }
 
     // Compute control dominators
-    let post_dominators = compute_post_dominator_tree(func, env.next_block_id().0, false)?;
+    let post_dominators =
+        compute_post_dominator_tree(func, env.next_block_id().index() as u32, false)?;
 
     // Collect block IDs for iteration
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+
+    // Post-dominator frontiers depend only on the CFG, which is invariant across
+    // the fixpoint below. Compute each block's frontier once here instead of
+    // re-deriving it (a full reverse-CFG walk that allocates several sets) on every
+    // `is_reactive_controlled_block` call — previously once per block plus once per
+    // phi operand, on every fixpoint iteration.
+    let frontiers: FxHashMap<BlockId, FxHashSet<BlockId>> = block_ids
+        .iter()
+        .map(|&block_id| (block_id, post_dominator_frontier(func, &post_dominators, block_id)))
+        .collect();
 
     // Track phi operand reactive flags during fixpoint.
     // In TS, isReactive() sets place.reactive as a side effect. But when a phi
@@ -74,7 +84,7 @@ pub fn infer_reactive_places(
         for block_id in &block_ids {
             let block = func.body.blocks.get(block_id).unwrap();
             let has_reactive_control =
-                is_reactive_controlled_block(block.id, func, &post_dominators, &mut reactive_map);
+                is_reactive_controlled_block(block.id, func, &frontiers, &mut reactive_map);
 
             // Process phi nodes
             let block = func.body.blocks.get(block_id).unwrap();
@@ -98,12 +108,8 @@ pub fn infer_reactive_places(
                     reactive_map.mark_reactive(phi.place.identifier);
                 } else {
                     for (pred, _operand) in &phi.operands {
-                        if is_reactive_controlled_block(
-                            *pred,
-                            func,
-                            &post_dominators,
-                            &mut reactive_map,
-                        ) {
+                        if is_reactive_controlled_block(*pred, func, &frontiers, &mut reactive_map)
+                        {
                             reactive_map.mark_reactive(phi.place.identifier);
                             break;
                         }
@@ -114,7 +120,7 @@ pub fn infer_reactive_places(
             // Process instructions
             let block = func.body.blocks.get(block_id).unwrap();
             for instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
 
                 // Handle stable identifier sources
                 stable_sidemap.handle_instruction(instr, env);
@@ -136,8 +142,7 @@ pub fn infer_reactive_places(
                 // Hooks and `use` operator are sources of reactivity
                 match value {
                     InstructionValue::CallExpression { callee, .. } => {
-                        let callee_ty = &env.types
-                            [env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                        let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                         if get_hook_kind_for_type(env, callee_ty)?.is_some()
                             || is_use_operator_type(callee_ty)
                         {
@@ -145,8 +150,7 @@ pub fn infer_reactive_places(
                         }
                     }
                     InstructionValue::MethodCall { property, .. } => {
-                        let property_ty = &env.types
-                            [env.identifiers[property.identifier.0 as usize].type_.0 as usize];
+                        let property_ty = &env.types[env.identifiers[property.identifier].type_];
                         if get_hook_kind_for_type(env, property_ty)?.is_some()
                             || is_use_operator_type(property_ty)
                         {
@@ -180,8 +184,7 @@ pub fn infer_reactive_places(
                             | Effect::ConditionallyMutate
                             | Effect::ConditionallyMutateIterator
                             | Effect::Mutate => {
-                                let op_range =
-                                    &env.identifiers[op_place.identifier.0 as usize].mutable_range;
+                                let op_range = &env.identifiers[op_place.identifier].mutable_range;
                                 if op_range.contains(instr.id) {
                                     reactive_map.mark_reactive(op_place.identifier);
                                 }
@@ -190,11 +193,10 @@ pub fn infer_reactive_places(
                                 // no-op
                             }
                             Effect::Unknown => {
-                                return Err(CompilerDiagnostic::new(
-                                    ErrorCategory::Invariant,
-                                    format!("Unexpected unknown effect at {:?}", op_place.loc),
-                                    None,
-                                ));
+                                return Err(ErrorCategory::Invariant.diagnostic(format!(
+                                    "Unexpected unknown effect at {:?}",
+                                    op_place.span
+                                )));
                             }
                         }
                     }
@@ -281,11 +283,9 @@ impl StableSidemap {
 
         match value {
             InstructionValue::CallExpression { callee, .. } => {
-                let callee_ty =
-                    &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                 if evaluates_to_stable_type_or_container(env, callee_ty) {
-                    let lvalue_ty =
-                        &env.types[env.identifiers[lvalue_id.0 as usize].type_.0 as usize];
+                    let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type(lvalue_ty) {
                         self.map.insert(lvalue_id, true);
                     } else {
@@ -294,11 +294,9 @@ impl StableSidemap {
                 }
             }
             InstructionValue::MethodCall { property, .. } => {
-                let property_ty =
-                    &env.types[env.identifiers[property.identifier.0 as usize].type_.0 as usize];
+                let property_ty = &env.types[env.identifiers[property.identifier].type_];
                 if evaluates_to_stable_type_or_container(env, property_ty) {
-                    let lvalue_ty =
-                        &env.types[env.identifiers[lvalue_id.0 as usize].type_.0 as usize];
+                    let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type(lvalue_ty) {
                         self.map.insert(lvalue_id, true);
                     } else {
@@ -309,8 +307,7 @@ impl StableSidemap {
             InstructionValue::PropertyLoad { object, .. } => {
                 let source_id = object.identifier;
                 if self.map.contains_key(&source_id) {
-                    let lvalue_ty =
-                        &env.types[env.identifiers[lvalue_id.0 as usize].type_.0 as usize];
+                    let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type_container(lvalue_ty) {
                         self.map.insert(lvalue_id, false);
                     } else if is_stable_type(lvalue_ty) {
@@ -326,7 +323,7 @@ impl StableSidemap {
                         .map(|p| p.identifier)
                         .collect();
                     for lid in lvalue_ids {
-                        let lid_ty = &env.types[env.identifiers[lid.0 as usize].type_.0 as usize];
+                        let lid_ty = &env.types[env.identifiers[lid].type_];
                         if is_stable_type_container(lid_ty) {
                             self.map.insert(lid, false);
                         } else if is_stable_type(lid_ty) {
@@ -362,11 +359,11 @@ impl StableSidemap {
 fn is_reactive_controlled_block(
     block_id: BlockId,
     func: &HirFunction,
-    post_dominators: &PostDominator,
+    frontiers: &FxHashMap<BlockId, FxHashSet<BlockId>>,
     reactive_map: &mut ReactivityMap,
 ) -> bool {
-    let frontier = post_dominator_frontier(func, post_dominators, block_id);
-    for frontier_block_id in &frontier {
+    let Some(frontier) = frontiers.get(&block_id) else { return false };
+    for frontier_block_id in frontier {
         let control_block = func.body.blocks.get(frontier_block_id).unwrap();
         match &control_block.terminal {
             Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
@@ -379,10 +376,10 @@ fn is_reactive_controlled_block(
                     return true;
                 }
                 for case in cases {
-                    if let Some(ref case_test) = case.test {
-                        if reactive_map.is_reactive(case_test.identifier) {
-                            return true;
-                        }
+                    if let Some(ref case_test) = case.test
+                        && reactive_map.is_reactive(case_test.identifier)
+                    {
+                        return true;
                     }
                 }
             }
@@ -401,7 +398,7 @@ use crate::react_compiler_hir::is_use_operator_type;
 fn get_hook_kind_for_type<'a>(
     env: &'a Environment,
     ty: &Type,
-) -> Result<Option<&'a HookKind>, CompilerDiagnostic> {
+) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
     env.get_hook_kind_for_type(ty)
 }
 
@@ -467,7 +464,7 @@ fn propagate_reactivity_to_inner_functions_outer(
 ) {
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
@@ -488,11 +485,11 @@ fn propagate_reactivity_to_inner_functions_inner(
     env: &Environment,
     reactive_map: &mut ReactivityMap,
 ) {
-    let inner_func = &env.functions[func_id.0 as usize];
+    let inner_func = &env.functions[func_id];
 
     for (_block_id, block) in &inner_func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &inner_func.instructions[instr_id.0 as usize];
+            let instr = &inner_func.instructions[instr_id.index()];
 
             for op in visitors::each_instruction_value_operand(&instr.value, env) {
                 reactive_map.is_reactive(op.identifier);
@@ -557,10 +554,9 @@ fn apply_reactive_flags_replay(
 
             for (op_idx, (_pred, operand)) in phi.operands.iter_mut().enumerate() {
                 if let Some(&is_reactive) = phi_operand_reactive.get(&(*block_id, phi_idx, op_idx))
+                    && is_reactive
                 {
-                    if is_reactive {
-                        operand.reactive = true;
-                    }
+                    operand.reactive = true;
                 }
             }
         }
@@ -570,7 +566,7 @@ fn apply_reactive_flags_replay(
         let instr_ids: Vec<InstructionId> = block.instructions.clone();
 
         for instr_id in &instr_ids {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Compute hasReactiveInput by checking value operands
             let value_operand_ids: Vec<IdentifierId> =
@@ -588,8 +584,7 @@ fn apply_reactive_flags_replay(
             // Check hooks/use
             match &instr.value {
                 InstructionValue::CallExpression { callee, .. } => {
-                    let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some()
                         || is_use_operator_type(callee_ty)
                     {
@@ -597,8 +592,7 @@ fn apply_reactive_flags_replay(
                     }
                 }
                 InstructionValue::MethodCall { property, .. } => {
-                    let property_ty = &env.types
-                        [env.identifiers[property.identifier.0 as usize].type_.0 as usize];
+                    let property_ty = &env.types[env.identifiers[property.identifier].type_];
                     if get_hook_kind_for_type(env, property_ty).ok().flatten().is_some()
                         || is_use_operator_type(property_ty)
                     {
@@ -609,7 +603,7 @@ fn apply_reactive_flags_replay(
             }
 
             // Value operands: set reactive flag using canonical visitor
-            let instr = &mut func.instructions[instr_id.0 as usize];
+            let instr = &mut func.instructions[instr_id.index()];
             visitors::for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| {
                 if reactive_ids.contains(&place.identifier) {
                     place.reactive = true;
@@ -619,7 +613,7 @@ fn apply_reactive_flags_replay(
             if let InstructionValue::FunctionExpression { lowered_func, .. }
             | InstructionValue::ObjectMethod { lowered_func, .. } = &mut instr.value
             {
-                let inner_func = &mut env.functions[lowered_func.func.0 as usize];
+                let inner_func = &mut env.functions[lowered_func.func];
                 for ctx in &mut inner_func.context {
                     if reactive_ids.contains(&ctx.identifier) {
                         ctx.reactive = true;
@@ -700,7 +694,7 @@ fn apply_reactive_flags_to_inner_functions(
 ) {
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
@@ -719,11 +713,11 @@ fn apply_reactive_flags_to_inner_func(
 ) {
     // Collect nested function IDs first to avoid borrow issues
     let nested_func_ids: Vec<FunctionId> = {
-        let func = &env.functions[func_id.0 as usize];
+        let func = &env.functions[func_id];
         let mut ids = Vec::new();
         for (_block_id, block) in &func.body.blocks {
             for instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
                 match &instr.value {
                     InstructionValue::FunctionExpression { lowered_func, .. }
                     | InstructionValue::ObjectMethod { lowered_func, .. } => {
@@ -737,10 +731,10 @@ fn apply_reactive_flags_to_inner_func(
     };
 
     // Apply reactive flags using canonical visitors
-    let inner_func = &mut env.functions[func_id.0 as usize];
+    let inner_func = &mut env.functions[func_id];
     for (_block_id, block) in &mut inner_func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &mut inner_func.instructions[instr_id.0 as usize];
+            let instr = &mut inner_func.instructions[instr_id.index()];
             visitors::for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| {
                 if reactive_ids.contains(&place.identifier) {
                     place.reactive = true;
@@ -756,7 +750,7 @@ fn apply_reactive_flags_to_inner_func(
 
     // Recurse into nested functions, and set reactive on their context variables
     for nested_id in nested_func_ids {
-        let nested_func = &mut env.functions[nested_id.0 as usize];
+        let nested_func = &mut env.functions[nested_id];
         for ctx in &mut nested_func.context {
             if reactive_ids.contains(&ctx.identifier) {
                 ctx.reactive = true;

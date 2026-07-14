@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- f85f0d8 ast: Delegate inherited enum variants in clone_in and estree derives (#23555) (Boshen)
+
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 61fbf10 ast: Implement `ReplaceWith` on all AST types (#24013) (overlookmotel)
+- 26dd9e2 ast: Add method to widen inherited enum ref to parent ref (#23961) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0b25582 ast: Type binding node `typeAnnotation` as `TSTypeAnnotation | null` (#23113) (Boshen)
+
+### 📚 Documentation
+
+- 675e6a8 ast: Correct doc comment for `PrivateFieldExpression` (#24008) (overlookmotel)
+- 4de3e54 ast: Correct doc comment (#23948) (overlookmotel)
+
 ## [0.138.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

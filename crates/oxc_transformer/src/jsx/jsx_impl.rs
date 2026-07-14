@@ -551,15 +551,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a> {
         if !expr.is_jsx() {
             return;
         }
+        self.transform_jsx_expression(expr, ctx);
+    }
+}
+
+impl<'a> JsxImpl<'a> {
+    #[inline(never)]
+    fn transform_jsx_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         expr.replace_with(|expr| match expr {
             Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
             Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),
         });
     }
-}
-
-impl<'a> JsxImpl<'a> {
     fn insert_filename_var_statement(&self, ctx: &mut TraverseCtx<'a>) {
         let Some(declarator) = self.jsx_source.get_filename_var_declarator(ctx) else { return };
 

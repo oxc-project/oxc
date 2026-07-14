@@ -102,7 +102,7 @@ fn bench_mangler(criterion: &mut Criterion) {
     {
         let files = TestFiles::minimal();
         let first_file = files.files().first().unwrap();
-        let id = BenchmarkId::from_parameter(format!("{}_keep_names", &first_file.file_name));
+        let id = BenchmarkId::from_parameter(format!("{}_keep_names", first_file.file_name));
         let source_type = SourceType::from_path(&first_file.file_name).unwrap();
         let source_text = first_file.source_text.as_str();
         let path = Path::new(&first_file.file_name);

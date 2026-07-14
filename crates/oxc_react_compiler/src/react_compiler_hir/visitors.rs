@@ -5,22 +5,29 @@
  * LICENSE file in the root directory of this source tree.
  */
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
+
+use oxc_index::IndexSlice;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, HirFunction, IdentifierId, Instruction,
-    InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot, ObjectPropertyKey,
-    ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
+    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, FunctionId, HirFunction, IdentifierId,
+    Instruction, InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot,
+    ObjectPropertyKey, ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
 };
 
 // =============================================================================
 // Iterator functions (return Vec instead of generators)
 // =============================================================================
 
+/// Operand/lvalue lists are almost always 1-4 entries; keep them inline instead
+/// of heap-allocating a `Vec` for every instruction visited.
+pub type PlaceList = SmallVec<[Place; 4]>;
+
 /// Yields `instr.lvalue` plus the value's lvalues.
 /// Equivalent to TS `eachInstructionLValue`.
-pub fn each_instruction_lvalue(instr: &Instruction) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
+    let mut result = PlaceList::new();
     result.push(instr.lvalue.clone());
     result.extend(each_instruction_value_lvalue(&instr.value));
     result
@@ -28,8 +35,8 @@ pub fn each_instruction_lvalue(instr: &Instruction) -> Vec<Place> {
 
 /// Yields lvalues from DeclareLocal/StoreLocal/DeclareContext/StoreContext/Destructure/PostfixUpdate/PrefixUpdate.
 /// Equivalent to TS `eachInstructionValueLValue`.
-pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
+    let mut result = PlaceList::new();
     match value {
         InstructionValue::DeclareContext { lvalue, .. }
         | InstructionValue::StoreContext { lvalue, .. }
@@ -79,21 +86,20 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
         | InstructionValue::StartMemoize { .. }
-        | InstructionValue::FinishMemoize { .. }
-        | InstructionValue::UnsupportedNode { .. } => {}
+        | InstructionValue::FinishMemoize { .. } => {}
     }
     result
 }
 
 /// Delegates to each_instruction_value_operand.
 /// Equivalent to TS `eachInstructionOperand`.
-pub fn each_instruction_operand(instr: &Instruction, env: &Environment) -> Vec<Place> {
+pub fn each_instruction_operand(instr: &Instruction, env: &Environment) -> PlaceList {
     each_instruction_value_operand(&instr.value, env)
 }
 
 /// Yields operand places from an InstructionValue.
 /// Equivalent to TS `eachInstructionValueOperand`.
-pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environment) -> Vec<Place> {
+pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environment) -> PlaceList {
     each_instruction_value_operand_with_functions(value, &env.functions)
 }
 
@@ -101,9 +107,9 @@ pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environmen
 /// Useful when borrow splitting prevents passing the full `Environment`.
 pub fn each_instruction_value_operand_with_functions(
     value: &InstructionValue,
-    functions: &[HirFunction],
-) -> Vec<Place> {
-    let mut result = Vec::new();
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+) -> PlaceList {
+    let mut result = PlaceList::new();
     match value {
         InstructionValue::NewExpression { callee, args, .. }
         | InstructionValue::CallExpression { callee, args, .. } => {
@@ -219,7 +225,7 @@ pub fn each_instruction_value_operand_with_functions(
         }
         InstructionValue::ObjectMethod { lowered_func, .. }
         | InstructionValue::FunctionExpression { lowered_func, .. } => {
-            let func = &functions[lowered_func.func.0 as usize];
+            let func = &functions[lowered_func.func];
             for ctx_place in &func.context {
                 result.push(ctx_place.clone());
             }
@@ -271,7 +277,6 @@ pub fn each_instruction_value_operand_with_functions(
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {
             // no operands
@@ -282,8 +287,8 @@ pub fn each_instruction_value_operand_with_functions(
 
 /// Yields each arg's place.
 /// Equivalent to TS `eachCallArgument`.
-pub fn each_call_argument(args: &[PlaceOrSpread]) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_call_argument(args: &[PlaceOrSpread]) -> PlaceList {
+    let mut result = PlaceList::new();
     for arg in args {
         match arg {
             PlaceOrSpread::Place(place) => {
@@ -299,8 +304,8 @@ pub fn each_call_argument(args: &[PlaceOrSpread]) -> Vec<Place> {
 
 /// Yields places from array/object patterns.
 /// Equivalent to TS `eachPatternOperand`.
-pub fn each_pattern_operand(pattern: &Pattern) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_pattern_operand(pattern: &Pattern) -> PlaceList {
+    let mut result = PlaceList::new();
     match pattern {
         Pattern::Array(arr) => {
             for item in &arr.items {
@@ -421,8 +426,8 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
 
 /// Yields places used by terminal.
 /// Equivalent to TS `eachTerminalOperand`.
-pub fn each_terminal_operand(terminal: &Terminal) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_terminal_operand(terminal: &Terminal) -> PlaceList {
+    let mut result = PlaceList::new();
     match terminal {
         Terminal::If { test, .. } => {
             result.push(test.clone());
@@ -859,7 +864,7 @@ pub fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
 //   for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| { ... });
 //   if let InstructionValue::FunctionExpression { lowered_func, .. }
 //       | InstructionValue::ObjectMethod { lowered_func, .. } = &mut instr.value {
-//       let func = &mut env.functions[lowered_func.func.0 as usize];
+//       let func = &mut env.functions[lowered_func.func];
 //       for ctx in func.context.iter_mut() { ... }
 //   }
 //
@@ -868,7 +873,7 @@ pub fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
 /// Does NOT handle FunctionExpression/ObjectMethod context — callers handle those separately.
 pub fn for_each_instruction_value_operand_mut(
     value: &mut InstructionValue,
-    f: &mut impl FnMut(&mut Place),
+    f: &mut dyn FnMut(&mut Place),
 ) {
     match value {
         InstructionValue::BinaryExpression { left, right, .. } => {
@@ -1018,14 +1023,13 @@ pub fn for_each_instruction_value_operand_mut(
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {}
     }
 }
 
 /// In-place mutation of call arguments.
-pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut dyn FnMut(&mut Place)) {
     for arg in args.iter_mut() {
         match arg {
             PlaceOrSpread::Place(place) => f(place),
@@ -1039,7 +1043,7 @@ pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut impl FnMut
 /// top-level lvalue — use `for_each_instruction_lvalue_mut` for that.
 pub fn for_each_instruction_value_lvalue_mut(
     value: &mut InstructionValue,
-    f: &mut impl FnMut(&mut Place),
+    f: &mut dyn FnMut(&mut Place),
 ) {
     match value {
         InstructionValue::DeclareContext { lvalue, .. }
@@ -1061,7 +1065,7 @@ pub fn for_each_instruction_value_lvalue_mut(
 
 /// In-place mutation of the instruction's lvalue and value's lvalues.
 /// Matches the same variants as TS `mapInstructionLValues` (skips DeclareContext/StoreContext).
-pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut dyn FnMut(&mut Place)) {
     match &mut instr.value {
         InstructionValue::DeclareLocal { lvalue, .. }
         | InstructionValue::StoreLocal { lvalue, .. } => {
@@ -1080,7 +1084,7 @@ pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut impl FnM
 }
 
 /// In-place mutation of pattern operands.
-pub fn for_each_pattern_operand_mut(pattern: &mut Pattern, f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_pattern_operand_mut(pattern: &mut Pattern, f: &mut dyn FnMut(&mut Place)) {
     match pattern {
         Pattern::Array(arr) => {
             for item in arr.items.iter_mut() {
@@ -1103,7 +1107,7 @@ pub fn for_each_pattern_operand_mut(pattern: &mut Pattern, f: &mut impl FnMut(&m
 }
 
 /// In-place mutation of terminal operand places.
-pub fn for_each_terminal_operand_mut(terminal: &mut Terminal, f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_terminal_operand_mut(terminal: &mut Terminal, f: &mut dyn FnMut(&mut Place)) {
     match terminal {
         Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
             f(test);

@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- 92f154a oxlint,oxfmt: Auto-discover `.mts` config files (#24357) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8337835 linter: Error on `ignorePatterns` that cannot match files aoutside the config directory (#24341) (leaysgur)
+- 415fe1e oxfmt: Error on ignorePatterns that cannot match files outside the config directory (#24286) (leaysgur)
+- eeabc4a formatter_css: Bail on EOF-recovered parse errors (#24282) (leaysgur)
+
+## [0.58.0] - 2026-07-06
+
+### 🚀 Features
+
+- 4f4313e formatter_css: Update oxc-css-parser 0.0.5 (#24120) (leaysgur)
+- 0ccd8a1 formatter_graphql: Update oxc-graphql-parser 0.0.5 (#24106) (leaysgur)
+- 89ec3d9 formatter_core: Add literal line and root indention primitives (#24051) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2121a55 oxfmt: Reuse tinypool process during the same LSP process (#24197) (leaysgur)
+- cd2452e formatter_css: Align SCSS output to Prettier 3.9.1 (#24097) (leaysgur)
+- ea5d095 oxfmt: Update `--migrate prettier` (#23963) (leaysgur)
+
 ## [0.57.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

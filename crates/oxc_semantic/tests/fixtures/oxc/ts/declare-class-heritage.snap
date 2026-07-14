@@ -1,0 +1,130 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-class-heritage.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(<anonymous>)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(Declared)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "Class(NamespaceDeclared)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 4,
+        "node": "Class(LocalDeclared)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 5,
+        "node": "Class(Runtime)",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeImport)",
+        "id": 0,
+        "name": "TypeOnlyNamespace",
+        "node": "ImportNamespaceSpecifier",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "TypeOnlyNamespace",
+            "node_id": 17,
+            "scope_id": 2
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Import)",
+        "id": 1,
+        "name": "RuntimeNamespace",
+        "node": "ImportNamespaceSpecifier",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "RuntimeNamespace",
+            "node_id": 23,
+            "scope_id": 3
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "RuntimeNamespace",
+            "node_id": 33,
+            "scope_id": 5
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "LocalBase",
+        "node": "VariableDeclarator(LocalBase)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 2,
+            "name": "LocalBase",
+            "node_id": 28,
+            "scope_id": 4
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Class | Ambient)",
+        "id": 3,
+        "name": "Declared",
+        "node": "Class(Declared)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Class | Ambient)",
+        "id": 4,
+        "name": "NamespaceDeclared",
+        "node": "Class(NamespaceDeclared)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Class | Ambient)",
+        "id": 5,
+        "name": "LocalDeclared",
+        "node": "Class(LocalDeclared)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 6,
+        "name": "Runtime",
+        "node": "Class(Runtime)",
+        "references": []
+      }
+    ]
+  }
+]

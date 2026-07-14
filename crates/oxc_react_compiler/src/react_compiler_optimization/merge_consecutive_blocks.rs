@@ -15,31 +15,33 @@
 
 use std::mem::replace;
 
+use oxc_index::IndexSlice;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, BlockKind, Effect, GENERATED_SOURCE, HirFunction, Instruction,
-    InstructionId, InstructionValue, Place, Terminal,
+    AliasingEffect, BlockId, BlockKind, Effect, FunctionId, GENERATED_SOURCE, HirFunction,
+    Instruction, InstructionId, InstructionValue, Place, Terminal,
 };
 use crate::react_compiler_lowering::mark_predecessors;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 /// Merge consecutive blocks in the function's CFG, including inner functions.
-pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunction]) {
+pub fn merge_consecutive_blocks(
+    func: &mut HirFunction,
+    functions: &mut IndexSlice<FunctionId, [HirFunction]>,
+) {
     // Collect inner function IDs for recursive processing
-    let inner_func_ids: Vec<usize> = func
+    let inner_func_ids: Vec<FunctionId> = func
         .body
         .blocks
         .values()
         .flat_map(|block| block.instructions.iter())
         .filter_map(|instr_id| {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
-                | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    Some(lowered_func.func.0 as usize)
-                }
+                | InstructionValue::ObjectMethod { lowered_func, .. } => Some(lowered_func.func),
                 _ => None,
             }
         })
@@ -123,19 +125,19 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
                 identifier,
                 effect: Effect::ConditionallyMutate,
                 reactive: false,
-                loc: GENERATED_SOURCE,
+                span: GENERATED_SOURCE,
             };
             let instr = Instruction {
                 id: eval_order,
                 lvalue: lvalue.clone(),
                 value: InstructionValue::LoadLocal {
                     place: operand.clone(),
-                    loc: GENERATED_SOURCE,
+                    span: GENERATED_SOURCE,
                 },
-                loc: GENERATED_SOURCE,
+                span: GENERATED_SOURCE,
                 effects: Some(vec![AliasingEffect::Alias { from: operand, into: lvalue }]),
             };
-            let instr_id = InstructionId(func.instructions.len() as u32);
+            let instr_id = InstructionId::from_usize(func.instructions.len());
             func.instructions.push(instr);
             new_instr_ids.push(instr_id);
         }

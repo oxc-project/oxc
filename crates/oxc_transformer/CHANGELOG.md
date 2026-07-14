@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- 721eb0b transformer/decorator: Scope accessor class binding (#24330) (camc314)
+- af4922b transformer: Clear lowered namespace redeclarations (#24300) (camc314)
+- f05dfab transformer: Correct symbol flags for lowered namespaces (#24271) (Dunqing)
+- 84eeb55 transformer: Correct symbol flags for lowered enums (#24269) (Dunqing)
+- c3057da transformer: Preserve generated class binding spans (#24220) (camc314)
+- 8260096 transformer: Correct span for lowered namespace symbol (#24222) (camc314)
+
+### ⚡ Performance
+
+- ab22e80 transformer: Fix Rust 1.97 performance regression (#24354) (camc314)
+
+## [0.139.0] - 2026-07-06
+
+### 🐛 Bug Fixes
+
+- e8b50ee transformer: Clean up semantics for stripped TypeScript syntax (#24180) (camc314)
+- 4b16e1a transformer/async-to-generator: Preserve direct eval scope flags (#24136) (camc314)
+- 018c0e5 transformer: Hoist lowered async declarations (#22770) (camc314)
+
+### ⚡ Performance
+
+- c5ca77b transformer: Avoid cloning refresh options (#24191) (camc314)
+- abb44a0 transformer: Build fixed object-rest arguments (#24190) (camc314)
+- ff10855 transformer: Use `ReplaceWith` instead of `TakeIn` (#24015) (overlookmotel)
+- e6d48e1 transformer/nullish_coalescing: Move cold path into separate function (#23989) (overlookmotel)
+- c4e35b5 transformer/object_rest_spread: Pre-allocate capacity in `Vec` (#23988) (overlookmotel)
+- 527b8e5 transformer/decorators: Narrow type earlier (#23987) (overlookmotel)
+
 ## [0.138.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

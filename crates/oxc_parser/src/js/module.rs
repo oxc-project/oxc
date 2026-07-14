@@ -887,7 +887,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         // { type as as }
                         property_name = Some(ModuleExportName::new_identifier_name(
                             type_or_name_token.span(),
-                            self.token_source(&type_or_name_token),
+                            self.ident(self.token_source(&type_or_name_token)),
                             self,
                         ));
                         name = ModuleExportName::new_identifier_name(
@@ -950,7 +950,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_span),
                     property_name.unwrap_or_else(|| name.clone()),
-                    BindingIdentifier::new(name.span(), name.name(), self),
+                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self),
                     kind,
                     self,
                 ))

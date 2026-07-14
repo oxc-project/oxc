@@ -7,22 +7,24 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
-};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
-    AliasingEffect, Effect, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionValue, Place, Type,
+    AliasingEffect, Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName,
+    InstructionValue, Place, Type, TypeId,
 };
+use oxc_span::Span;
 
 /// Information about a known mutation effect: which identifier is mutated, and
 /// the source location of the mutation.
 #[derive(Debug, Clone)]
 struct MutationInfo {
     value_identifier: IdentifierId,
-    value_loc: Option<SourceLocation>,
+    value_span: Option<Span>,
 }
 
 /// Validates that functions with known mutations (ie due to types) cannot be passed
@@ -47,18 +49,18 @@ pub fn validate_no_freezing_known_mutable_functions(func: &HirFunction, env: &mu
 
 fn check_no_freezing_known_mutable_functions(
     func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     env: &Environment,
-) -> Vec<CompilerDiagnostic> {
+) -> Vec<OxcDiagnostic> {
     // Maps an identifier to the mutation effect that makes it "known mutable"
     let mut context_mutation_effects: FxHashMap<IdentifierId, MutationInfo> = FxHashMap::default();
-    let mut diagnostics: Vec<CompilerDiagnostic> = Vec::new();
+    let mut diagnostics: Vec<OxcDiagnostic> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instruction_id in &block.instructions {
-            let instr = &func.instructions[instruction_id.0 as usize];
+            let instr = &func.instructions[instruction_id.index()];
 
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
@@ -81,7 +83,7 @@ fn check_no_freezing_known_mutable_functions(
                 }
 
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_function = &functions[lowered_func.func.0 as usize];
+                    let inner_function = &functions[lowered_func.func];
                     if let Some(ref aliasing_effects) = inner_function.aliasing_effects {
                         let context_ids: FxHashSet<IdentifierId> =
                             inner_function.context.iter().map(|place| place.identifier).collect();
@@ -110,7 +112,7 @@ fn check_no_freezing_known_mutable_functions(
                                             instr.lvalue.identifier,
                                             MutationInfo {
                                                 value_identifier: value.identifier,
-                                                value_loc: value.loc,
+                                                value_span: value.span,
                                             },
                                         );
                                         break 'effects;
@@ -168,50 +170,48 @@ fn check_no_freezing_known_mutable_functions(
 fn check_operand_for_freeze_violation(
     operand: &Place,
     context_mutation_effects: &FxHashMap<IdentifierId, MutationInfo>,
-    identifiers: &[Identifier],
-    diagnostics: &mut Vec<CompilerDiagnostic>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    diagnostics: &mut Vec<OxcDiagnostic>,
 ) {
-    if operand.effect == Effect::Freeze {
-        if let Some(mutation_info) = context_mutation_effects.get(&operand.identifier) {
-            let identifier = &identifiers[mutation_info.value_identifier.0 as usize];
-            let variable_name = match &identifier.name {
-                Some(IdentifierName::Named(name)) => format!("`{}`", name),
-                _ => "a local variable".to_string(),
-            };
+    if operand.effect == Effect::Freeze
+        && let Some(mutation_info) = context_mutation_effects.get(&operand.identifier)
+    {
+        let identifier = &identifiers[mutation_info.value_identifier];
+        let variable_name = match &identifier.name {
+            Some(IdentifierName::Named(name)) => format!("`{}`", name),
+            _ => "a local variable".to_string(),
+        };
 
-            diagnostics.push(
-                CompilerDiagnostic::new(
-                    ErrorCategory::Immutability,
-                    "Cannot modify local variables after render completes",
-                    Some(format!(
-                        "This argument is a function which may reassign or mutate {} after render, \
+        diagnostics.push(
+            ErrorCategory::Immutability
+                .diagnostic("Cannot modify local variables after render completes")
+                .with_help(format!(
+                    "This argument is a function which may reassign or mutate {} after render, \
                          which can cause inconsistent behavior on subsequent renders. \
                          Consider using state instead",
-                        variable_name
-                    )),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: operand.loc,
-                    message: Some(format!(
+                    variable_name
+                ))
+                .with_labels(operand.span.map(|s| {
+                    s.label(format!(
                         "This function may (indirectly) reassign or modify {} after render",
                         variable_name
-                    )),
-                })
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: mutation_info.value_loc,
-                    message: Some(format!("This modifies {}", variable_name)),
-                }),
-            );
-        }
+                    ))
+                }))
+                .and_labels(
+                    mutation_info
+                        .value_span
+                        .map(|s| s.label(format!("This modifies {}", variable_name))),
+                ),
+        );
     }
 }
 
 /// Check if an identifier's type is a ref or ref-like mutable type.
 fn is_ref_or_ref_like_mutable_type(
     identifier_id: IdentifierId,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
-    let identifier = &identifiers[identifier_id.0 as usize];
-    crate::react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_.0 as usize])
+    let identifier = &identifiers[identifier_id];
+    crate::react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_])
 }

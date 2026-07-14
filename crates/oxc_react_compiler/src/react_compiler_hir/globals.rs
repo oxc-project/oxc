@@ -8,8 +8,9 @@
 //! Provides `DEFAULT_SHAPES` (built-in object shapes) and `DEFAULT_GLOBALS`
 //! (global variable types including React hooks and JS built-ins).
 
-use rustc_hash::FxHashMap;
 use std::sync::LazyLock;
+
+use oxc_str::{Ident, IdentHashMap};
 
 use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::Type;
@@ -27,37 +28,37 @@ use crate::react_compiler_hir::type_config::ValueReason;
 
 /// Type alias matching TS `Global = BuiltInType | PolyType`.
 /// In the Rust port, both map to our `Type` enum.
-pub type Global = Type;
+pub type Global<'a> = Type<'a>;
 
 /// Registry mapping global names to their types.
 ///
 /// Supports two modes:
-/// - **Builder mode** (`base=None`): wraps a single FxHashMap, used during
+/// - **Builder mode** (`base=None`): wraps a single map, used during
 ///   `build_default_globals` to construct the static base.
-/// - **Overlay mode** (`base=Some`): holds a `&'static FxHashMap` base plus a small
-///   extras FxHashMap. Lookups check extras first, then base. Inserts go into extras.
+/// - **Overlay mode** (`base=Some`): holds a `&'static` base map plus a small
+///   extras map. Lookups check extras first, then base. Inserts go into extras.
 ///   Cloning only copies the extras map (the base pointer is shared).
-pub struct GlobalRegistry {
-    base: Option<&'static FxHashMap<String, Global>>,
-    entries: FxHashMap<String, Global>,
+pub struct GlobalRegistry<'a> {
+    base: Option<&'static IdentHashMap<'static, Global<'static>>>,
+    entries: IdentHashMap<'a, Global<'a>>,
 }
 
-impl GlobalRegistry {
+impl<'a> GlobalRegistry<'a> {
     /// Create an empty builder-mode registry.
     pub fn new() -> Self {
-        Self { base: None, entries: FxHashMap::default() }
+        Self { base: None, entries: IdentHashMap::default() }
     }
 
     /// Create an overlay-mode registry backed by a static base.
-    pub fn with_base(base: &'static FxHashMap<String, Global>) -> Self {
-        Self { base: Some(base), entries: FxHashMap::default() }
+    pub fn with_base(base: &'static IdentHashMap<'static, Global<'static>>) -> Self {
+        Self { base: Some(base), entries: IdentHashMap::default() }
     }
 
-    pub fn get(&self, key: &str) -> Option<&Global> {
-        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key)))
+    pub fn get(&self, key: &str) -> Option<&Global<'a>> {
+        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key).map(shrink_global)))
     }
 
-    pub fn insert(&mut self, key: String, value: Global) {
+    pub fn insert(&mut self, key: Ident<'a>, value: Global<'a>) {
         self.entries.insert(key, value);
     }
 
@@ -73,25 +74,30 @@ impl GlobalRegistry {
             .into_iter()
             .flat_map(|b| b.keys())
             .filter(|k| !self.entries.contains_key(k.as_str()))
-            .map(String::as_str);
-        self.entries.keys().map(String::as_str).chain(base_keys)
+            .map(Ident::as_str);
+        self.entries.keys().map(Ident::as_str).chain(base_keys)
     }
 
-    /// Consume the registry and return the inner FxHashMap.
+    /// Consume the registry and return the inner map.
     /// Only valid in builder mode (no base).
-    pub fn into_inner(self) -> FxHashMap<String, Global> {
+    pub fn into_inner(self) -> IdentHashMap<'a, Global<'a>> {
         debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode GlobalRegistry");
         self.entries
     }
 }
 
-impl Default for GlobalRegistry {
+/// Coerce a static global reference to the arena lifetime (covariant).
+fn shrink_global<'a, 'b>(global: &'b Global<'static>) -> &'b Global<'a> {
+    global
+}
+
+impl Default for GlobalRegistry<'_> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Clone for GlobalRegistry {
+impl Clone for GlobalRegistry<'_> {
     fn clone(&self) -> Self {
         Self { base: self.base, entries: self.entries.clone() }
     }
@@ -102,8 +108,8 @@ impl Clone for GlobalRegistry {
 // =============================================================================
 
 struct BaseRegistries {
-    shapes: FxHashMap<String, ObjectShape>,
-    globals: FxHashMap<String, Global>,
+    shapes: IdentHashMap<'static, ObjectShape<'static>>,
+    globals: IdentHashMap<'static, Global<'static>>,
 }
 
 static BASE: LazyLock<BaseRegistries> = LazyLock::new(|| {
@@ -113,12 +119,12 @@ static BASE: LazyLock<BaseRegistries> = LazyLock::new(|| {
 });
 
 /// Get a reference to the static base shapes registry.
-pub fn base_shapes() -> &'static FxHashMap<String, ObjectShape> {
+pub fn base_shapes() -> &'static IdentHashMap<'static, ObjectShape<'static>> {
     &BASE.shapes
 }
 
 /// Get a reference to the static base globals registry.
-pub fn base_globals() -> &'static FxHashMap<String, Global> {
+pub fn base_globals() -> &'static IdentHashMap<'static, Global<'static>> {
     &BASE.globals
 }
 
@@ -127,29 +133,29 @@ pub fn base_globals() -> &'static FxHashMap<String, Global> {
 // =============================================================================
 
 /// Like `install_type_config` but collects validation errors.
-pub fn install_type_config_with_errors(
-    shapes: &mut ShapeRegistry,
+pub fn install_type_config_with_errors<'a>(
+    shapes: &mut ShapeRegistry<'a>,
     type_config: &TypeConfig,
     module_name: &str,
     errors: &mut Vec<String>,
-) -> Global {
+) -> Global<'a> {
     install_type_config_inner(shapes, type_config, module_name, &mut Some(errors))
 }
 
-fn install_type_config_inner(
-    shapes: &mut ShapeRegistry,
+fn install_type_config_inner<'a>(
+    shapes: &mut ShapeRegistry<'a>,
     type_config: &TypeConfig,
     module_name: &str,
     errors: &mut Option<&mut Vec<String>>,
-) -> Global {
+) -> Global<'a> {
     match type_config {
         TypeConfig::TypeReference(TypeReferenceConfig { name }) => match name {
-            BuiltInTypeRef::Array => Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            BuiltInTypeRef::Array => Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             BuiltInTypeRef::MixedReadonly => {
-                Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) }
+                Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID) }
             }
             BuiltInTypeRef::Primitive => Type::Primitive,
-            BuiltInTypeRef::Ref => Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
+            BuiltInTypeRef::Ref => Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) },
             BuiltInTypeRef::Any => Type::Poly,
         },
         TypeConfig::Function(func_config) => {
@@ -170,9 +176,9 @@ fn install_type_config_inner(
                         .mutable_only_if_operands_are_mutable
                         .unwrap_or(false),
                     impure: func_config.impure.unwrap_or(false),
-                    canonical_name: func_config.canonical_name.clone(),
-                    aliasing: func_config.aliasing.clone(),
-                    known_incompatible: func_config.known_incompatible.clone(),
+                    canonical_name: func_config.canonical_name.clone().map(Into::into),
+                    aliasing: func_config.aliasing,
+                    known_incompatible: func_config.known_incompatible.clone().map(Into::into),
                     ..Default::default()
                 },
                 None,
@@ -193,15 +199,15 @@ fn install_type_config_inner(
                     return_type,
                     return_value_kind: hook_config.return_value_kind.unwrap_or(ValueKind::Frozen),
                     no_alias: hook_config.no_alias.unwrap_or(false),
-                    aliasing: hook_config.aliasing.clone(),
-                    known_incompatible: hook_config.known_incompatible.clone(),
+                    aliasing: hook_config.aliasing,
+                    known_incompatible: hook_config.known_incompatible.clone().map(Into::into),
                     ..Default::default()
                 },
                 None,
             )
         }
         TypeConfig::Object(obj_config) => {
-            let properties: Vec<(String, Type)> = obj_config
+            let properties: Vec<(Ident<'a>, Type<'a>)> = obj_config
                 .properties
                 .as_ref()
                 .map(|props| {
@@ -235,7 +241,7 @@ fn install_type_config_inner(
                                     ));
                                 }
                             }
-                            (key.clone(), ty)
+                            (shapes.alloc_ident(key), ty)
                         })
                         .collect()
                 })
@@ -251,14 +257,14 @@ fn install_type_config_inner(
 
 /// Build the built-in shapes registry. This corresponds to TS `BUILTIN_SHAPES`
 /// defined at module level in ObjectShape.ts.
-pub fn build_builtin_shapes() -> ShapeRegistry {
+pub fn build_builtin_shapes() -> ShapeRegistry<'static> {
     let mut shapes = ShapeRegistry::new();
 
     // BuiltInProps: { ref: UseRefType }
     add_object(
         &mut shapes,
         Some(BUILT_IN_PROPS_ID),
-        vec![("ref".to_string(), Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) })],
+        vec![(Ident::from("ref"), Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) })],
     );
 
     build_array_shape(&mut shapes);
@@ -275,13 +281,13 @@ pub fn build_builtin_shapes() -> ShapeRegistry {
     shapes
 }
 
-fn simple_function(
-    shapes: &mut ShapeRegistry,
+fn simple_function<'a>(
+    shapes: &mut ShapeRegistry<'a>,
     positional_params: Vec<Effect>,
     rest_param: Option<Effect>,
-    return_type: Type,
+    return_type: Type<'a>,
     return_value_kind: ValueKind,
-) -> Type {
+) -> Type<'a> {
     add_function(
         shapes,
         Vec::new(),
@@ -298,7 +304,7 @@ fn simple_function(
 }
 
 /// Shorthand for a pure function returning Primitive.
-fn pure_primitive_fn(shapes: &mut ShapeRegistry) -> Type {
+fn pure_primitive_fn<'a>(shapes: &mut ShapeRegistry<'a>) -> Type<'a> {
     simple_function(shapes, Vec::new(), Some(Effect::Read), Type::Primitive, ValueKind::Primitive)
 }
 
@@ -335,7 +341,7 @@ fn build_array_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::Capture),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Capture,
             ..Default::default()
@@ -350,7 +356,7 @@ fn build_array_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             rest_param: Some(Effect::Read),
             callee_effect: Effect::Capture,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -363,55 +369,45 @@ fn build_array_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             rest_param: Some(Effect::ConditionallyMutate),
             callee_effect: Effect::ConditionallyMutate,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             no_alias: true,
             mutable_only_if_operands_are_mutable: true,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@callback".to_string()],
+                receiver: "@receiver",
+                params: &["@callback"],
                 rest: None,
-                returns: "@returns".to_string(),
-                temporaries: vec![
-                    "@item".to_string(),
-                    "@callbackReturn".to_string(),
-                    "@thisArg".to_string(),
-                ],
-                effects: vec![
+                returns: "@returns",
+                temporaries: &["@item", "@callbackReturn", "@thisArg"],
+                effects: &[
                     // Map creates a new mutable array
                     AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
+                        into: "@returns",
                         value: ValueKind::Mutable,
                         reason: ValueReason::KnownReturnSignature,
                     },
                     // The first arg to the callback is an item extracted from the receiver array
-                    AliasingEffectConfig::CreateFrom {
-                        from: "@receiver".to_string(),
-                        into: "@item".to_string(),
-                    },
+                    AliasingEffectConfig::CreateFrom { from: "@receiver", into: "@item" },
                     // The undefined this for the callback
                     AliasingEffectConfig::Create {
-                        into: "@thisArg".to_string(),
+                        into: "@thisArg",
                         value: ValueKind::Primitive,
                         reason: ValueReason::KnownReturnSignature,
                     },
                     // Calls the callback, returning the result into a temporary
                     AliasingEffectConfig::Apply {
-                        receiver: "@thisArg".to_string(),
-                        function: "@callback".to_string(),
+                        receiver: "@thisArg",
+                        function: "@callback",
                         mutates_function: false,
-                        args: vec![
-                            ApplyArgConfig::Place("@item".to_string()),
+                        args: &[
+                            ApplyArgConfig::Place("@item"),
                             ApplyArgConfig::Hole { kind: ApplyArgHoleKind::Hole },
-                            ApplyArgConfig::Place("@receiver".to_string()),
+                            ApplyArgConfig::Place("@receiver"),
                         ],
-                        into: "@callbackReturn".to_string(),
+                        into: "@callbackReturn",
                     },
                     // Captures the result of the callback into the return array
-                    AliasingEffectConfig::Capture {
-                        from: "@callbackReturn".to_string(),
-                        into: "@returns".to_string(),
-                    },
+                    AliasingEffectConfig::Capture { from: "@callbackReturn", into: "@returns" },
                 ],
             }),
             ..Default::default()
@@ -425,7 +421,7 @@ fn build_array_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             rest_param: Some(Effect::ConditionallyMutate),
             callee_effect: Effect::ConditionallyMutate,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             no_alias: true,
             mutable_only_if_operands_are_mutable: true,
@@ -500,7 +496,7 @@ fn build_array_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             rest_param: Some(Effect::ConditionallyMutate),
             callee_effect: Effect::ConditionallyMutate,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             no_alias: true,
             mutable_only_if_operands_are_mutable: true,
@@ -519,22 +515,19 @@ fn build_array_shape(shapes: &mut ShapeRegistry) {
             return_type: Type::Primitive,
             return_value_kind: ValueKind::Primitive,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: Vec::new(),
-                rest: Some("@rest".to_string()),
-                returns: "@returns".to_string(),
-                temporaries: Vec::new(),
-                effects: vec![
+                receiver: "@receiver",
+                params: &[],
+                rest: Some("@rest"),
+                returns: "@returns",
+                temporaries: &[],
+                effects: &[
                     // Push directly mutates the array itself
-                    AliasingEffectConfig::Mutate { value: "@receiver".to_string() },
+                    AliasingEffectConfig::Mutate { value: "@receiver" },
                     // The arguments are captured into the array
-                    AliasingEffectConfig::Capture {
-                        from: "@rest".to_string(),
-                        into: "@receiver".to_string(),
-                    },
+                    AliasingEffectConfig::Capture { from: "@rest", into: "@receiver" },
                     // Returns the new length, a primitive
                     AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
+                        into: "@returns",
                         value: ValueKind::Primitive,
                         reason: ValueReason::KnownReturnSignature,
                     },
@@ -550,22 +543,22 @@ fn build_array_shape(shapes: &mut ShapeRegistry) {
         shapes,
         Some(BUILT_IN_ARRAY_ID),
         vec![
-            ("indexOf".to_string(), index_of),
-            ("includes".to_string(), includes),
-            ("pop".to_string(), pop),
-            ("at".to_string(), at),
-            ("concat".to_string(), concat),
-            ("length".to_string(), length),
-            ("push".to_string(), push),
-            ("slice".to_string(), slice),
-            ("map".to_string(), map),
-            ("flatMap".to_string(), flat_map),
-            ("filter".to_string(), filter),
-            ("every".to_string(), every),
-            ("some".to_string(), some),
-            ("find".to_string(), find),
-            ("findIndex".to_string(), find_index),
-            ("join".to_string(), join),
+            (Ident::from("indexOf"), index_of),
+            (Ident::from("includes"), includes),
+            (Ident::from("pop"), pop),
+            (Ident::from("at"), at),
+            (Ident::from("concat"), concat),
+            (Ident::from("length"), length),
+            (Ident::from("push"), push),
+            (Ident::from("slice"), slice),
+            (Ident::from("map"), map),
+            (Ident::from("flatMap"), flat_map),
+            (Ident::from("filter"), filter),
+            (Ident::from("every"), every),
+            (Ident::from("some"), some),
+            (Ident::from("find"), find),
+            (Ident::from("findIndex"), find_index),
+            (Ident::from("join"), join),
             // TODO: rest of Array properties
         ],
     );
@@ -590,27 +583,21 @@ fn build_set_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture],
             callee_effect: Effect::Store,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID) },
             return_value_kind: ValueKind::Mutable,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: Vec::new(),
-                rest: Some("@rest".to_string()),
-                returns: "@returns".to_string(),
-                temporaries: Vec::new(),
-                effects: vec![
+                receiver: "@receiver",
+                params: &[],
+                rest: Some("@rest"),
+                returns: "@returns",
+                temporaries: &[],
+                effects: &[
                     // Set.add returns the receiver Set
-                    AliasingEffectConfig::Assign {
-                        from: "@receiver".to_string(),
-                        into: "@returns".to_string(),
-                    },
+                    AliasingEffectConfig::Assign { from: "@receiver", into: "@returns" },
                     // Set.add mutates the set itself
-                    AliasingEffectConfig::Mutate { value: "@receiver".to_string() },
+                    AliasingEffectConfig::Mutate { value: "@receiver" },
                     // Captures the rest params into the set
-                    AliasingEffectConfig::Capture {
-                        from: "@rest".to_string(),
-                        into: "@receiver".to_string(),
-                    },
+                    AliasingEffectConfig::Capture { from: "@rest", into: "@receiver" },
                 ],
             }),
             ..Default::default()
@@ -650,7 +637,7 @@ fn build_set_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture],
             callee_effect: Effect::Capture,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -663,7 +650,7 @@ fn build_set_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture],
             callee_effect: Effect::Capture,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -676,7 +663,7 @@ fn build_set_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture],
             callee_effect: Effect::Capture,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -765,20 +752,20 @@ fn build_set_shape(shapes: &mut ShapeRegistry) {
         shapes,
         Some(BUILT_IN_SET_ID),
         vec![
-            ("add".to_string(), add),
-            ("clear".to_string(), clear),
-            ("delete".to_string(), delete),
-            ("has".to_string(), has),
-            ("size".to_string(), size),
-            ("difference".to_string(), difference),
-            ("union".to_string(), union),
-            ("symmetricalDifference".to_string(), symmetrical_difference),
-            ("isSubsetOf".to_string(), is_subset_of),
-            ("isSupersetOf".to_string(), is_superset_of),
-            ("forEach".to_string(), for_each),
-            ("values".to_string(), values),
-            ("keys".to_string(), keys),
-            ("entries".to_string(), entries),
+            (Ident::from("add"), add),
+            (Ident::from("clear"), clear),
+            (Ident::from("delete"), delete),
+            (Ident::from("has"), has),
+            (Ident::from("size"), size),
+            (Ident::from("difference"), difference),
+            (Ident::from("union"), union),
+            (Ident::from("symmetricalDifference"), symmetrical_difference),
+            (Ident::from("isSubsetOf"), is_subset_of),
+            (Ident::from("isSupersetOf"), is_superset_of),
+            (Ident::from("forEach"), for_each),
+            (Ident::from("values"), values),
+            (Ident::from("keys"), keys),
+            (Ident::from("entries"), entries),
         ],
     );
 }
@@ -827,7 +814,7 @@ fn build_map_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture, Effect::Capture],
             callee_effect: Effect::Store,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_MAP_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_MAP_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -904,16 +891,16 @@ fn build_map_shape(shapes: &mut ShapeRegistry) {
         shapes,
         Some(BUILT_IN_MAP_ID),
         vec![
-            ("has".to_string(), has),
-            ("get".to_string(), get),
-            ("set".to_string(), set),
-            ("clear".to_string(), clear),
-            ("delete".to_string(), delete),
-            ("size".to_string(), size),
-            ("forEach".to_string(), for_each),
-            ("values".to_string(), values),
-            ("keys".to_string(), keys),
-            ("entries".to_string(), entries),
+            (Ident::from("has"), has),
+            (Ident::from("get"), get),
+            (Ident::from("set"), set),
+            (Ident::from("clear"), clear),
+            (Ident::from("delete"), delete),
+            (Ident::from("size"), size),
+            (Ident::from("forEach"), for_each),
+            (Ident::from("values"), values),
+            (Ident::from("keys"), keys),
+            (Ident::from("entries"), entries),
         ],
     );
 }
@@ -926,7 +913,7 @@ fn build_weak_set_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture],
             callee_effect: Effect::Store,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_SET_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_SET_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -950,7 +937,7 @@ fn build_weak_set_shape(shapes: &mut ShapeRegistry) {
     add_object(
         shapes,
         Some(BUILT_IN_WEAK_SET_ID),
-        vec![("has".to_string(), has), ("add".to_string(), add), ("delete".to_string(), delete)],
+        vec![(Ident::from("has"), has), (Ident::from("add"), add), (Ident::from("delete"), delete)],
     );
 }
 
@@ -975,7 +962,7 @@ fn build_weak_map_shape(shapes: &mut ShapeRegistry) {
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture, Effect::Capture],
             callee_effect: Effect::Store,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_MAP_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_MAP_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -1000,10 +987,10 @@ fn build_weak_map_shape(shapes: &mut ShapeRegistry) {
         shapes,
         Some(BUILT_IN_WEAK_MAP_ID),
         vec![
-            ("has".to_string(), has),
-            ("get".to_string(), get),
-            ("set".to_string(), set),
-            ("delete".to_string(), delete),
+            (Ident::from("has"), has),
+            (Ident::from("get"), get),
+            (Ident::from("set"), set),
+            (Ident::from("delete"), delete),
         ],
     );
 }
@@ -1021,7 +1008,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         None,
         false,
     );
-    add_object(shapes, Some(BUILT_IN_OBJECT_ID), vec![("toString".to_string(), to_string)]);
+    add_object(shapes, Some(BUILT_IN_OBJECT_ID), vec![(Ident::from("toString"), to_string)]);
     // BuiltInFunction: empty shape
     add_object(shapes, Some(BUILT_IN_FUNCTION_ID), Vec::new());
     // BuiltInJsx: empty shape
@@ -1069,7 +1056,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Read],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID) },
             callee_effect: Effect::Capture,
             return_value_kind: ValueKind::Frozen,
             ..Default::default()
@@ -1082,7 +1069,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::ConditionallyMutate),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             callee_effect: Effect::ConditionallyMutate,
             return_value_kind: ValueKind::Mutable,
             no_alias: true,
@@ -1096,7 +1083,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::ConditionallyMutate),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             callee_effect: Effect::ConditionallyMutate,
             return_value_kind: ValueKind::Mutable,
             no_alias: true,
@@ -1110,7 +1097,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::ConditionallyMutate),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             callee_effect: Effect::ConditionallyMutate,
             return_value_kind: ValueKind::Mutable,
             no_alias: true,
@@ -1124,7 +1111,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::Capture),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             callee_effect: Effect::Capture,
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
@@ -1137,7 +1124,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::Read),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             callee_effect: Effect::Capture,
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
@@ -1180,7 +1167,7 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::ConditionallyMutate),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID) },
             callee_effect: Effect::ConditionallyMutate,
             return_value_kind: ValueKind::Frozen,
             no_alias: true,
@@ -1217,27 +1204,25 @@ fn build_object_shape(shapes: &mut ShapeRegistry) {
         None,
         false,
     );
-    let mut mixed_props = FxHashMap::default();
-    mixed_props.insert("toString".to_string(), mixed_to_string);
-    mixed_props.insert("indexOf".to_string(), mixed_index_of);
-    mixed_props.insert("includes".to_string(), mixed_includes);
-    mixed_props.insert("at".to_string(), mixed_at);
-    mixed_props.insert("map".to_string(), mixed_map);
-    mixed_props.insert("flatMap".to_string(), mixed_flat_map);
-    mixed_props.insert("filter".to_string(), mixed_filter);
-    mixed_props.insert("concat".to_string(), mixed_concat);
-    mixed_props.insert("slice".to_string(), mixed_slice);
-    mixed_props.insert("every".to_string(), mixed_every);
-    mixed_props.insert("some".to_string(), mixed_some);
-    mixed_props.insert("find".to_string(), mixed_find);
-    mixed_props.insert("findIndex".to_string(), mixed_find_index);
-    mixed_props.insert("join".to_string(), mixed_join);
-    mixed_props.insert(
-        "*".to_string(),
-        Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) },
-    );
+    let mut mixed_props = IdentHashMap::default();
+    mixed_props.insert(Ident::from("toString"), mixed_to_string);
+    mixed_props.insert(Ident::from("indexOf"), mixed_index_of);
+    mixed_props.insert(Ident::from("includes"), mixed_includes);
+    mixed_props.insert(Ident::from("at"), mixed_at);
+    mixed_props.insert(Ident::from("map"), mixed_map);
+    mixed_props.insert(Ident::from("flatMap"), mixed_flat_map);
+    mixed_props.insert(Ident::from("filter"), mixed_filter);
+    mixed_props.insert(Ident::from("concat"), mixed_concat);
+    mixed_props.insert(Ident::from("slice"), mixed_slice);
+    mixed_props.insert(Ident::from("every"), mixed_every);
+    mixed_props.insert(Ident::from("some"), mixed_some);
+    mixed_props.insert(Ident::from("find"), mixed_find);
+    mixed_props.insert(Ident::from("findIndex"), mixed_find_index);
+    mixed_props.insert(Ident::from("join"), mixed_join);
+    mixed_props
+        .insert(Ident::from("*"), Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID) });
     shapes.insert(
-        BUILT_IN_MIXED_READONLY_ID.to_string(),
+        BUILT_IN_MIXED_READONLY_ID,
         ObjectShape { properties: mixed_props, function_type: None },
     );
 }
@@ -1247,16 +1232,13 @@ fn build_ref_shapes(shapes: &mut ShapeRegistry) {
     add_object(
         shapes,
         Some(BUILT_IN_USE_REF_ID),
-        vec![(
-            "current".to_string(),
-            Type::Object { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) },
-        )],
+        vec![(Ident::from("current"), Type::Object { shape_id: Some(BUILT_IN_REF_VALUE_ID) })],
     );
     // BuiltInRefValue: { *: Object { shapeId: BuiltInRefValue } } (self-referencing)
     add_object(
         shapes,
         Some(BUILT_IN_REF_VALUE_ID),
-        vec![("*".to_string(), Type::Object { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) })],
+        vec![(Ident::from("*"), Type::Object { shape_id: Some(BUILT_IN_REF_VALUE_ID) })],
     );
 }
 
@@ -1279,7 +1261,7 @@ fn build_state_shapes(shapes: &mut ShapeRegistry) {
     add_object(
         shapes,
         Some(BUILT_IN_USE_STATE_ID),
-        vec![("0".to_string(), Type::Poly), ("1".to_string(), set_state)],
+        vec![(Ident::from("0"), Type::Poly), (Ident::from("1"), set_state)],
     );
 
     // BuiltInSetActionState
@@ -1300,7 +1282,7 @@ fn build_state_shapes(shapes: &mut ShapeRegistry) {
     add_object(
         shapes,
         Some(BUILT_IN_USE_ACTION_STATE_ID),
-        vec![("0".to_string(), Type::Poly), ("1".to_string(), set_action_state)],
+        vec![(Ident::from("0"), Type::Poly), (Ident::from("1"), set_action_state)],
     );
 
     // BuiltInDispatch
@@ -1321,7 +1303,7 @@ fn build_state_shapes(shapes: &mut ShapeRegistry) {
     add_object(
         shapes,
         Some(BUILT_IN_USE_REDUCER_ID),
-        vec![("0".to_string(), Type::Poly), ("1".to_string(), dispatch)],
+        vec![(Ident::from("0"), Type::Poly), (Ident::from("1"), dispatch)],
     );
 
     // BuiltInStartTransition
@@ -1342,7 +1324,7 @@ fn build_state_shapes(shapes: &mut ShapeRegistry) {
     add_object(
         shapes,
         Some(BUILT_IN_USE_TRANSITION_ID),
-        vec![("0".to_string(), Type::Primitive), ("1".to_string(), start_transition)],
+        vec![(Ident::from("0"), Type::Primitive), (Ident::from("1"), start_transition)],
     );
 
     // BuiltInSetOptimistic
@@ -1363,7 +1345,7 @@ fn build_state_shapes(shapes: &mut ShapeRegistry) {
     add_object(
         shapes,
         Some(BUILT_IN_USE_OPTIMISTIC_ID),
-        vec![("0".to_string(), Type::Poly), ("1".to_string(), set_optimistic)],
+        vec![(Ident::from("0"), Type::Poly), (Ident::from("1"), set_optimistic)],
     );
 }
 
@@ -1390,8 +1372,8 @@ fn build_misc_shapes(shapes: &mut ShapeRegistry) {
 }
 
 /// Build the reanimated module type. Ported from TS `getReanimatedModuleType`.
-pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
-    let mut reanimated_type: Vec<(String, Type)> = Vec::new();
+pub fn get_reanimated_module_type<'a>(shapes: &mut ShapeRegistry<'a>) -> Type<'a> {
+    let mut reanimated_type: Vec<(Ident, Type)> = Vec::new();
 
     // hooks that freeze args and return frozen value
     let frozen_hooks = [
@@ -1415,7 +1397,7 @@ pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
             },
             None,
         );
-        reanimated_type.push((hook.to_string(), hook_type));
+        reanimated_type.push((Ident::from(*hook), hook_type));
     }
 
     // hooks that return a mutable value (modelled as shared value)
@@ -1425,9 +1407,7 @@ pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
             shapes,
             HookSignatureBuilder {
                 rest_param: Some(Effect::Freeze),
-                return_type: Type::Object {
-                    shape_id: Some(REANIMATED_SHARED_VALUE_ID.to_string()),
-                },
+                return_type: Type::Object { shape_id: Some(REANIMATED_SHARED_VALUE_ID) },
                 return_value_kind: ValueKind::Mutable,
                 no_alias: true,
                 hook_kind: HookKind::Custom,
@@ -1435,7 +1415,7 @@ pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
             },
             None,
         );
-        reanimated_type.push((hook.to_string(), hook_type));
+        reanimated_type.push((Ident::from(*hook), hook_type));
     }
 
     // functions that return mutable value
@@ -1462,7 +1442,7 @@ pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
             None,
             false,
         );
-        reanimated_type.push((func_name.to_string(), func_type));
+        reanimated_type.push((Ident::from(*func_name), func_type));
     }
 
     add_object(shapes, None, reanimated_type)
@@ -1476,7 +1456,7 @@ pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
 ///
 /// Requires a mutable reference to the shapes registry because some globals
 /// (like Object.keys, Array.isArray) register new shapes.
-pub fn build_default_globals(shapes: &mut ShapeRegistry) -> GlobalRegistry {
+pub fn build_default_globals(shapes: &mut ShapeRegistry<'static>) -> GlobalRegistry<'static> {
     let mut globals = GlobalRegistry::new();
 
     // React APIs — returns the list so we can reuse them for the React namespace
@@ -1485,7 +1465,7 @@ pub fn build_default_globals(shapes: &mut ShapeRegistry) -> GlobalRegistry {
     // Untyped globals (treated as Poly) — must come before typed globals
     // so typed definitions take priority (matching TS ordering)
     for name in UNTYPED_GLOBALS {
-        globals.insert(name.to_string(), Type::Poly);
+        globals.insert(Ident::from(*name), Type::Poly);
     }
 
     // Typed JS globals (overwrites Poly entries from UNTYPED_GLOBALS).
@@ -1495,10 +1475,13 @@ pub fn build_default_globals(shapes: &mut ShapeRegistry) -> GlobalRegistry {
     // globalThis and global — populated with all typed globals as properties
     // (matching TS: `addObject(DEFAULT_SHAPES, 'globalThis', TYPED_GLOBALS)`)
     globals.insert(
-        "globalThis".to_string(),
-        add_object(shapes, Some("globalThis"), typed_globals.clone()),
+        Ident::from("globalThis"),
+        add_object(shapes, Some(Ident::from("globalThis")), typed_globals.clone()),
     );
-    globals.insert("global".to_string(), add_object(shapes, Some("global"), typed_globals));
+    globals.insert(
+        Ident::from("global"),
+        add_object(shapes, Some(Ident::from("global")), typed_globals),
+    );
 
     globals
 }
@@ -1535,11 +1518,11 @@ const UNTYPED_GLOBALS: &[&str] = &[
 /// Build the React API types (REACT_APIS from TS). Returns the list of (name, type) pairs
 /// so they can be reused as properties of the React namespace object (matching TS behavior
 /// where the SAME type objects are used in both DEFAULT_GLOBALS and the React namespace).
-fn build_react_apis(
-    shapes: &mut ShapeRegistry,
-    globals: &mut GlobalRegistry,
-) -> Vec<(String, Type)> {
-    let mut react_apis: Vec<(String, Type)> = Vec::new();
+fn build_react_apis<'a>(
+    shapes: &mut ShapeRegistry<'a>,
+    globals: &mut GlobalRegistry<'a>,
+) -> Vec<(Ident<'a>, Type<'a>)> {
+    let mut react_apis: Vec<(Ident, Type)> = Vec::new();
 
     // useContext
     let use_context = add_hook(
@@ -1554,14 +1537,14 @@ fn build_react_apis(
         },
         Some(BUILT_IN_USE_CONTEXT_HOOK_ID),
     );
-    react_apis.push(("useContext".to_string(), use_context));
+    react_apis.push((Ident::from("useContext"), use_context));
 
     // useState
     let use_state = add_hook(
         shapes,
         HookSignatureBuilder {
             rest_param: Some(Effect::Freeze),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_STATE_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_STATE_ID) },
             return_value_kind: ValueKind::Frozen,
             return_value_reason: Some(ValueReason::State),
             hook_kind: HookKind::UseState,
@@ -1569,14 +1552,14 @@ fn build_react_apis(
         },
         None,
     );
-    react_apis.push(("useState".to_string(), use_state));
+    react_apis.push((Ident::from("useState"), use_state));
 
     // useActionState
     let use_action_state = add_hook(
         shapes,
         HookSignatureBuilder {
             rest_param: Some(Effect::Freeze),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_ACTION_STATE_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_ACTION_STATE_ID) },
             return_value_kind: ValueKind::Frozen,
             return_value_reason: Some(ValueReason::State),
             hook_kind: HookKind::UseActionState,
@@ -1584,14 +1567,14 @@ fn build_react_apis(
         },
         None,
     );
-    react_apis.push(("useActionState".to_string(), use_action_state));
+    react_apis.push((Ident::from("useActionState"), use_action_state));
 
     // useReducer
     let use_reducer = add_hook(
         shapes,
         HookSignatureBuilder {
             rest_param: Some(Effect::Freeze),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_REDUCER_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_REDUCER_ID) },
             return_value_kind: ValueKind::Frozen,
             return_value_reason: Some(ValueReason::ReducerState),
             hook_kind: HookKind::UseReducer,
@@ -1599,21 +1582,21 @@ fn build_react_apis(
         },
         None,
     );
-    react_apis.push(("useReducer".to_string(), use_reducer));
+    react_apis.push((Ident::from("useReducer"), use_reducer));
 
     // useRef
     let use_ref = add_hook(
         shapes,
         HookSignatureBuilder {
             rest_param: Some(Effect::Capture),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) },
             return_value_kind: ValueKind::Mutable,
             hook_kind: HookKind::UseRef,
             ..Default::default()
         },
         None,
     );
-    react_apis.push(("useRef".to_string(), use_ref));
+    react_apis.push((Ident::from("useRef"), use_ref));
 
     // useImperativeHandle
     let use_imperative_handle = add_hook(
@@ -1627,7 +1610,7 @@ fn build_react_apis(
         },
         None,
     );
-    react_apis.push(("useImperativeHandle".to_string(), use_imperative_handle));
+    react_apis.push((Ident::from("useImperativeHandle"), use_imperative_handle));
 
     // useMemo
     let use_memo = add_hook(
@@ -1641,7 +1624,7 @@ fn build_react_apis(
         },
         None,
     );
-    react_apis.push(("useMemo".to_string(), use_memo));
+    react_apis.push((Ident::from("useMemo"), use_memo));
 
     // useCallback
     let use_callback = add_hook(
@@ -1655,7 +1638,7 @@ fn build_react_apis(
         },
         None,
     );
-    react_apis.push(("useCallback".to_string(), use_callback));
+    react_apis.push((Ident::from("useCallback"), use_callback));
 
     // useEffect (with aliasing signature)
     let use_effect = add_hook(
@@ -1666,27 +1649,21 @@ fn build_react_apis(
             return_value_kind: ValueKind::Frozen,
             hook_kind: HookKind::UseEffect,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: Vec::new(),
-                rest: Some("@rest".to_string()),
-                returns: "@returns".to_string(),
-                temporaries: vec!["@effect".to_string()],
-                effects: vec![
-                    AliasingEffectConfig::Freeze {
-                        value: "@rest".to_string(),
-                        reason: ValueReason::Effect,
-                    },
+                receiver: "@receiver",
+                params: &[],
+                rest: Some("@rest"),
+                returns: "@returns",
+                temporaries: &["@effect"],
+                effects: &[
+                    AliasingEffectConfig::Freeze { value: "@rest", reason: ValueReason::Effect },
                     AliasingEffectConfig::Create {
-                        into: "@effect".to_string(),
+                        into: "@effect",
                         value: ValueKind::Frozen,
                         reason: ValueReason::KnownReturnSignature,
                     },
-                    AliasingEffectConfig::Capture {
-                        from: "@rest".to_string(),
-                        into: "@effect".to_string(),
-                    },
+                    AliasingEffectConfig::Capture { from: "@rest", into: "@effect" },
                     AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
+                        into: "@returns",
                         value: ValueKind::Primitive,
                         reason: ValueReason::KnownReturnSignature,
                     },
@@ -1696,7 +1673,7 @@ fn build_react_apis(
         },
         Some(BUILT_IN_USE_EFFECT_HOOK_ID),
     );
-    react_apis.push(("useEffect".to_string(), use_effect));
+    react_apis.push((Ident::from("useEffect"), use_effect));
 
     // useLayoutEffect
     let use_layout_effect = add_hook(
@@ -1710,7 +1687,7 @@ fn build_react_apis(
         },
         Some(BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID),
     );
-    react_apis.push(("useLayoutEffect".to_string(), use_layout_effect));
+    react_apis.push((Ident::from("useLayoutEffect"), use_layout_effect));
 
     // useInsertionEffect
     let use_insertion_effect = add_hook(
@@ -1724,28 +1701,28 @@ fn build_react_apis(
         },
         Some(BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID),
     );
-    react_apis.push(("useInsertionEffect".to_string(), use_insertion_effect));
+    react_apis.push((Ident::from("useInsertionEffect"), use_insertion_effect));
 
     // useTransition
     let use_transition = add_hook(
         shapes,
         HookSignatureBuilder {
             rest_param: None,
-            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_TRANSITION_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_TRANSITION_ID) },
             return_value_kind: ValueKind::Frozen,
             hook_kind: HookKind::UseTransition,
             ..Default::default()
         },
         None,
     );
-    react_apis.push(("useTransition".to_string(), use_transition));
+    react_apis.push((Ident::from("useTransition"), use_transition));
 
     // useOptimistic
     let use_optimistic = add_hook(
         shapes,
         HookSignatureBuilder {
             rest_param: Some(Effect::Freeze),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_OPTIMISTIC_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_OPTIMISTIC_ID) },
             return_value_kind: ValueKind::Frozen,
             return_value_reason: Some(ValueReason::State),
             hook_kind: HookKind::UseOptimistic,
@@ -1753,7 +1730,7 @@ fn build_react_apis(
         },
         None,
     );
-    react_apis.push(("useOptimistic".to_string(), use_optimistic));
+    react_apis.push((Ident::from("useOptimistic"), use_optimistic));
 
     // use (not a hook, it's a function)
     let use_fn = add_function(
@@ -1768,7 +1745,7 @@ fn build_react_apis(
         Some(BUILT_IN_USE_OPERATOR_ID),
         false,
     );
-    react_apis.push(("use".to_string(), use_fn));
+    react_apis.push((Ident::from("use"), use_fn));
 
     // useEffectEvent
     let use_effect_event = add_hook(
@@ -1776,7 +1753,7 @@ fn build_react_apis(
         HookSignatureBuilder {
             rest_param: Some(Effect::Freeze),
             return_type: Type::Function {
-                shape_id: Some(BUILT_IN_EFFECT_EVENT_ID.to_string()),
+                shape_id: Some(BUILT_IN_EFFECT_EVENT_ID),
                 return_type: Box::new(Type::Poly),
                 is_constructor: false,
             },
@@ -1786,48 +1763,45 @@ fn build_react_apis(
         },
         Some(BUILT_IN_USE_EFFECT_EVENT_ID),
     );
-    react_apis.push(("useEffectEvent".to_string(), use_effect_event));
+    react_apis.push((Ident::from("useEffectEvent"), use_effect_event));
 
     // Insert all React APIs as standalone globals
     for (name, ty) in &react_apis {
-        globals.insert(name.clone(), ty.clone());
+        globals.insert(*name, ty.clone());
     }
 
     react_apis
 }
 
 /// Build typed globals and return them as a list for use as globalThis/global properties.
-fn build_typed_globals(
-    shapes: &mut ShapeRegistry,
-    globals: &mut GlobalRegistry,
-    react_apis: Vec<(String, Type)>,
-) -> Vec<(String, Type)> {
-    let mut typed_globals: Vec<(String, Type)> = Vec::new();
+fn build_typed_globals<'a>(
+    shapes: &mut ShapeRegistry<'a>,
+    globals: &mut GlobalRegistry<'a>,
+    react_apis: Vec<(Ident<'a>, Type<'a>)>,
+) -> Vec<(Ident<'a>, Type<'a>)> {
+    let mut typed_globals: Vec<(Ident, Type)> = Vec::new();
     // Object
     let obj_keys = add_function(
         shapes,
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Read],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@object".to_string()],
+                receiver: "@receiver",
+                params: &["@object"],
                 rest: None,
-                returns: "@returns".to_string(),
-                temporaries: Vec::new(),
-                effects: vec![
+                returns: "@returns",
+                temporaries: &[],
+                effects: &[
                     AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
+                        into: "@returns",
                         value: ValueKind::Mutable,
                         reason: ValueReason::KnownReturnSignature,
                     },
                     // Only keys are captured, and keys are immutable
-                    AliasingEffectConfig::ImmutableCapture {
-                        from: "@object".to_string(),
-                        into: "@returns".to_string(),
-                    },
+                    AliasingEffectConfig::ImmutableCapture { from: "@object", into: "@returns" },
                 ],
             }),
             ..Default::default()
@@ -1840,7 +1814,7 @@ fn build_typed_globals(
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::ConditionallyMutate],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_OBJECT_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_OBJECT_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -1852,25 +1826,22 @@ fn build_typed_globals(
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@object".to_string()],
+                receiver: "@receiver",
+                params: &["@object"],
                 rest: None,
-                returns: "@returns".to_string(),
-                temporaries: Vec::new(),
-                effects: vec![
+                returns: "@returns",
+                temporaries: &[],
+                effects: &[
                     AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
+                        into: "@returns",
                         value: ValueKind::Mutable,
                         reason: ValueReason::KnownReturnSignature,
                     },
                     // Object values are captured into the return
-                    AliasingEffectConfig::Capture {
-                        from: "@object".to_string(),
-                        into: "@returns".to_string(),
-                    },
+                    AliasingEffectConfig::Capture { from: "@object", into: "@returns" },
                 ],
             }),
             ..Default::default()
@@ -1883,25 +1854,22 @@ fn build_typed_globals(
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::Capture],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@object".to_string()],
+                receiver: "@receiver",
+                params: &["@object"],
                 rest: None,
-                returns: "@returns".to_string(),
-                temporaries: Vec::new(),
-                effects: vec![
+                returns: "@returns",
+                temporaries: &[],
+                effects: &[
                     AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
+                        into: "@returns",
                         value: ValueKind::Mutable,
                         reason: ValueReason::KnownReturnSignature,
                     },
                     // Object values are captured into the return
-                    AliasingEffectConfig::Capture {
-                        from: "@object".to_string(),
-                        into: "@returns".to_string(),
-                    },
+                    AliasingEffectConfig::Capture { from: "@object", into: "@returns" },
                 ],
             }),
             ..Default::default()
@@ -1911,16 +1879,16 @@ fn build_typed_globals(
     );
     let object_global = add_object(
         shapes,
-        Some("Object"),
+        Some(Ident::from("Object")),
         vec![
-            ("keys".to_string(), obj_keys),
-            ("fromEntries".to_string(), obj_from_entries),
-            ("entries".to_string(), obj_entries),
-            ("values".to_string(), obj_values),
+            (Ident::from("keys"), obj_keys),
+            (Ident::from("fromEntries"), obj_from_entries),
+            (Ident::from("entries"), obj_entries),
+            (Ident::from("values"), obj_values),
         ],
     );
-    typed_globals.push(("Object".to_string(), object_global.clone()));
-    globals.insert("Object".to_string(), object_global);
+    typed_globals.push((Ident::from("Object"), object_global.clone()));
+    globals.insert(Ident::from("Object"), object_global);
 
     // Array
     let array_is_array = add_function(
@@ -1945,7 +1913,7 @@ fn build_typed_globals(
                 Effect::ConditionallyMutate,
             ],
             rest_param: Some(Effect::Read),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -1957,7 +1925,7 @@ fn build_typed_globals(
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::Read),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -1966,23 +1934,23 @@ fn build_typed_globals(
     );
     let array_global = add_object(
         shapes,
-        Some("Array"),
+        Some(Ident::from("Array")),
         vec![
-            ("isArray".to_string(), array_is_array),
-            ("from".to_string(), array_from),
-            ("of".to_string(), array_of),
+            (Ident::from("isArray"), array_is_array),
+            (Ident::from("from"), array_from),
+            (Ident::from("of"), array_of),
         ],
     );
-    typed_globals.push(("Array".to_string(), array_global.clone()));
-    globals.insert("Array".to_string(), array_global);
+    typed_globals.push((Ident::from("Array"), array_global.clone()));
+    globals.insert(Ident::from("Array"), array_global);
 
     // Math
-    let math_fns: Vec<(String, Type)> = ["max", "min", "trunc", "ceil", "floor", "pow"]
+    let math_fns: Vec<(Ident, Type)> = ["max", "min", "trunc", "ceil", "floor", "pow"]
         .iter()
-        .map(|name| (name.to_string(), pure_primitive_fn(shapes)))
+        .map(|name| (Ident::from(*name), pure_primitive_fn(shapes)))
         .collect();
     let mut math_props = math_fns;
-    math_props.push(("PI".to_string(), Type::Primitive));
+    math_props.push((Ident::from("PI"), Type::Primitive));
     // Math.random is impure
     let math_random = add_function(
         shapes,
@@ -1991,16 +1959,16 @@ fn build_typed_globals(
             return_type: Type::Poly,
             return_value_kind: ValueKind::Mutable,
             impure: true,
-            canonical_name: Some("Math.random".to_string()),
+            canonical_name: Some("Math.random".into()),
             ..Default::default()
         },
         None,
         false,
     );
-    math_props.push(("random".to_string(), math_random));
-    let math_global = add_object(shapes, Some("Math"), math_props);
-    typed_globals.push(("Math".to_string(), math_global.clone()));
-    globals.insert("Math".to_string(), math_global);
+    math_props.push((Ident::from("random"), math_random));
+    let math_global = add_object(shapes, Some(Ident::from("Math")), math_props);
+    typed_globals.push((Ident::from("Math"), math_global.clone()));
+    globals.insert(Ident::from("Math"), math_global);
 
     // performance
     let perf_now = add_function(
@@ -2011,15 +1979,16 @@ fn build_typed_globals(
             return_type: Type::Poly,
             return_value_kind: ValueKind::Mutable,
             impure: true,
-            canonical_name: Some("performance.now".to_string()),
+            canonical_name: Some("performance.now".into()),
             ..Default::default()
         },
         None,
         false,
     );
-    let perf_global = add_object(shapes, Some("performance"), vec![("now".to_string(), perf_now)]);
-    typed_globals.push(("performance".to_string(), perf_global.clone()));
-    globals.insert("performance".to_string(), perf_global);
+    let perf_global =
+        add_object(shapes, Some(Ident::from("performance")), vec![(Ident::from("now"), perf_now)]);
+    typed_globals.push((Ident::from("performance"), perf_global.clone()));
+    globals.insert(Ident::from("performance"), perf_global);
 
     // Date
     let date_now = add_function(
@@ -2030,24 +1999,25 @@ fn build_typed_globals(
             return_type: Type::Poly,
             return_value_kind: ValueKind::Mutable,
             impure: true,
-            canonical_name: Some("Date.now".to_string()),
+            canonical_name: Some("Date.now".into()),
             ..Default::default()
         },
         None,
         false,
     );
-    let date_global = add_object(shapes, Some("Date"), vec![("now".to_string(), date_now)]);
-    typed_globals.push(("Date".to_string(), date_global.clone()));
-    globals.insert("Date".to_string(), date_global);
+    let date_global =
+        add_object(shapes, Some(Ident::from("Date")), vec![(Ident::from("now"), date_now)]);
+    typed_globals.push((Ident::from("Date"), date_global.clone()));
+    globals.insert(Ident::from("Date"), date_global);
 
     // console
-    let console_methods: Vec<(String, Type)> = ["error", "info", "log", "table", "trace", "warn"]
+    let console_methods: Vec<(Ident, Type)> = ["error", "info", "log", "table", "trace", "warn"]
         .iter()
-        .map(|name| (name.to_string(), pure_primitive_fn(shapes)))
+        .map(|name| (Ident::from(*name), pure_primitive_fn(shapes)))
         .collect();
-    let console_global = add_object(shapes, Some("console"), console_methods);
-    typed_globals.push(("console".to_string(), console_global.clone()));
-    globals.insert("console".to_string(), console_global);
+    let console_global = add_object(shapes, Some(Ident::from("console")), console_methods);
+    typed_globals.push((Ident::from("console"), console_global.clone()));
+    globals.insert(Ident::from("console"), console_global);
 
     // Simple global functions returning Primitive
     for name in &[
@@ -2064,15 +2034,15 @@ fn build_typed_globals(
         "decodeURIComponent",
     ] {
         let f = pure_primitive_fn(shapes);
-        typed_globals.push((name.to_string(), f.clone()));
-        globals.insert(name.to_string(), f);
+        typed_globals.push((Ident::from(*name), f.clone()));
+        globals.insert(Ident::from(*name), f);
     }
 
     // Primitive globals
-    typed_globals.push(("Infinity".to_string(), Type::Primitive));
-    globals.insert("Infinity".to_string(), Type::Primitive);
-    typed_globals.push(("NaN".to_string(), Type::Primitive));
-    globals.insert("NaN".to_string(), Type::Primitive);
+    typed_globals.push((Ident::from("Infinity"), Type::Primitive));
+    globals.insert(Ident::from("Infinity"), Type::Primitive);
+    typed_globals.push((Ident::from("NaN"), Type::Primitive));
+    globals.insert(Ident::from("NaN"), Type::Primitive);
 
     // Map, Set, WeakMap, WeakSet constructors
     let map_ctor = add_function(
@@ -2080,60 +2050,60 @@ fn build_typed_globals(
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::ConditionallyMutateIterator],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_MAP_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_MAP_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
         None,
         true,
     );
-    typed_globals.push(("Map".to_string(), map_ctor.clone()));
-    globals.insert("Map".to_string(), map_ctor);
+    typed_globals.push((Ident::from("Map"), map_ctor.clone()));
+    globals.insert(Ident::from("Map"), map_ctor);
 
     let set_ctor = add_function(
         shapes,
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::ConditionallyMutateIterator],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_SET_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
         None,
         true,
     );
-    typed_globals.push(("Set".to_string(), set_ctor.clone()));
-    globals.insert("Set".to_string(), set_ctor);
+    typed_globals.push((Ident::from("Set"), set_ctor.clone()));
+    globals.insert(Ident::from("Set"), set_ctor);
 
     let weak_map_ctor = add_function(
         shapes,
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::ConditionallyMutateIterator],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_MAP_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_MAP_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
         None,
         true,
     );
-    typed_globals.push(("WeakMap".to_string(), weak_map_ctor.clone()));
-    globals.insert("WeakMap".to_string(), weak_map_ctor);
+    typed_globals.push((Ident::from("WeakMap"), weak_map_ctor.clone()));
+    globals.insert(Ident::from("WeakMap"), weak_map_ctor);
 
     let weak_set_ctor = add_function(
         shapes,
         Vec::new(),
         FunctionSignatureBuilder {
             positional_params: vec![Effect::ConditionallyMutateIterator],
-            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_SET_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_WEAK_SET_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
         None,
         true,
     );
-    typed_globals.push(("WeakSet".to_string(), weak_set_ctor.clone()));
-    globals.insert("WeakSet".to_string(), weak_set_ctor);
+    typed_globals.push((Ident::from("WeakSet"), weak_set_ctor.clone()));
+    globals.insert(Ident::from("WeakSet"), weak_set_ctor);
 
     // React global object — reuses the same REACT_APIS types (matching TS behavior
     // where the same type objects are used as both standalone globals and React.* properties)
@@ -2166,7 +2136,7 @@ fn build_typed_globals(
         Vec::new(),
         FunctionSignatureBuilder {
             rest_param: Some(Effect::Capture),
-            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
+            return_type: Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) },
             return_value_kind: ValueKind::Mutable,
             ..Default::default()
         },
@@ -2175,14 +2145,14 @@ fn build_typed_globals(
     );
 
     // Build React namespace properties from react_apis + React-specific functions
-    let mut react_props: Vec<(String, Type)> = react_apis;
-    react_props.push(("createElement".to_string(), react_create_element));
-    react_props.push(("cloneElement".to_string(), react_clone_element));
-    react_props.push(("createRef".to_string(), react_create_ref));
+    let mut react_props: Vec<(Ident, Type)> = react_apis;
+    react_props.push((Ident::from("createElement"), react_create_element));
+    react_props.push((Ident::from("cloneElement"), react_clone_element));
+    react_props.push((Ident::from("createRef"), react_create_ref));
 
     let react_global = add_object(shapes, None, react_props);
-    typed_globals.push(("React".to_string(), react_global.clone()));
-    globals.insert("React".to_string(), react_global);
+    typed_globals.push((Ident::from("React"), react_global.clone()));
+    globals.insert(Ident::from("React"), react_global);
 
     // _jsx (used by JSX transform)
     let jsx_fn = add_function(
@@ -2197,8 +2167,8 @@ fn build_typed_globals(
         None,
         false,
     );
-    typed_globals.push(("_jsx".to_string(), jsx_fn.clone()));
-    globals.insert("_jsx".to_string(), jsx_fn);
+    typed_globals.push((Ident::from("_jsx"), jsx_fn.clone()));
+    globals.insert(Ident::from("_jsx"), jsx_fn);
 
     typed_globals
 }

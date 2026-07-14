@@ -2,9 +2,8 @@ pub mod build_hir;
 pub mod find_context_identifiers;
 pub mod hir_builder;
 pub mod identifier_loc_index;
-pub mod source_loc;
 
-use oxc_ast::ast as oxc;
+use oxc_ast::ast::*;
 
 use crate::react_compiler_hir::BindingKind;
 
@@ -26,14 +25,14 @@ pub fn convert_binding_kind(kind: &crate::scope::BindingKind) -> BindingKind {
 /// Analogous to TS's `NodePath<t.Function>` / `BabelFn`.
 ///
 /// oxc collapses Babel's `FunctionDeclaration`/`FunctionExpression` into one
-/// [`oxc::Function`] (discriminated by `r#type`); arrows are separate.
+/// [`Function`] (discriminated by `r#type`); arrows are separate.
 #[derive(Clone, Copy)]
-pub enum FunctionNode<'a> {
-    Function(&'a oxc::Function<'a>),
-    Arrow(&'a oxc::ArrowFunctionExpression<'a>),
+pub enum FunctionNode<'b, 'a> {
+    Function(&'b Function<'a>),
+    Arrow(&'b ArrowFunctionExpression<'a>),
 }
 
-impl<'a> FunctionNode<'a> {
+impl FunctionNode<'_, '_> {
     /// The scope the function node creates (its semantic `scope_id` cell).
     pub fn scope_id(&self) -> Option<oxc_syntax::scope::ScopeId> {
         match self {

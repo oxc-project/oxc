@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- 1b829d8 semantic: Record const enums in EnumData (#24268) (Dunqing)
+- ba0944c semantic: Add `Scoping::set_symbol_span` (#24221) (camc314)
+
+### 🐛 Bug Fixes
+
+- 058a62f semantic: Track ambient contexts in `SemanticBuilder` (#24327) (camc314)
+- 1ebdce3 semantic: Allow reserved keywords in ambient declaration types (#24325) (camc314)
+- af4922b transformer: Clear lowered namespace redeclarations (#24300) (camc314)
+- ffd2765 semantic: Mark declared computed `MethodDefinition`s as type references (#24296) (camc314)
+- 6371fed transformer: Remove stale enum member bindings (#24272) (camc314)
+- 42d00d3 semantic: Mark declared class heritage as type references (#24237) (camc314)
+- 588d997 semantic: Mark TS `PropertyDefinition`s computed fields as type references (#24233) (camc314)
+- 9b95632 semantic: Mark computed method keys in `TSMethodSignature`s as type references (#24232) (camc314)
+
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 260425f semantic/examples: Include unresolved references (#24214) (camc314)
+- 7db7a29 allocator: Add `ReplaceWith` trait (#24012) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e8b50ee transformer: Clean up semantics for stripped TypeScript syntax (#24180) (camc314)
+
+### ⚡ Performance
+
+- c59f2fe rust: Return impl ExactSizeIterator from slice-backed accessors (#24144) (Boshen)
+
 ## [0.138.0] - 2026-06-29
 
 ### 🐛 Bug Fixes

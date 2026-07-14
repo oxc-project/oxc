@@ -16,7 +16,6 @@ mod build_reactive_function;
 pub mod codegen_reactive_function;
 mod extract_scope_declarations_from_destructuring;
 mod merge_reactive_scopes_that_invalidate_together;
-pub mod print_reactive_function;
 mod promote_used_temporaries;
 mod propagate_early_returns;
 mod prune_always_invalidating_scopes;

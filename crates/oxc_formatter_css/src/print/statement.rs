@@ -238,18 +238,29 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             );
         }
         Statement::KeyframeBlock(keyframe_block) => {
+            // Comments follow the list-separator rule (pre-comma stays before the comma, post-comma leads the next selector).
+            // Prettier instead keeps a COMMENTED selector list verbatim on one line.
             for (i, sel) in keyframe_block.selectors.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(
+                        keyframe_block.comma_spans.get(i - 1).map(|sp| to_span(sp).start),
+                        f,
+                    );
                     write!(f, hard_line_break());
                 }
+                value::flush_value_comments(to_span(sel.span()).start, f);
                 selector::write_keyframe_selector(sel, f);
             }
+            // Trailing comments before `{` stay on the selector line
+            value::flush_trailing_value_comments(to_span(keyframe_block.block.span()).start, f);
             write!(f, space());
             write_block(&keyframe_block.block, f);
         }
+        Statement::LessExtendRule(rule) => {
+            less::write_less_extend_rule(rule, f);
+            write!(f, ";");
+        }
         // Not yet ported: emit the original source verbatim.
-        // - LessExtendRule
         // - LessFunctionCall
         // - LessVariableCall
         _ => {
@@ -326,7 +337,19 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     // one indent under the prop (`indent([hardline, dedent(value)])`).
     let between_breaks = trimmed_between != ":"
         && trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//");
-    if trimmed_between == ":" {
+    // A Less merge marker (`prop+: val` / `prop+_: val`)
+    // glues to the property name and its spaces drop, leaving only `:`
+    // (Prettier 3.9.5 #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).
+    // Comments around the marker keep the verbatim path.
+    let merge_marker =
+        decl.less_property_merge.as_ref().map(|merge| to_span(&merge.span)).filter(|span| {
+            source.slice_range(name_span.end, span.start).trim_ascii().is_empty()
+                && source.slice_range(span.end, between_upper).trim_ascii() == ":"
+        });
+    if let Some(span) = merge_marker {
+        write!(f, text(source.text_for(&span)));
+        write!(f, ":");
+    } else if trimmed_between == ":" {
         write!(f, ":");
     } else {
         let _ = f.context().comments().take_before(between_upper);

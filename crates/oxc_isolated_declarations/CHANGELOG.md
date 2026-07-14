@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- f17514b isolated-declarations: Emit const readonly fields as types (#24288) (camc314)
+
+## [0.139.0] - 2026-07-06
+
+### ⚡ Performance
+
+- a4db731 isolated_declarations: Use `ReplaceWith` instead of `TakeIn` (#24016) (overlookmotel)
+
 ## [0.138.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

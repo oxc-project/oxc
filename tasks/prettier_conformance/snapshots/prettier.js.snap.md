@@ -1,53 +1,33 @@
-js compatibility: 737/808 (91.21%), 23 files skipped
+js compatibility: 774/809 (95.67%), 23 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrows/issue-17421.js | 💥💥 | 90.43% |
-| js/arrows/parenthesized-body/issue-18776.js | 💥 | 71.43% |
-| js/arrows/parenthesized-body/issue-19261.js | 💥 | 55.56% |
 | js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
 | js/call/no-argument/no-arguments.js | 💥 | 57.53% |
-| js/chain-expression/member-chain.js | 💥 | 57.14% |
 | js/comments/15661.js | 💥💥 | 43.53% |
-| js/comments/break-continue-statements-2.js | 💥💥 | 87.18% |
-| js/comments/break-continue-statements-3.js | 💥💥 | 95.77% |
-| js/comments/break-continue-statements.js | 💥✨ | 40.91% |
-| js/comments/dangling.js | 💥💥 | 69.23% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/if.js | 💥💥 | 97.99% |
-| js/comments/jsdoc.js | 💥✨ | 46.15% |
 | js/comments/return-statement-2.js | 💥💥 | 77.78% |
 | js/comments/return-statement.js | 💥💥 | 97.25% |
 | js/comments/between-head-and-body/between-head-and-body.js | 💥 | 33.10% |
 | js/comments/between-head-and-body/empty-statement.js | 💥 | 51.25% |
 | js/comments/between-head-and-body/non-block.js | 💥 | 82.86% |
 | js/comments/first-argument/first-argument.js | 💥 | 92.98% |
-| js/comments/in-list/dangling-comment-in-list.js | 💥 | 83.06% |
-| js/comments/while-like/while.js | 💥 | 82.35% |
-| js/comments/while-like/with.js | 💥 | 65.45% |
+| js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
+| js/comments/while-like/if.js | 💥 | 96.97% |
+| js/comments/while-like/while.js | 💥 | 82.76% |
+| js/comments/while-like/with.js | 💥 | 74.47% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
-| js/comments-closure-typecast/no-semi/comments.js | 💥 | 70.59% |
-| js/comments-closure-typecast/no-semi/multiline.js | 💥 | 80.00% |
-| js/comments-closure-typecast/no-semi/not-on-same-line.js | 💥 | 84.85% |
-| js/comments-closure-typecast/no-semi/with-other-comments.js | 💥 | 50.00% |
-| js/explicit-resource-management/using-declarations.js | 💥 | 87.50% |
-| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 80.00% |
-| js/explicit-resource-management/valid-for-using-declaration.js | 💥 | 66.67% |
-| js/explicit-resource-management/valid-using-as-identifier-for-init.js | 💥 | 0.00% |
+| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 85.71% |
 | js/for/9812-2.js | 💥 | 58.33% |
-| js/for/continue-and-break-comment-1.js | 💥 | 97.89% |
-| js/for/continue-and-break-comment-without-blocks.js | 💥 | 41.51% |
-| js/for/for.js | 💥 | 71.43% |
-| js/for/in.js | 💥 | 41.67% |
-| js/for/parentheses.js | 💥 | 59.18% |
+| js/for/continue-and-break-comment-without-blocks.js | 💥 | 74.24% |
 | js/for-of/comments.js | 💥 | 50.00% |
 | js/function/iife.js | 💥 | 14.89% |
 | js/function/issue-12967.js | 💥 | 0.00% |
-| js/identifier/for-of/let.js | 💥 | 92.31% |
-| js/identifier/parentheses/let.js | 💥💥 | 99.09% |
 | js/if/blank-lines.js | 💥 | 94.83% |
 | js/if/comment-between-condition-and-body.js | 💥 | 92.11% |
 | js/if/if_comments.js | 💥 | 91.89% |
@@ -55,26 +35,10 @@ js compatibility: 737/808 (91.21%), 23 files skipped
 | js/if/condition-break/unary-expression.js | 💥 | 59.59% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
 | js/logical-expressions/in-unary-expression.js | 💥 | 33.33% |
-| js/new-expression/parentheses.js | 💥 | 33.33% |
-| js/no-semi/comments.js | 💥💥 | 96.00% |
-| js/no-semi/debugger-statement.js | 💥💥 | 91.18% |
-| js/no-semi/do-while-statement.js | 💥💥 | 61.36% |
-| js/no-semi/for-in-statement.js | 💥💥 | 61.11% |
-| js/no-semi/for-of-statement.js | 💥💥 | 64.58% |
-| js/no-semi/for-statement.js | 💥💥 | 61.11% |
-| js/no-semi/if-statement.js | 💥💥 | 65.00% |
-| js/no-semi/labeled-statement.js | 💥💥 | 61.11% |
-| js/no-semi/return-statement.js | 💥💥 | 64.71% |
-| js/no-semi/while-statement.js | 💥💥 | 61.11% |
-| js/no-semi/with-statement.js | 💥💥 | 61.11% |
-| js/return/comment.js | 💥 | 94.64% |
-| js/sequence-expression/parenthesized-trailing-comment.js | 💥 | 45.71% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
 | js/unary-expression/comments.js | 💥 | 96.47% |
-| jsx/attribute-blank-lines/attribute-blank-lines.js | 💥💥 | 62.82% |
-| jsx/jsx/quotes.js | 💥💥💥💥 | 89.47% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

@@ -281,13 +281,11 @@ impl Rule for ConsistentTypeImports {
                 {
                     let type_names = type_references_without_type_qualifier
                         .iter()
-                        .map(|specifier| specifier.name())
+                        .map(|specifier| specifier.local().name.as_str())
                         .collect::<Vec<_>>();
 
                     // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
                     let type_imports = format_word_list(&type_names);
-                    let type_names =
-                        type_names.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>();
 
                     let fixer_fn = |fixer: RuleFixer<'_, 'a>| {
                         let fix_options = FixOptions {
@@ -341,10 +339,10 @@ impl Rule for ConsistentTypeImports {
 // the `and` clause inserted before the last item.
 //
 // Example: ['foo', 'bar', 'baz' ] returns the string "foo, bar, and baz".
-fn format_word_list<'a>(words: &[Cow<'a, str>]) -> Cow<'a, str> {
+fn format_word_list<'a>(words: &[&'a str]) -> Cow<'a, str> {
     match words.len() {
         0 => Cow::Borrowed(""),
-        1 => words[0].clone(),
+        1 => Cow::Borrowed(words[0]),
         2 => Cow::Owned(format!("{} and {}", words[0], words[1])),
         _ => {
             let mut result = String::with_capacity(words.len() * 2);

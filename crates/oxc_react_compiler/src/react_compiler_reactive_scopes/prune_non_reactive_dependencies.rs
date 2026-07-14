@@ -10,7 +10,8 @@
 
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionValue, Place, PrunedReactiveScopeBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveValue, Type,
@@ -63,10 +64,10 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectVisitor<'a, 'e> {
     fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock<'a>, state: &mut Self::State) {
         self.traverse_pruned_scope(scope, state);
 
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope];
         for (_id, decl) in &scope_data.declarations {
-            let identifier = &self.env.identifiers[decl.identifier.0 as usize];
-            let ty = &self.env.types[identifier.type_.0 as usize];
+            let identifier = &self.env.identifiers[decl.identifier];
+            let ty = &self.env.types[identifier.type_];
             if !is_primitive_type(ty) && !is_stable_ref_type(ty, state, identifier.id) {
                 state.insert(*_id);
             }
@@ -98,23 +99,23 @@ fn is_stable_type(ty: &Type) -> bool {
 }
 
 fn is_set_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_STATE_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_STATE_ID)
 }
 
 fn is_set_action_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_ACTION_STATE_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_ACTION_STATE_ID)
 }
 
 fn is_dispatcher_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_DISPATCH_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_DISPATCH_ID)
 }
 
 fn is_start_transition_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_START_TRANSITION_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_START_TRANSITION_ID)
 }
 
 fn is_set_optimistic_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_OPTIMISTIC_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_OPTIMISTIC_ID)
 }
 
 // =============================================================================
@@ -149,16 +150,16 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_instruction(instruction, state)?;
 
         let lvalue = &instruction.lvalue;
         match &instruction.value {
             ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. }) => {
-                if let Some(lv) = lvalue {
-                    if state.contains(&place.identifier) {
-                        state.insert(lv.identifier);
-                    }
+                if let Some(lv) = lvalue
+                    && state.contains(&place.identifier)
+                {
+                    state.insert(lv.identifier);
                 }
             }
             ReactiveValue::Instruction(InstructionValue::StoreLocal {
@@ -180,8 +181,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
             }) => {
                 if state.contains(&destr_value.identifier) {
                     for operand in hir_visitors::each_pattern_operand(&destr_lvalue.pattern) {
-                        let ident = &self.env.identifiers[operand.identifier.0 as usize];
-                        let ty = &self.env.types[ident.type_.0 as usize];
+                        let ident = &self.env.identifiers[operand.identifier];
+                        let ty = &self.env.types[ident.type_];
                         if is_stable_type(ty) {
                             continue;
                         }
@@ -194,8 +195,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
             }
             ReactiveValue::Instruction(InstructionValue::PropertyLoad { object, .. }) => {
                 if let Some(lv) = lvalue {
-                    let ident = &self.env.identifiers[lv.identifier.0 as usize];
-                    let ty = &self.env.types[ident.type_.0 as usize];
+                    let ident = &self.env.identifiers[lv.identifier];
+                    let ty = &self.env.types[ident.type_];
                     if state.contains(&object.identifier) && !is_stable_type(ty) {
                         state.insert(lv.identifier);
                     }
@@ -204,10 +205,10 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
             ReactiveValue::Instruction(InstructionValue::ComputedLoad {
                 object, property, ..
             }) => {
-                if let Some(lv) = lvalue {
-                    if state.contains(&object.identifier) || state.contains(&property.identifier) {
-                        state.insert(lv.identifier);
-                    }
+                if let Some(lv) = lvalue
+                    && (state.contains(&object.identifier) || state.contains(&property.identifier))
+                {
+                    state.insert(lv.identifier);
                 }
             }
             _ => {}
@@ -219,11 +220,11 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_scope(scope, state)?;
 
         let scope_id = scope.scope;
-        let scope_data = &mut self.env.scopes[scope_id.0 as usize];
+        let scope_data = &mut self.env.scopes[scope_id];
 
         // Remove non-reactive dependencies
         scope_data.dependencies.retain(|dep| state.contains(&dep.identifier));

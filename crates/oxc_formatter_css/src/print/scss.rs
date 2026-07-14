@@ -7,12 +7,11 @@ use oxc_css_parser::ast::{
     SassMixin, SassModuleConfig, SassParameters, SassUnaryOperatorKind, SassUse,
     SassUseNamespaceKind, SassVariableDeclaration,
 };
-
 use oxc_formatter_core::{
     Buffer,
     builders::{
         dedent, empty_line, expand_parent, group, hard_line_break, if_group_breaks, indent,
-        soft_line_break, soft_line_break_or_space, space, text,
+        line_suffix, soft_line_break, soft_line_break_or_space, space, text,
     },
     write,
 };
@@ -94,9 +93,9 @@ pub(super) fn write_top_level_value<'a>(
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let (elements, is_comma) = match value {
-        ComponentValue::SassList(list) => (&list.elements, list.comma_spans.is_some()),
-        ComponentValue::LessList(list) => (&list.elements, list.comma_spans.is_some()),
+    let (elements, comma_spans) = match value {
+        ComponentValue::SassList(list) => (&list.elements, list.comma_spans.as_ref()),
+        ComponentValue::LessList(list) => (&list.elements, list.comma_spans.as_ref()),
         _ => {
             value::write_component_value(value, ctx, f);
             return;
@@ -105,17 +104,22 @@ pub(super) fn write_top_level_value<'a>(
     // `paren_break` only applies to a paren group that IS the whole value,
     // not to parens nested inside lists.
     let ctx = ValueContext { paren_break: false, ..ctx };
-    if is_comma {
-        let groups: Vec<&[ComponentValue<'a>]> = elements
+    if let Some(comma_spans) = comma_spans {
+        // Each element paired with the comma that follows it (see `write_value_groups`)
+        let groups: Vec<(&[ComponentValue<'a>], Option<u32>)> = elements
             .iter()
-            .map(|el| match el {
-                ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
-                    &inner.elements[..]
-                }
-                ComponentValue::LessList(inner) if inner.comma_spans.is_none() => {
-                    &inner.elements[..]
-                }
-                other => std::slice::from_ref(other),
+            .enumerate()
+            .map(|(i, el)| {
+                let group = match el {
+                    ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
+                        &inner.elements[..]
+                    }
+                    ComponentValue::LessList(inner) if inner.comma_spans.is_none() => {
+                        &inner.elements[..]
+                    }
+                    other => std::slice::from_ref(other),
+                };
+                (group, comma_spans.get(i).map(|sp| to_span(sp).start))
             })
             .collect();
         let value_span = to_span(value.span());
@@ -125,7 +129,10 @@ pub(super) fn write_top_level_value<'a>(
             .iter_before(value_span.end)
             .any(|c| c.span.start >= value_span.start);
         let force_hard_line = !ctx.decl_prop.is_some_and(|p| p.starts_with("--"))
-            && (groups.iter().enumerate().any(|(i, g)| value::comma_group_is_multi(g, i == 0))
+            && (groups
+                .iter()
+                .enumerate()
+                .any(|(i, (g, _))| value::comma_group_is_multi(g, i == 0))
                 || has_comments);
         value::write_value_groups(&groups, ctx, force_hard_line, true, f);
     } else {
@@ -190,7 +197,10 @@ pub(super) fn write_sass_map<'a>(
             write!(f, soft_line_break());
             for (i, item) in map.items.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(
+                        map.comma_spans.get(i - 1).map(|sp| to_span(sp).start),
+                        f,
+                    );
                     // A blank line between items in the source is preserved
                     // (Prettier's isNextLineEmpty → hardline).
                     let prev_end = to_span(map.items[i - 1].span()).end;
@@ -245,7 +255,7 @@ pub(super) fn write_sass_map<'a>(
         let mut first_item_has_leading_comment = false;
         for (i, item) in map.items.iter().enumerate() {
             if i > 0 {
-                write!(f, ",");
+                value::write_group_comma(map.comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
                 write!(f, hard_line_break());
                 // Preserve one blank line between items
                 let prev_end = to_span(map.items[i - 1].span()).end;
@@ -411,6 +421,7 @@ pub(super) fn write_sass_list<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     if list.comma_spans.is_some() {
+        let comma_spans = list.comma_spans.as_ref();
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             let mut filler = f.fill();
             for (i, el) in list.elements.iter().enumerate() {
@@ -418,7 +429,10 @@ pub(super) fn write_sass_list<'a>(
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     value::write_component_value(el, ctx, f);
                     if !is_last {
-                        write!(f, ",");
+                        value::write_group_comma(
+                            comma_spans.and_then(|s| s.get(i)).map(|sp| to_span(sp).start),
+                            f,
+                        );
                     }
                 });
                 filler.entry(&soft_line_break_or_space(), &content);
@@ -440,10 +454,14 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
 
     // Comma-list expr: the first element joins the `... in` entry,
     // the rest are separate fill entries (mirrors postcss's flat comma groups).
-    let expr_elements: &[ComponentValue<'a>] = match &each.expr {
-        ComponentValue::SassList(list) if list.comma_spans.is_some() => &list.elements,
-        expr => std::slice::from_ref(expr),
+    let (expr_elements, expr_comma_spans): (&[ComponentValue<'a>], _) = match &each.expr {
+        ComponentValue::SassList(list) if list.comma_spans.is_some() => {
+            (&list.elements, list.comma_spans.as_ref())
+        }
+        expr => (std::slice::from_ref(expr), None),
     };
+    let expr_comma_start =
+        move |i: usize| expr_comma_spans.and_then(|s| s.get(i)).map(|sp| to_span(sp).start);
 
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         let mut filler = f.fill();
@@ -471,7 +489,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
                                 f,
                             );
                             if expr_elements.len() > 1 {
-                                write!(f, ",");
+                                value::write_group_comma(expr_comma_start(0), f);
                             }
                         });
                         inner.entry(&soft_line_break_or_space(), &binding);
@@ -486,7 +504,10 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
                     write!(f, group(&indent(&tail)));
                 } else {
                     write!(f, text(source.text_for(&span)));
-                    write!(f, ",");
+                    value::write_group_comma(
+                        each.comma_spans.get(i).map(|sp| to_span(sp).start),
+                        f,
+                    );
                 }
             });
             filler.entry(&soft_line_break_or_space(), &content);
@@ -496,7 +517,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 value::write_component_value(el, ValueContext::default(), f);
                 if !is_last {
-                    write!(f, ",");
+                    value::write_group_comma(expr_comma_start(i), f);
                 }
             });
             filler.entry(&soft_line_break_or_space(), &content);
@@ -540,15 +561,15 @@ pub(super) fn write_sass_function<'a>(function: &SassFunction<'a>, f: &mut CssFo
 
 fn write_sass_parameters<'a>(parameters: &SassParameters<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    let comma_start =
+        |i: usize| parameters.comma_spans.get(i).map(|sp: &oxc_css_parser::Span| to_span(sp).start);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write!(f, soft_line_break());
-        let mut first = true;
-        for param in &parameters.params {
-            if !first {
-                write!(f, ",");
+        for (i, param) in parameters.params.iter().enumerate() {
+            if i > 0 {
+                value::write_group_comma(comma_start(i - 1), f);
                 write!(f, soft_line_break_or_space());
             }
-            first = false;
             let name_span = to_span(param.name.span());
             write!(f, text(source.text_for(&name_span)));
             if let Some(default) = &param.default_value {
@@ -557,8 +578,8 @@ fn write_sass_parameters<'a>(parameters: &SassParameters<'a>, f: &mut CssFormatt
             }
         }
         if let Some(arbitrary) = &parameters.arbitrary_param {
-            if !first {
-                write!(f, ",");
+            if !parameters.params.is_empty() {
+                value::write_group_comma(comma_start(parameters.params.len() - 1), f);
                 write!(f, soft_line_break_or_space());
             }
             let span = to_span(arbitrary.name.span());
@@ -583,6 +604,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
     write!(f, text(source.text_for(&name_span)));
     if let Some(arguments) = &include.arguments {
         let args = &arguments.args;
+        let comma_spans = &arguments.comma_spans;
         // Same first-argument gate as `write_function` (which see), over typed args
         let first_arg_is_kw =
             args.first().is_some_and(|a| matches!(a, ComponentValue::SassKeywordArgument(_)));
@@ -591,7 +613,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
             write!(f, soft_line_break());
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
                     // Preserve a blank line, but only after a multi-part argument
                     // (Prettier checks `value-comma_group`s only).
                     let prev = &args[i - 1];
@@ -774,76 +796,164 @@ fn write_condition_chain<'a>(
     );
 }
 
-/// `@use "path" as ns with (...)` / `@forward "path" as p-* show a, b with (...)`
+/// `@use "path" as ns with (...)`.
+///
+/// The prelude head is ONE fill — `path`, `as`, `ns` are its chunks —
+/// so an overflow breaks at the token seams with a +2 continuation.
+/// Prettier reaches the same break points through its generic params path
+/// (the whole params string is a comma list of `line`-joined words in a fill);
+/// pending comments before a token glue to that token's chunk.
 pub(super) fn write_sass_use<'a>(sass_use: &SassUse<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
-    if let InterpolableStr::Literal(str) = &sass_use.path {
-        value::write_str(str, f);
-    } else {
-        let span = to_span(sass_use.path.span());
-        write!(f, text(source.text_for(&span)));
-    }
-    if let Some(namespace) = &sass_use.namespace {
-        write!(f, [space(), "as", space()]);
-        match &namespace.kind {
-            SassUseNamespaceKind::Named(ident) => {
-                let span = to_span(ident.span());
-                write!(f, text(source.text_for(&span)));
-            }
-            SassUseNamespaceKind::Unnamed(_) => write!(f, "*"),
+    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        let mut filler = f.fill();
+        let path = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            write_module_path(&sass_use.path, f);
+        });
+        filler.entry(&soft_line_break_or_space(), &path);
+        if let Some(namespace) = &sass_use.namespace {
+            let as_kw = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                value::flush_value_comments(to_span(&namespace.as_span).start, f);
+                write!(f, "as");
+            });
+            filler.entry(&soft_line_break_or_space(), &as_kw);
+            let name = format_with(move |f: &mut CssFormatter<'_, 'a>| match &namespace.kind {
+                SassUseNamespaceKind::Named(ident) => {
+                    let span = to_span(ident.span());
+                    value::flush_value_comments(span.start, f);
+                    write!(f, text(source.text_for(&span)));
+                }
+                SassUseNamespaceKind::Unnamed(star) => {
+                    value::flush_value_comments(to_span(&star.span).start, f);
+                    write!(f, "*");
+                }
+            });
+            filler.entry(&soft_line_break_or_space(), &name);
         }
-    }
+        filler.finish();
+    });
+    write!(f, group(&indent(&body)));
     if let Some(config) = &sass_use.config {
         write_sass_module_config(config, f);
     }
 }
 
+/// `@forward "path" as p-* show a, b with (...)`.
+///
+/// Same fill-of-chunks head as [`write_sass_use`]; each member carries its `,`
+/// glued so a break lands after the comma, and same-line comments before a `,`
+/// stay glued to their member.
 pub(super) fn write_sass_forward<'a>(forward: &SassForward<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
-    if let InterpolableStr::Literal(str) = &forward.path {
-        value::write_str(str, f);
-    } else {
-        let span = to_span(forward.path.span());
-        write!(f, text(source.text_for(&span)));
-    }
-    if let Some(prefix) = &forward.prefix {
-        let span = to_span(prefix.name.span());
-        write!(f, [space(), "as", space(), text(source.text_for(&span)), "*"]);
-    }
-    if let Some(visibility) = &forward.visibility {
-        match visibility.modifier.kind {
-            SassForwardVisibilityModifierKind::Show => {
-                write!(f, [space(), "show", space()]);
-            }
-            SassForwardVisibilityModifierKind::Hide => {
-                write!(f, [space(), "hide", space()]);
+    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        let mut filler = f.fill();
+        let path = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            write_module_path(&forward.path, f);
+        });
+        filler.entry(&soft_line_break_or_space(), &path);
+        if let Some(prefix) = &forward.prefix {
+            let as_kw = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                value::flush_value_comments(to_span(&prefix.as_span).start, f);
+                write!(f, "as");
+            });
+            filler.entry(&soft_line_break_or_space(), &as_kw);
+            let name = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                let span = to_span(prefix.name.span());
+                value::flush_value_comments(span.start, f);
+                write!(f, [text(source.text_for(&span)), "*"]);
+            });
+            filler.entry(&soft_line_break_or_space(), &name);
+        }
+        if let Some(visibility) = &forward.visibility {
+            let keyword = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                value::flush_value_comments(to_span(&visibility.modifier.span).start, f);
+                match visibility.modifier.kind {
+                    SassForwardVisibilityModifierKind::Show => write!(f, "show"),
+                    SassForwardVisibilityModifierKind::Hide => write!(f, "hide"),
+                }
+            });
+            filler.entry(&soft_line_break_or_space(), &keyword);
+            let members = &visibility.members;
+            for (i, member) in members.iter().enumerate() {
+                let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                    let span = to_span(member.span());
+                    value::flush_value_comments(span.start, f);
+                    write!(f, text(source.text_for(&span)));
+                    if i + 1 < members.len() {
+                        write_same_line_trailing_comments(
+                            to_span(&visibility.comma_spans[i]).start,
+                            f,
+                        );
+                        write!(f, ",");
+                    }
+                });
+                filler.entry(&soft_line_break_or_space(), &entry);
             }
         }
-        for (i, member) in visibility.members.iter().enumerate() {
-            if i > 0 {
-                write!(f, [",", space()]);
-            }
-            let span = to_span(member.span());
-            write!(f, text(source.text_for(&span)));
-        }
-    }
+        filler.finish();
+    });
+    write!(f, group(&indent(&body)));
     if let Some(config) = &forward.config {
         write_sass_module_config(config, f);
     }
 }
 
-/// `with ($var: value, ...)`: configurations always break, one item per line,
-/// without a trailing comma.
+/// Module path of `@use`/`@forward`: literal strings re-quote per the quote
+/// option, interpolated paths stay verbatim.
+fn write_module_path<'a>(path: &InterpolableStr<'a>, f: &mut CssFormatter<'_, 'a>) {
+    if let InterpolableStr::Literal(str) = path {
+        value::write_str(str, f);
+    } else {
+        let source = f.context().source_text();
+        let span = to_span(path.span());
+        write!(f, text(source.text_for(&span)));
+    }
+}
+
+/// `with ($var: value, ...)`:
+/// configurations always break, one item per line, without a trailing comma.
+///
+/// Comments follow Prettier's comma-group handling:
+/// - a leading `//` comment sits on its own line
+/// - a leading block comment glues to its item
+/// - a same-line trailing comment stays at the end of the item's line
+/// - and a blank line after an item's comma is preserved
+///
+/// EXCEPT an own-line trailing comment, which keeps its own line
+/// (consistent with the map printer; Prettier pulls it up — see "Known divergences").
 fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    // Comments between the module path and `with` stay glued to the head
+    // (`@use "a" /* c */ with (`).
+    write_same_line_trailing_comments(to_span(&config.with_span).start, f);
     write!(f, [space(), "with", space(), "("]);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write!(f, hard_line_break());
         for (i, item) in config.items.iter().enumerate() {
+            let item_span = to_span(&item.span);
             if i > 0 {
-                write!(f, ",");
-                write!(f, hard_line_break());
+                // Prettier's `isNextLineEmpty` after an item:
+                // a blank line after the comma survives, measured up to the next item or its first leading comment.
+                let comma_end = to_span(&config.comma_spans[i - 1]).end;
+                // Clamped: an own-line comment left pending by the previous
+                // item's trailing flush can start BEFORE the comma.
+                let next_start = f
+                    .context()
+                    .comments()
+                    .iter_before(item_span.start)
+                    .next()
+                    .map_or(item_span.start, |c| c.span.start)
+                    .max(comma_end);
+                if comments::classify_gap(source.bytes_range(comma_end, next_start))
+                    == comments::Gap::Blank
+                {
+                    write!(f, empty_line());
+                } else {
+                    write!(f, hard_line_break());
+                }
             }
+            // Leading comments: `//` on its own line, block glued inline
+            value::flush_value_comments(item_span.start, f);
             let span = to_span(item.variable.span());
             write!(f, [text(source.text_for(&span)), ":", space()]);
             // No first-argument gate here (cf. `write_function`):
@@ -856,7 +966,56 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
                 write!(f, space());
                 write!(f, text(source.text_for(&span)));
             }
+            if i + 1 < config.items.len() {
+                // An own-line comment before the comma stays pending and
+                // leads the next item instead.
+                write_same_line_trailing_comments(to_span(&config.comma_spans[i]).start, f);
+                write!(f, ",");
+            } else {
+                // Comments before `)` (past a trailing comma, which is dropped):
+                // same-line ones glue to the last item, own-line ones keep their line.
+                let bound = to_span(&config.span).end;
+                let mut prev_end =
+                    write_same_line_trailing_comments(bound, f).unwrap_or(item_span.end);
+                for &comment in f.context().comments().take_before(bound) {
+                    comments::write_gap(source.bytes_range(prev_end, comment.span.start), f);
+                    comments::write_single_comment(comment, f);
+                    prev_end = comment.span.end;
+                }
+            }
         }
     });
     write!(f, [indent(&body), hard_line_break(), ")"]);
+}
+
+/// Emits pending SAME-LINE comments before `upper_bound` glued to the just-printed
+/// content (`$a: 1 /* c */,`); an own-line comment stops the loop and stays pending.
+/// Inline `//` comments ride a `line_suffix`,
+/// so a following `,` lands before the comment text (Prettier prints `$a: 1, // c`).
+/// Returns the end offset of the last emitted comment.
+fn write_same_line_trailing_comments<'a>(
+    upper_bound: u32,
+    f: &mut CssFormatter<'_, 'a>,
+) -> Option<u32> {
+    let mut last_end = None;
+    while let Some(comment) = f.context().comments().peek() {
+        if comment.span.end > upper_bound
+            || value::comment_is_own_line(comment, f.context().source_text())
+        {
+            break;
+        }
+        f.context().comments().take_before(comment.span.end);
+        if comment.inline {
+            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                write!(f, space());
+                comments::write_single_comment(comment, f);
+            });
+            write!(f, line_suffix(&content));
+        } else {
+            write!(f, space());
+            comments::write_single_comment(comment, f);
+        }
+        last_end = Some(comment.span.end);
+    }
+    last_end
 }

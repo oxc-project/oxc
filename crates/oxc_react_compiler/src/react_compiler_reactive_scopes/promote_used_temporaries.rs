@@ -11,6 +11,8 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
+use oxc_str::format_ident;
+
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::FunctionId;
 use crate::react_compiler_hir::IdentifierId;
@@ -69,7 +71,7 @@ pub fn promote_used_temporaries(func: &mut ReactiveFunction, env: &mut Environme
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let identifier = &env.identifiers[place.identifier.0 as usize];
+        let identifier = &env.identifiers[place.identifier];
         if identifier.name.is_none() {
             promote_identifier(place.identifier, &mut state, env);
         }
@@ -128,9 +130,9 @@ fn collect_promotable_block(
                 active_scopes.pop();
             }
             ReactiveStatement::PrunedScope(scope) => {
-                let scope_data = &env.scopes[scope.scope.0 as usize];
+                let scope_data = &env.scopes[scope.scope];
                 for (_id, decl) in &scope_data.declarations {
-                    let identifier = &env.identifiers[decl.identifier.0 as usize];
+                    let identifier = &env.identifiers[decl.identifier];
                     state.pruned.insert(
                         identifier.declaration_id,
                         PrunedInfo {
@@ -155,13 +157,12 @@ fn collect_promotable_place(
     env: &Environment,
 ) {
     if !active_scopes.is_empty() {
-        let identifier = &env.identifiers[place.identifier.0 as usize];
-        if let Some(pruned) = state.pruned.get_mut(&identifier.declaration_id) {
-            if let Some(last) = active_scopes.last() {
-                if !pruned.active_scopes.contains(last) {
-                    pruned.used_outside_scope = true;
-                }
-            }
+        let identifier = &env.identifiers[place.identifier];
+        if let Some(pruned) = state.pruned.get_mut(&identifier.declaration_id)
+            && let Some(last) = active_scopes.last()
+            && !pruned.active_scopes.contains(last)
+        {
+            pruned.used_outside_scope = true;
         }
     }
 }
@@ -189,7 +190,7 @@ fn collect_promotable_value(
             }
             // Check for JSX tag
             if let InstructionValue::JsxExpression { tag: JsxTag::Place(place), .. } = instr_value {
-                let identifier = &env.identifiers[place.identifier.0 as usize];
+                let identifier = &env.identifiers[place.identifier];
                 state.tags.insert(identifier.declaration_id);
             }
         }
@@ -293,13 +294,13 @@ fn promote_temporaries_block(block: &ReactiveBlock, state: &mut State, env: &mut
             }
             ReactiveStatement::Scope(scope) => {
                 let scope_id = scope.scope;
-                let scope_data = &env.scopes[scope_id.0 as usize];
+                let scope_data = &env.scopes[scope_id];
                 // Collect all IDs to promote first
                 let mut ids_to_check: Vec<IdentifierId> = Vec::new();
                 ids_to_check.extend(scope_data.dependencies.iter().map(|d| d.identifier));
                 ids_to_check.extend(scope_data.declarations.iter().map(|(_, d)| d.identifier));
                 for id in ids_to_check {
-                    let identifier = &env.identifiers[id.0 as usize];
+                    let identifier = &env.identifiers[id];
                     if identifier.name.is_none() {
                         promote_identifier(id, state, env);
                     }
@@ -308,23 +309,22 @@ fn promote_temporaries_block(block: &ReactiveBlock, state: &mut State, env: &mut
             }
             ReactiveStatement::PrunedScope(scope) => {
                 let scope_id = scope.scope;
-                let scope_data = &env.scopes[scope_id.0 as usize];
+                let scope_data = &env.scopes[scope_id];
                 let decls: Vec<(IdentifierId, DeclarationId)> = scope_data
                     .declarations
                     .iter()
                     .map(|(_, d)| {
-                        let identifier = &env.identifiers[d.identifier.0 as usize];
+                        let identifier = &env.identifiers[d.identifier];
                         (d.identifier, identifier.declaration_id)
                     })
                     .collect();
                 for (id, decl_id) in decls {
-                    let identifier = &env.identifiers[id.0 as usize];
-                    if identifier.name.is_none() {
-                        if let Some(pruned) = state.pruned.get(&decl_id) {
-                            if pruned.used_outside_scope {
-                                promote_identifier(id, state, env);
-                            }
-                        }
+                    let identifier = &env.identifiers[id];
+                    if identifier.name.is_none()
+                        && let Some(pruned) = state.pruned.get(&decl_id)
+                        && pruned.used_outside_scope
+                    {
+                        promote_identifier(id, state, env);
                     }
                 }
                 promote_temporaries_block(&scope.instructions, state, env);
@@ -438,7 +438,7 @@ fn promote_temporaries_terminal(
 fn visit_hir_function_for_promotion(func_id: FunctionId, state: &mut State, env: &mut Environment) {
     // Promote params of this function
     let param_ids: Vec<IdentifierId> = {
-        let func = &env.functions[func_id.0 as usize];
+        let func = &env.functions[func_id];
         func.params
             .iter()
             .map(|param| match param {
@@ -448,7 +448,7 @@ fn visit_hir_function_for_promotion(func_id: FunctionId, state: &mut State, env:
             .collect()
     };
     for id in param_ids {
-        let identifier = &env.identifiers[id.0 as usize];
+        let identifier = &env.identifiers[id];
         if identifier.name.is_none() {
             promote_identifier(id, state, env);
         }
@@ -456,11 +456,11 @@ fn visit_hir_function_for_promotion(func_id: FunctionId, state: &mut State, env:
 
     // Find nested FunctionExpression/ObjectMethod in body instructions
     let nested_func_ids: Vec<FunctionId> = {
-        let func = &env.functions[func_id.0 as usize];
+        let func = &env.functions[func_id];
         let mut nested = Vec::new();
         for (_, block) in &func.body.blocks {
             for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
                 match &instr.value {
                     InstructionValue::FunctionExpression { lowered_func, .. }
                     | InstructionValue::ObjectMethod { lowered_func, .. } => {
@@ -529,7 +529,7 @@ fn promote_interposed_place(
     env: &mut Environment,
 ) {
     if let Some(&(id, needs_promotion)) = inter_state.get(&place.identifier) {
-        let identifier = &env.identifiers[id.0 as usize];
+        let identifier = &env.identifiers[id];
         if needs_promotion && identifier.name.is_none() && !consts.contains(&id) {
             promote_identifier(id, state, env);
         }
@@ -577,15 +577,14 @@ fn promote_interposed_instruction(
                         }
                         _ => {}
                     }
-                    if let InstructionValue::Destructure { lvalue, .. } = iv {
-                        if lvalue.kind == InstructionKind::Const
-                            || lvalue.kind == InstructionKind::HoistedConst
-                        {
-                            for operand in each_pattern_operand(&lvalue.pattern) {
-                                consts.insert(operand.identifier);
-                            }
-                            const_store = true;
+                    if let InstructionValue::Destructure { lvalue, .. } = iv
+                        && (lvalue.kind == InstructionKind::Const
+                            || lvalue.kind == InstructionKind::HoistedConst)
+                    {
+                        for operand in each_pattern_operand(&lvalue.pattern) {
+                            consts.insert(operand.identifier);
                         }
+                        const_store = true;
                     }
                     if let InstructionValue::MethodCall { property, .. } = iv {
                         consts.insert(property.identifier);
@@ -598,8 +597,7 @@ fn promote_interposed_instruction(
 
                     if !const_store
                         && (instr.lvalue.is_none()
-                            || env.identifiers
-                                [instr.lvalue.as_ref().unwrap().identifier.0 as usize]
+                            || env.identifiers[instr.lvalue.as_ref().unwrap().identifier]
                                 .name
                                 .is_some())
                     {
@@ -612,7 +610,7 @@ fn promote_interposed_instruction(
                         }
                     }
                     if let Some(lvalue) = &instr.lvalue {
-                        let identifier = &env.identifiers[lvalue.identifier.0 as usize];
+                        let identifier = &env.identifiers[lvalue.identifier];
                         if identifier.name.is_none() {
                             inter_state.insert(lvalue.identifier, (lvalue.identifier, false));
                         }
@@ -633,7 +631,7 @@ fn promote_interposed_instruction(
                 InstructionValue::LoadContext { place: load_place, .. }
                 | InstructionValue::LoadLocal { place: load_place, .. } => {
                     if let Some(lvalue) = &instr.lvalue {
-                        let identifier = &env.identifiers[lvalue.identifier.0 as usize];
+                        let identifier = &env.identifiers[lvalue.identifier];
                         if identifier.name.is_none() {
                             if consts.contains(&load_place.identifier) {
                                 consts.insert(lvalue.identifier);
@@ -653,7 +651,7 @@ fn promote_interposed_instruction(
                             globals.insert(lvalue.identifier);
                             consts.insert(lvalue.identifier);
                         }
-                        let identifier = &env.identifiers[lvalue.identifier.0 as usize];
+                        let identifier = &env.identifiers[lvalue.identifier];
                         if identifier.name.is_none() {
                             inter_state.insert(lvalue.identifier, (lvalue.identifier, false));
                         }
@@ -815,7 +813,7 @@ fn promote_all_instances_params(func: &ReactiveFunction, state: &mut State, env:
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let identifier = &env.identifiers[place.identifier.0 as usize];
+        let identifier = &env.identifiers[place.identifier];
         if identifier.name.is_none() && state.promoted.contains(&identifier.declaration_id) {
             promote_identifier(place.identifier, state, env);
         }
@@ -848,7 +846,7 @@ fn promote_all_instances_scope_identifiers(
     state: &mut State,
     env: &mut Environment,
 ) {
-    let scope_data = &env.scopes[scope_id.0 as usize];
+    let scope_data = &env.scopes[scope_id];
 
     // Collect identifiers to promote
     let decl_ids: Vec<IdentifierId> =
@@ -857,19 +855,19 @@ fn promote_all_instances_scope_identifiers(
     let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.clone();
 
     for id in decl_ids {
-        let identifier = &env.identifiers[id.0 as usize];
+        let identifier = &env.identifiers[id];
         if identifier.name.is_none() && state.promoted.contains(&identifier.declaration_id) {
             promote_identifier(id, state, env);
         }
     }
     for id in dep_ids {
-        let identifier = &env.identifiers[id.0 as usize];
+        let identifier = &env.identifiers[id];
         if identifier.name.is_none() && state.promoted.contains(&identifier.declaration_id) {
             promote_identifier(id, state, env);
         }
     }
     for id in reassign_ids {
-        let identifier = &env.identifiers[id.0 as usize];
+        let identifier = &env.identifiers[id];
         if identifier.name.is_none() && state.promoted.contains(&identifier.declaration_id) {
             promote_identifier(id, state, env);
         }
@@ -877,7 +875,7 @@ fn promote_all_instances_scope_identifiers(
 }
 
 fn promote_all_instances_place(place: &Place, state: &mut State, env: &mut Environment) {
-    let identifier = &env.identifiers[place.identifier.0 as usize];
+    let identifier = &env.identifiers[place.identifier];
     if identifier.name.is_none() && state.promoted.contains(&identifier.declaration_id) {
         promote_identifier(place.identifier, state, env);
     }
@@ -905,7 +903,7 @@ fn promote_all_instances_value(value: &ReactiveValue, state: &mut State, env: &m
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
                     let func_id = lowered_func.func;
-                    let inner_func = &env.functions[func_id.0 as usize];
+                    let inner_func = &env.functions[func_id];
                     let param_ids: Vec<IdentifierId> = inner_func
                         .params
                         .iter()
@@ -915,7 +913,7 @@ fn promote_all_instances_value(value: &ReactiveValue, state: &mut State, env: &m
                         })
                         .collect();
                     for id in param_ids {
-                        let identifier = &env.identifiers[id.0 as usize];
+                        let identifier = &env.identifiers[id];
                         if identifier.name.is_none()
                             && state.promoted.contains(&identifier.declaration_id)
                         {
@@ -1018,7 +1016,7 @@ fn promote_all_instances_terminal(
 // =============================================================================
 
 fn promote_identifier(identifier_id: IdentifierId, state: &mut State, env: &mut Environment) {
-    let identifier = &env.identifiers[identifier_id.0 as usize];
+    let identifier = &env.identifiers[identifier_id];
     assert!(
         identifier.name.is_none(),
         "promoteTemporary: Expected to be called only for temporary variables"
@@ -1026,11 +1024,11 @@ fn promote_identifier(identifier_id: IdentifierId, state: &mut State, env: &mut 
     let decl_id = identifier.declaration_id;
     if state.tags.contains(&decl_id) {
         // JSX tag temporary: use capitalized name
-        env.identifiers[identifier_id.0 as usize].name =
-            Some(IdentifierName::Promoted(format!("#T{}", decl_id.0)));
+        env.identifiers[identifier_id].name =
+            Some(IdentifierName::Promoted(format_ident!(env.allocator, "#T{}", decl_id.index())));
     } else {
-        env.identifiers[identifier_id.0 as usize].name =
-            Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+        env.identifiers[identifier_id].name =
+            Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
     }
     state.promoted.insert(decl_id);
 }

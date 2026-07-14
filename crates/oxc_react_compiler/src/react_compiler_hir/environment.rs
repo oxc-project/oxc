@@ -4,11 +4,15 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use oxc_allocator::{Allocator, GetAllocator};
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_index::IndexVec;
+use oxc_span::Span;
+use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
+use oxc_syntax::reference::ReferenceId;
+use oxc_syntax::symbol::SymbolId;
+
+use crate::diagnostics::ErrorCategory;
 
 use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
@@ -25,15 +29,6 @@ use crate::react_compiler_hir::object_shape::default_mutating_hook;
 use crate::react_compiler_hir::object_shape::default_nonmutating_hook;
 use crate::react_compiler_hir::*;
 
-/// A variable rename from lowering: the binding at `declaration_start` position
-/// was renamed from `original` to `renamed`.
-#[derive(Debug, Clone)]
-pub struct BindingRename {
-    pub original: String,
-    pub renamed: String,
-    pub declaration_start: u32,
-}
-
 /// Output mode for the compiler, mirrored from the entrypoint's CompilerOutputMode.
 /// Stored on Environment so pipeline passes can access it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -44,19 +39,30 @@ pub enum OutputMode {
 }
 
 pub struct Environment<'a> {
+    // Arena allocator for the compilation unit. HIR strings (identifier names,
+    // shape ids, property keys) live here so they can be borrowed from the
+    // source AST at lowering and emitted into the output AST without copies.
+    pub allocator: &'a Allocator,
+
     // Counters
     pub next_block_id_counter: u32,
     pub next_scope_id_counter: u32,
     next_mutable_range_id_counter: u32,
 
     // Arenas (use direct field access for sliced borrows)
-    pub identifiers: Vec<Identifier>,
-    pub types: Vec<Type>,
-    pub scopes: Vec<ReactiveScope>,
-    pub functions: Vec<HirFunction<'a>>,
+    pub identifiers: IndexVec<IdentifierId, Identifier<'a>>,
+    pub types: IndexVec<TypeId, Type<'a>>,
+    pub scopes: IndexVec<ScopeId, ReactiveScope<'a>>,
+    pub functions: IndexVec<FunctionId, HirFunction<'a>>,
 
     // Error accumulation
-    pub errors: CompilerError,
+    pub errors: Diagnostics,
+
+    // Set during lowering when the function uses syntax the compiler can't handle
+    // yet (currently `using`/`await using`, whose disposal semantics aren't
+    // preserved). Signals the pipeline to skip compiling this function silently —
+    // no diagnostic — while other functions in the file still compile.
+    pub skip_compilation: bool,
 
     // Function type classification (Component, Hook, Other)
     pub fn_type: ReactFunctionType,
@@ -64,26 +70,21 @@ pub struct Environment<'a> {
     // Output mode (Client, Ssr, Lint)
     pub output_mode: OutputMode,
 
-    // Pre-resolved import local names for instrumentation/hook guards.
+    // Pre-resolved import local names for instrumentation/hook guards/memo cache.
     // Set by the program-level code before compilation.
-    pub instrument_fn_name: Option<String>,
-    pub instrument_gating_name: Option<String>,
-    pub hook_guard_name: Option<String>,
+    pub instrument_fn_name: Option<Ident<'a>>,
+    pub instrument_gating_name: Option<Ident<'a>>,
+    pub hook_guard_name: Option<Ident<'a>>,
+    pub memo_cache_name: Option<Ident<'a>>,
 
-    // Renames: tracks variable renames from lowering (original_name → new_name)
-    // keyed by binding declaration position, for applying back to the Babel AST.
-    pub renames: Vec<BindingRename>,
-
-    // Node IDs of identifiers that are actual references to bindings.
-    // Used by codegen to filter type annotation renames — only rename identifiers
-    // whose node_id is in this set (type labels like ObjectTypeIndexer params
-    // are NOT in this set and should keep their original names).
-    pub reference_node_ids: FxHashSet<u32>,
+    // Renames from lowering (collision suffixes like `name_0`), recorded per
+    // resolved reference so codegen can rename identifiers inside preserved TS
+    // type annotations by reference identity.
+    pub renames: FxHashMap<ReferenceId, Ident<'a>>,
 
     // Hoisted identifiers: tracks which bindings have already been hoisted
     // via DeclareContext to avoid duplicate hoisting.
-    // Uses u32 to avoid depending on react_compiler_ast types.
-    hoisted_identifiers: FxHashSet<u32>,
+    hoisted_identifiers: FxHashSet<SymbolId>,
 
     // Config flags for validation passes (kept for backwards compat with existing pipeline code)
     pub validate_preserve_existing_memoization_guarantees: bool,
@@ -91,17 +92,17 @@ pub struct Environment<'a> {
     pub enable_preserve_existing_memoization_guarantees: bool,
 
     // Type system registries
-    globals: GlobalRegistry,
-    pub shapes: ShapeRegistry,
-    module_types: FxHashMap<String, Option<Global>>,
-    module_type_errors: FxHashMap<String, Vec<String>>,
+    globals: GlobalRegistry<'a>,
+    pub shapes: ShapeRegistry<'a>,
+    module_types: IdentHashMap<'a, Option<Global<'a>>>,
+    module_type_errors: IdentHashMap<'a, Vec<String>>,
 
     // Environment configuration (feature flags, custom hooks, etc.)
     pub config: EnvironmentConfig,
 
     // Cached default hook types (lazily initialized)
-    default_nonmutating_hook: Option<Global>,
-    default_mutating_hook: Option<Global>,
+    default_nonmutating_hook: Option<Global<'a>>,
+    default_mutating_hook: Option<Global<'a>>,
 
     // Outlined functions: functions extracted from the component during outlining passes
     outlined_functions: Vec<OutlinedFunctionEntry<'a>>,
@@ -109,7 +110,7 @@ pub struct Environment<'a> {
     // Known names for collision-aware UID generation. Lazily populated from
     // identifiers on first use, then updated with each generated name.
     // Matches Babel's generateUid behavior of checking hasBinding/hasReference.
-    uid_known_names: Option<FxHashSet<String>>,
+    uid_known_names: Option<IdentHashSet<'a>>,
 }
 
 /// An outlined function entry, stored on Environment during compilation.
@@ -120,17 +121,19 @@ pub struct OutlinedFunctionEntry<'a> {
     pub fn_type: Option<ReactFunctionType>,
 }
 
-impl<'a> Environment<'a> {
-    pub fn new() -> Self {
-        Self::with_config(EnvironmentConfig::default())
+impl<'a> GetAllocator<'a> for Environment<'a> {
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
     }
+}
 
+impl<'a> Environment<'a> {
     /// Create a new Environment with the given configuration.
     ///
     /// Initializes the shape and global registries, registers custom hooks,
     /// and sets up the module type cache.
-    pub fn with_config(config: EnvironmentConfig) -> Self {
-        let mut shapes = ShapeRegistry::with_base(globals::base_shapes());
+    pub fn with_config(allocator: &'a Allocator, config: EnvironmentConfig) -> Self {
+        let mut shapes = ShapeRegistry::with_base(globals::base_shapes(), allocator);
         let mut global_registry = GlobalRegistry::with_base(globals::base_globals());
 
         // Register custom hooks from config
@@ -140,7 +143,7 @@ impl<'a> Environment<'a> {
                 continue;
             }
             let return_type = if hook.transitive_mixed_data {
-                Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) }
+                Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID) }
             } else {
                 Type::Poly
             };
@@ -156,33 +159,35 @@ impl<'a> Environment<'a> {
                 },
                 None,
             );
-            global_registry.insert(hook_name.clone(), hook_type);
+            global_registry.insert(Ident::from_str_in(hook_name, &allocator), hook_type);
         }
 
         // Register reanimated module type when enabled
-        let mut module_types: FxHashMap<String, Option<Global>> = FxHashMap::default();
+        let mut module_types: IdentHashMap<'a, Option<Global<'a>>> = IdentHashMap::default();
         if config.enable_custom_type_definition_for_reanimated {
             let reanimated_module_type = globals::get_reanimated_module_type(&mut shapes);
             module_types
-                .insert("react-native-reanimated".to_string(), Some(reanimated_module_type));
+                .insert(Ident::from("react-native-reanimated"), Some(reanimated_module_type));
         }
 
         Self {
+            allocator,
             next_block_id_counter: 0,
             next_scope_id_counter: 0,
             next_mutable_range_id_counter: 0,
-            identifiers: Vec::new(),
-            types: Vec::new(),
-            scopes: Vec::new(),
-            functions: Vec::new(),
-            errors: CompilerError::new(),
+            identifiers: IndexVec::new(),
+            types: IndexVec::new(),
+            scopes: IndexVec::new(),
+            functions: IndexVec::new(),
+            errors: Diagnostics::new(),
+            skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
-            renames: Vec::new(),
-            reference_node_ids: FxHashSet::default(),
+            memo_cache_name: None,
+            renames: FxHashMap::default(),
             hoisted_identifiers: FxHashSet::default(),
             validate_preserve_existing_memoization_guarantees: config
                 .validate_preserve_existing_memoization_guarantees,
@@ -192,7 +197,7 @@ impl<'a> Environment<'a> {
             globals: global_registry,
             shapes,
             module_types,
-            module_type_errors: FxHashMap::default(),
+            module_type_errors: IdentHashMap::default(),
             default_nonmutating_hook: None,
             default_mutating_hook: None,
             outlined_functions: Vec::new(),
@@ -202,7 +207,7 @@ impl<'a> Environment<'a> {
     }
 
     pub fn next_block_id(&mut self) -> BlockId {
-        let id = BlockId(self.next_block_id_counter);
+        let id = BlockId::from_usize(self.next_block_id_counter as usize);
         self.next_block_id_counter += 1;
         id
     }
@@ -215,7 +220,7 @@ impl<'a> Environment<'a> {
         start: EvaluationOrder,
         end: EvaluationOrder,
     ) -> MutableRange {
-        let id = MutableRangeId(self.next_mutable_range_id_counter);
+        let id = MutableRangeId::from_usize(self.next_mutable_range_id_counter as usize);
         self.next_mutable_range_id_counter += 1;
         MutableRange { id, start, end }
     }
@@ -223,26 +228,26 @@ impl<'a> Environment<'a> {
     /// Allocate a new Identifier in the arena with default values,
     /// returns its IdentifierId.
     pub fn next_identifier_id(&mut self) -> IdentifierId {
-        let id = IdentifierId(self.identifiers.len() as u32);
+        let id = self.identifiers.next_idx();
         let type_id = self.make_type();
-        let mutable_range = self.new_mutable_range(EvaluationOrder(0), EvaluationOrder(0));
+        let mutable_range = self.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
         self.identifiers.push(Identifier {
             id,
-            declaration_id: DeclarationId(id.0),
+            declaration_id: DeclarationId::from_usize(id.index()),
             name: None,
             mutable_range,
             scope: None,
             type_: type_id,
-            loc: None,
+            span: None,
         });
         id
     }
 
     /// Allocate a new ReactiveScope in the arena, returns its ScopeId.
     pub fn next_scope_id(&mut self) -> ScopeId {
-        let id = ScopeId(self.next_scope_id_counter);
+        let id = ScopeId::from_usize(self.next_scope_id_counter as usize);
         self.next_scope_id_counter += 1;
-        let range = self.new_mutable_range(EvaluationOrder(0), EvaluationOrder(0));
+        let range = self.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
         self.scopes.push(ReactiveScope {
             id,
             range,
@@ -251,15 +256,15 @@ impl<'a> Environment<'a> {
             reassignments: Vec::new(),
             early_return_value: None,
             merged: Vec::new(),
-            loc: None,
+            span: None,
         });
         id
     }
 
     /// Allocate a new Type in the arena, returns its TypeId.
     pub fn next_type_id(&mut self) -> TypeId {
-        let id = TypeId(self.types.len() as u32);
-        self.types.push(Type::TypeVar { id });
+        let id = self.types.next_idx();
+        self.types.push(Type::Var { id });
         id
     }
 
@@ -269,75 +274,57 @@ impl<'a> Environment<'a> {
     }
 
     pub fn add_function(&mut self, func: HirFunction<'a>) -> FunctionId {
-        let id = FunctionId(self.functions.len() as u32);
+        let id = self.functions.next_idx();
         self.functions.push(func);
         id
     }
 
-    pub fn record_error(&mut self, detail: CompilerErrorDetail) -> Result<(), CompilerError> {
-        if detail.category == ErrorCategory::Invariant {
-            let detail_clone = detail.clone();
-            self.errors.push_error_detail(detail);
-            let mut err = CompilerError::new();
-            err.push_error_detail(detail_clone);
-            return Err(err);
+    pub fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
+        if ErrorCategory::Invariant.matches(&diagnostic) {
+            self.errors.push(diagnostic.clone());
+            return Err(diagnostic);
         }
-        self.errors.push_error_detail(detail);
+        self.errors.push(diagnostic);
         Ok(())
     }
 
-    pub fn record_diagnostic(&mut self, diagnostic: CompilerDiagnostic) {
-        self.errors.push_diagnostic(diagnostic);
+    pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
+        self.errors.push(diagnostic);
     }
 
     pub fn has_errors(&self) -> bool {
-        self.errors.has_any_errors()
+        !self.errors.is_empty()
     }
 
     /// Check if any recorded errors have Invariant category.
     /// In TS, Invariant errors throw immediately from recordError(),
     /// which aborts the current operation.
     pub fn has_invariant_errors(&self) -> bool {
-        self.errors.has_invariant_errors()
+        self.errors.iter().any(|d| ErrorCategory::Invariant.matches(d))
     }
 
-    pub fn take_errors(&mut self) -> CompilerError {
-        let mut errors = take(&mut self.errors);
-        // Mark as not thrown — these are accumulated errors returned at the end
-        // of the pipeline, not errors thrown by a pass.
-        errors.is_thrown = false;
-        errors
+    /// Take the accumulated errors, to be returned at the end of the pipeline.
+    pub fn take_errors(&mut self) -> Diagnostics {
+        take(&mut self.errors)
     }
 
     /// Take only the Invariant errors, leaving non-Invariant errors in place.
-    /// In TS, Invariant errors throw as a separate CompilerError, so only
-    /// the Invariant error is surfaced.
-    pub fn take_invariant_errors(&mut self) -> CompilerError {
-        let mut invariant = CompilerError::new();
-        let mut remaining = CompilerError::new();
-        let old = take(&mut self.errors);
-        for detail in old.details {
-            let is_invariant = match &detail {
-                CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Invariant,
-                CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Invariant,
-            };
-            if is_invariant {
-                invariant.details.push(detail);
-            } else {
-                remaining.details.push(detail);
-            }
-        }
-        self.errors = remaining;
-        invariant
+    /// In TS, Invariant errors throw as a separate error, so only the
+    /// Invariant error is surfaced.
+    pub fn take_invariant_errors(&mut self) -> Diagnostics {
+        let (invariant, remaining): (Vec<_>, Vec<_>) =
+            take(&mut self.errors).into_iter().partition(|d| ErrorCategory::Invariant.matches(d));
+        self.errors = remaining.into();
+        invariant.into()
     }
 
     /// Check if a binding has been hoisted (via DeclareContext) already.
-    pub fn is_hoisted_identifier(&self, binding_id: u32) -> bool {
+    pub fn is_hoisted_identifier(&self, binding_id: SymbolId) -> bool {
         self.hoisted_identifiers.contains(&binding_id)
     }
 
     /// Mark a binding as hoisted.
-    pub fn add_hoisted_identifier(&mut self, binding_id: u32) {
+    pub fn add_hoisted_identifier(&mut self, binding_id: SymbolId) {
         self.hoisted_identifiers.insert(binding_id);
     }
 
@@ -347,13 +334,13 @@ impl<'a> Environment<'a> {
 
     /// Resolve a non-local binding to its type. Ported from TS `getGlobalDeclaration`.
     ///
-    /// The `loc` parameter is used for error diagnostics when validating module type
+    /// The `span` parameter is used for error diagnostics when validating module type
     /// configurations. Pass `None` if no source location is available.
     pub fn get_global_declaration(
         &mut self,
         binding: &NonLocalBinding,
-        loc: Option<SourceLocation>,
-    ) -> Result<Option<Global>, CompilerError> {
+        span: Option<Span>,
+    ) -> Result<Option<Global<'a>>, OxcDiagnostic> {
         match binding {
             NonLocalBinding::ModuleLocal { name, .. } => {
                 if is_hook_name(name) {
@@ -384,25 +371,22 @@ impl<'a> Environment<'a> {
                 let module_type = self.resolve_module_type(module);
 
                 // Check for module type validation errors (hook-name vs hook-type mismatches)
-                if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
-                    if let Some(first_error) = errors.into_iter().next() {
-                        self.record_error(
-                            CompilerErrorDetail::new(
-                                ErrorCategory::Config,
-                                "Invalid type configuration for module",
-                            )
-                            .with_description(first_error.to_string())
-                            .with_loc(loc),
-                        )?;
-                    }
+                if let Some(errors) = self.module_type_errors.remove(module.as_str())
+                    && let Some(first_error) = errors.into_iter().next()
+                {
+                    self.record_error(
+                        ErrorCategory::Config
+                            .diagnostic("Invalid type configuration for module")
+                            .with_help(first_error)
+                            .with_labels(span),
+                    )?;
                 }
 
-                if let Some(module_type) = module_type {
-                    if let Some(imported_type) =
+                if let Some(module_type) = module_type
+                    && let Some(imported_type) =
                         Self::get_property_type_from_shapes(&self.shapes, &module_type, imported)
-                    {
-                        return Ok(Some(imported_type));
-                    }
+                {
+                    return Ok(Some(imported_type));
                 }
 
                 if is_hook_name(imported) || is_hook_name(name) {
@@ -428,17 +412,15 @@ impl<'a> Environment<'a> {
                 let module_type = self.resolve_module_type(module);
 
                 // Check for module type validation errors (hook-name vs hook-type mismatches)
-                if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
-                    if let Some(first_error) = errors.into_iter().next() {
-                        self.record_error(
-                            CompilerErrorDetail::new(
-                                ErrorCategory::Config,
-                                "Invalid type configuration for module",
-                            )
-                            .with_description(first_error.to_string())
-                            .with_loc(loc),
-                        )?;
-                    }
+                if let Some(errors) = self.module_type_errors.remove(module.as_str())
+                    && let Some(first_error) = errors.into_iter().next()
+                {
+                    self.record_error(
+                        ErrorCategory::Config
+                            .diagnostic("Invalid type configuration for module")
+                            .with_help(first_error)
+                            .with_labels(span),
+                    )?;
                 }
 
                 if let Some(module_type) = module_type {
@@ -454,16 +436,14 @@ impl<'a> Environment<'a> {
                             self.get_hook_kind_for_type(&imported_type).ok().flatten().is_some();
                         if expect_hook != is_hook {
                             self.record_error(
-                                CompilerErrorDetail::new(
-                                    ErrorCategory::Config,
-                                    "Invalid type configuration for module",
-                                )
-                                .with_description(format!(
-                                    "Expected type for `import ... from '{}'` {} based on the module name",
-                                    module,
-                                    if expect_hook { "to be a hook" } else { "not to be a hook" }
-                                ))
-                                .with_loc(loc),
+                                ErrorCategory::Config
+                                    .diagnostic("Invalid type configuration for module")
+                                    .with_help(format!(
+                                        "Expected type for `import ... from '{}'` {} based on the module name",
+                                        module,
+                                        if expect_hook { "to be a hook" } else { "not to be a hook" }
+                                    ))
+                                    .with_labels(span),
                             )?;
                         }
                         return Ok(Some(imported_type));
@@ -479,10 +459,10 @@ impl<'a> Environment<'a> {
     /// Used internally to avoid double-borrow of `self`. Includes hook-name
     /// fallback matching TS `getPropertyType`.
     fn get_property_type_from_shapes(
-        shapes: &ShapeRegistry,
-        receiver: &Type,
+        shapes: &ShapeRegistry<'a>,
+        receiver: &Type<'a>,
         property: &str,
-    ) -> Option<Type> {
+    ) -> Option<Type<'a>> {
         let shape_id = match receiver {
             Type::Object { shape_id } | Type::Function { shape_id, .. } => shape_id.as_deref(),
             _ => None,
@@ -507,18 +487,16 @@ impl<'a> Environment<'a> {
     pub fn get_function_signature(
         &self,
         ty: &Type,
-    ) -> Result<Option<&FunctionSignature>, CompilerDiagnostic> {
+    ) -> Result<Option<&FunctionSignature>, OxcDiagnostic> {
         let shape_id = match ty {
             Type::Function { shape_id, .. } => shape_id.as_deref(),
             _ => return Ok(None),
         };
         if let Some(shape_id) = shape_id {
             let shape = self.shapes.get(shape_id).ok_or_else(|| {
-                CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
-                    None,
-                )
+                ErrorCategory::Invariant.diagnostic(format!(
+                    "[HIR] Forget internal error: cannot resolve shape {shape_id}"
+                ))
             })?;
             return Ok(shape.function_type.as_ref());
         }
@@ -527,17 +505,14 @@ impl<'a> Environment<'a> {
 
     /// Get the hook kind for a type, if it represents a hook.
     /// Ported from TS `getHookKindForType` in HIR.ts.
-    pub fn get_hook_kind_for_type(
-        &self,
-        ty: &Type,
-    ) -> Result<Option<&HookKind>, CompilerDiagnostic> {
+    pub fn get_hook_kind_for_type(&self, ty: &Type) -> Result<Option<&HookKind>, OxcDiagnostic> {
         Ok(self.get_function_signature(ty)?.and_then(|sig| sig.hook_kind.as_ref()))
     }
 
     /// Resolve the module type provider for a given module name.
     /// Caches results. Checks pre-resolved provider results first, then falls
     /// back to `defaultModuleTypeProvider` (hardcoded).
-    fn resolve_module_type(&mut self, module_name: &str) -> Option<Global> {
+    fn resolve_module_type(&mut self, module_name: &str) -> Option<Global<'a>> {
         if let Some(cached) = self.module_types.get(module_name) {
             return cached.clone();
         }
@@ -560,11 +535,15 @@ impl<'a> Environment<'a> {
             );
             // Store errors for later reporting when the import is actually used
             for err in type_errors {
-                self.module_type_errors.entry(module_name.to_string()).or_default().push(err);
+                self.module_type_errors
+                    .entry(Ident::from_str_in(module_name, &self.allocator))
+                    .or_default()
+                    .push(err);
             }
             ty
         });
-        self.module_types.insert(module_name.to_string(), module_type.clone());
+        self.module_types
+            .insert(Ident::from_str_in(module_name, &self.allocator), module_type.clone());
         module_type
     }
 
@@ -573,7 +552,7 @@ impl<'a> Environment<'a> {
         lower == "react" || lower == "react-dom"
     }
 
-    fn get_custom_hook_type(&mut self) -> Global {
+    fn get_custom_hook_type(&mut self) -> Global<'a> {
         if self.config.enable_assume_hooks_follow_rules_of_react {
             if self.default_nonmutating_hook.is_none() {
                 self.default_nonmutating_hook = Some(default_nonmutating_hook(&mut self.shapes));
@@ -589,12 +568,12 @@ impl<'a> Environment<'a> {
 
     /// Public accessor for the custom hook type, used by InferTypes for
     /// property resolution fallback when a property name looks like a hook.
-    pub fn get_custom_hook_type_opt(&mut self) -> Option<Global> {
+    pub fn get_custom_hook_type_opt(&mut self) -> Option<Global<'a>> {
         Some(self.get_custom_hook_type())
     }
 
     /// Get a reference to the globals registry.
-    pub fn globals(&self) -> &GlobalRegistry {
+    pub fn globals(&self) -> &GlobalRegistry<'a> {
         &self.globals
     }
 
@@ -607,7 +586,7 @@ impl<'a> Environment<'a> {
     /// Like Babel's `generateUid`, checks for collisions against existing
     /// bindings (source-level identifier names) and previously generated UIDs,
     /// rather than using a blind counter.
-    pub fn generate_globally_unique_identifier_name(&mut self, name: Option<&str>) -> String {
+    pub fn generate_globally_unique_identifier_name(&mut self, name: Option<&str>) -> Ident<'a> {
         let base = name.unwrap_or("temp");
         // Apply Babel's toIdentifier sanitization:
         // 1. Replace non-identifier chars with '-'
@@ -651,10 +630,10 @@ impl<'a> Environment<'a> {
         // Lazily build the set of known names from existing identifiers.
         // This approximates Babel's hasBinding/hasGlobal/hasReference checks.
         if self.uid_known_names.is_none() {
-            let mut known = FxHashSet::default();
+            let mut known = IdentHashSet::default();
             for id in &self.identifiers {
                 if let Some(name) = &id.name {
-                    known.insert(name.value().to_string());
+                    known.insert(Ident::from(name.value()));
                 }
             }
             self.uid_known_names = Some(known);
@@ -663,8 +642,11 @@ impl<'a> Environment<'a> {
         // Find a name that doesn't collide, matching Babel's generateUid loop
         let mut i = 1u32;
         let uid = loop {
-            let candidate =
-                if i == 1 { format!("_{}", uid_base) } else { format!("_{}{}", uid_base, i) };
+            let candidate = if i == 1 {
+                format_ident!(self.allocator, "_{uid_base}")
+            } else {
+                format_ident!(self.allocator, "_{uid_base}{i}")
+            };
             i += 1;
             if !self.uid_known_names.as_ref().unwrap().contains(&candidate) {
                 break candidate;
@@ -672,7 +654,7 @@ impl<'a> Environment<'a> {
         };
 
         // Register the generated name so subsequent calls see it
-        self.uid_known_names.as_mut().unwrap().insert(uid.clone());
+        self.uid_known_names.as_mut().unwrap().insert(uid);
 
         uid
     }
@@ -680,15 +662,15 @@ impl<'a> Environment<'a> {
     /// Seed the UID known names set with external names (e.g. from ProgramContext).
     /// This ensures UID generation avoids names generated by previous function compilations,
     /// matching Babel's behavior where the program scope accumulates all generated UIDs.
-    pub fn seed_uid_known_names(&mut self, names: &FxHashSet<String>) {
+    pub fn seed_uid_known_names(&mut self, names: &IdentHashSet<'a>) {
         match &mut self.uid_known_names {
-            Some(existing) => existing.extend(names.iter().cloned()),
+            Some(existing) => existing.extend(names.iter().copied()),
             None => self.uid_known_names = Some(names.clone()),
         }
     }
 
     /// Return the UID known names accumulated during this compilation.
-    pub fn take_uid_known_names(&mut self) -> Option<FxHashSet<String>> {
+    pub fn take_uid_known_names(&mut self) -> Option<IdentHashSet<'a>> {
         self.uid_known_names.take()
     }
 
@@ -696,11 +678,6 @@ impl<'a> Environment<'a> {
     /// Corresponds to TS `env.outlineFunction(fn, type)`.
     pub fn outline_function(&mut self, func: HirFunction<'a>, fn_type: Option<ReactFunctionType>) {
         self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
-    }
-
-    #[cfg(feature = "debug")]
-    pub(crate) fn outlined_functions(&self) -> &[OutlinedFunctionEntry<'a>] {
-        &self.outlined_functions
     }
 
     /// Take the outlined functions, leaving the vec empty.
@@ -733,7 +710,7 @@ impl<'a> Environment<'a> {
     /// Check whether the function type for an identifier has a noAlias signature.
     /// Looks up the identifier's type and checks its function signature.
     pub fn has_no_alias_signature(&self, identifier_id: IdentifierId) -> bool {
-        let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
+        let ty = &self.types[self.identifiers[identifier_id].type_];
         self.get_function_signature(ty).ok().flatten().is_some_and(|sig| sig.no_alias)
     }
 
@@ -742,15 +719,9 @@ impl<'a> Environment<'a> {
     pub fn get_hook_kind_for_id(
         &self,
         identifier_id: IdentifierId,
-    ) -> Result<Option<&HookKind>, CompilerDiagnostic> {
-        let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
+    ) -> Result<Option<&HookKind>, OxcDiagnostic> {
+        let ty = &self.types[self.identifiers[identifier_id].type_];
         self.get_hook_kind_for_type(ty)
-    }
-}
-
-impl Default for Environment<'_> {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -765,17 +736,4 @@ pub fn is_hook_name(name: &str) -> bool {
     }
     let fourth_char = name.as_bytes()[3];
     fourth_char.is_ascii_uppercase() || fourth_char.is_ascii_digit()
-}
-
-/// Returns true if the name follows React naming conventions (component or hook).
-/// Components start with an uppercase letter; hooks match `use[A-Z0-9]`.
-pub fn is_react_like_name(name: &str) -> bool {
-    if name.is_empty() {
-        return false;
-    }
-    let first_char = name.as_bytes()[0];
-    if first_char.is_ascii_uppercase() {
-        return true;
-    }
-    is_hook_name(name)
 }

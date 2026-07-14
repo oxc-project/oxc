@@ -61,8 +61,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
-                Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
-                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                Statement::ExportNamedDeclaration(decl)
+                    if let Some(declaration) = &decl.declaration =>
+                {
+                    !declaration.is_typescript_syntax()
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
@@ -88,6 +90,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 }
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
+                        Self::remove_import_declaration_bindings(decl, ctx);
                         false
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {
@@ -99,6 +102,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                                 let id = match specifier {
                                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                         if s.import_kind.is_type() {
+                                            Self::remove_binding(&s.local, ctx);
                                             return false;
                                         }
                                         &s.local
@@ -112,10 +116,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                                 };
                                 // If `only_remove_type_imports` is true, then we can return `true` to keep it because
                                 // it is not a type import, otherwise we need to check if the identifier is referenced
-                                if self.only_remove_type_imports {
+                                if self.only_remove_type_imports || self.has_value_reference(id, ctx) {
                                     true
                                 } else {
-                                    self.has_value_reference(id, ctx)
+                                    Self::remove_binding(id, ctx);
+                                    false
                                 }
                             });
 
@@ -541,6 +546,36 @@ impl<'a> TypeScriptAnnotations<'a> {
                 keep
             }
         }
+    }
+
+    fn remove_import_declaration_bindings(decl: &ImportDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(specifiers) = &decl.specifiers {
+            for specifier in specifiers {
+                match specifier {
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                        Self::remove_binding(&specifier.local, ctx);
+                    }
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        Self::remove_binding(&specifier.local, ctx);
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                        Self::remove_binding(&specifier.local, ctx);
+                    }
+                }
+            }
+        }
+    }
+
+    fn remove_binding(ident: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        let symbol_id = ident.symbol_id();
+        let flags = ctx.scoping().symbol_flags(symbol_id);
+        if (flags - SymbolFlags::Import - SymbolFlags::TypeImport).is_value() {
+            ctx.scoping_mut().remove_symbol_declaration(symbol_id, ident.span);
+            return;
+        }
+
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        ctx.scoping_mut().remove_binding(scope_id, ident.name);
     }
 
     /// Check if the given name is a JSX pragma or fragment pragma import

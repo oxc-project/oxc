@@ -12,7 +12,6 @@ use oxc_ast_macros::ast;
 define_nonmax_u32_index_type! {
     #[ast]
     #[builder(default)]
-    #[clone_in(default)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct ReferenceId;
@@ -21,15 +20,16 @@ define_nonmax_u32_index_type! {
 impl<'alloc> CloneIn<'alloc> for ReferenceId {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self {
-        // `clone_in` should never reach this, because `CloneIn` skips reference_id field
-        unreachable!();
-    }
-
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
-        *self
+    fn clone_in_impl(&self, with_semantic_ids: bool, _: &'alloc Allocator) -> Self {
+        if with_semantic_ids {
+            *self
+        } else {
+            // `with_semantic_ids == false` should never reach this, because `CloneIn` skips
+            // `reference_id` field, filling it with its default instead.
+            unreachable!();
+        }
     }
 }
 
@@ -224,7 +224,11 @@ impl ReferenceFlags {
 impl<'alloc> CloneIn<'alloc> for ReferenceFlags {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: bool,
+        _: &'alloc oxc_allocator::Allocator,
+    ) -> Self::Cloned {
         *self
     }
 }

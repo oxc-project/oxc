@@ -30,7 +30,7 @@ use crate::{
     common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
 };
 
-use super::options::ReactRefreshOptions;
+use super::options::{DEFAULT_REFRESH_REG, DEFAULT_REFRESH_SIG, ReactRefreshOptions};
 
 /// Parse a string into a `RefreshIdentifierResolver` and convert it into an `Expression`
 #[derive(Debug)]
@@ -136,11 +136,13 @@ pub struct ReactRefresh<'a> {
 }
 
 impl<'a> ReactRefresh<'a> {
-    pub fn new(options: &ReactRefreshOptions, ast: &AstBuilder<'a>) -> Self {
+    pub fn new(options: Option<&ReactRefreshOptions>, ast: &AstBuilder<'a>) -> Self {
+        let refresh_reg = options.map_or(DEFAULT_REFRESH_REG, |options| &options.refresh_reg);
+        let refresh_sig = options.map_or(DEFAULT_REFRESH_SIG, |options| &options.refresh_sig);
         Self {
-            refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),
-            refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
-            emit_full_signatures: options.emit_full_signatures,
+            refresh_reg: RefreshIdentifierResolver::parse(refresh_reg, ast),
+            refresh_sig: RefreshIdentifierResolver::parse(refresh_sig, ast),
+            emit_full_signatures: options.is_some_and(|options| options.emit_full_signatures),
             registrations: Vec::default(),
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
@@ -215,74 +217,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         var_decl.declarations = variable_declarator_items;
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let signature = match expr {
-            Expression::FunctionExpression(func) => self.create_signature_call_expression(
-                func.scope_id(),
-                func.body.as_mut().unwrap(),
-                ctx,
-            ),
-            Expression::ArrowFunctionExpression(arrow) => {
-                let call_fn =
-                    self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
-
-                // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
-                if call_fn.is_some() {
-                    Self::transform_arrow_function_to_block(arrow, ctx);
-                }
-                call_fn
-            }
-            // hoc(_c = function() { })
-            Expression::AssignmentExpression(_) => return,
-            // hoc1(hoc2(...))
-            Expression::CallExpression(_) => self.last_signature.take(),
-            _ => None,
-        };
-
-        let Some((binding_identifier, mut arguments)) = signature else {
-            return;
-        };
-        let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
-
-        if !matches!(expr, Expression::CallExpression(_)) {
-            // Try to get binding from parent VariableDeclarator
-            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent()
-                && let Some(ident) = declarator.id().get_binding_identifier()
-            {
-                let id_binding = BoundIdentifier::from_binding_ident(ident);
-                self.handle_function_in_variable_declarator(&id_binding, &binding, arguments, ctx);
-                return;
-            }
+        if matches!(
+            expr,
+            Expression::FunctionExpression(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::CallExpression(_)
+        ) {
+            self.exit_expression_impl(expr, ctx);
         }
-
-        let mut found_call_expression = false;
-        for ancestor in ctx.ancestors() {
-            if ancestor.is_assignment_expression() {
-                continue;
-            }
-            if ancestor.is_call_expression() {
-                found_call_expression = true;
-            }
-            break;
-        }
-
-        if found_call_expression {
-            self.last_signature =
-                Some((binding_identifier.clone(), arguments.clone_in(ctx.allocator())));
-        }
-
-        let span = expr.span();
-        expr.replace_with(|expr| {
-            arguments.insert(0, Argument::from(expr));
-            Expression::new_call_expression(
-                span,
-                binding.create_read_expression(ctx),
-                NONE,
-                arguments,
-                false,
-                ctx,
-            )
-        });
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -462,6 +406,75 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
 // Internal Methods
 impl<'a> ReactRefresh<'a> {
+    #[inline(never)]
+    fn exit_expression_impl(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let signature = match expr {
+            Expression::FunctionExpression(func) => self.create_signature_call_expression(
+                func.scope_id(),
+                func.body.as_mut().unwrap(),
+                ctx,
+            ),
+            Expression::ArrowFunctionExpression(arrow) => {
+                let call_fn =
+                    self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
+
+                // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
+                if call_fn.is_some() {
+                    Self::transform_arrow_function_to_block(arrow, ctx);
+                }
+                call_fn
+            }
+            // hoc1(hoc2(...))
+            Expression::CallExpression(_) => self.last_signature.take(),
+            _ => unreachable!(),
+        };
+
+        let Some((binding_identifier, mut arguments)) = signature else {
+            return;
+        };
+        let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
+
+        if !matches!(expr, Expression::CallExpression(_)) {
+            // Try to get binding from parent VariableDeclarator
+            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent()
+                && let Some(ident) = declarator.id().get_binding_identifier()
+            {
+                let id_binding = BoundIdentifier::from_binding_ident(ident);
+                self.handle_function_in_variable_declarator(&id_binding, &binding, arguments, ctx);
+                return;
+            }
+        }
+
+        let mut found_call_expression = false;
+        for ancestor in ctx.ancestors() {
+            if ancestor.is_assignment_expression() {
+                continue;
+            }
+            if ancestor.is_call_expression() {
+                found_call_expression = true;
+            }
+            break;
+        }
+
+        if found_call_expression {
+            self.last_signature =
+                Some((binding_identifier.clone(), arguments.clone_in(ctx.allocator())));
+        }
+
+        let span = expr.span();
+        expr.replace_with(|expr| {
+            arguments.insert(0, Argument::from(expr));
+            Expression::new_call_expression(
+                span,
+                binding.create_read_expression(ctx),
+                NONE,
+                arguments,
+                false,
+                ctx,
+            )
+        });
+    }
+
     fn create_registration(
         &mut self,
         persistent_id: Str<'a>,

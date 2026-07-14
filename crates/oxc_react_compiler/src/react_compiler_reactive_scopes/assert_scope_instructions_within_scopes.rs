@@ -8,9 +8,10 @@
 //!
 //! Corresponds to `src/ReactiveScopes/AssertScopeInstructionsWithinScope.ts`.
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     EvaluationOrder, Place, ReactiveFunction, ReactiveScopeBlock, ScopeId,
@@ -27,7 +28,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn assert_scope_instructions_within_scopes<'a>(
     func: &ReactiveFunction<'a>,
     env: &Environment<'a>,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     // Pass 1: Collect all scope IDs
     let mut existing_scopes: FxHashSet<ScopeId> = FxHashSet::default();
     let find_visitor = FindAllScopesVisitor { env };
@@ -72,7 +73,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindAllScopesVisitor<'a, 'e> {
 struct CheckState {
     existing_scopes: FxHashSet<ScopeId>,
     active_scopes: FxHashSet<ScopeId>,
-    error: Option<CompilerDiagnostic>,
+    error: Option<OxcDiagnostic>,
 }
 
 struct CheckInstructionsAgainstScopesVisitor<'a, 'e> {
@@ -88,25 +89,27 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CheckInstructionsAgainstScopesVisit
 
     fn visit_place(&self, id: EvaluationOrder, place: &Place, state: &mut CheckState) {
         // getPlaceScope: check if the place's identifier has a scope that is active at this id
-        let identifier = &self.env.identifiers[place.identifier.0 as usize];
+        let identifier = &self.env.identifiers[place.identifier];
         if let Some(scope_id) = identifier.scope {
-            let scope = &self.env.scopes[scope_id.0 as usize];
+            let scope = &self.env.scopes[scope_id];
             // isScopeActive: id >= scope.range.start && id < scope.range.end
             let is_active_at_id = id >= scope.range.start && id < scope.range.end;
             if is_active_at_id
                 && state.existing_scopes.contains(&scope_id)
                 && !state.active_scopes.contains(&scope_id)
             {
-                state.error = Some(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Encountered an instruction that should be part of a scope, \
-                     but where that scope has already completed",
-                    Some(format!(
-                        "Instruction [{:?}] is part of scope @{:?}, \
-                         but that scope has already completed",
-                        id, scope_id
-                    )),
-                ));
+                state.error = Some(
+                    ErrorCategory::Invariant
+                        .diagnostic(
+                            "Encountered an instruction that should be part of a scope, \
+                             but where that scope has already completed",
+                        )
+                        .with_help(format!(
+                            "Instruction [{:?}] is part of scope @{:?}, \
+                             but that scope has already completed",
+                            id, scope_id
+                        )),
+                );
             }
         }
     }

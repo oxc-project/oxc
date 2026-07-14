@@ -9,7 +9,6 @@ use oxc_index::define_nonmax_u32_index_type;
 define_nonmax_u32_index_type! {
     /// AST Node ID
     #[ast]
-    #[clone_in(default)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct NodeId;
@@ -42,14 +41,15 @@ impl<'a> Dummy<'a> for NodeId {
 impl<'alloc> CloneIn<'alloc> for NodeId {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self {
-        // `clone_in` should never reach this, because `CloneIn` skips `node_id` field
-        unreachable!();
-    }
-
     #[inline]
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
-        *self
+    fn clone_in_impl(&self, with_semantic_ids: bool, _: &'alloc Allocator) -> Self {
+        if with_semantic_ids {
+            *self
+        } else {
+            // `with_semantic_ids == false` should never reach this, because `CloneIn` skips
+            // `node_id` field, filling it with its default instead.
+            unreachable!();
+        }
     }
 }
 
@@ -59,12 +59,8 @@ bitflags! {
     pub struct NodeFlags: u8 {
         /// Set if the Node has a JSDoc comment attached
         const JSDoc     = 1 << 0;
-        /// Set on Nodes inside classes
-        const Class     = 1 << 1;
         /// Set functions containing yield statements
         const HasYield  = 1 << 2;
-        /// Set for `export { specifier }`
-        const ExportSpecifier  = 1 << 3;
     }
 }
 
@@ -75,21 +71,9 @@ impl NodeFlags {
         self.contains(Self::JSDoc)
     }
 
-    /// Returns `true` if this node is inside a class.
-    #[inline]
-    pub fn has_class(self) -> bool {
-        self.contains(Self::Class)
-    }
-
     /// Returns `true` if this function has a yield statement.
     #[inline]
     pub fn has_yield(self) -> bool {
         self.contains(Self::HasYield)
-    }
-
-    /// Returns `true` if this function has an export specifier.
-    #[inline]
-    pub fn has_export_specifier(self) -> bool {
-        self.contains(Self::ExportSpecifier)
     }
 }

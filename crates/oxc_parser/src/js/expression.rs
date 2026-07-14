@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
@@ -125,7 +125,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // from source text without going through `get_string`'s kind matching.
         let name = if token.escaped() { self.cur_string() } else { self.token_source(&token) };
         self.advance(kind);
-        (span, Ident::from(name))
+        (span, self.ident(name))
+    }
+
+    /// Create an [`Ident`], respecting [`ParseOptions::enable_ident_hashes`].
+    ///
+    /// All parser-created [`Ident`]s must be built through this method (or copied from another
+    /// `Ident` that was), so that [`ParseOptions::enable_ident_hashes`] applies uniformly.
+    /// Building an `Ident` from a `&str`/`Str` via `Into` instead would always hash it, producing
+    /// an AST where some `Ident`s are hashed and some are not.
+    ///
+    /// [`ParseOptions::enable_ident_hashes`]: crate::ParseOptions::enable_ident_hashes
+    #[inline]
+    pub(crate) fn ident(&self, name: &'a str) -> Ident<'a> {
+        if self.options.enable_ident_hashes { Ident::from(name) } else { Ident::new_unhashed(name) }
     }
 
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
@@ -159,7 +172,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// # Panics
     pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
         let span = self.cur_token().span();
-        let name = Str::from(self.cur_string());
+        let name = self.ident(self.cur_string());
         self.bump_any();
         PrivateIdentifier::new(span, name, self)
     }
@@ -743,8 +756,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
-            expr.expression =
-                self.map_to_chain_expression(expr.expression.span(), expr.expression.take_in(self));
+            expr.expression.replace_with(|expr| self.map_to_chain_expression(expr.span(), expr));
             Expression::TSInstantiationExpression(expr)
         } else {
             let span = self.end_span(span);

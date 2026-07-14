@@ -153,7 +153,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `type something = intrinsic. ...`
                 let left_name = TSTypeName::new_identifier_reference(
                     intrinsic_token.span(),
-                    self.token_source(&intrinsic_token),
+                    self.ident(self.token_source(&intrinsic_token)),
                     self,
                 );
                 let type_name =
@@ -236,7 +236,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
         }
-        let (extends, implements) = self.parse_heritage_clause();
+        let (extends, implements) =
+            self.parse_heritage_clause(Self::parse_ts_interface_extends_clause);
         let body = self.parse_ts_interface_body();
         let extends = extends.unwrap_or_else(|| ArenaVec::new_in(self));
         self.verify_modifiers(
@@ -265,6 +266,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains_declare(),
             self,
         )
+    }
+
+    fn parse_ts_interface_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {
+        self.bump_any(); // bump `extends`
+
+        let mut extends = ArenaVec::with_capacity_in(1, self);
+        loop {
+            let span = self.start_span();
+            let mut extend = self.parse_lhs_expression_or_higher();
+            if self.fatal_error.is_some() {
+                break;
+            }
+            let type_argument;
+            if let Expression::TSInstantiationExpression(expr) = extend {
+                let expr = expr.unbox();
+                extend = expr.expression;
+                type_argument = Some(expr.type_arguments);
+            } else {
+                type_argument = self.try_parse_type_arguments();
+            }
+
+            extends.push(TSInterfaceHeritage::new(
+                self.end_span(span),
+                extend,
+                type_argument,
+                self,
+            ));
+
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+
+        extends
     }
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
@@ -739,7 +774,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::identifier_reserved_word(this_span, "this"));
             self.bump_any();
             // Recover by creating an identifier
-            let this = this_span.source_text(self.source_text);
+            let this = self.ident(this_span.source_text(self.source_text));
             debug_assert_eq!(this, "this");
             let ident = IdentifierReference::boxed(this_span, this, self);
             return TSModuleReference::IdentifierReference(ident);

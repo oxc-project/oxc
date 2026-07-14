@@ -700,3 +700,74 @@ fn fold_coalesce_on_tracked_non_nullish_binding() {
 fn test_fold_if_keep_var_filter_converges() {
     test_same("function f() {\n\tif (0) var x, y;\n\ty = 1;\n\treturn y;\n}\nf();");
 }
+
+// DCE mode is rolldown's per-module tree-shaking preprocess; the DEFAULT-mode
+// drop of write-only property assignments (full minify only) must stay off
+// here — `treeshake.property_write_side_effects: false` is rolldown's own knob
+// for opting in.
+#[test]
+fn dce_keeps_write_only_property_assignments() {
+    test_same(
+        "(function() {\n\tvar r = require(\"react\");\n\tvar o = function(e, t) {\n\t\treturn r.create(e, t);\n\t};\n\to.displayName = \"X\";\n})();",
+    );
+}
+
+// A statement that never completes normally (a kept block ending in a jump,
+// an if/else or try/catch where every branch jumps) makes everything after it
+// in the same statement list unreachable. The kept-block shape is what
+// `define`-driven branch folding leaves behind: `if (true) { ... return fn; }`
+// folds to a block that is pinned by its lexical declaration.
+#[test]
+fn dce_remove_unreachable_after_terminating_statement() {
+    // https://github.com/rolldown/rolldown/issues/10184
+    test(
+        "export function f() {\n\tif (true) {\n\t\tconst fn = () => 1;\n\t\tfn.stop = fn;\n\t\treturn fn;\n\t}\n\tconst fn = () => 2;\n\tfn.stop = fn;\n\treturn fn;\n}",
+        "export function f() {\n\t{\n\t\tconst fn = () => 1;\n\t\tfn.stop = fn;\n\t\treturn fn;\n\t}\n}",
+    );
+    // Both branches of an if/else terminate.
+    test(
+        "export function f(c) { if (c) { return 1; } else { return 2; } foo(); }",
+        "export function f(c) { if (c) return 1; else return 2; }",
+    );
+    // Both blocks of a try/catch terminate.
+    test(
+        "export function f() { try { return g(); } catch { return h(); } i(); }",
+        "export function f() { try { return g(); } catch { return h(); } }",
+    );
+    // A `var` in the unreachable tail hoists; unreferenced, the re-emitted
+    // declaration is then dropped as unused.
+    test(
+        "export function f() {\n\tif (true) {\n\t\tconst a = 1;\n\t\tuse(a);\n\t\treturn a;\n\t}\n\tvar x = g();\n}",
+        "export function f() {\n\t{\n\t\tconst a = 1;\n\t\tuse(a);\n\t\treturn a;\n\t}\n}",
+    );
+    // A `var` in the unreachable tail referenced from live code keeps its
+    // binding (only the unreachable initializer goes).
+    test(
+        "export function f() {\n\tuse(() => x);\n\tif (true) {\n\t\tconst a = 1;\n\t\tuse(a);\n\t\treturn a;\n\t}\n\tvar x = g();\n}",
+        "export function f() {\n\tuse(() => x);\n\t{\n\t\tconst a = 1;\n\t\tuse(a);\n\t\treturn a;\n\t}\n\tvar x;\n}",
+    );
+    // Function declarations in the unreachable tail hoist and stay.
+    test_same(
+        "export function f() {\n\t{\n\t\tconst a = g();\n\t\tuse(a);\n\t\treturn a;\n\t}\n\tfunction g() {\n\t\treturn 2;\n\t}\n}",
+    );
+    // Negative: the block can complete normally, so the tail stays.
+    test_same(
+        "export function f(c) {\n\t{\n\t\tlet a = g();\n\t\tif (c) return a;\n\t}\n\treturn foo();\n}",
+    );
+    // Hoisting survivors trailing the jump inside the block — a kept
+    // `function` declaration or a `var` stub re-emitted by `KeepVar` — don't
+    // hide that the block terminates.
+    test(
+        "export function f() {\n\t{\n\t\tconst a = g();\n\t\ta.x = a;\n\t\treturn a;\n\t\tfunction g() {\n\t\t\treturn {};\n\t\t}\n\t}\n\ttail();\n}",
+        "export function f() {\n\t{\n\t\tconst a = g();\n\t\ta.x = a;\n\t\treturn a;\n\t\tfunction g() {\n\t\t\treturn {};\n\t\t}\n\t}\n}",
+    );
+    test(
+        "export function f() {\n\tuse(() => x);\n\t{\n\t\tlet a = g();\n\t\tuse(a);\n\t\treturn a;\n\t\tvar x = h();\n\t}\n\ttail();\n}",
+        "export function f() {\n\tuse(() => x);\n\t{\n\t\tlet a = g();\n\t\tuse(a);\n\t\treturn a;\n\t\tvar x;\n\t}\n}",
+    );
+    // Negative: skipping the hoisting survivors must land on a statement
+    // that really terminates — `if` without `else` doesn't.
+    test_same(
+        "export function f(c) {\n\t{\n\t\tif (c) return g();\n\t\tfunction g() {\n\t\t\treturn 1;\n\t\t}\n\t}\n\treturn tail();\n}",
+    );
+}

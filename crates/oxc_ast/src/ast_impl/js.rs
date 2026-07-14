@@ -1942,8 +1942,8 @@ impl<'a> ImportDeclarationSpecifier<'a> {
     /// - `import { foo } from "lib"` => `"foo"`
     /// - `import * as foo from "lib"` => `"foo"`
     /// - `import foo from "lib"` => `"foo"`
-    pub fn name(&self) -> Cow<'a, str> {
-        Cow::Borrowed(self.local().name.as_str())
+    pub fn name(&self) -> Ident<'a> {
+        self.local().name
     }
 }
 

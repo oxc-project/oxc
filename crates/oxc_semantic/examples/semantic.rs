@@ -117,6 +117,28 @@ fn main() -> std::io::Result<()> {
             reporter.render_report(&mut s, info.as_ref()).unwrap();
             println!("{s}");
         }
+
+        for (ident, references) in semantic.semantic.scoping().root_unresolved_references() {
+            let info = OxcDiagnostic::warn(format!("Unresolved ident `{ident}`")).and_labels(
+                references
+                    .iter()
+                    .map(|reference_id| semantic.semantic.scoping().get_reference(*reference_id))
+                    .map(|reference| {
+                        semantic
+                            .semantic
+                            .nodes()
+                            .get_node(reference.node_id())
+                            .span()
+                            .label(format!("referenced here: ({:?})", reference.flags()))
+                    }),
+            );
+
+            let info = info.with_source_code(Arc::clone(&source_text));
+
+            let mut s = String::new();
+            reporter.render_report(&mut s, info.as_ref()).unwrap();
+            println!("{s}");
+        }
     }
 
     Ok(())

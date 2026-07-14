@@ -329,7 +329,7 @@ impl<'a> Codegen<'a> {
             loop {
                 // SAFETY: `ptr` is always less than or equal to `last_ptr`.
                 // `last_ptr` is within bounds of `bytes`, so safe to read a byte at `ptr`.
-                let byte = unsafe { *ptr.as_ref().unwrap_unchecked() };
+                let byte = unsafe { *ptr.as_ref_unchecked() };
                 if byte == b'<' {
                     // SAFETY: `ptr <= last_ptr`, and `last_ptr` points to no later than
                     // 8 bytes before end of string, so safe to read 8 bytes from `ptr`

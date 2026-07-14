@@ -14,18 +14,20 @@ use std::iter::once;
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerError, CompilerErrorDetail, ErrorCategory, SourceLocation,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{each_pattern_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern, Place,
-    PlaceOrSpread, PropertyLiteral, Type, visitors,
+    PlaceOrSpread, PropertyLiteral, Type, TypeId, visitors,
 };
 use crate::react_compiler_utils::FxIndexMap;
+use oxc_index::IndexSlice;
+use oxc_span::Span;
 
 /// Value classification for hook validation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -54,43 +56,46 @@ fn join_kinds(a: Kind, b: Kind) -> Kind {
 fn get_kind_for_place(
     place: &Place,
     value_kinds: &FxHashMap<IdentifierId, Kind>,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
 ) -> Kind {
     let known_kind = value_kinds.get(&place.identifier).copied();
-    let ident = &identifiers[place.identifier.0 as usize];
-    if let Some(ref name) = ident.name {
-        if is_hook_name(name.value()) {
-            return join_kinds(known_kind.unwrap_or(Kind::Local), Kind::PotentialHook);
-        }
+    let ident = &identifiers[place.identifier];
+    if let Some(ref name) = ident.name
+        && is_hook_name(name.value())
+    {
+        return join_kinds(known_kind.unwrap_or(Kind::Local), Kind::PotentialHook);
     }
     known_kind.unwrap_or(Kind::Local)
 }
 
-fn ident_is_hook_name(identifier_id: IdentifierId, identifiers: &[Identifier]) -> bool {
-    let ident = &identifiers[identifier_id.0 as usize];
+fn ident_is_hook_name(
+    identifier_id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> bool {
+    let ident = &identifiers[identifier_id];
     if let Some(ref name) = ident.name { is_hook_name(name.value()) } else { false }
 }
 
 fn get_hook_kind_for_id<'a>(
     identifier_id: IdentifierId,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
     env: &'a Environment,
-) -> Result<Option<&'a HookKind>, CompilerDiagnostic> {
-    let identifier = &identifiers[identifier_id.0 as usize];
-    let ty = &types[identifier.type_.0 as usize];
+) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
+    let identifier = &identifiers[identifier_id];
+    let ty = &types[identifier.type_];
     env.get_hook_kind_for_type(ty)
 }
 
 fn visit_place(
     place: &Place,
     value_kinds: &FxHashMap<IdentifierId, Kind>,
-    errors_by_loc: &mut FxIndexMap<SourceLocation, CompilerErrorDetail>,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let kind = value_kinds.get(&place.identifier).copied();
     if kind == Some(Kind::KnownHook) {
-        record_invalid_hook_usage_error(place, errors_by_loc, env)?;
+        record_invalid_hook_usage_error(place, errors_by_span, env)?;
     }
     Ok(())
 }
@@ -98,89 +103,51 @@ fn visit_place(
 fn record_conditional_hook_error(
     place: &Place,
     value_kinds: &mut FxHashMap<IdentifierId, Kind>,
-    errors_by_loc: &mut FxIndexMap<SourceLocation, CompilerErrorDetail>,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     value_kinds.insert(place.identifier, Kind::Error);
-    let reason = "Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)".to_string();
-    if let Some(loc) = place.loc {
-        let previous = errors_by_loc.get(&loc);
-        if previous.is_none() || previous.unwrap().reason != reason {
-            errors_by_loc.insert(
-                loc,
-                CompilerErrorDetail {
-                    category: ErrorCategory::Hooks,
-                    reason,
-                    description: None,
-                    loc: Some(loc),
-                },
-            );
+    let reason = "Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)";
+    if let Some(span) = place.span {
+        let diagnostic = ErrorCategory::Hooks.diagnostic(reason).with_label(span);
+        let previous = errors_by_span.get(&span);
+        if previous.is_none() || previous.unwrap().message != diagnostic.message {
+            errors_by_span.insert(span, diagnostic);
         }
     } else {
-        env.record_error(CompilerErrorDetail {
-            category: ErrorCategory::Hooks,
-            reason,
-            description: None,
-            loc: None,
-        })?;
+        env.record_error(ErrorCategory::Hooks.diagnostic(reason))?;
     }
     Ok(())
 }
 
 fn record_invalid_hook_usage_error(
     place: &Place,
-    errors_by_loc: &mut FxIndexMap<SourceLocation, CompilerErrorDetail>,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
-    let reason = "Hooks may not be referenced as normal values, they must be called. See https://react.dev/reference/rules/react-calls-components-and-hooks#never-pass-around-hooks-as-regular-values".to_string();
-    if let Some(loc) = place.loc {
-        if !errors_by_loc.contains_key(&loc) {
-            errors_by_loc.insert(
-                loc,
-                CompilerErrorDetail {
-                    category: ErrorCategory::Hooks,
-                    reason,
-                    description: None,
-                    loc: Some(loc),
-                },
-            );
+) -> Result<(), OxcDiagnostic> {
+    let reason = "Hooks may not be referenced as normal values, they must be called. See https://react.dev/reference/rules/react-calls-components-and-hooks#never-pass-around-hooks-as-regular-values";
+    if let Some(span) = place.span {
+        if !errors_by_span.contains_key(&span) {
+            errors_by_span.insert(span, ErrorCategory::Hooks.diagnostic(reason).with_label(span));
         }
     } else {
-        env.record_error(CompilerErrorDetail {
-            category: ErrorCategory::Hooks,
-            reason,
-            description: None,
-            loc: None,
-        })?;
+        env.record_error(ErrorCategory::Hooks.diagnostic(reason))?;
     }
     Ok(())
 }
 
 fn record_dynamic_hook_usage_error(
     place: &Place,
-    errors_by_loc: &mut FxIndexMap<SourceLocation, CompilerErrorDetail>,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
-    let reason = "Hooks must be the same function on every render, but this value may change over time to a different function. See https://react.dev/reference/rules/react-calls-components-and-hooks#dont-dynamically-use-hooks".to_string();
-    if let Some(loc) = place.loc {
-        if !errors_by_loc.contains_key(&loc) {
-            errors_by_loc.insert(
-                loc,
-                CompilerErrorDetail {
-                    category: ErrorCategory::Hooks,
-                    reason,
-                    description: None,
-                    loc: Some(loc),
-                },
-            );
+) -> Result<(), OxcDiagnostic> {
+    let reason = "Hooks must be the same function on every render, but this value may change over time to a different function. See https://react.dev/reference/rules/react-calls-components-and-hooks#dont-dynamically-use-hooks";
+    if let Some(span) = place.span {
+        if !errors_by_span.contains_key(&span) {
+            errors_by_span.insert(span, ErrorCategory::Hooks.diagnostic(reason).with_label(span));
         }
     } else {
-        env.record_error(CompilerErrorDetail {
-            category: ErrorCategory::Hooks,
-            reason,
-            description: None,
-            loc: None,
-        })?;
+        env.record_error(ErrorCategory::Hooks.diagnostic(reason))?;
     }
     Ok(())
 }
@@ -189,9 +156,10 @@ fn record_dynamic_hook_usage_error(
 pub fn validate_hooks_usage(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
-    let unconditional_blocks = compute_unconditional_blocks(func, env.next_block_id().0)?;
-    let mut errors_by_loc: FxIndexMap<SourceLocation, CompilerErrorDetail> = FxIndexMap::default();
+) -> Result<(), OxcDiagnostic> {
+    let unconditional_blocks =
+        compute_unconditional_blocks(func, env.next_block_id().index() as u32)?;
+    let mut errors_by_span: FxIndexMap<Span, OxcDiagnostic> = FxIndexMap::default();
     let mut value_kinds: FxHashMap<IdentifierId, Kind> = FxHashMap::default();
 
     // Process params
@@ -223,7 +191,7 @@ pub fn validate_hooks_usage(
 
         // Process instructions
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
@@ -237,13 +205,13 @@ pub fn validate_hooks_usage(
                 }
                 InstructionValue::LoadContext { place, .. }
                 | InstructionValue::LoadLocal { place, .. } => {
-                    visit_place(place, &value_kinds, &mut errors_by_loc, env)?;
+                    visit_place(place, &value_kinds, &mut errors_by_span, env)?;
                     let kind = get_kind_for_place(place, &value_kinds, &env.identifiers);
                     value_kinds.insert(lvalue_id, kind);
                 }
                 InstructionValue::StoreLocal { lvalue, value, .. }
                 | InstructionValue::StoreContext { lvalue, value, .. } => {
-                    visit_place(value, &value_kinds, &mut errors_by_loc, env)?;
+                    visit_place(value, &value_kinds, &mut errors_by_span, env)?;
                     let kind = join_kinds(
                         get_kind_for_place(value, &value_kinds, &env.identifiers),
                         get_kind_for_place(&lvalue.place, &value_kinds, &env.identifiers),
@@ -252,7 +220,7 @@ pub fn validate_hooks_usage(
                     value_kinds.insert(lvalue_id, kind);
                 }
                 InstructionValue::ComputedLoad { object, .. } => {
-                    visit_place(object, &value_kinds, &mut errors_by_loc, env)?;
+                    visit_place(object, &value_kinds, &mut errors_by_span, env)?;
                     let kind = get_kind_for_place(object, &value_kinds, &env.identifiers);
                     let lvalue_kind =
                         get_kind_for_place(&instr.lvalue, &value_kinds, &env.identifiers);
@@ -299,11 +267,11 @@ pub fn validate_hooks_usage(
                         record_conditional_hook_error(
                             callee,
                             &mut value_kinds,
-                            &mut errors_by_loc,
+                            &mut errors_by_span,
                             env,
                         )?;
                     } else if callee_kind == Kind::PotentialHook {
-                        record_dynamic_hook_usage_error(callee, &mut errors_by_loc, env)?;
+                        record_dynamic_hook_usage_error(callee, &mut errors_by_span, env)?;
                     }
                     // Visit all operands except callee
                     for arg in args {
@@ -311,7 +279,7 @@ pub fn validate_hooks_usage(
                             PlaceOrSpread::Place(p) => p,
                             PlaceOrSpread::Spread(s) => &s.place,
                         };
-                        visit_place(place, &value_kinds, &mut errors_by_loc, env)?;
+                        visit_place(place, &value_kinds, &mut errors_by_span, env)?;
                     }
                 }
                 InstructionValue::MethodCall { receiver, property, args, .. } => {
@@ -322,24 +290,24 @@ pub fn validate_hooks_usage(
                         record_conditional_hook_error(
                             property,
                             &mut value_kinds,
-                            &mut errors_by_loc,
+                            &mut errors_by_span,
                             env,
                         )?;
                     } else if callee_kind == Kind::PotentialHook {
-                        record_dynamic_hook_usage_error(property, &mut errors_by_loc, env)?;
+                        record_dynamic_hook_usage_error(property, &mut errors_by_span, env)?;
                     }
                     // Visit receiver and args (not property)
-                    visit_place(receiver, &value_kinds, &mut errors_by_loc, env)?;
+                    visit_place(receiver, &value_kinds, &mut errors_by_span, env)?;
                     for arg in args {
                         let place = match arg {
                             PlaceOrSpread::Place(p) => p,
                             PlaceOrSpread::Spread(s) => &s.place,
                         };
-                        visit_place(place, &value_kinds, &mut errors_by_loc, env)?;
+                        visit_place(place, &value_kinds, &mut errors_by_span, env)?;
                     }
                 }
                 InstructionValue::Destructure { lvalue, value, .. } => {
-                    visit_place(value, &value_kinds, &mut errors_by_loc, env)?;
+                    visit_place(value, &value_kinds, &mut errors_by_span, env)?;
                     let object_kind = get_kind_for_place(value, &value_kinds, &env.identifiers);
                     // Process instr.lvalue and all pattern operands (matching TS eachInstructionLValue)
                     let pattern_places = each_pattern_operand(&lvalue.pattern);
@@ -376,7 +344,7 @@ pub fn validate_hooks_usage(
                 _ => {
                     // For all other instructions: visit operands, set lvalue kinds
                     // Matches TS which uses eachInstructionOperand + eachInstructionLValue
-                    visit_all_operands(&instr.value, &value_kinds, &mut errors_by_loc, env)?;
+                    visit_all_operands(&instr.value, &value_kinds, &mut errors_by_span, env)?;
                     // Set kind for instr.lvalue
                     let kind = get_kind_for_place(&instr.lvalue, &value_kinds, &env.identifiers);
                     value_kinds.insert(lvalue_id, kind);
@@ -391,12 +359,12 @@ pub fn validate_hooks_usage(
 
         // Visit terminal operands
         for place in each_terminal_operand(&block.terminal) {
-            visit_place(&place, &value_kinds, &mut errors_by_loc, env)?;
+            visit_place(&place, &value_kinds, &mut errors_by_span, env)?;
         }
     }
 
     // Record all accumulated errors (in insertion order, matching TS Map iteration)
-    for (_, error_detail) in errors_by_loc {
+    for (_, error_detail) in errors_by_span {
         env.record_error(error_detail)?;
     }
     Ok(())
@@ -408,30 +376,30 @@ pub fn validate_hooks_usage(
 fn visit_function_expression(
     env: &mut Environment,
     func_id: FunctionId,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Collect items in instruction order to process them sequentially.
     // Each item is either a call to check or a nested function to visit.
     enum Item {
-        Call(IdentifierId, Option<SourceLocation>),
+        Call(IdentifierId, Option<Span>),
         NestedFunc(FunctionId),
     }
 
-    let func = &env.functions[func_id.0 as usize];
+    let func = &env.functions[func_id];
     let mut items: Vec<Item> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::ObjectMethod { lowered_func, .. }
                 | InstructionValue::FunctionExpression { lowered_func, .. } => {
                     items.push(Item::NestedFunc(lowered_func.func));
                 }
                 InstructionValue::CallExpression { callee, .. } => {
-                    items.push(Item::Call(callee.identifier, callee.loc));
+                    items.push(Item::Call(callee.identifier, callee.span));
                 }
                 InstructionValue::MethodCall { property, .. } => {
-                    items.push(Item::Call(property.identifier, property.loc));
+                    items.push(Item::Call(property.identifier, property.span));
                 }
                 _ => {}
             }
@@ -442,9 +410,9 @@ fn visit_function_expression(
     // functions immediately before processing subsequent calls)
     for item in items {
         match item {
-            Item::Call(identifier_id, loc) => {
-                let identifier = &env.identifiers[identifier_id.0 as usize];
-                let ty = &env.types[identifier.type_.0 as usize];
+            Item::Call(identifier_id, span) => {
+                let identifier = &env.identifiers[identifier_id];
+                let ty = &env.types[identifier.type_];
                 let hook_kind = env.get_hook_kind_for_type(ty).ok().flatten().cloned();
                 if let Some(hook_kind) = hook_kind {
                     let description = format!(
@@ -455,12 +423,14 @@ fn visit_function_expression(
                             hook_kind_display(&hook_kind)
                         }
                     );
-                    env.record_error(CompilerErrorDetail {
-                        category: ErrorCategory::Hooks,
-                        reason: "Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)".to_string(),
-                        description: Some(description),
-                        loc,
-                    })?;
+                    env.record_error(
+                        ErrorCategory::Hooks
+                            .diagnostic(
+                                "Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)",
+                            )
+                            .with_help(description)
+                            .with_labels(span),
+                    )?;
                 }
             }
             Item::NestedFunc(nested_func_id) => {
@@ -496,12 +466,12 @@ fn hook_kind_display(kind: &HookKind) -> &'static str {
 fn visit_all_operands(
     value: &InstructionValue,
     value_kinds: &FxHashMap<IdentifierId, Kind>,
-    errors_by_loc: &mut FxIndexMap<SourceLocation, CompilerErrorDetail>,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let operands = visitors::each_instruction_value_operand(value, &*env);
     for place in &operands {
-        visit_place(place, value_kinds, errors_by_loc, env)?;
+        visit_place(place, value_kinds, errors_by_span, env)?;
     }
     Ok(())
 }

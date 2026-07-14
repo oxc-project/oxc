@@ -4,55 +4,84 @@ pub mod environment;
 pub mod environment_config;
 pub mod globals;
 pub mod object_shape;
-pub mod print;
 pub mod raw;
 pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
-pub use crate::react_compiler_diagnostics::CompilerDiagnostic;
-pub use crate::react_compiler_diagnostics::GENERATED_SOURCE;
-pub use crate::react_compiler_diagnostics::Position;
-pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
-use oxc_ast::ast as oxc;
+use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::define_nonmax_u32_index_type;
+use oxc_str::{Ident, Str};
+use oxc_syntax::number::ToJsString;
 pub use raw::RawTypeCategory;
 pub use reactive::*;
+
+/// Sentinel value for generated/synthetic source locations (a node with no span).
+pub const GENERATED_SOURCE: Option<Span> = None;
 
 // =============================================================================
 // ID newtypes
 // =============================================================================
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct BlockId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct BlockId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct IdentifierId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct IdentifierId;
+}
 
-/// Index into the flat instruction table on HirFunction.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct InstructionId(pub u32);
+define_nonmax_u32_index_type! {
+    /// Index into the flat instruction table on HirFunction.
+    pub struct InstructionId;
+}
 
-/// Evaluation order assigned to instructions and terminals during numbering.
-/// This was previously called InstructionId in the TypeScript compiler.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EvaluationOrder(pub u32);
+define_nonmax_u32_index_type! {
+    /// Evaluation order assigned to instructions and terminals during numbering.
+    /// This was previously called InstructionId in the TypeScript compiler.
+    pub struct EvaluationOrder;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct DeclarationId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct DeclarationId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ScopeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct ScopeId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TypeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct TypeId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct FunctionId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct FunctionId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct MutableRangeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct MutableRangeId;
+}
+
+impl BlockId {
+    /// The entry block of a function's CFG. Blocks are numbered from 0, so the first
+    /// block allocated is always the entry.
+    pub const ENTRY: Self = Self::from_usize(0);
+
+    /// Placeholder id for the never-read block that the final `terminate()` installs as
+    /// `current`. Uses the largest representable index so it can never alias a real block
+    /// (blocks are numbered from 0).
+    pub const PLACEHOLDER: Self = Self::from_usize(Self::MAX_INDEX);
+}
+
+impl EvaluationOrder {
+    /// Placeholder order for instructions, terminals, and ranges before
+    /// `mark_instruction_ids` assigns the real, 1-based orders. `0` is never a valid
+    /// assigned order.
+    pub const UNSET: Self = Self::from_usize(0);
+}
 
 // =============================================================================
 // FloatValue wrapper
@@ -101,50 +130,7 @@ impl std::hash::Hash for FloatValue {
 
 impl std::fmt::Display for FloatValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format_js_number(self.value()))
-    }
-}
-
-/// Format an f64 the way JavaScript's `Number.prototype.toString()` does.
-///
-/// Key differences from Rust's default `Display`:
-/// - Uses scientific notation for |x| >= 1e21 (e.g. `1e+21`, `2.18739127891275e+22`)
-/// - Uses scientific notation for 0 < |x| < 1e-6 (e.g. `1e-7`, `1.5e-8`)
-/// - Uses minimal significant digits that round-trip to the same f64
-/// - Formats -0 as "0"
-pub fn format_js_number(n: f64) -> String {
-    if n.is_nan() {
-        return "NaN".to_string();
-    }
-    if n.is_infinite() {
-        return if n > 0.0 { "Infinity".to_string() } else { "-Infinity".to_string() };
-    }
-    if n == 0.0 {
-        return "0".to_string();
-    }
-
-    let abs = n.abs();
-    let sign = if n < 0.0 { "-" } else { "" };
-
-    if abs >= 1e21 || (abs > 0.0 && abs < 1e-6) {
-        // Use scientific notation matching JS format: coefficient + "e+" or "e-" + exponent
-        // Rust's {:e} uses "e" (lowercase) like JS, but formats as e.g. "1.5e21" not "1.5e+21"
-        let formatted = format!("{:e}", abs);
-        // Split into coefficient and exponent parts
-        let (coeff, exp_str) = formatted.split_once('e').unwrap();
-        let exp: i32 = exp_str.parse().unwrap();
-        // JS uses e+N for positive exponents, e-N for negative
-        if exp >= 0 {
-            format!("{}{}e+{}", sign, coeff, exp)
-        } else {
-            format!("{}{}e-{}", sign, coeff, exp.unsigned_abs())
-        }
-    } else if abs.fract() == 0.0 && abs < (i64::MAX as f64) {
-        // Integer that fits in i64 — format without decimal point
-        format!("{}{}", sign, abs as i64)
-    } else {
-        // Regular float: Rust's default Display gives us the right digits
-        format!("{}", n)
+        write!(f, "{}", self.value().to_js_string())
     }
 }
 
@@ -155,9 +141,9 @@ pub fn format_js_number(n: f64) -> String {
 /// A function lowered to HIR form
 #[derive(Debug, Clone)]
 pub struct HirFunction<'a> {
-    pub loc: Option<SourceLocation>,
-    pub id: Option<String>,
-    pub name_hint: Option<String>,
+    pub span: Option<Span>,
+    pub id: Option<Ident<'a>>,
+    pub name_hint: Option<Ident<'a>>,
     pub fn_type: ReactFunctionType,
     pub params: Vec<ParamPattern>,
     pub returns: Place,
@@ -166,7 +152,7 @@ pub struct HirFunction<'a> {
     pub instructions: Vec<Instruction<'a>>,
     pub generator: bool,
     pub is_async: bool,
-    pub directives: Vec<String>,
+    pub directives: Vec<Str<'a>>,
     pub aliasing_effects: Option<Vec<AliasingEffect>>,
 }
 
@@ -239,25 +225,25 @@ pub struct Phi {
 pub enum Terminal {
     Unreachable {
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Throw {
         value: Place,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Return {
         value: Place,
         return_variant: ReturnVariant,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         effects: Option<Vec<AliasingEffect>>,
     },
     Goto {
         block: BlockId,
         variant: GotoVariant,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     If {
         test: Place,
@@ -265,7 +251,7 @@ pub enum Terminal {
         alternate: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Branch {
         test: Place,
@@ -273,28 +259,28 @@ pub enum Terminal {
         alternate: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Switch {
         test: Place,
         cases: Vec<Case>,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     DoWhile {
         loop_block: BlockId,
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     While {
         test: BlockId,
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     For {
         init: BlockId,
@@ -303,7 +289,7 @@ pub enum Terminal {
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ForOf {
         init: BlockId,
@@ -311,52 +297,52 @@ pub enum Terminal {
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ForIn {
         init: BlockId,
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Logical {
         operator: LogicalOperator,
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Ternary {
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Optional {
         optional: bool,
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Label {
         block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Sequence {
         block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     MaybeThrow {
         continuation: BlockId,
         handler: Option<BlockId>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         effects: Option<Vec<AliasingEffect>>,
     },
     Try {
@@ -365,21 +351,21 @@ pub enum Terminal {
         handler: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Scope {
         fallthrough: BlockId,
         block: BlockId,
         scope: ScopeId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PrunedScope {
         fallthrough: BlockId,
         block: BlockId,
         scope: ScopeId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 }
 
@@ -412,29 +398,29 @@ impl Terminal {
     }
 
     /// Get the source location of this terminal
-    pub fn loc(&self) -> Option<&SourceLocation> {
+    pub fn span(&self) -> Option<&Span> {
         match self {
-            Terminal::Unreachable { loc, .. }
-            | Terminal::Throw { loc, .. }
-            | Terminal::Return { loc, .. }
-            | Terminal::Goto { loc, .. }
-            | Terminal::If { loc, .. }
-            | Terminal::Branch { loc, .. }
-            | Terminal::Switch { loc, .. }
-            | Terminal::DoWhile { loc, .. }
-            | Terminal::While { loc, .. }
-            | Terminal::For { loc, .. }
-            | Terminal::ForOf { loc, .. }
-            | Terminal::ForIn { loc, .. }
-            | Terminal::Logical { loc, .. }
-            | Terminal::Ternary { loc, .. }
-            | Terminal::Optional { loc, .. }
-            | Terminal::Label { loc, .. }
-            | Terminal::Sequence { loc, .. }
-            | Terminal::MaybeThrow { loc, .. }
-            | Terminal::Try { loc, .. }
-            | Terminal::Scope { loc, .. }
-            | Terminal::PrunedScope { loc, .. } => loc.as_ref(),
+            Terminal::Unreachable { span, .. }
+            | Terminal::Throw { span, .. }
+            | Terminal::Return { span, .. }
+            | Terminal::Goto { span, .. }
+            | Terminal::If { span, .. }
+            | Terminal::Branch { span, .. }
+            | Terminal::Switch { span, .. }
+            | Terminal::DoWhile { span, .. }
+            | Terminal::While { span, .. }
+            | Terminal::For { span, .. }
+            | Terminal::ForOf { span, .. }
+            | Terminal::ForIn { span, .. }
+            | Terminal::Logical { span, .. }
+            | Terminal::Ternary { span, .. }
+            | Terminal::Optional { span, .. }
+            | Terminal::Label { span, .. }
+            | Terminal::Sequence { span, .. }
+            | Terminal::MaybeThrow { span, .. }
+            | Terminal::Try { span, .. }
+            | Terminal::Scope { span, .. }
+            | Terminal::PrunedScope { span, .. } => span.as_ref(),
         }
     }
 
@@ -486,23 +472,6 @@ pub struct Case {
     pub block: BlockId,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LogicalOperator {
-    And,
-    Or,
-    NullishCoalescing,
-}
-
-impl std::fmt::Display for LogicalOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LogicalOperator::And => write!(f, "&&"),
-            LogicalOperator::Or => write!(f, "||"),
-            LogicalOperator::NullishCoalescing => write!(f, "??"),
-        }
-    }
-}
-
 // =============================================================================
 // Instruction types
 // =============================================================================
@@ -512,7 +481,7 @@ pub struct Instruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Place,
     pub value: InstructionValue<'a>,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub effects: Option<Vec<AliasingEffect>>,
 }
 
@@ -535,15 +504,15 @@ pub struct LValue {
 }
 
 #[derive(Debug, Clone)]
-pub struct LValuePattern {
-    pub pattern: Pattern,
+pub struct LValuePattern<'a> {
+    pub pattern: Pattern<'a>,
     pub kind: InstructionKind,
 }
 
 #[derive(Debug, Clone)]
-pub enum Pattern {
+pub enum Pattern<'a> {
     Array(ArrayPattern),
-    Object(ObjectPattern),
+    Object(ObjectPattern<'a>),
 }
 
 // =============================================================================
@@ -554,164 +523,156 @@ pub enum Pattern {
 pub enum InstructionValue<'a> {
     LoadLocal {
         place: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     LoadContext {
         place: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     DeclareLocal {
         lvalue: LValue,
-        type_annotation: Option<String>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     DeclareContext {
         lvalue: LValue,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     StoreLocal {
         lvalue: LValue,
         value: Place,
-        type_annotation: Option<String>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     StoreContext {
         lvalue: LValue,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Destructure {
-        lvalue: LValuePattern,
+        lvalue: LValuePattern<'a>,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Primitive {
-        value: PrimitiveValue,
-        loc: Option<SourceLocation>,
+        value: PrimitiveValue<'a>,
+        span: Option<Span>,
     },
     JSXText {
-        value: String,
-        loc: Option<SourceLocation>,
+        value: Str<'a>,
+        span: Option<Span>,
     },
     BinaryExpression {
         operator: BinaryOperator,
         left: Place,
         right: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     NewExpression {
         callee: Place,
         args: Vec<PlaceOrSpread>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     CallExpression {
         callee: Place,
         args: Vec<PlaceOrSpread>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     MethodCall {
         receiver: Place,
         property: Place,
         args: Vec<PlaceOrSpread>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     UnaryExpression {
         operator: UnaryOperator,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     TypeCastExpression {
         value: Place,
-        type_: Type,
-        type_annotation_name: Option<String>,
-        type_annotation_kind: Option<String>,
-        /// The original oxc AST type annotation subtree, preserved for codegen,
-        /// which re-emits it by cloning into the output allocator (and applying any
-        /// identifier renames via the environment for the rare rename case).
-        type_annotation: Option<&'a oxc::TSType<'a>>,
-        loc: Option<SourceLocation>,
+        cast: TypeCast<'a>,
+        span: Option<Span>,
     },
     JsxExpression {
-        tag: JsxTag,
-        props: Vec<JsxAttribute>,
+        tag: JsxTag<'a>,
+        props: Vec<JsxAttribute<'a>>,
         children: Option<Vec<Place>>,
-        loc: Option<SourceLocation>,
-        opening_loc: Option<SourceLocation>,
-        closing_loc: Option<SourceLocation>,
+        span: Option<Span>,
+        opening_span: Option<Span>,
+        closing_span: Option<Span>,
     },
     ObjectExpression {
-        properties: Vec<ObjectPropertyOrSpread>,
-        loc: Option<SourceLocation>,
+        properties: Vec<ObjectPropertyOrSpread<'a>>,
+        span: Option<Span>,
     },
     ObjectMethod {
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         lowered_func: LoweredFunction,
     },
     ArrayExpression {
         elements: Vec<ArrayElement>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     JsxFragment {
         children: Vec<Place>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     RegExpLiteral {
-        pattern: String,
-        flags: String,
-        loc: Option<SourceLocation>,
+        pattern: Str<'a>,
+        flags: Str<'a>,
+        span: Option<Span>,
     },
     MetaProperty {
-        meta: String,
-        property: String,
-        loc: Option<SourceLocation>,
+        meta: Ident<'a>,
+        property: Ident<'a>,
+        span: Option<Span>,
     },
     PropertyStore {
         object: Place,
-        property: PropertyLiteral,
+        property: PropertyLiteral<'a>,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PropertyLoad {
         object: Place,
-        property: PropertyLiteral,
-        loc: Option<SourceLocation>,
+        property: PropertyLiteral<'a>,
+        span: Option<Span>,
     },
     PropertyDelete {
         object: Place,
-        property: PropertyLiteral,
-        loc: Option<SourceLocation>,
+        property: PropertyLiteral<'a>,
+        span: Option<Span>,
     },
     ComputedStore {
         object: Place,
         property: Place,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ComputedLoad {
         object: Place,
         property: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ComputedDelete {
         object: Place,
         property: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     LoadGlobal {
-        binding: NonLocalBinding,
-        loc: Option<SourceLocation>,
+        binding: NonLocalBinding<'a>,
+        span: Option<Span>,
     },
     StoreGlobal {
-        name: String,
+        name: Ident<'a>,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     FunctionExpression {
-        name: Option<String>,
-        name_hint: Option<String>,
+        name: Option<Ident<'a>>,
+        name_hint: Option<Ident<'a>>,
         lowered_func: LoweredFunction,
         expr_type: FunctionExpressionType,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     TaggedTemplateExpression {
         tag: Place,
@@ -719,116 +680,118 @@ pub enum InstructionValue<'a> {
         // Upstream's HIR models only a single quasi with no interpolation; the
         // oxc port extends it to support `tag`-ed templates with `${...}`
         // interpolations (a deliberate divergence from the TS reference).
-        quasis: Vec<TemplateQuasi>,
+        quasis: Vec<TemplateQuasi<'a>>,
         subexprs: Vec<Place>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     TemplateLiteral {
         subexprs: Vec<Place>,
-        quasis: Vec<TemplateQuasi>,
-        loc: Option<SourceLocation>,
+        quasis: Vec<TemplateQuasi<'a>>,
+        span: Option<Span>,
     },
     Await {
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     GetIterator {
         collection: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     IteratorNext {
         iterator: Place,
         collection: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     NextPropertyOf {
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PrefixUpdate {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PostfixUpdate {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Debugger {
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     StartMemoize {
         manual_memo_id: u32,
-        deps: Option<Vec<ManualMemoDependency>>,
-        deps_loc: Option<Option<SourceLocation>>,
+        deps: Option<Vec<ManualMemoDependency<'a>>>,
+        deps_span: Option<Option<Span>>,
         has_invalid_deps: bool,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     FinishMemoize {
         manual_memo_id: u32,
         decl: Place,
         pruned: bool,
-        loc: Option<SourceLocation>,
-    },
-    UnsupportedNode {
-        node_type: Option<String>,
-        /// The borrowed oxc statement node preserved verbatim, so codegen can clone
-        /// it into the output allocator and re-emit it (e.g. an inline TS `enum`,
-        /// which has runtime semantics but no HIR representation).
-        stmt: &'a oxc::Statement<'a>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 }
 
+/// A preserved TS type-cast wrapper, aligned with the oxc AST node it was
+/// lowered from. The type subtree is an arena clone made at lowering; codegen
+/// re-emits it, applying identifier renames via semantic reference ids.
+#[derive(Debug, Clone, Copy)]
+pub enum TypeCast<'a> {
+    /// `expr as T` (`TSAsExpression`) and `<T>expr` (`TSTypeAssertion`)
+    As(&'a TSType<'a>),
+    /// `expr satisfies T` (`TSSatisfiesExpression`)
+    Satisfies(&'a TSType<'a>),
+}
+
 impl<'a> InstructionValue<'a> {
-    pub fn loc(&self) -> Option<&SourceLocation> {
+    pub fn span(&self) -> Option<&Span> {
         match self {
-            InstructionValue::LoadLocal { loc, .. }
-            | InstructionValue::LoadContext { loc, .. }
-            | InstructionValue::DeclareLocal { loc, .. }
-            | InstructionValue::DeclareContext { loc, .. }
-            | InstructionValue::StoreLocal { loc, .. }
-            | InstructionValue::StoreContext { loc, .. }
-            | InstructionValue::Destructure { loc, .. }
-            | InstructionValue::Primitive { loc, .. }
-            | InstructionValue::JSXText { loc, .. }
-            | InstructionValue::BinaryExpression { loc, .. }
-            | InstructionValue::NewExpression { loc, .. }
-            | InstructionValue::CallExpression { loc, .. }
-            | InstructionValue::MethodCall { loc, .. }
-            | InstructionValue::UnaryExpression { loc, .. }
-            | InstructionValue::TypeCastExpression { loc, .. }
-            | InstructionValue::JsxExpression { loc, .. }
-            | InstructionValue::ObjectExpression { loc, .. }
-            | InstructionValue::ObjectMethod { loc, .. }
-            | InstructionValue::ArrayExpression { loc, .. }
-            | InstructionValue::JsxFragment { loc, .. }
-            | InstructionValue::RegExpLiteral { loc, .. }
-            | InstructionValue::MetaProperty { loc, .. }
-            | InstructionValue::PropertyStore { loc, .. }
-            | InstructionValue::PropertyLoad { loc, .. }
-            | InstructionValue::PropertyDelete { loc, .. }
-            | InstructionValue::ComputedStore { loc, .. }
-            | InstructionValue::ComputedLoad { loc, .. }
-            | InstructionValue::ComputedDelete { loc, .. }
-            | InstructionValue::LoadGlobal { loc, .. }
-            | InstructionValue::StoreGlobal { loc, .. }
-            | InstructionValue::FunctionExpression { loc, .. }
-            | InstructionValue::TaggedTemplateExpression { loc, .. }
-            | InstructionValue::TemplateLiteral { loc, .. }
-            | InstructionValue::Await { loc, .. }
-            | InstructionValue::GetIterator { loc, .. }
-            | InstructionValue::IteratorNext { loc, .. }
-            | InstructionValue::NextPropertyOf { loc, .. }
-            | InstructionValue::PrefixUpdate { loc, .. }
-            | InstructionValue::PostfixUpdate { loc, .. }
-            | InstructionValue::Debugger { loc, .. }
-            | InstructionValue::StartMemoize { loc, .. }
-            | InstructionValue::FinishMemoize { loc, .. }
-            | InstructionValue::UnsupportedNode { loc, .. } => loc.as_ref(),
+            InstructionValue::LoadLocal { span, .. }
+            | InstructionValue::LoadContext { span, .. }
+            | InstructionValue::DeclareLocal { span, .. }
+            | InstructionValue::DeclareContext { span, .. }
+            | InstructionValue::StoreLocal { span, .. }
+            | InstructionValue::StoreContext { span, .. }
+            | InstructionValue::Destructure { span, .. }
+            | InstructionValue::Primitive { span, .. }
+            | InstructionValue::JSXText { span, .. }
+            | InstructionValue::BinaryExpression { span, .. }
+            | InstructionValue::NewExpression { span, .. }
+            | InstructionValue::CallExpression { span, .. }
+            | InstructionValue::MethodCall { span, .. }
+            | InstructionValue::UnaryExpression { span, .. }
+            | InstructionValue::TypeCastExpression { span, .. }
+            | InstructionValue::JsxExpression { span, .. }
+            | InstructionValue::ObjectExpression { span, .. }
+            | InstructionValue::ObjectMethod { span, .. }
+            | InstructionValue::ArrayExpression { span, .. }
+            | InstructionValue::JsxFragment { span, .. }
+            | InstructionValue::RegExpLiteral { span, .. }
+            | InstructionValue::MetaProperty { span, .. }
+            | InstructionValue::PropertyStore { span, .. }
+            | InstructionValue::PropertyLoad { span, .. }
+            | InstructionValue::PropertyDelete { span, .. }
+            | InstructionValue::ComputedStore { span, .. }
+            | InstructionValue::ComputedLoad { span, .. }
+            | InstructionValue::ComputedDelete { span, .. }
+            | InstructionValue::LoadGlobal { span, .. }
+            | InstructionValue::StoreGlobal { span, .. }
+            | InstructionValue::FunctionExpression { span, .. }
+            | InstructionValue::TaggedTemplateExpression { span, .. }
+            | InstructionValue::TemplateLiteral { span, .. }
+            | InstructionValue::Await { span, .. }
+            | InstructionValue::GetIterator { span, .. }
+            | InstructionValue::IteratorNext { span, .. }
+            | InstructionValue::NextPropertyOf { span, .. }
+            | InstructionValue::PrefixUpdate { span, .. }
+            | InstructionValue::PostfixUpdate { span, .. }
+            | InstructionValue::Debugger { span, .. }
+            | InstructionValue::StartMemoize { span, .. }
+            | InstructionValue::FinishMemoize { span, .. } => span.as_ref(),
         }
     }
 }
@@ -837,68 +800,13 @@ impl<'a> InstructionValue<'a> {
 // Supporting types
 // =============================================================================
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum PrimitiveValue {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PrimitiveValue<'a> {
     Null,
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(crate::react_compiler_diagnostics::JsString),
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BinaryOperator {
-    Equal,
-    NotEqual,
-    StrictEqual,
-    StrictNotEqual,
-    LessThan,
-    LessEqual,
-    GreaterThan,
-    GreaterEqual,
-    ShiftLeft,
-    ShiftRight,
-    UnsignedShiftRight,
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
-    Exponent,
-    BitwiseOr,
-    BitwiseXor,
-    BitwiseAnd,
-    In,
-    InstanceOf,
-}
-
-impl std::fmt::Display for BinaryOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            BinaryOperator::Equal => write!(f, "=="),
-            BinaryOperator::NotEqual => write!(f, "!="),
-            BinaryOperator::StrictEqual => write!(f, "==="),
-            BinaryOperator::StrictNotEqual => write!(f, "!=="),
-            BinaryOperator::LessThan => write!(f, "<"),
-            BinaryOperator::LessEqual => write!(f, "<="),
-            BinaryOperator::GreaterThan => write!(f, ">"),
-            BinaryOperator::GreaterEqual => write!(f, ">="),
-            BinaryOperator::ShiftLeft => write!(f, "<<"),
-            BinaryOperator::ShiftRight => write!(f, ">>"),
-            BinaryOperator::UnsignedShiftRight => write!(f, ">>>"),
-            BinaryOperator::Add => write!(f, "+"),
-            BinaryOperator::Subtract => write!(f, "-"),
-            BinaryOperator::Multiply => write!(f, "*"),
-            BinaryOperator::Divide => write!(f, "/"),
-            BinaryOperator::Modulo => write!(f, "%"),
-            BinaryOperator::Exponent => write!(f, "**"),
-            BinaryOperator::BitwiseOr => write!(f, "|"),
-            BinaryOperator::BitwiseXor => write!(f, "^"),
-            BinaryOperator::BitwiseAnd => write!(f, "&"),
-            BinaryOperator::In => write!(f, "in"),
-            BinaryOperator::InstanceOf => write!(f, "instanceof"),
-        }
-    }
+    String(Str<'a>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -925,21 +833,6 @@ impl std::fmt::Display for UnaryOperator {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum UpdateOperator {
-    Increment,
-    Decrement,
-}
-
-impl std::fmt::Display for UpdateOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            UpdateOperator::Increment => write!(f, "++"),
-            UpdateOperator::Decrement => write!(f, "--"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FunctionExpressionType {
     ArrowFunctionExpression,
     FunctionExpression,
@@ -947,29 +840,29 @@ pub enum FunctionExpressionType {
 }
 
 #[derive(Debug, Clone)]
-pub struct TemplateQuasi {
-    pub raw: String,
-    pub cooked: Option<String>,
+pub struct TemplateQuasi<'a> {
+    pub raw: Str<'a>,
+    pub cooked: Option<Str<'a>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct ManualMemoDependency {
-    pub root: ManualMemoDependencyRoot,
-    pub path: Vec<DependencyPathEntry>,
-    pub loc: Option<SourceLocation>,
+pub struct ManualMemoDependency<'a> {
+    pub root: ManualMemoDependencyRoot<'a>,
+    pub path: Vec<DependencyPathEntry<'a>>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ManualMemoDependencyRoot {
+pub enum ManualMemoDependencyRoot<'a> {
     NamedLocal { value: Place, constant: bool },
-    Global { identifier_name: String },
+    Global { identifier_name: Ident<'a> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DependencyPathEntry {
-    pub property: PropertyLiteral,
+pub struct DependencyPathEntry<'a> {
+    pub property: PropertyLiteral<'a>,
     pub optional: bool,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 // =============================================================================
@@ -981,18 +874,18 @@ pub struct Place {
     pub identifier: IdentifierId,
     pub effect: Effect,
     pub reactive: bool,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Identifier {
+pub struct Identifier<'a> {
     pub id: IdentifierId,
     pub declaration_id: DeclarationId,
-    pub name: Option<IdentifierName>,
+    pub name: Option<IdentifierName<'a>>,
     pub mutable_range: MutableRange,
     pub scope: Option<ScopeId>,
     pub type_: TypeId,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -1020,16 +913,16 @@ impl MutableRange {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum IdentifierName {
-    Named(String),
-    Promoted(String),
+#[derive(Debug, Clone, Copy)]
+pub enum IdentifierName<'a> {
+    Named(Ident<'a>),
+    Promoted(Ident<'a>),
 }
 
-impl IdentifierName {
-    pub fn value(&self) -> &str {
+impl<'a> IdentifierName<'a> {
+    pub fn value(&self) -> &'a str {
         match self {
-            IdentifierName::Named(v) | IdentifierName::Promoted(v) => v,
+            IdentifierName::Named(v) | IdentifierName::Promoted(v) => v.as_str(),
         }
     }
 }
@@ -1085,7 +978,6 @@ pub struct SpreadPattern {
 #[derive(Debug, Clone)]
 pub struct ArrayPattern {
     pub items: Vec<ArrayPatternElement>,
-    pub loc: Option<SourceLocation>,
 }
 
 #[derive(Debug, Clone)]
@@ -1096,28 +988,27 @@ pub enum ArrayPatternElement {
 }
 
 #[derive(Debug, Clone)]
-pub struct ObjectPattern {
-    pub properties: Vec<ObjectPropertyOrSpread>,
-    pub loc: Option<SourceLocation>,
+pub struct ObjectPattern<'a> {
+    pub properties: Vec<ObjectPropertyOrSpread<'a>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ObjectPropertyOrSpread {
-    Property(ObjectProperty),
+pub enum ObjectPropertyOrSpread<'a> {
+    Property(ObjectProperty<'a>),
     Spread(SpreadPattern),
 }
 
 #[derive(Debug, Clone)]
-pub struct ObjectProperty {
-    pub key: ObjectPropertyKey,
+pub struct ObjectProperty<'a> {
+    pub key: ObjectPropertyKey<'a>,
     pub property_type: ObjectPropertyType,
     pub place: Place,
 }
 
 #[derive(Debug, Clone)]
-pub enum ObjectPropertyKey {
-    String { name: String },
-    Identifier { name: String },
+pub enum ObjectPropertyKey<'a> {
+    String { name: Ident<'a> },
+    Identifier { name: Ident<'a> },
     Computed { name: Place },
 }
 
@@ -1136,19 +1027,19 @@ impl std::fmt::Display for ObjectPropertyType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum PropertyLiteral {
-    String(String),
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PropertyLiteral<'a> {
+    String(Ident<'a>),
     Number(FloatValue),
 }
 
-impl PropertyLiteral {
+impl PropertyLiteral<'_> {
     pub fn is_string(&self, value: &str) -> bool {
-        matches!(self, Self::String(s) if s == value)
+        matches!(self, Self::String(s) if *s == value)
     }
 }
 
-impl std::fmt::Display for PropertyLiteral {
+impl std::fmt::Display for PropertyLiteral<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PropertyLiteral::String(s) => write!(f, "{}", s),
@@ -1176,20 +1067,20 @@ pub struct LoweredFunction {
 }
 
 #[derive(Debug, Clone)]
-pub struct BuiltinTag {
-    pub name: String,
+pub struct BuiltinTag<'a> {
+    pub name: Ident<'a>,
 }
 
 #[derive(Debug, Clone)]
-pub enum JsxTag {
+pub enum JsxTag<'a> {
     Place(Place),
-    Builtin(BuiltinTag),
+    Builtin(BuiltinTag<'a>),
 }
 
 #[derive(Debug, Clone)]
-pub enum JsxAttribute {
+pub enum JsxAttribute<'a> {
     SpreadAttribute { argument: Place },
-    Attribute { name: String, place: Place },
+    Attribute { name: Ident<'a>, place: Place },
 }
 
 // =============================================================================
@@ -1209,33 +1100,33 @@ pub enum BindingKind {
 }
 
 #[derive(Debug, Clone)]
-pub enum VariableBinding {
+pub enum VariableBinding<'a> {
     Identifier { identifier: IdentifierId, binding_kind: BindingKind },
-    Global { name: String },
-    ImportDefault { name: String, module: String },
-    ImportSpecifier { name: String, module: String, imported: String },
-    ImportNamespace { name: String, module: String },
-    ModuleLocal { name: String },
+    Global { name: Ident<'a> },
+    ImportDefault { name: Ident<'a>, module: Str<'a> },
+    ImportSpecifier { name: Ident<'a>, module: Str<'a>, imported: Ident<'a> },
+    ImportNamespace { name: Ident<'a>, module: Str<'a> },
+    ModuleLocal { name: Ident<'a> },
 }
 
 #[derive(Debug, Clone)]
-pub enum NonLocalBinding {
-    ImportDefault { name: String, module: String },
-    ImportSpecifier { name: String, module: String, imported: String },
-    ImportNamespace { name: String, module: String },
-    ModuleLocal { name: String },
-    Global { name: String },
+pub enum NonLocalBinding<'a> {
+    ImportDefault { name: Ident<'a>, module: Str<'a> },
+    ImportSpecifier { name: Ident<'a>, module: Str<'a>, imported: Ident<'a> },
+    ImportNamespace { name: Ident<'a>, module: Str<'a> },
+    ModuleLocal { name: Ident<'a> },
+    Global { name: Ident<'a> },
 }
 
-impl NonLocalBinding {
+impl<'a> NonLocalBinding<'a> {
     /// Returns the `name` field common to all variants.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> Ident<'a> {
         match self {
             NonLocalBinding::ImportDefault { name, .. }
             | NonLocalBinding::ImportSpecifier { name, .. }
             | NonLocalBinding::ImportNamespace { name, .. }
             | NonLocalBinding::ModuleLocal { name, .. }
-            | NonLocalBinding::Global { name, .. } => name,
+            | NonLocalBinding::Global { name, .. } => *name,
         }
     }
 }
@@ -1245,36 +1136,35 @@ impl NonLocalBinding {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub enum Type {
+pub enum Type<'a> {
     Primitive,
     Function {
-        shape_id: Option<String>,
-        return_type: Box<Type>,
+        shape_id: Option<Ident<'a>>,
+        return_type: Box<Type<'a>>,
         is_constructor: bool,
     },
     Object {
-        shape_id: Option<String>,
+        shape_id: Option<Ident<'a>>,
     },
-    #[allow(clippy::enum_variant_names)]
-    TypeVar {
+    Var {
         id: TypeId,
     },
     Poly,
     Phi {
-        operands: Vec<Type>,
+        operands: Vec<Type<'a>>,
     },
     Property {
-        object_type: Box<Type>,
-        object_name: String,
-        property_name: PropertyNameKind,
+        object_type: Box<Type<'a>>,
+        object_name: Ident<'a>,
+        property_name: PropertyNameKind<'a>,
     },
     ObjectMethod,
 }
 
 #[derive(Debug, Clone)]
-pub enum PropertyNameKind {
-    Literal { value: PropertyLiteral },
-    Computed { value: Box<Type> },
+pub enum PropertyNameKind<'a> {
+    Literal { value: PropertyLiteral<'a> },
+    Computed,
 }
 
 // =============================================================================
@@ -1282,12 +1172,12 @@ pub enum PropertyNameKind {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub struct ReactiveScope {
+pub struct ReactiveScope<'a> {
     pub id: ScopeId,
     pub range: MutableRange,
 
     /// The inputs to this reactive scope (populated by later passes)
-    pub dependencies: Vec<ReactiveScopeDependency>,
+    pub dependencies: Vec<ReactiveScopeDependency<'a>>,
 
     /// The set of values produced by this scope (populated by later passes)
     pub declarations: Vec<(IdentifierId, ReactiveScopeDeclaration)>,
@@ -1302,16 +1192,16 @@ pub struct ReactiveScope {
     pub merged: Vec<ScopeId>,
 
     /// Source location spanning the scope
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 /// A dependency of a reactive scope.
 #[derive(Debug, Clone)]
-pub struct ReactiveScopeDependency {
+pub struct ReactiveScopeDependency<'a> {
     pub identifier: IdentifierId,
     pub reactive: bool,
-    pub path: Vec<DependencyPathEntry>,
-    pub loc: Option<SourceLocation>,
+    pub path: Vec<DependencyPathEntry<'a>>,
+    pub span: Option<Span>,
 }
 
 /// A declaration produced by a reactive scope.
@@ -1325,7 +1215,7 @@ pub struct ReactiveScopeDeclaration {
 #[derive(Debug, Clone)]
 pub struct ReactiveScopeEarlyReturn {
     pub value: IdentifierId,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub label: BlockId,
 }
 
@@ -1346,7 +1236,6 @@ pub enum MutationReason {
 /// Describes the aliasing/mutation/data-flow effects of an instruction or terminal.
 /// Ported from TS `AliasingEffect` in `AliasingEffects.ts`.
 #[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
 pub enum AliasingEffect {
     /// Marks the given value and its direct aliases as frozen.
     Freeze { value: Place, reason: ValueReason },
@@ -1379,17 +1268,17 @@ pub enum AliasingEffect {
         mutates_function: bool,
         args: Vec<PlaceOrSpreadOrHole>,
         into: Place,
-        signature: Option<FunctionSignature>,
-        loc: Option<SourceLocation>,
+        signature: Option<std::rc::Rc<FunctionSignature>>,
+        span: Option<Span>,
     },
     /// Function expression creation with captures.
     CreateFunction { captures: Vec<Place>, function_id: FunctionId, into: Place },
     /// Mutation of a value known to be frozen (error).
-    MutateFrozen { place: Place, error: CompilerDiagnostic },
+    MutateFrozen { place: Place, error: OxcDiagnostic },
     /// Mutation of a global value (error).
-    MutateGlobal { place: Place, error: CompilerDiagnostic },
+    MutateGlobal { place: Place, error: OxcDiagnostic },
     /// Side-effect not safe during render.
-    Impure { place: Place, error: CompilerDiagnostic },
+    Impure { place: Place, error: OxcDiagnostic },
     /// Value is accessed during render.
     Render { place: Place },
 }
@@ -1432,27 +1321,27 @@ pub fn is_primitive_type(ty: &Type) -> bool {
 
 /// Returns true if the type is the props object.
 pub fn is_props_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_PROPS_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_PROPS_ID)
 }
 
 /// Returns true if the type is an array.
 pub fn is_array_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_ARRAY_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_ARRAY_ID)
 }
 
 /// Returns true if the type is JSX.
 pub fn is_jsx_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_JSX_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_JSX_ID)
 }
 
 /// Returns true if the identifier type is a ref value.
 pub fn is_ref_value_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_REF_VALUE_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_REF_VALUE_ID)
 }
 
 /// Returns true if the identifier type is useRef.
 pub fn is_use_ref_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_USE_REF_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_USE_REF_ID)
 }
 
 /// Returns true if the type is a ref or ref value.
@@ -1462,38 +1351,38 @@ pub fn is_ref_or_ref_value(ty: &Type) -> bool {
 
 /// Returns true if the type is a useState result (BuiltInUseState).
 pub fn is_use_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == object_shape::BUILT_IN_USE_STATE_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == object_shape::BUILT_IN_USE_STATE_ID)
 }
 
 /// Returns true if the type is a setState function (BuiltInSetState).
 pub fn is_set_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_STATE_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_STATE_ID)
 }
 
 /// Returns true if the type is a useEffect hook.
 pub fn is_use_effect_hook_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_EFFECT_HOOK_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_EFFECT_HOOK_ID)
 }
 
 /// Returns true if the type is a useLayoutEffect hook.
 pub fn is_use_layout_effect_hook_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID)
 }
 
 /// Returns true if the type is a useInsertionEffect hook.
 pub fn is_use_insertion_effect_hook_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID)
 }
 
 /// Returns true if the type is a useEffectEvent function.
 pub fn is_use_effect_event_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_EFFECT_EVENT_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_EFFECT_EVENT_ID)
 }
 
 /// Returns true if the type is a ref or ref-like mutable type (e.g. Reanimated shared values).
 pub fn is_ref_or_ref_like_mutable_type(ty: &Type) -> bool {
     matches!(ty, Type::Object { shape_id: Some(id) }
-        if id == object_shape::BUILT_IN_USE_REF_ID || id == object_shape::REANIMATED_SHARED_VALUE_ID)
+        if *id == object_shape::BUILT_IN_USE_REF_ID || *id == object_shape::REANIMATED_SHARED_VALUE_ID)
 }
 
 /// Returns true if the type is the `use()` operator (React.use).
@@ -1501,16 +1390,16 @@ pub fn is_use_operator_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Function { shape_id: Some(id), .. }
-            if id == BUILT_IN_USE_OPERATOR_ID
+            if *id == BUILT_IN_USE_OPERATOR_ID
     )
 }
 
 /// Returns true if the type is a plain object (BuiltInObject).
 pub fn is_plain_object_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == object_shape::BUILT_IN_OBJECT_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == object_shape::BUILT_IN_OBJECT_ID)
 }
 
 /// Returns true if the type is a startTransition function (BuiltInStartTransition).
 pub fn is_start_transition_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_START_TRANSITION_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_START_TRANSITION_ID)
 }

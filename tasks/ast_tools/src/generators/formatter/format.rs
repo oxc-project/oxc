@@ -31,7 +31,39 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "TemplateElement",
 ];
 
-const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] = &["TSUnionType"];
+// `ExpressionStatement` prints leading comments in its `write` implementation,
+// so the ASI-guard semicolon can be printed before a leading type cast comment.
+const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
+    &["TSUnionType", "ExpressionStatement"];
+
+// Statements whose suppressed (`oxfmt-ignore`d) range must exclude the trailing semicolon,
+// so the formatter prints its own terminator like Prettier's ignored range.
+// Every node listed here MUST implement `FormatWrite::write_suppressed`
+// (the default implementation panics at runtime).
+//
+// Mirrors Prettier's `locEnd` overrides (`language-js/location/overrides.js`) +
+// `shouldIgnoredNodePrintSemicolon`: keyword statements end at their keyword/label,
+// content-terminated ones at their content, body-ended ones recurse into the rightmost body.
+//
+// `ExpressionStatement` and `VariableDeclaration` have the same issue in principle
+// but no confirmed divergence against Prettier 3.9 yet.
+//
+// Extend the list one statement at a time, verifying each against Prettier first.
+const AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING: &[&str] = &[
+    "BreakStatement",
+    "ContinueStatement",
+    "DebuggerStatement",
+    "DoWhileStatement",
+    "ForInStatement",
+    "ForOfStatement",
+    "ForStatement",
+    "IfStatement",
+    "LabeledStatement",
+    "ReturnStatement",
+    "ThrowStatement",
+    "WhileStatement",
+    "WithStatement",
+];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
@@ -88,7 +120,7 @@ impl Generator for FormatterFormatGenerator {
                 formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
-                utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
+                utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren}},
                 print::{FormatWrite #(#options)*},
             };
 
@@ -114,7 +146,12 @@ fn generate_struct_implementation(
     let do_not_print_leading_comment = do_not_print_comment
         || AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST.contains(&struct_name);
 
-    let leading_comments = (!do_not_print_leading_comment).then(|| {
+    let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
+
+    // For nodes that may get formatter-added parentheses,
+    // leading comments are printed by the parentheses block below (ordering depends on the comments),
+    // not as a standalone step.
+    let leading_comments = (!do_not_print_leading_comment && !needs_parentheses).then(|| {
         quote! {
             self.format_leading_comments(f);
         }
@@ -125,13 +162,21 @@ fn generate_struct_implementation(
         }
     });
 
-    let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
-
     let needs_parentheses_before = if needs_parentheses {
-        quote! {
-            let needs_parentheses = self.needs_parentheses(f);
-            if needs_parentheses {
-                "(".fmt(f);
+        if do_not_print_leading_comment {
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                if needs_parentheses {
+                    "(".fmt(f);
+                }
+            }
+        } else {
+            // A leading type cast comment must stay adjacent to the `(` of its cast target inside this node;
+            // the helper prints the comments inside the added parentheses in that case,
+            // or the cast would rebind to them.
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
             }
         }
     } else {
@@ -170,27 +215,37 @@ fn generate_struct_implementation(
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
-        } else if trailing_comments.is_none() {
-            quote! {
-                if is_suppressed {
-                     self.format_leading_comments(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
-                     self.format_trailing_comments(f);
-                } else {
-                    #write_call
-                }
-            }
         } else {
+            let suppressed_write =
+                if AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING.contains(&struct_name) {
+                    quote! { self.write_suppressed(f); }
+                } else {
+                    quote! { FormatSuppressedNode(self.span()).fmt(f); }
+                };
+            // When `fmt` doesn't print leading/trailing comments itself,
+            // the suppressed path still has to print them, or the suppression comment would be lost.
+            let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
+                quote! {
+                    self.format_leading_comments(f);
+                }
+            });
+            let suppressed_trailing_comments = do_not_print_comment.then(|| {
+                quote! {
+                    self.format_trailing_comments(f);
+                }
+            });
             quote! {
                 if is_suppressed {
-                    FormatSuppressedNode(self.span()).fmt(f);
+                    #suppressed_leading_comments
+                    #suppressed_write
+                    #suppressed_trailing_comments
                 } else {
                     #write_call
                 }
             }
         };
 
-        let type_cast_comment_formatting = parenthesis_type_ids.contains(&struct_def.id).then(|| {
+        let type_cast_comment_formatting = needs_parentheses.then(|| {
             let is_object_or_array_argument =
                 if matches!(struct_def.name.as_str(), "ObjectExpression" | "ArrayExpression") {
                     quote! {
@@ -213,7 +268,7 @@ fn generate_struct_implementation(
             }
         });
 
-        if needs_parentheses_before.is_empty() && trailing_comments.is_none() {
+        if !needs_parentheses && trailing_comments.is_none() {
             quote! {
                 #suppressed_check
                 #type_cast_comment_formatting

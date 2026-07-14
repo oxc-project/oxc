@@ -1,9 +1,9 @@
-commit: 1fb0b771
+commit: c86e9e4b
 
 parser_babel Summary:
-AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2221/2236 (99.33%)
-Negative Passed: 1709/1723 (99.19%)
+AST Parsed     : 2235/2235 (100.00%)
+Positive Passed: 2221/2235 (99.37%)
+Negative Passed: 1728/1743 (99.14%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -25,6 +25,8 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-named/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-declare-module-identifier/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable-in-module/input.ts
 
@@ -178,25 +180,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │         // Also works on AssignmentPattern
    ╰────
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
-
-  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts:5:5]
- 4 │   #c?: number;
- 5 │   #d!;
-   ·     ─
- 6 │   #e!: boolean;
-   ╰────
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
-
-  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:6]
- 5 │     x: number = 1;
- 6 │     x!;
-   ·      ─
- 7 │     x!: number;
-   ╰────
 
   × Identifier `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:2:5]
@@ -231,7 +215,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     x: number = 1;
    ·     ┬
    ·     ╰── It can not be redeclared here
- 6 │     x!;
+ 6 │     x!: number;
    ╰────
 
   × Identifier `x` has already been declared
@@ -240,22 +224,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     x: number = 1;
    ·     ┬
    ·     ╰── `x` has already been declared here
- 6 │     x!;
+ 6 │     x!: number;
    ·     ┬
    ·     ╰── It can not be redeclared here
- 7 │     x!: number;
-   ╰────
-
-  × Identifier `x` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:5]
- 5 │     x: number = 1;
- 6 │     x!;
-   ·     ┬
-   ·     ╰── `x` has already been declared here
- 7 │     x!: number;
-   ·     ┬
-   ·     ╰── It can not be redeclared here
- 8 │ }
+ 7 │ }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
@@ -12535,6 +12507,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:5:13]
+ 4 │ 
+ 5 │   accessor a!;
+   ·             ─
+ 6 │   abstract accessor #s;
+   ╰────
+
   × TS(1276): An 'accessor' property cannot be declared optional.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:7:14]
  6 │   abstract accessor #s;
@@ -12876,6 +12856,70 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │     readonly static [x: string]: any;
    ·              ──────
  3 │ }
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:2:4]
+ 1 │ class C {
+ 2 │   x!: number = 1;
+   ·    ─
+ 3 │   #x!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:3:5]
+ 2 │   x!: number = 1;
+ 3 │   #x!: number = 1;
+   ·     ─
+ 4 │   accessor a!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:4:13]
+ 3 │   #x!: number = 1;
+ 4 │   accessor a!: number = 1;
+   ·             ─
+ 5 │   accessor #a!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:5:14]
+ 4 │   accessor a!: number = 1;
+ 5 │   accessor #a!: number = 1;
+   ·              ─
+ 6 │ }
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:2:4]
+ 1 │ class C {
+ 2 │   x!;
+   ·    ─
+ 3 │   #x!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:3:5]
+ 2 │   x!;
+ 3 │   #x!;
+   ·     ─
+ 4 │   accessor a!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:4:13]
+ 3 │   #x!;
+ 4 │   accessor a!;
+   ·             ─
+ 5 │   accessor #a!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:5:14]
+ 4 │   accessor a!;
+ 5 │   accessor #a!;
+   ·              ─
+ 6 │ }
    ╰────
 
   × TS(1029): 'private' modifier must precede 'override' modifier.
@@ -13422,6 +13466,132 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-await-using-declaration-with-initializer/input.ts:1:8]
  1 │ declare await using basic = null;
    ·        ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:1:26]
+ 1 │ declare var w!: number = 1;
+   ·                          ─
+ 2 │ declare let x!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:1:14]
+ 1 │ declare var w!: number = 1;
+   ·              ─
+ 2 │ declare let x!: number = 1;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:2:26]
+ 1 │ declare var w!: number = 1;
+ 2 │ declare let x!: number = 1;
+   ·                          ─
+ 3 │ declare const y!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:2:14]
+ 1 │ declare var w!: number = 1;
+ 2 │ declare let x!: number = 1;
+   ·              ─
+ 3 │ declare const y!: number = 1;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:3:28]
+ 2 │ declare let x!: number = 1;
+ 3 │ declare const y!: number = 1;
+   ·                            ─
+ 4 │ {
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:3:16]
+ 2 │ declare let x!: number = 1;
+ 3 │ declare const y!: number = 1;
+   ·                ─
+ 4 │ {
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:5:10]
+ 4 │ {
+ 5 │   declare using z!: number = 1;
+   ·          ▲
+ 6 │   declare await using za!: number = 1;
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-await-using/input.ts:2:10]
+ 1 │ {
+ 2 │   declare await using {}! = {};
+   ·          ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-const/input.ts:1:17]
+ 1 │ declare const {}! = {};
+   ·                 ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-let/input.ts:1:15]
+ 1 │ declare let {}! = {};
+   ·               ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-using/input.ts:2:10]
+ 1 │ {
+ 2 │   declare using {}! = {};
+   ·          ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-var/input.ts:1:15]
+ 1 │ declare var {}! = {};
+   ·               ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:1:14]
+ 1 │ declare var w!;
+   ·              ─
+ 2 │ declare let x!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:2:14]
+ 1 │ declare var w!;
+ 2 │ declare let x!;
+   ·              ─
+ 3 │ declare const y!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:3:16]
+ 2 │ declare let x!;
+ 3 │ declare const y!;
+   ·                ─
+ 4 │ {
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:5:10]
+ 4 │ {
+ 5 │   declare using z!;
+   ·          ▲
+ 6 │   declare await using za!;
    ╰────
   help: Try inserting a semicolon here
 
@@ -14265,6 +14435,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────────────────────
  3 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-declare-module-number/input.ts:1:8]
+ 1 │ declare module 0 {}
+   ·        ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-declare-module-without-name/input.ts:1:8]
+ 1 │ declare module {}
+   ·        ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable/input.ts:3:1]
@@ -15178,16 +15362,218 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·           ╰── Opened here
    ╰────
 
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-with-type/input.ts:3:7]
+ 2 │ let x!: number;
+ 3 │ const y!: number;
+   ·       ─
+ 4 │ {
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-with-type/input.ts:5:9]
+ 4 │ {
+ 5 │   using z!: number;
+   ·         ─
+ 6 │   await using za!: number;
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-with-type/input.ts:6:15]
+ 5 │   using z!: number;
+ 6 │   await using za!: number;
+   ·               ──
+ 7 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:1:6]
+ 1 │ var w!: number = 1;
+   ·      ─
+ 2 │ let x!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:2:6]
+ 1 │ var w!: number = 1;
+ 2 │ let x!: number = 1;
+   ·      ─
+ 3 │ const y!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:3:8]
+ 2 │ let x!: number = 1;
+ 3 │ const y!: number = 1;
+   ·        ─
+ 4 │ {
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:5:10]
+ 4 │ {
+ 5 │   using z!: number = 1;
+   ·          ─
+ 6 │   await using za!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:6:17]
+ 5 │   using z!: number = 1;
+ 6 │   await using za!: number = 1;
+   ·                 ─
+ 7 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-like-not-eq/input.ts:1:6]
+ 1 │ var w!=null;
+   ·      ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:14]
+ 1 │ {
+ 2 │   await using {}! = {};
+   ·              ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
   × Missing initializer in destructuring declaration
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:5]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-const/input.ts:1:7]
+ 1 │ const {}! = {};
+   ·       ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-const/input.ts:1:9]
+ 1 │ const {}! = {};
+   ·         ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-let/input.ts:1:5]
  1 │ let {}! = {};
    ·     ──
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:7]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-let/input.ts:1:7]
  1 │ let {}! = {};
    ·       ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-using/input.ts:2:9]
+ 1 │ {
+ 2 │   using {}! = {};
+   ·         ──
+ 3 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-using/input.ts:2:9]
+ 1 │ {
+ 2 │   using {}! = {};
+   ·         ──
+ 3 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-using/input.ts:2:11]
+ 1 │ {
+ 2 │   using {}! = {};
+   ·           ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-var/input.ts:1:5]
+ 1 │ var {}! = {};
+   ·     ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-var/input.ts:1:7]
+ 1 │ var {}! = {};
+   ·       ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:1:6]
+ 1 │ var w!;
+   ·      ─
+ 2 │ let x!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:2:6]
+ 1 │ var w!;
+ 2 │ let x!;
+   ·      ─
+ 3 │ const y!;
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:3:7]
+ 2 │ let x!;
+ 3 │ const y!;
+   ·       ─
+ 4 │ {
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:3:8]
+ 2 │ let x!;
+ 3 │ const y!;
+   ·        ─
+ 4 │ {
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:5:9]
+ 4 │ {
+ 5 │   using z!;
+   ·         ─
+ 6 │   await using za!;
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:5:10]
+ 4 │ {
+ 5 │   using z!;
+   ·          ─
+ 6 │   await using za!;
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:6:15]
+ 5 │   using z!;
+ 6 │   await using za!;
+   ·               ──
+ 7 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:6:17]
+ 5 │   using z!;
+ 6 │   await using za!;
+   ·                 ─
+ 7 │ }
+   ╰────
