@@ -63,7 +63,6 @@ use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 use crate::react_compiler_hir::visitors;
 use oxc_span::Span;
-use smallvec::SmallVec;
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -293,40 +292,54 @@ impl ValueId {
 // AbstractValue
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 struct AbstractValue {
     kind: ValueKind,
     reason: ReasonSet,
 }
 
-/// A small, insertion-ordered set of [`ValueReason`]s.
+/// A set of [`ValueReason`]s stored as a bitmask.
 ///
-/// `AbstractValue`s are cloned constantly during the inference fixpoint — once per
-/// entry on every `InferenceState` clone — so `reason` must clone without
-/// allocating. The sets are tiny (usually a single element, never more than one
-/// per `ValueReason` variant), so an inline `SmallVec` avoids the per-clone heap
-/// allocation the previous `IndexSet` required. Insertion order is preserved to
-/// keep [`primary_reason`] (which returns the first non-`Other` reason) unchanged.
-#[derive(Debug, Clone, Default)]
-struct ReasonSet(SmallVec<[ValueReason; 4]>);
+/// `AbstractValue`s are copied constantly during the inference fixpoint — once per
+/// entry on every `InferenceState` clone — so `reason` must be cheap to copy. There
+/// are only 12 `ValueReason` variants, so the set fits in a `u16` bitmask: it is
+/// `Copy` (no per-clone allocation or memcpy), and membership/union/superset are
+/// single bitwise ops. [`Self::iter`] yields reasons in `ValueReason` declaration
+/// order, which is the order [`primary_reason`] consumes.
+#[derive(Debug, Clone, Copy, Default)]
+struct ReasonSet(u16);
 
 impl ReasonSet {
-    fn single(reason: ValueReason) -> Self {
-        Self(smallvec::smallvec![reason])
+    /// All variants in declaration order; index matches the bit position.
+    const ALL: [ValueReason; 12] = [
+        ValueReason::KnownReturnSignature,
+        ValueReason::State,
+        ValueReason::ReducerState,
+        ValueReason::Context,
+        ValueReason::Effect,
+        ValueReason::HookCaptured,
+        ValueReason::HookReturn,
+        ValueReason::Global,
+        ValueReason::JsxCaptured,
+        ValueReason::StoreLocal,
+        ValueReason::ReactiveFunctionArgument,
+        ValueReason::Other,
+    ];
+
+    fn bit(reason: ValueReason) -> u16 {
+        1 << (reason as u16)
     }
 
-    fn insert(&mut self, reason: ValueReason) {
-        if !self.0.contains(&reason) {
-            self.0.push(reason);
-        }
+    fn single(reason: ValueReason) -> Self {
+        Self(Self::bit(reason))
     }
 
     fn contains(&self, reason: &ValueReason) -> bool {
-        self.0.contains(reason)
+        self.0 & Self::bit(*reason) != 0
     }
 
     fn iter(&self) -> impl Iterator<Item = ValueReason> + '_ {
-        self.0.iter().copied()
+        Self::ALL.into_iter().filter(move |&reason| self.0 & Self::bit(reason) != 0)
     }
 }
 
@@ -390,7 +403,7 @@ impl InferenceState {
             };
             merged_kind = Some(match merged_kind {
                 Some(prev) => merge_abstract_values(&prev, kind),
-                None => kind.clone(),
+                None => *kind,
             });
         }
         merged_kind.unwrap_or_else(|| AbstractValue {
@@ -535,7 +548,7 @@ impl InferenceState {
         for (id, other_value) in &other.values {
             if !self.values.contains_key(id) {
                 let nv = next_values.get_or_insert_with(|| self.values.clone());
-                nv.insert(*id, other_value.clone());
+                nv.insert(*id, *other_value);
             }
         }
 
@@ -596,7 +609,7 @@ impl InferenceState {
                     }
                 }
                 None => {
-                    self.values.insert(*id, other_value.clone());
+                    self.values.insert(*id, *other_value);
                 }
             }
         }
@@ -641,7 +654,7 @@ impl InferenceState {
 }
 
 fn is_superset(a: &ReasonSet, b: &ReasonSet) -> bool {
-    b.iter().all(|x| a.contains(&x))
+    a.0 & b.0 == b.0
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -793,12 +806,9 @@ fn hash_effect(effect: &AliasingEffect) -> String {
 fn merge_abstract_values(a: &AbstractValue, b: &AbstractValue) -> AbstractValue {
     let kind = merge_value_kinds(a.kind, b.kind);
     if kind == a.kind && kind == b.kind && is_superset(&a.reason, &b.reason) {
-        return a.clone();
+        return *a;
     }
-    let mut reason = a.reason.clone();
-    for r in b.reason.iter() {
-        reason.insert(r);
-    }
+    let reason = ReasonSet(a.reason.0 | b.reason.0);
     AbstractValue { kind, reason }
 }
 
@@ -1011,7 +1021,7 @@ fn infer_param(param: &ParamPattern, state: &mut InferenceState, param_kind: &Ab
         ParamPattern::Spread(s) => &s.place,
     };
     let value_id = ValueId::new();
-    state.initialize(value_id, param_kind.clone());
+    state.initialize(value_id, *param_kind);
     state.define(place.identifier, value_id);
 }
 
@@ -1329,7 +1339,7 @@ fn apply_effect(
             let value_id = context.get_or_create_value_id(&effect);
             state.initialize(
                 value_id,
-                AbstractValue { kind: from_value.kind, reason: from_value.reason.clone() },
+                AbstractValue { kind: from_value.kind, reason: from_value.reason },
             );
             state.define(into.identifier, value_id);
             match from_value.kind {
