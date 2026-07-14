@@ -4788,6 +4788,11 @@ impl RuleRunner
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }
 
+impl RuleRunner for crate::rules::vitest::padding_around_test_blocks::PaddingAroundTestBlocks {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
 impl RuleRunner
     for crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith
 {
