@@ -9760,6 +9760,9 @@
         "vitest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vitest/padding-around-test-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vitest/prefer-called-exactly-once-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },

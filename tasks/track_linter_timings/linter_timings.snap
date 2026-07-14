@@ -687,6 +687,7 @@ vitest/no-test-prefixes                                    |      0
 vitest/no-test-return-statement                            |  76889
 vitest/no-unneeded-async-expect-function                   |      0
 vitest/padding-around-after-all-blocks                     |      0
+vitest/padding-around-test-blocks                          |      0
 vitest/prefer-called-exactly-once-with                     |  14953
 vitest/prefer-called-once                                  |      0
 vitest/prefer-called-times                                 |      0

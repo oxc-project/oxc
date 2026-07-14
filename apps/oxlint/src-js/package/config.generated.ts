@@ -1674,6 +1674,7 @@ export interface DummyRuleMap {
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "vitest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-test-blocks"?: RuleNoConfig;
   "vitest/prefer-called-exactly-once-with"?: RuleNoConfig;
   "vitest/prefer-called-once"?: RuleNoConfig;
   "vitest/prefer-called-times"?: RuleNoConfig;
