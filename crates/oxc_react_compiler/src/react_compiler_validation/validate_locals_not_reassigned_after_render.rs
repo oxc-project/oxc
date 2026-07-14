@@ -9,11 +9,12 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
+use smallvec::smallvec;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
-    each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
+    PlaceList, each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
     Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue,
@@ -204,24 +205,24 @@ fn get_context_reassignment(
                     // For calls with noAlias signatures, only check the callee/receiver
                     // (not args) to avoid false positives from callbacks that reassign
                     // context variables.
-                    let operands: Vec<Place> = match &instr.value {
+                    let operands: PlaceList = match &instr.value {
                         InstructionValue::CallExpression { callee, .. } => {
                             if env.has_no_alias_signature(callee.identifier) {
-                                vec![callee.clone()]
+                                smallvec![callee.clone()]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
                         }
                         InstructionValue::MethodCall { receiver, property, .. } => {
                             if env.has_no_alias_signature(property.identifier) {
-                                vec![receiver.clone(), property.clone()]
+                                smallvec![receiver.clone(), property.clone()]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
                         }
                         InstructionValue::TaggedTemplateExpression { tag, .. } => {
                             if env.has_no_alias_signature(tag.identifier) {
-                                vec![tag.clone()]
+                                smallvec![tag.clone()]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
