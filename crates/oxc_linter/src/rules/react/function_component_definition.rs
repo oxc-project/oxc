@@ -266,7 +266,8 @@ mod fix {
                     return false;
                 }
                 if expected == FunctionStyle::Arrow
-                    && (function.generator
+                    && (function.this_param.is_some()
+                        || function.generator
                         || has_one_unconstrained_type_parameter(
                             function.type_parameters.as_deref(),
                         ))
@@ -1314,6 +1315,10 @@ fn test() {
         ),
         (
             "function* Hello(props) { return <div/>; }",
+            Some(serde_json::json!([{ "namedComponents": "arrow-function" }])),
+        ),
+        (
+            "function Hello(this: Context, props: Props) { return <div/>; }",
             Some(serde_json::json!([{ "namedComponents": "arrow-function" }])),
         ),
     ];
