@@ -1831,6 +1831,11 @@ pub enum FunctionType {
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
+/// `span` includes parentheses, except for unparenthesized arrow parameters.
+/// ```js
+/// function foo(a) {} // `params.span` is `(a)`
+/// const bar = x => x // `params.span` is `x`
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
