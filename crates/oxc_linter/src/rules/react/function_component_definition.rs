@@ -405,7 +405,7 @@ mod fix {
             ctx: &LintContext<'a>,
         ) -> Self {
             let declaration = variable_declarator(node, ctx);
-            let (replace_span, variable_kind) = variable_context(node, ctx);
+            let (replace_span, variable_kind) = variable_context(node, declaration, ctx);
             Self {
                 replace_span,
                 name: function.id.as_ref().map_or_else(
@@ -439,7 +439,7 @@ mod fix {
             ctx: &LintContext<'a>,
         ) -> Self {
             let declaration = variable_declarator(node, ctx);
-            let (replace_span, variable_kind) = variable_context(node, ctx);
+            let (replace_span, variable_kind) = variable_context(node, declaration, ctx);
             Self {
                 replace_span,
                 name: variable_name(declaration),
@@ -462,15 +462,19 @@ mod fix {
         }
     }
 
-    fn variable_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> (Span, &'static str) {
-        if variable_declarator(node, ctx).is_some() {
-            let declaration_node = ctx.nodes().parent_node(node.id());
-            let variable_node = ctx.nodes().parent_node(declaration_node.id());
-            if let AstKind::VariableDeclaration(variable) = variable_node.kind() {
-                return (variable.span, variable.kind.as_str());
-            }
-        }
-        (node.span(), "const")
+    fn variable_context<'a>(
+        node: &AstNode<'a>,
+        declaration: Option<&VariableDeclarator<'a>>,
+        ctx: &LintContext<'a>,
+    ) -> (Span, &'static str) {
+        let Some(declaration) = declaration else {
+            return (node.span(), "const");
+        };
+        let AstKind::VariableDeclaration(variable) = ctx.nodes().parent_kind(declaration.node_id())
+        else {
+            unreachable!()
+        };
+        (variable.span, variable.kind.as_str())
     }
 
     fn variable_name(declaration: Option<&VariableDeclarator<'_>>) -> String {
