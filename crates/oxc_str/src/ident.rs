@@ -413,7 +413,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
 
     /// Clone the identifier into a new allocator, preserving the precomputed hash.
     #[inline]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: bool,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
         let s = allocator.alloc_str(self.as_str());
         let ptr = NonNull::from_ref(s).cast::<u8>();
         // SAFETY: `ptr` points to a `&str`, with length `self.ident_len()`.
