@@ -59,6 +59,21 @@ pub struct SymbolValue<'a> {
     /// object/array/function/class literals. See `FreshValueKind`.
     pub kind: FreshValueKind,
 
+    /// A hoisted function called before this `let`/`const`/`class`
+    /// declarator executes could observe the binding's temporal dead zone.
+    /// Module sources: set from `BodyFrame::hoisted_fn_referenced` (see its
+    /// doc for the reachability model, including declarators inside blocks).
+    /// Script top-level declarators: any executable statement precedes the
+    /// declarator, or the declarator sits inside a block — a script's
+    /// top-level hoisted functions are global-object-reachable without a
+    /// local reference. Script nested bodies are closed namespaces and use
+    /// the same bit as modules. Consumers must not
+    /// resolve `initialized_constant` for a read inside a hoisted function
+    /// declaration below the binding's scope; the position test (and why
+    /// arrows / function expressions are exempt) lives on
+    /// `inside_hoisted_function_below`.
+    pub lexical_unsafe_prelude: bool,
+
     /// The symbol is provably falsy in **boolean context** but not necessarily
     /// foldable in value context. Set for a write-once binding with a falsy
     /// constant initializer whose `initialized_constant` was withheld (a hoisted
@@ -66,6 +81,12 @@ pub struct SymbolValue<'a> {
     /// initializer sees `undefined`, but `undefined` and the falsy init are
     /// indistinguishable inside `if (x)` / `x ? …` / `!x`, so such reads fold to
     /// `false` there. See `minimize_expression_in_boolean_context` / #14001.
+    ///
+    /// Never set for TDZ-lexicals: their value-context constant is never
+    /// withheld (`falsy_init` requires `value_withheld`), which is why the
+    /// boolean-context fold consuming this flag carries no TDZ gate. If
+    /// withholding is ever extended to lexicals, that fold must adopt the
+    /// `lexical_unsafe_prelude` gate.
     pub boolean_falsy: bool,
 }
 

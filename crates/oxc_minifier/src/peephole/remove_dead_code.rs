@@ -7,6 +7,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
+use oxc_syntax::scope::ScopeId;
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
@@ -439,6 +440,7 @@ impl<'a> PeepholeOptimizations {
                         f.id.as_ref(),
                         &f.params,
                         body,
+                        f.scope_id.get(),
                         f.r#async,
                         f.generator,
                         ctx,
@@ -454,6 +456,7 @@ impl<'a> PeepholeOptimizations {
                                     Some(id),
                                     &a.params,
                                     &a.body,
+                                    a.scope_id.get(),
                                     a.r#async,
                                     false,
                                     ctx,
@@ -465,6 +468,7 @@ impl<'a> PeepholeOptimizations {
                                         Some(id),
                                         &f.params,
                                         body,
+                                        f.scope_id.get(),
                                         f.r#async,
                                         f.generator,
                                         ctx,
@@ -484,6 +488,7 @@ impl<'a> PeepholeOptimizations {
         id: Option<&BindingIdentifier<'a>>,
         params: &FormalParameters<'a>,
         body: &FunctionBody<'a>,
+        scope_id: Option<ScopeId>,
         r#async: bool,
         generator: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -498,6 +503,20 @@ impl<'a> PeepholeOptimizations {
         if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {
             return;
         }
+        // The side-effect walk above does not model the temporal dead zone: a
+        // read of an outer `let`/`const`/`class` binding throws when the
+        // function runs before the declarator. `pure_functions` is never
+        // reset, so caching here lets a later pass drop such a call and erase
+        // the ReferenceError. Bail when the body (or a default parameter)
+        // reads an outer lexical whose declarator hasn't been visited yet
+        // (it sits later in source, so a call in between observes the TDZ)
+        // or was recorded as TDZ-hazardous. A visited, unhazardous declarator
+        // precedes this statement with no hoisted-function reference before
+        // it, so no call of this function can run inside the TDZ.
+        let Some(scope_id) = scope_id else { return };
+        if Self::reads_possibly_tdz_lexical(params, body, scope_id, ctx) {
+            return;
+        }
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
             ctx.state.pure_functions.insert(
@@ -505,6 +524,57 @@ impl<'a> PeepholeOptimizations {
                 if body.is_empty() { Some(ConstantValue::Undefined) } else { None },
             );
         }
+    }
+
+    /// See the call site in `try_save_pure_function`.
+    fn reads_possibly_tdz_lexical(
+        params: &FormalParameters<'a>,
+        body: &FunctionBody<'a>,
+        fn_scope: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        struct TdzReadFinder<'a, 'b> {
+            ctx: &'b TraverseCtx<'a>,
+            fn_scope: ScopeId,
+            found: bool,
+        }
+        impl<'a> VisitJs<'a> for TdzReadFinder<'a, '_> {
+            // Stop descending once a hazard is found.
+            fn visit_statement(&mut self, stmt: &Statement<'a>) {
+                if !self.found {
+                    oxc_ast_visit::walk_js::walk_statement(self, stmt);
+                }
+            }
+            fn visit_expression(&mut self, expr: &Expression<'a>) {
+                if !self.found {
+                    oxc_ast_visit::walk_js::walk_expression(self, expr);
+                }
+            }
+            fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+                if self.found {
+                    return;
+                }
+                let Some(symbol_id) =
+                    self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                else {
+                    return;
+                };
+                // Cheap flag test first; the scope walk below only runs for
+                // hazardous lexicals.
+                if !self.ctx.lexical_read_is_tdz_hazardous(symbol_id) {
+                    return;
+                }
+                let symbol_scope = self.ctx.scoping().symbol_scope_id(symbol_id);
+                // A binding inside the function itself is initialized by the
+                // function's own execution.
+                self.found = symbol_scope != self.fn_scope
+                    && !self.ctx.scoping().scope_is_descendant_of(symbol_scope, self.fn_scope);
+            }
+        }
+        let mut finder = TdzReadFinder { ctx, fn_scope, found: false };
+        finder.visit_formal_parameters(params);
+        finder.visit_function_body(body);
+        finder.found
     }
 
     pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

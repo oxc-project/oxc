@@ -83,8 +83,9 @@ impl<'a> PeepholeOptimizations {
         // `body_unsafe` is set by a preceding non-declarative statement, and the
         // program root additionally starts unsafe when the module has loaders
         // (see `enter_program`) — so this one check covers the cyclic-import gate.
-        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
-        if body_unsafe || ctx.current_scope_id() != body_scope {
+        let frame = ctx.state.body_unsafe_stack.last();
+        let body_scope = frame.scope;
+        if frame.body_unsafe || ctx.current_scope_id() != frame.scope {
             return false;
         }
         // At least one read, and every read crosses a function boundary.
@@ -236,6 +237,13 @@ impl<'a> PeepholeOptimizations {
         };
         // Skip if there are write references.
         if symbol_value.write_references_count > 0 {
+            return;
+        }
+        // A read inside a hoisted function declaration may run inside the
+        // binding's temporal dead zone (see `SymbolValue::lexical_unsafe_prelude`).
+        if symbol_value.lexical_unsafe_prelude
+            && ctx.inside_hoisted_function_below(ctx.scoping().symbol_scope_id(symbol_id))
+        {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };

@@ -43,6 +43,7 @@ impl<'a> PeepholeOptimizations {
                 // a `ReferenceError`, so we must keep it. In all other positions (including
                 // non-derived constructors) `this` is always initialized and can be dropped.
                 Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
+                Expression::Identifier(ident) => Self::remove_unused_identifier(ident, ctx),
                 _ => unreachable!(
                     "expr_has_specialized_unused_handler is out of sync with this dispatch"
                 ),
@@ -73,6 +74,25 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         false
+    }
+
+    /// Like the `this`-in-derived-constructor keep above: reading a
+    /// `let`/`const`/`class` binding inside a hoisted function that can run
+    /// before the declarator throws a ReferenceError. Dropping the read
+    /// erases the throw directly — and, by emptying the function, feeds the
+    /// pure-call cache so the caller gets dropped too. Keep the read when
+    /// the declarator is TDZ-hazardous (or not yet visited, i.e. later in
+    /// source) and the read sits inside a hoisted function declaration
+    /// below the binding's scope.
+    fn remove_unused_identifier(ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+            // Unresolved: reading a global can throw or trigger a getter —
+            // defer to the side-effect model.
+            return !ident.may_have_side_effects(ctx);
+        };
+        // A resolved read has no side effect besides a possible TDZ throw.
+        !(ctx.lexical_read_is_tdz_hazardous(symbol_id)
+            && ctx.inside_hoisted_function_below(ctx.scoping().symbol_scope_id(symbol_id)))
     }
 
     fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
@@ -1198,6 +1218,7 @@ impl<'a> PeepholeOptimizations {
                 | Expression::TemplateLiteral(_)
                 | Expression::UnaryExpression(_)
                 | Expression::ThisExpression(_)
+                | Expression::Identifier(_)
         )
     }
 }

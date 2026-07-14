@@ -21,7 +21,7 @@ use oxc_ast_visit::{Visit, VisitJs, walk_js::walk_call_expression};
 use oxc_semantic::Scoping;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
+    symbol::{SymbolFlags, SymbolId},
 };
 use rustc_hash::FxHashSet;
 
@@ -30,7 +30,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    traverse_context::as_direct_eval_call,
+    state::BodyFrame, traverse_context::as_direct_eval_call,
 };
 
 pub use self::normalize::{Normalize, NormalizeOptions};
@@ -136,10 +136,65 @@ impl<'a> PeepholeOptimizations {
     /// prelude. No-op if the flag is already set, or if `current_scope_id` is
     /// some inner scope (a block/for/etc.) — those don't end the prelude.
     fn mark_current_body_unsafe(ctx: &mut TraverseCtx<'a>) {
-        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
-        if !body_unsafe && body_scope == ctx.current_scope_id() {
-            ctx.state.body_unsafe_stack.last_mut().1 = true;
+        let frame = ctx.state.body_unsafe_stack.last();
+        if !frame.body_unsafe && frame.scope == ctx.current_scope_id() {
+            ctx.state.body_unsafe_stack.last_mut().body_unsafe = true;
         }
+    }
+
+    /// Maintains `BodyFrame::hoisted_fn_referenced`; see its doc for the
+    /// reachability model.
+    ///
+    /// Deliberately conservative for closure-contained references: a mention
+    /// inside an arrow or function expression arms the bit at creation even
+    /// though the closure may never run before a later declarator
+    /// (`const expose = () => g; let a = 1;` loses the fold of reads in
+    /// `g`). Distinguishing "created" from "invokable" needs a pending bit
+    /// promoted by a subsequent executable statement at any scope depth —
+    /// the body-scope-only variant is unsound for
+    /// `{ const e = () => g; e(); } let a = 1;` — and the shape is too rare
+    /// to justify that machinery.
+    fn track_hoisted_function_reference(
+        ident: &IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+            return;
+        };
+        if !ctx.scoping().symbol_flags(symbol_id).contains(SymbolFlags::Function) {
+            return;
+        }
+        let symbol_scope = ctx.scoping().symbol_scope_id(symbol_id);
+        // No exclusion for a named function expression's self-binding: its
+        // symbol scope is indistinguishable from a declaration nested in a
+        // function body (both are `Function`-flagged), and a self-recursive
+        // call can precede the body's own lexicals anyway — the reference
+        // then sets the bit on its own body's frame, which is exactly right.
+        // The owning frame: the innermost body whose scope contains the
+        // function's declaration scope (equal for body-level declarations,
+        // an ancestor for block-level ones).
+        let Some(owner_index) =
+            ctx.state.body_unsafe_stack.as_slice().iter().enumerate().rev().find_map(
+                |(i, frame)| {
+                    (frame.scope == symbol_scope
+                        || ctx.scoping().scope_is_descendant_of(symbol_scope, frame.scope))
+                    .then_some(i)
+                },
+            )
+        else {
+            return;
+        };
+        let owner = &ctx.state.body_unsafe_stack.as_slice()[owner_index];
+        if owner.hoisted_fn_referenced {
+            return;
+        }
+        let owner_scope = owner.scope;
+        // See `BodyFrame::hoisted_fn_referenced`: references from inside a
+        // hoisted function of the same body don't count.
+        if ctx.inside_hoisted_function_below(owner_scope) {
+            return;
+        }
+        ctx.state.body_unsafe_stack.as_mut_slice()[owner_index].hoisted_fn_referenced = true;
     }
 
     /// Checks if a member expression's base object may be mutated.
@@ -462,14 +517,21 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // `enter`/`exit_function_body` are balanced, so the stack is back to its
         // single program-root entry by the next pass; reset it in place rather
         // than reallocating (matching the `reset`/`clear` above).
-        *ctx.state.body_unsafe_stack.last_mut() =
-            (ctx.scoping().root_scope_id(), module_has_loaders);
+        *ctx.state.body_unsafe_stack.last_mut() = BodyFrame {
+            scope: ctx.scoping().root_scope_id(),
+            body_unsafe: module_has_loaders,
+            hoisted_fn_referenced: false,
+        };
         // `PassDirty` is managed by the `Compressor` driver via
         // `flush_pass_dirty`, not reset per traversal.
     }
 
     fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.body_unsafe_stack.push((ctx.current_scope_id(), false));
+        ctx.state.body_unsafe_stack.push(BodyFrame {
+            scope: ctx.current_scope_id(),
+            body_unsafe: false,
+            hoisted_fn_referenced: false,
+        });
     }
 
     fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -605,6 +667,15 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Runs in both modes: `init_symbol_value` (also both modes) consumes
+        // the bit this maintains — for module sources and for script nested
+        // bodies. Script ROOT frames use the blunt prelude rule instead, so
+        // at script top level (stack depth 1) the tracking is skipped.
+        if (!ctx.source_type().is_script() || ctx.state.body_unsafe_stack.len() > 1)
+            && let Expression::Identifier(ident) = expr
+        {
+            Self::track_hoisted_function_reference(ident, ctx);
+        }
         // Tree-shaking mode: fewer passes than full minify below. Only the ones
         // that remove code, plus the constant folds those removals need. The
         // folds stay on because the removal passes don't evaluate compound

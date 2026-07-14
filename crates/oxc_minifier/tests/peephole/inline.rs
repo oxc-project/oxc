@@ -1,8 +1,128 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, test_options, test_options_source_type, test_same_options, test_smallest,
+    CompressOptions, test, test_options, test_options_source_type, test_same, test_same_options,
+    test_same_options_source_type, test_smallest,
 };
+
+// A hoisted function called before a `let`/`const` executes reads the
+// binding inside its temporal dead zone and must throw a ReferenceError.
+// Folding the read to the recorded constant (and then dropping the now-pure
+// call) erases the throw. The constant is only recorded when the declarator
+// sits in its body's clean declarative prelude, where nothing can have run.
+#[test]
+fn lexical_tdz_read_not_folded() {
+    // Arithmetic fold over the implicit undefined.
+    test_same("g();\nlet a;\nfunction g() {\n\treturn a * 2;\n}");
+    // Explicit initializer via the single-read inliner.
+    test_same("g();\nlet a = 1;\nfunction g() {\n\treturn a * 2;\n}");
+    // Nullish fold.
+    test_same("g();\nlet a;\nfunction g() {\n\treturn a ?? 'x';\n}");
+}
+
+#[test]
+fn lexical_prelude_reads_still_fold() {
+    // Declarator first: nothing can run before it, so a function created
+    // later cannot observe the TDZ.
+    test("let a = 1; function g() { return a * 2 } g();", "let a = 1; function g() { return 2 }");
+    test("let a; window.f = () => a ?? 'x';", "let a; window.f = () => 'x';");
+    // Function expressions and arrows created after the declarator cannot
+    // run inside the TDZ, even past an executable prelude — only hoisted
+    // function declarations can.
+    test(
+        "k(); let a = 1; NOOP(function() { return a * 2 });",
+        "k(); let a = 1; NOOP(function() { return 2 });",
+    );
+    test("k(); let a = 1; NOOP(() => a * 2);", "k(); let a = 1; NOOP(() => 2);");
+    // Same inside a block, which has no prelude tracking at all.
+    test("{ let a = 1; NOOP(() => a * 2); }", "{ let a = 1; NOOP(() => 2); }");
+    // A hoisted function referenced only after the declarator cannot have
+    // run before it, even past an executable prelude — the shape of
+    // generated code that specializes on top-level flag constants.
+    test(
+        "k(); let a = 1; function g() { return a * 2 } NOOP(g);",
+        "k(); let a = 1; function g() { return 2 } NOOP(g);",
+    );
+}
+
+// The purity pre-scan walks a function's body from the statement position
+// and its side-effect analysis does not model the TDZ, so a read of an outer
+// lexical looked pure with the value completely unknown; the never-reset
+// cache then let a later pass drop the pre-declaration `g()` call. The
+// `if (1) h()` forces that second pass.
+#[test]
+fn lexical_tdz_read_not_pure_cached() {
+    test_smallest(
+        "g(); let a = 1; function g() { return a * 2 } if (1) h();",
+        "g();\nlet a = 1;\nfunction g() {\n\treturn a * 2;\n}\nh();",
+    );
+    // Same with the declarator after the function: at scan time the
+    // declarator hasn't been visited, so the cache must also bail.
+    test_smallest(
+        "function g() { return a * 2 } g(); let a = 1; if (1) h();",
+        "function g() {\n\treturn a * 2;\n}\ng();\nlet a = 1;\nh();",
+    );
+    // Classes have the same temporal dead zone; the bare `C;` read must
+    // survive too — dropping it would empty `g` into the pure-call cache.
+    test_smallest(
+        "g(); class C {} function g() { C; } if (1) h();",
+        "g();\nclass C {}\nfunction g() {\n\tC;\n}\nh();",
+    );
+    test_smallest(
+        "g(); let a = 1; function g() { a; } if (1) h();",
+        "g();\nlet a = 1;\nfunction g() {\n\ta;\n}\nh();",
+    );
+    // The hazard is scope-relative: a declaration nested in another function
+    // body binds its symbol in that body's `Function`-flagged scope, which
+    // must not be mistaken for a named function expression's self-binding.
+    test_smallest(
+        "function outer() { g(); let a = 1; function g() { return a * 2 } } outer();",
+        "function outer() {\n\tg();\n\tlet a = 1;\n\tfunction g() {\n\t\treturn a * 2;\n\t}\n}\nouter();",
+    );
+}
+
+// Script sources: only TOP-LEVEL hoisted functions are global-object
+// properties reachable without a local reference. A nested body (a UMD
+// factory, an IIFE) is a closed namespace like a module, so it uses the
+// precise reference bit instead of the blunt prelude rule.
+#[test]
+fn script_nested_body_uses_reference_bit() {
+    let script = SourceType::cjs().with_script(true);
+    let options = CompressOptions::smallest();
+    // No hoisted-function reference before the declarator: folds.
+    test_options_source_type(
+        "function outer() { k(); let a = 1; function g() { return a * 2 } NOOP(g); } outer();",
+        "function outer() {\n\tk();\n\tfunction g() {\n\t\treturn 2;\n\t}\n\tNOOP(g);\n}\nouter();",
+        script,
+        &options,
+    );
+    // Hoisted call before the declarator: still withheld.
+    test_same_options_source_type(
+        "function outer() {\n\tg();\n\tlet a = 1;\n\tfunction g() {\n\t\treturn a * 2;\n\t}\n}\nouter();",
+        script,
+        &options,
+    );
+    // Top level of the script stays blunt: an executable statement before
+    // the declarator withholds even without a local hoisted reference.
+    test_same_options_source_type(
+        "k();\nlet a = 1;\nfunction g() {\n\treturn a * 2;\n}\nNOOP(g);",
+        script,
+        &options,
+    );
+}
+
+// Accepted limitation: a cyclic importer can call an exported function —
+// and transitively any hoisted function — before the module body runs, so
+// this fold erases a deterministic ReferenceError under an import cycle.
+// Guarding it would withhold every flag-constant specialization in any
+// module with imports (the generated deserializers, bundler chunks).
+#[test]
+fn lexical_tdz_import_cycle_accepted_limitation() {
+    test(
+        "import 'm'; let a = 1; function g() { return a * 2 } NOOP(g);",
+        "import 'm'; let a = 1; function g() { return 2 } NOOP(g);",
+    );
+}
 
 // https://github.com/oxc-project/oxc/issues/13051
 #[test]

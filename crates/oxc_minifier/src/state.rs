@@ -82,15 +82,8 @@ pub struct MinifierState<'a> {
     pub symbol_facts: PersistentSymbolFacts,
 
     /// One frame per enclosing function body (program root at the bottom).
-    /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
-    /// `var x = <literal>;` whose declarator sits at `body_scope` is safe to
-    /// inline despite hoisting. A preceding non-declarative statement sets it;
-    /// the program root additionally starts unsafe when the module has any
-    /// loader (`import` / `export … from` / `export * from`), since a cyclic
-    /// importer could observe a not-yet-assigned binding our exports close over.
-    /// Pushed by `enter_function_body`, popped by `exit_function_body`. See
-    /// `init_symbol_value`.
-    pub body_unsafe_stack: NonEmptyStack<(ScopeId, bool)>,
+    /// Pushed by `enter_function_body`, popped by `exit_function_body`.
+    pub body_unsafe_stack: NonEmptyStack<BodyFrame>,
 
     /// Set when a typed helper mutates the AST. Private by design: the only
     /// writers are the helpers on `MinifierTraverseCtx`; the only reader is
@@ -106,6 +99,27 @@ pub struct MinifierState<'a> {
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
+}
+
+/// Per-function-body streaming state. See `body_unsafe_stack`.
+pub struct BodyFrame {
+    pub scope: ScopeId,
+    /// While false, the next `var x = <literal>;` whose declarator sits at
+    /// `scope` is safe to inline despite hoisting. A preceding
+    /// non-declarative statement sets it; the program root additionally
+    /// starts unsafe when the module has any loader, since a cyclic importer
+    /// could observe a not-yet-assigned binding our exports close over. See
+    /// `init_symbol_value`.
+    pub body_unsafe: bool,
+    /// A hoisted function declaration of this body (or of a block below it)
+    /// has been referenced from executed code. From that point on, any
+    /// executed statement may reach it — directly, transitively, or through
+    /// an escaped closure — so a lexical declarator recorded after this
+    /// point may have reads that run inside its temporal dead zone.
+    /// References from inside a hoisted function of the same body don't set
+    /// this: that function can only run if an earlier reference already did.
+    /// See `SymbolValue::lexical_unsafe_prelude`.
+    pub hoisted_fn_referenced: bool,
 }
 
 impl<'a> MinifierState<'a> {
@@ -124,7 +138,11 @@ impl<'a> MinifierState<'a> {
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             symbol_facts: PersistentSymbolFacts::default(),
-            body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
+            body_unsafe_stack: NonEmptyStack::new(BodyFrame {
+                scope: scoping.root_scope_id(),
+                body_unsafe: false,
+                hoisted_fn_referenced: false,
+            }),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),

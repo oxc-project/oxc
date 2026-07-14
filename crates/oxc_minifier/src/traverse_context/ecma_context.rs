@@ -12,7 +12,10 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::{IsGlobalReference, SymbolId};
 use oxc_str::format_str;
-use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
+use oxc_syntax::{
+    reference::ReferenceId,
+    scope::{ScopeFlags, ScopeId},
+};
 
 use crate::{
     generated::ancestor::Ancestor,
@@ -176,12 +179,72 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         &self,
         reference_id: ReferenceId,
     ) -> Option<&ConstantValue<'a>> {
-        self.scoping()
-            .get_reference(reference_id)
-            .symbol_id()
-            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
-            .filter(|sv| sv.write_references_count == 0)
-            .and_then(|sv| sv.initialized_constant.as_ref())
+        let symbol_id = self.scoping().get_reference(reference_id).symbol_id()?;
+        let sv = self.state.symbol_values.get_symbol_value(symbol_id)?;
+        if sv.write_references_count != 0 {
+            return None;
+        }
+        // A read inside a hoisted function declaration may run inside the
+        // binding's temporal dead zone (see `SymbolValue::lexical_unsafe_prelude`).
+        if sv.lexical_unsafe_prelude
+            && self.inside_hoisted_function_below(self.scoping().symbol_scope_id(symbol_id))
+        {
+            return None;
+        }
+        sv.initialized_constant.as_ref()
+    }
+
+    /// Whether a read of `symbol_id` may execute inside its temporal dead
+    /// zone when reached from a hoisted function: the binding is
+    /// block-scoped (TS `enum` is included conservatively; it is erased
+    /// before minification) and its declarator is either recorded as
+    /// hazardous (`lexical_unsafe_prelude`) or not yet visited this pass —
+    /// it sits later in source, so a call between the read's function and
+    /// the declarator observes the TDZ. Position-independent: combine with
+    /// `inside_hoisted_function_below` (or a scan-scope check) at the call
+    /// site. Callers that already hold the `SymbolValue` inline the flag
+    /// read instead — do not add a third shape. Sibling hazard for `var` /
+    /// class heritage: `UNINIT_RISK` in `remove_unused_expression`.
+    pub fn lexical_read_is_tdz_hazardous(&self, symbol_id: SymbolId) -> bool {
+        if !self.scoping().symbol_flags(symbol_id).is_block_scoped() {
+            return false;
+        }
+        match self.state.symbol_values.get_symbol_value(symbol_id) {
+            None => true,
+            Some(sv) => sv.lexical_unsafe_prelude,
+        }
+    }
+
+    /// Whether the current traversal position sits inside a hoisted function
+    /// declaration whose scope is strictly below `symbol_scope`. Such a
+    /// function is callable before the symbol's declarator executes, so a
+    /// read of the binding here may run inside its temporal dead zone and
+    /// must throw rather than fold: in
+    /// `g(); let a = 1; function g() { return a * 2 }` folding `a * 2`
+    /// (and then dropping the now-pure `g()` call) erases the
+    /// ReferenceError. Arrows use a different ancestor link and function
+    /// expressions are created after the declarator (a fold-reachable read
+    /// is always source-after it), so neither can run inside the TDZ; the
+    /// walk stops once a function no longer sits below the binding's scope.
+    /// Reads in a hoisted declaration's default parameters are TDZ-reachable
+    /// the same way, hence the `FunctionParams` arm.
+    pub fn inside_hoisted_function_below(&self, symbol_scope: ScopeId) -> bool {
+        for ancestor in self.ancestors() {
+            let (r#type, scope_id) = match &ancestor {
+                Ancestor::FunctionBody(f) => (*f.r#type(), f.scope_id().get()),
+                Ancestor::FunctionParams(f) => (*f.r#type(), f.scope_id().get()),
+                _ => continue,
+            };
+            // Conservatively treat a missing scope id as hazardous.
+            let Some(scope_id) = scope_id else { return true };
+            if !self.scoping().scope_is_descendant_of(scope_id, symbol_scope) {
+                return false;
+            }
+            if r#type == FunctionType::FunctionDeclaration {
+                return true;
+            }
+        }
+        false
     }
 
     pub fn eval_binary(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
@@ -341,6 +404,29 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         let implicit_undefined =
             init_absent && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
 
+        // See `SymbolValue::lexical_unsafe_prelude`.
+        let lexical_unsafe_prelude = self.scoping().symbol_flags(symbol_id).is_block_scoped() && {
+            let frame = self.state.body_unsafe_stack.last();
+            if self.source_type().is_script() && frame.scope == self.scoping().root_scope_id() {
+                // A script's TOP-LEVEL hoisted functions are properties of
+                // the global object (Annex-B block functions included): any
+                // executed statement can reach them without a local
+                // reference having escaped. Nested bodies are closed
+                // namespaces like modules and take the precise branch below.
+                frame.body_unsafe || self.scoping.current_scope_id() != frame.scope
+            } else {
+                // A hoisted function of this body was referenced from
+                // executed code before this declarator, so later
+                // statements can reach it. Accepted limitation: a
+                // cyclic importer calling an exported function before
+                // the body runs can still observe the TDZ; folding
+                // erases that deterministic ReferenceError. Guarding
+                // it would withhold every flag-constant
+                // specialization in any module with imports.
+                frame.hoisted_fn_referenced
+            }
+        };
+
         let symbol_value = SymbolValue {
             initialized_constant,
             implicit_undefined,
@@ -349,6 +435,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             write_references_count,
             member_write_target_read_count,
             kind,
+            lexical_unsafe_prelude,
             boolean_falsy,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);
