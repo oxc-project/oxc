@@ -2554,8 +2554,8 @@ fn compute_effects_for_aliasing_signature_config(
 ) -> Result<Option<Vec<AliasingEffect>>, OxcDiagnostic> {
     // Build substitutions from config strings to places
     let mut substitutions: FxHashMap<String, Vec<Place>> = FxHashMap::default();
-    substitutions.insert(config.receiver.clone(), vec![receiver.clone()]);
-    substitutions.insert(config.returns.clone(), vec![lvalue.clone()]);
+    substitutions.insert(config.receiver.to_string(), vec![receiver.clone()]);
+    substitutions.insert(config.returns.to_string(), vec![lvalue.clone()]);
 
     let mut mutable_spreads: FxHashSet<IdentifierId> = FxHashSet::default();
 
@@ -2565,9 +2565,9 @@ fn compute_effects_for_aliasing_signature_config(
             PlaceOrSpreadOrHole::Place(place)
             | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
                 if i < config.params.len() && !matches!(arg, PlaceOrSpreadOrHole::Spread(_)) {
-                    substitutions.insert(config.params[i].clone(), vec![place.clone()]);
-                } else if let Some(ref rest) = config.rest {
-                    substitutions.entry(rest.clone()).or_default().push(place.clone());
+                    substitutions.insert(config.params[i].to_string(), vec![place.clone()]);
+                } else if let Some(rest) = config.rest {
+                    substitutions.entry(rest.to_string()).or_default().push(place.clone());
                 } else {
                     return Ok(None);
                 }
@@ -2591,21 +2591,21 @@ fn compute_effects_for_aliasing_signature_config(
     }
 
     // Create temporaries (cached by lvalue + temp_name to be stable across fixpoint iterations)
-    for temp_name in &config.temporaries {
-        let cache_key = (lvalue.identifier, temp_name.clone());
+    for temp_name in config.temporaries {
+        let cache_key = (lvalue.identifier, temp_name.to_string());
         let temp_place = temp_cache
             .entry(cache_key)
             .or_insert_with(|| create_temp_place(env, receiver.span))
             .clone();
-        substitutions.insert(temp_name.clone(), vec![temp_place]);
+        substitutions.insert(temp_name.to_string(), vec![temp_place]);
     }
 
     let mut effects: Vec<AliasingEffect> = Vec::new();
 
-    for eff_config in &config.effects {
+    for eff_config in config.effects {
         match eff_config {
             AliasingEffectConfig::Freeze { value, reason } => {
-                let values = substitutions.get(value).cloned().unwrap_or_default();
+                let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
                         return Err(ErrorCategory::Todo
@@ -2616,7 +2616,7 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::Create { into, value, reason } => {
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for v in intos {
                     effects.push(AliasingEffect::Create {
                         into: v,
@@ -2626,8 +2626,8 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::CreateFrom { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
                         effects
@@ -2636,8 +2636,8 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::Assign { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
                         effects.push(AliasingEffect::Assign { from: f.clone(), into: t.clone() });
@@ -2645,8 +2645,8 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::Alias { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
                         effects.push(AliasingEffect::Alias { from: f.clone(), into: t.clone() });
@@ -2654,8 +2654,8 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::Capture { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
                         effects.push(AliasingEffect::Capture { from: f.clone(), into: t.clone() });
@@ -2663,8 +2663,8 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::ImmutableCapture { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
                         effects.push(AliasingEffect::ImmutableCapture {
@@ -2675,7 +2675,7 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::Impure { place } => {
-                let values = substitutions.get(place).cloned().unwrap_or_default();
+                let values = substitutions.get(*place).cloned().unwrap_or_default();
                 for v in values {
                     effects.push(AliasingEffect::Impure {
                         place: v,
@@ -2684,13 +2684,13 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::Mutate { value } => {
-                let values = substitutions.get(value).cloned().unwrap_or_default();
+                let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     effects.push(AliasingEffect::Mutate { value: v, reason: None });
                 }
             }
             AliasingEffectConfig::MutateTransitiveConditionally { value } => {
-                let values = substitutions.get(value).cloned().unwrap_or_default();
+                let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     effects.push(AliasingEffect::MutateTransitiveConditionally { value: v });
                 }
@@ -2702,25 +2702,25 @@ fn compute_effects_for_aliasing_signature_config(
                 args: a,
                 into: i,
             } => {
-                let recv = substitutions.get(r).and_then(|v| v.first()).cloned();
-                let func = substitutions.get(f).and_then(|v| v.first()).cloned();
-                let into = substitutions.get(i).and_then(|v| v.first()).cloned();
+                let recv = substitutions.get(*r).and_then(|v| v.first()).cloned();
+                let func = substitutions.get(*f).and_then(|v| v.first()).cloned();
+                let into = substitutions.get(*i).and_then(|v| v.first()).cloned();
                 if let (Some(recv), Some(func), Some(into)) = (recv, func, into) {
                     let mut apply_args: Vec<PlaceOrSpreadOrHole> = Vec::new();
-                    for arg in a {
+                    for arg in *a {
                         match arg {
                             ApplyArgConfig::Hole { .. } => {
                                 apply_args.push(PlaceOrSpreadOrHole::Hole);
                             }
                             ApplyArgConfig::Place(name) => {
-                                if let Some(places) = substitutions.get(name)
+                                if let Some(places) = substitutions.get(*name)
                                     && let Some(p) = places.first()
                                 {
                                     apply_args.push(PlaceOrSpreadOrHole::Place(p.clone()));
                                 }
                             }
                             ApplyArgConfig::Spread { place: name, .. } => {
-                                if let Some(places) = substitutions.get(name)
+                                if let Some(places) = substitutions.get(*name)
                                     && let Some(p) = places.first()
                                 {
                                     apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
