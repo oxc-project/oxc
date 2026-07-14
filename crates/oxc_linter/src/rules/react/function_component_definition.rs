@@ -101,7 +101,7 @@ declare_oxc_lint!(
     FunctionComponentDefinition,
     react,
     style,
-    conditional_fix,
+    conditional_suggestion,
     config = FunctionComponentDefinition,
     version = "next",
     short_description = "Enforce a specific function type for function components.",
@@ -149,7 +149,7 @@ impl Rule for FunctionComponentDefinition {
 
         let diagnostic = function_component_definition_diagnostic(node.span(), expected);
         if can_fix(node, ctx, expected) {
-            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                 let (span, replacement) = replacement(node, ctx, expected, named);
                 fixer.replace(span, replacement)
             });
