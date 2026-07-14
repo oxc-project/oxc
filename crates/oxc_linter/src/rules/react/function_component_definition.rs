@@ -24,6 +24,7 @@ struct FunctionComponentDefinitionConfig {
     named_components: NamedComponents,
     unnamed_components: UnnamedComponents,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
 enum NamedComponents {
