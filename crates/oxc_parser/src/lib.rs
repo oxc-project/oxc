@@ -243,6 +243,20 @@ pub struct ParseOptions {
     ///
     /// Default: `true`
     pub precompute_ident_hashes: bool,
+
+    /// Classify comment contents into annotations while parsing.
+    ///
+    /// Annotation classification reads comment bodies to detect `@__PURE__` /
+    /// `@__NO_SIDE_EFFECTS__` markers (minifier), legal comments such as `//!` and
+    /// `@license` / `@preserve` (codegen), and webpack / vite magic comments.
+    /// It also determines how such comments attach to surrounding tokens.
+    ///
+    /// Only disable this for parse-only pipelines that do not run the minifier, codegen,
+    /// or formatter on the resulting AST: all comments are then classified as plain text,
+    /// and annotation-dependent comment attachment is not computed.
+    ///
+    /// Default: `true`
+    pub parse_comment_annotations: bool,
 }
 
 impl Default for ParseOptions {
@@ -254,6 +268,7 @@ impl Default for ParseOptions {
             preserve_parens: true,
             allow_v8_intrinsics: false,
             precompute_ident_hashes: true,
+            parse_comment_annotations: true,
         }
     }
 }
@@ -658,9 +673,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         config: C,
         unique: UniquePromise,
     ) -> Self {
+        let mut lexer =
+            Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique);
+        lexer.trivia_builder.parse_annotations = options.parse_comment_annotations;
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique),
+            lexer,
             source_type,
             source_text,
             errors: vec![],

@@ -33,6 +33,10 @@ pub struct TriviaBuilder<'a> {
     pub(super) pure_comment: Option<usize>,
 
     pub(super) has_no_side_effects_comment: bool,
+
+    /// Whether to classify comment contents into annotations.
+    /// Set from [`ParseOptions::parse_comment_annotations`](crate::ParseOptions::parse_comment_annotations).
+    pub(crate) parse_annotations: bool,
 }
 
 impl<'a> TriviaBuilder<'a> {
@@ -46,6 +50,7 @@ impl<'a> TriviaBuilder<'a> {
             previous_kind: Kind::Undetermined,
             pure_comment: None,
             has_no_side_effects_comment: false,
+            parse_annotations: true,
         }
     }
 
@@ -199,7 +204,9 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
-        Self::parse_annotation(&mut comment, source_text);
+        if self.parse_annotations {
+            Self::parse_annotation(&mut comment, source_text);
+        }
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last()
