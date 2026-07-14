@@ -670,6 +670,14 @@ impl Tool for ServerLinter {
         self.run_diagnostic(document)
     }
 
+    fn should_lint_on_change(&self) -> bool {
+        self.run == Run::OnType
+    }
+
+    fn should_lint_on_save(&self) -> bool {
+        self.run == Run::OnSave
+    }
+
     fn remove_uri_cache(&self, uri: &Uri) {
         self.code_actions.pin().remove(uri);
     }

@@ -138,6 +138,22 @@ pub trait Tool: Send + Sync {
         Ok(Vec::new())
     }
 
+    /// Whether this tool should compute diagnostics in response to a document change (`onType`).
+    ///
+    /// This mirrors the gating inside [`Tool::run_diagnostic_on_change`], but is exposed
+    /// separately so callers can decide *whether* to lint before entering the deduplicated
+    /// diagnostic path (which always runs the full [`Tool::run_diagnostic`]).
+    fn should_lint_on_change(&self) -> bool {
+        true
+    }
+
+    /// Whether this tool should compute diagnostics in response to a document save (`onSave`).
+    ///
+    /// See [`Tool::should_lint_on_change`] for why this is separate from the gated run method.
+    fn should_lint_on_save(&self) -> bool {
+        true
+    }
+
     /// Remove internal cache for the given URI, if any.
     fn remove_uri_cache(&self, _uri: &Uri) {
         // Default implementation does nothing.

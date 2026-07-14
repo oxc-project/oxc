@@ -1,5 +1,12 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::Path,
+    sync::{
+        Arc, Mutex as StdMutex,
+        atomic::{AtomicU64, Ordering},
+    },
+};
 
+use futures::future::{BoxFuture, FutureExt, Shared};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
@@ -21,6 +28,45 @@ use crate::{
     tool::{DiagnosticResult, Tool, ToolBuilder},
 };
 
+/// Result of a diagnostic run, shareable between concurrent callers.
+///
+/// Must stay [`Clone`] so it can be the output of a [`Shared`] future.
+type DiagnosticRunResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
+
+/// A diagnostic computation that is currently running for a specific document version.
+///
+/// Concurrent requests for the same `(uri, version)` clone and await the same [`Shared`]
+/// future instead of spawning a second identical lint run. This collapses the two lints
+/// that otherwise happen on a single save (the server's own on-save lint and the plugin's
+/// Fix-All warm-up pull) into exactly one.
+struct InFlightDiagnostic {
+    /// Unique per run. Removal is keyed on this rather than on `version` so a finishing run
+    /// never deletes a newer entry that happens to reuse the same document version.
+    id: u64,
+    version: i32,
+    future: Shared<BoxFuture<'static, DiagnosticRunResult>>,
+}
+
+/// Removes the in-flight entry created by a run when that run completes, is cancelled, or
+/// panics. Held only by the run that inserted the entry (joiners rely on it); removal is a
+/// no-op unless the entry still carries the same `id`.
+struct InFlightGuard {
+    worker: Arc<WorkspaceWorker>,
+    uri: Uri,
+    id: u64,
+}
+
+impl Drop for InFlightGuard {
+    fn drop(&mut self) {
+        // Ignore a poisoned lock: the critical sections never panic, and `Drop` must not.
+        if let Ok(mut inflight) = self.worker.inflight_diagnostics.lock()
+            && inflight.get(&self.uri).is_some_and(|entry| entry.id == self.id)
+        {
+            inflight.remove(&self.uri);
+        }
+    }
+}
+
 /// A worker that manages the individual tool for a specific workspace
 /// and returns back the results of the running tool.
 ///
@@ -38,6 +84,12 @@ pub struct WorkspaceWorker {
     diagnostic_mode: DiagnosticMode,
     // Keep track of published diagnostics to clear them on shutdown (only in push mode)
     published_diagnostics: Mutex<FxHashSet<Uri>>,
+    // Diagnostic runs currently in flight, keyed by URI, used to deduplicate concurrent
+    // identical requests. See [`InFlightDiagnostic`]. A synchronous mutex so [`InFlightGuard`]
+    // can clean up from `Drop`; critical sections are short and never `.await`.
+    inflight_diagnostics: StdMutex<FxHashMap<Uri, InFlightDiagnostic>>,
+    // Monotonic id source for [`InFlightDiagnostic::id`].
+    next_run_id: AtomicU64,
 }
 
 impl WorkspaceWorker {
@@ -56,6 +108,8 @@ impl WorkspaceWorker {
             options: Mutex::new(None),
             diagnostic_mode,
             published_diagnostics: Mutex::new(FxHashSet::default()),
+            inflight_diagnostics: StdMutex::new(FxHashMap::default()),
+            next_run_id: AtomicU64::new(0),
         }
     }
 
@@ -181,6 +235,80 @@ impl WorkspaceWorker {
             tool.run_diagnostic_on_save(document)
         })
         .await
+    }
+
+    /// Whether the tool should compute diagnostics on document change (`onType`).
+    pub async fn should_lint_on_change(&self) -> bool {
+        self.tool.read().await.as_ref().is_some_and(|tool| tool.should_lint_on_change())
+    }
+
+    /// Whether the tool should compute diagnostics on document save (`onSave`).
+    pub async fn should_lint_on_save(&self) -> bool {
+        self.tool.read().await.as_ref().is_some_and(|tool| tool.should_lint_on_save())
+    }
+
+    /// Run diagnostics for `document`, deduplicating concurrent identical requests.
+    ///
+    /// If another run for the same `(uri, version)` is already in flight, this joins it and
+    /// returns its result instead of starting a second lint. The CPU-intensive work is offloaded
+    /// to a blocking thread inside the shared future, so callers await it directly (no outer
+    /// `spawn_blocking` needed).
+    ///
+    /// The canonical computation is always the full [`Self::run_diagnostic`]; the `onType`/`onSave`
+    /// gating is decided by the caller via [`Self::should_lint_on_change`]/[`Self::should_lint_on_save`]
+    /// *before* calling this, so the shared future is never poisoned with a gated-empty result.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the underlying tool's diagnostic run fails; the message is propagated
+    /// from the tool.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the internal `spawn_blocking` task panics. The diagnostic run is not expected to
+    /// panic, so this surfaces the bug instead of hiding it.
+    pub async fn run_diagnostic_deduped(
+        self: &Arc<Self>,
+        document: &TextDocument,
+        version: i32,
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
+        let uri = document.uri.clone();
+
+        // `_guard` is `Some` only for the run that creates the entry; its `Drop` removes that
+        // entry on completion, cancellation, or panic. Joiners get `None` and rely on the creator.
+        let (shared, _guard) = {
+            let mut inflight = self.inflight_diagnostics.lock().unwrap();
+            match inflight.get(&uri) {
+                // A run for the exact same content version is already in flight: join it.
+                Some(entry) if entry.version == version => (entry.future.clone(), None),
+                // No run, or an older version is running (superseded by this newer request).
+                // Phase 1 does not cancel the older run; it is left to finish and its result
+                // is discarded by the caller's version check. Phase 2 adds cancellation.
+                _ => {
+                    let id = self.next_run_id.fetch_add(1, Ordering::Relaxed);
+                    let worker = Arc::clone(self);
+                    let document = document.clone();
+                    let future = async move {
+                        let handle = tokio::runtime::Handle::current();
+                        tokio::task::spawn_blocking(move || {
+                            handle.block_on(async move { worker.run_diagnostic(&document).await })
+                        })
+                        .await
+                        .unwrap()
+                    }
+                    .boxed()
+                    .shared();
+                    inflight.insert(
+                        uri.clone(),
+                        InFlightDiagnostic { id, version, future: future.clone() },
+                    );
+                    let guard = InFlightGuard { worker: Arc::clone(self), uri, id };
+                    (future, Some(guard))
+                }
+            }
+        };
+
+        shared.await
     }
 
     /// Format a file with the current formatter
