@@ -37,6 +37,17 @@ impl LenAndHash {
         Self((len as u64) | ((hash as u64) << 32))
     }
 
+    /// Create a `LenAndHash` with a `0` hash directly from a `usize` `len`.
+    ///
+    /// Converting the `usize` straight to `u64` (rather than truncating to `u32` and widening
+    /// back) is a no-op, because identifier lengths always fit in 32 bits, so the top 32 bits
+    /// (the hash) are `0`. This lets [`Ident::new_unhashed`] compile to a no-op reinterpret of
+    /// `&str`, which has identical layout.
+    #[inline(always)]
+    const fn unhashed(len: usize) -> Self {
+        Self(len as u64)
+    }
+
     #[expect(clippy::cast_possible_truncation)]
     #[inline(always)]
     const fn len(self) -> u32 {
@@ -72,6 +83,15 @@ impl LenAndHash {
     #[inline(always)]
     const fn new(len: u32, hash: u32) -> Self {
         Self { len, hash }
+    }
+
+    /// Create a `LenAndHash` with a `0` hash directly from a `usize` `len`.
+    ///
+    /// See the 64-bit version of this method for why it takes a `usize`.
+    #[expect(clippy::cast_possible_truncation)]
+    #[inline(always)]
+    const fn unhashed(len: usize) -> Self {
+        Self { len: len as u32, hash: 0 }
     }
 
     #[inline(always)]
@@ -136,13 +156,32 @@ impl<'a> Ident<'a> {
         new_const_ident(allocator.allocator().alloc_str(s))
     }
 
+    /// Create an [`Ident`] without precomputing its hash (hash field is `0`).
+    ///
+    /// `Eq` and `Hash` include the stored hash, so an unhashed `Ident` does not compare equal to,
+    /// or hash the same as, a hashed `Ident` of the same string. Only use this when nothing
+    /// downstream relies on `Ident` hashing (e.g. parse-only pipelines that skip semantic analysis).
+    ///
+    /// On 64-bit platforms this compiles to a no-op: an unhashed `Ident` has the same layout and
+    /// bit representation as `&str` (a pointer plus the `usize` length, whose top 32 bits are the
+    /// `0` hash), so no work is done beyond reinterpreting the `&str`.
+    #[inline]
+    pub const fn new_unhashed(s: &'a str) -> Self {
+        let bytes = s.as_bytes();
+        let ptr = NonNull::from_ref(bytes).cast::<u8>();
+        // `ptr` points to a `&str` with lifetime `'a`, of length `bytes.len()`, whose memory is
+        // immutable for lifetime `'a`. The stored hash is `0` (unhashed).
+        Self { ptr, len_and_hash: LenAndHash::unhashed(bytes.len()), _marker: PhantomData }
+    }
+
     /// Create an [`Ident`] from raw components.
     ///
     /// # SAFETY
     ///
     /// * `ptr` must point to the start of a valid UTF-8 string, of length `len`.
     /// * The memory pointed to `len` bytes starting at `ptr` must be valid for reads and immutable for lifetime `'a`.
-    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`.
+    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`,
+    ///   or `0` for an unhashed `Ident` (see [`Ident::new_unhashed`]).
     #[inline]
     const unsafe fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
         Self { ptr, len_and_hash: LenAndHash::new(len, hash), _marker: PhantomData }

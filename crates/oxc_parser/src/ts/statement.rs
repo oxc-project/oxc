@@ -153,7 +153,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `type something = intrinsic. ...`
                 let left_name = TSTypeName::new_identifier_reference(
                     intrinsic_token.span(),
-                    self.token_source(&intrinsic_token),
+                    self.ident(self.token_source(&intrinsic_token)),
                     self,
                 );
                 let type_name =
@@ -739,7 +739,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::identifier_reserved_word(this_span, "this"));
             self.bump_any();
             // Recover by creating an identifier
-            let this = this_span.source_text(self.source_text);
+            let this = self.ident(this_span.source_text(self.source_text));
             debug_assert_eq!(this, "this");
             let ident = IdentifierReference::boxed(this_span, this, self);
             return TSModuleReference::IdentifierReference(ident);
