@@ -1,0 +1,75 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/parameters/default-chain-freeze.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 2,
+            "node": "Function(f)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 3,
+                "name": "a",
+                "node": "FormalParameter(a)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(outer)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 2,
+            "name": "f",
+            "node": "Function(f)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 4,
+            "name": "b",
+            "node": "VariableDeclarator(b)",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "b",
+        "node": "VariableDeclarator(b)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "b",
+            "node_id": 14,
+            "scope_id": 2
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 1,
+        "name": "outer",
+        "node": "Function(outer)",
+        "references": []
+      }
+    ]
+  }
+]

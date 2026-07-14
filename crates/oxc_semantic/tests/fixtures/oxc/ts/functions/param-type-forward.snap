@@ -1,0 +1,82 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/param-type-forward.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "TSInterfaceDeclaration",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 3,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(f)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 1,
+            "name": "x",
+            "node": "FormalParameter(x)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(Interface)",
+            "id": 2,
+            "name": "T",
+            "node": "TSInterfaceDeclaration",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 8,
+                "scope_id": 1
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 3,
+            "name": "U",
+            "node": "TSTypeAliasDeclaration",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 1,
+                "name": "U",
+                "node_id": 11,
+                "scope_id": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "f",
+        "node": "Function(f)",
+        "references": []
+      }
+    ]
+  }
+]

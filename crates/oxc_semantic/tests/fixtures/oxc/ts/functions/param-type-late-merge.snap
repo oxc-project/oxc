@@ -1,0 +1,89 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/param-type-late-merge.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 3,
+            "node": "Function(f)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 4,
+                "name": "a",
+                "node": "FormalParameter(a)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 4,
+            "node": "TSInterfaceDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 2,
+        "node": "Function(g)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | Interface)",
+            "id": 2,
+            "name": "X",
+            "node": "VariableDeclarator(X)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 3,
+            "name": "f",
+            "node": "Function(f)",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Interface)",
+        "id": 0,
+        "name": "X",
+        "node": "TSInterfaceDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "X",
+            "node_id": 23,
+            "scope_id": 3
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 1,
+        "name": "g",
+        "node": "Function(g)",
+        "references": []
+      }
+    ]
+  }
+]

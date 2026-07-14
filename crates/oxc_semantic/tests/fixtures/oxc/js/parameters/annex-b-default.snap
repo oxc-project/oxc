@@ -1,0 +1,68 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/parameters/annex-b-default.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 3,
+                "node": "Function(x)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "BlockStatement",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(f)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 1,
+            "name": "a",
+            "node": "FormalParameter(a)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable | Function)",
+            "id": 2,
+            "name": "x",
+            "node": "Function(x)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 0,
+                "name": "x",
+                "node_id": 6,
+                "scope_id": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "f",
+        "node": "Function(f)",
+        "references": []
+      }
+    ]
+  }
+]
