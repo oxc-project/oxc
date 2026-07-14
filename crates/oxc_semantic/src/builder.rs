@@ -352,6 +352,12 @@ impl<'a> SemanticBuilder<'a> {
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
 
+        // Batch-build the symbol -> resolved-references index. Resolution during
+        // the walk only sets each reference's `symbol_id`; building the index in
+        // one pass here gives every inner vec a single exactly-sized allocation
+        // instead of interleaved growth.
+        self.scoping.finish_resolved_references();
+
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
         if let Some(stats) = check_stats {
@@ -714,7 +720,8 @@ impl<'a> SemanticBuilder<'a> {
             *flags = ReferenceFlags::Type;
         }
         reference.set_symbol_id(symbol_id);
-        self.scoping.add_resolved_reference(symbol_id, reference_id);
+        // The symbol -> references index is batch-built by
+        // `Scoping::finish_resolved_references` at the end of the build.
         true
     }
 

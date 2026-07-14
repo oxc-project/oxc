@@ -626,6 +626,36 @@ impl Scoping {
         });
     }
 
+    /// Batch-build the symbol → resolved-references index from `references`.
+    ///
+    /// Called once at the end of `SemanticBuilder::build`. Resolution only sets
+    /// each reference's `symbol_id`; this fills `resolved_references` in two
+    /// passes — count, then reserve exactly and fill — so each symbol's list
+    /// gets a single exactly-sized allocation instead of growing push-by-push
+    /// (grown-out-of buffers cannot be freed in the bump arena).
+    pub(crate) fn finish_resolved_references(&mut self) {
+        if self.references.is_empty() {
+            return;
+        }
+        let references = &self.references;
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            let mut counts = vec![0u32; cell.resolved_references.len()];
+            for reference in references {
+                if let Some(symbol_id) = reference.symbol_id() {
+                    counts[symbol_id.index()] += 1;
+                }
+            }
+            for (reference_ids, &count) in cell.resolved_references.iter_mut().zip(&counts) {
+                reference_ids.reserve_exact(count as usize);
+            }
+            for (reference_id, reference) in references.iter_enumerated() {
+                if let Some(symbol_id) = reference.symbol_id() {
+                    cell.resolved_references[symbol_id.index()].push(reference_id);
+                }
+            }
+        });
+    }
+
     /// Delete a reference.
     pub fn delete_reference(&mut self, reference_id: ReferenceId) {
         let Some(symbol_id) = self.get_reference(reference_id).symbol_id() else { return };
