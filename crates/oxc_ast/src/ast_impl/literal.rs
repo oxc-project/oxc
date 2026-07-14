@@ -172,7 +172,7 @@ impl ContentEq for RegExpFlags {
 impl<'alloc> CloneIn<'alloc> for RegExpFlags {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(&self, _with_semantic_ids: bool, _: &'alloc Allocator) -> Self::Cloned {
         *self
     }
 }

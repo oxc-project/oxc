@@ -31,13 +31,12 @@ impl CloneIn<'_> for Redeclaration {
     type Cloned = Self;
 
     #[inline]
-    fn clone_in(&self, _allocator: &Allocator) -> Self::Cloned {
-        Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
-    }
-
-    #[inline]
-    fn clone_in_with_semantic_ids(&self, _allocator: &Allocator) -> Self::Cloned {
-        self.clone()
+    fn clone_in_impl(&self, with_semantic_ids: bool, _allocator: &Allocator) -> Self::Cloned {
+        if with_semantic_ids {
+            self.clone()
+        } else {
+            Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
+        }
     }
 }
 

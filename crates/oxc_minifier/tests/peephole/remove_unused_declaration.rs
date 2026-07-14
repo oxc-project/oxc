@@ -358,9 +358,9 @@ fn keep_in_script_mode() {
 
 #[test]
 fn keep_class_cycle_with_wrapped_arrow_heritage() {
-    // The removal check must see the arrow heritage through a pure
-    // sequence/paren wrapper, so the decision cannot change when a fold
-    // surfaces the literal arrow between passes.
+    // `classify_class_removability` must see the arrow heritage through a
+    // pure sequence/paren wrapper, so the classification cannot change when
+    // a fold surfaces the literal arrow between passes.
     test_smallest(
         "class A extends (0, () => {}) { m() { new B() } } class B { m() { new A() } } console.log(1);",
         "class A extends (() => {}) {\n\tm() {\n\t\tnew B();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}\nconsole.log(1);",

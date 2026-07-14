@@ -12903,6 +12903,14 @@
             "prefer-inline"
           ],
           "markdownDescription": "Prefer `import { type Foo } from 'foo'` for type imports."
+        },
+        {
+          "description": "Prefer `import type { Foo } from 'foo'` when all named imports are types, but allow\n`import { type Foo, bar } from 'foo'` when value imports are present.",
+          "type": "string",
+          "enum": [
+            "prefer-top-level-if-only-type-imports"
+          ],
+          "markdownDescription": "Prefer `import type { Foo } from 'foo'` when all named imports are types, but allow\n`import { type Foo, bar } from 'foo'` when value imports are present."
         }
       ]
     },

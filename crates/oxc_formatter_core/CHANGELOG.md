@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- a9a5cd6 formatter_core: Expose `SourceText::as_str()` (#24281) (leaysgur)
+
+### ⚡ Performance
+
+- eeb1913 formatter_core: Avoid per-call `Vec` work-stack in soft-line removal (#23775) (Marius Schulz)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🚀 Features

@@ -108,12 +108,12 @@ impl Node {
 }
 
 struct AliasingState {
-    nodes: FxIndexMap<IdentifierId, Node>,
+    nodes: FxHashMap<IdentifierId, Node>,
 }
 
 impl AliasingState {
     fn new() -> Self {
-        AliasingState { nodes: FxIndexMap::default() }
+        AliasingState { nodes: FxHashMap::default() }
     }
 
     fn create(&mut self, place: &Place, value: NodeValue) {

@@ -11,6 +11,7 @@ use oxc_ecmascript::{
     ToPrimitive,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
+use oxc_semantic::Scoping;
 use oxc_span::GetSpan;
 use oxc_syntax::symbol::{SymbolFlags, SymbolId};
 
@@ -20,24 +21,34 @@ use super::fold_constants::is_cjs_module_exports_hint;
 impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
     pub fn remove_unused_expression(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        match e {
-            Expression::ArrayExpression(_) => Self::remove_unused_array_expr(e, ctx),
-            Expression::AssignmentExpression(_) => Self::remove_unused_assignment_expr(e, ctx),
-            Expression::BinaryExpression(_) => Self::remove_unused_binary_expr(e, ctx),
-            Expression::CallExpression(_) => Self::remove_unused_call_expr(e, ctx),
-            Expression::ClassExpression(_) => Self::remove_unused_class_expr(e, ctx),
-            Expression::ConditionalExpression(_) => Self::remove_unused_conditional_expr(e, ctx),
-            Expression::LogicalExpression(_) => Self::remove_unused_logical_expr(e, ctx),
-            Expression::NewExpression(_) => Self::remove_unused_new_expr(e, ctx),
-            Expression::ObjectExpression(_) => Self::remove_unused_object_expr(e, ctx),
-            Expression::SequenceExpression(_) => Self::remove_unused_sequence_expr(e, ctx),
-            Expression::TemplateLiteral(_) => Self::remove_unused_template_literal(e, ctx),
-            Expression::UnaryExpression(_) => Self::remove_unused_unary_expr(e, ctx),
-            // In a derived class constructor, accessing `this` before `super()` throws
-            // a `ReferenceError`, so we must keep it. In all other positions (including
-            // non-derived constructors) `this` is always initialized and can be dropped.
-            Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
-            _ => !e.may_have_side_effects(ctx),
+        // Routed through `expr_has_specialized_unused_handler` so the
+        // predicate cannot drift from the dispatch (see its doc).
+        if Self::expr_has_specialized_unused_handler(e) {
+            match e {
+                Expression::ArrayExpression(_) => Self::remove_unused_array_expr(e, ctx),
+                Expression::AssignmentExpression(_) => Self::remove_unused_assignment_expr(e, ctx),
+                Expression::BinaryExpression(_) => Self::remove_unused_binary_expr(e, ctx),
+                Expression::CallExpression(_) => Self::remove_unused_call_expr(e, ctx),
+                Expression::ClassExpression(_) => Self::remove_unused_class_expr(e, ctx),
+                Expression::ConditionalExpression(_) => {
+                    Self::remove_unused_conditional_expr(e, ctx)
+                }
+                Expression::LogicalExpression(_) => Self::remove_unused_logical_expr(e, ctx),
+                Expression::NewExpression(_) => Self::remove_unused_new_expr(e, ctx),
+                Expression::ObjectExpression(_) => Self::remove_unused_object_expr(e, ctx),
+                Expression::SequenceExpression(_) => Self::remove_unused_sequence_expr(e, ctx),
+                Expression::TemplateLiteral(_) => Self::remove_unused_template_literal(e, ctx),
+                Expression::UnaryExpression(_) => Self::remove_unused_unary_expr(e, ctx),
+                // In a derived class constructor, accessing `this` before `super()` throws
+                // a `ReferenceError`, so we must keep it. In all other positions (including
+                // non-derived constructors) `this` is always initialized and can be dropped.
+                Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
+                _ => unreachable!(
+                    "expr_has_specialized_unused_handler is out of sync with this dispatch"
+                ),
+            }
+        } else {
+            !e.may_have_side_effects(ctx)
         }
     }
 
@@ -1005,91 +1016,138 @@ impl<'a> PeepholeOptimizations {
         c: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<ArenaVec<'a, Expression<'a>>> {
+        match Self::classify_class_removability(c, &*ctx, ctx.scoping()) {
+            ClassRemovability::Keep => return None,
+            // Nothing to extract by construction: `RemovesClean` means pure
+            // heritage, no present static values, pure computed keys — so
+            // the extraction walk (which would re-run the classifier's
+            // purity checks to extract nothing) is skipped.
+            ClassRemovability::RemovesClean => {}
+            ClassRemovability::Extracts => {
+                // Extract the evaluation-time expressions. The heritage and
+                // computed-key purity checks below repeat the classifier's:
+                // the classifier is shared with callers that never extract,
+                // so it reports no extraction plan. Cold path — it only runs
+                // when an `Extracts` class is actually removed.
+                let mut exprs = ArenaVec::new_in(ctx);
+
+                if let Some(e) = &mut c.super_class
+                    && e.may_have_side_effects(ctx)
+                {
+                    exprs.push(c.super_class.take().unwrap());
+                }
+
+                for e in &mut c.body.body {
+                    // Save computed key.
+                    if e.computed()
+                        && let Some(key) = match e {
+                            ClassElement::TSIndexSignature(_) | ClassElement::StaticBlock(_) => {
+                                None
+                            }
+                            ClassElement::MethodDefinition(def) => Some(&mut def.key),
+                            ClassElement::PropertyDefinition(def) => Some(&mut def.key),
+                            ClassElement::AccessorProperty(def) => Some(&mut def.key),
+                        }
+                        && let Some(expr) = key.as_expression_mut()
+                        && expr.may_have_side_effects(ctx)
+                    {
+                        exprs.push(expr.take_in(ctx));
+                    }
+                    // Save static initializer.
+                    if e.r#static()
+                        && let Some(init) = match e {
+                            ClassElement::TSIndexSignature(_)
+                            | ClassElement::StaticBlock(_)
+                            | ClassElement::MethodDefinition(_) => None,
+                            ClassElement::PropertyDefinition(def) => def.value.take(),
+                            ClassElement::AccessorProperty(def) => def.value.take(),
+                        }
+                    {
+                        // Already checked side effects above.
+                        exprs.push(init);
+                    }
+                }
+
+                ctx.notice_change();
+                return Some(exprs);
+            }
+        }
+
+        ctx.notice_change();
+        Some(ArenaVec::new_in(ctx))
+    }
+
+    /// How `remove_unused_class` treats an unused class. The classifier is
+    /// the single source of truth for its bail-outs; the extraction loop in
+    /// `remove_unused_class` keys off it.
+    pub(crate) fn classify_class_removability(
+        c: &Class<'a>,
+        ctx: &impl MayHaveSideEffectsContext<'a>,
+        scoping: &Scoping,
+    ) -> ClassRemovability {
+        // Don't remove classes with decorators - they may have side effects.
+        if !c.decorators.is_empty() {
+            return ClassRemovability::Keep;
+        }
         if let Some(super_class) = &c.super_class {
-            // Unwrap parens and sequence tails — `(0, x)` — so the check sees
-            // the value the heritage actually evaluates to.
+            // Unwrap parens and sequence tails — `(0, x)` — so the
+            // classification does not change when a later fold surfaces
+            // the inner expression.
             let mut e = super_class.get_inner_expression();
             while let Expression::SequenceExpression(seq) = e {
                 let Some(last) = seq.expressions.last() else { break };
                 e = last.get_inner_expression();
             }
             match e {
-                // TypeError `class C extends (() => {}) {}`
-                Expression::ArrowFunctionExpression(_) => return None,
+                // TypeError `class C extends (() => {}) {}`.
+                Expression::ArrowFunctionExpression(_) => return ClassRemovability::Keep,
                 Expression::Identifier(ident)
-                    if Self::heritage_may_be_uninitialized(ident, ctx) =>
+                    if Self::heritage_may_be_uninitialized(ident, scoping) =>
                 {
-                    return None;
+                    return ClassRemovability::Keep;
                 }
                 _ => {}
             }
         }
-        // Don't remove classes with decorators - they may have side effects
-        if !c.decorators.is_empty() {
-            return None;
-        }
-        // Keep the entire class if there are class level side effects.
+        let mut extracts = false;
         for e in &c.body.body {
+            // Cheap structural bail-outs first; purity walks after.
+            if e.has_decorator() {
+                return ClassRemovability::Keep;
+            }
             match e {
-                e if e.has_decorator() => return None,
-                ClassElement::TSIndexSignature(_) => return None,
-                ClassElement::StaticBlock(block) if !block.body.is_empty() => return None,
-                ClassElement::PropertyDefinition(prop)
-                    if prop.r#static
-                        && prop.value.as_ref().is_some_and(|v| v.may_have_side_effects(ctx)) =>
-                {
-                    return None;
-                }
-                ClassElement::AccessorProperty(prop)
-                    if prop.r#static
-                        && prop.value.as_ref().is_some_and(|v| v.may_have_side_effects(ctx)) =>
-                {
-                    return None;
+                ClassElement::TSIndexSignature(_) => return ClassRemovability::Keep,
+                ClassElement::StaticBlock(block) if !block.body.is_empty() => {
+                    return ClassRemovability::Keep;
                 }
                 _ => {}
             }
-        }
-
-        // Otherwise extract the expressions.
-        let mut exprs = ArenaVec::new_in(ctx);
-
-        if let Some(e) = &mut c.super_class
-            && e.may_have_side_effects(ctx)
-        {
-            exprs.push(c.super_class.take().unwrap());
-        }
-
-        for e in &mut c.body.body {
-            // Save computed key.
-            if e.computed()
-                && let Some(key) = match e {
-                    ClassElement::TSIndexSignature(_) | ClassElement::StaticBlock(_) => None,
-                    ClassElement::MethodDefinition(def) => Some(&mut def.key),
-                    ClassElement::PropertyDefinition(def) => Some(&mut def.key),
-                    ClassElement::AccessorProperty(def) => Some(&mut def.key),
+            if e.r#static() {
+                let value = match e {
+                    ClassElement::PropertyDefinition(prop) => prop.value.as_ref(),
+                    ClassElement::AccessorProperty(prop) => prop.value.as_ref(),
+                    _ => None,
+                };
+                if let Some(value) = value {
+                    if value.may_have_side_effects(ctx) {
+                        return ClassRemovability::Keep;
+                    }
+                    // Every PRESENT static value is extracted, pure or not.
+                    extracts = true;
                 }
-                && let Some(expr) = key.as_expression_mut()
+            }
+            if e.computed()
+                && let Some(key) = e.property_key()
+                && let Some(expr) = key.as_expression()
                 && expr.may_have_side_effects(ctx)
             {
-                exprs.push(expr.take_in(ctx));
-            }
-            // Save static initializer.
-            if e.r#static()
-                && let Some(init) = match e {
-                    ClassElement::TSIndexSignature(_)
-                    | ClassElement::StaticBlock(_)
-                    | ClassElement::MethodDefinition(_) => None,
-                    ClassElement::PropertyDefinition(def) => def.value.take(),
-                    ClassElement::AccessorProperty(def) => def.value.take(),
-                }
-            {
-                // Already checked side effects above.
-                exprs.push(init);
+                extracts = true;
             }
         }
-
-        ctx.notice_change();
-        Some(exprs)
+        if c.super_class.as_ref().is_some_and(|e| e.may_have_side_effects(ctx)) {
+            extracts = true;
+        }
+        if extracts { ClassRemovability::Extracts } else { ClassRemovability::RemovesClean }
     }
 
     /// A heritage identifier can throw at class-evaluation time regardless
@@ -1106,15 +1164,53 @@ impl<'a> PeepholeOptimizations {
     /// machinery. The deeper fix — modeling potentially-uninitialized
     /// identifier reads — belongs in `oxc_ecmascript`'s side-effect layer,
     /// which currently treats every resolved identifier read as pure.
-    fn heritage_may_be_uninitialized(
-        ident: &IdentifierReference<'_>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
+    fn heritage_may_be_uninitialized(ident: &IdentifierReference<'_>, scoping: &Scoping) -> bool {
         const UNINIT_RISK: SymbolFlags = SymbolFlags::Variable.union(SymbolFlags::Class);
         ident
             .reference_id
             .get()
-            .and_then(|reference_id| ctx.scoping().get_reference(reference_id).symbol_id())
-            .is_some_and(|symbol_id| ctx.scoping().symbol_flags(symbol_id).intersects(UNINIT_RISK))
+            .and_then(|reference_id| scoping.get_reference(reference_id).symbol_id())
+            .is_some_and(|symbol_id| scoping.symbol_flags(symbol_id).intersects(UNINIT_RISK))
     }
+
+    /// Expression kinds the `remove_unused_expression` dispatch above sends
+    /// to a specialized handler, which may REDUCE the expression (leaving
+    /// residue) instead of dropping it whole (`ThisExpression` counts as
+    /// specialized: its removal depends on traversal position).
+    ///
+    /// The dispatch routes through this predicate, so the two cannot drift
+    /// silently: a new specialized arm without a predicate entry is dead
+    /// code (its author's own tests fail), and a predicate entry without a
+    /// dispatch arm hits the `unreachable!`.
+    pub(crate) fn expr_has_specialized_unused_handler(e: &Expression<'a>) -> bool {
+        matches!(
+            e,
+            Expression::ArrayExpression(_)
+                | Expression::AssignmentExpression(_)
+                | Expression::BinaryExpression(_)
+                | Expression::CallExpression(_)
+                | Expression::ClassExpression(_)
+                | Expression::ConditionalExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::NewExpression(_)
+                | Expression::ObjectExpression(_)
+                | Expression::SequenceExpression(_)
+                | Expression::TemplateLiteral(_)
+                | Expression::UnaryExpression(_)
+                | Expression::ThisExpression(_)
+        )
+    }
+}
+
+/// See [`PeepholeOptimizations::classify_class_removability`].
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ClassRemovability {
+    /// Removal must bail (`remove_unused_class` returns `None`).
+    Keep,
+    /// Removable, but evaluation-time expressions (side-effectful heritage
+    /// or computed keys, any present static value) are extracted into the
+    /// surrounding code.
+    Extracts,
+    /// Removable with nothing extracted.
+    RemovesClean,
 }

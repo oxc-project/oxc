@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment between a function argument and its comma stays BEFORE the comma
+$x: foo($a /* c1 */, $b /* c2 */);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment between a function argument and its comma stays BEFORE the comma
+$x: foo($a /* c1 */, $b /* c2 */);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment between a function argument and its comma stays BEFORE the comma
+$x: foo($a /* c1 */, $b /* c2 */);
+
+===================== End =====================

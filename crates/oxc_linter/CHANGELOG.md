@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.74.0] - 2026-07-13
+
+### 🚀 Features
+
+- 0433a83 linter/eslint/no-inner-declarations: Add `namespaces` option (#24044) (Boshen)
+- 8c1d74b linter/import/no-duplicates: Add autofix logic (#24273) (Cole Ellison)
+
+### 🐛 Bug Fixes
+
+- 0b086de linter/jest/prefer-lowercase-title: False positive when `lowercaseFirstCharacterOnly` is false (#24414) (Connor Shea)
+- 097cb95 linter: Allow `vite-plus/test` and `@effect as Vitest source (#24196) (Liang)
+- 8337835 linter: Error on `ignorePatterns` that cannot match files aoutside the config directory (#24341) (leaysgur)
+- 9ba30e5 linter/oxc/bad-replace-all-arg: Add note to enhance diagnostic (#24346) (camc314)
+- 2ce5a33 linter: Resolve `ignorePatterns` relative to the config dir (#24339) (leaysgur)
+- ab90eed linter/eslint/no-loop-func: Do not error on catch variables (#24316) (Chris Opperwall)
+- b67f0a6 linter/eslint/no-unused-vars: Count default parameter updates as usage (#24323) (camc314)
+- 2aecf60 linter/eslint/no-unreachable: Handle `break` in switch stmts correctly (#24260) (camc314)
+
+### ⚡ Performance
+
+- 7f80cac linter/vue/prop-name-casing: Precompile `ignoreProps` regex pattern (#24413) (connorshea)
+- 6272051 linter/typescript/no-require-imports: Compile allow patterns once (#24417) (connorshea)
+- fb1edf1 linter: Compute comment fix span only for directive comments (#24419) (connorshea)
+- 33805b9 linter/jsdoc/require-param: Compile checkTypesPattern regex once (#24420) (connorshea)
+- 8de6fca linter/jest/valid-title: Compile disallowedWords regex once (#24412) (Connor Shea)
+- 4a0d8dc linter/eslint/no-underscore-dangle: Avoid String clone per identifier (#24371) (Ian Macalinao)
+- f3ab04c linter/typescript/consistent-type-imports: Remove redundant Vec per violation (#24370) (Ian Macalinao)
+- 4d2d78d linter/typescript/prefer-ts-expect-error: Avoid String clone per comment (#24369) (Ian Macalinao)
+
 ## [1.73.0] - 2026-07-06
 
 ### 🚀 Features

@@ -635,7 +635,7 @@ impl<'a> CloneIn<'a> for Span {
     type Cloned = Self;
 
     #[inline]
-    fn clone_in(&self, _: &'a Allocator) -> Self {
+    fn clone_in_impl(&self, _with_semantic_ids: bool, _: &'a Allocator) -> Self {
         *self
     }
 }

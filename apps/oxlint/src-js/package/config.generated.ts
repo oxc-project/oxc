@@ -86,7 +86,7 @@ export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
-export type Mode = "prefer-top-level" | "prefer-inline";
+export type Mode = "prefer-top-level" | "prefer-inline" | "prefer-top-level-if-only-type-imports";
 /**
  * Extension rule configuration; Copy to avoid extra indirection.
  */
