@@ -420,7 +420,8 @@ mod fix {
                     .type_parameters
                     .as_ref()
                     .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
-                params: parenthesized_params(&function.params, ctx),
+                // Function parameter spans always include their parentheses.
+                params: ctx.source_range(function.params.span).to_string(),
                 return_type: function
                     .return_type
                     .as_ref()
@@ -451,7 +452,7 @@ mod fix {
                     .type_parameters
                     .as_ref()
                     .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
-                params: parenthesized_params(&arrow.params, ctx),
+                params: parenthesized_arrow_params(&arrow.params, ctx),
                 return_type: arrow
                     .return_type
                     .as_ref()
@@ -492,8 +493,9 @@ mod fix {
             .map_or("", |annotation| ctx.source_range(annotation.span))
     }
 
-    fn parenthesized_params(params: &FormalParameters<'_>, ctx: &LintContext<'_>) -> String {
+    fn parenthesized_arrow_params(params: &FormalParameters<'_>, ctx: &LintContext<'_>) -> String {
         let source = ctx.source_range(params.span);
+        // Simple arrow parameter spans omit parentheses; parenthesized arrow spans include them.
         if source.starts_with('(') { source.to_string() } else { format!("({source})") }
     }
 }
@@ -1911,6 +1913,11 @@ fn test() {
             "async function* Hello(props) { yield await load(); return <div/>; }",
             "const Hello = async function*(props) { yield await load(); return <div/>; }",
             Some(serde_json::json!([{ "namedComponents": "function-expression" }])),
+        ),
+        (
+            "const Hello = props => <div/>;",
+            "function Hello(props) {\n return <div/>\n}",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
         ),
     ];
 
