@@ -392,11 +392,9 @@ pnpm --dir apps/oxfmt conformance
 ### Manual checks
 
 ```sh
-cargo run -p oxc_formatter_css --example css_formatter file.css
+cargo run -p oxc_formatter_css --example css_formatter file.css                  # defaults to --print-width 80
 cargo run -p oxc_formatter_css --example parse_debug -- --syntax scss file.scss  # dump oxc-css-parser AST
 cargo run -p oxc_formatter_css --example embedded_debug file.scss                # format_to_ir entry
 ```
 
-## Roadmap (TODO: Follow Prettier main)
-
-The guiding axis is Prettier compatibility, matching what is in Prettier's unreleased changelog (main has them, next stable will).
+`DUMP_IR=1` prints the `FormatElement` stream before printing.
