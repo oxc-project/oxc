@@ -47,15 +47,11 @@ fn test() {
     let fail = vec![
         "test('foo', () => {});test('bar', () => {});",
         "test('foo', () => {});\ntest('bar', () => {});",
-        "it('foo', () => {});\nfit('bar', () => {});\ntest('baz', () => {});",
         "const thing = 123;\n/* one */\n/* two */\ntest('foo', () => {});",
         r"
 const foo = 'bar';
 const bar = 'baz';
 it('foo', () => {
-  // stuff
-});
-fit('bar', () => {
   // stuff
 });
 test('foo foo', () => {});
@@ -71,10 +67,9 @@ test('bar bar', () => {});
      });
      test.skip('skipping', () => {}); // Another comment
      it.skip('skipping too', () => {});
- });xtest('weird', () => {});
+ });
  test
    .skip('skippy skip', () => {});
- xit('bar foo', () => {});
             ",
         r"
 describe('other bar', function() {
@@ -96,10 +91,6 @@ describe('other bar', function() {
             "test('foo', () => {});\n\ntest('bar', () => {});",
         ),
         (
-            "it('foo', () => {});\nfit('bar', () => {});\ntest('baz', () => {});",
-            "it('foo', () => {});\n\nfit('bar', () => {});\n\ntest('baz', () => {});",
-        ),
-        (
             "const thing = 123;\n/* one */\n/* two */\ntest('foo', () => {});",
             "const thing = 123;\n\n/* one */\n/* two */\ntest('foo', () => {});",
         ),
@@ -110,9 +101,6 @@ const bar = 'baz';
 it('foo', () => {
   // stuff
 });
-fit('bar', () => {
-  // stuff
-});
 test('foo foo', () => {});
 test('bar bar', () => {});
 
@@ -126,10 +114,9 @@ describe('other bar', () => {
     });
     test.skip('skipping', () => {}); // Another comment
     it.skip('skipping too', () => {});
-});xtest('weird', () => {});
+});
 test
   .skip('skippy skip', () => {});
-xit('bar foo', () => {});
         ",
             r"
 const foo = 'bar';
@@ -139,10 +126,6 @@ it('foo', () => {
   // stuff
 });
 
-fit('bar', () => {
-  // stuff
-});
-
 test('foo foo', () => {});
 
 test('bar bar', () => {});
@@ -163,12 +146,8 @@ describe('other bar', () => {
     it.skip('skipping too', () => {});
 });
 
-xtest('weird', () => {});
-
 test
   .skip('skippy skip', () => {});
-
-xit('bar foo', () => {});
         ",
         ),
         (
@@ -192,7 +171,7 @@ describe('other bar', function() {
         ),
     ];
     Tester::new(PaddingAroundTestBlocks::NAME, PaddingAroundTestBlocks::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }
