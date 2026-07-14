@@ -136,13 +136,28 @@ impl<'a> Ident<'a> {
         new_const_ident(allocator.allocator().alloc_str(s))
     }
 
+    /// Create an [`Ident`] without precomputing its hash (hash field is `0`).
+    ///
+    /// `Eq` and `Hash` include the stored hash, so an unhashed `Ident` does not compare equal to,
+    /// or hash the same as, a hashed `Ident` of the same string. Only use this when nothing
+    /// downstream relies on `Ident` hashing (e.g. parse-only pipelines that skip semantic analysis).
+    #[expect(clippy::cast_possible_truncation)]
+    #[inline]
+    pub const fn new_unhashed(s: &'a str) -> Self {
+        let bytes = s.as_bytes();
+        let ptr = NonNull::from_ref(bytes).cast::<u8>();
+        // SAFETY: `ptr` points to a `&str` with lifetime `'a`, with length `len`.
+        unsafe { Self::from_raw(ptr, bytes.len() as u32, 0) }
+    }
+
     /// Create an [`Ident`] from raw components.
     ///
     /// # SAFETY
     ///
     /// * `ptr` must point to the start of a valid UTF-8 string, of length `len`.
     /// * The memory pointed to `len` bytes starting at `ptr` must be valid for reads and immutable for lifetime `'a`.
-    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`.
+    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`,
+    ///   or `0` for an unhashed `Ident` (see [`Ident::new_unhashed`]).
     #[inline]
     const unsafe fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
         Self { ptr, len_and_hash: LenAndHash::new(len, hash), _marker: PhantomData }

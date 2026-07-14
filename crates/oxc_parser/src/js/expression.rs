@@ -125,7 +125,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // from source text without going through `get_string`'s kind matching.
         let name = if token.escaped() { self.cur_string() } else { self.token_source(&token) };
         self.advance(kind);
-        (span, Ident::from(name))
+        (span, self.ident(name))
+    }
+
+    /// Create an [`Ident`], respecting [`ParseOptions::precompute_ident_hashes`].
+    ///
+    /// [`ParseOptions::precompute_ident_hashes`]: crate::ParseOptions::precompute_ident_hashes
+    #[inline]
+    pub(crate) fn ident(&self, name: &'a str) -> Ident<'a> {
+        if self.options.precompute_ident_hashes {
+            Ident::from(name)
+        } else {
+            Ident::new_unhashed(name)
+        }
     }
 
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {

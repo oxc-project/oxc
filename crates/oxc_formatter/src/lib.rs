@@ -210,6 +210,7 @@ pub fn parse_for_format<'a>(
         allow_return_outside_function: true, // accept all syntax the formatter may be handed
         allow_v8_intrinsics: true,
         preserve_parens: false, // MUST be false: the formatter panics otherwise
+        ..ParseOptions::default()
     };
     Parser::new(allocator, source_text, source_type).with_options(options).parse()
 }

@@ -231,6 +231,18 @@ pub struct ParseOptions {
     ///
     /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
     pub allow_v8_intrinsics: bool,
+
+    /// Precompute hashes for identifier names (`Ident`s) in the AST.
+    ///
+    /// Precomputed hashes speed up `Ident`-keyed hash map operations in semantic analysis
+    /// and later compilation stages, at a small cost to parsing speed.
+    ///
+    /// Only disable this for parse-only pipelines (e.g. parse + serialize). Unhashed `Ident`s
+    /// do not compare equal to hashed ones, so semantic analysis and anything else relying on
+    /// `Ident` hashing must not run on an AST parsed with this option disabled.
+    ///
+    /// Default: `true`
+    pub precompute_ident_hashes: bool,
 }
 
 impl Default for ParseOptions {
@@ -241,6 +253,7 @@ impl Default for ParseOptions {
             allow_return_outside_function: false,
             preserve_parens: true,
             allow_v8_intrinsics: false,
+            precompute_ident_hashes: true,
         }
     }
 }
