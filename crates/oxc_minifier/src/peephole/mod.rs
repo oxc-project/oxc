@@ -453,7 +453,7 @@ impl<'a> PeepholeOptimizations {
     /// `symbol_liveness::propagate_collected`).
     pub(crate) fn end_pass(program: &Program<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         Self::flush_pass_dirty(program, ctx);
-        symbol_liveness::propagate_collected(ctx)
+        symbol_liveness::propagate_collected(program, ctx)
     }
 }
 

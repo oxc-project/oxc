@@ -146,6 +146,11 @@ use oxc_syntax::symbol::{SymbolFlags, SymbolId};
 
 use crate::{CompressOptions, CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
 
+#[cfg(debug_assertions)]
+mod validate;
+#[cfg(debug_assertions)]
+pub use validate::compute_dead_symbols;
+
 // ========================================================================
 // Shared predicates: the gate definitions (rules 1 and 2)
 // ========================================================================
@@ -502,57 +507,66 @@ pub fn collect_exit_function(ctx: &mut TraverseCtx<'_>) {
 /// bits only ever come from the symbol table, and a quiet re-run of an
 /// unchanged tree finds no new ones.
 ///
-/// Must run after `flush_pass_dirty` so consumed reference counts are
-/// post-flush fresh.
-pub fn propagate_collected(ctx: &mut TraverseCtx<'_>) -> bool {
-    let TraverseCtx { state, .. } = ctx;
-    let crate::state::MinifierState { liveness, dead_symbols, pinned_symbols, .. } = state;
-    let lv = liveness;
-    if !lv.active {
-        return false;
-    }
-    debug_assert!(lv.frames.is_empty(), "unbalanced liveness region frames at flush");
-
-    // References minted behind the traversal cursor were never visited by
-    // the collection and must stay live this flush (see the
-    // `force_root_log` field doc).
-    while let Some(symbol_id) = lv.force_root_log.pop() {
-        lv.mark_live_root(symbol_id);
-    }
-
-    // No candidates admitted ⇒ no edges (an edge needs an enclosing
-    // candidate region) and no dead set: skip the worklist drain and the
-    // set scan (mirrors `compute_dead_symbols`' early-out). The swap still
-    // runs so a stale dead set from the previous pass clears.
-    if lv.candidates.is_empty() {
-        std::mem::swap(dead_symbols, &mut lv.dead_next);
-        std::mem::swap(pinned_symbols, &mut lv.pinned_next);
-        return false;
-    }
-
-    // Candidacy is fully known post-collection, so drop the (measured
-    // 77-84%) edges whose targets can never be dead before they hit the
-    // sort. A removed edge's only effect was a live mark on a
-    // non-candidate, which nothing consults.
-    {
-        let LivenessCollect { edges, candidates, .. } = lv;
-        edges.retain(|&(_, target)| candidates.contains(target.index()));
-    }
-
-    propagate(&lv.candidates, &mut lv.live, &mut lv.roots, &mut lv.edges);
-
-    for candidate in lv.candidates.ones() {
-        if !lv.live.contains(candidate) {
-            lv.dead_next.set_bit(candidate);
+/// Must run after `flush_pass_dirty` so the debug ground-truth walk sees
+/// post-flush scoping.
+pub fn propagate_collected<'a>(
+    #[cfg_attr(not(debug_assertions), expect(unused_variables))] program: &Program<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> bool {
+    let found_new_dead = {
+        let crate::state::MinifierState { liveness: lv, dead_symbols, pinned_symbols, .. } =
+            &mut ctx.state;
+        if !lv.active {
+            return false;
         }
-    }
+        debug_assert!(lv.frames.is_empty(), "unbalanced liveness region frames at flush");
 
-    // Per-bit scan; a word-level set-difference helper would make this
-    // O(words) — a possible `oxc_allocator` follow-up. Until then, gate the
-    // common terminal-pass case (empty dead set).
-    let found_new_dead =
-        !lv.dead_next.is_empty() && lv.dead_next.ones().any(|bit| !dead_symbols.contains(bit));
+        // References minted behind the traversal cursor were never visited
+        // by the collection and must stay live this flush (see the
+        // `force_root_log` field doc).
+        while let Some(symbol_id) = lv.force_root_log.pop() {
+            lv.mark_live_root(symbol_id);
+        }
 
+        // No candidates admitted ⇒ no edges (an edge needs an enclosing
+        // candidate region) and no dead set: skip the worklist drain and the
+        // set scan (mirrors `compute_dead_symbols`' early-out). The swap
+        // still runs so a stale dead set from the previous pass clears.
+        if lv.candidates.is_empty() {
+            std::mem::swap(dead_symbols, &mut lv.dead_next);
+            std::mem::swap(pinned_symbols, &mut lv.pinned_next);
+            return false;
+        }
+
+        // Candidacy is fully known post-collection, so drop the edges whose
+        // targets were never admitted (exported functions,
+        // function-expression names) before they hit the sort — such a
+        // target can never be dead. A removed edge's only effect was a live
+        // mark on a non-candidate, which nothing consults.
+        {
+            let LivenessCollect { edges, candidates, .. } = &mut *lv;
+            edges.retain(|&(_, target)| candidates.contains(target.index()));
+        }
+
+        propagate(&lv.candidates, &mut lv.live, &mut lv.roots, &mut lv.edges);
+
+        for candidate in lv.candidates.ones() {
+            if !lv.live.contains(candidate) {
+                lv.dead_next.set_bit(candidate);
+            }
+        }
+
+        // Per-bit scan; a word-level set-difference helper would make this
+        // O(words) — a possible `oxc_allocator` follow-up. Until then, gate
+        // the common terminal-pass case (empty dead set).
+        !lv.dead_next.is_empty() && lv.dead_next.ones().any(|bit| !dead_symbols.contains(bit))
+    };
+
+    #[cfg(debug_assertions)]
+    validate_flush(program, ctx);
+
+    let crate::state::MinifierState { liveness: lv, dead_symbols, pinned_symbols, .. } =
+        &mut ctx.state;
     std::mem::swap(dead_symbols, &mut lv.dead_next);
     std::mem::swap(pinned_symbols, &mut lv.pinned_next);
     // A released pin never strands a waiting removal here: v1 pins sit on
@@ -563,4 +577,43 @@ pub fn propagate_collected(ctx: &mut TraverseCtx<'_>) -> bool {
     // sources will need a release-driven extra pass (Annex B blockers);
     // that arrives with them.
     found_new_dead
+}
+
+/// Debug-only flush validation, before the swaps: the fresh sets are still
+/// in [`LivenessCollect`], the consumed sets still in `MinifierState`. Both
+/// nets sit behind the dead-set gate (their checks are vacuous when this
+/// pass marked nothing dead), so the whole test and conformance corpus
+/// doubles as a collection-vs-truth differ at zero release cost.
+#[cfg(debug_assertions)]
+fn validate_flush<'a>(program: &Program<'a>, ctx: &TraverseCtx<'a>) {
+    let lv = &ctx.state.liveness;
+    if lv.dead_next.is_empty() {
+        return;
+    }
+    let (walk_dead, walk_candidates, walk_pins) =
+        compute_dead_symbols(program, ctx.scoping(), &ctx.state.options, ctx.allocator());
+    // Ground-truth net: everything the in-pass collection calls dead must
+    // be dead per a standalone walk of the settled tree — for symbols
+    // whose declarations still exist (a declaration removed this pass
+    // legitimately lingers in the stale set for one flush, with nothing
+    // left to remove).
+    for bit in lv.dead_next.ones() {
+        assert!(
+            !walk_candidates.contains(bit) || walk_dead.contains(bit),
+            "in-pass liveness collection marked symbol {bit} dead but the ground-truth walk \
+             sees it live",
+        );
+    }
+    // Pin net: every pin the settled tree demands must have been
+    // collected. A missed pin is SILENT wrong code — the count arm deletes
+    // an observable binding while the dead set stays perfectly correct —
+    // so no dead-set check can catch it; this is the one direction the net
+    // above cannot see.
+    for bit in walk_pins.ones() {
+        assert!(
+            lv.pinned_next.contains(bit),
+            "collection failed to pin symbol {bit} (`{}`) that the ground-truth walk pins",
+            ctx.scoping().symbol_name(SymbolId::from_usize(bit)),
+        );
+    }
 }
