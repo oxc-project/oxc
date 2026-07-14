@@ -17,7 +17,8 @@ declare_oxc_lint!(
     fix,
     docs = DOCUMENTATION,
     version = "1.13.0",
-    short_description = "This rule enforces a line of padding before and after 1 or more `test`/`it` statements.",
+    short_description =
+        "This rule enforces a line of padding before and after 1 or more `test`/`it` statements.",
 );
 
 impl Rule for PaddingAroundTestBlocks {
