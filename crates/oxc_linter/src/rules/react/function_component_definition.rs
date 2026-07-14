@@ -108,17 +108,13 @@ impl Rule for FunctionComponentDefinition {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (actual, is_component) = match node.kind() {
-            AstKind::Function(function)
-                if matches!(
-                    function.r#type,
-                    FunctionType::FunctionDeclaration | FunctionType::FunctionExpression
-                ) =>
-            {
-                let actual = if function.r#type == FunctionType::FunctionDeclaration {
-                    FunctionStyle::Declaration
-                } else {
-                    FunctionStyle::Expression
+            AstKind::Function(function) => {
+                let actual = match function.r#type {
+                    FunctionType::FunctionDeclaration => FunctionStyle::Declaration,
+                    FunctionType::FunctionExpression => FunctionStyle::Expression,
+                    _ => return,
                 };
+
                 (actual, function_contains_jsx(function))
             }
             AstKind::ArrowFunctionExpression(arrow) => {
