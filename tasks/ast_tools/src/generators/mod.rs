@@ -26,6 +26,7 @@ mod traverse;
 mod typescript;
 mod utf8_to_utf16;
 mod visit;
+mod visit_js;
 
 pub use assert_layouts::AssertLayoutsGenerator;
 pub use ast_builder::AstBuilderGenerator;
@@ -49,6 +50,7 @@ pub use traverse::TraverseGenerator;
 pub use typescript::TypescriptGenerator;
 pub use utf8_to_utf16::Utf8ToUtf16ConverterGenerator;
 pub use visit::VisitGenerator;
+pub use visit_js::VisitJsGenerator;
 
 /// Trait to define a generator.
 pub trait Generator: Runner {
