@@ -286,7 +286,7 @@ mod fix {
                     return false;
                 }
             }
-            _ => return false,
+            _ => unreachable!(),
         }
         true
     }
