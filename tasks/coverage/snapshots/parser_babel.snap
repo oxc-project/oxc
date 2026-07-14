@@ -12507,6 +12507,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:5:13]
+ 4 │ 
+ 5 │   accessor a!;
+   ·             ─
+ 6 │   abstract accessor #s;
+   ╰────
+
   × TS(1276): An 'accessor' property cannot be declared optional.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:7:14]
  6 │   abstract accessor #s;
@@ -12866,6 +12874,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   accessor a!: number = 1;
    ╰────
 
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:4:13]
+ 3 │   #x!: number = 1;
+ 4 │   accessor a!: number = 1;
+   ·             ─
+ 5 │   accessor #a!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:5:14]
+ 4 │   accessor a!: number = 1;
+ 5 │   accessor #a!: number = 1;
+   ·              ─
+ 6 │ }
+   ╰────
+
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:2:4]
  1 │ class C {
@@ -12880,6 +12904,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │   #x!;
    ·     ─
  4 │   accessor a!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:4:13]
+ 3 │   #x!;
+ 4 │   accessor a!;
+   ·             ─
+ 5 │   accessor #a!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:5:14]
+ 4 │   accessor a!;
+ 5 │   accessor #a!;
+   ·              ─
+ 6 │ }
    ╰────
 
   × TS(1029): 'private' modifier must precede 'override' modifier.
