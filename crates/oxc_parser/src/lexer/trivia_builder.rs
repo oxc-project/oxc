@@ -18,16 +18,22 @@ pub struct TriviaBuilder<'a> {
     /// index of processed comments
     processed: usize,
 
-    /// Saw a newline before this position (since last token).
-    /// Used to determine if comments are trailing comments of the previous token.
-    saw_newline: bool,
-
-    /// Saw a newline before this position (since last comment or token).
-    /// Used to set `preceded_by_newline` on comments.
-    saw_newline_for_comment: bool,
+    /// Start offset of the most recent regular line break outside comments,
+    /// or `u32::MAX` if none seen since the previous token.
+    /// Initialized to `0`: the start of the file counts as a preceding line break.
+    last_newline_start: u32,
 
     /// Previous token kind, used to indicates comments are trailing from what kind
     previous_kind: Kind,
+
+    /// Mirror of `self.processed < self.comments.len()`, kept as a bool so the
+    /// per-token hot path tests a single byte.
+    has_pending: bool,
+
+    /// Whether the pending comments can still be finalized as trailing comments of the
+    /// previous token: the run starts on the token's line, and no earlier line break has
+    /// already declined the sweep (stay-leading comment, or a declined line comment).
+    sweepable: bool,
 
     /// Index of the pure comment in `comments` vec, or `None` if no pure comment for the current token.
     pub(super) pure_comment: Option<usize>,
@@ -45,9 +51,10 @@ impl<'a> TriviaBuilder<'a> {
             comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
             processed: 0,
-            saw_newline: true,
-            saw_newline_for_comment: true,
+            last_newline_start: 0,
             previous_kind: Kind::Undetermined,
+            has_pending: false,
+            sweepable: false,
             pure_comment: None,
             has_no_side_effects_comment: false,
             parse_annotations: true,
@@ -103,32 +110,53 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
-    // newline after line comments.
-    pub fn handle_newline(&mut self) {
-        // The last unprocessed comment is on a newline.
-        let len = self.comments.len();
-        if self.processed < len {
-            let comment = &mut self.comments[len - 1];
-            comment.set_followed_by_newline(true);
-            if !self.saw_newline && !Self::should_stay_leading(comment) {
-                self.processed = self.comments.len();
-            }
-        }
-        self.saw_newline = true;
-        self.saw_newline_for_comment = true;
+    // newline after line comments. Line breaks inside multi-line comments, and irregular line
+    // terminators, deliberately do not update this state (same as before this was a watermark).
+    #[inline]
+    pub fn handle_newline(&mut self, start: u32) {
+        self.last_newline_start = start;
     }
 
     #[inline]
     pub fn handle_token(&mut self, token: Token) {
+        // Cold path: resolve pending comments before this token. For files with no comments
+        // (or once all comments are consumed) `has_pending` is false, so this branch is skipped.
+        if self.has_pending {
+            self.finish_pending(token.start());
+        }
         self.previous_kind = token.kind();
-        self.saw_newline = false;
-        self.saw_newline_for_comment = false;
-        // Cold path: any unprocessed comments since the last token become leading comments
-        // of this one. For files with no comments (or once all comments are consumed)
-        // `processed == comments.len()`, so this branch is skipped.
+        self.last_newline_start = u32::MAX;
+    }
+
+    /// Was a line break seen at or after `pos` (and since the previous token)?
+    fn newline_since(&self, pos: u32) -> bool {
+        self.last_newline_start != u32::MAX && self.last_newline_start >= pos
+    }
+
+    /// Apply the effects of any line break seen after the last pending comment — what
+    /// `handle_newline` used to do eagerly at each line break: set its `followed_by_newline`
+    /// flag, and either finalize the whole pending run as trailing comments of the previous
+    /// token, or permanently decline the sweep for this run.
+    fn resolve_pending(&mut self) {
         let len = self.comments.len();
-        if self.processed < len {
-            self.attach_pending_leading_comments(token.start(), len);
+        let end = self.comments[len - 1].span.end;
+        if self.newline_since(end) {
+            let comment = &mut self.comments[len - 1];
+            comment.set_followed_by_newline(true);
+            if self.sweepable && !Self::should_stay_leading(comment) {
+                self.processed = len;
+                self.has_pending = false;
+            } else {
+                self.sweepable = false;
+            }
+        }
+    }
+
+    #[cold]
+    fn finish_pending(&mut self, attached_to: u32) {
+        self.resolve_pending();
+        if self.has_pending {
+            self.attach_pending_leading_comments(attached_to, self.comments.len());
         }
     }
 
@@ -139,6 +167,7 @@ impl<'a> TriviaBuilder<'a> {
             comment.attached_to = attached_to;
         }
         self.processed = len;
+        self.has_pending = false;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
@@ -174,7 +203,8 @@ impl<'a> TriviaBuilder<'a> {
     /// previous token rather than the following operand), which breaks codegen
     /// idempotency once a transform emits `? consequent : // comment\nalternate`.
     fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen | Kind::Colon)
+        self.last_newline_start == u32::MAX
+            && !matches!(self.previous_kind, Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
     fn should_stay_leading(comment: &Comment) -> bool {
@@ -218,29 +248,56 @@ impl<'a> TriviaBuilder<'a> {
             return;
         }
 
-        // This newly added comment may be preceded by a newline.
-        // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
-        // not just since the last token.
-        comment.set_preceded_by_newline(self.saw_newline_for_comment);
+        // Apply line-break effects on the previous pending comment first
+        // (what `handle_newline` used to do eagerly at each line break).
+        if self.has_pending {
+            self.resolve_pending();
+        }
+
+        // This newly added comment may be preceded by a newline: a line break since the
+        // previous comment, or since the previous token if there is no previous comment.
+        // (Line comments record their own terminating line break below, and line breaks
+        // inside multi-line comments deliberately don't count, as before.)
+        let preceded = match self.comments.last() {
+            Some(last) => self.newline_since(last.span.end),
+            None => self.newline_since(0),
+        };
+        comment.set_preceded_by_newline(preceded);
+
+        let mut line_declined = false;
         if comment.is_line() {
-            // A line comment is always followed by a newline. This is never set in `handle_newline`.
+            // A line comment is always followed by its terminating line break.
             comment.set_followed_by_newline(true);
             if self.should_be_treated_as_trailing_comment() && !Self::should_stay_leading(&comment)
             {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
+            } else {
+                line_declined = true;
             }
-            self.saw_newline = true;
-            self.saw_newline_for_comment = true;
-        } else {
-            // Block comments don't end with a newline, so reset saw_newline_for_comment.
-            // If there's a newline after the block comment, `handle_newline` will set it back to true.
-            self.saw_newline_for_comment = false;
+            // The line comment consumed its terminating line break.
+            self.last_newline_start = comment.span.end;
         }
 
         // Set annotation flags here (not in `parse_annotation`) so the index is correct
         // even when the dedup check above skips a duplicate from parser lookahead/rewind.
         self.set_annotation_flags(&comment, self.comments.len());
         self.comments.push(comment);
+
+        // Maintain the pending-run state.
+        if self.processed < self.comments.len() {
+            if !self.has_pending {
+                // This comment starts a new pending run: it can only be swept as
+                // trailing if it is on the same line as the previous token.
+                self.sweepable = !preceded;
+                self.has_pending = true;
+            }
+            if line_declined {
+                // A declined line comment permanently blocks the sweep for this run.
+                self.sweepable = false;
+            }
+        } else {
+            self.has_pending = false;
+        }
     }
 
     /// Parse Notation
