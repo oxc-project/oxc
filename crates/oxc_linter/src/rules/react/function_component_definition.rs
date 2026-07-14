@@ -246,6 +246,16 @@ mod fix {
         ctx: &LintContext<'a>,
         expected: FunctionStyle,
     ) -> bool {
+        let declaration = variable_declarator(node, ctx);
+        if declaration.is_some_and(|declaration| {
+            matches!(
+                ctx.nodes().parent_kind(declaration.node_id()),
+                AstKind::VariableDeclaration(variable) if variable.declarations.len() > 1
+            )
+        }) {
+            return false;
+        }
+
         match node.kind() {
             AstKind::Function(function) => {
                 if function.r#type == FunctionType::FunctionDeclaration
@@ -260,8 +270,7 @@ mod fix {
                     return false;
                 }
                 if expected == FunctionStyle::Declaration
-                    && variable_declarator(node, ctx)
-                        .is_some_and(|declaration| declaration.type_annotation.is_some())
+                    && declaration.is_some_and(|declaration| declaration.type_annotation.is_some())
                 {
                     return false;
                 }
@@ -277,8 +286,7 @@ mod fix {
             }
             AstKind::ArrowFunctionExpression(arrow) => {
                 if expected == FunctionStyle::Declaration
-                    && variable_declarator(node, ctx)
-                        .is_some_and(|declaration| declaration.type_annotation.is_some())
+                    && declaration.is_some_and(|declaration| declaration.type_annotation.is_some())
                 {
                     return false;
                 }
@@ -1320,6 +1328,10 @@ fn test() {
         (
             "function Hello(this: Context, props: Props) { return <div/>; }",
             Some(serde_json::json!([{ "namedComponents": "arrow-function" }])),
+        ),
+        (
+            "const Hello = () => <div/>, keep = sideEffect();",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
         ),
     ];
 

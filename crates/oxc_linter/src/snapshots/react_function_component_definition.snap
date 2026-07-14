@@ -639,3 +639,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Hello(this: Context, props: Props) { return <div/>; }
    · ──────────────────────────────────────────────────────────────
    ╰────
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:1:15]
+ 1 │ const Hello = () => <div/>, keep = sideEffect();
+   ·               ────────────
+   ╰────
