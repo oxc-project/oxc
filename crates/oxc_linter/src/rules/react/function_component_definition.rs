@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, FormalParameters, Function, FunctionType},
+    ast::{
+        ArrowFunctionExpression, FormalParameters, Function, FunctionType,
+        TSTypeParameterDeclaration, VariableDeclarator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -278,7 +281,7 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, expected: FunctionStyl
 }
 
 fn has_one_unconstrained_type_parameter(
-    parameters: Option<&oxc_ast::ast::TSTypeParameterDeclaration<'_>>,
+    parameters: Option<&TSTypeParameterDeclaration<'_>>,
 ) -> bool {
     parameters.is_some_and(|parameters| {
         parameters.params.len() == 1 && parameters.params[0].constraint.is_none()
@@ -288,7 +291,7 @@ fn has_one_unconstrained_type_parameter(
 fn variable_declarator<'a, 'c>(
     node: &AstNode<'a>,
     ctx: &'c LintContext<'a>,
-) -> Option<&'c oxc_ast::ast::VariableDeclarator<'a>> {
+) -> Option<&'c VariableDeclarator<'a>> {
     match ctx.nodes().parent_kind(node.id()) {
         AstKind::VariableDeclarator(declaration) => Some(declaration),
         _ => None,
@@ -435,16 +438,13 @@ fn variable_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> (Span, &'s
     (node.span(), "const")
 }
 
-fn variable_name(declaration: Option<&oxc_ast::ast::VariableDeclarator<'_>>) -> String {
+fn variable_name(declaration: Option<&VariableDeclarator<'_>>) -> String {
     declaration
         .and_then(|declaration| declaration.id.get_identifier_name())
         .map_or_else(String::new, |name| name.to_string())
 }
 
-fn type_annotation(
-    declaration: Option<&oxc_ast::ast::VariableDeclarator<'_>>,
-    ctx: &LintContext<'_>,
-) -> String {
+fn type_annotation(declaration: Option<&VariableDeclarator<'_>>, ctx: &LintContext<'_>) -> String {
     declaration
         .and_then(|declaration| declaration.type_annotation.as_ref())
         .map_or_else(String::new, |annotation| ctx.source_range(annotation.span).to_string())
