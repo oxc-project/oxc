@@ -123,6 +123,7 @@ impl Rule for FunctionComponentDefinition {
             }
             _ => return,
         };
+
         if !is_component || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
         {
             return;
