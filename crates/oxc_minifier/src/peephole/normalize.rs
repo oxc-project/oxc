@@ -11,7 +11,7 @@ use oxc_syntax::scope::ScopeFlags;
 use super::PeepholeOptimizations;
 use crate::{
     ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    symbol_facts::SymbolFact,
+    symbol_facts::SymbolFact, symbol_liveness,
 };
 
 #[derive(Default)]
@@ -52,10 +52,38 @@ impl<'a> Normalize {
 }
 
 impl<'a> Traverse<'a> for Normalize {
+    fn enter_program(&mut self, _node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Normalize's traversal doubles as the first liveness collection
+        // pass, replacing a standalone pre-loop walk. See `symbol_liveness`.
+        symbol_liveness::begin_pass(ctx);
+    }
+
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
         }
+    }
+
+    // Liveness-collection delegations — keep this set in sync with the
+    // identical one in `PeepholeOptimizations` (both traversals collect;
+    // the membership is part of the analysis contract, see the
+    // `symbol_liveness` module doc). Normalize's mutations during
+    // collection only diverge toward-live (drops were already visited;
+    // mints are logged at the choke point and force-rooted at flush).
+    fn enter_identifier_reference(
+        &mut self,
+        node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::collect_identifier_reference(node, ctx);
+    }
+
+    fn enter_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        symbol_liveness::collect_enter_function(node, ctx);
+    }
+
+    fn exit_function(&mut self, _node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        symbol_liveness::collect_exit_function(ctx);
     }
 
     fn exit_statements(

@@ -8,7 +8,10 @@ use oxc_span::SourceType;
 use oxc_str::Str;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
-use crate::{CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_value::SymbolValues};
+use crate::{
+    CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_liveness::LivenessCollect,
+    symbol_value::SymbolValues,
+};
 
 /// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
 /// two consumption points. Live from `MinifierState::new` so the pre-loop
@@ -103,6 +106,24 @@ pub struct MinifierState<'a> {
     /// the incremental scoping refresh.
     pub(crate) dirty: PassDirty<'a>,
 
+    /// Candidate symbols proven unreachable by the whole-program liveness
+    /// analysis (`symbol_liveness`): declarations whose every reference sits
+    /// inside their own — or their reference cycle's — removable bodies, so
+    /// no live code can ever reach them (#13105). Seeded pre-loop from the
+    /// collection gathered during `Normalize`'s traversal (see
+    /// `symbol_liveness::begin_pass`), then refreshed at every flush
+    /// from the collection the peephole traversal gathered during the pass
+    /// (see [`LivenessCollect`]) — always exactly one pass stale. Consumed
+    /// alongside `symbol_is_unused` by the removal sites in
+    /// `remove_unused_declaration.rs`. Bits are `SymbolId::index()`; ids
+    /// minted after the last refresh are beyond capacity and read as live.
+    pub(crate) dead_symbols: BitSet<'a>,
+
+    /// In-traversal liveness collection for the CURRENT peephole pass; see
+    /// `symbol_liveness` for the architecture. Reset at `enter_program`,
+    /// consumed by `symbol_liveness::propagate_collected` at flush.
+    pub(crate) liveness: LivenessCollect<'a>,
+
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
@@ -127,6 +148,8 @@ impl<'a> MinifierState<'a> {
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
+            dead_symbols: BitSet::new_in(0, allocator),
+            liveness: LivenessCollect::new(allocator),
             concat_scratch: String::new(),
         }
     }

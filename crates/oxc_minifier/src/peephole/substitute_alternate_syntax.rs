@@ -573,6 +573,14 @@ impl<'a> PeepholeOptimizations {
         let is_null_symbol_id =
             ctx.scoping().get_reference(is_null_id_ref.reference_id()).symbol_id();
 
+        // These mints happen behind the traversal cursor, so the liveness
+        // collection never visits them: log them for force-rooting at the
+        // flush (`LivenessCollect::force_root_log`), as every minting call
+        // site must.
+        for symbol_id in [typeof_symbol_id, is_null_symbol_id].into_iter().flatten() {
+            ctx.state.liveness.log_force_root(symbol_id);
+        }
+
         // Plain `clone_in` resets every `reference_id` to `None`, making id
         // aliasing structurally impossible; the loop below installs the one
         // fresh reference the clone needs.
