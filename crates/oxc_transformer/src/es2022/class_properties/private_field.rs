@@ -5,8 +5,8 @@ use std::mem;
 
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_span::SPAN;
-use oxc_str::static_ident;
+use oxc_span::{SPAN, Span};
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 use oxc_traverse::{Ancestor, BoundIdentifier, ast_operations::get_var_name_from_node};
 
@@ -766,89 +766,106 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         expr.replace_with(|expr| {
-            let Expression::AssignmentExpression(assign_expr) = expr else {
-                unreachable!();
-            };
-            let AssignmentExpression { span, operator, right: value, left, .. } =
-                assign_expr.unbox();
-            let AssignmentTarget::PrivateFieldExpression(field_expr) = left else { unreachable!() };
-            let PrivateFieldExpression { field, object, .. } = field_expr.unbox();
-
-            if operator == AssignmentOperator::Assign {
-                // `object.#prop = value` -> `_classPrivateFieldSet2(_prop, object, value)`
-                return self.create_private_setter(
-                    &field.name,
-                    class_binding,
-                    set_binding,
-                    object,
-                    value,
-                    span,
-                    ctx,
-                );
-            }
-
-            // Make 2 copies of `object`
-            let (object1, object2) = self.duplicate_object(object.into_inner_expression(), ctx);
-
-            if let Some(operator) = operator.to_binary_operator() {
-                // `object.#prop += value`
-                // -> `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
-
-                // `_classPrivateFieldGet2(_prop, object)`
-                let get_call = self.create_private_getter(
-                    &field.name,
-                    class_binding,
-                    get_binding,
-                    object2,
-                    SPAN,
-                    ctx,
-                );
-
-                // `_classPrivateFieldGet2(_prop, object) + value`
-                let value = Expression::new_binary_expression(SPAN, get_call, operator, value, ctx);
-
-                // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
-                self.create_private_setter(
-                    &field.name,
-                    class_binding,
-                    set_binding,
-                    object1,
-                    value,
-                    span,
-                    ctx,
-                )
-            } else if let Some(operator) = operator.to_logical_operator() {
-                // `object.#prop &&= value`
-                // -> `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
-
-                // `_classPrivateFieldGet2(_prop, object)`
-                let get_call = self.create_private_getter(
-                    &field.name,
-                    class_binding,
-                    get_binding,
-                    object1,
-                    SPAN,
-                    ctx,
-                );
-
-                // `_classPrivateFieldSet2(_prop, object, value)`
-                let set_call = self.create_private_setter(
-                    &field.name,
-                    class_binding,
-                    set_binding,
-                    object2,
-                    value,
-                    SPAN,
-                    ctx,
-                );
-
-                // `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
-                Expression::new_logical_expression(span, get_call, operator, set_call, ctx)
-            } else {
-                // The above covers all types of `AssignmentOperator`
-                unreachable!();
-            }
+            self.transform_instance_assignment_expression_impl(
+                expr,
+                get_binding,
+                set_binding,
+                class_binding,
+                ctx,
+            )
         });
+    }
+
+    #[inline(never)]
+    fn transform_instance_assignment_expression_impl(
+        &self,
+        expr: Expression<'a>,
+        get_binding: Option<&BoundIdentifier<'a>>,
+        set_binding: Option<&BoundIdentifier<'a>>,
+        class_binding: Option<&BoundIdentifier<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let Expression::AssignmentExpression(assign_expr) = expr else {
+            unreachable!();
+        };
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
+        let AssignmentTarget::PrivateFieldExpression(field_expr) = left else { unreachable!() };
+        let PrivateFieldExpression { field, object, .. } = field_expr.unbox();
+
+        if operator == AssignmentOperator::Assign {
+            // `object.#prop = value` -> `_classPrivateFieldSet2(_prop, object, value)`
+            return self.create_private_setter(
+                &field.name,
+                class_binding,
+                set_binding,
+                object,
+                value,
+                span,
+                ctx,
+            );
+        }
+
+        // Make 2 copies of `object`
+        let (object1, object2) = self.duplicate_object(object.into_inner_expression(), ctx);
+
+        if let Some(operator) = operator.to_binary_operator() {
+            // `object.#prop += value`
+            // -> `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
+
+            // `_classPrivateFieldGet2(_prop, object)`
+            let get_call = self.create_private_getter(
+                &field.name,
+                class_binding,
+                get_binding,
+                object2,
+                SPAN,
+                ctx,
+            );
+
+            // `_classPrivateFieldGet2(_prop, object) + value`
+            let value = Expression::new_binary_expression(SPAN, get_call, operator, value, ctx);
+
+            // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
+            self.create_private_setter(
+                &field.name,
+                class_binding,
+                set_binding,
+                object1,
+                value,
+                span,
+                ctx,
+            )
+        } else if let Some(operator) = operator.to_logical_operator() {
+            // `object.#prop &&= value`
+            // -> `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
+
+            // `_classPrivateFieldGet2(_prop, object)`
+            let get_call = self.create_private_getter(
+                &field.name,
+                class_binding,
+                get_binding,
+                object1,
+                SPAN,
+                ctx,
+            );
+
+            // `_classPrivateFieldSet2(_prop, object, value)`
+            let set_call = self.create_private_setter(
+                &field.name,
+                class_binding,
+                set_binding,
+                object2,
+                value,
+                SPAN,
+                ctx,
+            );
+
+            // `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
+            Expression::new_logical_expression(span, get_call, operator, set_call, ctx)
+        } else {
+            // The above covers all types of `AssignmentOperator`
+            unreachable!();
+        }
     }
 
     /// Transform update expression (`++` or `--`) where argument is private field.
@@ -1045,75 +1062,18 @@ impl<'a> ClassProperties<'a> {
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
             expr.replace_with(|update_expr| {
-                if prefix {
-                    // Source = `++object.#prop` (prefix `++`)
-
-                    // `(_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)`
-                    let mut value = Expression::new_sequence_expression(
-                        SPAN,
-                        ArenaVec::from_array_in([assignment, update_expr], ctx),
-                        ctx,
-                    );
-
-                    // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
-                    if let Some(class_ident) = class_ident {
-                        value =
-                            self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
-                    }
-
-                    // `_prop._ = <value>`
-                    Expression::new_assignment_expression(
-                        span,
-                        AssignmentOperator::Assign,
-                        Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
-                        value,
-                        ctx,
-                    )
-                } else {
-                    // Source = `object.#prop++` (postfix `++`)
-
-                    // `_object$prop2 = _object$prop++`
-                    let temp_binding2 =
-                        VarDeclarationsStore::create_uid_var(&temp_var_name_base, ctx);
-                    let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
-
-                    // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
-                    let mut value = Expression::new_sequence_expression(
-                        SPAN,
-                        ArenaVec::from_array_in(
-                            [assignment, assignment2, temp_binding.create_read_expression(ctx)],
-                            ctx,
-                        ),
-                        ctx,
-                    );
-
-                    // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
-                    if let Some(class_ident) = class_ident {
-                        value =
-                            self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
-                    }
-
-                    // `_prop._ = <value>`
-                    let assignment3 = Expression::new_assignment_expression(
-                        SPAN,
-                        AssignmentOperator::Assign,
-                        Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
-                        value,
-                        ctx,
-                    );
-
-                    // `(_prop._ = <value>, _object$prop2)`
-                    // TODO(improve-on-babel): Final `_object$prop2` is only needed if this expression
-                    // is consumed (i.e. not in an `ExpressionStatement`)
-                    Expression::new_sequence_expression(
-                        span,
-                        ArenaVec::from_array_in(
-                            [assignment3, temp_binding2.create_read_expression(ctx)],
-                            ctx,
-                        ),
-                        ctx,
-                    )
-                }
+                self.transform_static_update_expression_replacement(
+                    update_expr,
+                    prefix,
+                    assignment,
+                    class_ident,
+                    object,
+                    prop_ident2,
+                    &temp_binding,
+                    &temp_var_name_base,
+                    span,
+                    ctx,
+                )
             });
         } else {
             // Clone as borrow restrictions.
@@ -1151,64 +1111,174 @@ impl<'a> ClassProperties<'a> {
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
             expr.replace_with(|update_expr| {
-                if prefix {
-                    // Source = `++object.#prop` (prefix `++`)
-                    // `(_object$prop = _classPrivateFieldGet(_prop, object), ++_object$prop)`
-                    let value = Expression::new_sequence_expression(
-                        SPAN,
-                        ArenaVec::from_array_in([assignment, update_expr], ctx),
-                        ctx,
-                    );
-                    // `_classPrivateFieldSet(_prop, object, <value>)`
-                    self.create_private_setter(
-                        &private_name,
-                        class_binding.as_ref(),
-                        set_binding.as_ref(),
-                        object1,
-                        value,
-                        span,
-                        ctx,
-                    )
-                } else {
-                    // Source = `object.#prop++` (postfix `++`)
-                    // `_object$prop2 = _object$prop++`
-                    let temp_binding2 =
-                        VarDeclarationsStore::create_uid_var(&temp_var_name_base, ctx);
-                    let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
-
-                    // `(_object$prop = _classPrivateFieldGet(_prop, object), _object$prop2 = _object$prop++, _object$prop)`
-                    let value = Expression::new_sequence_expression(
-                        SPAN,
-                        ArenaVec::from_array_in(
-                            [assignment, assignment2, temp_binding.create_read_expression(ctx)],
-                            ctx,
-                        ),
-                        ctx,
-                    );
-
-                    // `_classPrivateFieldSet(_prop, object, <value>)`
-                    let set_call = self.create_private_setter(
-                        &private_name,
-                        class_binding.as_ref(),
-                        set_binding.as_ref(),
-                        object1,
-                        value,
-                        span,
-                        ctx,
-                    );
-                    // `(_classPrivateFieldSet(_prop, object, <value>), _object$prop2)`
-                    // TODO(improve-on-babel): Final `_object$prop2` is only needed if this expression
-                    // is consumed (i.e. not in an `ExpressionStatement`)
-                    Expression::new_sequence_expression(
-                        span,
-                        ArenaVec::from_array_in(
-                            [set_call, temp_binding2.create_read_expression(ctx)],
-                            ctx,
-                        ),
-                        ctx,
-                    )
-                }
+                self.transform_instance_update_expression_replacement(
+                    update_expr,
+                    prefix,
+                    assignment,
+                    private_name,
+                    class_binding.as_ref(),
+                    set_binding.as_ref(),
+                    object1,
+                    &temp_binding,
+                    &temp_var_name_base,
+                    span,
+                    ctx,
+                )
             });
+        }
+    }
+
+    #[inline(never)]
+    #[expect(clippy::too_many_arguments)]
+    fn transform_static_update_expression_replacement(
+        &self,
+        update_expr: Expression<'a>,
+        prefix: bool,
+        assignment: Expression<'a>,
+        class_ident: Option<Expression<'a>>,
+        object: Expression<'a>,
+        prop_ident: Expression<'a>,
+        temp_binding: &BoundIdentifier<'a>,
+        temp_var_name_base: &str,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if prefix {
+            // Source = `++object.#prop` (prefix `++`)
+
+            // `(_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)`
+            let mut value = Expression::new_sequence_expression(
+                SPAN,
+                ArenaVec::from_array_in([assignment, update_expr], ctx),
+                ctx,
+            );
+
+            // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
+            if let Some(class_ident) = class_ident {
+                value = self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
+            }
+
+            // `_prop._ = <value>`
+            Expression::new_assignment_expression(
+                span,
+                AssignmentOperator::Assign,
+                Self::create_underscore_member_expr_target(prop_ident, SPAN, ctx),
+                value,
+                ctx,
+            )
+        } else {
+            // Source = `object.#prop++` (postfix `++`)
+
+            // `_object$prop2 = _object$prop++`
+            let temp_binding2 = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
+            let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
+
+            // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
+            let mut value = Expression::new_sequence_expression(
+                SPAN,
+                ArenaVec::from_array_in(
+                    [assignment, assignment2, temp_binding.create_read_expression(ctx)],
+                    ctx,
+                ),
+                ctx,
+            );
+
+            // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
+            if let Some(class_ident) = class_ident {
+                value = self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
+            }
+
+            // `_prop._ = <value>`
+            let assignment3 = Expression::new_assignment_expression(
+                SPAN,
+                AssignmentOperator::Assign,
+                Self::create_underscore_member_expr_target(prop_ident, SPAN, ctx),
+                value,
+                ctx,
+            );
+
+            // `(_prop._ = <value>, _object$prop2)`
+            // TODO(improve-on-babel): Final `_object$prop2` is only needed if this expression
+            // is consumed (i.e. not in an `ExpressionStatement`)
+            Expression::new_sequence_expression(
+                span,
+                ArenaVec::from_array_in(
+                    [assignment3, temp_binding2.create_read_expression(ctx)],
+                    ctx,
+                ),
+                ctx,
+            )
+        }
+    }
+
+    #[inline(never)]
+    #[expect(clippy::too_many_arguments)]
+    fn transform_instance_update_expression_replacement(
+        &self,
+        update_expr: Expression<'a>,
+        prefix: bool,
+        assignment: Expression<'a>,
+        private_name: Ident<'a>,
+        class_binding: Option<&BoundIdentifier<'a>>,
+        set_binding: Option<&BoundIdentifier<'a>>,
+        object: Expression<'a>,
+        temp_binding: &BoundIdentifier<'a>,
+        temp_var_name_base: &str,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if prefix {
+            // Source = `++object.#prop` (prefix `++`)
+            // `(_object$prop = _classPrivateFieldGet(_prop, object), ++_object$prop)`
+            let value = Expression::new_sequence_expression(
+                SPAN,
+                ArenaVec::from_array_in([assignment, update_expr], ctx),
+                ctx,
+            );
+            // `_classPrivateFieldSet(_prop, object, <value>)`
+            self.create_private_setter(
+                &private_name,
+                class_binding,
+                set_binding,
+                object,
+                value,
+                span,
+                ctx,
+            )
+        } else {
+            // Source = `object.#prop++` (postfix `++`)
+            // `_object$prop2 = _object$prop++`
+            let temp_binding2 = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
+            let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
+
+            // `(_object$prop = _classPrivateFieldGet(_prop, object), _object$prop2 = _object$prop++, _object$prop)`
+            let value = Expression::new_sequence_expression(
+                SPAN,
+                ArenaVec::from_array_in(
+                    [assignment, assignment2, temp_binding.create_read_expression(ctx)],
+                    ctx,
+                ),
+                ctx,
+            );
+
+            // `_classPrivateFieldSet(_prop, object, <value>)`
+            let set_call = self.create_private_setter(
+                &private_name,
+                class_binding,
+                set_binding,
+                object,
+                value,
+                span,
+                ctx,
+            );
+            // `(_classPrivateFieldSet(_prop, object, <value>), _object$prop2)`
+            // TODO(improve-on-babel): Final `_object$prop2` is only needed if this expression
+            // is consumed (i.e. not in an `ExpressionStatement`)
+            Expression::new_sequence_expression(
+                span,
+                ArenaVec::from_array_in([set_call, temp_binding2.create_read_expression(ctx)], ctx),
+                ctx,
+            )
         }
     }
 
