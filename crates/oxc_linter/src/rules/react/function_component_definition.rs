@@ -70,7 +70,6 @@ enum UnnamedComponentStyle {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct FunctionComponentDefinition(Box<FunctionComponentDefinitionConfig>);
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
