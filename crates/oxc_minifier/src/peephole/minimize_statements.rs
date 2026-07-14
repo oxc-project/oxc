@@ -804,7 +804,14 @@ impl<'a> PeepholeOptimizations {
             };
 
             // Remove the removable suffix if any
-            if start < end {
+            if start == end {
+                let case = &switch_stmt.cases.last().unwrap();
+                if Self::switch_case_is_empty(case, allow_break)
+                    && !case.test.may_have_side_effects(ctx)
+                {
+                    ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
+                }
+            } else if start < end {
                 let mut last = switch_stmt.cases.pop().unwrap();
                 for removed_case in switch_stmt.cases.drain(start..) {
                     ctx.drop_switch_case(&removed_case);
