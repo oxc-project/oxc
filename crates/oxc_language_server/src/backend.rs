@@ -585,18 +585,17 @@ impl LanguageServer for Backend {
             let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
                 return;
             };
+            // Gate before entering the deduplicated path so the shared future always runs the
+            // full lint. On save this collapses with the plugin's Fix-All pull (same version).
+            if !worker.should_lint_on_save().await {
+                return;
+            }
             let document_version = self.file_system.get_version(&uri);
             let document = self.file_system.get_document(uri);
             let document_uri = document.uri.clone();
-            let handle = tokio::runtime::Handle::current();
-            // use `spawn_blocking` because this is a very CPU intensive task and we do not want to block the async runtime.
-            let diagnostics = tokio::task::spawn_blocking(move || {
-                handle.block_on(async move { worker.run_diagnostic_on_save(&document).await })
-            })
-            .await
-            // unwrap because we want to panic if the task panics,
-            // because it should not happen and we want to know about it.
-            .unwrap();
+            let diagnostics = worker
+                .run_diagnostic_deduped(&document, document_version.unwrap_or_default())
+                .await;
 
             if document_version != self.file_system.get_version(&document_uri) {
                 debug!(
@@ -649,16 +648,13 @@ impl LanguageServer for Backend {
         let document = self.file_system.get_document(uri);
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
+            // Gate before the deduplicated path so the shared future always runs the full lint.
+            if !worker.should_lint_on_change().await {
+                return;
+            }
             let document_uri = document.uri.clone();
-            let handle = tokio::runtime::Handle::current();
-            // use `spawn_blocking` because this is a very CPU intensive task and we do not want to block the async runtime.
-            let diagnostics = tokio::task::spawn_blocking(move || {
-                handle.block_on(async move { worker.run_diagnostic_on_change(&document).await })
-            })
-            .await
-            // unwrap because we want to panic if the task panics,
-            // because it should not happen and we want to know about it.
-            .unwrap();
+            let diagnostics =
+                worker.run_diagnostic_deduped(&document, params.text_document.version).await;
 
             match diagnostics {
                 Err(err) => {
@@ -719,18 +715,13 @@ impl LanguageServer for Backend {
                 return;
             };
 
+            let document_version = self.file_system.get_version(&uri);
             let document = self.file_system.get_document(uri);
 
             let document_uri = document.uri.clone();
-            let handle = tokio::runtime::Handle::current();
-            // use `spawn_blocking` because this is a very CPU intensive task and we do not want to block the async runtime.
-            let diagnostics = tokio::task::spawn_blocking(move || {
-                handle.block_on(async move { worker.run_diagnostic(&document).await })
-            })
-            .await
-            // unwrap because we want to panic if the task panics,
-            // because it should not happen and we want to know about it.
-            .unwrap();
+            let diagnostics = worker
+                .run_diagnostic_deduped(&document, document_version.unwrap_or_default())
+                .await;
 
             match diagnostics {
                 Err(err) => {
@@ -889,15 +880,8 @@ impl LanguageServer for Backend {
         let document_version = self.file_system.get_version(&uri);
         let document = self.file_system.get_document(uri.clone());
 
-        let handle = tokio::runtime::Handle::current();
-        // use `spawn_blocking` because this is a very CPU intensive task and we do not want to block the async runtime.
-        let diagnostics = tokio::task::spawn_blocking(move || {
-            handle.block_on(async move { worker.run_diagnostic(&document).await })
-        })
-        .await
-        // unwrap because we want to panic if the task panics,
-        // because it should not happen and we want to know about it.
-        .unwrap();
+        let diagnostics =
+            worker.run_diagnostic_deduped(&document, document_version.unwrap_or_default()).await;
 
         if self.file_system.get_version(&uri) != document_version {
             return Err(Error {
