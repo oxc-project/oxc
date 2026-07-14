@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -70,7 +70,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut list = ArenaVec::new_in(self);
+        let allocator = self.allocator();
+        let mark = self.scratch.mark();
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
 
@@ -143,10 +144,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self,
                 ));
             } else {
-                list.push(self.parse_formal_parameter_with_decorators(func_kind, span, decorators));
+                let param =
+                    self.parse_formal_parameter_with_decorators(func_kind, span, decorators);
+                self.scratch.push(param);
             }
         }
 
+        let list = self.scratch.drain_into::<FormalParameter>(mark, allocator);
         (list, rest)
     }
 

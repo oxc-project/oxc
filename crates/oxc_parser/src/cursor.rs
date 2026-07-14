@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -390,7 +390,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = ArenaVec::new_in(self);
+        // Accumulate elements in the reusable scratch stack (see [`ScratchStack`]) rather than
+        // growing an arena `Vec`, then move them into the arena in one exact-size allocation.
+        let allocator = self.allocator();
+        let mark = self.scratch.mark();
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -399,8 +402,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 break;
             }
-            list.push(f(self));
+            let element = f(self);
+            self.scratch.push(element);
         }
+        let list = self.scratch.drain_into::<T>(mark, allocator);
         self.expect_closing(close, opening_span);
         list
     }
@@ -416,17 +421,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = ArenaVec::new_in(self);
+        let allocator = self.allocator();
+        let mark = self.scratch.mark();
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
             }
             if let Some(e) = f(self) {
-                list.push(e);
+                self.scratch.push(e);
             } else {
                 break;
             }
         }
+        let list = self.scratch.drain_into::<T>(mark, allocator);
         self.expect_closing(close, opening_span);
         list
     }
@@ -436,28 +443,52 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
-        mut f: F,
+        f: F,
     ) -> (ArenaVec<'a, T>, Option<u32>)
     where
         F: FnMut(&mut Self) -> T,
     {
-        let mut list = ArenaVec::new_in(self);
+        // Accumulate elements in the reusable scratch stack (see [`ScratchStack`]), then move
+        // them into the arena in one exact-size allocation. The element loop is a separate
+        // method so that its several early exits all funnel through the single `drain_into`
+        // below — draining on every path keeps the scratch stack balanced.
+        let allocator = self.allocator();
+        let mark = self.scratch.mark();
+        let trailing_separator =
+            self.parse_delimited_list_elements::<F, T>(close, separator, opening_span, f);
+        let list = self.scratch.drain_into::<T>(mark, allocator);
+        (list, trailing_separator)
+    }
+
+    /// Parse the elements of a delimited list into the scratch stack, returning the trailing
+    /// separator position (if any). The caller is responsible for draining the scratch stack.
+    fn parse_delimited_list_elements<F, T>(
+        &mut self,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+        mut f: F,
+    ) -> Option<u32>
+    where
+        F: FnMut(&mut Self) -> T,
+    {
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
         if kind == close
             || matches!(kind, Kind::Eof | Kind::Undetermined)
             || self.fatal_error.is_some()
         {
-            return (list, None);
+            return None;
         }
-        list.push(f(self));
+        let element = f(self);
+        self.scratch.push(element);
         loop {
             let kind = self.cur_kind();
             if kind == close
                 || matches!(kind, Kind::Eof | Kind::Undetermined)
                 || self.fatal_error.is_some()
             {
-                return (list, None);
+                return None;
             }
             if kind != separator {
                 self.set_fatal_error(diagnostics::expect_closing_or_separator(
@@ -467,14 +498,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self.cur_token().span(),
                     opening_span,
                 ));
-                return (list, None);
+                return None;
             }
             self.advance(separator);
             if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
-                return (list, Some(trailing_separator));
+                return Some(trailing_separator);
             }
-            list.push(f(self));
+            let element = f(self);
+            self.scratch.push(element);
         }
     }
 
@@ -538,7 +570,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> OxcDiagnostic,
     {
-        let mut list = ArenaVec::new_in(self);
+        let allocator = self.allocator();
+        let mark = self.scratch.mark();
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
         loop {
@@ -585,10 +618,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if kind == Kind::Dot3 {
                 rest.replace(parse_rest(self));
             } else {
-                list.push(parse_element(self));
+                let element = parse_element(self);
+                self.scratch.push(element);
             }
         }
 
+        let list = self.scratch.drain_into::<A>(mark, allocator);
         (list, rest)
     }
 }
