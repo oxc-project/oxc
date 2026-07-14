@@ -211,6 +211,15 @@ pub struct TreeShakeOptions {
     ///
     /// Default `false`
     pub invalid_import_side_effects: bool,
+
+    /// Which imported modules may have side effects when loaded.
+    ///
+    /// This allows callers with module-graph knowledge to remove an import declaration once all
+    /// of its bindings are unused. Matching uses the module specifier exactly as written in the
+    /// source code.
+    ///
+    /// Default [`ModuleSideEffects::All`]
+    pub module_side_effects: ModuleSideEffects,
 }
 
 impl Default for TreeShakeOptions {
@@ -222,6 +231,28 @@ impl Default for TreeShakeOptions {
             property_write_side_effects: true,
             unknown_global_side_effects: true,
             invalid_import_side_effects: false,
+            module_side_effects: ModuleSideEffects::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum ModuleSideEffects {
+    /// Every imported module may have side effects.
+    #[default]
+    All,
+    /// Only the listed module specifiers may have side effects.
+    Only(FxHashSet<String>),
+    /// Every imported module except the listed module specifiers may have side effects.
+    AllExcept(FxHashSet<String>),
+}
+
+impl ModuleSideEffects {
+    pub fn has_side_effects(&self, source: &str) -> bool {
+        match self {
+            Self::All => true,
+            Self::Only(sources) => sources.contains(source),
+            Self::AllExcept(sources) => !sources.contains(source),
         }
     }
 }

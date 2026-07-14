@@ -51,6 +51,33 @@ describe("simple", () => {
 });
 
 describe("treeshake options", () => {
+  it("removes imports declared side-effect-free", () => {
+    const code = "import a from 'a'; import b from 'b'; console.log(a);";
+    const ret = minifySync("test.mjs", code, {
+      compress: {
+        treeshake: {
+          moduleSideEffects: { allExcept: ["b"] },
+        },
+      },
+    });
+    expect(ret.code).toBe('import e from"a";console.log(e);');
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it("validates module side-effect configuration", () => {
+    const ret = minifySync("test.mjs", "import 'a';", {
+      compress: {
+        treeshake: {
+          moduleSideEffects: { only: [], allExcept: [] },
+        },
+      },
+    });
+    expect(ret.code).toBe("");
+    expect(ret.errors[0]?.message).toContain(
+      "moduleSideEffects cannot specify both 'only' and 'allExcept'",
+    );
+  });
+
   it("respects annotations by default", () => {
     const code = "/* @__PURE__ */ foo(); bar();";
     const ret = minifySync("test.js", code, {

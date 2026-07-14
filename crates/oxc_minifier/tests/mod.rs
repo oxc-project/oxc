@@ -11,7 +11,8 @@ use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
 pub(crate) use oxc_minifier::{
-    CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, Compressor, TreeShakeOptions,
+    CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, Compressor,
+    ModuleSideEffects, TreeShakeOptions,
 };
 
 pub(crate) fn default_options() -> CompressOptions {

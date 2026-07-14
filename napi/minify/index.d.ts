@@ -197,6 +197,13 @@ export interface MinifyResult {
 /** Minify synchronously. */
 export declare function minifySync(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
 
+export interface ModuleSideEffects {
+  /** Only these module specifiers may have side effects. */
+  only?: Array<string>
+  /** These module specifiers are side-effect-free; all others may have side effects. */
+  allExcept?: Array<string>
+}
+
 export interface TreeShakeOptions {
   /**
    * Whether to respect the pure annotations.
@@ -247,6 +254,11 @@ export interface TreeShakeOptions {
    * @default true
    */
   invalidImportSideEffects?: boolean
+  /**
+   * Declare which module specifiers may have side effects when loaded.
+   * Module specifiers are matched exactly as written in the source.
+   */
+  moduleSideEffects?: ModuleSideEffects
 }
 export interface Comment {
   type: 'Line' | 'Block'
