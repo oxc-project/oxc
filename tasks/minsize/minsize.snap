@@ -15,7 +15,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 1.01 MB    | 439.33 kB  | 458.89 kB  | 122.04 kB  | 126.71 kB  |          2 | bundle.min.js 
 
-1.25 MB    | 642.61 kB  | 646.76 kB  | 159.40 kB  | 163.73 kB  |          2 | three.js   
+1.25 MB    | 642.60 kB  | 646.76 kB  | 159.39 kB  | 163.73 kB  |          2 | three.js   
 
 2.14 MB    | 711.03 kB  | 724.14 kB  | 160.38 kB  | 181.07 kB  |          2 | victory.js 
 
@@ -23,5 +23,5 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 6.69 MB    | 2.13 MB    | 2.31 MB    | 455.50 kB  | 488.28 kB  |          5 | antd.js    
 
-10.95 MB   | 3.33 MB    | 3.49 MB    | 853.06 kB  | 915.50 kB  |          4 | typescript.js 
+10.95 MB   | 3.33 MB    | 3.49 MB    | 853.03 kB  | 915.50 kB  |          4 | typescript.js 
 
