@@ -347,11 +347,11 @@ fn replacement<'a>(
     (parts.replace_span, function)
 }
 
-struct FunctionParts {
+struct FunctionParts<'a> {
     replace_span: Span,
     name: String,
     variable_kind: &'static str,
-    type_annotation: String,
+    type_annotation: &'a str,
     type_parameters: String,
     params: String,
     return_type: String,
@@ -359,8 +359,8 @@ struct FunctionParts {
     expression_body: bool,
 }
 
-impl FunctionParts {
-    fn new<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
+impl<'a> FunctionParts<'a> {
+    fn new(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
         match node.kind() {
             AstKind::Function(function) => Self::from_function(function, node, ctx),
             AstKind::ArrowFunctionExpression(arrow) => Self::from_arrow(arrow, node, ctx),
@@ -368,11 +368,7 @@ impl FunctionParts {
         }
     }
 
-    fn from_function<'a>(
-        function: &Function<'a>,
-        node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
-    ) -> Self {
+    fn from_function(function: &Function<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
         let declaration = variable_declarator(node, ctx);
         let (replace_span, variable_kind) = variable_context(node, ctx);
         Self {
@@ -400,7 +396,7 @@ impl FunctionParts {
         }
     }
 
-    fn from_arrow<'a>(
+    fn from_arrow(
         arrow: &ArrowFunctionExpression<'a>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
@@ -444,10 +440,13 @@ fn variable_name(declaration: Option<&VariableDeclarator<'_>>) -> String {
         .map_or_else(String::new, |name| name.to_string())
 }
 
-fn type_annotation(declaration: Option<&VariableDeclarator<'_>>, ctx: &LintContext<'_>) -> String {
+fn type_annotation<'a>(
+    declaration: Option<&VariableDeclarator<'_>>,
+    ctx: &LintContext<'a>,
+) -> &'a str {
     declaration
         .and_then(|declaration| declaration.type_annotation.as_ref())
-        .map_or_else(String::new, |annotation| ctx.source_range(annotation.span).to_string())
+        .map_or("", |annotation| ctx.source_range(annotation.span))
 }
 
 fn parenthesized_params(params: &FormalParameters<'_>, ctx: &LintContext<'_>) -> String {
