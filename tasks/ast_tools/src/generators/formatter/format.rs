@@ -41,13 +41,29 @@ const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
 // Every node listed here MUST implement `FormatWrite::write_suppressed`
 // (the default implementation panics at runtime).
 //
-// Other semicolon-terminated statements have the same issue in principle,
-// (`ExpressionStatement`, `VariableDeclaration`, ...)
-// but only these three have a confirmed divergence against Prettier 3.9.
-// (return/throw already handle their suppression in their own `write`)
+// Mirrors Prettier's `locEnd` overrides (`language-js/location/overrides.js`) +
+// `shouldIgnoredNodePrintSemicolon`: keyword statements end at their keyword/label,
+// content-terminated ones at their content, body-ended ones recurse into the rightmost body.
+//
+// `ExpressionStatement` and `VariableDeclaration` have the same issue in principle
+// but no confirmed divergence against Prettier 3.9 yet.
+//
 // Extend the list one statement at a time, verifying each against Prettier first.
-const AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING: &[&str] =
-    &["BreakStatement", "ContinueStatement", "DoWhileStatement"];
+const AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING: &[&str] = &[
+    "BreakStatement",
+    "ContinueStatement",
+    "DebuggerStatement",
+    "DoWhileStatement",
+    "ForInStatement",
+    "ForOfStatement",
+    "ForStatement",
+    "IfStatement",
+    "LabeledStatement",
+    "ReturnStatement",
+    "ThrowStatement",
+    "WhileStatement",
+    "WithStatement",
+];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
