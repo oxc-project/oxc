@@ -144,11 +144,7 @@ impl ScratchStack {
     ///
     /// [`Vec`]: oxc_allocator::Vec
     #[inline]
-    pub fn drain_into<'a, T>(
-        &mut self,
-        mark: usize,
-        allocator: &'a Allocator,
-    ) -> ArenaVec<'a, T> {
+    pub fn drain_into<'a, T>(&mut self, mark: usize, allocator: &'a Allocator) -> ArenaVec<'a, T> {
         const { assert!(align_of::<T>() <= SCRATCH_ALIGN) };
         let offset = align_up(mark, align_of::<T>());
         let count = if self.len > offset { (self.len - offset) / size_of::<T>() } else { 0 };
