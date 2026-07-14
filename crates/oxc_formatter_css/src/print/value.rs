@@ -577,7 +577,7 @@ pub(super) fn comma_group_is_multi(group: &[ComponentValue<'_>], is_first: bool)
 /// A group's separator comma:
 /// comments between the group and its comma stay before the comma (`a /* c */, b`);
 /// only comments past it lead the next group.
-fn write_group_comma(comma_start: Option<u32>, f: &mut CssFormatter<'_, '_>) {
+pub(super) fn write_group_comma(comma_start: Option<u32>, f: &mut CssFormatter<'_, '_>) {
     if let Some(comma) = comma_start {
         flush_trailing_value_comments(comma, f);
     }
@@ -1355,11 +1355,15 @@ pub(super) fn write_component_value<'a>(
                 let inner_ctx = ValueContext { paren_break: false, ..ctx };
                 let trailing = f.options().allow_trailing_comma();
                 let elements = &list.elements;
+                let comma_spans = list.comma_spans.as_ref();
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, hard_line_break());
                     for (i, el) in elements.iter().enumerate() {
                         if i > 0 {
-                            write!(f, ",");
+                            write_group_comma(
+                                comma_spans.and_then(|s| s.get(i - 1)).map(|sp| to_span(sp).start),
+                                f,
+                            );
                             write!(f, hard_line_break());
                         }
                         write_component_value(el, inner_ctx, f);
@@ -1381,9 +1385,13 @@ pub(super) fn write_component_value<'a>(
                 if let ComponentValue::SassList(list) = &*paren.expr
                     && list.comma_spans.is_some()
                 {
+                    let comma_spans = list.comma_spans.as_ref();
                     for (i, el) in list.elements.iter().enumerate() {
                         if i > 0 {
-                            write!(f, ",");
+                            write_group_comma(
+                                comma_spans.and_then(|s| s.get(i - 1)).map(|sp| to_span(sp).start),
+                                f,
+                            );
                             write!(f, soft_line_break_or_space());
                         }
                         write_component_value(el, inner_ctx, f);

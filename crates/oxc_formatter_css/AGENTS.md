@@ -85,7 +85,7 @@ this section records their CSS translation:
   - Declaration value lists (`write_value_groups`) and function arguments (`write_function`) route every comma through `write_group_comma` with the comma offset paired to its group
   - `split_comma_groups` returns `(group, Option<comma_start>)`; SCSS/Less lists pair `comma_spans`
   - A new comma site must take the pair, the shape makes taking the groups without the commas a visible choice, not an accident
-    - TODO: not every comma writer has adopted this yet
+  - Adopted by every comma writer (function/include args, maps, paren/sass lists, `@mixin` params, `@each` bindings, keyframe selectors)
 - `;` is a declaration TERMINATOR, but unlike JS statements Prettier does NOT move comments behind it:
   - `value /* c */;` keeps the comment before `;` (measured behavior, not principle, may change in the future)
 - The positional cursor makes ownership a bounds discipline, not an attachment one:
@@ -217,6 +217,9 @@ Deliberate divergences from Prettier. Two admission reasons:
 
 Notable divergences are:
 
+- A COMMENTED keyframe selector list is formatted structurally (one selector per line, comments per the separator rule: `60% /* mid */,`)
+  - Prettier keeps the whole list verbatim on one line, interior spacing included (`60%   /* mid */  ,   70%` survives untouched)
+  - Ours prints commented and uncommented lists with the same layout; layout-only, rare trigger
 - Broken `:not(...)` selector args indent at +2
   - Prettier lands at +4 (arg) / +2 (`)`)
   - Layout-only, rare trigger (selector longer than line width)

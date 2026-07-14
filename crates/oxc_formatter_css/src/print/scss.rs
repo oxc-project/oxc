@@ -197,7 +197,10 @@ pub(super) fn write_sass_map<'a>(
             write!(f, soft_line_break());
             for (i, item) in map.items.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(
+                        map.comma_spans.get(i - 1).map(|sp| to_span(sp).start),
+                        f,
+                    );
                     // A blank line between items in the source is preserved
                     // (Prettier's isNextLineEmpty → hardline).
                     let prev_end = to_span(map.items[i - 1].span()).end;
@@ -252,7 +255,7 @@ pub(super) fn write_sass_map<'a>(
         let mut first_item_has_leading_comment = false;
         for (i, item) in map.items.iter().enumerate() {
             if i > 0 {
-                write!(f, ",");
+                value::write_group_comma(map.comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
                 write!(f, hard_line_break());
                 // Preserve one blank line between items
                 let prev_end = to_span(map.items[i - 1].span()).end;
@@ -418,6 +421,7 @@ pub(super) fn write_sass_list<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     if list.comma_spans.is_some() {
+        let comma_spans = list.comma_spans.as_ref();
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             let mut filler = f.fill();
             for (i, el) in list.elements.iter().enumerate() {
@@ -425,7 +429,10 @@ pub(super) fn write_sass_list<'a>(
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     value::write_component_value(el, ctx, f);
                     if !is_last {
-                        write!(f, ",");
+                        value::write_group_comma(
+                            comma_spans.and_then(|s| s.get(i)).map(|sp| to_span(sp).start),
+                            f,
+                        );
                     }
                 });
                 filler.entry(&soft_line_break_or_space(), &content);
@@ -447,10 +454,14 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
 
     // Comma-list expr: the first element joins the `... in` entry,
     // the rest are separate fill entries (mirrors postcss's flat comma groups).
-    let expr_elements: &[ComponentValue<'a>] = match &each.expr {
-        ComponentValue::SassList(list) if list.comma_spans.is_some() => &list.elements,
-        expr => std::slice::from_ref(expr),
+    let (expr_elements, expr_comma_spans): (&[ComponentValue<'a>], _) = match &each.expr {
+        ComponentValue::SassList(list) if list.comma_spans.is_some() => {
+            (&list.elements, list.comma_spans.as_ref())
+        }
+        expr => (std::slice::from_ref(expr), None),
     };
+    let expr_comma_start =
+        move |i: usize| expr_comma_spans.and_then(|s| s.get(i)).map(|sp| to_span(sp).start);
 
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         let mut filler = f.fill();
@@ -478,7 +489,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
                                 f,
                             );
                             if expr_elements.len() > 1 {
-                                write!(f, ",");
+                                value::write_group_comma(expr_comma_start(0), f);
                             }
                         });
                         inner.entry(&soft_line_break_or_space(), &binding);
@@ -493,7 +504,10 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
                     write!(f, group(&indent(&tail)));
                 } else {
                     write!(f, text(source.text_for(&span)));
-                    write!(f, ",");
+                    value::write_group_comma(
+                        each.comma_spans.get(i).map(|sp| to_span(sp).start),
+                        f,
+                    );
                 }
             });
             filler.entry(&soft_line_break_or_space(), &content);
@@ -503,7 +517,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 value::write_component_value(el, ValueContext::default(), f);
                 if !is_last {
-                    write!(f, ",");
+                    value::write_group_comma(expr_comma_start(i), f);
                 }
             });
             filler.entry(&soft_line_break_or_space(), &content);
@@ -547,15 +561,15 @@ pub(super) fn write_sass_function<'a>(function: &SassFunction<'a>, f: &mut CssFo
 
 fn write_sass_parameters<'a>(parameters: &SassParameters<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    let comma_start =
+        |i: usize| parameters.comma_spans.get(i).map(|sp: &oxc_css_parser::Span| to_span(sp).start);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write!(f, soft_line_break());
-        let mut first = true;
-        for param in &parameters.params {
-            if !first {
-                write!(f, ",");
+        for (i, param) in parameters.params.iter().enumerate() {
+            if i > 0 {
+                value::write_group_comma(comma_start(i - 1), f);
                 write!(f, soft_line_break_or_space());
             }
-            first = false;
             let name_span = to_span(param.name.span());
             write!(f, text(source.text_for(&name_span)));
             if let Some(default) = &param.default_value {
@@ -564,8 +578,8 @@ fn write_sass_parameters<'a>(parameters: &SassParameters<'a>, f: &mut CssFormatt
             }
         }
         if let Some(arbitrary) = &parameters.arbitrary_param {
-            if !first {
-                write!(f, ",");
+            if !parameters.params.is_empty() {
+                value::write_group_comma(comma_start(parameters.params.len() - 1), f);
                 write!(f, soft_line_break_or_space());
             }
             let span = to_span(arbitrary.name.span());
@@ -590,6 +604,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
     write!(f, text(source.text_for(&name_span)));
     if let Some(arguments) = &include.arguments {
         let args = &arguments.args;
+        let comma_spans = &arguments.comma_spans;
         // Same first-argument gate as `write_function` (which see), over typed args
         let first_arg_is_kw =
             args.first().is_some_and(|a| matches!(a, ComponentValue::SassKeywordArgument(_)));
@@ -598,7 +613,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
             write!(f, soft_line_break());
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
                     // Preserve a blank line, but only after a multi-part argument
                     // (Prettier checks `value-comma_group`s only).
                     let prev = &args[i - 1];
