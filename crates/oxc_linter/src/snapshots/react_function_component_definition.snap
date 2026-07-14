@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `function Hello(props: Test) {
                               return React.createElement('div');
-                            }` with `var Hello = function(props: Test) {
+                            }` with `const Hello = function(props: Test) {
                               return React.createElement('div');
                             }`.
 

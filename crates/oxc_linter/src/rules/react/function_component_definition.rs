@@ -1,8 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        ArrowFunctionExpression, FormalParameters, Function, FunctionType, VariableDeclarationKind,
-    },
+    ast::{ArrowFunctionExpression, FormalParameters, Function, FunctionType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -434,19 +432,7 @@ fn variable_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> (Span, &'s
             return (variable.span, variable.kind.as_str());
         }
     }
-    let uses_es6 = ctx.nodes().iter().any(|candidate| match candidate.kind() {
-        AstKind::VariableDeclaration(declaration) => {
-            declaration.kind != VariableDeclarationKind::Var
-        }
-        AstKind::JSXElement(_)
-        | AstKind::JSXFragment(_)
-        | AstKind::ImportDeclaration(_)
-        | AstKind::ExportNamedDeclaration(_)
-        | AstKind::ExportDefaultDeclaration(_)
-        | AstKind::ExportAllDeclaration(_) => true,
-        _ => false,
-    });
-    (node.span(), if uses_es6 { "const" } else { "var" })
+    (node.span(), "const")
 }
 
 fn variable_name(declaration: Option<&oxc_ast::ast::VariableDeclarator<'_>>) -> String {
@@ -1517,7 +1503,7 @@ fn test() {
                     }
                   ",
             "
-                    var Hello = function(props: Test) {
+                    const Hello = function(props: Test) {
                       return React.createElement('div');
                     }
                   ",
