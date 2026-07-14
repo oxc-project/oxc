@@ -257,7 +257,8 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, expected: FunctionStyl
                 return false;
             }
             if expected == FunctionStyle::Arrow
-                && has_one_unconstrained_type_parameter(function.type_parameters.as_deref())
+                && (function.generator
+                    || has_one_unconstrained_type_parameter(function.type_parameters.as_deref()))
             {
                 return false;
             }
@@ -312,36 +313,51 @@ fn replacement<'a>(
     };
     let function = match (expected, named) {
         (FunctionStyle::Declaration, true) => format!(
-            "function {}{}{}{} {}",
-            parts.name, parts.type_parameters, parts.params, parts.return_type, body
+            "{}function{} {}{}{}{} {}",
+            parts.async_prefix,
+            parts.generator_marker,
+            parts.name,
+            parts.type_parameters,
+            parts.params,
+            parts.return_type,
+            body
         ),
         (FunctionStyle::Expression, true) => format!(
-            "{} {}{} = function{}{}{} {}",
+            "{} {}{} = {}function{}{}{}{} {}",
             parts.variable_kind,
             parts.name,
             parts.type_annotation,
+            parts.async_prefix,
+            parts.generator_marker,
             parts.type_parameters,
             parts.params,
             parts.return_type,
             body
         ),
         (FunctionStyle::Arrow, true) => format!(
-            "{} {}{} = {}{}{} => {}",
+            "{} {}{} = {}{}{}{} => {}",
             parts.variable_kind,
             parts.name,
             parts.type_annotation,
+            parts.async_prefix,
             parts.type_parameters,
             parts.params,
             parts.return_type,
             body
         ),
         (FunctionStyle::Expression, false) => format!(
-            "function{}{}{} {}",
-            parts.type_parameters, parts.params, parts.return_type, body
+            "{}function{}{}{}{} {}",
+            parts.async_prefix,
+            parts.generator_marker,
+            parts.type_parameters,
+            parts.params,
+            parts.return_type,
+            body
         ),
-        (FunctionStyle::Arrow, false) => {
-            format!("{}{}{} => {}", parts.type_parameters, parts.params, parts.return_type, body)
-        }
+        (FunctionStyle::Arrow, false) => format!(
+            "{}{}{}{} => {}",
+            parts.async_prefix, parts.type_parameters, parts.params, parts.return_type, body
+        ),
         (FunctionStyle::Declaration, false) => unreachable!(),
     };
     (parts.replace_span, function)
@@ -352,6 +368,8 @@ struct FunctionParts<'a> {
     name: String,
     variable_kind: &'static str,
     type_annotation: &'a str,
+    async_prefix: &'static str,
+    generator_marker: &'static str,
     type_parameters: String,
     params: String,
     return_type: String,
@@ -379,6 +397,8 @@ impl<'a> FunctionParts<'a> {
             ),
             variable_kind,
             type_annotation: type_annotation(declaration, ctx),
+            async_prefix: if function.r#async { "async " } else { "" },
+            generator_marker: if function.generator { "*" } else { "" },
             type_parameters: function
                 .type_parameters
                 .as_ref()
@@ -408,6 +428,8 @@ impl<'a> FunctionParts<'a> {
             name: variable_name(declaration),
             variable_kind,
             type_annotation: type_annotation(declaration, ctx),
+            async_prefix: if arrow.r#async { "async " } else { "" },
+            generator_marker: "",
             type_parameters: arrow
                 .type_parameters
                 .as_ref()
@@ -1268,6 +1290,10 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "namedComponents": ["function-declaration"] }])),
         ),
+        (
+            "function* Hello(props) { return <div/>; }",
+            Some(serde_json::json!([{ "namedComponents": "arrow-function" }])),
+        ),
     ];
 
     let fix = vec![
@@ -1848,6 +1874,21 @@ fn test() {
                     export default IndexPage;
                   ",
             Some(serde_json::json!([{ "namedComponents": ["function-declaration"] }])),
+        ),
+        (
+            "async function Hello(props) { await load(); return <div/>; }",
+            "const Hello = async (props) => { await load(); return <div/>; }",
+            Some(serde_json::json!([{ "namedComponents": "arrow-function" }])),
+        ),
+        (
+            "const Hello = async (props) => { await load(); return <div/>; }",
+            "async function Hello(props) { await load(); return <div/>; }",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
+        ),
+        (
+            "async function* Hello(props) { yield await load(); return <div/>; }",
+            "const Hello = async function*(props) { yield await load(); return <div/>; }",
+            Some(serde_json::json!([{ "namedComponents": "function-expression" }])),
         ),
     ];
 

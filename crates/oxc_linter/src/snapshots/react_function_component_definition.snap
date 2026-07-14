@@ -627,3 +627,9 @@ source: crates/oxc_linter/src/tester.rs
                                 </div>
                               )
                             }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:1:1]
+ 1 │ function* Hello(props) { return <div/>; }
+   · ─────────────────────────────────────────
+   ╰────
