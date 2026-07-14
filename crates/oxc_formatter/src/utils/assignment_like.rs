@@ -13,6 +13,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
+        typecast::classify_type_cast,
     },
     write,
 };
@@ -619,6 +620,7 @@ impl<'a> AssignmentLike<'a, '_> {
         if let Some(right_expression) = right_expression {
             should_break_after_operator(right_expression, is_left_short, f)
         } else if let AssignmentLike::TSTypeAliasDeclaration(decl) = self {
+            let annotation_start = decl.type_annotation.span().start;
             // For TSTypeAliasDeclaration, check if the type annotation is a union type with comments
             match &decl.type_annotation {
                 TSType::TSConditionalType(conditional_type) => {
@@ -633,7 +635,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     };
                     is_generic(&conditional_type.check_type)
                         || is_generic(&conditional_type.extends_type)
-                        || comments.has_comment_before(decl.type_annotation.span().start)
+                        || comments.has_leading_own_line_comment(annotation_start)
                 }
                 // `TSUnionType` has its own indentation logic
                 TSType::TSUnionType(_) => false,
@@ -650,8 +652,8 @@ impl<'a> AssignmentLike<'a, '_> {
                     )
                 }
                 _ => {
-                    // Check for leading comments on any other type
-                    comments.has_comment_before(decl.type_annotation.span().start)
+                    // Only comments on their own line force the break
+                    comments.has_leading_own_line_comment(annotation_start)
                 }
             }
         } else {
@@ -730,14 +732,26 @@ fn should_break_after_operator<'a>(
 
     let comments = f.context().comments();
     for comment in comments.comments_before_iter(right.span().start) {
-        if comment.has_newlines_around() {
+        // Like Prettier's `hasLeadingOwnLineComment` (the same rule as the type-alias arms):
+        // only a comment on its own line (followed by a newline) forces the break.
+        if comment.followed_by_newline() {
             return true;
         }
 
-        // Needs to wrap a parenthesis for the node, so it won't break.
+        // A tight type-cast comment hugs its parenthesized node,
+        // so it doesn't force the break itself,
+        // and the comments after it sit inside the cast's parentheses and belong to the inner node, stop scanning;
+        // the shape-based rules below still apply.
         if comments.is_type_cast_comment(comment) {
-            return false;
+            break;
         }
+    }
+
+    // Prettier keeps the `ParenthesizedExpression` node when it is a closure type cast target,
+    // which makes a fully cast RHS opaque to the shape checks below (`x = /** @type {T} */ (a || b);` stays inline).
+    // We have no paren nodes, so reproduce that with the cast classification.
+    if classify_type_cast(right.span(), f).is_target() {
+        return false;
     }
 
     match right.as_ref() {
@@ -750,6 +764,8 @@ fn should_break_after_operator<'a>(
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
         Expression::ConditionalExpression(conditional) => match &conditional.test {
+            // A cast-parenthesized test is opaque, same as the whole-RHS case above
+            test if classify_type_cast(test.span(), f).is_target() => false,
             Expression::BinaryExpression(_) => true,
             Expression::LogicalExpression(logical) => {
                 !BinaryLikeExpression::can_inline_logical_expr(logical)

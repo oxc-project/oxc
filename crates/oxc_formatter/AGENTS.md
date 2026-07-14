@@ -73,6 +73,13 @@ Above all, prioritize consistency, and always consider whether the divergence is
 
 ### Comment placement invariants
 
+Two layers of rules, know which one you are editing:
+
+- Invariants hold uniformly
+  - violating one is a bug even where Prettier disagrees (the "Never let it cross" list below, and the content/terminator ownership split)
+- Compat tables record measured Prettier behavior that is not derivable from principle (the variant tables below)
+  - extend them by measuring Prettier, never by analogy, and pin every entry in a fixture
+
 Repositioning a comment is allowed only relative to formatter-owned punctuation
 (e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
 
@@ -107,12 +114,12 @@ so pin every position change in a fixture.
 The move-behind-the-terminator policy has four deliberate variants.
 When extending to a new node, pick by measuring Prettier, not by analogy:
 
-| Site                                                        | Source `;` required?      | Own-line comment before `;`              |
-| ----------------------------------------------------------- | ------------------------- | ---------------------------------------- |
-| Statements (`FormatContentWithSemicolon`)                   | yes (ASI: no move)        | deferred to the next node's leading pass |
-| return/throw (`ReturnAndThrowStatement`)                    | no (moves even under ASI) | printed as dangling                      |
-| Class property/accessor (`FormatClassElementWithSemicolon`) | yes                       | cancels the move (stays own-line)        |
-| Bodyless methods (`MethodDefinition`)                       | yes                       | cancels the move                         |
+| Site                                                        | Source `;` required?      | Own-line comment before `;`                                                           |
+| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| Statements (`FormatContentWithSemicolon`)                   | yes (ASI: no move)        | deferred to the next node's leading pass                                              |
+| return/throw (`ReturnAndThrowStatement`)                    | no (moves even under ASI) | deferred to the next node's leading pass (only the same-line prefix moves behind `;`) |
+| Class property/accessor (`FormatClassElementWithSemicolon`) | yes                       | cancels the move (stays own-line)                                                     |
+| Bodyless methods (`MethodDefinition`)                       | yes                       | cancels the move                                                                      |
 
 Never let it cross:
 
@@ -129,6 +136,29 @@ Never let it cross:
 Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
 (e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
 When that happens, prefer one uniform rule over emulating the asymmetry, and pin the intentional divergence in a fixture with a note.
+
+### Statement terminators and suppression
+
+The formatter owns statement terminators (and the trivia up to them); the user owns content.
+Prettier encodes "the trailing `;` is outside the statement" once, in `locEnd`;
+deciding on the spot, we encode the same policy per site, so keep them in step:
+
+- print side: `FormatContentWithSemicolon` and the move-behind table above
+- return/throw: the same-line-prefix dangling split in `ReturnAndThrowStatement`
+- capture side: `Comments::get_trailing_comments` lets deferred own-line comments escape when the statement shares its distant `;` with the enclosing statement
+  (a single-statement body, `if (1) foo\n// c\n;`); a block's last statement keeps them inside instead
+- suppressed side: `suppressed_statement_content_end` (`print/mod.rs`) ends the ignored range at the content,
+  so even a `prettier-ignore`d statement gets the formatter's terminator (per `semi`) instead of its source one
+
+Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
+
+- Whether a suppressed statement re-adds `;` is a compat table, not a principle:
+  keyword statements (`debugger`/`break`/`continue`) always re-add,
+  content-terminated ones only when a source `;` was stripped — the asymmetry is observable only for a suppressed keyword statement relying on ASI
+- The `semi: false` ASI guard is decided from the guarded statement alone,
+  never from the previous statement's output;
+  sound because no statement leaves its own trailing `;`,
+  except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`
 
 ## Verification
 

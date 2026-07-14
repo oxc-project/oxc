@@ -238,13 +238,21 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             );
         }
         Statement::KeyframeBlock(keyframe_block) => {
+            // Comments follow the list-separator rule (pre-comma stays before the comma, post-comma leads the next selector).
+            // Prettier instead keeps a COMMENTED selector list verbatim on one line.
             for (i, sel) in keyframe_block.selectors.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(
+                        keyframe_block.comma_spans.get(i - 1).map(|sp| to_span(sp).start),
+                        f,
+                    );
                     write!(f, hard_line_break());
                 }
+                value::flush_value_comments(to_span(sel.span()).start, f);
                 selector::write_keyframe_selector(sel, f);
             }
+            // Trailing comments before `{` stay on the selector line
+            value::flush_trailing_value_comments(to_span(keyframe_block.block.span()).start, f);
             write!(f, space());
             write_block(&keyframe_block.block, f);
         }

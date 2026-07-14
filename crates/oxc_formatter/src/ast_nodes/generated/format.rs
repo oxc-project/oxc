@@ -1945,7 +1945,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IfStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -1971,7 +1971,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WhileStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -1984,7 +1984,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2028,7 +2028,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForInStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2072,7 +2072,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForOfStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2111,7 +2111,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ReturnStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2124,7 +2124,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2163,7 +2163,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabeledStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2176,7 +2176,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThrowStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2228,7 +2228,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DebuggerStatement> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }

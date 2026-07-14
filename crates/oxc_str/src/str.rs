@@ -117,7 +117,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Str<'_> {
     type Cloned = Str<'new_alloc>;
 
     #[inline]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: bool,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
         Str::from_in(self.as_str(), allocator)
     }
 }

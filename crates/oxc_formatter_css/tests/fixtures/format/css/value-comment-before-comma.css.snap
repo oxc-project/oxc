@@ -1,0 +1,67 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* issue #24469: a comment between a value group and its comma stays BEFORE the comma */
+@theme {
+  --default-font-feature-settings:
+    "ss01" on /* Open digits */,
+    "ss03" on /* Round quotes & commas */,
+    "cv05" on /* Lower-case L with tail */,
+    "cv06" on /* Simplified u */,
+    "cv08" on /* Upper-case i with serif */,
+    "cv10" on /* Capital G with spur */;
+}
+a {
+  /* comment position relative to the comma is preserved */
+  --x: aa /* c1 */, /* c2 */ bb;
+  /* a declaration-tail comment stays on the LAST group */
+  --y: aa, bb /* tail */;
+  /* non-custom property: forced one-group-per-line list */
+  font-family: Arial /* c1 */, /* c2 */ sans-serif;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* issue #24469: a comment between a value group and its comma stays BEFORE the comma */
+@theme {
+  --default-font-feature-settings:
+    "ss01" on /* Open digits */, "ss03" on /* Round quotes & commas */,
+    "cv05" on /* Lower-case L with tail */, "cv06" on /* Simplified u */,
+    "cv08" on /* Upper-case i with serif */, "cv10" on /* Capital G with spur */;
+}
+a {
+  /* comment position relative to the comma is preserved */
+  --x: aa /* c1 */, /* c2 */ bb;
+  /* a declaration-tail comment stays on the LAST group */
+  --y: aa, bb /* tail */;
+  /* non-custom property: forced one-group-per-line list */
+  font-family:
+    Arial /* c1 */,
+    /* c2 */ sans-serif;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* issue #24469: a comment between a value group and its comma stays BEFORE the comma */
+@theme {
+  --default-font-feature-settings:
+    "ss01" on /* Open digits */, "ss03" on /* Round quotes & commas */,
+    "cv05" on /* Lower-case L with tail */, "cv06" on /* Simplified u */,
+    "cv08" on /* Upper-case i with serif */, "cv10" on /* Capital G with spur */;
+}
+a {
+  /* comment position relative to the comma is preserved */
+  --x: aa /* c1 */, /* c2 */ bb;
+  /* a declaration-tail comment stays on the LAST group */
+  --y: aa, bb /* tail */;
+  /* non-custom property: forced one-group-per-line list */
+  font-family:
+    Arial /* c1 */,
+    /* c2 */ sans-serif;
+}
+
+===================== End =====================

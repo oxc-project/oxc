@@ -427,6 +427,51 @@ impl<'a> Comments<'a> {
         if following_span_start == 0 {
             // Find dangling comments at the end of the enclosing node
             let comments = self.comments_before(enclosing_span.end);
+
+            // When the enclosing statement ends at the very position the preceding node does
+            // (a single-statement body sharing its distant `;`),
+            // ```js
+            // if (1) foo
+            // // c
+            // ;
+            // ```
+            // every comment here sits inside the preceding node,
+            // and own-line comments the preceding statement deferred must escape the enclosing statement
+            // to stay own-line for a later pass (the next statement's leading comments),
+            // like Prettier whose statement `locEnd` excludes the trailing `;`.
+            // When the enclosing node continues past the preceding one (e.g. a block's last statement),
+            // the loop below keeps them inside as trailing comments instead.
+            if enclosing_span.end == preceding_span.end {
+                for (idx, comment) in comments.iter().enumerate() {
+                    if !comment.preceded_by_newline() {
+                        continue;
+                    }
+                    // Everything from here to the terminator must be trivia:
+                    // a run of own-line comments separated by whitespace, then the `;`.
+                    let mut pos = comment.span.end;
+                    let mut deferrable = true;
+                    for next in &comments[idx + 1..] {
+                        if !next.preceded_by_newline()
+                            || !source_text
+                                .all_bytes_match(pos, next.span.start, |b| b.is_ascii_whitespace())
+                        {
+                            deferrable = false;
+                            break;
+                        }
+                        pos = next.span.end;
+                    }
+                    if deferrable
+                        && source_text.all_bytes_match(pos, preceding_span.end, |b| {
+                            b.is_ascii_whitespace() || b == b';'
+                        })
+                        && source_text.bytes_contain(pos, preceding_span.end, b';')
+                    {
+                        return &comments[..idx];
+                    }
+                }
+                return comments;
+            }
+
             let mut start = preceding_span.end;
             for (idx, comment) in comments.iter().enumerate() {
                 // Comments inside the preceding node, which should be printed without checking

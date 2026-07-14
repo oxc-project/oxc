@@ -426,13 +426,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::accessor_modifier,
         );
         if let Some(definite_token_start) = definite
-            && ((self.ctx.has_ambient() && !modifiers.contains(ModifierKind::Declare))
-                || r#type.is_abstract())
+            && !modifiers.contains(ModifierKind::Declare)
         {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(Span::sized(
-                definite_token_start,
-                1,
-            )));
+            let definite_span = Span::sized(definite_token_start, 1);
+            if value.is_some() {
+                self.error(diagnostics::variable_declarator_definite(definite_span));
+            } else if type_annotation.is_none() {
+                self.error(diagnostics::variable_declarator_definite_type_assertion(definite_span));
+            } else if self.ctx.has_ambient()
+                || modifiers.contains(ModifierKind::Static)
+                || r#type.is_abstract()
+            {
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
+            }
         }
         ClassElement::new_accessor_property(
             self.end_span(span),

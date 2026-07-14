@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- df250df formatter: Support `quoteProps` for TS enum and methods (#24309) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 162bddf formatter: Add required parens for conditional type in type parameter constraint (#24450) (leaysgur)
+- 2d22a91 formatter: Determine type cast target from span instead of lexical scan (#24447) (leaysgur)
+- 25306e9 formatter: Do not add extra parens with type cast comment (#24444) (leaysgur)
+- bd6edfe formatter: Break arrow signature that exactly fills the line when cond body may hug (#24440) (leaysgur)
+- a99ef41 formatter: Keep quotes on method signature named new (#24432) (leaysgur)
+- b7c7e15 formatter: Add parens for import and private field in new callee chain (#24320) (leaysgur)
+- 0c8f6e4 formatter: Update detect_code_removal for #24309 (#24314) (leaysgur)
+- a85aad0 formatter: Fix member-chain and non-null parens (#24312) (leaysgur)
+- 1c29c73 formatter: Preserve `TSNonNullExpression` in chain expression (#24311) (leaysgur)
+- 8933c0e formatter: Keep comment inside of empty `switch` block (#24308) (leaysgur)
+- ec26af2 formatter: Preserve blank lines between JSX attrs (#24290) (leaysgur)
+- 70bd54d formatter: Keep arrow function body comment (#24287) (leaysgur)
+- 42ec8de formatter: Keep comments inside surviving parens and suppressed statement terminators (#24253) (leaysgur)
+- 1343779 formatter: Keep comment inline for empty statements (#24249) (leaysgur)
+- b996579 formatter: Print ; before trailing comments part 2 (#24246) (leaysgur)
+- 4f86e8c formatter: Print `;` before trailing comments (#24244) (leaysgur)
+- 01252e4 formatter: Add or remove parens for `let` declaration (#24215) (leaysgur)
+
+### ⚡ Performance
+
+- a2f255b formatter: Use `SmallVec` for `MemberChain` collections (#23776) (Marius Schulz)
+
+### 📚 Documentation
+
+- b52d0f5 formatter: Add TODO comment about unsound code (#24372) (overlookmotel)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🚀 Features

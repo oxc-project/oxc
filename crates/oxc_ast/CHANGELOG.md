@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- f85f0d8 ast: Delegate inherited enum variants in clone_in and estree derives (#23555) (Boshen)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

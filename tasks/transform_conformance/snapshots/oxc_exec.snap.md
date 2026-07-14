@@ -1,6 +1,6 @@
 commit: c86e9e4b
 
-node: v24.14.0
+node: v26.5.0
 
 Passed: 15 of 17 (88.24%)
 
