@@ -17,7 +17,9 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::{Visit, VisitJs, walk_js::walk_call_expression};
+#[cfg(debug_assertions)]
+use oxc_ast_visit::Visit;
+use oxc_ast_visit::{VisitJs, walk_js::walk_call_expression};
 use oxc_semantic::Scoping;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
