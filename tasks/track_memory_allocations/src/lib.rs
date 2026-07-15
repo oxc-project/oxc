@@ -50,6 +50,18 @@ impl AtomicCounter {
         self.0.update(SeqCst, SeqCst, |count| count.saturating_add(n));
     }
 
+    fn sub(&self, n: usize) {
+        self.0.update(SeqCst, SeqCst, |count| count.saturating_sub(n));
+    }
+
+    fn set(&self, n: usize) {
+        self.0.store(n, SeqCst);
+    }
+
+    fn fetch_max(&self, n: usize) {
+        self.0.fetch_max(n, SeqCst);
+    }
+
     fn reset(&self) {
         self.0.store(0, SeqCst);
     }
@@ -67,11 +79,29 @@ static NUM_REALLOC: AtomicCounter = AtomicCounter::new();
 // After regenerating on another platform, expect diffs on byte-value lines only, and take
 // those lines from the CI job's diff output.
 static NUM_ALLOC_BYTES: AtomicCounter = AtomicCounter::new();
+/// Number of system deallocations
+static NUM_DEALLOC: AtomicCounter = AtomicCounter::new();
+/// Total number of bytes returned to the system allocator.
+/// Each `realloc` counts its old size as freed (its new size is counted in `NUM_ALLOC_BYTES`),
+/// so `NUM_ALLOC_BYTES - NUM_DEALLOC_BYTES` nets out correctly across reallocations.
+static NUM_DEALLOC_BYTES: AtomicCounter = AtomicCounter::new();
+/// Number of bytes currently live in the system allocator (allocated minus freed).
+/// Unlike the counters above, arena chunks are included — this feeds a heap footprint
+/// metric, and chunk memory is real footprint. Tracks the process from its start.
+static LIVE_BYTES: AtomicCounter = AtomicCounter::new();
+/// High-water mark of [`LIVE_BYTES`]. Re-anchored to the current live level at the start of
+/// each measured operation (see `record_stats_in`), so `peak - start` is the operation's
+/// peak heap growth.
+static PEAK_LIVE_BYTES: AtomicCounter = AtomicCounter::new();
 
 fn reset_global_allocs() {
     NUM_ALLOC.reset();
     NUM_REALLOC.reset();
     NUM_ALLOC_BYTES.reset();
+    NUM_DEALLOC.reset();
+    NUM_DEALLOC_BYTES.reset();
+    // `LIVE_BYTES` and `PEAK_LIVE_BYTES` are deliberately not reset:
+    // live bytes track reality, and the peak is re-anchored per measured operation.
 }
 
 // SAFETY: Methods simply delegate to `MiMalloc` allocator to ensure that the allocator
@@ -83,12 +113,17 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         if !ret.is_null() {
             NUM_ALLOC.increment();
             NUM_ALLOC_BYTES.add(layout.size());
+            LIVE_BYTES.add(layout.size());
+            PEAK_LIVE_BYTES.fetch_max(LIVE_BYTES.get());
         }
         ret
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         unsafe { MiMalloc.dealloc(ptr, layout) };
+        NUM_DEALLOC.increment();
+        NUM_DEALLOC_BYTES.add(layout.size());
+        LIVE_BYTES.sub(layout.size());
     }
 
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
@@ -96,6 +131,8 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         if !ret.is_null() {
             NUM_ALLOC.increment();
             NUM_ALLOC_BYTES.add(layout.size());
+            LIVE_BYTES.add(layout.size());
+            PEAK_LIVE_BYTES.fetch_max(LIVE_BYTES.get());
         }
         ret
     }
@@ -105,6 +142,12 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         if !ret.is_null() {
             NUM_REALLOC.increment();
             NUM_ALLOC_BYTES.add(new_size);
+            NUM_DEALLOC_BYTES.add(layout.size());
+            // Model realloc as alloc-copy-free: both blocks are counted live momentarily,
+            // matching the worst case where the allocator cannot grow in place.
+            LIVE_BYTES.add(new_size);
+            PEAK_LIVE_BYTES.fetch_max(LIVE_BYTES.get());
+            LIVE_BYTES.sub(layout.size());
         }
         ret
     }
@@ -115,6 +158,15 @@ unsafe impl GlobalAlloc for TrackedAllocator {
 struct StageStats {
     /// Deltas of the allocation counters across the measured operation
     counters: AllocatorStats,
+    /// Largest rise of live system-allocator bytes above the operation's starting level,
+    /// at any moment during the operation. Catches transient balloons (e.g. a large scratch
+    /// buffer freed before the operation ends) that the cumulative counters cannot see.
+    /// Unlike `sys_alloc_bytes`, arena chunks are included — this is a footprint number —
+    /// so values move in chunk-sized steps when transient arenas are created.
+    peak_heap_growth: usize,
+    /// Bytes the measured `Allocator`'s arena grew during the operation
+    /// (used-bytes delta), attributing arena consumption to the stage that caused it.
+    arena_growth: usize,
     /// Bytes used in the measured `Allocator`'s arena at the end of the measured operation.
     /// A point-in-time gauge read after the operation completes, not a diffed counter.
     /// The arena is not reset between stages, so this includes content from earlier stages
@@ -130,9 +182,15 @@ struct AllocatorStats {
     sys_allocs: usize,
     /// Number of reallocations made by system allocator
     sys_reallocs: usize,
+    /// Number of deallocations made by system allocator, excluding arena chunk deallocations
+    sys_deallocs: usize,
     /// Total bytes allocated by system allocator, excluding arena chunk allocations.
     /// Each reallocation counts its full new size, not just the growth.
     sys_alloc_bytes: usize,
+    /// Total bytes freed via system allocator, excluding arena chunk deallocations.
+    /// Each reallocation counts its old size as freed, so `sys_alloc_bytes - sys_dealloc_bytes`
+    /// is the net bytes an operation retains.
+    sys_dealloc_bytes: usize,
     /// Number of chunks arenas have requested from the system allocator.
     /// Tracked separately so chunk allocations can be excluded from `sys_allocs`
     /// (see `record_stats_diff`). Not printed in snapshots because the count is platform-dependent.
@@ -141,10 +199,24 @@ struct AllocatorStats {
     /// Tracked separately so chunk bytes can be excluded from `sys_alloc_bytes`,
     /// for the same reason as `arena_chunk_allocs`. Not printed in snapshots.
     arena_chunk_alloc_bytes: usize,
-    /// Number of allocations made by arena allocator
+    /// Number of chunks arenas have returned to the system allocator.
+    /// Tracked separately so chunk deallocations can be excluded from `sys_deallocs`,
+    /// for the same reason as `arena_chunk_allocs`. Not printed in snapshots.
+    arena_chunk_deallocs: usize,
+    /// Total bytes of chunks arenas have returned to the system allocator.
+    /// Tracked separately so chunk bytes can be excluded from `sys_dealloc_bytes`.
+    /// Not printed in snapshots.
+    arena_chunk_dealloc_bytes: usize,
+    /// Number of allocations made in the measured `Allocator`'s arena
     arena_allocs: usize,
-    /// Number of reallocations made by arena allocator
+    /// Number of reallocations made in the measured `Allocator`'s arena
     arena_reallocs: usize,
+    /// Number of allocations made in ALL arenas, including short-lived arenas created and
+    /// dropped inside the operation (e.g. the arena backing `oxc_semantic`'s `Scoping`),
+    /// which are invisible to `arena_allocs`.
+    total_arena_allocs: usize,
+    /// Number of reallocations made in ALL arenas (see `total_arena_allocs`)
+    total_arena_reallocs: usize,
 }
 
 #[test]
@@ -288,22 +360,43 @@ pub fn run() -> Result<(), io::Error> {
 fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let sys_allocs = NUM_ALLOC.get();
     let sys_reallocs = NUM_REALLOC.get();
+    let sys_deallocs = NUM_DEALLOC.get();
     let sys_alloc_bytes = NUM_ALLOC_BYTES.get();
+    let sys_dealloc_bytes = NUM_DEALLOC_BYTES.get();
     #[cfg(not(feature = "is_all_features"))]
-    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, arena_chunk_alloc_bytes)) =
-        (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_stats());
+    let (
+        (arena_allocs, arena_reallocs),
+        (arena_chunk_allocs, arena_chunk_alloc_bytes),
+        (arena_chunk_deallocs, arena_chunk_dealloc_bytes),
+        (total_arena_allocs, total_arena_reallocs),
+    ) = (
+        allocator.get_allocation_stats(),
+        Allocator::global_chunk_allocation_stats(),
+        Allocator::global_chunk_deallocation_stats(),
+        Allocator::global_arena_allocation_stats(),
+    );
     #[cfg(feature = "is_all_features")]
-    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, arena_chunk_alloc_bytes)) =
-        ((0, 0), (0, 0));
+    let (
+        (arena_allocs, arena_reallocs),
+        (arena_chunk_allocs, arena_chunk_alloc_bytes),
+        (arena_chunk_deallocs, arena_chunk_dealloc_bytes),
+        (total_arena_allocs, total_arena_reallocs),
+    ) = ((0, 0), (0, 0), (0, 0), (0, 0));
 
     AllocatorStats {
         sys_allocs,
         sys_reallocs,
+        sys_deallocs,
         sys_alloc_bytes,
+        sys_dealloc_bytes,
         arena_chunk_allocs,
         arena_chunk_alloc_bytes,
+        arena_chunk_deallocs,
+        arena_chunk_dealloc_bytes,
         arena_allocs,
         arena_reallocs,
+        total_arena_allocs,
+        total_arena_reallocs,
     }
 }
 
@@ -321,20 +414,35 @@ fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorS
     let arena_chunk_allocs = stats.arena_chunk_allocs.saturating_sub(prev.arena_chunk_allocs);
     let arena_chunk_alloc_bytes =
         stats.arena_chunk_alloc_bytes.saturating_sub(prev.arena_chunk_alloc_bytes);
+    let arena_chunk_deallocs = stats.arena_chunk_deallocs.saturating_sub(prev.arena_chunk_deallocs);
+    let arena_chunk_dealloc_bytes =
+        stats.arena_chunk_dealloc_bytes.saturating_sub(prev.arena_chunk_dealloc_bytes);
     AllocatorStats {
         sys_allocs: stats
             .sys_allocs
             .saturating_sub(prev.sys_allocs)
             .saturating_sub(arena_chunk_allocs),
         sys_reallocs: stats.sys_reallocs.saturating_sub(prev.sys_reallocs),
+        sys_deallocs: stats
+            .sys_deallocs
+            .saturating_sub(prev.sys_deallocs)
+            .saturating_sub(arena_chunk_deallocs),
         sys_alloc_bytes: stats
             .sys_alloc_bytes
             .saturating_sub(prev.sys_alloc_bytes)
             .saturating_sub(arena_chunk_alloc_bytes),
+        sys_dealloc_bytes: stats
+            .sys_dealloc_bytes
+            .saturating_sub(prev.sys_dealloc_bytes)
+            .saturating_sub(arena_chunk_dealloc_bytes),
         arena_chunk_allocs,
         arena_chunk_alloc_bytes,
+        arena_chunk_deallocs,
+        arena_chunk_dealloc_bytes,
         arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
         arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
+        total_arena_allocs: stats.total_arena_allocs.saturating_sub(prev.total_arena_allocs),
+        total_arena_reallocs: stats.total_arena_reallocs.saturating_sub(prev.total_arena_reallocs),
     }
 }
 
@@ -344,9 +452,22 @@ where
     F: FnOnce() -> R,
 {
     let before_stats = record_stats(allocator);
+    let arena_used_before = allocator.used_bytes();
+    // Anchor the high-water mark to the current live level, so that after `f` runs,
+    // `peak - live_before` is the largest heap growth at any moment during `f`.
+    let live_before = LIVE_BYTES.get();
+    PEAK_LIVE_BYTES.set(live_before);
+
     let result = f();
+
     let counters = record_stats_diff(allocator, &before_stats);
-    let stats = StageStats { counters, arena_used_bytes: allocator.used_bytes() };
+    let arena_used_bytes = allocator.used_bytes();
+    let stats = StageStats {
+        counters,
+        peak_heap_growth: PEAK_LIVE_BYTES.get().saturating_sub(live_before),
+        arena_growth: arena_used_bytes.saturating_sub(arena_used_before),
+        arena_used_bytes,
+    };
 
     (result, stats)
 }
@@ -362,9 +483,15 @@ fn format_stats(file: &TestFile, stats: &StageStats) -> String {
         ("file size", format_size(file.source_text.len(), DECIMAL)),
         ("sys allocs", counters.sys_allocs.to_string()),
         ("sys reallocs", counters.sys_reallocs.to_string()),
+        ("sys deallocs", counters.sys_deallocs.to_string()),
         ("sys alloc bytes", format_bytes(counters.sys_alloc_bytes)),
+        ("sys dealloc bytes", format_bytes(counters.sys_dealloc_bytes)),
+        ("peak heap growth", format_bytes(stats.peak_heap_growth)),
         ("arena allocs", counters.arena_allocs.to_string()),
         ("arena reallocs", counters.arena_reallocs.to_string()),
+        ("total arena allocs", counters.total_arena_allocs.to_string()),
+        ("total arena reallocs", counters.total_arena_reallocs.to_string()),
+        ("arena growth", format_bytes(stats.arena_growth)),
         ("arena size", format_bytes(stats.arena_used_bytes)),
     ];
 
