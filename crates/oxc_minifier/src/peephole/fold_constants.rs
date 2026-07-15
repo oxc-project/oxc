@@ -281,13 +281,43 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn extract_numeric_values(e: &BinaryExpression<'a>) -> Option<(f64, f64)> {
+    fn extract_numeric_values(
+        e: &BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<(f64, f64)> {
         if let (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) =
             (&e.left, &e.right)
         {
             return Some((left.value, right.value));
         }
-        None
+        // `undefined` has no literal form (`void 0` is a unary expression) and
+        // a tracked-constant read is an identifier, so fall back to the
+        // evaluator, which also applies ToNumber (`undefined` → NaN, `null` →
+        // 0, `'2'` → 2) and refuses operands with side effects.
+        if !Self::is_cheap_to_number_operand(&e.left) || !Self::is_cheap_to_number_operand(&e.right)
+        {
+            return None;
+        }
+        let left = e.left.get_side_free_number_value(ctx)?;
+        let right = e.right.get_side_free_number_value(ctx)?;
+        Some((left, right))
+    }
+
+    /// Operand shapes whose ToNumber evaluation is allocation-free. Evaluating
+    /// the rest is wasted work here: a `BigIntLiteral` heap-allocates a bigint
+    /// only for ToNumber to bail, a `CallExpression` attempts string-method
+    /// folds that build strings, and neither can pass the small-result size
+    /// filters anyway.
+    fn is_cheap_to_number_operand(e: &Expression<'a>) -> bool {
+        matches!(
+            e.get_inner_expression(),
+            Expression::NumericLiteral(_)
+                | Expression::StringLiteral(_)
+                | Expression::BooleanLiteral(_)
+                | Expression::NullLiteral(_)
+                | Expression::Identifier(_)
+                | Expression::UnaryExpression(_)
+        )
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -315,7 +345,7 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Addition => Self::try_fold_add(e, ctx),
             BinaryOperator::Subtraction => {
                 // Subtraction of small-ish integers can definitely be folded without issues
-                Self::extract_numeric_values(e)
+                Self::extract_numeric_values(e, ctx)
                     .filter(|(left, right)| {
                         left.is_nan()
                             || left.is_finite()
@@ -330,7 +360,7 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::Multiplication
             | BinaryOperator::Exponential
-            | BinaryOperator::Remainder => Self::extract_numeric_values(e)
+            | BinaryOperator::Remainder => Self::extract_numeric_values(e, ctx)
                 .filter(|(left, right)| {
                     *left == 0.0
                         || left.is_nan()
@@ -346,11 +376,11 @@ impl<'a> PeepholeOptimizations {
                             && right.fract() == 0.0)
                 })
                 .and_then(|_| ctx.eval_binary(e)),
-            BinaryOperator::Division => Self::extract_numeric_values(e)
+            BinaryOperator::Division => Self::extract_numeric_values(e, ctx)
                 .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
                 .and_then(|_| ctx.eval_binary(e)),
             BinaryOperator::ShiftLeft => {
-                Self::extract_numeric_values(e).and_then(|(left, right)| {
+                Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
@@ -360,7 +390,7 @@ impl<'a> PeepholeOptimizations {
                 })
             }
             BinaryOperator::ShiftRightZeroFill => {
-                Self::extract_numeric_values(e).and_then(|(left, right)| {
+                Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
