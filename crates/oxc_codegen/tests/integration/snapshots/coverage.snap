@@ -202,3 +202,42 @@ const obj = {
 	/* v8 ignore next */
 	...rest
 };
+
+########## 29
+const x = 1 ?? /* istanbul ignore next -- @preserve */ 0;
+----------
+const x = 1 ?? /* istanbul ignore next -- @preserve */ 0;
+
+########## 30
+if (a && /* istanbul ignore next -- @preserve */ b) {}
+----------
+if (a && /* istanbul ignore next -- @preserve */ b) {}
+
+########## 31
+function f() {
+  if (a || /* istanbul ignore next -- @preserve */ b) {}
+}
+----------
+function f() {
+	if (a || /* istanbul ignore next -- @preserve */ b) {}
+}
+
+########## 32
+const y = cond ? /* istanbul ignore next -- @preserve */ 1 : 2;
+----------
+const y = cond ? /* istanbul ignore next -- @preserve */ 1 : 2;
+
+########## 33
+const obj = { a: cond ? /* istanbul ignore next -- @preserve */ 1 : 2 };
+----------
+const obj = { a: cond ? /* istanbul ignore next -- @preserve */ 1 : 2 };
+
+########## 34
+const obj = { removeSelection: /* istanbul ignore next -- @preserve */ () => onUpdate(null) };
+----------
+const obj = { removeSelection: /* istanbul ignore next -- @preserve */ () => onUpdate(null) };
+
+########## 35
+const t = `${/* istanbul ignore next -- @preserve */ () => undefined}`;
+----------
+const t = `${/* istanbul ignore next -- @preserve */ () => undefined}`;
