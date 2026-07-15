@@ -1,0 +1,39 @@
+crates/oxc_react_compiler/src/react_compiler_hir/mod.rs
+  s_dc058530401985::t_cdfcf5554187c0 624-626,774
+crates/oxc_react_compiler/src/react_compiler_hir/visitors.rs
+  s_dc058530401985::t_c86ffcca8867c3 71,278,1024
+crates/oxc_react_compiler/src/react_compiler_inference/infer_mutation_aliasing_effects.rs
+  s_dc058530401985::t_52807e57c2b9af 2385
+crates/oxc_react_compiler/src/react_compiler_inference/infer_reactive_scope_variables.rs
+  s_dc058530401985::t_f6ce75d138c4cc 168
+crates/oxc_react_compiler/src/react_compiler_lowering/build_hir.rs
+  s_dc058530401985::t_e7ed8cac559bfe 22,3753-3757,3762-3764,5253
+crates/oxc_react_compiler/src/react_compiler_optimization/constant_propagation.rs
+  s_dc058530401985::t_e43d2b652994fe 603
+crates/oxc_react_compiler/src/react_compiler_optimization/dead_code_elimination.rs
+  s_dc058530401985::t_52ed7883ea78e8 357
+crates/oxc_react_compiler/src/react_compiler_reactive_scopes/codegen_reactive_function.rs
+  s_dc058530401985::t_07f1913921fdb4 1933-1935
+crates/oxc_react_compiler/src/react_compiler_reactive_scopes/prune_non_escaping_scopes.rs
+  s_dc058530401985::t_2f64d03b29be3e 460
+crates/oxc_react_compiler/src/react_compiler_typeinference/infer_types.rs
+  s_dc058530401985::t_b2758121588182 811,1159
+crates/oxc_react_compiler/tests/snapshots/error.todo-new-target-meta-property.snap
+  s_dc058530401985::t_726b43df7185a4 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "98ffc311010ec282909e3756ce2ef23fe6505c23",
+  "prompts": {},
+  "sessions": {
+    "s_dc058530401985": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f655e-5f88-7903-b735-259c1b70ee8b",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
