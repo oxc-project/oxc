@@ -813,19 +813,9 @@ impl<'a> PeepholeOptimizations {
 
                 // Remove the removable suffix if any
                 if start < end {
-                    let mut last = switch_stmt.cases.pop().unwrap();
-                    for removed_case in switch_stmt.cases.drain(start..) {
+                    for removed_case in switch_stmt.cases.drain(start..end) {
                         ctx.drop_switch_case(&removed_case);
                     }
-
-                    if let Some(last_test) = last.test.take() {
-                        ctx.drop_expression(&last_test);
-                    }
-
-                    if !Self::switch_case_is_removable(&last, true, ctx) {
-                        switch_stmt.cases.push(last);
-                    }
-                    ctx.notice_change();
                 }
             }
         }
