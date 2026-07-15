@@ -771,19 +771,20 @@ impl<'a> PeepholeOptimizations {
                 ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
             }
         } else if case_count > 1 {
-            // Determine the range [0, end) to check for removable cases.
-            // 1. default is at the end: check cases [0, count-1), allow break in default
-            // 2. default is not last: cannot remove trailing cases (fall-through to default)
-            // 3. no default: check all cases, allow break in final case
+            // Determine the range [0, end] to check for removable cases.
+            // 1. default exists and is empty: check the full switch.
+            // 2. default exists and is non-empty and last: check only cases before that default.
+            // 3. default exists, is non-empty, and is not last: skip this optimization (`end = 0`).
+            // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
             let (end, allow_break) = if let Some(default_pos) =
                 switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
             {
-                if default_pos == case_count - 1 {
-                    let is_default_empty =
-                        Self::switch_case_is_empty(&switch_stmt.cases[default_pos], true);
-                    if is_default_empty { (case_count, true) } else { (case_count - 1, false) }
+                if Self::switch_case_is_empty(&switch_stmt.cases[default_pos], true) {
+                    (case_count, true)
+                } else if default_pos == case_count - 1 {
+                    (default_pos, false)
                 } else {
-                    (case_count, false)
+                    (0, false)
                 }
             } else {
                 (case_count, true)
