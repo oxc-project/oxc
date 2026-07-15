@@ -672,6 +672,21 @@
       },
       "additionalProperties": false
     },
+    "AnchorHasContentConfig": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "Additional custom component names to treat as anchor elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional custom component names to treat as anchor elements."
+        }
+      },
+      "additionalProperties": false
+    },
     "AnchorIsValidAspect": {
       "type": "string",
       "enum": [
@@ -3717,7 +3732,24 @@
           ]
         },
         "jsx-a11y/anchor-has-content": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AnchorHasContentConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/anchor-is-valid": {
           "anyOf": [
