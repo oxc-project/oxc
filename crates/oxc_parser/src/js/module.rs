@@ -876,8 +876,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         // { type as as "something" }
                         kind = ImportOrExportKind::Type;
                         property_name = Some(ModuleExportName::new_identifier_name(
-                            second_as.span,
-                            second_as.name,
+                            first_as.span,
+                            first_as.name,
                             self,
                         ));
                         check_identifier_token = self.cur_token();
@@ -1059,7 +1059,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 mod test {
     use oxc_allocator::{Allocator, ArenaBox};
     use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, ImportPhase, Statement};
-    use oxc_span::SourceType;
+    use oxc_span::{GetSpan, SourceType, Span};
 
     use crate::Parser;
     #[test]
@@ -1205,6 +1205,26 @@ mod test {
             if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = &specifiers[0] {
                 assert_eq!(specifier.local.name, "as");
                 assert_eq!(specifier.imported.name(), "type");
+            } else {
+                panic!("Expected ImportSpecifier, found: {:?}", specifiers[0]);
+            }
+        });
+
+        let src = "import { type as as x } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = &specifiers[0] {
+                assert_eq!(specifier.import_kind, ImportOrExportKind::Type);
+                assert_eq!(specifier.imported.name(), "as");
+                // The first `as` (14-16) is the imported name; the second `as` (17-19) is the keyword
+                assert_eq!(specifier.imported.span(), Span::new(14, 16));
+                assert_eq!(specifier.local.name, "x");
+                assert_eq!(specifier.local.span, Span::new(20, 21));
             } else {
                 panic!("Expected ImportSpecifier, found: {:?}", specifiers[0]);
             }
