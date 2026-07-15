@@ -28,12 +28,42 @@ static NUM_CHUNK_ALLOC: AtomicUsize = AtomicUsize::new(0);
 /// A global counter, for the same reason as [`NUM_CHUNK_ALLOC`].
 static NUM_CHUNK_ALLOC_BYTES: AtomicUsize = AtomicUsize::new(0);
 
+/// Number of chunks all [`Arena`]s have returned to the system allocator, in total.
+///
+/// A global counter, for the same reason as [`NUM_CHUNK_ALLOC`].
+static NUM_CHUNK_DEALLOC: AtomicUsize = AtomicUsize::new(0);
+
+/// Total size in bytes of all chunks [`Arena`]s have returned to the system allocator.
+///
+/// A global counter, for the same reason as [`NUM_CHUNK_ALLOC`].
+static NUM_CHUNK_DEALLOC_BYTES: AtomicUsize = AtomicUsize::new(0);
+
+/// Number of allocations made in all [`Arena`]s, in total.
+///
+/// A global counter, unlike the per-arena [`AllocationStats`], so that allocations made in
+/// short-lived arenas (which are dropped inside the operation being measured) are still visible.
+static NUM_ARENA_ALLOC: AtomicUsize = AtomicUsize::new(0);
+
+/// Number of reallocations made in all [`Arena`]s, in total.
+///
+/// A global counter, for the same reason as [`NUM_ARENA_ALLOC`].
+static NUM_ARENA_REALLOC: AtomicUsize = AtomicUsize::new(0);
+
 /// Record that a chunk of `size` bytes was allocated from the system allocator.
 pub fn record_chunk_allocation(size: usize) {
     // Counters max out at `usize::MAX`, but if there's that many allocations,
     // the exact number is not important
     NUM_CHUNK_ALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |count| count.saturating_add(1));
     NUM_CHUNK_ALLOC_BYTES
+        .update(Ordering::Relaxed, Ordering::Relaxed, |total| total.saturating_add(size));
+}
+
+/// Record that a chunk of `size` bytes was returned to the system allocator.
+pub fn record_chunk_deallocation(size: usize) {
+    // Counters max out at `usize::MAX`, but if there's that many allocations,
+    // the exact number is not important
+    NUM_CHUNK_DEALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |count| count.saturating_add(1));
+    NUM_CHUNK_DEALLOC_BYTES
         .update(Ordering::Relaxed, Ordering::Relaxed, |total| total.saturating_add(size));
 }
 
@@ -52,6 +82,7 @@ impl AllocationStats {
         // Counter maxes out at `usize::MAX`, but if there's that many allocations,
         // the exact number is not important
         self.num_alloc.set(self.num_alloc.get().saturating_add(1));
+        NUM_ARENA_ALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |n| n.saturating_add(1));
     }
 
     /// Record that a reallocation was made.
@@ -59,6 +90,7 @@ impl AllocationStats {
         // Counter maxes out at `usize::MAX`, but if there's that many allocations,
         // the exact number is not important
         self.num_realloc.set(self.num_realloc.get().saturating_add(1));
+        NUM_ARENA_REALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |n| n.saturating_add(1));
     }
 
     /// Record that a reallocation was made, after it was initially recorded as an allocation.
@@ -69,10 +101,14 @@ impl AllocationStats {
         if num_alloc != usize::MAX {
             self.num_alloc.set(num_alloc - 1);
         }
+        NUM_ARENA_ALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |n| {
+            if n == usize::MAX { n } else { n - 1 }
+        });
 
         // Counter maxes out at `usize::MAX`, but if there's that many allocations,
         // the exact number is not important
         self.num_realloc.set(self.num_realloc.get().saturating_add(1));
+        NUM_ARENA_REALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |n| n.saturating_add(1));
     }
 
     /// Reset allocation counters.
@@ -103,5 +139,19 @@ impl Allocator {
     #[doc(hidden)]
     pub fn global_chunk_allocation_stats() -> (usize, usize) {
         (NUM_CHUNK_ALLOC.load(Ordering::Relaxed), NUM_CHUNK_ALLOC_BYTES.load(Ordering::Relaxed))
+    }
+
+    /// Get number and total size in bytes of chunks all [`Arena`]s have returned to
+    /// the system allocator, as `(count, bytes)`.
+    #[doc(hidden)]
+    pub fn global_chunk_deallocation_stats() -> (usize, usize) {
+        (NUM_CHUNK_DEALLOC.load(Ordering::Relaxed), NUM_CHUNK_DEALLOC_BYTES.load(Ordering::Relaxed))
+    }
+
+    /// Get number of allocations and reallocations made in all [`Arena`]s, in total,
+    /// including arenas that have since been dropped.
+    #[doc(hidden)]
+    pub fn global_arena_allocation_stats() -> (usize, usize) {
+        (NUM_ARENA_ALLOC.load(Ordering::Relaxed), NUM_ARENA_REALLOC.load(Ordering::Relaxed))
     }
 }

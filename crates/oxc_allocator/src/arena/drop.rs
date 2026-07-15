@@ -149,6 +149,9 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
         }
     }
 
+    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+    crate::tracking::record_chunk_deallocation(layout.size());
+
     // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
     // `is_fixed_size` is `false`, so backing allocation was made via global allocator.
     unsafe { alloc::dealloc(backing_alloc_ptr, layout) };
