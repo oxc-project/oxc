@@ -22,12 +22,11 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str, format_ident};
 
 use crate::react_compiler_lowering::FunctionNode;
-use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
 use crate::react_compiler_lowering::hir_builder::HirBuilder;
 use crate::react_compiler_lowering::hir_builder::is_always_reserved_word;
 use crate::react_compiler_lowering::hir_builder::reserved_identifier_diagnostic;
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
-use crate::react_compiler_lowering::identifier_loc_index::build_identifier_loc_index;
+use crate::react_compiler_lowering::pre_pass::run_pre_passes;
 
 fn validate_ts_this_parameter(
     scope: &ScopeResolver<'_, '_>,
@@ -567,11 +566,10 @@ pub fn lower<'a>(
 
     validate_ts_this_parameters_within(scope, scope_id)?;
 
-    // Build identifier location index from the AST (replaces serialized referenceLocs/jsxReferencePositions)
-    let identifier_spans = build_identifier_loc_index(func);
-
-    // Pre-compute context identifiers: variables captured across function boundaries
-    let context_identifiers = find_context_identifiers(func, scope, &identifier_spans)?;
+    // Build the identifier location index from the AST (replaces serialized
+    // referenceLocs/jsxReferencePositions) and pre-compute context identifiers
+    // (variables captured across function boundaries) in one shared walk.
+    let (identifier_spans, context_identifiers) = run_pre_passes(func, scope)?;
 
     // For top-level functions, context is empty (no captured refs)
     let context_map: FxIndexMap<SymbolId, Option<Span>> = FxIndexMap::default();
