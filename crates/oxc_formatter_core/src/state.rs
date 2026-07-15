@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, GetAllocator};
 use rustc_hash::FxHashMap;
 
-use crate::{GroupId, UniqueGroupIdBuilder, format_element::Interned};
+use crate::{FormatElement, GroupId, UniqueGroupIdBuilder, format_element::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -15,6 +15,15 @@ pub struct FormatState<'ast, C> {
     // For the document IR printing process
     /// The interned elements that have been printed to this point
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
+    /// Reusable heap staging buffers for [`crate::HeapVecBuffer`], LIFO.
+    ///
+    /// Element sequences of unknown length (interned content, best-fitting variants) are
+    /// staged on the heap and copied into the arena exactly-sized once complete. Staging
+    /// directly in the arena would leave every grown-out-of allocation behind for the rest
+    /// of the format run — the arena is a bump allocator and never reclaims. The pool holds
+    /// one buffer per nesting level, each retaining its high-water capacity, so staging
+    /// costs no allocation at all in the steady state.
+    scratch_buffers: Vec<Vec<FormatElement<'ast>>>,
 }
 
 impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
@@ -31,6 +40,25 @@ impl<'ast, C> FormatState<'ast, C> {
             allocator,
             group_id_builder: UniqueGroupIdBuilder::default(),
             printed_interned_elements: FxHashMap::default(),
+            scratch_buffers: Vec::new(),
+        }
+    }
+
+    /// Takes a heap staging buffer from the pool (empty, capacity retained), or creates one.
+    ///
+    /// Used by [`crate::HeapVecBuffer`]; see [`FormatState::scratch_buffers`] for why staging
+    /// happens on the heap. Return it with [`FormatState::return_scratch_buffer`] once done.
+    pub(crate) fn take_scratch_buffer(&mut self) -> Vec<FormatElement<'ast>> {
+        self.scratch_buffers.pop().unwrap_or_default()
+    }
+
+    /// Returns a staging buffer to the pool so its capacity is reused.
+    pub(crate) fn return_scratch_buffer(&mut self, mut buffer: Vec<FormatElement<'ast>>) {
+        // A capacity-less buffer has nothing worth pooling
+        // (e.g. the leftover of `HeapVecBuffer::take_heap_vec`).
+        if buffer.capacity() > 0 {
+            buffer.clear();
+            self.scratch_buffers.push(buffer);
         }
     }
 

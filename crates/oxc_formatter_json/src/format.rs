@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, Format, FormatContext, FormatState, Formatted, VecBuffer,
+    Buffer, Document, Format, FormatContext, FormatState, Formatted, HeapVecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -35,14 +35,16 @@ pub fn format<'a>(
         parsed.source_offset,
     );
     let mut state = FormatState::new(context, allocator);
-    // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
-    let mut buffer = VecBuffer::new(&mut state);
+    // Stage the document on the heap; the arena gets one exactly-sized copy at the end
+    // (see `HeapVecBuffer`).
+    let mut buffer = HeapVecBuffer::new(&mut state);
 
     // BOM detection runs on the original `source_text`; `wrapped_source` may prepend `(`.
     let has_bom = source_text.starts_with(ZWNBSP);
     write!(&mut buffer, FormatJsonRoot { expression: parsed.expression, has_bom });
 
-    let elements = buffer.into_vec();
+    let elements = buffer.take_into_arena_vec();
+    drop(buffer);
     let context = state.into_context();
 
     if let Some(err) = context.take_error() {

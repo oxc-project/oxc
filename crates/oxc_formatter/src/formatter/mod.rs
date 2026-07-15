@@ -47,7 +47,7 @@ pub mod buffer {
 
 pub use oxc_formatter_core::{
     Argument, Arguments, Buffer, BufferExtensions, Format, FormatElement, FormatOptions,
-    FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized, SourceText,
+    FormatState, Formatted, Formatter, GroupId, HeapVecBuffer, MemoizeFormat, Memoized, SourceText,
     UniqueGroupIdBuilder, VecBuffer,
 };
 
@@ -74,11 +74,15 @@ pub fn format<'ast>(
     let capacity = (context.source_text().len() * 2) / 5;
 
     let mut state = FormatState::new(context, allocator);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    // Stage the document on the heap; the arena gets one exactly-sized copy at the end.
+    // Staging in the arena would strand the pre-allocation (files dominated by interned
+    // content barely touch the root buffer) plus every grown-out-of allocation.
+    let mut buffer = HeapVecBuffer::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);
 
-    let elements = buffer.into_vec();
+    let elements = buffer.take_into_arena_vec();
+    drop(buffer);
     let mut context = state.into_context();
 
     let tailwind_classes = context.take_tailwind_classes();

@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, JsFormatter, VecBuffer,
+        Buffer, BufferExtensions, Format, HeapVecBuffer, JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
@@ -836,9 +836,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             // which is computed only when we format it
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
-            let mut buffer = VecBuffer::new(f.state_mut());
+            let mut buffer = HeapVecBuffer::new(f.state_mut());
             let is_left_short = self.write_left(&mut Formatter::new(&mut buffer));
-            let formatted_left = buffer.into_vec();
+            let formatted_left = buffer.take_heap_vec();
+            drop(buffer);
             let left_may_break = formatted_left.may_directly_break();
 
             let left = format_once(|f| f.write_elements(formatted_left));
