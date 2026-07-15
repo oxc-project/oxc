@@ -9,7 +9,7 @@ use oxc_ast::{
         JSXOpeningElement, Statement, StaticMemberExpression,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 use oxc_syntax::operator::UnaryOperator;
@@ -913,7 +913,7 @@ impl JsxFinder {
     }
 }
 
-impl<'a> Visit<'a> for JsxFinder {
+impl<'a> VisitJs<'a> for JsxFinder {
     fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
         self.found = true;
         // Don't walk children - we found what we need
@@ -928,7 +928,7 @@ impl<'a> Visit<'a> for JsxFinder {
             self.found = true;
         }
         if !self.found {
-            walk::walk_call_expression(self, call);
+            walk_js::walk_call_expression(self, call);
         }
     }
 

@@ -11,7 +11,7 @@ use oxc_ast::{
         ReturnStatement, Statement,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -258,7 +258,7 @@ struct ReturnWrapFinder<'a, 'b> {
     allow_reject: bool,
 }
 
-impl<'a> Visit<'a> for ReturnWrapFinder<'a, '_> {
+impl<'a> VisitJs<'a> for ReturnWrapFinder<'a, '_> {
     fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
         if let Some(Expression::CallExpression(call_expr)) = &it.argument {
             check_for_resolve_reject(self.ctx, self.allow_reject, call_expr);

@@ -8,7 +8,7 @@ use oxc_ast::{
         Statement,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -268,7 +268,7 @@ struct ConstructorAssignmentCollector<'set, 'a> {
     excluded_properties: &'set mut FxHashSet<Str<'a>>,
 }
 
-impl<'a> Visit<'a> for ConstructorAssignmentCollector<'_, 'a> {
+impl<'a> VisitJs<'a> for ConstructorAssignmentCollector<'_, 'a> {
     fn visit_assignment_expression(&mut self, assignment: &AssignmentExpression<'a>) {
         if let Some(name) = assigned_this_property_name(&assignment.left) {
             self.excluded_properties.insert(name);
