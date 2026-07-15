@@ -8,20 +8,20 @@ export interface CommentOptions {
    *
    * @default true
    */
-  normal?: boolean
+  normal?: boolean;
   /**
    * Print jsdoc comments (`/** jsdoc *\/`).
    *
    * @default true
    */
-  jsdoc?: boolean
+  jsdoc?: boolean;
   /**
    * Print annotation comments, e.g. `/* #__PURE__ *\/`, `/* webpackChunkName *\/`,
    * `/* @vite-ignore *\/` and coverage ignore comments.
    *
    * @default true
    */
-  annotation?: boolean
+  annotation?: boolean;
   /**
    * How to handle legal comments (comments containing `@license`, `@preserve`,
    * or starting with `//!` / `/*!`).
@@ -32,18 +32,18 @@ export interface CommentOptions {
    *
    * @default "inline"
    */
-  legal?: 'none' | 'inline' | 'eof'
+  legal?: "none" | "inline" | "eof";
 }
 
 export declare const enum IndentCharKind {
-  Space = 'space',
-  Tab = 'tab'
+  Space = "space",
+  Tab = "tab",
 }
 
 export declare const enum LegalCommentsMode {
-  None = 'none',
-  Inline = 'inline',
-  Eof = 'eof'
+  None = "none",
+  Inline = "inline",
+  Eof = "eof",
 }
 
 export interface PrintOptions {
@@ -54,32 +54,32 @@ export interface PrintOptions {
    * accurate source maps. When omitted, comments are not printed and span-derived
    * output is best-effort.
    */
-  sourceText?: string
+  sourceText?: string;
   /**
    * Source filename, used as the `source` field of the source map.
    *
    * @default "unknown"
    */
-  filename?: string
+  filename?: string;
   /**
    * Produce a source map, returned as `map` on the result.
    *
    * @default false
    */
-  sourcemap?: boolean
+  sourcemap?: boolean;
   /**
    * Use single quotes instead of double quotes.
    *
    * @default false
    */
-  singleQuote?: boolean
+  singleQuote?: boolean;
   /**
    * Remove whitespace (minified output). Comments are removed unless `comments`
    * is set explicitly.
    *
    * @default false
    */
-  minify?: boolean
+  minify?: boolean;
   /**
    * Print comments. Requires `sourceText`.
    *
@@ -87,65 +87,65 @@ export interface PrintOptions {
    *
    * @default true (when `sourceText` is provided and not minifying)
    */
-  comments?: boolean | CommentOptions
+  comments?: boolean | CommentOptions;
   /**
    * Indentation character.
    *
    * @default "tab"
    */
-  indentChar?: 'space' | 'tab'
+  indentChar?: "space" | "tab";
   /**
    * Number of characters per indentation level.
    *
    * @default 1
    */
-  indentWidth?: number
+  indentWidth?: number;
   /**
    * Initial indentation level for the generated code.
    *
    * @default 0
    */
-  initialIndent?: number
+  initialIndent?: number;
 }
 
 export interface PrintResult {
-  code: string
-  map?: SourceMap
-  errors: Array<OxcError>
+  code: string;
+  map?: SourceMap;
+  errors: Array<OxcError>;
 }
 export interface Comment {
-  type: 'Line' | 'Block'
-  value: string
-  start: number
-  end: number
+  type: "Line" | "Block";
+  value: string;
+  start: number;
+  end: number;
 }
 
 export interface ErrorLabel {
-  message: string | null
-  start: number
-  end: number
+  message: string | null;
+  start: number;
+  end: number;
 }
 
 export interface OxcError {
-  severity: Severity
-  message: string
-  labels: Array<ErrorLabel>
-  helpMessage: string | null
-  codeframe: string | null
+  severity: Severity;
+  message: string;
+  labels: Array<ErrorLabel>;
+  helpMessage: string | null;
+  codeframe: string | null;
 }
 
 export declare const enum Severity {
-  Error = 'Error',
-  Warning = 'Warning',
-  Advice = 'Advice'
+  Error = "Error",
+  Warning = "Warning",
+  Advice = "Advice",
 }
 export interface SourceMap {
-  file?: string
-  mappings: string
-  names: Array<string>
-  sourceRoot?: string
-  sources: Array<string>
-  sourcesContent?: Array<string>
-  version: number
-  x_google_ignoreList?: Array<number>
+  file?: string;
+  mappings: string;
+  names: Array<string>;
+  sourceRoot?: string;
+  sources: Array<string>;
+  sourcesContent?: Array<string>;
+  version: number;
+  x_google_ignoreList?: Array<number>;
 }
