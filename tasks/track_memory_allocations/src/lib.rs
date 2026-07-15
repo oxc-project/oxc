@@ -266,10 +266,11 @@ fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let sys_allocs = NUM_ALLOC.get();
     let sys_reallocs = NUM_REALLOC.get();
     #[cfg(not(feature = "is_all_features"))]
-    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) =
-        (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_count());
+    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, _arena_chunk_alloc_bytes)) =
+        (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_stats());
     #[cfg(feature = "is_all_features")]
-    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) = ((0, 0), 0);
+    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, _arena_chunk_alloc_bytes)) =
+        ((0, 0), (0, 0));
 
     AllocatorStats { sys_allocs, sys_reallocs, arena_chunk_allocs, arena_allocs, arena_reallocs }
 }
