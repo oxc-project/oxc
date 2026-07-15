@@ -752,13 +752,11 @@ impl<'a> PeepholeOptimizations {
                 switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
             {
                 if default_pos == case_count - 1 {
-                    (
-                        case_count - 1,
-                        Self::is_empty_switch_case(
-                            &switch_stmt.cases[default_pos].consequent,
-                            true,
-                        ),
-                    )
+                    let is_default_empty = Self::is_empty_switch_case(
+                        &switch_stmt.cases[default_pos].consequent,
+                        true,
+                    );
+                    if is_default_empty { (case_count, true) } else { (case_count - 1, false) }
                 } else {
                     (case_count, false)
                 }
@@ -779,14 +777,16 @@ impl<'a> PeepholeOptimizations {
 
             // Remove the removable suffix if any
             if start < end {
-                for removed_case in &switch_stmt.cases[start..end] {
-                    ctx.drop_switch_case(removed_case);
-                }
                 let mut last = switch_stmt.cases.pop().unwrap();
-                switch_stmt.cases.truncate(start);
+                for removed_case in switch_stmt.cases.drain(start..) {
+                    ctx.drop_switch_case(&removed_case);
+                }
+
+                if let Some(last_test) = last.test.take() {
+                    ctx.drop_expression(&last_test);
+                }
 
                 if !Self::is_empty_switch_case(&last.consequent, true) {
-                    last.test = None;
                     switch_stmt.cases.push(last);
                 }
                 ctx.notice_change();
