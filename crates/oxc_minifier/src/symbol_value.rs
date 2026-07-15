@@ -33,6 +33,15 @@ pub struct SymbolValue<'a> {
     /// `None` when the value is not a constant evaluated value.
     pub initialized_constant: Option<ConstantValue<'a>>,
 
+    /// The `initialized_constant` is the implicit `undefined` of a declaration
+    /// with no initializer (`let x;`), not an evaluated initializer. Textually
+    /// inlining such a read prints `void 0` — longer than a mangled identifier
+    /// read — and there is no initializer whose elimination pays for it, so
+    /// `inline_identifier_reference` skips it (rolldown#10174). Constant-driven
+    /// folds (`if (x)`, `x === void 0`, `return x`) are unaffected: they
+    /// resolve the value through `initialized_constant`.
+    pub implicit_undefined: bool,
+
     /// Symbol is exported.
     pub exported: bool,
 

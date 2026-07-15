@@ -86,7 +86,7 @@ export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
-export type Mode = "prefer-top-level" | "prefer-inline";
+export type Mode = "prefer-top-level" | "prefer-inline" | "prefer-top-level-if-only-type-imports";
 /**
  * Extension rule configuration; Copy to avoid extra indirection.
  */
@@ -215,6 +215,10 @@ export type ForbidItem2 =
        */
       message?: string;
     };
+export type NamedComponents = NamedComponentStyle | NamedComponentStyle[];
+export type NamedComponentStyle = "function-declaration" | "arrow-function" | "function-expression";
+export type UnnamedComponents = UnnamedComponentStyle | UnnamedComponentStyle[];
+export type UnnamedComponentStyle = "arrow-function" | "function-expression";
 export type EnforceBooleanAttribute = "always" | "never";
 export type JsxCurlyBracePresenceConfig = JsxCurlyBracePresenceMode | JsxCurlyBracePresence;
 export type JsxCurlyBracePresenceMode = "always" | "never" | "ignore";
@@ -1305,6 +1309,7 @@ export interface DummyRuleMap {
   "react/forbid-dom-props"?: RuleNoConfig | [AllowWarnDeny, ForbidDomPropsConfig];
   "react/forbid-elements"?: RuleNoConfig | [AllowWarnDeny, ForbidElementsConfig];
   "react/forward-ref-uses-ref"?: RuleNoConfig;
+  "react/function-component-definition"?: RuleNoConfig | [AllowWarnDeny, FunctionComponentDefinitionConfig];
   "react/hook-use-state"?: RuleNoConfig | [AllowWarnDeny, HookUseStateConfig];
   "react/iframe-missing-sandbox"?: RuleNoConfig;
   "react/jsx-boolean-value"?:
@@ -1659,6 +1664,7 @@ export interface DummyRuleMap {
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "vitest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-test-blocks"?: RuleNoConfig;
   "vitest/prefer-called-exactly-once-with"?: RuleNoConfig;
   "vitest/prefer-called-once"?: RuleNoConfig;
   "vitest/prefer-called-times"?: RuleNoConfig;
@@ -4507,6 +4513,10 @@ export interface ForbidElementsConfig {
    * - `["error, { "forbid": [{ "element": "input" }] }]`
    */
   forbid?: ForbidItem2[];
+}
+export interface FunctionComponentDefinitionConfig {
+  namedComponents?: NamedComponents;
+  unnamedComponents?: UnnamedComponents;
 }
 export interface HookUseStateConfig {
   /**

@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.74.0] - 2026-07-13
+
+### 🚀 Features
+
+- 0433a83 linter/eslint/no-inner-declarations: Add `namespaces` option (#24044) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 8337835 linter: Error on `ignorePatterns` that cannot match files aoutside the config directory (#24341) (leaysgur)
+- 2ce5a33 linter: Resolve `ignorePatterns` relative to the config dir (#24339) (leaysgur)
+
+### ⚡ Performance
+
+- 7f80cac linter/vue/prop-name-casing: Precompile `ignoreProps` regex pattern (#24413) (connorshea)
+- 6272051 linter/typescript/no-require-imports: Compile allow patterns once (#24417) (connorshea)
+- 33805b9 linter/jsdoc/require-param: Compile checkTypesPattern regex once (#24420) (connorshea)
+
 ## [1.73.0] - 2026-07-06
 
 ### 🚀 Features

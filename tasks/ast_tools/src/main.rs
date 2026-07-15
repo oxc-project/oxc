@@ -266,6 +266,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::GetIdGenerator,
     &generators::InheritVariantsGenerator,
     &generators::VisitGenerator,
+    &generators::VisitJsGenerator,
     &generators::ScopesCollectorGenerator,
     &generators::Utf8ToUtf16ConverterGenerator,
     #[cfg(feature = "generate-js")]

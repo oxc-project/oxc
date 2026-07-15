@@ -11,6 +11,7 @@ use crate::scope::ImportBindingKind;
 use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
+use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
@@ -890,18 +891,18 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 /// only reachable as fallthroughs (not through real successor edges) are
 /// replaced with empty blocks that have an Unreachable terminal.
 pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlock> {
-    let mut visited: FxIndexSet<BlockId> = FxIndexSet::default();
-    let mut used: FxIndexSet<BlockId> = FxIndexSet::default();
-    let mut used_fallthroughs: FxIndexSet<BlockId> = FxIndexSet::default();
+    let mut visited: FxHashSet<BlockId> = FxHashSet::default();
+    let mut used: FxHashSet<BlockId> = FxHashSet::default();
+    let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
     let mut postorder: Vec<BlockId> = Vec::new();
 
     fn visit(
         hir: &HIR,
         block_id: BlockId,
         is_used: bool,
-        visited: &mut FxIndexSet<BlockId>,
-        used: &mut FxIndexSet<BlockId>,
-        used_fallthroughs: &mut FxIndexSet<BlockId>,
+        visited: &mut FxHashSet<BlockId>,
+        used: &mut FxHashSet<BlockId>,
+        used_fallthroughs: &mut FxHashSet<BlockId>,
         postorder: &mut Vec<BlockId>,
     ) {
         let was_used = used.contains(&block_id);
@@ -975,7 +976,7 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
 /// For each block with a `For` terminal whose update block is not in the
 /// blocks map, set update to None.
 pub fn remove_unreachable_for_updates(hir: &mut HIR) {
-    let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
+    let block_ids: FxHashSet<BlockId> = hir.blocks.keys().copied().collect();
     for block in hir.blocks.values_mut() {
         if let Terminal::For { update, .. } = &mut block.terminal
             && let Some(update_id) = *update
@@ -989,7 +990,7 @@ pub fn remove_unreachable_for_updates(hir: &mut HIR) {
 /// For each block with a `DoWhile` terminal whose test block is not in
 /// the blocks map, replace the terminal with a Goto to the loop block.
 pub fn remove_dead_do_while_statements(hir: &mut HIR) {
-    let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
+    let block_ids: FxHashSet<BlockId> = hir.blocks.keys().copied().collect();
     for block in hir.blocks.values_mut() {
         let should_replace = if let Terminal::DoWhile { test, .. } = &block.terminal {
             !block_ids.contains(test)
@@ -1014,7 +1015,7 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
 /// Also cleans up the fallthrough block's predecessors if the handler
 /// was the only path to it.
 pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
-    let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
+    let block_ids: FxHashSet<BlockId> = hir.blocks.keys().copied().collect();
 
     // Collect the blocks that need replacement and their associated data
     let replacements: Vec<(BlockId, BlockId, BlockId, BlockId, Option<Span>)> = hir
@@ -1080,13 +1081,13 @@ pub fn mark_predecessors(hir: &mut HIR) {
         block.preds.clear();
     }
 
-    let mut visited: FxIndexSet<BlockId> = FxIndexSet::default();
+    let mut visited: FxHashSet<BlockId> = FxHashSet::default();
 
     fn visit(
         hir: &mut HIR,
         block_id: BlockId,
         prev_block_id: Option<BlockId>,
-        visited: &mut FxIndexSet<BlockId>,
+        visited: &mut FxHashSet<BlockId>,
     ) {
         // Add predecessor
         if let Some(prev_id) = prev_block_id {

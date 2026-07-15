@@ -410,6 +410,7 @@ react/display-name                                         |      7
 react/exhaustive-deps                                      |  62606
 react/forbid-component-props                               |    452
 react/forward-ref-uses-ref                                 |  62606
+react/function-component-definition                        |  16812
 react/hook-use-state                                       |  62606
 react/iframe-missing-sandbox                               |  63058
 react/jsx-boolean-value                                    |    452
@@ -687,6 +688,7 @@ vitest/no-test-prefixes                                    |      0
 vitest/no-test-return-statement                            |  76889
 vitest/no-unneeded-async-expect-function                   |      0
 vitest/padding-around-after-all-blocks                     |      0
+vitest/padding-around-test-blocks                          |      0
 vitest/prefer-called-exactly-once-with                     |  14953
 vitest/prefer-called-once                                  |      0
 vitest/prefer-called-times                                 |      0

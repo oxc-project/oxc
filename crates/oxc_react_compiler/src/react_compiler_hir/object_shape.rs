@@ -402,28 +402,25 @@ pub fn default_nonmutating_hook<'a>(registry: &mut ShapeRegistry<'a>) -> Type<'a
             return_value_kind: ValueKind::Frozen,
             hook_kind: HookKind::Custom,
             aliasing: Some(AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: Vec::new(),
-                rest: Some("@rest".to_string()),
-                returns: "@returns".to_string(),
-                temporaries: Vec::new(),
-                effects: vec![
+                receiver: "@receiver",
+                params: &[],
+                rest: Some("@rest"),
+                returns: "@returns",
+                temporaries: &[],
+                effects: &[
                     // Freeze the arguments
                     AliasingEffectConfig::Freeze {
-                        value: "@rest".to_string(),
+                        value: "@rest",
                         reason: ValueReason::HookCaptured,
                     },
                     // Returns a frozen value
                     AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
+                        into: "@returns",
                         value: ValueKind::Frozen,
                         reason: ValueReason::HookReturn,
                     },
                     // May alias any arguments into the return
-                    AliasingEffectConfig::Alias {
-                        from: "@rest".to_string(),
-                        into: "@returns".to_string(),
-                    },
+                    AliasingEffectConfig::Alias { from: "@rest", into: "@returns" },
                 ],
             }),
             ..Default::default()

@@ -1827,6 +1827,46 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Move sequence expressions out of operand positions so the trailing
+    /// expression can be folded into the parent operator.
+    ///
+    /// - `(a, b) + c` -> `a, b + c`
+    /// - `(a, b) || c` -> `a, b || c`
+    /// - `-(a, b)` -> `a, -b`
+    /// - `await (a, b)` -> `a, await b`
+    /// - `yield (a, b)` -> `a, yield b`
+    pub fn fold_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let argument = match expr {
+            Expression::BinaryExpression(binary_expr) => &mut binary_expr.left,
+            Expression::LogicalExpression(logical_expr) => &mut logical_expr.left,
+            Expression::UnaryExpression(unary_expr)
+                if !unary_expr.operator.is_keyword() && !unary_expr.operator.is_not() =>
+            {
+                &mut unary_expr.argument
+            }
+            Expression::AwaitExpression(await_expr) => &mut await_expr.argument,
+            Expression::YieldExpression(yield_expr) => {
+                let Some(maybe_sequence_expression) = &mut yield_expr.argument else { return };
+                maybe_sequence_expression
+            }
+            _ => {
+                return;
+            }
+        };
+
+        let Expression::SequenceExpression(seq_expr) = argument else { return };
+
+        if seq_expr.expressions.len() <= 1 {
+            return;
+        }
+
+        let mut seq_expr = seq_expr.take_in_box(ctx);
+        *argument = seq_expr.expressions.pop().unwrap();
+        seq_expr.expressions.push(expr.take_in(ctx));
+        let new_value = Expression::SequenceExpression(seq_expr);
+        ctx.replace_expression(expr, new_value);
+    }
+
     fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: &str) -> bool {
         body.body.iter().any(|stmt| {
             let Statement::VariableDeclaration(decl) = stmt else { return false };

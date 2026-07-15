@@ -432,6 +432,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         }
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.is_disabled() {
             return;
@@ -444,12 +445,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            expr.replace_with(|expr| {
-                let Expression::ArrowFunctionExpression(arrow_function_expr) = expr else {
-                    unreachable!()
-                };
-                Self::transform_arrow_function_expression(arrow_function_expr, ctx)
-            });
+            Self::transform_arrow_function_expression_on_exit(expr, ctx);
         }
     }
 
@@ -485,6 +481,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
 }
 
 impl<'a> ArrowFunctionConverter<'a> {
+    #[inline(never)]
+    fn transform_arrow_function_expression_on_exit(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        expr.replace_with(|expr| {
+            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr else {
+                unreachable!()
+            };
+            Self::transform_arrow_function_expression(arrow_function_expr, ctx)
+        });
+    }
+
     /// Check if arrow function conversion is disabled
     fn is_disabled(&self) -> bool {
         self.mode == ArrowFunctionConverterMode::Disabled
