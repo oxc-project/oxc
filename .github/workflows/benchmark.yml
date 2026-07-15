@@ -73,6 +73,8 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
+      # Memory mode reuses these binaries: cargo-codspeed maps both simulation and
+      # memory modes to the same `analysis` build (`--cfg codspeed`) and directory.
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
@@ -93,5 +95,5 @@ jobs:
         uses: CodSpeedHQ/action@f99becdce5e5d51fd556489ebef684f4ecfd6286 # v4.18.5
         timeout-minutes: 30
         with:
-          mode: simulation
+          mode: ${{ matrix.mode }}
           run: cargo codspeed run ${{ matrix.component }}
