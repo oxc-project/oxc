@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -83,14 +83,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let mut declarations = ArenaVec::new_in(self);
+        let allocator = self.allocator();
+        let mark = self.scratch.mark();
         loop {
             let declaration = self.parse_variable_declarator(decl_parent, kind);
-            declarations.push(declaration);
+            self.scratch.push(declaration);
             if !self.eat(Kind::Comma) {
                 break;
             }
         }
+        let declarations = self.scratch.drain_into::<VariableDeclarator>(mark, allocator);
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
@@ -204,7 +206,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = ArenaVec::new_in(self);
+        let allocator = self.allocator();
+        let mark = self.scratch.mark();
         loop {
             let decl_parent = if matches!(statement_ctx, StatementContext::For) {
                 VariableDeclarationParent::For
@@ -219,11 +222,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ));
             }
 
-            declarations.push(declaration);
+            self.scratch.push(declaration);
             if !self.eat(Kind::Comma) {
                 break;
             }
         }
+        let declarations = self.scratch.drain_into::<VariableDeclarator>(mark, allocator);
 
         VariableDeclaration::boxed(self.end_span(span), kind, declarations, false, self)
     }

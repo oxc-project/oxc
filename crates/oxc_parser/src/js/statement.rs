@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
@@ -35,7 +35,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
         let mut directives = ArenaVec::new_in(self);
-        let mut statements = ArenaVec::new_in(self);
+        // Accumulate statements in the reusable scratch stack (see [`ScratchStack`]) rather than
+        // growing an arena `Vec`, then move them into the arena in one exact-size allocation.
+        let allocator = self.allocator();
+        let statements_mark = self.scratch.mark();
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
@@ -62,7 +65,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     None
                 } else {
                     self.state.encountered_await_identifier = false;
-                    Some((statements.len(), self.checkpoint()))
+                    // Index is relative to `statements_mark` (the start of this list's run in
+                    // the scratch stack). At true top level the mark is 0, so this equals the
+                    // index into the finalized statements `Vec` that the reparse patches.
+                    Some((
+                        self.scratch.count_since::<Statement>(statements_mark),
+                        self.checkpoint(),
+                    ))
                 }
             } else {
                 None
@@ -112,9 +121,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::statement_in_ambient_context(stmt.span()));
                 reported_ambient_statement = true;
             }
-            statements.push(stmt);
+            self.scratch.push(stmt);
         }
 
+        let statements = self.scratch.drain_into::<Statement>(statements_mark, allocator);
         (directives, statements)
     }
 
@@ -731,7 +741,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = ArenaVec::new_in(self);
+        let allocator = self.allocator();
+        let consequent_mark = self.scratch.mark();
         loop {
             let kind = self.cur_kind();
             if matches!(
@@ -751,8 +762,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     stmt.span(),
                 ));
             }
-            consequent.push(stmt);
+            self.scratch.push(stmt);
         }
+        let consequent = self.scratch.drain_into::<Statement>(consequent_mark, allocator);
         SwitchCase::new(self.end_span(span), test, consequent, self)
     }
 

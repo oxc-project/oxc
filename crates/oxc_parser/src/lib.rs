@@ -72,6 +72,7 @@ mod cursor;
 mod error_handler;
 mod modifiers;
 mod module_record;
+mod scratch;
 mod state;
 
 mod js;
@@ -105,6 +106,7 @@ use crate::{
     error_handler::FatalError,
     lexer::Lexer,
     module_record::ModuleRecordBuilder,
+    scratch::ScratchStack,
     state::ParserState,
 };
 
@@ -642,6 +644,10 @@ struct ParserImpl<'a, C: ParserConfig> {
 
     /// Precomputed typescript detection
     is_ts: bool,
+
+    /// Reusable scratch buffer for building AST node lists without repeated
+    /// arena reallocations. See [`ScratchStack`].
+    scratch: ScratchStack,
 }
 
 impl<'a, C: ParserConfig> ParserImpl<'a, C> {
@@ -674,6 +680,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             ast: AstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
+            scratch: ScratchStack::new(),
         }
     }
 
