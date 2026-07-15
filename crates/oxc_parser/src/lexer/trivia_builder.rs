@@ -57,6 +57,16 @@ impl<'a> TriviaBuilder<'a> {
         self.has_no_side_effects_comment
     }
 
+    /// Mark the leading comments attached to `statement_start` as statement trivia.
+    pub fn mark_statement_leading_comments(&mut self, statement_start: u32) {
+        for comment in self.comments.iter_mut().rev() {
+            if comment.attached_to != statement_start || !comment.is_leading() {
+                break;
+            }
+            comment.set_statement_leading();
+        }
+    }
+
     pub fn mark_pure_comment_not_applied(&mut self, index: usize) {
         if let Some(comment) = self.comments.get_mut(index) {
             debug_assert!(comment.is_pure());
@@ -430,7 +440,7 @@ mod test {
             Comment {
                 span: Span::new(9, 24),
                 kind: CommentKind::SingleLineBlock,
-                position: CommentPosition::Leading,
+                position: CommentPosition::StatementLeading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
@@ -438,7 +448,7 @@ mod test {
             Comment {
                 span: Span::new(33, 45),
                 kind: CommentKind::Line,
-                position: CommentPosition::Leading,
+                position: CommentPosition::StatementLeading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
@@ -446,7 +456,7 @@ mod test {
             Comment {
                 span: Span::new(54, 69),
                 kind: CommentKind::SingleLineBlock,
-                position: CommentPosition::Leading,
+                position: CommentPosition::StatementLeading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading,
                 content: CommentContent::None,
@@ -494,7 +504,7 @@ token /* Trailing 1 */
             Comment {
                 span: Span::new(20, 35),
                 kind: CommentKind::SingleLineBlock,
-                position: CommentPosition::Leading,
+                position: CommentPosition::StatementLeading,
                 attached_to: 36,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
@@ -509,6 +519,18 @@ token /* Trailing 1 */
             },
         ];
         assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn statement_leading_is_distinct_from_expression_leading() {
+        let source_text = "/* statement */ foo(); const x = /* expression */ bar();";
+        let comments = get_comments(source_text);
+
+        assert_eq!(comments.len(), 2);
+        assert!(comments[0].is_statement_leading());
+        assert!(comments[0].is_leading());
+        assert_eq!(comments[1].position, CommentPosition::Leading);
+        assert!(!comments[1].is_statement_leading());
     }
 
     #[test]
@@ -527,7 +549,7 @@ token /* Trailing 1 */
             Comment {
                 span: Span::new(1, 13),
                 kind: CommentKind::MultiLineBlock,
-                position: CommentPosition::Leading,
+                position: CommentPosition::StatementLeading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
@@ -535,7 +557,7 @@ token /* Trailing 1 */
             Comment {
                 span: Span::new(14, 26),
                 kind: CommentKind::MultiLineBlock,
-                position: CommentPosition::Leading,
+                position: CommentPosition::StatementLeading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
@@ -554,7 +576,7 @@ function bar() {}";
         let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
 
         assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].position, CommentPosition::StatementLeading);
         assert_eq!(comments[0].attached_to, function_start);
         assert!(comments[0].is_legal());
         assert!(comments[0].followed_by_newline());
@@ -567,7 +589,7 @@ function bar() {}";
         let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
 
         assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].position, CommentPosition::StatementLeading);
         assert_eq!(comments[0].attached_to, function_start);
         assert!(comments[0].is_legal());
         assert!(comments[0].followed_by_newline());
@@ -586,7 +608,7 @@ function bar() {}";
         let bar_start = u32::try_from(source_text.rfind("function").unwrap()).unwrap();
 
         assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].position, CommentPosition::StatementLeading);
         assert_eq!(comments[0].attached_to, bar_start);
         assert!(comments[0].is_no_side_effects());
     }
@@ -598,7 +620,7 @@ function bar() {}";
         let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
 
         assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].position, CommentPosition::StatementLeading);
         assert_eq!(comments[0].attached_to, function_start);
         assert!(comments[0].is_no_side_effects());
         assert!(comments[0].followed_by_newline());
@@ -611,7 +633,7 @@ function bar() {}";
         let new_start = u32::try_from(source_text.find("new").unwrap()).unwrap();
 
         assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].position, CommentPosition::StatementLeading);
         assert_eq!(comments[0].attached_to, new_start);
         assert!(comments[0].is_pure());
     }

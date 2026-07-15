@@ -132,6 +132,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        self.lexer.trivia_builder.mark_statement_leading_comments(self.cur_token().start());
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();

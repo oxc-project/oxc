@@ -22,12 +22,12 @@ pub enum CommentKind {
     MultiLineBlock = 2,
 }
 
-/// Information about a comment's position relative to a token.
+/// Information about a comment's position relative to its syntactic target.
 #[ast]
 #[generate_derive(CloneIn, ContentEq)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum CommentPosition {
-    /// Comments prior to a token until another token or trailing comment.
+    /// Comments attached to the start of the following token.
     ///
     /// e.g.
     ///
@@ -43,6 +43,10 @@ pub enum CommentPosition {
     /// Comments tailing a token until a newline.
     /// e.g. `token /* trailing */ // trailing`
     Trailing = 1,
+
+    /// Leading comments attached to a token that starts a statement.
+    /// Distinguishes statement trivia when transforms move its expression elsewhere.
+    StatementLeading = 2,
 }
 
 /// Annotation comment that has special meaning.
@@ -151,7 +155,7 @@ pub struct Comment {
     #[estree(rename = "type")]
     pub kind: CommentKind,
 
-    /// Leading or trailing comment
+    /// Attachment position.
     #[estree(skip)]
     pub position: CommentPosition,
 
@@ -211,13 +215,26 @@ impl Comment {
     /// Returns `true` if this comment is before a token.
     #[inline]
     pub fn is_leading(self) -> bool {
-        self.position == CommentPosition::Leading
+        matches!(self.position, CommentPosition::Leading | CommentPosition::StatementLeading)
     }
 
     /// Returns `true` if this comment is after a token.
     #[inline]
     pub fn is_trailing(self) -> bool {
         self.position == CommentPosition::Trailing
+    }
+
+    /// Returns `true` if this comment leads a statement.
+    #[inline]
+    pub fn is_statement_leading(self) -> bool {
+        self.position == CommentPosition::StatementLeading
+    }
+
+    /// Marks this leading comment as leading a statement.
+    #[inline]
+    pub fn set_statement_leading(&mut self) {
+        debug_assert!(self.is_leading());
+        self.position = CommentPosition::StatementLeading;
     }
 
     /// Is comment without a special meaning.

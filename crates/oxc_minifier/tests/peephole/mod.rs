@@ -1,6 +1,7 @@
 mod collapse_variable_declarations;
 mod convert_to_dotted_properties;
 mod dead_code_elimination;
+mod dissolved_statement_comments;
 mod esbuild;
 mod fold_constants;
 mod inline;

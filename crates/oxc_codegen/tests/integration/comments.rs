@@ -54,7 +54,7 @@ fn test_comments_before_expression_operands() {
     );
     test(
         "condition ?\n  /* v8 ignore next */ uncovered() :\n  coveredAlternate();",
-        "condition ? \n/* v8 ignore next */ uncovered() : coveredAlternate();\n",
+        "condition ?\n/* v8 ignore next */ uncovered() : coveredAlternate();\n",
     );
     test(
         "const value = { aFunction: /* istanbul ignore next */ () => {} };",
@@ -146,16 +146,37 @@ fn test_minify_comment_glue_idempotency() {
     );
 }
 
-// Normal-comment groups must NOT be printed before a logical RHS: the minifier
-// merges statements into logical right-hand sides (`if(a)x;if(b)x;` ->
-// `if(a||(b,..))x`), which can anchor a removed statement's banner comments at
-// the RHS span start; printing them mid-expression breaks minify idempotency
-// (minifier_test262 `language/asi/S7.9_A5.8_T1.js`). Only annotation-bearing
-// groups (coverage directives etc.) are printed.
+// Normal comments from a pristine parse are expression trivia, so logical RHS
+// and conditional-consequent printers preserve them. Statement trivia is
+// covered separately by the minifier's dissolved-statement tests.
 #[test]
-fn test_normal_comment_before_logical_rhs_not_printed() {
-    test("const value = a ?? /* plain comment */ [];", "const value = a ?? [];\n");
-    test("const value = a || //\n////////\n(b, c);", "const value = a || (b, c);\n");
+fn test_normal_comment_before_operand_positions() {
+    for (source, expected) in [
+        (
+            "const value = a ?? /* plain comment */ [];",
+            "const value = a ?? /* plain comment */ [];\n",
+        ),
+        (
+            "const value = a ? /* plain comment */ b : c;",
+            "const value = a ? /* plain comment */ b : c;\n",
+        ),
+        (
+            "const value = a ? b : /* plain comment */ c;",
+            "const value = a ? b : /* plain comment */ c;\n",
+        ),
+        // The first line comment is trailing; the own-line banner leads the operand.
+        ("const value = a || //\n////////\n(b, c);", "const value = a ||\n////////\n(b, c);\n"),
+    ] {
+        test(source, expected);
+        test_idempotency(source);
+    }
+
+    test_idempotency(
+        "const value = a ? // operator comment\n// operand comment\n/*#__PURE__*/ (() => b)() : c;",
+    );
+
+    // Legal comments defer to statement-boundary orphan handling.
+    test("const value = a ?? /*! legal */ [];", "const value = a ?? [];\n/*! legal */\n");
 }
 
 #[test]
