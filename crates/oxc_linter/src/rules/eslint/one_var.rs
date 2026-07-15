@@ -1,12 +1,11 @@
 use oxc_ast::{
-    AstKind,
-    ast::{Declaration, Expression, VariableDeclaration, VariableDeclarationKind},
+    AstKind, AstType,
+    ast::{Expression, Statement, VariableDeclaration, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{node::NodeId, scope::ScopeId};
-use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -98,12 +97,14 @@ impl Rule for OneVar {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut scopes: FxHashMap<(ScopeId, u8), ScopeState> = FxHashMap::default();
-        let mut previous_statements = PreviousStatementTracker::default();
+        if !ctx.nodes().contains(AstType::VariableDeclaration) {
+            return;
+        }
+
+        let mut scopes = vec![[ScopeState::default(); 5]; ctx.scoping().scopes_len()];
         let separate_requires = self.separate_requires();
 
         for node in ctx.nodes().iter() {
-            let previous_statement_id = previous_statements.visit(node, ctx);
             let AstKind::VariableDeclaration(declaration) = node.kind() else {
                 continue;
             };
@@ -124,15 +125,9 @@ impl Rule for OneVar {
                 ));
             }
 
-            let previous_declaration = previous_statement_id
-                .map(|id| ctx.nodes().get_node(id))
-                .and_then(|node| match node.kind() {
-                    AstKind::VariableDeclaration(declaration) => Some(declaration),
-                    _ => None,
-                });
             if (modes.initialized == Some(OneVarMode::Consecutive)
                 || modes.uninitialized == Some(OneVarMode::Consecutive))
-                && let Some(previous) = previous_declaration
+                && let Some(previous) = previous_declaration(node, ctx)
                 && previous.kind == declaration.kind
             {
                 let previous_facts = DeclarationFacts::new(previous);
@@ -183,7 +178,7 @@ impl Rule for OneVar {
             }
 
             let scope_id = declaration_scope(node, ctx);
-            let state = scopes.entry((scope_id, declaration.kind as u8)).or_default();
+            let state = &mut scopes[scope_id.index()][declaration.kind as usize];
             let has_requires = facts.requires > 0;
             let should_join_initialized = modes.initialized == Some(OneVarMode::Always)
                 && facts.initialized > 0
@@ -201,8 +196,8 @@ impl Rule for OneVar {
             if should_join_all || should_join_require {
                 report_join_with_optional_previous(
                     ctx,
+                    node,
                     declaration,
-                    previous_declaration,
                     format!(
                         "Combine this with the previous '{}' statement.",
                         declaration.kind.as_str()
@@ -212,8 +207,8 @@ impl Rule for OneVar {
                 if should_join_initialized {
                     report_join_with_optional_previous(
                         ctx,
+                        node,
                         declaration,
-                        previous_declaration,
                         format!(
                             "Combine this with the previous '{}' statement with initialized variables.",
                             declaration.kind.as_str()
@@ -223,8 +218,8 @@ impl Rule for OneVar {
                 if should_join_uninitialized && !is_for_in_or_of_left(node, ctx) {
                     report_join_with_optional_previous(
                         ctx,
+                        node,
                         declaration,
-                        previous_declaration,
                         format!(
                             "Combine this with the previous '{}' statement with uninitialized variables.",
                             declaration.kind.as_str()
@@ -319,7 +314,7 @@ impl OneVar {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 struct ScopeState {
     initialized: bool,
     uninitialized: bool,
@@ -339,7 +334,7 @@ impl DeclarationFacts {
         for declarator in &declaration.declarations {
             if let Some(initializer) = &declarator.init {
                 initialized += 1;
-                requires += usize::from(is_require(Some(initializer)));
+                requires += usize::from(is_require(initializer));
             }
         }
         Self { initialized, uninitialized: declaration.declarations.len() - initialized, requires }
@@ -353,8 +348,12 @@ impl DeclarationFacts {
     }
 }
 
-fn is_require(expression: Option<&Expression<'_>>) -> bool {
-    matches!(expression, Some(Expression::CallExpression(call)) if call.callee_name() == Some("require"))
+fn is_require(expression: &Expression<'_>) -> bool {
+    matches!(
+        expression,
+        Expression::CallExpression(call)
+            if matches!(&call.callee, Expression::Identifier(identifier) if identifier.name == "require")
+    )
 }
 
 fn declaration_scope(node: &AstNode<'_>, ctx: &LintContext<'_>) -> ScopeId {
@@ -394,36 +393,39 @@ fn statement_node_id(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<NodeId
     }
 }
 
-#[derive(Default)]
-struct PreviousStatementTracker {
-    last_by_parent: FxHashMap<NodeId, NodeId>,
-    exported_variable_previous: FxHashMap<NodeId, NodeId>,
-}
-
-impl PreviousStatementTracker {
-    fn visit(&mut self, node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<NodeId> {
-        let parent = ctx.nodes().parent_node(node.id());
-        if is_statement_list_parent(parent.kind()) {
-            let previous = self.last_by_parent.insert(parent.id(), node.id());
-            debug_assert!(
-                previous.is_none_or(|id| {
-                    ctx.nodes().get_node(id).span().start <= node.span().start
-                })
-            );
-            if matches!(
-                node.kind(),
-                AstKind::ExportNamedDeclaration(export)
-                    if matches!(export.declaration.as_ref(), Some(Declaration::VariableDeclaration(_)))
-            ) && let Some(previous) = previous
-            {
-                self.exported_variable_previous.insert(node.id(), previous);
-            }
-            previous
-        } else if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
-            self.exported_variable_previous.remove(&parent.id())
-        } else {
-            None
+fn previous_declaration<'a, 'c>(
+    node: &AstNode<'a>,
+    ctx: &'c LintContext<'a>,
+) -> Option<&'c VariableDeclaration<'a>> {
+    let nodes = ctx.nodes();
+    let parent = nodes.parent_node(node.id());
+    let (statement_span, statement_parent) = if is_statement_list_parent(parent.kind()) {
+        (node.span(), parent)
+    } else if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
+        let grandparent = nodes.parent_node(parent.id());
+        if !is_statement_list_parent(grandparent.kind()) {
+            return None;
         }
+        (parent.span(), grandparent)
+    } else {
+        return None;
+    };
+
+    let statements: &[Statement<'a>] = match statement_parent.kind() {
+        AstKind::Program(program) => &program.body,
+        AstKind::BlockStatement(block) => &block.body,
+        AstKind::FunctionBody(body) => &body.statements,
+        AstKind::StaticBlock(block) => &block.body,
+        AstKind::SwitchCase(case) => &case.consequent,
+        AstKind::TSModuleBlock(block) => &block.body,
+        _ => unreachable!(),
+    };
+    let index = statements
+        .binary_search_by_key(&statement_span.start, |statement| statement.span().start)
+        .ok()?;
+    match index.checked_sub(1).and_then(|index| statements.get(index))? {
+        Statement::VariableDeclaration(declaration) => Some(declaration),
+        _ => None,
     }
 }
 
@@ -440,11 +442,13 @@ fn is_for_in_or_of_left(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
 
 fn report_join_with_optional_previous<'a>(
     ctx: &LintContext<'a>,
+    node: &AstNode<'a>,
     declaration: &VariableDeclaration<'a>,
-    previous: Option<&VariableDeclaration<'a>>,
     message: String,
 ) {
-    if let Some(previous) = previous.filter(|previous| previous.kind == declaration.kind) {
+    if let Some(previous) =
+        previous_declaration(node, ctx).filter(|previous| previous.kind == declaration.kind)
+    {
         report_join(ctx, declaration, previous, message);
     } else {
         ctx.diagnostic(one_var_diagnostic(declaration.span, message));
@@ -1551,6 +1555,11 @@ fn test() {
         (
             "const foo = require('foo'); const bar = require('bar');",
             "const foo = require('foo'),  bar = require('bar');",
+            Some(serde_json::json!([{ "separateRequires": true, "const": "always" }])),
+        ),
+        (
+            "const foo = obj.require('foo'); const bar = 1;",
+            "const foo = obj.require('foo'),  bar = 1;",
             Some(serde_json::json!([{ "separateRequires": true, "const": "always" }])),
         ),
         ("var a = 1, b; var c;", "var a = 1, b,  c;", Some(serde_json::json!(["consecutive"]))),
