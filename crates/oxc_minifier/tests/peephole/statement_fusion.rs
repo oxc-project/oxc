@@ -40,6 +40,7 @@ fn fold_block_throw() {
 #[test]
 fn fold_switch() {
     test("a;b;c;switch(x){}", "a,b,c,x");
+    test("a;b;c;switch(x){case a:b();case b:c()}", "switch(a,b,c,x){case a:b();case b:c()}");
 }
 
 #[test]

@@ -19,7 +19,7 @@ use oxc_ast::ast::{
     ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
     TaggedTemplateExpression, TemplateLiteral,
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_tasks_common::project_root;
@@ -250,7 +250,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     }
 }
 
-impl<'a> Visit<'a> for TestCase {
+impl<'a> VisitJs<'a> for TestCase {
     fn visit_expression(&mut self, expr: &Expression<'a>) {
         match expr {
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
@@ -520,7 +520,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> Visit<'a> for State<'a> {
+impl<'a> VisitJs<'a> for State<'a> {
     fn visit_program(&mut self, program: &Program<'a>) {
         for stmt in &program.body {
             self.visit_statement(stmt);
@@ -1151,7 +1151,7 @@ impl<'a> RuleConfig<'a> {
     }
 }
 
-impl<'a> Visit<'a> for RuleConfig<'a> {
+impl<'a> VisitJs<'a> for RuleConfig<'a> {
     fn visit_program(&mut self, program: &Program<'a>) {
         for stmt in &program.body {
             self.visit_statement(stmt);

@@ -1,16 +1,20 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{AstKind, ast::FunctionType};
+use oxc_ast::{
+    AstKind,
+    ast::{AssignmentTarget, FunctionType, VariableDeclarator},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::iter_outer_expressions,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{function_body_contains_jsx, function_contains_jsx},
+    utils::{arrow_function_returns, function_returns, is_hoc_call, is_react_component_name},
 };
 
 fn function_component_definition_diagnostic(span: Span, expected: FunctionStyle) -> OxcDiagnostic {
@@ -108,24 +112,17 @@ impl Rule for FunctionComponentDefinition {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (actual, is_component) = match node.kind() {
-            AstKind::Function(function) => {
-                let actual = match function.r#type {
-                    FunctionType::FunctionDeclaration => FunctionStyle::Declaration,
-                    FunctionType::FunctionExpression => FunctionStyle::Expression,
-                    _ => return,
-                };
-
-                (actual, function_contains_jsx(function))
-            }
-            AstKind::ArrowFunctionExpression(arrow) => {
-                (FunctionStyle::Arrow, function_body_contains_jsx(&arrow.body))
-            }
+        let actual = match node.kind() {
+            AstKind::Function(function) => match function.r#type {
+                FunctionType::FunctionDeclaration => FunctionStyle::Declaration,
+                FunctionType::FunctionExpression => FunctionStyle::Expression,
+                _ => return,
+            },
+            AstKind::ArrowFunctionExpression(_) => FunctionStyle::Arrow,
             _ => return,
         };
 
-        if !is_component || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
-        {
+        if !is_function_component(node, ctx) {
             return;
         }
 
@@ -148,6 +145,97 @@ impl Rule for FunctionComponentDefinition {
         } else {
             ctx.diagnostic(diagnostic);
         }
+    }
+}
+
+fn is_function_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    if matches!(component_parent_kind(node, ctx), Some(AstKind::ObjectProperty(_))) {
+        return false;
+    }
+
+    match node.kind() {
+        AstKind::Function(function) if function.r#type == FunctionType::FunctionDeclaration => {
+            function.id.as_ref().is_none_or(|id| is_react_component_name(&id.name))
+                && function_returns(function, ctx).has_jsx_or_null()
+        }
+        AstKind::Function(function) => {
+            if !is_component_expression_position(node, ctx) {
+                return false;
+            }
+            function_returns(function, ctx).has_jsx_or_null()
+        }
+        AstKind::ArrowFunctionExpression(arrow) => {
+            if !is_component_expression_position(node, ctx) {
+                return false;
+            }
+            arrow_function_returns(arrow, ctx).has_jsx_or_null()
+        }
+        _ => false,
+    }
+}
+
+fn is_component_expression_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let Some(parent) = component_parent_kind(node, ctx) else {
+        return false;
+    };
+    match parent {
+        AstKind::VariableDeclarator(declaration) => {
+            declaration.id.get_identifier_name().is_some_and(|name| is_react_component_name(&name))
+        }
+        AstKind::ExportDefaultDeclaration(_)
+        | AstKind::ReturnStatement(_)
+        | AstKind::ArrowFunctionExpression(_) => true,
+        AstKind::AssignmentExpression(assignment) => match &assignment.left {
+            AssignmentTarget::AssignmentTargetIdentifier(id)
+                if is_react_component_name(&id.name) =>
+            {
+                true
+            }
+            AssignmentTarget::StaticMemberExpression(member) => {
+                is_react_component_name(&member.property.name)
+                    || member.object.is_specific_id("module") && member.property.name == "exports"
+            }
+            _ => false,
+        },
+        AstKind::CallExpression(call) => {
+            let is_first_argument = call.arguments.first().is_some_and(|argument| {
+                argument.as_expression().is_some_and(|expression| {
+                    expression.get_inner_expression().span() == node.span()
+                })
+            });
+            is_first_argument && call.callee_name().is_some_and(|name| is_hoc_call(name, ctx))
+        }
+        _ => false,
+    }
+}
+
+fn component_parent_kind<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<AstKind<'a>> {
+    let mut parents = iter_outer_expressions(ctx.nodes(), node.id());
+    let mut inner_span = node.span();
+    loop {
+        let parent = parents.next()?;
+        if let AstKind::SequenceExpression(sequence) = parent {
+            let is_last = sequence
+                .expressions
+                .last()
+                .is_some_and(|expression| expression.get_inner_expression().span() == inner_span);
+            if !is_last {
+                return None;
+            }
+            inner_span = sequence.span;
+        } else {
+            return Some(parent);
+        }
+    }
+}
+
+fn variable_declarator<'a, 'c>(
+    node: &AstNode<'a>,
+    ctx: &'c LintContext<'a>,
+) -> Option<&'c VariableDeclarator<'a>> {
+    match component_parent_kind(node, ctx) {
+        Some(AstKind::VariableDeclarator(declaration)) => Some(declaration),
+        _ => None,
     }
 }
 
@@ -223,9 +311,9 @@ impl UnnamedComponentStyle {
     }
 }
 
-fn is_named(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+fn is_named<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     matches!(node.kind(), AstKind::Function(function) if function.r#type == FunctionType::FunctionDeclaration)
-        || matches!(ctx.nodes().parent_kind(node.id()), AstKind::VariableDeclarator(_))
+        || variable_declarator(node, ctx).is_some()
 }
 
 mod fix {
@@ -238,7 +326,7 @@ mod fix {
     };
     use oxc_span::{GetSpan, Span};
 
-    use super::FunctionStyle;
+    use super::{FunctionStyle, variable_declarator};
     use crate::{AstNode, context::LintContext};
 
     pub(super) fn can_fix<'a>(
@@ -246,6 +334,10 @@ mod fix {
         ctx: &LintContext<'a>,
         expected: FunctionStyle,
     ) -> bool {
+        if has_unsafe_outer_expression(node, ctx) {
+            return false;
+        }
+
         let declaration = variable_declarator(node, ctx);
         if declaration.is_some_and(|declaration| {
             matches!(
@@ -301,22 +393,28 @@ mod fix {
         true
     }
 
+    fn has_unsafe_outer_expression(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+        for parent in ctx.nodes().ancestor_kinds(node.id()) {
+            match parent {
+                AstKind::ParenthesizedExpression(_) => {}
+                AstKind::SequenceExpression(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSInstantiationExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSTypeAssertion(_) => return true,
+                _ => return false,
+            }
+        }
+        false
+    }
+
     fn has_one_unconstrained_type_parameter(
         parameters: Option<&TSTypeParameterDeclaration<'_>>,
     ) -> bool {
         parameters.is_some_and(|parameters| {
             parameters.params.len() == 1 && parameters.params[0].constraint.is_none()
         })
-    }
-
-    fn variable_declarator<'a, 'c>(
-        node: &AstNode<'a>,
-        ctx: &'c LintContext<'a>,
-    ) -> Option<&'c VariableDeclarator<'a>> {
-        match ctx.nodes().parent_kind(node.id()) {
-            AstKind::VariableDeclarator(declaration) => Some(declaration),
-            _ => None,
-        }
     }
 
     pub(super) fn replacement<'a>(
@@ -916,6 +1014,16 @@ fn test() {
                   ",
             None,
         ),
+        ("items.map(item => <div>{item}</div>);", None),
+        ("const renderItem = item => <div>{item}</div>;", None),
+        (
+            "class Hello extends React.Component { render() { return <div/>; } }",
+            Some(serde_json::json!([{ "unnamedComponents": "arrow-function" }])),
+        ),
+        (
+            "function Helper() { const element = <div/>; consume(element); }",
+            Some(serde_json::json!([{ "namedComponents": "arrow-function" }])),
+        ),
     ];
 
     let fail = vec![
@@ -1331,6 +1439,18 @@ fn test() {
         ),
         (
             "const Hello = () => <div/>, keep = sideEffect();",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
+        ),
+        (
+            "const Component = (() => <div/>) as React.FC;",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
+        ),
+        (
+            "const Component = (sideEffect(), () => <div/>);",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
+        ),
+        (
+            "const Component = (sideEffect(), (otherEffect(), () => <div/>));",
             Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
         ),
     ];
@@ -1933,6 +2053,31 @@ fn test() {
             "const Hello = props => <div/>;",
             "function Hello(props) {\n return <div/>\n}",
             Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
+        ),
+        (
+            "function NullComponent() { return null; }",
+            "const NullComponent = () => { return null; }",
+            Some(serde_json::json!([{ "namedComponents": "arrow-function" }])),
+        ),
+        (
+            "const Component = () => { const view = <div/>; return view; };",
+            "function Component() { const view = <div/>; return view; }",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
+        ),
+        (
+            "const Component = (() => <div/>);",
+            "function Component() {\n return <div/>\n}",
+            Some(serde_json::json!([{ "namedComponents": "function-declaration" }])),
+        ),
+        (
+            "export default () => null;",
+            "export default function() {\n return null\n};",
+            Some(serde_json::json!([{ "unnamedComponents": "function-expression" }])),
+        ),
+        (
+            "function make() { return () => null; }",
+            "function make() { return function() {\n return null\n}; }",
+            Some(serde_json::json!([{ "unnamedComponents": "function-expression" }])),
         ),
     ];
 

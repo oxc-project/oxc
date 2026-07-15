@@ -5,7 +5,7 @@ use oxc_ast::{
         ObjectExpression,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
@@ -181,7 +181,7 @@ impl<'a> LifecycleAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for LifecycleAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         if !self.found {
             self.found = true;
@@ -190,23 +190,23 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
 
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if !self.found {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
         if call_expr.arguments.len() >= 2 {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
         let Some(ident) = call_expr.callee.get_inner_expression().get_identifier_reference() else {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         };
 
         let reference = self.scoping.get_reference(ident.reference_id());
         let Some(symbol_id) = reference.symbol_id() else {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         };
 
@@ -215,7 +215,7 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
         {
             self.errors.push((call_expr.span, name_span.name().to_string()));
         }
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

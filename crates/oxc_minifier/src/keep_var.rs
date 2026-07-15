@@ -3,7 +3,7 @@ use oxc_ast::{
     ast::*,
     builder::{GetAstBuilder, NONE},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_str::Str;
@@ -14,7 +14,7 @@ pub struct KeepVar<'a> {
     all_hoisted: bool,
 }
 
-impl<'a> Visit<'a> for KeepVar<'a> {
+impl<'a> VisitJs<'a> for KeepVar<'a> {
     fn visit_statement(&mut self, it: &Statement<'a>) {
         // Only visit blocks where vars could be hoisted
         match it {

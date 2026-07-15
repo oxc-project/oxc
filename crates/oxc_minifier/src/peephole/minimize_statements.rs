@@ -3,7 +3,7 @@ use std::{iter, ops::ControlFlow};
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
@@ -791,6 +791,15 @@ impl<'a> PeepholeOptimizations {
                 }
                 ctx.notice_change();
             }
+        }
+
+        if switch_stmt.cases.is_empty() {
+            result.push(Statement::new_expression_statement(
+                switch_stmt.span,
+                switch_stmt.discriminant.take_in(ctx),
+                ctx,
+            ));
+            return;
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));

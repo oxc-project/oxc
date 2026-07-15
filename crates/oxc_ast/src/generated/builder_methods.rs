@@ -284,24 +284,6 @@ impl<'a> Expression<'a> {
         ))
     }
 
-    /// Build an [`Expression::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[inline]
-    pub fn new_meta_property<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
-        Self::MetaProperty(MetaProperty::boxed(span, meta, property, builder))
-    }
-
     /// Build an [`Expression::Super`].
     ///
     /// This node contains a [`Super`] that will be stored in the memory arena.
@@ -1079,6 +1061,28 @@ impl<'a> Expression<'a> {
         Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
     }
 
+    /// Build an [`Expression::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder))
+    }
+
+    /// Build an [`Expression::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder))
+    }
+
     /// Build an [`Expression::JSXElement`].
     ///
     /// This node contains a [`JSXElement`] that will be stored in the memory arena.
@@ -1841,24 +1845,6 @@ impl<'a> ArrayExpressionElement<'a> {
             reference_id,
             builder,
         ))
-    }
-
-    /// Build an [`ArrayExpressionElement::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[inline]
-    pub fn new_meta_property<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
-        Self::MetaProperty(MetaProperty::boxed(span, meta, property, builder))
     }
 
     /// Build an [`ArrayExpressionElement::Super`].
@@ -2638,6 +2624,28 @@ impl<'a> ArrayExpressionElement<'a> {
         Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
     }
 
+    /// Build an [`ArrayExpressionElement::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder))
+    }
+
+    /// Build an [`ArrayExpressionElement::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder))
+    }
+
     /// Build an [`ArrayExpressionElement::JSXElement`].
     ///
     /// This node contains a [`JSXElement`] that will be stored in the memory arena.
@@ -3289,24 +3297,6 @@ impl<'a> PropertyKey<'a> {
             reference_id,
             builder,
         ))
-    }
-
-    /// Build a [`PropertyKey::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[inline]
-    pub fn new_meta_property<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
-        Self::MetaProperty(MetaProperty::boxed(span, meta, property, builder))
     }
 
     /// Build a [`PropertyKey::Super`].
@@ -4084,6 +4074,28 @@ impl<'a> PropertyKey<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build a [`PropertyKey::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder))
+    }
+
+    /// Build a [`PropertyKey::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder))
     }
 
     /// Build a [`PropertyKey::JSXElement`].
@@ -4955,44 +4967,57 @@ impl<'a> NewExpression<'a> {
     }
 }
 
-impl<'a> MetaProperty<'a> {
-    /// Build a [`MetaProperty`].
+impl ImportMeta {
+    /// Build an [`ImportMeta`].
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`MetaProperty::boxed`] instead.
+    /// use [`ImportMeta::boxed`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
         let builder = builder.builder();
-        MetaProperty { node_id: Cell::new(builder.node_id()), span, meta, property }
+        ImportMeta { node_id: Cell::new(builder.node_id()), span }
     }
 
-    /// Build a [`MetaProperty`], and store it in the memory arena.
+    /// Build an [`ImportMeta`], and store it in the memory arena.
     ///
     /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`MetaProperty::new`] instead.
+    /// If you want a stack-allocated node, use [`ImportMeta::new`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, meta, property, builder), builder.builder())
+    pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
+        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+    }
+}
+
+impl NewTarget {
+    /// Build a [`NewTarget`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`NewTarget::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        let builder = builder.builder();
+        NewTarget { node_id: Cell::new(builder.node_id()), span }
+    }
+
+    /// Build a [`NewTarget`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`NewTarget::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
+        ArenaBox::new_in(Self::new(span, builder), builder.builder())
     }
 }
 
@@ -5237,24 +5262,6 @@ impl<'a> Argument<'a> {
             reference_id,
             builder,
         ))
-    }
-
-    /// Build an [`Argument::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[inline]
-    pub fn new_meta_property<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
-        Self::MetaProperty(MetaProperty::boxed(span, meta, property, builder))
     }
 
     /// Build an [`Argument::Super`].
@@ -6032,6 +6039,28 @@ impl<'a> Argument<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build an [`Argument::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder))
+    }
+
+    /// Build an [`Argument::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder))
     }
 
     /// Build an [`Argument::JSXElement`].
@@ -10401,24 +10430,6 @@ impl<'a> ForStatementInit<'a> {
         ))
     }
 
-    /// Build a [`ForStatementInit::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[inline]
-    pub fn new_meta_property<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
-        Self::MetaProperty(MetaProperty::boxed(span, meta, property, builder))
-    }
-
     /// Build a [`ForStatementInit::Super`].
     ///
     /// This node contains a [`Super`] that will be stored in the memory arena.
@@ -11194,6 +11205,28 @@ impl<'a> ForStatementInit<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build a [`ForStatementInit::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder))
+    }
+
+    /// Build a [`ForStatementInit::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder))
     }
 
     /// Build a [`ForStatementInit::JSXElement`].
@@ -15783,24 +15816,6 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         ))
     }
 
-    /// Build an [`ExportDefaultDeclarationKind::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[inline]
-    pub fn new_meta_property<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
-        Self::MetaProperty(MetaProperty::boxed(span, meta, property, builder))
-    }
-
     /// Build an [`ExportDefaultDeclarationKind::Super`].
     ///
     /// This node contains a [`Super`] that will be stored in the memory arena.
@@ -16576,6 +16591,28 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::JSXElement`].
@@ -18019,24 +18056,6 @@ impl<'a> JSXExpression<'a> {
         ))
     }
 
-    /// Build a [`JSXExpression::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[inline]
-    pub fn new_meta_property<B: GetAstBuilder<'a>>(
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-        builder: &B,
-    ) -> Self {
-        Self::MetaProperty(MetaProperty::boxed(span, meta, property, builder))
-    }
-
     /// Build a [`JSXExpression::Super`].
     ///
     /// This node contains a [`Super`] that will be stored in the memory arena.
@@ -18812,6 +18831,28 @@ impl<'a> JSXExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build a [`JSXExpression::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder))
+    }
+
+    /// Build a [`JSXExpression::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder))
     }
 
     /// Build a [`JSXExpression::JSXElement`].

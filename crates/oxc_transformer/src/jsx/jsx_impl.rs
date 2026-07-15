@@ -445,12 +445,7 @@ impl<'a> Pragma<'a> {
                 (object, parts.iter())
             }
             Self::ImportMeta(parts) => {
-                let object = Expression::new_meta_property(
-                    SPAN,
-                    IdentifierName::new(SPAN, "import", ctx),
-                    IdentifierName::new(SPAN, "meta", ctx),
-                    ctx,
-                );
+                let object = Expression::new_import_meta(SPAN, ctx);
                 (object, parts.iter())
             }
         };
@@ -1393,9 +1388,7 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::MetaProperty(meta_prop) = &expr else { panic!() };
-        assert_eq!(&meta_prop.meta.name, "import");
-        assert_eq!(&meta_prop.property.name, "meta");
+        assert!(matches!(expr, Expression::ImportMeta(_)));
     }
 
     #[test]
@@ -1407,9 +1400,7 @@ mod test {
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(member) = &expr else { panic!() };
-        let Expression::MetaProperty(meta_prop) = &member.object else { panic!() };
-        assert_eq!(&meta_prop.meta.name, "import");
-        assert_eq!(&meta_prop.property.name, "meta");
+        assert!(matches!(&member.object, Expression::ImportMeta(_)));
         assert_eq!(member.property.name, "prop");
     }
 

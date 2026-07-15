@@ -333,17 +333,21 @@ impl<'a> Dummy<'a> for NewExpression<'a> {
     }
 }
 
-impl<'a> Dummy<'a> for MetaProperty<'a> {
-    /// Create a dummy [`MetaProperty`].
+impl<'a> Dummy<'a> for ImportMeta {
+    /// Create a dummy [`ImportMeta`].
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            node_id: Dummy::dummy(allocator),
-            span: Dummy::dummy(allocator),
-            meta: Dummy::dummy(allocator),
-            property: Dummy::dummy(allocator),
-        }
+        Self { node_id: Dummy::dummy(allocator), span: Dummy::dummy(allocator) }
+    }
+}
+
+impl<'a> Dummy<'a> for NewTarget {
+    /// Create a dummy [`NewTarget`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self { node_id: Dummy::dummy(allocator), span: Dummy::dummy(allocator) }
     }
 }
 

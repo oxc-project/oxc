@@ -37,6 +37,147 @@ fn test_line_comment_after_conditional_colon() {
 }
 
 #[test]
+fn test_comments_before_expression_operands() {
+    // https://github.com/oxc-project/oxc/issues/21301
+    // https://github.com/oxc-project/oxc/issues/24324
+    test(
+        "const value = a ?? /* istanbul ignore next */ [];",
+        "const value = a ?? /* istanbul ignore next */ [];\n",
+    );
+    test(
+        "const value = a && /* istanbul ignore next */ otherValue;",
+        "const value = a && /* istanbul ignore next */ otherValue;\n",
+    );
+    test(
+        "const value = a ? /* istanbul ignore next */ first : second;",
+        "const value = a ? /* istanbul ignore next */ first : second;\n",
+    );
+    test(
+        "condition ?\n  /* v8 ignore next */ uncovered() :\n  coveredAlternate();",
+        "condition ? \n/* v8 ignore next */ uncovered() : coveredAlternate();\n",
+    );
+    test(
+        "const value = { aFunction: /* istanbul ignore next */ () => {} };",
+        "const value = { aFunction: /* istanbul ignore next */ () => {} };\n",
+    );
+}
+
+#[test]
+fn test_comments_before_expression_operands_idempotency() {
+    test_idempotency("const value = a ?? /* istanbul ignore next */ [];");
+    test_idempotency("const value = a && /* istanbul ignore next */ otherValue;");
+    test_idempotency("const value = a ? /* istanbul ignore next */ first : second;");
+    test_idempotency("condition ?\n  /* v8 ignore next */ uncovered() :\n  coveredAlternate();");
+    test_idempotency("const value = { aFunction: /* istanbul ignore next */ () => {} };");
+}
+
+// A mid-line comment group must not receive a full indent: `print_comments`
+// used to inject `indent` tabs before any group whose first comment was not
+// preceded by a newline, so indented emission sites (`key: /** c */ value`)
+// grew indentation on every codegen pass (monitor-oxc caught this on
+// webpack's `source: /** @type {string} */ (source)` shorthand collapse).
+#[test]
+fn test_comment_before_indented_object_property_value() {
+    test(
+        "function f(source) {\n\treturn {\n\t\tsource: /** @type {string} */ (source),\n\t\tother: 1\n\t};\n}",
+        "function f(source) {\n\treturn {\n\t\t/** @type {string} */ source,\n\t\tother: 1\n\t};\n}\n",
+    );
+    test_idempotency(
+        "function f(source) {\n\treturn {\n\t\tsource: /** @type {string} */ (source),\n\t\tother: 1\n\t};\n}",
+    );
+}
+
+// A comment group ending in a newline before a mid-expression operand must
+// re-indent the operand: pass 1 otherwise leaves it at column 0 while the
+// reparse anchors the group to the item and indents it (monitor-oxc dce
+// caught this on storybook's `argument: /** @type {Expression} */ (argument)`
+// with the group on its own lines).
+#[test]
+fn test_newline_comment_group_before_object_property_value() {
+    test(
+        "function f(argument) {\n\treturn {\n\t\ttype: 1,\n\t\targument:\n\t\t// c1\n\t\t/** @type {Expression} */\n\t\t(argument)\n\t};\n}",
+        "function f(argument) {\n\treturn {\n\t\ttype: 1,\n\t\t// c1\n\t\t/** @type {Expression} */\n\t\targument\n\t};\n}\n",
+    );
+    test_idempotency(
+        "function f(argument) {\n\treturn {\n\t\ttype: 1,\n\t\targument:\n\t\t// c1\n\t\t/** @type {Expression} */\n\t\t(argument)\n\t};\n}",
+    );
+}
+
+// An annotation before a parenthesized logical RHS anchors to the `(`, which
+// `Binaryish::right()` strips — the lookup must check the unstripped span too.
+// This is the reparse shape of a lowered optional chain (monitor-oxc
+// transformer caught it on `a?.x || /* istanbul ignore next */ a?.y`).
+#[test]
+fn test_annotation_before_parenthesized_logical_rhs() {
+    test(
+        "x = a || /* istanbul ignore next */ (b ? c : d);",
+        "x = a || /* istanbul ignore next */ (b ? c : d);\n",
+    );
+    test_idempotency("x = a || /* istanbul ignore next */ (b ? c : d);");
+    // The comment can also anchor INSIDE the parens — the helpers probe
+    // every parenthesized layer, at all emission sites. It hoists before the
+    // `(`, where the reparse re-anchors it, so the rendering is stable.
+    test(
+        "x = a || (/* istanbul ignore next */ b ? c : d);",
+        "x = a || /* istanbul ignore next */ (b ? c : d);\n",
+    );
+    test_idempotency("x = a || (/* istanbul ignore next */ b ? c : d);");
+    test("y = { k: (/* lingui */ v) };", "y = { k: /* lingui */ v };\n");
+    test_idempotency("y = { k: (/* lingui */ v) };");
+}
+
+// In minify mode (comments kept, whitespace removed) a comment group glues to
+// the next token with no space: `print_indent` never consumes the pending
+// indent-as-space under minify, so an emitting consumer would make spacing
+// depend on which printer consumed the group (`*/ x` vs `*/x`) — monitor-oxc
+// whitespace caught this on webpack's `/** @type {string} */ (source)`.
+#[test]
+fn test_minify_comment_glue_idempotency() {
+    use oxc_codegen::CodegenOptions;
+    let minify_with_comments = CodegenOptions { minify: true, ..CodegenOptions::default() };
+    crate::tester::test_options(
+        "const x = { source: /** @type {string} */ (source), other: 1 };",
+        "const x={/** @type {string} */source,other:1};",
+        minify_with_comments.clone(),
+    );
+    test_idempotency_options(
+        "const x = { source: /** @type {string} */ (source), other: 1 };",
+        &minify_with_comments,
+    );
+}
+
+// Normal-comment groups must NOT be printed before a logical RHS: the minifier
+// merges statements into logical right-hand sides (`if(a)x;if(b)x;` ->
+// `if(a||(b,..))x`), which can anchor a removed statement's banner comments at
+// the RHS span start; printing them mid-expression breaks minify idempotency
+// (minifier_test262 `language/asi/S7.9_A5.8_T1.js`). Only annotation-bearing
+// groups (coverage directives etc.) are printed.
+#[test]
+fn test_normal_comment_before_logical_rhs_not_printed() {
+    test("const value = a ?? /* plain comment */ [];", "const value = a ?? [];\n");
+    test("const value = a || //\n////////\n(b, c);", "const value = a || (b, c);\n");
+}
+
+#[test]
+fn test_comment_before_template_literal_interpolation() {
+    // https://github.com/oxc-project/oxc/issues/22049
+    test(
+        "const value = `color: ${/* v8 ignore next -- @preserve */ ({ theme }) => theme.color}`;",
+        "const value = `color: ${/* v8 ignore next -- @preserve */ ({ theme }) => theme.color}`;\n",
+    );
+    test(
+        "const value = `color: ${\n  /* v8 ignore next -- @preserve */\n  ({ theme }) => theme.color\n};`;",
+        "const value = `color: ${\n/* v8 ignore next -- @preserve */\n({ theme }) => theme.color};`;\n",
+    );
+    test_idempotency(
+        "const value = `color: ${/* v8 ignore next -- @preserve */ ({ theme }) => theme.color}`;",
+    );
+    test_idempotency(
+        "const value = `color: ${\n  /* v8 ignore next -- @preserve */\n  ({ theme }) => theme.color\n};`;",
+    );
+}
+
+#[test]
 fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
     use oxc_ast::CommentPosition;
@@ -71,10 +212,7 @@ fn unit() {
     test("console.log(<>{/*before*/ x}</>)", "console.log(<>{/*before*/ x}</>);\n");
     // https://lingui.dev/ref/macro#definemessage
     test("const message = /*i18n*/{};", "const message = (/*i18n*/ {});\n");
-    test(
-        "function foo() { return /*i18n*/ {} }",
-        "function foo() {\n\treturn (\t/*i18n*/ {});\n}\n",
-    );
+    test("function foo() { return /*i18n*/ {} }", "function foo() {\n\treturn (/*i18n*/ {});\n}\n");
 
     test_same("export { /** @deprecated */ parseAst } from \"rolldown/parseAst\";\n");
     test_same("export { /** @deprecated */ parseAst };\n");
