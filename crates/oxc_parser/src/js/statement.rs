@@ -34,8 +34,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
-        let mut directives = ArenaVec::new_in(self);
-        let mut statements = ArenaVec::new_in(self);
+        let directives_mark = self.scratch_mark::<Directive<'a>>();
+        let statements_mark = self.scratch_mark::<Statement<'a>>();
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
@@ -62,7 +62,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     None
                 } else {
                     self.state.encountered_await_identifier = false;
-                    Some((statements.len(), self.checkpoint()))
+                    let stmt_index = self.scratch_mark::<Statement<'a>>() - statements_mark;
+                    Some((stmt_index, self.checkpoint()))
                 }
             } else {
                 None
@@ -93,7 +94,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         let directive =
                             Directive::new(expr.span, (*string).clone(), Str::from(src), self);
-                        directives.push(directive);
+                        self.scratch_push(directive);
                         continue;
                     }
                 }
@@ -112,9 +113,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::statement_in_ambient_context(stmt.span()));
                 reported_ambient_statement = true;
             }
-            statements.push(stmt);
+            self.scratch_push(stmt);
         }
 
+        let directives = self.scratch_take(directives_mark);
+        let statements = self.scratch_take(statements_mark);
         (directives, statements)
     }
 
@@ -731,7 +734,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = ArenaVec::new_in(self);
+        let mark = self.scratch_mark::<Statement<'a>>();
         loop {
             let kind = self.cur_kind();
             if matches!(
@@ -751,8 +754,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     stmt.span(),
                 ));
             }
-            consequent.push(stmt);
+            self.scratch_push(stmt);
         }
+        let consequent = self.scratch_take(mark);
         SwitchCase::new(self.end_span(span), test, consequent, self)
     }
 

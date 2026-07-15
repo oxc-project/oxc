@@ -190,7 +190,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         self.bump_any(); // bump `extends`
 
-        let mut extends = ArenaVec::with_capacity_in(1, self);
+        let mark = self
+            .scratch_mark::<(Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)>();
         loop {
             let mut extend = self.parse_lhs_expression_or_higher();
             if self.fatal_error.is_some() {
@@ -205,14 +206,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 type_argument = self.try_parse_type_arguments();
             }
 
-            extends.push((extend, type_argument));
+            self.scratch_push((extend, type_argument));
 
             if !self.eat(Kind::Comma) {
                 break;
             }
         }
 
-        extends
+        self.scratch_take(mark)
     }
 
     fn parse_class_body(&mut self) -> ArenaBox<'a, ClassBody<'a>> {

@@ -97,7 +97,8 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
     // would otherwise carry this body's large stack frame + callee-saved spills on every call.
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut elements = ArenaVec::new_in(p);
+        // Exact-size except for a trailing rest element (at most 1 slack slot).
+        let mut elements = ArenaVec::with_capacity_in(expr.elements.len(), p);
         let mut rest = None;
 
         let len = expr.elements.len();
@@ -174,7 +175,8 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
     // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut properties = ArenaVec::new_in(p);
+        // Exact-size except for a trailing rest property (at most 1 slack slot).
+        let mut properties = ArenaVec::with_capacity_in(expr.properties.len(), p);
         let mut rest = None;
 
         let len = expr.properties.len();

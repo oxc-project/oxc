@@ -204,12 +204,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_ts_implements_clause(&mut self) -> ArenaVec<'a, TSClassImplements<'a>> {
         self.expect(Kind::Implements);
-        let first = self.parse_ts_implement_name();
-        let mut implements = ArenaVec::from_value_in(first, self);
-        while self.eat(Kind::Comma) {
-            implements.push(self.parse_ts_implement_name());
-        }
-        implements
+        self.parse_separated_list(Kind::Comma, Self::parse_ts_implement_name)
     }
 
     fn parse_ts_type_parameter(&mut self, allow_variance: bool) -> TSTypeParameter<'a> {
@@ -277,13 +272,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         /* hasLeadingOperator && parseFunctionOrConstructorTypeToError(isUnionType) ||*/
         let mut ty = parse_constituent_type(self);
         if self.at(kind) || has_leading_operator {
-            let mut types = ArenaVec::from_value_in(ty, self);
-            while self.eat(kind) {
-                types.push(
-                    /*parseFunctionOrConstructorTypeToError(isUnionType) || */
-                    parse_constituent_type(self),
-                );
-            }
+            /*parseFunctionOrConstructorTypeToError(isUnionType) || */
+            let types = self.parse_separated_list_from(ty, kind, parse_constituent_type);
             let span = self.end_span(span);
             ty = match kind {
                 Kind::Pipe => TSType::new_ts_union_type(span, types, self),
@@ -776,31 +766,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_template_type(&mut self, tagged: bool) -> TSType<'a> {
         let span = self.start_span();
-        let mut types = ArenaVec::new_in(self);
-        let mut quasis = ArenaVec::new_in(self);
+        let types_mark = self.scratch_mark::<TSType<'a>>();
+        let quasis_mark = self.scratch_mark::<TemplateElement<'a>>();
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
-                quasis.push(self.parse_template_element(tagged));
+                let quasi = self.parse_template_element(tagged);
+                self.scratch_push(quasi);
             }
             Kind::TemplateHead => {
-                quasis.push(self.parse_template_element(tagged));
-                types.push(self.parse_ts_type());
+                let quasi = self.parse_template_element(tagged);
+                self.scratch_push(quasi);
+                let ty = self.parse_ts_type();
+                self.scratch_push(ty);
                 self.re_lex_template_substitution_tail();
                 while self.fatal_error.is_none() {
                     match self.cur_kind() {
                         Kind::TemplateTail => {
-                            quasis.push(self.parse_template_element(tagged));
+                            let quasi = self.parse_template_element(tagged);
+                            self.scratch_push(quasi);
                             break;
                         }
                         Kind::TemplateMiddle => {
-                            quasis.push(self.parse_template_element(tagged));
+                            let quasi = self.parse_template_element(tagged);
+                            self.scratch_push(quasi);
                         }
                         Kind::Eof => {
                             self.expect(Kind::TemplateTail);
                             break;
                         }
                         _ => {
-                            types.push(self.parse_ts_type());
+                            let ty = self.parse_ts_type();
+                            self.scratch_push(ty);
                             self.re_lex_template_substitution_tail();
                         }
                     }
@@ -809,6 +805,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => unreachable!("parse_template_literal"),
         }
 
+        let quasis = self.scratch_take(quasis_mark);
+        let types = self.scratch_take(types_mark);
         TSType::new_ts_template_literal_type(self.end_span(span), quasis, types, self)
     }
 
@@ -1249,7 +1247,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
 
-        let mut properties = ArenaVec::new_in(self);
+        let mark = self.scratch_mark::<ObjectPropertyKind<'a>>();
         let mut first = true;
         while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
             if first {
@@ -1284,7 +1282,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
-                properties.push(ObjectPropertyKind::new_object_property(
+                self.scratch_push(ObjectPropertyKind::new_object_property(
                     self.end_span(prop_span),
                     PropertyKind::Init,
                     key,
@@ -1309,7 +1307,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::Colon);
             let value = self.parse_assignment_expression_or_higher();
 
-            properties.push(ObjectPropertyKind::new_object_property(
+            self.scratch_push(ObjectPropertyKind::new_object_property(
                 self.end_span(prop_span),
                 PropertyKind::Init,
                 key,
@@ -1322,6 +1320,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         self.expect(Kind::RCurly);
+        let properties = self.scratch_take(mark);
         ObjectExpression::boxed(self.end_span(span), properties, self)
     }
 

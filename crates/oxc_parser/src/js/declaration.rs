@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -83,14 +83,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
+        let declarations = self
+            .parse_separated_list(Kind::Comma, |p| p.parse_variable_declarator(decl_parent, kind));
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
@@ -204,26 +198,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
-                VariableDeclarationParent::For
-            } else {
-                VariableDeclarationParent::Statement
-            };
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-
+        let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+            VariableDeclarationParent::For
+        } else {
+            VariableDeclarationParent::Statement
+        };
+        let declarations = self.parse_separated_list(Kind::Comma, |p| {
+            let declaration = p.parse_variable_declarator(decl_parent, kind);
             if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_identifier_in_using_declaration(
+                p.error(diagnostics::invalid_identifier_in_using_declaration(
                     declaration.id.span(),
                 ));
             }
-
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
+            declaration
+        });
 
         VariableDeclaration::boxed(self.end_span(span), kind, declarations, false, self)
     }
