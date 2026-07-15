@@ -796,34 +796,37 @@ impl<'a> PeepholeOptimizations {
             } else {
                 (case_count, true)
             };
-            // Last non-empty case index in [0, end). Returns None if all cases are removable.
-            let last_non_empty_before_last = switch_stmt.cases[..end]
-                .iter()
-                .rposition(|case| !Self::switch_case_is_removable(case, allow_break, ctx));
 
-            // Calculate the start of the removable suffix.
-            // 1. next case after last non-empty: remove from pos + 1
-            // 2. no non-empty case: all cases are removable, start from 0
-            let start = match last_non_empty_before_last {
-                Some(pos) => pos + 1,
-                None => 0,
-            };
+            if end > 0 {
+                // Last non-empty case index in [0, end]. Returns None if all cases are removable.
+                let last_non_removable_case_before_end = switch_stmt.cases[..end]
+                    .iter()
+                    .rposition(|case| !Self::switch_case_is_removable(case, allow_break, ctx));
 
-            // Remove the removable suffix if any
-            if start < end {
-                let mut last = switch_stmt.cases.pop().unwrap();
-                for removed_case in switch_stmt.cases.drain(start..) {
-                    ctx.drop_switch_case(&removed_case);
+                // Calculate the start of the removable suffix.
+                // 1. next case after last non-empty: remove from pos + 1
+                // 2. no non-empty case: all cases are removable, start from 0
+                let start = match last_non_removable_case_before_end {
+                    Some(pos) => pos + 1,
+                    None => 0,
+                };
+
+                // Remove the removable suffix if any
+                if start < end {
+                    let mut last = switch_stmt.cases.pop().unwrap();
+                    for removed_case in switch_stmt.cases.drain(start..) {
+                        ctx.drop_switch_case(&removed_case);
+                    }
+
+                    if let Some(last_test) = last.test.take() {
+                        ctx.drop_expression(&last_test);
+                    }
+
+                    if !Self::switch_case_is_removable(&last, true, ctx) {
+                        switch_stmt.cases.push(last);
+                    }
+                    ctx.notice_change();
                 }
-
-                if let Some(last_test) = last.test.take() {
-                    ctx.drop_expression(&last_test);
-                }
-
-                if !Self::switch_case_is_removable(&last, true, ctx) {
-                    switch_stmt.cases.push(last);
-                }
-                ctx.notice_change();
             }
         }
 
