@@ -1,0 +1,29 @@
+crates/oxc_estree_tokens/src/json/mod.rs
+  s_9116e0bb07f64a::t_a2942b06c0c84b 62,65
+crates/oxc_ast/src/serialize/mod.rs
+  s_9116e0bb07f64a::t_e59a42df6632db 50-51,59-60,68-69,80-81
+crates/oxc_estree/src/serialize/sequences.rs
+  s_9116e0bb07f64a::t_a3144197322b46 15,17,22,24,37
+crates/oxc_estree/src/serialize/mod.rs
+  s_9116e0bb07f64a::t_38ac8fff5b0dea 56-58,80,83,86,89,92,98,101,110,122-136,183,190,192-194,208-213,216,222,283-304
+  s_9116e0bb07f64a::t_62b728fdfff9db 42-44,46
+crates/oxc_estree/src/serialize/structs.rs
+  s_9116e0bb07f64a::t_979dc2fb621535 55-57,63,65,71,73,86,89,189-194,243,245,252,276-281,298,363-368
+  s_9116e0bb07f64a::t_cc1146622bb5e6 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8d1ff6478bbf8b4da660d3c9b7ac685e0af40734",
+  "prompts": {},
+  "sessions": {
+    "s_9116e0bb07f64a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6640-b764-7883-99f4-c8f340605997",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
