@@ -55,7 +55,7 @@ use std::{borrow::Cow, mem};
 
 use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::{Ident, static_ident};
@@ -1012,7 +1012,7 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for BindingMover<'a, '_> {
+impl<'a> VisitJs<'a> for BindingMover<'a, '_> {
     fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
         // Move the parameter binding itself, then only reparent direct scopes from the initializer.
         // Initializer expressions can contain function/class bindings that must stay in their own

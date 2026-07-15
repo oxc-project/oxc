@@ -2467,7 +2467,7 @@ fn ox_clone_original_fn_as_expression<'a>(
         scope_id: ScopeId,
         found: Option<Expression<'a>>,
     }
-    impl<'a, 'b> oxc_ast_visit::Visit<'a> for Finder<'a, 'b> {
+    impl<'a, 'b> oxc_ast_visit::VisitJs<'a> for Finder<'a, 'b> {
         fn visit_function(&mut self, func: &Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
             if self.found.is_some() {
                 return;
@@ -2490,7 +2490,7 @@ fn ox_clone_original_fn_as_expression<'a>(
                 self.found = Some(Expression::FunctionExpression(f));
                 return;
             }
-            oxc_ast_visit::walk::walk_function(self, func, flags);
+            oxc_ast_visit::walk_js::walk_function(self, func, flags);
         }
         fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
             if self.found.is_some() {
@@ -2503,11 +2503,11 @@ fn ox_clone_original_fn_as_expression<'a>(
                 )));
                 return;
             }
-            oxc_ast_visit::walk::walk_arrow_function_expression(self, arrow);
+            oxc_ast_visit::walk_js::walk_arrow_function_expression(self, arrow);
         }
     }
     let mut finder = Finder { ast, scope_id, found: None };
-    oxc_ast_visit::Visit::visit_program(&mut finder, program);
+    oxc_ast_visit::VisitJs::visit_program(&mut finder, program);
     finder.found.map(|e| e.clone_in_with_semantic_ids(ast.allocator()))
 }
 
