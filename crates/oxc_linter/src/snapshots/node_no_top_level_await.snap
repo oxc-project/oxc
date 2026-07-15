@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:13]
+ 1 │ const foo = await import('foo')
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:1]
+ 1 │ for await (const e of asyncIterate()) { /* ... */ }
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:1]
+ 1 │ await using foo = x
+   · ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:13]
+ 1 │ const foo = await import('foo')
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:2:13]
+ 1 │ #!/usr/bin/env node
+ 2 │ const foo = await import('foo')
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
