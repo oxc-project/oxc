@@ -780,8 +780,8 @@ impl<'a> PeepholeOptimizations {
         } else if case_count > 1 {
             // Determine the range [0, end] to check for removable cases.
             // 1. default exists and is empty: check the full switch.
-            // 2. default exists and is non-empty and last: check only cases before that default.
-            // 3. default exists, is non-empty, and is not last: skip this optimization (`end = 0`).
+            // 2. default exists and is non-removable and last: check only cases before that default.
+            // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
             // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
             let (end, allow_break) = if let Some(default_pos) =
                 switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
@@ -798,14 +798,14 @@ impl<'a> PeepholeOptimizations {
             };
 
             if end > 0 {
-                // Last non-empty case index in [0, end]. Returns None if all cases are removable.
+                // Last non-removable case index in [0, end]. Returns None if all cases are removable.
                 let last_non_removable_case_before_end = switch_stmt.cases[..end]
                     .iter()
                     .rposition(|case| !Self::switch_case_is_removable(case, allow_break, ctx));
 
                 // Calculate the start of the removable suffix.
-                // 1. next case after last non-empty: remove from pos + 1
-                // 2. no non-empty case: all cases are removable, start from 0
+                // 1. next case after last non-removable: remove from pos + 1
+                // 2. no non-removable case: all cases are removable, start from 0
                 let start = match last_non_removable_case_before_end {
                     Some(pos) => pos + 1,
                     None => 0,
