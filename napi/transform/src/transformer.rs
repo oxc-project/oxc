@@ -30,6 +30,7 @@ use oxc_napi::{OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
 use crate::IsolatedDeclarationsOptions;
+use crate::react_compiler::ReactCompilerOptions;
 
 #[derive(Default)]
 #[napi(object)]
@@ -83,7 +84,7 @@ pub struct TransformResult {
 ///
 /// Options are listed in evaluation order: the source is parsed (`lang`,
 /// `sourceType`), declarations are emitted (`typescript.declaration`), then
-/// transforms run (`typescript`, `decorator`, `plugins`,
+/// transforms run (`reactCompiler`, `typescript`, `decorator`, `plugins`,
 /// `jsx`, `target`), followed by the `inject` and `define` plugins, and
 /// finally codegen (`sourcemap`). `helpers` configures the runtime helpers
 /// the transforms emit.
@@ -106,6 +107,17 @@ pub struct TransformOptions {
 
     /// Set assumptions in order to produce smaller output.
     pub assumptions: Option<CompilerAssumptions>,
+
+    /// Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
+    ///
+    /// `true` enables it with default options; an object enables it with the
+    /// given options; `false` or omitted disables it. When enabled, the compiler
+    /// runs as the first transform and memoizes React components and hooks.
+    ///
+    /// Requires a build with the `react_compiler` Cargo feature, which is on by
+    /// default; enabling this option against a build without it is an error.
+    #[napi(ts_type = "boolean | ReactCompilerOptions")]
+    pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
 
     /// Configure how TypeScript is transformed.
     ///
@@ -178,9 +190,21 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             Some(Either::B(list)) => EnvOptions::from_target_list(&list)?,
             _ => EnvOptions::default(),
         };
+        // The option is always part of the type surface (so `index.d.ts` doesn't vary
+        // with features), which means a build without the compiler has to reject it
+        // here rather than accept it and quietly skip the pass.
+        #[cfg(not(feature = "react_compiler"))]
+        if crate::react_compiler::is_enabled(options.react_compiler.as_ref()) {
+            return Err(
+                "`reactCompiler` requires a build with the `react_compiler` Cargo feature."
+                    .to_string(),
+            );
+        }
         Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
+            #[cfg(feature = "react_compiler")]
+            react_compiler: crate::react_compiler::resolve(options.react_compiler)?,
             typescript: options
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
@@ -208,11 +232,10 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
-            // `..Default` supplies `proposals` (TC39, none implemented) and, when a
-            // workspace build enables it via Cargo feature unification, the gated
-            // `oxc_transformer` `react_compiler` field this binding no longer exposes.
-            // Keeps the literal valid in every feature config (and avoids
-            // `clippy::needless_update`).
+            // `..Default` supplies `proposals` (TC39, none implemented) and, when this
+            // binding's `react_compiler` feature is off while feature unification still
+            // enables `oxc_transformer`'s, that gated field. Keeps the literal valid in
+            // every feature config (and avoids `clippy::needless_update`).
             ..Default::default()
         })
     }

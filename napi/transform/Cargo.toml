@@ -51,5 +51,13 @@ mimalloc-safe = { workspace = true, optional = true, features = [
 napi-build = { workspace = true }
 
 [features]
-default = []
+# On by default so the published binary supports the `reactCompiler` option that
+# `index.d.ts` advertises. The generated `.d.ts` does not depend on this feature — the
+# option types are unconditional (see `src/react_compiler.rs`), so a
+# `--no-default-features` build regenerates a byte-identical one and CI's
+# `git diff --exit-code` holds either way. Opting out only drops the (heavy) compiler
+# from the binary; passing `reactCompiler` to such a build is then a hard error rather
+# than a silent no-op.
+default = ["react_compiler"]
 allocator = ["dep:mimalloc-safe"]
+react_compiler = ["oxc/react_compiler"]

@@ -70,6 +70,19 @@ pub mod semantic {
     pub use oxc_semantic::*;
 }
 
+#[cfg(feature = "react_compiler")]
+pub mod react_compiler {
+    //! Experimental React Compiler, run as the first transform pass.
+    //!
+    //! Provides the `PluginOptions` that
+    //! [`crate::transformer::TransformOptions::react_compiler`] takes.
+    //!
+    //! See the [`oxc_react_compiler` module-level documentation](oxc_react_compiler) for more
+    //! information.
+    #[doc(inline)]
+    pub use oxc_react_compiler::*;
+}
+
 #[cfg(feature = "transformer")]
 pub mod transformer {
     //! Transformer/Transpiler
