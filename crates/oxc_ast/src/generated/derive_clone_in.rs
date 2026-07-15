@@ -70,9 +70,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::Identifier(it) => {
                 Expression::Identifier(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
             }
-            Self::MetaProperty(it) => {
-                Expression::MetaProperty(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
             Self::Super(it) => {
                 Expression::Super(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
             }
@@ -168,6 +165,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::PrivateInExpression(it) => Expression::PrivateInExpression(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
+            Self::ImportMeta(it) => {
+                Expression::ImportMeta(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
+            Self::NewTarget(it) => {
+                Expression::NewTarget(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
             Self::JSXElement(it) => {
                 Expression::JSXElement(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
             }
@@ -327,7 +330,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -351,6 +353,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -470,7 +474,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -494,6 +497,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -725,19 +730,32 @@ impl<'new_alloc> CloneIn<'new_alloc> for NewExpression<'_> {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for MetaProperty<'_> {
-    type Cloned = MetaProperty<'new_alloc>;
+impl<'new_alloc> CloneIn<'new_alloc> for ImportMeta {
+    type Cloned = ImportMeta;
 
     fn clone_in_impl(
         &self,
         with_semantic_ids: bool,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
-        MetaProperty {
+        ImportMeta {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            meta: CloneIn::clone_in_impl(&self.meta, with_semantic_ids, allocator),
-            property: CloneIn::clone_in_impl(&self.property, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for NewTarget {
+    type Cloned = NewTarget;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: bool,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        NewTarget {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
         }
     }
 }
@@ -778,7 +796,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -802,6 +819,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -1669,7 +1688,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -1693,6 +1711,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -2908,7 +2928,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -2932,6 +2951,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -3376,7 +3397,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -3400,6 +3420,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)

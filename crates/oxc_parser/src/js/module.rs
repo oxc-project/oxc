@@ -830,13 +830,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ImportDeclarationSpecifier<'a> {
         match self.parse_import_or_export_specifier(ImportOrExport::Import, parent_import_kind) {
             ImportOrExportSpecifier::Import(specifier) => {
-                ImportDeclarationSpecifier::new_import_specifier(
-                    specifier.span,
-                    specifier.imported,
-                    specifier.local,
-                    specifier.import_kind,
-                    self,
-                )
+                ImportDeclarationSpecifier::ImportSpecifier(self.alloc(specifier))
             }
             ImportOrExportSpecifier::Export(_) => unreachable!(),
         }
@@ -876,8 +870,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         // { type as as "something" }
                         kind = ImportOrExportKind::Type;
                         property_name = Some(ModuleExportName::new_identifier_name(
-                            second_as.span,
-                            second_as.name,
+                            first_as.span,
+                            first_as.name,
                             self,
                         ));
                         check_identifier_token = self.cur_token();
@@ -947,10 +941,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
+                let local =
+                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self);
+                let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_span),
-                    property_name.unwrap_or_else(|| name.clone()),
-                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self),
+                    imported,
+                    local,
                     kind,
                     self,
                 ))
@@ -963,13 +960,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                let exported = match property_name {
+                let local = match property_name {
                     Some(property_name) => property_name,
-                    None => name.clone(),
+                    None => self.duplicate_module_export_name(&name),
                 };
                 ImportOrExportSpecifier::Export(ExportSpecifier::new(
                     self.end_span(specifier_span),
-                    exported,
+                    local,
                     name,
                     kind,
                     self,
@@ -993,6 +990,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::StringLiteral(literal)
             }
             _ => ModuleExportName::IdentifierName(self.parse_identifier_name()),
+        }
+    }
+
+    /// Build a 2nd [`ModuleExportName`] node matching `name`.
+    ///
+    /// Not `name.clone()` - `clone` copies `node_id` and the ID cells, bypassing the AST builder.
+    fn duplicate_module_export_name(&self, name: &ModuleExportName<'a>) -> ModuleExportName<'a> {
+        match name {
+            ModuleExportName::IdentifierName(ident) => {
+                ModuleExportName::new_identifier_name(ident.span, ident.name, self)
+            }
+            ModuleExportName::IdentifierReference(ident) => {
+                ModuleExportName::new_identifier_reference(ident.span, ident.name, self)
+            }
+            ModuleExportName::StringLiteral(literal) => {
+                ModuleExportName::new_string_literal_with_lone_surrogates(
+                    literal.span,
+                    literal.value,
+                    literal.raw,
+                    literal.lone_surrogates,
+                    self,
+                )
+            }
         }
     }
 
@@ -1059,7 +1079,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 mod test {
     use oxc_allocator::{Allocator, ArenaBox};
     use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, ImportPhase, Statement};
-    use oxc_span::SourceType;
+    use oxc_span::{GetSpan, SourceType, Span};
 
     use crate::Parser;
     #[test]
@@ -1205,6 +1225,26 @@ mod test {
             if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = &specifiers[0] {
                 assert_eq!(specifier.local.name, "as");
                 assert_eq!(specifier.imported.name(), "type");
+            } else {
+                panic!("Expected ImportSpecifier, found: {:?}", specifiers[0]);
+            }
+        });
+
+        let src = "import { type as as x } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = &specifiers[0] {
+                assert_eq!(specifier.import_kind, ImportOrExportKind::Type);
+                assert_eq!(specifier.imported.name(), "as");
+                // The first `as` (14-16) is the imported name; the second `as` (17-19) is the keyword
+                assert_eq!(specifier.imported.span(), Span::new(14, 16));
+                assert_eq!(specifier.local.name, "x");
+                assert_eq!(specifier.local.span, Span::new(20, 21));
             } else {
                 panic!("Expected ImportSpecifier, found: {:?}", specifiers[0]);
             }

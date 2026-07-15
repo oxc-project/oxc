@@ -30,7 +30,6 @@ impl ESTree for Expression<'_> {
             Self::StringLiteral(it) => it.serialize(serializer),
             Self::TemplateLiteral(it) => it.serialize(serializer),
             Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
             Self::Super(it) => it.serialize(serializer),
             Self::ArrayExpression(it) => it.serialize(serializer),
             Self::ArrowFunctionExpression(it) => it.serialize(serializer),
@@ -54,6 +53,8 @@ impl ESTree for Expression<'_> {
             Self::UpdateExpression(it) => it.serialize(serializer),
             Self::YieldExpression(it) => it.serialize(serializer),
             Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::ImportMeta(it) => it.serialize(serializer),
+            Self::NewTarget(it) => it.serialize(serializer),
             Self::JSXElement(it) => it.serialize(serializer),
             Self::JSXFragment(it) => it.serialize(serializer),
             Self::TSAsExpression(it) => it.serialize(serializer),
@@ -156,7 +157,6 @@ impl ESTree for ArrayExpressionElement<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -180,6 +180,8 @@ impl ESTree for ArrayExpressionElement<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -249,7 +251,6 @@ impl ESTree for PropertyKey<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -273,6 +274,8 @@ impl ESTree for PropertyKey<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -410,12 +413,23 @@ impl ESTree for NewExpression<'_> {
     }
 }
 
-impl ESTree for MetaProperty<'_> {
+impl ESTree for ImportMeta {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("MetaProperty"));
-        state.serialize_field("meta", &self.meta);
-        state.serialize_field("property", &self.property);
+        state.serialize_field("meta", &crate::serialize::js::ImportMetaMeta(self));
+        state.serialize_field("property", &crate::serialize::js::ImportMetaProperty(self));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for NewTarget {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("MetaProperty"));
+        state.serialize_field("meta", &crate::serialize::js::NewTargetMeta(self));
+        state.serialize_field("property", &crate::serialize::js::NewTargetProperty(self));
         state.serialize_span(self.span);
         state.end();
     }
@@ -443,7 +457,6 @@ impl ESTree for Argument<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -467,6 +480,8 @@ impl ESTree for Argument<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -990,7 +1005,6 @@ impl ESTree for ForStatementInit<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -1014,6 +1028,8 @@ impl ESTree for ForStatementInit<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -1749,7 +1765,6 @@ impl ESTree for ExportDefaultDeclarationKind<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -1773,6 +1788,8 @@ impl ESTree for ExportDefaultDeclarationKind<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)
@@ -2047,7 +2064,6 @@ impl ESTree for JSXExpression<'_> {
             | Self::StringLiteral(_)
             | Self::TemplateLiteral(_)
             | Self::Identifier(_)
-            | Self::MetaProperty(_)
             | Self::Super(_)
             | Self::ArrayExpression(_)
             | Self::ArrowFunctionExpression(_)
@@ -2071,6 +2087,8 @@ impl ESTree for JSXExpression<'_> {
             | Self::UpdateExpression(_)
             | Self::YieldExpression(_)
             | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
             | Self::JSXElement(_)
             | Self::JSXFragment(_)
             | Self::TSAsExpression(_)

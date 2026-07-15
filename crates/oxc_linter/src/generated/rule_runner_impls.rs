@@ -3606,7 +3606,7 @@ impl RuleRunner
     for crate::rules::unicorn::prefer_import_meta_properties::PreferImportMetaProperties
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::MetaProperty]));
+        Some(&AstTypesBitset::from_types(&[AstType::ImportMeta]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

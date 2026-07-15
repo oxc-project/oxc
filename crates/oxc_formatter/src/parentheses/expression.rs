@@ -23,7 +23,8 @@ impl NeedsParentheses<'_> for AstNode<'_, Expression<'_>> {
             AstNodes::StringLiteral(it) => it.needs_parentheses(f),
             AstNodes::TemplateLiteral(it) => it.needs_parentheses(f),
             AstNodes::IdentifierReference(it) => it.needs_parentheses(f),
-            AstNodes::MetaProperty(it) => it.needs_parentheses(f),
+            AstNodes::ImportMeta(it) => it.needs_parentheses(f),
+            AstNodes::NewTarget(it) => it.needs_parentheses(f),
             AstNodes::Super(it) => it.needs_parentheses(f),
             AstNodes::ArrayExpression(it) => it.needs_parentheses(f),
             AstNodes::ArrowFunctionExpression(it) => it.needs_parentheses(f),
@@ -205,7 +206,14 @@ impl NeedsParentheses<'_> for AstNode<'_, TemplateLiteral<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, MetaProperty<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, ImportMeta> {
+    #[inline]
+    fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
+        false
+    }
+}
+
+impl NeedsParentheses<'_> for AstNode<'_, NewTarget> {
     #[inline]
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
         false

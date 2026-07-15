@@ -1,7 +1,7 @@
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue},
     side_effects::MayHaveSideEffects,

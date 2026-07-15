@@ -157,6 +157,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
 
   ⚠ eslint(no-throw-literal): Expected an error object to be thrown
+   ╭─[no_throw_literal.tsx:1:37]
+ 1 │ let err: Error | null = null; throw err; err = new Error('My error');
+   ·                                     ───
+   ╰────
+  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
+
+  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
    ╭─[no_throw_literal.tsx:1:44]
  1 │ let foo = 'foo' as unknown as Error; throw foo;
    ·                                            ───

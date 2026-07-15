@@ -139,6 +139,7 @@ fn test() {
         "throw obj?.foo() satisfies Direction",
         // local reference resolution
         "const err = new Error(); throw err;",
+        "let err: Error | null = null; err = new Error('My error'); throw err;",
         "function main(x) { throw x; }", // cannot determine type of x
         "function main(x: any) { throw x; }",
         "function main(x: TypeError) { throw x; }",
@@ -169,6 +170,7 @@ fn test() {
         "throw 'error' satisfies Error",
         // local reference resolution
         "let foo = 'foo'; throw foo;",
+        "let err: Error | null = null; throw err; err = new Error('My error');",
         "let foo = 'foo' as unknown as Error; throw foo;",
         "function foo() {}; throw foo;",
         "const foo = () => {}; throw foo;",

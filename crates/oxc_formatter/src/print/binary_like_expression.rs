@@ -158,7 +158,8 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     | AstNodes::CallExpression(_)
                     | AstNodes::NewExpression(_)
                     | AstNodes::ImportExpression(_)
-                    | AstNodes::MetaProperty(_)
+                    | AstNodes::ImportMeta(_)
+                    | AstNodes::NewTarget(_)
             ),
             // For argument of `Boolean()` calls.
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {

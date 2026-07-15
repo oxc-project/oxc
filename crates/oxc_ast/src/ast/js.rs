@@ -96,74 +96,77 @@ pub enum Expression<'a> {
     /// See [`IdentifierReference`] for AST node details.
     Identifier(Box<'a, IdentifierReference<'a>>) = 7,
 
-    /// See [`MetaProperty`] for AST node details.
-    MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
     /// See [`Super`] for AST node details.
-    Super(Box<'a, Super>) = 9,
+    Super(Box<'a, Super>) = 8,
 
     /// See [`ArrayExpression`] for AST node details.
-    ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+    ArrayExpression(Box<'a, ArrayExpression<'a>>) = 9,
     /// See [`ArrowFunctionExpression`] for AST node details.
-    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 10,
     /// See [`AssignmentExpression`] for AST node details.
-    AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+    AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 11,
     /// See [`AwaitExpression`] for AST node details.
-    AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+    AwaitExpression(Box<'a, AwaitExpression<'a>>) = 12,
     /// See [`BinaryExpression`] for AST node details.
-    BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+    BinaryExpression(Box<'a, BinaryExpression<'a>>) = 13,
     /// See [`CallExpression`] for AST node details.
-    CallExpression(Box<'a, CallExpression<'a>>) = 15,
+    CallExpression(Box<'a, CallExpression<'a>>) = 14,
     /// See [`ChainExpression`] for AST node details.
-    ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+    ChainExpression(Box<'a, ChainExpression<'a>>) = 15,
     /// See [`Class`] for AST node details.
-    ClassExpression(Box<'a, Class<'a>>) = 17,
+    ClassExpression(Box<'a, Class<'a>>) = 16,
     /// See [`ConditionalExpression`] for AST node details.
-    ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+    ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 17,
     /// See [`Function`] for AST node details.
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionExpression(Box<'a, Function<'a>>) = 19,
+    FunctionExpression(Box<'a, Function<'a>>) = 18,
     /// See [`ImportExpression`] for AST node details.
-    ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+    ImportExpression(Box<'a, ImportExpression<'a>>) = 19,
     /// See [`LogicalExpression`] for AST node details.
-    LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+    LogicalExpression(Box<'a, LogicalExpression<'a>>) = 20,
     /// See [`NewExpression`] for AST node details.
-    NewExpression(Box<'a, NewExpression<'a>>) = 22,
+    NewExpression(Box<'a, NewExpression<'a>>) = 21,
     /// See [`ObjectExpression`] for AST node details.
-    ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+    ObjectExpression(Box<'a, ObjectExpression<'a>>) = 22,
     /// See [`ParenthesizedExpression`] for AST node details.
-    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 23,
     /// See [`SequenceExpression`] for AST node details.
-    SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+    SequenceExpression(Box<'a, SequenceExpression<'a>>) = 24,
     /// See [`TaggedTemplateExpression`] for AST node details.
-    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 25,
     /// See [`ThisExpression`] for AST node details.
-    ThisExpression(Box<'a, ThisExpression>) = 27,
+    ThisExpression(Box<'a, ThisExpression>) = 26,
     /// See [`UnaryExpression`] for AST node details.
-    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 27,
     /// See [`UpdateExpression`] for AST node details.
-    UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+    UpdateExpression(Box<'a, UpdateExpression<'a>>) = 28,
     /// See [`YieldExpression`] for AST node details.
-    YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+    YieldExpression(Box<'a, YieldExpression<'a>>) = 29,
     /// See [`PrivateInExpression`] for AST node details.
-    PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
+    PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 30,
+
+    /// See [`ImportMeta`] for AST node details.
+    ImportMeta(Box<'a, ImportMeta>) = 31,
+    /// See [`NewTarget`] for AST node details.
+    NewTarget(Box<'a, NewTarget>) = 32,
 
     /// See [`JSXElement`] for AST node details.
-    JSXElement(Box<'a, JSXElement<'a>>) = 32,
+    JSXElement(Box<'a, JSXElement<'a>>) = 33,
     /// See [`JSXFragment`] for AST node details.
-    JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
+    JSXFragment(Box<'a, JSXFragment<'a>>) = 34,
 
     /// See [`TSAsExpression`] for AST node details.
-    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 35,
     /// See [`TSSatisfiesExpression`] for AST node details.
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 36,
     /// See [`TSTypeAssertion`] for AST node details.
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 37,
     /// See [`TSNonNullExpression`] for AST node details.
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 38,
     /// See [`TSInstantiationExpression`] for AST node details.
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 39,
     /// See [`V8IntrinsicExpression`] for AST node details.
-    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
+    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 40,
 
     // `MemberExpression` variants added here by `#[ast]` macro
     INHERIT(MemberExpression<'a>),
@@ -607,18 +610,44 @@ pub struct NewExpression<'a> {
     pub pure: bool,
 }
 
-/// `import.meta` in `console.log(import.meta);`
-///
-/// Represents a meta property. The following syntaxes are supported. `import.meta`, `new.target`.
+/// `import.meta` in `console.log(import.meta);`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
-pub struct MetaProperty<'a> {
+#[estree(
+    rename = "MetaProperty",
+    ts_alias = "MetaProperty",
+    add_ts_def = "
+        interface MetaProperty extends Span {
+            type: 'MetaProperty';
+            meta: IdentifierName;
+            property: IdentifierName;
+            parent/* IF !LINTER */?/* END IF */: Node;
+        }
+    ",
+    add_fields(meta = ImportMetaMeta, property = ImportMetaProperty),
+    field_order(meta, property, span),
+)]
+pub struct ImportMeta {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub meta: IdentifierName<'a>,
-    pub property: IdentifierName<'a>,
+}
+
+/// `new.target` in `function F() { return new.target; }`.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "MetaProperty",
+    ts_alias = "MetaProperty",
+    add_fields(meta = NewTargetMeta, property = NewTargetProperty),
+    field_order(meta, property, span),
+)]
+pub struct NewTarget {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
 }
 
 /// `...[1, 2]` in `const arr = [...[1, 2]];`

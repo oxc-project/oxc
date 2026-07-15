@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write as _,
     fs::File,
     io::{self, Write},
 };
@@ -11,7 +12,7 @@ use oxc_formatter::{JsFormatOptions, format_program, parse_for_format};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_tasks_common::{TestFiles, project_root};
+use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer::{TransformOptions, Transformer};
 
 use std::alloc::{GlobalAlloc, Layout};
@@ -24,8 +25,8 @@ struct TrackedAllocator;
 
 /// Atomic counter.
 ///
-/// Mainly just a wrapper around `AtomicUsize`, but `increment` method ensures that counter value
-/// doesn't wrap around if counter reaches `usize::MAX`.
+/// Mainly just a wrapper around `AtomicUsize`, but its methods saturate at `usize::MAX`
+/// instead of wrapping around.
 /// This is practically infeasible on 64-bit systems, but might just be possible on 32-bit.
 ///
 /// Note: `SeqCst` ordering may be stronger than required, but performance is not the primary concern here,
@@ -51,11 +52,8 @@ impl AtomicCounter {
 }
 
 /// Number of system allocations
-// NOTE: We are only tracking the number of system allocations here, and not the number of bytes that are allocated.
-// The original version of this tool did track the number of bytes, but there was some variance between platforms that
-// made it less reliable as a measurement. In general, the number of allocations is closely correlated with the size of
-// allocations, so just tracking the number of allocations is sufficient for our purposes.
 static NUM_ALLOC: AtomicCounter = AtomicCounter::new();
+/// Number of system reallocations
 static NUM_REALLOC: AtomicCounter = AtomicCounter::new();
 
 fn reset_global_allocs() {
@@ -98,6 +96,19 @@ unsafe impl GlobalAlloc for TrackedAllocator {
 
 /// Stores all of the memory allocation stats that will be printed for each file.
 #[derive(Debug)]
+struct StageStats {
+    /// Deltas of the allocation counters across the measured operation
+    counters: AllocatorStats,
+    /// Bytes used in the measured `Allocator`'s arena at the end of the measured operation.
+    /// A point-in-time gauge read after the operation completes, not a diffed counter.
+    /// The arena is not reset between stages, so this includes content from earlier stages
+    /// (e.g. the AST the parser built).
+    arena_used_bytes: usize,
+}
+
+/// Counters of allocations, captured from the global and arena allocators.
+/// Used both as a raw snapshot and as per-operation deltas (see `record_stats_diff`).
+#[derive(Debug)]
 struct AllocatorStats {
     /// Number of allocations made by system allocator, excluding arena chunk allocations
     sys_allocs: usize,
@@ -123,19 +134,12 @@ fn test() {
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
-    // Width of each column in the output table
-    let width = 14;
-    // Width of the longest file name, used for formatting the first column
-    let fixture_width = files.files().iter().map(|file| file.file_name.len()).max().unwrap();
 
-    // Table header, which should be same for each file
-    let table_header = format_table_header(fixture_width, width);
-
-    let mut parser_out = table_header.clone();
-    let mut semantic_out = table_header.clone();
-    let mut transformer_out = table_header.clone();
-    let mut minifier_out = table_header.clone();
-    let mut formatter_out = table_header;
+    let mut parser_out = String::new();
+    let mut semantic_out = String::new();
+    let mut transformer_out = String::new();
+    let mut minifier_out = String::new();
+    let mut formatter_out = String::new();
 
     let mut allocator = Allocator::default();
 
@@ -193,25 +197,13 @@ pub fn run() -> Result<(), io::Error> {
             parsed
         });
 
-        parser_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &parser_stats,
-            fixture_width,
-            width,
-        ));
+        parser_out.push_str(&format_stats(file, &parser_stats));
 
         let ((), semantic_stats) = record_stats_in(&allocator, || {
             let _ = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
         });
 
-        semantic_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &semantic_stats,
-            fixture_width,
-            width,
-        ));
+        semantic_out.push_str(&format_stats(file, &semantic_stats));
 
         // Match the production compiler path for transforms: transformers add scopes, symbols, and
         // references, so semantic analysis reserves excess capacity up front.
@@ -233,25 +225,13 @@ pub fn run() -> Result<(), io::Error> {
             .build_with_scoping(scoping, &mut parsed.program);
         });
 
-        transformer_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &transformer_stats,
-            fixture_width,
-            width,
-        ));
+        transformer_out.push_str(&format_stats(file, &transformer_stats));
 
         let ((), minifier_stats) = record_stats_in(&allocator, || {
             Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
         });
 
-        minifier_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &minifier_stats,
-            fixture_width,
-            width,
-        ));
+        minifier_out.push_str(&format_stats(file, &minifier_stats));
 
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
         // so re-parse with the formatter's parse options before measuring the formatter
@@ -268,13 +248,7 @@ pub fn run() -> Result<(), io::Error> {
                 .into_code()
         });
 
-        formatter_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &formatter_stats,
-            fixture_width,
-            width,
-        ));
+        formatter_out.push_str(&format_stats(file, &formatter_stats));
     }
 
     write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
@@ -292,13 +266,10 @@ fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let sys_allocs = NUM_ALLOC.get();
     let sys_reallocs = NUM_REALLOC.get();
     #[cfg(not(feature = "is_all_features"))]
-    let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
+    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) =
+        (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_count());
     #[cfg(feature = "is_all_features")]
-    let (arena_allocs, arena_reallocs) = (0, 0);
-    #[cfg(not(feature = "is_all_features"))]
-    let arena_chunk_allocs = Allocator::global_chunk_allocation_count();
-    #[cfg(feature = "is_all_features")]
-    let arena_chunk_allocs = 0;
+    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) = ((0, 0), 0);
 
     AllocatorStats { sys_allocs, sys_reallocs, arena_chunk_allocs, arena_allocs, arena_reallocs }
 }
@@ -328,53 +299,49 @@ fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorS
 }
 
 /// Records the allocations stats before and after the given closure is executed.
-fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, AllocatorStats)
+fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, StageStats)
 where
     F: FnOnce() -> R,
 {
     let before_stats = record_stats(allocator);
     let result = f();
-    let diff_stats = record_stats_diff(allocator, &before_stats);
+    let counters = record_stats_diff(allocator, &before_stats);
+    let stats = StageStats { counters, arena_used_bytes: allocator.used_bytes() };
 
-    (result, diff_stats)
+    (result, stats)
 }
 
-/// Formats a single row of the allocator stats table
-fn format_table_row(
-    file_name: &str,
-    file_size: usize,
-    stats: &AllocatorStats,
-    fixture_width: usize,
-    width: usize,
-) -> String {
-    format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$}\n\n",
-        file_name,
-        format_size(file_size, DECIMAL),
-        stats.sys_allocs,
-        stats.sys_reallocs,
-        stats.arena_allocs,
-        stats.arena_reallocs,
-        fixture_width = fixture_width,
-        width = width
-    )
-}
+/// Formats the allocator stats for one file as a block of `label: value` lines.
+///
+/// One value per line, with no column alignment, so that a change to one value produces
+/// a one-line diff, and adding a new value later doesn't reformat existing lines.
+/// File names stay at column 0 so they appear in git hunk headers.
+fn format_stats(file: &TestFile, stats: &StageStats) -> String {
+    let counters = &stats.counters;
+    let values = [
+        ("file size", format_size(file.source_text.len(), DECIMAL)),
+        ("sys allocs", counters.sys_allocs.to_string()),
+        ("sys reallocs", counters.sys_reallocs.to_string()),
+        ("arena allocs", counters.arena_allocs.to_string()),
+        ("arena reallocs", counters.arena_reallocs.to_string()),
+        ("arena size", format_bytes(stats.arena_used_bytes)),
+    ];
 
-fn format_table_header(fixture_width: usize, width: usize) -> String {
-    let mut out = format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} \n",
-        "File",
-        "File size",
-        "Sys allocs",
-        "Sys reallocs",
-        "Arena allocs",
-        "Arena reallocs",
-        fixture_width = fixture_width,
-        width = width
-    );
-    out.push_str(&str::repeat("-", width * 6 + fixture_width + 13));
+    let mut out = String::new();
+    out.push_str(&file.file_name);
+    out.push('\n');
+    for (label, value) in values {
+        writeln!(out, "  {label}: {value}").unwrap();
+    }
     out.push('\n');
     out
+}
+
+/// Formats a byte count as the exact number followed by a human-readable size,
+/// e.g. `12582912 (12.58 MB)`. The exact number is what diffs; the human-readable
+/// form is only there for scanning.
+fn format_bytes(bytes: usize) -> String {
+    format!("{bytes} ({})", format_size(bytes, DECIMAL))
 }
 
 fn write_snapshot(file_path: &str, contents: &str) -> Result<(), io::Error> {

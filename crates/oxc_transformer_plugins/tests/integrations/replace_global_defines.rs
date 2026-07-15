@@ -282,8 +282,7 @@ fn dot_with_postfix_mixed() {
 
 #[test]
 fn meta_property_not_new_target() {
-    // `new.target` is also a `MetaProperty`, but an `import.meta.*` define must only match
-    // `import.meta`, never `new.target`.
+    // An `import.meta.*` define must not match the distinct `new.target` expression.
     let config = config(&[("import.meta.env", "__foo__"), ("import.meta.env.*", "undefined")]);
     test(
         "export function f() { return new.target.env; }",
@@ -368,7 +367,7 @@ fn computed_key_dispatches_to_bucket() {
 #[test]
 fn global_meta_dot_define_does_not_match_import_meta() {
     // A dot define rooted at a global `meta` shares the bucket key `X` with nothing else, but its
-    // chain walks onto a `MetaProperty`. The `import.meta` guard must keep `import.meta.X` from
+    // chain walks onto `import.meta`. The root guard must keep `import.meta.X` from
     // matching a `meta.X` define meant for a global identifier named `meta`.
     let c = config(&[("meta.X", "1")]);
     test("foo(meta.X)", "foo(1)", &c);

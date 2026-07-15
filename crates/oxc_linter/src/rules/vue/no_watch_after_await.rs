@@ -7,7 +7,7 @@ use oxc_ast::{
         Expression, ExpressionStatement, Function, ObjectExpression,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
@@ -164,7 +164,7 @@ impl<'a> WatchAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for WatchAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         self.found = true;
     }
@@ -174,7 +174,7 @@ impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
     // `[watch()]` are wrapped in another expression and are intentionally ignored.
     fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
         if !self.found {
-            walk::walk_expression_statement(self, stmt);
+            walk_js::walk_expression_statement(self, stmt);
             return;
         }
 
@@ -183,25 +183,25 @@ impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
             Expression::CallExpression(c) => c,
             Expression::ChainExpression(chain) => {
                 let ChainElement::CallExpression(c) = &chain.expression else {
-                    walk::walk_expression_statement(self, stmt);
+                    walk_js::walk_expression_statement(self, stmt);
                     return;
                 };
                 c
             }
             _ => {
-                walk::walk_expression_statement(self, stmt);
+                walk_js::walk_expression_statement(self, stmt);
                 return;
             }
         };
 
         let Some(ident) = call_expr.callee.get_inner_expression().get_identifier_reference() else {
-            walk::walk_expression_statement(self, stmt);
+            walk_js::walk_expression_statement(self, stmt);
             return;
         };
 
         let reference = self.scoping.get_reference(ident.reference_id());
         let Some(symbol_id) = reference.symbol_id() else {
-            walk::walk_expression_statement(self, stmt);
+            walk_js::walk_expression_statement(self, stmt);
             return;
         };
 
@@ -210,7 +210,7 @@ impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
         {
             self.errors.push((call_expr.span, name_span.name().to_string()));
         }
-        walk::walk_expression_statement(self, stmt);
+        walk_js::walk_expression_statement(self, stmt);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

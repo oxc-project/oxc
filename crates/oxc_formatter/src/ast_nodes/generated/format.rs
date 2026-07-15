@@ -122,16 +122,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::MetaProperty(inner) => {
-                allocator
-                    .alloc(AstNode::<MetaProperty> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
-            }
             Expression::Super(inner) => {
                 allocator
                     .alloc(AstNode::<Super> {
@@ -355,6 +345,26 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
             Expression::PrivateInExpression(inner) => {
                 allocator
                     .alloc(AstNode::<PrivateInExpression> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::ImportMeta(inner) => {
+                allocator
+                    .alloc(AstNode::<ImportMeta> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::NewTarget(inner) => {
+                allocator
+                    .alloc(AstNode::<NewTarget> {
                         inner,
                         parent,
                         allocator,
@@ -907,7 +917,27 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MetaProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportMeta> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewTarget> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {

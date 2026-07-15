@@ -521,10 +521,8 @@ impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_meta_property(&mut self, it: &oxc_ast::ast::MetaProperty<'a>) {
-        if it.meta.name == "new" && it.property.name == "target" {
-            self.has_lexical_identifier = true;
-        }
+    fn visit_new_target(&mut self, _it: &oxc_ast::ast::NewTarget) {
+        self.has_lexical_identifier = true;
     }
 
     fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {

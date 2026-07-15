@@ -1009,7 +1009,7 @@ pub fn is_simple_module_import(
                             Expression::Identifier(ident) if ident.name.as_str() == "require" => {
                                 // `require.resolve("foo")`
                             }
-                            Expression::MetaProperty(_) => {
+                            Expression::ImportMeta(_) => {
                                 // `import.meta.resolve("foo")`
                             }
                             _ => return false,

@@ -110,7 +110,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
 
     // Sort: ascending by start, descending by end for ties
     let mut items: Vec<ScopeId> = scope_ids;
-    items.sort_by(|a, b| {
+    items.sort_unstable_by(|a, b| {
         let a_range = &env.scopes[*a].range;
         let b_range = &env.scopes[*b].range;
         let start_diff = a_range.start.cmp(&b_range.start);
