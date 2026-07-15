@@ -1024,7 +1024,7 @@ fn test_flatten_array_spread_elements() {
 }
 
 #[test]
-fn fold_sequence_expression() {
+fn test_fold_sequence_expression() {
     test("(a(), b) + c", "a(), b + c");
     test("(a(), b, c) + d", "a(), b, c + d");
 
@@ -1046,4 +1046,13 @@ fn fold_sequence_expression() {
         "async function a() { await (c(1), d(2), 3) }",
         "async function a() { c(1), d(2), await 3 }",
     );
+
+    test("a = (x, z)", "x, a = z");
+    test_same("a += (x, z)");
+    test_same("a -= (x, z)");
+    test_same("this.#test = (x, z)");
+    test_same("a.b = (x, z)");
+    test_same("a ||= (x, z)");
+    test_same("a ??= (x, z)");
+    test_same("a &&= (x, z)");
 }

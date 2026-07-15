@@ -715,6 +715,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Expression::AssignmentExpression(e) => {
                     Self::minimize_normal_assignment_to_combined_logical_assignment(e, ctx);
                     Self::minimize_normal_assignment_to_combined_assignment(e, ctx);
+                    Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_assignment_to_update_expression(expr, ctx);
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }

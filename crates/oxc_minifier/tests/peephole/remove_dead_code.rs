@@ -273,7 +273,7 @@ fn remove_empty_function() {
     test_options("var foo = () => {}; foo(...a, b)", "[...a], b", &options);
     test_options("var foo = () => {}; foo(...a, ...b)", "[...a], [...b]", &options);
     test_options("var foo = () => {}; x = foo()", "x = void 0", &options);
-    test_options("var foo = () => {}; x = foo(a(), b())", "x = (a(), b(), void 0)", &options);
+    test_options("var foo = () => {}; x = foo(a(), b())", "a(), b(), x = void 0", &options);
     test_options("var foo = function () {}; foo()", "", &options);
 
     test_same_options("function foo({}) {} foo()", &options);
