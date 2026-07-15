@@ -26,7 +26,7 @@ use oxc::react_compiler::{CompilerTarget, DynamicGatingConfig, GatingConfig, Plu
 /// Mirrors the compiler's `PluginOptions`. The deep `environment` configuration
 /// (inference / validation flags) is not surfaced here.
 ///
-/// @see {@link TransformOptions#reactCompiler}
+/// @see {@link PluginsOptions#reactCompiler}
 #[napi(object)]
 #[derive(Default, Debug)]
 pub struct ReactCompilerOptions {
@@ -131,7 +131,8 @@ pub fn resolve(
 /// reach this with anything.
 #[cfg(feature = "react_compiler")]
 fn parse<T: FromStr>(value: &str, option: &str) -> Result<T, String> {
-    T::from_str(value).map_err(|_| format!("Invalid reactCompiler.{option} option: `{value}`."))
+    T::from_str(value)
+        .map_err(|_| format!("Invalid plugins.reactCompiler.{option} option: `{value}`."))
 }
 
 #[cfg(feature = "react_compiler")]
@@ -148,7 +149,7 @@ impl ReactCompilerOptions {
             // `CompilerTarget::Version` takes any string and silently falls back to the
             // React 19 runtime for unrecognized ones, so reject typos here instead.
             if !matches!(target.as_str(), "17" | "18" | "19") {
-                return Err(format!("Invalid reactCompiler.target option: `{target}`."));
+                return Err(format!("Invalid plugins.reactCompiler.target option: `{target}`."));
             }
             options.target = CompilerTarget::Version(target);
         }

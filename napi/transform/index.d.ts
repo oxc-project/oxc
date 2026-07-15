@@ -325,6 +325,18 @@ export interface ModuleRunnerTransformResult {
 export declare function moduleRunnerTransformSync(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): ModuleRunnerTransformResult
 
 export interface PluginsOptions {
+  /**
+   * Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
+   *
+   * `true` enables it with default options; an object enables it with the
+   * given options; `false` or omitted disables it. When enabled, the compiler
+   * runs in its own pass before every other transform, memoizing React
+   * components and hooks.
+   *
+   * Requires a build with the `react_compiler` Cargo feature, which is on by
+   * default; enabling this option against a build without it is an error.
+   */
+  reactCompiler?: boolean | ReactCompilerOptions
   styledComponents?: StyledComponentsOptions
   taggedTemplateEscape?: boolean
 }
@@ -349,7 +361,7 @@ export interface ReactCompilerGating {
  * Mirrors the compiler's `PluginOptions`. The deep `environment` configuration
  * (inference / validation flags) is not surfaced here.
  *
- * @see {@link TransformOptions#reactCompiler}
+ * @see {@link PluginsOptions#reactCompiler}
  */
 export interface ReactCompilerOptions {
   /**
@@ -525,9 +537,9 @@ export declare function transform(filename: string, sourceText: string, options?
  *
  * Options are listed in evaluation order: the source is parsed (`lang`,
  * `sourceType`), declarations are emitted (`typescript.declaration`), then
- * transforms run (`reactCompiler`, `typescript`, `decorator`, `plugins`,
- * `jsx`, `target`), followed by the `inject` and `define` plugins, and
- * finally codegen (`sourcemap`). `helpers` configures the runtime helpers
+ * transforms run (`plugins.reactCompiler`, `typescript`, `decorator`,
+ * `plugins`, `jsx`, `target`), followed by the `inject` and `define` plugins,
+ * and finally codegen (`sourcemap`). `helpers` configures the runtime helpers
  * the transforms emit.
  *
  * @see {@link transform}
@@ -544,17 +556,6 @@ export interface TransformOptions {
   cwd?: string
   /** Set assumptions in order to produce smaller output. */
   assumptions?: CompilerAssumptions
-  /**
-   * Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
-   *
-   * `true` enables it with default options; an object enables it with the
-   * given options; `false` or omitted disables it. When enabled, the compiler
-   * runs as the first transform and memoizes React components and hooks.
-   *
-   * Requires a build with the `react_compiler` Cargo feature, which is on by
-   * default; enabling this option against a build without it is an error.
-   */
-  reactCompiler?: boolean | ReactCompilerOptions
   /**
    * Configure how TypeScript is transformed.
    *

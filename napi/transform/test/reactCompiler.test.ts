@@ -26,10 +26,10 @@ export function Component(props: Props) {
 }
 `;
 
-describe("reactCompiler", () => {
+describe("plugins.reactCompiler", () => {
   it("memoizes, composes with the TS + JSX transforms, and preserves comments", () => {
     const { code, errors } = transformSync("Component.tsx", fixture, {
-      reactCompiler: true,
+      plugins: { reactCompiler: true },
       jsx: { runtime: "automatic" },
     });
 
@@ -59,10 +59,37 @@ describe("reactCompiler", () => {
 
   it("accepts a ReactCompilerOptions object", () => {
     const { code } = transformSync("Component.tsx", fixture, {
-      reactCompiler: { compilationMode: "all" },
+      plugins: { reactCompiler: { compilationMode: "all" } },
     });
     expect(code).toContain("react/compiler-runtime");
     expect(code).toContain("_c(");
+  });
+
+  // It sits under `plugins` for JS callers, but the compiler still runs as its own pass
+  // before the rest of `plugins` — so it composes with its neighbours there.
+  it("composes with the other plugins it is grouped with", () => {
+    const { code, errors } = transformSync(
+      "Component.tsx",
+      `import styled from "styled-components";
+const Box = styled.div\`color: red;\`;
+export function Component() {
+  const [n] = useState(0);
+  return <Box>{n}</Box>;
+}
+`,
+      {
+        plugins: {
+          reactCompiler: true,
+          styledComponents: { displayName: true },
+        },
+        jsx: { runtime: "automatic" },
+      },
+    );
+
+    expect(errors).toEqual([]);
+    // React Compiler memoized, and styled-components still got its displayName.
+    expect(code).toContain("_c(");
+    expect(code).toContain("displayName");
   });
 
   // The `ts_type` annotations constrain the string options at the type level only, so
@@ -75,19 +102,19 @@ describe("reactCompiler", () => {
     ["target", { target: "20" }],
   ])("rejects an unknown `%s` value rather than ignoring it", (option, reactCompiler) => {
     const { code, errors } = transformSync("Component.tsx", fixture, {
-      reactCompiler: reactCompiler as never,
+      plugins: { reactCompiler: reactCompiler as never },
     });
 
     expect(code).toBe("");
     expect(errors).toHaveLength(1);
-    expect(errors[0].message).toContain(`Invalid reactCompiler.${option} option:`);
+    expect(errors[0].message).toContain(`Invalid plugins.reactCompiler.${option} option:`);
   });
 
   // Each option below changes observable output, proving it is forwarded to the compiler.
 
   it("forwards `target` — 17/18 import the standalone runtime package", () => {
     const { code } = transformSync("Component.tsx", fixture, {
-      reactCompiler: { target: "18" },
+      plugins: { reactCompiler: { target: "18" } },
       jsx: { runtime: "automatic" },
     });
     expect(code).toContain("react-compiler-runtime");
@@ -96,8 +123,10 @@ describe("reactCompiler", () => {
 
   it("forwards `gating` — emits a feature-gated component", () => {
     const { code } = transformSync("Component.tsx", fixture, {
-      reactCompiler: {
-        gating: { source: "my-gating-module", importSpecifierName: "isForgetEnabled" },
+      plugins: {
+        reactCompiler: {
+          gating: { source: "my-gating-module", importSpecifierName: "isForgetEnabled" },
+        },
       },
       jsx: { runtime: "automatic" },
     });
@@ -112,13 +141,13 @@ describe("reactCompiler", () => {
 }
 `;
     const optedOut = transformSync("Component.jsx", source, {
-      reactCompiler: true,
+      plugins: { reactCompiler: true },
       jsx: { runtime: "automatic" },
     });
     expect(optedOut.code).not.toContain("_c(");
 
     const overridden = transformSync("Component.jsx", source, {
-      reactCompiler: { ignoreUseNoForget: true },
+      plugins: { reactCompiler: { ignoreUseNoForget: true } },
       jsx: { runtime: "automatic" },
     });
     expect(overridden.code).toContain("_c(");
@@ -134,7 +163,7 @@ function Component() {
 }
 `,
       {
-        reactCompiler: true,
+        plugins: { reactCompiler: true },
         jsx: { runtime: "automatic" },
       },
     );
@@ -157,7 +186,7 @@ function Component(props) {
 }
 `,
       {
-        reactCompiler: true,
+        plugins: { reactCompiler: true },
         jsx: { runtime: "automatic" },
       },
     );
@@ -182,7 +211,7 @@ function Component() {
 }
 `,
       {
-        reactCompiler: true,
+        plugins: { reactCompiler: true },
         jsx: { runtime: "automatic" },
       },
     );
@@ -191,8 +220,8 @@ function Component() {
     expect(code).toContain('E[E["B"] = 2] = "B"');
   });
 
-  it("does nothing when `reactCompiler` is omitted (the default) or `false`", () => {
-    for (const options of [{}, { reactCompiler: false }]) {
+  it("does nothing when omitted (the default), or when `plugins` or the option is absent/false", () => {
+    for (const options of [{}, { plugins: {} }, { plugins: { reactCompiler: false } }]) {
       const { code } = transformSync("Component.tsx", fixture, options);
       expect(code).not.toContain("react/compiler-runtime");
       expect(code).not.toContain("_c(");
