@@ -121,11 +121,19 @@ fn test() {
     let pass = vec![
         ("import * as foo from 'foo'", None),
         ("for (const e of iterate()) { /* ... */ }", None),
+        // Plain `using` (without `await`) is not top-level `await`.
+        ("using foo = x", None),
+        // `await` nested inside any function form is allowed.
         ("async function fn () { const foo = await import('foo') }", None),
         ("async function fn () { for await (const e of asyncIterate()) { /* ... */ } }", None),
         ("const fn = async () => await import('foo')", None),
         ("const fn = async () => { for await (const e of asyncIterate()) { /* ... */ } }", None),
         ("async function f() { await using foo = x }", None),
+        ("class A { async foo () { const bar = await import('bar') } }", None),
+        ("const o = { async foo () { const bar = await import('bar') } }", None),
+        // A top-level `await` inside a nested function is allowed even when the
+        // outer function is not async.
+        ("function outer () { return async function () { await import('foo') } }", None),
         (
             "#!/usr/bin/env node\nconst foo = await import('foo')",
             Some(serde_json::json!([{ "ignoreBin": true }])),
@@ -134,12 +142,23 @@ fn test() {
             "#!/usr/bin/env node\nfor await (const e of asyncIterate()) { /* ... */ }",
             Some(serde_json::json!([{ "ignoreBin": true }])),
         ),
+        (
+            "#!/usr/bin/env node\nawait using foo = x",
+            Some(serde_json::json!([{ "ignoreBin": true }])),
+        ),
     ];
 
     let fail = vec![
         ("const foo = await import('foo')", None),
+        // A bare top-level `await` expression statement (not inside a declaration).
+        ("await import('foo')", None),
         ("for await (const e of asyncIterate()) { /* ... */ }", None),
         ("await using foo = x", None),
+        // `await` nested in non-function statements (block, `if`, loop) is still top-level.
+        ("{ await import('foo') }", None),
+        ("if (cond) { await import('foo') }", None),
+        ("for (const e of iterate()) { await handle(e) }", None),
+        ("{ await using foo = x }", None),
         // `ignoreBin` without a hashbang still reports.
         ("const foo = await import('foo')", Some(serde_json::json!([{ "ignoreBin": true }]))),
         // A hashbang without `ignoreBin` still reports.

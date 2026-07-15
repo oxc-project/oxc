@@ -11,6 +11,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
    ╭─[no_top_level_await.mts:1:1]
+ 1 │ await import('foo')
+   · ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:1]
  1 │ for await (const e of asyncIterate()) { /* ... */ }
    · ───────────────────────────────────────────────────
    ╰────
@@ -20,6 +27,34 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_top_level_await.mts:1:1]
  1 │ await using foo = x
    · ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:3]
+ 1 │ { await import('foo') }
+   ·   ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:13]
+ 1 │ if (cond) { await import('foo') }
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:30]
+ 1 │ for (const e of iterate()) { await handle(e) }
+   ·                              ───────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+
+  ⚠ node(no-top-level-await): Top-level `await` is forbidden in published modules.
+   ╭─[no_top_level_await.mts:1:3]
+ 1 │ { await using foo = x }
+   ·   ───────────────────
    ╰────
   help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
 
