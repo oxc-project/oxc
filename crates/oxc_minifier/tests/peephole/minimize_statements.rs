@@ -126,20 +126,20 @@ fn test_object_property_shorthand_normalisation_skips_proto_setter() {
 
 #[test]
 fn test_handle_switch_statement() {
-    test_same("switch (a()) {}"); // a()
-    test("switch (a) { default: }", "switch (a) {}"); // a;
-    test("switch (a) { default: break;}", "switch (a) {}"); // a;
+    test("switch (a()) {}", "a()");
+    test("switch (a) { default: }", "a;");
+    test("switch (a) { default: break;}", " a;");
     test_same("switch (a) { default: var b; break;}"); // a; var b;
     test_same("switch (a) { default: b()}"); // a; b();
     test_same("switch (a) { default: b(); return;}"); // a, b(); return;
 
-    test("switch (a) { case 1: break;}", "switch (a) {}"); // a;
+    test("switch (a) { case 1: break;}", "a;");
     test_same("switch (a) { case 1: b();}"); // a === 1 && b();
     test_same("switch (a) { case 1: b();break; }"); // a === 1 && b();
     test_same("switch (a) { case 1: b();return; }"); // if (a === 1) { b(); return; }
 
-    test("switch (a) { default: case 1: }", "switch (a) {}"); // a;
-    test("switch (a) { case 1: default: }", "switch (a) {}"); // a;
+    test("switch (a) { default: case 1: }", "a;");
+    test("switch (a) { case 1: default: }", "a;");
     test_same("switch (a) { case 1: default: break; case 2: b()}");
     test_same("switch (a) { case 1: b(); default: c()}"); // a === 1 && b(); c();
     test_same("switch (a) { case 1: b(); default: break; case 2: c()}");
@@ -160,7 +160,7 @@ fn test_handle_switch_statement() {
     ); // a === 1 ? c() : b();
 
     test("switch (a) { case b(): default:}", "switch (a) { case b(): }"); // a, b();
-    test("switch (a) { case 2: case 1: break; default: break;}", "switch (a) {}"); // a;
+    test("switch (a) { case 2: case 1: break; default: break;}", "a;");
     test("switch (a) { case 3: b(); break; case 2: break;}", "switch (a) { case 3: b(); break; }"); // a === 3 && b();
     test("switch (a) { case 3: b(); case 2: break;}", "switch (a) { case 3: b(); }"); // a === 3 && b();
     test_same("switch (a) { case 3: b(); case 2: c(); break;}");

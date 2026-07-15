@@ -29,7 +29,7 @@ fn test_fold_one_child_blocks() {
     test_same("function f(){try{foo()}catch(e){bar(e)}finally{baz()}}");
 
     // Try it out with switch statements
-    test("function f(){switch(x){case 1:break}}", "function f(){switch(x){}}");
+    test("function f(){switch(x){case 1:break}}", "function f(){x;}");
 
     // Do while loops stay in a block if that's where they started
     test(
