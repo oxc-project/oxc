@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -10,8 +12,13 @@ use oxc_ast::{
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
+use oxc_cfg::{
+    EdgeType, InstructionKind, ReturnInstructionKind,
+    graph::{Direction, visit::EdgeRef},
+};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, SymbolId};
+use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
@@ -839,6 +846,127 @@ pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
     ctx.settings().react.is_component_wrapper_function(callee_name)
 }
 
+#[derive(Debug, Default, Clone, Copy)]
+pub struct FunctionReturns {
+    jsx: bool,
+    null: bool,
+}
+
+impl FunctionReturns {
+    pub fn has_jsx(self) -> bool {
+        self.jsx
+    }
+
+    pub fn has_jsx_or_null(self) -> bool {
+        self.jsx || self.null
+    }
+
+    fn add_expression(
+        &mut self,
+        expression: &Expression<'_>,
+        ctx: &LintContext<'_>,
+        visited: &mut FxHashSet<SymbolId>,
+    ) {
+        match expression.get_inner_expression() {
+            Expression::JSXElement(_) | Expression::JSXFragment(_) => self.jsx = true,
+            Expression::CallExpression(call) if is_create_element_call(call) => self.jsx = true,
+            Expression::NullLiteral(_) => self.null = true,
+            Expression::ConditionalExpression(expression) => {
+                self.add_expression(&expression.consequent, ctx, visited);
+                self.add_expression(&expression.alternate, ctx, visited);
+            }
+            Expression::LogicalExpression(expression) => {
+                self.add_expression(&expression.left, ctx, visited);
+                self.add_expression(&expression.right, ctx, visited);
+            }
+            Expression::SequenceExpression(expression) => {
+                if let Some(last) = expression.expressions.last() {
+                    self.add_expression(last, ctx, visited);
+                }
+            }
+            Expression::Identifier(identifier) => {
+                let Some(symbol_id) =
+                    ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
+                else {
+                    return;
+                };
+                if !visited.insert(symbol_id) {
+                    return;
+                }
+                let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+                if let AstKind::VariableDeclarator(declaration) = declaration.kind()
+                    && let Some(initializer) = &declaration.init
+                {
+                    self.add_expression(initializer, ctx, visited);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn function_returns(function: &Function<'_>, ctx: &LintContext<'_>) -> FunctionReturns {
+    cfg_returns(function.node_id(), ctx)
+}
+
+pub fn arrow_function_returns(
+    arrow: &ArrowFunctionExpression<'_>,
+    ctx: &LintContext<'_>,
+) -> FunctionReturns {
+    if let Some(expression) = arrow.get_expression() {
+        let mut returns = FunctionReturns::default();
+        returns.add_expression(expression, ctx, &mut FxHashSet::default());
+        returns
+    } else {
+        cfg_returns(arrow.node_id(), ctx)
+    }
+}
+
+pub fn expression_returns(expression: &Expression<'_>, ctx: &LintContext<'_>) -> FunctionReturns {
+    match expression {
+        Expression::FunctionExpression(function) => function_returns(function, ctx),
+        Expression::ArrowFunctionExpression(arrow) => arrow_function_returns(arrow, ctx),
+        _ => FunctionReturns::default(),
+    }
+}
+
+fn cfg_returns(node_id: NodeId, ctx: &LintContext<'_>) -> FunctionReturns {
+    let cfg = ctx.cfg();
+    let mut returns = FunctionReturns::default();
+    let mut visited_symbols = FxHashSet::default();
+    let mut stack = vec![ctx.nodes().cfg_id(node_id)];
+    let mut seen = FxHashSet::default();
+
+    while let Some(block_id) = stack.pop() {
+        if !seen.insert(block_id) || cfg.basic_block(block_id).is_unreachable() {
+            continue;
+        }
+
+        for instruction in cfg.basic_block(block_id).instructions() {
+            if instruction.kind
+                == InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined)
+                && let Some(return_node_id) = instruction.node_id
+                && let AstKind::ReturnStatement(statement) =
+                    ctx.nodes().get_node(return_node_id).kind()
+                && let Some(argument) = &statement.argument
+            {
+                returns.add_expression(argument, ctx, &mut visited_symbols);
+            }
+        }
+
+        stack.extend(
+            cfg.graph()
+                .edges_directed(block_id, Direction::Outgoing)
+                .filter(|edge| {
+                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                })
+                .map(|edge| edge.target()),
+        );
+    }
+
+    returns
+}
+
 /// Finds the innermost function with JSX in a chain of HOC calls
 #[derive(Debug)]
 pub enum InnermostFunction<'a> {
@@ -867,12 +995,14 @@ pub fn find_innermost_function_with_jsx<'a>(
             None
         }
         Expression::FunctionExpression(func) => {
-            // Check if this function contains JSX
-            if function_contains_jsx(func) { Some(InnermostFunction::Function(func)) } else { None }
+            if function_returns(func, ctx).has_jsx() {
+                Some(InnermostFunction::Function(func))
+            } else {
+                None
+            }
         }
         Expression::ArrowFunctionExpression(arrow_func) => {
-            // Check if this arrow function contains JSX
-            if expression_contains_jsx(expr) {
+            if arrow_function_returns(arrow_func, ctx).has_jsx() {
                 Some(InnermostFunction::ArrowFunction)
             } else {
                 // Check if this arrow function returns another function that contains JSX
