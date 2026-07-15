@@ -8,41 +8,13 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{operator::BinaryOperator, scope::ScopeFlags};
 
 impl<'a> PeepholeOptimizations {
-    /// Attempts to minimize a `switch` statement by applying a series of transformations
-    /// - Removes the trailing `break` statement from the last case of the `switch`, if it's unnecessary.
-    /// - Merges or removes consecutive empty cases within the switch to simplify its structure.
-    /// - Eliminates the entire `switch` statement if it contains no meaningful cases or logic.
-    /// - Converts the `switch` if it contains only one or two cases to `if`/`else` statements.
-    pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::try_remove_last_break_from_case(stmt, ctx);
-        Self::remove_empty_switch(stmt, ctx);
-        Self::fold_switch_with_one_case(stmt, ctx);
-        Self::fold_switch_with_two_cases(stmt, ctx);
-    }
-
     /// Attempts to remove the last `break` statement from the last case of a switch statement.
-    fn try_remove_last_break_from_case(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::SwitchStatement(switch_stmt) = stmt else {
-            return;
-        };
-
+    pub fn try_remove_last_break_from_case(
+        switch_stmt: &mut SwitchStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if let Some(last_case) = switch_stmt.cases.last_mut() {
             Self::remove_last_break(&mut last_case.consequent, ctx);
-        }
-    }
-
-    /// Removes an empty switch statement from the given AST statement.
-    fn remove_empty_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::SwitchStatement(switch_stmt) = stmt else {
-            return;
-        };
-        if switch_stmt.cases.is_empty() {
-            let new_stmt = Statement::new_expression_statement(
-                switch_stmt.span,
-                switch_stmt.discriminant.take_in(ctx),
-                ctx,
-            );
-            ctx.replace_statement(stmt, new_stmt);
         }
     }
 
@@ -53,7 +25,7 @@ impl<'a> PeepholeOptimizations {
     /// - One of the cases represents the `default` case, and the other defines a condition (`test`).
     /// - Both cases can be safely inlined without reordering or modifying program behavior.
     /// - Both cases are terminated properly (e.g., with a `break` statement).
-    fn fold_switch_with_two_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn fold_switch_with_two_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
@@ -111,7 +83,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn fold_switch_with_one_case(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn fold_switch_with_one_case(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
@@ -148,7 +120,7 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     ));
                 }
-                if !Self::is_empty_switch_case(&case.consequent, true) {
+                if !Self::switch_case_is_removable(&case, true, ctx) {
                     stmts.extend(case.consequent);
                 }
                 Statement::new_block_statement_with_scope_id(
@@ -159,22 +131,6 @@ impl<'a> PeepholeOptimizations {
                 )
             };
             ctx.replace_statement(stmt, new_stmt);
-        }
-    }
-
-    pub fn is_empty_switch_case(stmt: &Vec<'a, Statement<'a>>, allow_break: bool) -> bool {
-        if stmt.len() != 1 {
-            return stmt.is_empty();
-        }
-        match stmt.last() {
-            Some(Statement::EmptyStatement(_)) => true,
-            Some(Statement::BlockStatement(block_stmt)) => {
-                Self::is_empty_switch_case(&block_stmt.body, allow_break)
-            }
-            Some(Statement::BreakStatement(break_stmt)) => {
-                break_stmt.label.is_none() && allow_break
-            }
-            _ => false,
         }
     }
 

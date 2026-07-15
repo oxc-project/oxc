@@ -531,7 +531,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     }
                 }
                 Statement::SwitchStatement(_) => {
-                    Self::try_minimize_switch(stmt, ctx);
+                    Self::fold_switch_with_one_case(stmt, ctx);
+                    Self::fold_switch_with_two_cases(stmt, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);

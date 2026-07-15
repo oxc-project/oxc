@@ -142,35 +142,35 @@ fn test_handle_switch_statement() {
     test("switch (a) { case 1: default: }", "a;");
     test_same("switch (a) { case 1: default: break; case 2: b()}");
     test_same("switch (a) { case 1: b(); default: c()}"); // a === 1 && b(); c();
+    test_same("switch (a) { case 1: default: b(); case 2: c();}");
     test_same("switch (a) { case 1: b(); default: break; case 2: c()}");
     test_same("switch (a) { case 1: b(); case 2: break; case 3: c()}");
-    test_same("switch (a) { case 1: b(); break; case 2: c();break;}");
-    test_same("switch (a) { case 1: b(); case 2: b();}");
-    test_same("switch (a) { case 1: var c=2; break;}"); // if (a === 1) { var c=2; }
     test(
-        "switch (a) { case 1: case 2: default: b(); break;}",
-        "switch (a) { default: b(); break;}",
-    ); // a, b();
-
-    test_same("switch (a) { default: break; case 1: break;}"); // a;
-    test_same("switch (a) { default: b();break;case 1: c();break;}"); // a === 1 ? c() : b();
-    test(
-        "switch (a) { default: {b();break;} case 1: {c();break;}}",
-        "switch (a) { default: b();break;case 1: c();break;}",
-    ); // a === 1 ? c() : b();
-
-    test_same("switch (a) { case b(): default:}"); // a, b();
-    test_same("switch (a) { case 2: case 1: break; default: break;}"); // a;
-    test_same("switch (a) { case 3: b(); break; case 2: break;}"); // a === 3 && b();
-    test_same("switch (a) { case 3: b(); case 2: break;}"); // a === 3 && b();
-    test_same("switch (a) { case 3: b(); case 2: c(); break;}");
-    test_same("switch (a) { case 3: b(); case 2: case 1: break;}"); // a === 3 && b();
-    test_same("switch (a) { case 3: b(); case 2: case 1: }"); // a === 3 && b();
-    test_same("switch (a) { case 3: if (b) break }"); // a === 3 && b;
-    test(
-        "switch (a) { case 3: { if(b) {c()} else {break;} }}",
-        "a === 3 && b && c();",
+        "switch (a) { case 1: b(); break; case 2: c();break;}",
+        "switch (a) { case 1: b(); break; case 2: c();}",
     );
+    test_same("switch (x) { default: foo(); case 1: }");
+    test_same("switch (a) { case 1: b(); case 2: b();}");
+    test_same("switch (a) { case 1: case 2: b(); }");
+    test("switch (a) { case 1: var c=2; break;}", "if (a === 1) var c = 2;");
+    test("switch (a) { case 1: case 2: default: b(); break;}", "a, b();");
+
+    test("switch (a) { default: break; case 1: break;}", "a;");
+    test("switch (a) { default: b();break;case 1: c();break;}", "a === 1 ? c() : b();");
+    test("switch (a) { default: {b();break;} case 1: {c();break;}}", "a === 1 ? c() : b();");
+
+    test("switch (a) { case b(): default:}", "switch (a) { case b(): }"); // a, b();
+    test("switch (a) { case 2: case 1: break; default: break;}", "a;");
+    test("switch (a) { case 3: b(); break; case 2: break;}", "a === 3 && b();");
+    test("switch (a) { case 3: b(); case 2: break;}", "a === 3 && b();");
+    test(
+        "switch (a) { case 3: b(); case 2: c(); break;}",
+        "switch (a) { case 3: b(); case 2: c(); }",
+    );
+    test("switch (a) { case 3: b(); case 2: case 1: break;}", "a === 3 && b();");
+    test("switch (a) { case 3: b(); case 2: case 1: }", "a === 3 && b();");
+    test("switch (a) { case 3: if (b) break }", "a === 3 && b;");
+    test("switch (a) { case 3: { if(b) {c()} else {break;} }}", "a === 3 && b && c();");
     test(
         "switch (a) { case 3: { if(b) {c(); break;} else { d(); break;} }}",
         "a === 3 && (b ? c() : d());",
@@ -206,7 +206,7 @@ fn test_handle_switch_statement() {
     test(
         "switch ('r') { case 'r': a();break; case 'r': var x=0;break;}",
         "switch ('r') { case 'r': a(); break; case 'r': var x = 0; }",
-    ); // a();
+    );
     test_same("switch (2) { default: a; case 1: b()}"); // a, b();
     test("switch (1) { case 1: a();break; default: b();}", "a();");
     test_same("switch ('e') { case 'e': case 'f': a();}"); // a();
@@ -230,9 +230,9 @@ fn test_handle_switch_statement() {
     );
     test(
         "switch (1) { case 1: case 2: {break;} case 3: case 4: default: b(); break;}",
-        "switch (1) { case 1: case 2: break; default: b(); break; }",
+        "switch (1) { case 1: case 2: break; default: b(); }",
     );
-    test_same("switch ('d') { case 'foo': foo();break; default: bar();break;}"); // bar()
+    test("switch ('d') { case 'foo': foo();break; default: bar();break;}", "bar();");
     test(
         "switch (0) { case NaN: foobar();break;case -0: foo();break; case 2: bar();break;}",
         "switch (0) { case NaN: foobar();break;case -0: foo();break; case 2: bar();}",

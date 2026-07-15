@@ -526,7 +526,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Mark a switch case subtree as about to be dropped. Walks the entire case —
     /// test expression (if present) and all statements in the consequent. Same contract
     /// as `drop_expression`. Use this helper when removing a case from a switch statement's
-    /// cases vector to properly notify the scope tracking system about dropped references.
+    /// case vector to properly notify the scope tracking system about dropped references.
     #[inline]
     pub fn drop_switch_case(&mut self, switch_case: &SwitchCase<'a>) {
         self.dirty_diff().visit_switch_case(switch_case);
