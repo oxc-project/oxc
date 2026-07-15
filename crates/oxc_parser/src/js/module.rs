@@ -830,13 +830,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ImportDeclarationSpecifier<'a> {
         match self.parse_import_or_export_specifier(ImportOrExport::Import, parent_import_kind) {
             ImportOrExportSpecifier::Import(specifier) => {
-                ImportDeclarationSpecifier::new_import_specifier(
-                    specifier.span,
-                    specifier.imported,
-                    specifier.local,
-                    specifier.import_kind,
-                    self,
-                )
+                ImportDeclarationSpecifier::ImportSpecifier(self.alloc(specifier))
             }
             ImportOrExportSpecifier::Export(_) => unreachable!(),
         }
@@ -947,10 +941,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
+                let local =
+                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self);
+                let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_span),
-                    property_name.unwrap_or_else(|| name.clone()),
-                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self),
+                    imported,
+                    local,
                     kind,
                     self,
                 ))
@@ -963,13 +960,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                let exported = match property_name {
+                let local = match property_name {
                     Some(property_name) => property_name,
-                    None => name.clone(),
+                    None => self.duplicate_module_export_name(&name),
                 };
                 ImportOrExportSpecifier::Export(ExportSpecifier::new(
                     self.end_span(specifier_span),
-                    exported,
+                    local,
                     name,
                     kind,
                     self,
@@ -993,6 +990,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::StringLiteral(literal)
             }
             _ => ModuleExportName::IdentifierName(self.parse_identifier_name()),
+        }
+    }
+
+    /// Build a 2nd [`ModuleExportName`] node matching `name`.
+    ///
+    /// Not `name.clone()` - `clone` copies `node_id` and the ID cells, bypassing the AST builder.
+    fn duplicate_module_export_name(&self, name: &ModuleExportName<'a>) -> ModuleExportName<'a> {
+        match name {
+            ModuleExportName::IdentifierName(ident) => {
+                ModuleExportName::new_identifier_name(ident.span, ident.name, self)
+            }
+            ModuleExportName::IdentifierReference(ident) => {
+                ModuleExportName::new_identifier_reference(ident.span, ident.name, self)
+            }
+            ModuleExportName::StringLiteral(literal) => {
+                ModuleExportName::new_string_literal_with_lone_surrogates(
+                    literal.span,
+                    literal.value,
+                    literal.raw,
+                    literal.lone_surrogates,
+                    self,
+                )
+            }
         }
     }
 
