@@ -72,6 +72,7 @@
     "build-browser-bundle": "node scripts/build-browser-bundle.js",
     "test": "pnpm run test-node run",
     "test-node": "vitest --dir ./test",
+    "test-raw-back": "vitest run --dir ./test raw-transfer-back",
     "test-browser": "vitest -c vitest.config.browser.ts",
     "bench": "vitest bench --run ./bench.bench.js"
   },

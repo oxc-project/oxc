@@ -1,0 +1,15 @@
+raw_transfer_back conformance
+Round trip: parse -> ESTree -> encode -> arena -> ContentEq + codegen equality.
+Regenerate: UPDATE_RAW_TRANSFER_BACK_SNAPSHOT=true pnpm vitest run --dir ./test raw-transfer-back
+
+Suite is pending implementation (`RAW_TRANSFER_BACK_SUPPORTED = false` in
+test/raw-transfer-back-api.ts). No results recorded yet.
+
+test262 Summary:
+Passed: 0/0
+
+acorn-jsx Summary:
+Passed: 0/0
+
+typescript Summary:
+Passed: 0/0
