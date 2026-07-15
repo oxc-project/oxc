@@ -70,7 +70,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut list = ArenaVec::new_in(self);
+        let mark = self.scratch_mark::<FormalParameter<'a>>();
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
 
@@ -143,11 +143,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self,
                 ));
             } else {
-                list.push(self.parse_formal_parameter_with_decorators(func_kind, span, decorators));
+                let parameter =
+                    self.parse_formal_parameter_with_decorators(func_kind, span, decorators);
+                self.scratch_push(parameter);
             }
         }
 
-        (list, rest)
+        (self.scratch_take(mark), rest)
     }
 
     fn parse_formal_parameter_with_decorators(

@@ -9,6 +9,7 @@ use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
+    scratch::{ScratchBuffers, ScratchFor},
 };
 
 #[derive(Clone)]
@@ -387,10 +388,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaVec<'a, T>
     where
         F: FnMut(&mut Self) -> T,
+        ScratchBuffers<'a>: ScratchFor<T>,
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = ArenaVec::new_in(self);
+        let mark = self.scratch_mark::<T>();
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -399,10 +401,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 break;
             }
-            list.push(f(self));
+            let element = f(self);
+            self.scratch_push(element);
         }
         self.expect_closing(close, opening_span);
-        list
+        self.scratch_take(mark)
     }
 
     pub(crate) fn parse_normal_list_breakable<F, T>(
@@ -413,22 +416,65 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaVec<'a, T>
     where
         F: Fn(&mut Self) -> Option<T>,
+        ScratchBuffers<'a>: ScratchFor<T>,
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = ArenaVec::new_in(self);
+        let mark = self.scratch_mark::<T>();
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
             }
             if let Some(e) = f(self) {
-                list.push(e);
+                self.scratch_push(e);
             } else {
                 break;
             }
         }
         self.expect_closing(close, opening_span);
-        list
+        self.scratch_take(mark)
+    }
+
+    /// Parse a list of at least one item separated by `separator`, ending at the first
+    /// token that is not a separator (there is no closing token).
+    pub(crate) fn parse_separated_list<F, T>(
+        &mut self,
+        separator: Kind,
+        mut f: F,
+    ) -> ArenaVec<'a, T>
+    where
+        F: FnMut(&mut Self) -> T,
+        ScratchBuffers<'a>: ScratchFor<T>,
+    {
+        let mark = self.scratch_mark::<T>();
+        loop {
+            let element = f(self);
+            self.scratch_push(element);
+            if !self.eat(separator) {
+                break;
+            }
+        }
+        self.scratch_take(mark)
+    }
+
+    /// Like [`Self::parse_separated_list`], but seeded with an already-parsed first element.
+    pub(crate) fn parse_separated_list_from<F, T>(
+        &mut self,
+        first: T,
+        separator: Kind,
+        mut f: F,
+    ) -> ArenaVec<'a, T>
+    where
+        F: FnMut(&mut Self) -> T,
+        ScratchBuffers<'a>: ScratchFor<T>,
+    {
+        let mark = self.scratch_mark::<T>();
+        self.scratch_push(first);
+        while self.eat(separator) {
+            let element = f(self);
+            self.scratch_push(element);
+        }
+        self.scratch_take(mark)
     }
 
     pub(crate) fn parse_delimited_list<F, T>(
@@ -436,51 +482,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
-        mut f: F,
+        f: F,
     ) -> (ArenaVec<'a, T>, Option<u32>)
     where
         F: FnMut(&mut Self) -> T,
+        ScratchBuffers<'a>: ScratchFor<T>,
     {
-        let mut list = ArenaVec::new_in(self);
-        // Cache cur_kind() to avoid redundant calls in compound checks
-        let kind = self.cur_kind();
-        if kind == close
-            || matches!(kind, Kind::Eof | Kind::Undetermined)
-            || self.fatal_error.is_some()
-        {
-            return (list, None);
-        }
-        list.push(f(self));
-        loop {
-            let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
-                return (list, None);
-            }
-            if kind != separator {
-                self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                    close.to_str(),
-                    separator.to_str(),
-                    kind.to_str(),
-                    self.cur_token().span(),
-                    opening_span,
-                ));
-                return (list, None);
-            }
-            self.advance(separator);
-            if self.cur_kind() == close {
-                let trailing_separator = self.prev_token_end - 1;
-                return (list, Some(trailing_separator));
-            }
-            list.push(f(self));
-        }
+        let mark = self.scratch_mark::<T>();
+        let trailing_separator =
+            self.parse_delimited_list_append(close, separator, opening_span, f);
+        (self.scratch_take(mark), trailing_separator)
     }
 
-    pub(crate) fn parse_delimited_list_into<F, T>(
+    /// Like [`Self::parse_delimited_list`], but appends the elements to the scratch list
+    /// for `T` which the caller has already started: the caller owns the mark, and drains
+    /// its elements and these combined with one `scratch_take`.
+    pub(crate) fn parse_delimited_list_append<F, T>(
         &mut self,
-        list: &mut ArenaVec<'a, T>,
         close: Kind,
         separator: Kind,
         opening_span: Span,
@@ -488,6 +506,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Option<u32>
     where
         F: FnMut(&mut Self) -> T,
+        ScratchBuffers<'a>: ScratchFor<T>,
     {
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
@@ -497,7 +516,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             return None;
         }
-        list.push(f(self));
+        let element = f(self);
+        self.scratch_push(element);
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -521,7 +541,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let trailing_separator = self.prev_token_end - 1;
                 return Some(trailing_separator);
             }
-            list.push(f(self));
+            let element = f(self);
+            self.scratch_push(element);
         }
     }
 
@@ -537,8 +558,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         E: Fn(&mut Self) -> A,
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> OxcDiagnostic,
+        ScratchBuffers<'a>: ScratchFor<A>,
     {
-        let mut list = ArenaVec::new_in(self);
+        let mark = self.scratch_mark::<A>();
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
         loop {
@@ -585,10 +607,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if kind == Kind::Dot3 {
                 rest.replace(parse_rest(self));
             } else {
-                list.push(parse_element(self));
+                let element = parse_element(self);
+                self.scratch_push(element);
             }
         }
 
-        (list, rest)
+        (self.scratch_take(mark), rest)
     }
 }

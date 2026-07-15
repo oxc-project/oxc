@@ -563,25 +563,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 (quasis, ArenaVec::new_in(self))
             }
             Kind::TemplateHead => {
-                let mut expressions = ArenaVec::with_capacity_in(1, self);
-                let mut quasis = ArenaVec::with_capacity_in(2, self);
+                let expressions_mark = self.scratch_mark::<Expression<'a>>();
+                let quasis_mark = self.scratch_mark::<TemplateElement<'a>>();
 
-                quasis.push(self.parse_template_element(tagged));
+                let quasi = self.parse_template_element(tagged);
+                self.scratch_push(quasi);
                 // TemplateHead Expression[+In, ?Yield, ?Await]
                 let expr = self.context_add(Context::In, Self::parse_expr);
-                expressions.push(expr);
+                self.scratch_push(expr);
                 self.re_lex_template_substitution_tail();
                 while self.fatal_error.is_none() {
                     match self.cur_kind() {
                         Kind::TemplateTail => {
-                            quasis.push(self.parse_template_element(tagged));
+                            let quasi = self.parse_template_element(tagged);
+                            self.scratch_push(quasi);
                             break;
                         }
                         Kind::TemplateMiddle => {
-                            quasis.push(self.parse_template_element(tagged));
+                            let quasi = self.parse_template_element(tagged);
+                            self.scratch_push(quasi);
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
                             let expr = self.context_add(Context::In, Self::parse_expr);
-                            expressions.push(expr);
+                            self.scratch_push(expr);
                             self.re_lex_template_substitution_tail();
                         }
                         _ => {
@@ -591,6 +594,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
 
+                let quasis = self.scratch_take(quasis_mark);
+                let expressions = self.scratch_take(expressions_mark);
                 (quasis, expressions)
             }
             _ => unreachable!("parse_template_literal"),
@@ -1648,12 +1653,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         first_expression: Expression<'a>,
     ) -> Expression<'a> {
-        let mut expressions = ArenaVec::with_capacity_in(2, self);
-        expressions.push(first_expression);
-        while self.eat(Kind::Comma) {
-            let expression = self.parse_assignment_expression_or_higher();
-            expressions.push(expression);
-        }
+        let expressions = self.parse_separated_list_from(
+            first_expression,
+            Kind::Comma,
+            Self::parse_assignment_expression_or_higher,
+        );
         Expression::new_sequence_expression(self.end_span(span), expressions, self)
     }
 
@@ -1757,11 +1761,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_decorators(&mut self) -> ArenaVec<'a, Decorator<'a>> {
         if self.at(Kind::At) {
-            let mut decorators = ArenaVec::with_capacity_in(1, self);
+            let mark = self.scratch_mark::<Decorator<'a>>();
             while self.at(Kind::At) {
-                decorators.push(self.parse_decorator());
+                let decorator = self.parse_decorator();
+                self.scratch_push(decorator);
             }
-            decorators
+            self.scratch_take(mark)
         } else {
             ArenaVec::new_in(self)
         }
