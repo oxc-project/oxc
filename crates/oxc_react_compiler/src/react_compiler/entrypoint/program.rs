@@ -2715,7 +2715,7 @@ fn ox_add_imports_to_program<'a>(
     }
 
     let mut sorted_modules: Vec<_> = imports.iter().collect();
-    sorted_modules.sort_by_key(|(a, _)| a.cow_to_lowercase());
+    sorted_modules.sort_unstable_by_key(|(a, _)| a.cow_to_lowercase());
 
     let is_module = matches!(program.source_type.module_kind(), oxc_span::ModuleKind::Module);
 
@@ -2723,7 +2723,7 @@ fn ox_add_imports_to_program<'a>(
 
     for (module_name, imports_map) in sorted_modules {
         let mut sorted_imports: Vec<_> = imports_map.values().collect();
-        sorted_imports.sort_by(|a, b| a.imported.as_str().cmp(b.imported.as_str()));
+        sorted_imports.sort_unstable_by(|a, b| a.imported.as_str().cmp(b.imported.as_str()));
 
         if let Some(&idx) = existing_import_indices.get(module_name.as_str()) {
             // Merge into the existing import declaration.

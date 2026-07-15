@@ -1098,7 +1098,7 @@ fn validate_dependencies(
     types: &IndexSlice<TypeId, [Type<'_>]>,
 ) -> Result<Option<OxcDiagnostic>, OxcDiagnostic> {
     // Sort dependencies by name and path
-    inferred.sort_by(|a, b| {
+    inferred.sort_unstable_by(|a, b| {
         match (a, b) {
             (
                 InferredDependency::Global { binding: ab },

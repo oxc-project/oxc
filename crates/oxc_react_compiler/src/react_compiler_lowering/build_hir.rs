@@ -419,7 +419,7 @@ fn lower_block_statement_inner<'a>(
         }
 
         // Sort by first reference position to match TS traversal order
-        will_hoist.sort_by_key(|h| h.first_ref_span.start);
+        will_hoist.sort_unstable_by_key(|h| h.first_ref_span.start);
 
         // Emit DeclareContext for hoisted bindings
         for info in &will_hoist {
@@ -3343,7 +3343,7 @@ fn gather_captured_context(
     // Sort captured entries by source position so context declarations appear
     // in source order, matching the TS compiler's position-ordered traversal.
     let mut sorted: Vec<_> = captured.into_iter().collect();
-    sorted.sort_by_key(|(_, (pos, _))| *pos);
+    sorted.sort_unstable_by_key(|(_, (pos, _))| *pos);
 
     sorted.into_iter().map(|(sid, (_, span))| (sid, span)).collect()
 }

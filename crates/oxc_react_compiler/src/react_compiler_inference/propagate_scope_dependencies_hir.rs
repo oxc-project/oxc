@@ -1435,7 +1435,7 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
         // instruction-based entries, and the first insertion determines the
         // root access type.
         let mut sorted_deps: Vec<&ReactiveScopeDependency> = hoistable_objects.collect();
-        sorted_deps.sort_by(|a, b| {
+        sorted_deps.sort_unstable_by(|a, b| {
             let a_optional = !a.path.is_empty() && a.path[0].optional;
             let b_optional = !b.path.is_empty() && b.path[0].optional;
             b_optional.cmp(&a_optional)
