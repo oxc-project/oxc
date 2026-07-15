@@ -23,11 +23,18 @@ use crate::{Allocator, arena::Arena};
 /// the operation being measured, so their counters cannot be read after the operation completes.
 static NUM_CHUNK_ALLOC: AtomicUsize = AtomicUsize::new(0);
 
-/// Record that a chunk was allocated from the system allocator.
-pub fn record_chunk_allocation() {
-    // Counter maxes out at `usize::MAX`, but if there's that many allocations,
+/// Total size in bytes of all chunks [`Arena`]s have requested from the system allocator.
+///
+/// A global counter, for the same reason as [`NUM_CHUNK_ALLOC`].
+static NUM_CHUNK_ALLOC_BYTES: AtomicUsize = AtomicUsize::new(0);
+
+/// Record that a chunk of `size` bytes was allocated from the system allocator.
+pub fn record_chunk_allocation(size: usize) {
+    // Counters max out at `usize::MAX`, but if there's that many allocations,
     // the exact number is not important
     NUM_CHUNK_ALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |count| count.saturating_add(1));
+    NUM_CHUNK_ALLOC_BYTES
+        .update(Ordering::Relaxed, Ordering::Relaxed, |total| total.saturating_add(size));
 }
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
@@ -91,9 +98,10 @@ impl Allocator {
         self.arena().get_allocation_stats()
     }
 
-    /// Get number of chunks all [`Arena`]s have requested from the system allocator, in total.
+    /// Get number and total size in bytes of chunks all [`Arena`]s have requested from
+    /// the system allocator, as `(count, bytes)`.
     #[doc(hidden)]
-    pub fn global_chunk_allocation_count() -> usize {
-        NUM_CHUNK_ALLOC.load(Ordering::Relaxed)
+    pub fn global_chunk_allocation_stats() -> (usize, usize) {
+        (NUM_CHUNK_ALLOC.load(Ordering::Relaxed), NUM_CHUNK_ALLOC_BYTES.load(Ordering::Relaxed))
     }
 }
