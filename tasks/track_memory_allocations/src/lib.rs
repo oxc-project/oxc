@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write as _,
     fs::File,
     io::{self, Write},
 };
@@ -123,19 +124,12 @@ fn test() {
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
-    // Width of each column in the output table
-    let width = 14;
-    // Width of the longest file name, used for formatting the first column
-    let fixture_width = files.files().iter().map(|file| file.file_name.len()).max().unwrap();
 
-    // Table header, which should be same for each file
-    let table_header = format_table_header(fixture_width, width);
-
-    let mut parser_out = table_header.clone();
-    let mut semantic_out = table_header.clone();
-    let mut transformer_out = table_header.clone();
-    let mut minifier_out = table_header.clone();
-    let mut formatter_out = table_header;
+    let mut parser_out = String::new();
+    let mut semantic_out = String::new();
+    let mut transformer_out = String::new();
+    let mut minifier_out = String::new();
+    let mut formatter_out = String::new();
 
     let mut allocator = Allocator::default();
 
@@ -193,24 +187,20 @@ pub fn run() -> Result<(), io::Error> {
             parsed
         });
 
-        parser_out.push_str(&format_table_row(
+        parser_out.push_str(&format_stats(
             file.file_name.as_str(),
             file.source_text.len(),
             &parser_stats,
-            fixture_width,
-            width,
         ));
 
         let ((), semantic_stats) = record_stats_in(&allocator, || {
             let _ = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
         });
 
-        semantic_out.push_str(&format_table_row(
+        semantic_out.push_str(&format_stats(
             file.file_name.as_str(),
             file.source_text.len(),
             &semantic_stats,
-            fixture_width,
-            width,
         ));
 
         // Match the production compiler path for transforms: transformers add scopes, symbols, and
@@ -233,24 +223,20 @@ pub fn run() -> Result<(), io::Error> {
             .build_with_scoping(scoping, &mut parsed.program);
         });
 
-        transformer_out.push_str(&format_table_row(
+        transformer_out.push_str(&format_stats(
             file.file_name.as_str(),
             file.source_text.len(),
             &transformer_stats,
-            fixture_width,
-            width,
         ));
 
         let ((), minifier_stats) = record_stats_in(&allocator, || {
             Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
         });
 
-        minifier_out.push_str(&format_table_row(
+        minifier_out.push_str(&format_stats(
             file.file_name.as_str(),
             file.source_text.len(),
             &minifier_stats,
-            fixture_width,
-            width,
         ));
 
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
@@ -268,12 +254,10 @@ pub fn run() -> Result<(), io::Error> {
                 .into_code()
         });
 
-        formatter_out.push_str(&format_table_row(
+        formatter_out.push_str(&format_stats(
             file.file_name.as_str(),
             file.source_text.len(),
             &formatter_stats,
-            fixture_width,
-            width,
         ));
     }
 
@@ -339,40 +323,26 @@ where
     (result, diff_stats)
 }
 
-/// Formats a single row of the allocator stats table
-fn format_table_row(
-    file_name: &str,
-    file_size: usize,
-    stats: &AllocatorStats,
-    fixture_width: usize,
-    width: usize,
-) -> String {
-    format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$}\n\n",
-        file_name,
-        format_size(file_size, DECIMAL),
-        stats.sys_allocs,
-        stats.sys_reallocs,
-        stats.arena_allocs,
-        stats.arena_reallocs,
-        fixture_width = fixture_width,
-        width = width
-    )
-}
+/// Formats the allocator stats for one file as a block of `label: value` lines.
+///
+/// One value per line, with no column alignment, so that a change to one value produces
+/// a one-line diff, and adding a new value later doesn't reformat existing lines.
+/// File names stay at column 0 so they appear in git hunk headers.
+fn format_stats(file_name: &str, file_size: usize, stats: &AllocatorStats) -> String {
+    let values = [
+        ("file size", format_size(file_size, DECIMAL)),
+        ("sys allocs", stats.sys_allocs.to_string()),
+        ("sys reallocs", stats.sys_reallocs.to_string()),
+        ("arena allocs", stats.arena_allocs.to_string()),
+        ("arena reallocs", stats.arena_reallocs.to_string()),
+    ];
 
-fn format_table_header(fixture_width: usize, width: usize) -> String {
-    let mut out = format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} \n",
-        "File",
-        "File size",
-        "Sys allocs",
-        "Sys reallocs",
-        "Arena allocs",
-        "Arena reallocs",
-        fixture_width = fixture_width,
-        width = width
-    );
-    out.push_str(&str::repeat("-", width * 6 + fixture_width + 13));
+    let mut out = String::new();
+    out.push_str(file_name);
+    out.push('\n');
+    for (label, value) in values {
+        writeln!(out, "  {label}: {value}").unwrap();
+    }
     out.push('\n');
     out
 }
