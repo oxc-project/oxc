@@ -10,9 +10,10 @@
 
 use std::mem::take;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexVec;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::{
@@ -32,19 +33,32 @@ use crate::react_compiler_reactive_scopes::visitors::{
 // Public entry point
 // =============================================================================
 
+/// Last usage per declaration, indexed densely by declaration id
+/// (declaration ids share the identifier id space).
+type LastUsageMap = IndexVec<DeclarationId, Option<EvaluationOrder>>;
+
+/// Temporary-to-source declaration mapping, indexed densely by declaration id.
+type TemporariesMap = IndexVec<DeclarationId, Option<DeclarationId>>;
+
 /// Merges adjacent reactive scopes that share dependencies (invalidate together).
 /// TS: `mergeReactiveScopesThatInvalidateTogether`
 pub fn merge_reactive_scopes_that_invalidate_together<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
 ) -> Result<(), OxcDiagnostic> {
+    let num_identifiers = env.identifiers.len();
+
     // Pass 1: find last usage of each declaration
     let visitor = FindLastUsageVisitor { env: &*env };
-    let mut last_usage: FxHashMap<DeclarationId, EvaluationOrder> = FxHashMap::default();
+    let mut last_usage: LastUsageMap = IndexVec::from_vec(vec![None; num_identifiers]);
     visit_reactive_function(func, &visitor, &mut last_usage);
 
     // Pass 2+3: merge scopes
-    let mut transform = MergeTransform { env, last_usage, temporaries: FxHashMap::default() };
+    let mut transform = MergeTransform {
+        env,
+        last_usage,
+        temporaries: IndexVec::from_vec(vec![None; num_identifiers]),
+    };
     let mut state: Option<Vec<ReactiveScopeDependency>> = None;
     transform_reactive_function(func, &mut transform, &mut state)
 }
@@ -59,7 +73,7 @@ struct FindLastUsageVisitor<'a, 'e> {
 }
 
 impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindLastUsageVisitor<'a, 'e> {
-    type State = FxHashMap<DeclarationId, EvaluationOrder>;
+    type State = LastUsageMap;
 
     fn env(&self) -> &Environment<'a> {
         self.env
@@ -67,9 +81,9 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindLastUsageVisitor<'a, 'e> {
 
     fn visit_place(&self, id: EvaluationOrder, place: &Place, state: &mut Self::State) {
         let decl_id = self.env.identifiers[place.identifier].declaration_id;
-        let entry = state.entry(decl_id).or_insert(id);
-        if id > *entry {
-            *entry = id;
+        let slot = &mut state[decl_id];
+        if slot.is_none_or(|last| id > last) {
+            *slot = Some(id);
         }
     }
 }
@@ -81,8 +95,8 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindLastUsageVisitor<'a, 'e> {
 /// TS: `class Transform extends ReactiveFunctionTransform<ReactiveScopeDependencies | null>`
 struct MergeTransform<'a, 'e> {
     env: &'e mut Environment<'a>,
-    last_usage: FxHashMap<DeclarationId, EvaluationOrder>,
-    temporaries: FxHashMap<DeclarationId, DeclarationId>,
+    last_usage: LastUsageMap,
+    temporaries: TemporariesMap,
 }
 
 impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
@@ -187,7 +201,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                         if let InstructionValue::LoadLocal { place, .. } = iv {
                                             let src_decl = self.env.identifiers[place.identifier]
                                                 .declaration_id;
-                                            self.temporaries.insert(decl_id, src_decl);
+                                            self.temporaries[decl_id] = Some(src_decl);
                                         }
                                     }
                                 }
@@ -209,12 +223,9 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                             // Track temporary mapping
                                             let value_decl = self.env.identifiers[value.identifier]
                                                 .declaration_id;
-                                            let mapped = self
-                                                .temporaries
-                                                .get(&value_decl)
-                                                .copied()
-                                                .unwrap_or(value_decl);
-                                            self.temporaries.insert(store_decl, mapped);
+                                            let mapped =
+                                                self.temporaries[value_decl].unwrap_or(value_decl);
+                                            self.temporaries[store_decl] = Some(mapped);
                                         } else {
                                             // Non-const StoreLocal — reset
                                             let c = current.take().unwrap();
@@ -385,14 +396,14 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
 /// Updates scope declarations to remove any that are not used after the scope.
 fn update_scope_declarations<'a>(
     scope_id: ScopeId,
-    last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
+    last_usage: &LastUsageMap,
     env: &mut Environment<'a>,
 ) {
     let range_end = env.scopes[scope_id].range.end;
     env.scopes[scope_id].declarations.retain(|(_id, decl)| {
         let decl_declaration_id = env.identifiers[decl.identifier].declaration_id;
-        match last_usage.get(&decl_declaration_id) {
-            Some(last_used_at) => *last_used_at >= range_end,
+        match last_usage[decl_declaration_id] {
+            Some(last_used_at) => last_used_at >= range_end,
             // If not tracked, keep the declaration (conservative)
             None => true,
         }
@@ -403,12 +414,12 @@ fn update_scope_declarations<'a>(
 fn are_lvalues_last_used_by_scope<'a>(
     scope_id: ScopeId,
     lvalues: &FxHashSet<DeclarationId>,
-    last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
+    last_usage: &LastUsageMap,
     env: &Environment<'a>,
 ) -> bool {
     let range_end = env.scopes[scope_id].range.end;
-    for lvalue in lvalues {
-        if let Some(&last_used_at) = last_usage.get(lvalue)
+    for &lvalue in lvalues {
+        if let Some(last_used_at) = last_usage[lvalue]
             && last_used_at >= range_end
         {
             return false;
@@ -422,7 +433,7 @@ fn can_merge_scopes<'a>(
     current_id: ScopeId,
     next_id: ScopeId,
     env: &Environment<'a>,
-    temporaries: &FxHashMap<DeclarationId, DeclarationId>,
+    temporaries: &TemporariesMap,
 ) -> bool {
     let current = &env.scopes[current_id];
     let next = &env.scopes[next_id];
@@ -468,8 +479,7 @@ fn can_merge_scopes<'a>(
             let dep_decl = env.identifiers[dep.identifier].declaration_id;
             current.declarations.iter().any(|(_key, decl)| {
                 let decl_decl_id = env.identifiers[decl.identifier].declaration_id;
-                decl_decl_id == dep_decl
-                    || temporaries.get(&dep_decl).copied() == Some(decl_decl_id)
+                decl_decl_id == dep_decl || temporaries[dep_decl] == Some(decl_decl_id)
             })
         })
     {
