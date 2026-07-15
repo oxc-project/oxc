@@ -1886,6 +1886,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_codegen_napi"
+version = "0.140.0"
+dependencies = [
+ "mimalloc-safe",
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc_codegen",
+ "oxc_napi",
+ "oxc_sourcemap",
+]
+
+[[package]]
 name = "oxc_compat"
 version = "0.140.0"
 dependencies = [

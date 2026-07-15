@@ -198,7 +198,7 @@ jobs:
         id: filter
         with:
           exclude: oxc_linter,oxc_language_server
-          paths: napi/parser/,napi/minify/,napi/transform/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
+          paths: napi/parser/,napi/minify/,napi/transform/,napi/codegen/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
@@ -222,8 +222,8 @@ jobs:
           RUN_RAW_RANGE_TESTS: "true"
           RUN_RAW_TOKENS_TESTS: "true"
         run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/codegen" build-test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/codegen" test
       - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
         working-directory: tasks/e2e
@@ -343,7 +343,7 @@ jobs:
         id: filter
         with:
           exclude: oxc_linter,oxc_language_server
-          paths: napi/parser/,napi/minify/,napi/transform/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
+          paths: napi/parser/,napi/minify/,napi/transform/,napi/codegen/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
@@ -374,8 +374,8 @@ jobs:
         env:
           RUN_RAW_RANGE_TESTS: "true"
         run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/codegen" build-test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/codegen" test
       - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e

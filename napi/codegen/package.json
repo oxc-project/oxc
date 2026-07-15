@@ -1,0 +1,93 @@
+{
+  "name": "oxc-codegen",
+  "version": "0.140.0",
+  "private": true,
+  "description": "Oxc Codegen Node API",
+  "keywords": [
+    "ast",
+    "codegen",
+    "estree",
+    "javascript",
+    "oxc",
+    "printer",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
+    "directory": "napi/codegen"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "src-js/bindings.js",
+    "src-js/index.d.ts",
+    "src-js/index.js",
+    "src-js/supported.js",
+    "src-js/raw-transfer-back/buffer.js",
+    "src-js/raw-transfer-back/serialize.js",
+    "src-js/webcontainer-fallback.cjs"
+  ],
+  "type": "module",
+  "main": "src-js/index.js",
+  "types": "src-js/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build-dev": "napi build --esm --platform --js bindings.js --dts bindings.d.ts --output-dir src-js",
+    "build-test": "pnpm run build-dev --profile coverage",
+    "build": "pnpm run build-dev --features allocator --release",
+    "postbuild-dev": "node scripts/patch.js",
+    "test": "vitest run --dir ./test"
+  },
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "catalog:",
+    "@types/node": "catalog:",
+    "oxc-parser": "workspace:^",
+    "vitest": "catalog:"
+  },
+  "napi": {
+    "binaryName": "codegen",
+    "packageName": "@oxc-codegen/binding",
+    "targets": [
+      "aarch64-apple-darwin",
+      "aarch64-linux-android",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
+      "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-musl",
+      "s390x-unknown-linux-gnu",
+      "wasm32-wasip1-threads",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-freebsd",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
+    ],
+    "wasm": {
+      "browser": {
+        "fs": false
+      }
+    }
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

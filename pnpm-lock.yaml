@@ -242,6 +242,25 @@ importers:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@24.1.0)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.0))
 
+  napi/codegen:
+    dependencies:
+      '@oxc-project/types':
+        specifier: workspace:^
+        version: link:../../npm/oxc-types
+    devDependencies:
+      '@napi-rs/cli':
+        specifier: 'catalog:'
+        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.1.0
+      oxc-parser:
+        specifier: workspace:^
+        version: link:../parser
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.10(@types/node@24.1.0)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.0))
+
   napi/minify:
     devDependencies:
       '@emnapi/core':
