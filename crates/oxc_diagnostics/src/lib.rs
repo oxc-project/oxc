@@ -46,6 +46,7 @@
 //! service.run();
 //! ```
 
+mod line_indexed_source;
 mod service;
 
 use std::{
@@ -56,7 +57,10 @@ use std::{
 
 pub mod reporter;
 
-pub use crate::service::{DiagnosticSender, DiagnosticService};
+pub use crate::{
+    line_indexed_source::LineIndexedSource,
+    service::{DiagnosticSender, DiagnosticService},
+};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;

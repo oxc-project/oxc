@@ -11,7 +11,7 @@ use percent_encoding::AsciiSet;
 use std::fs::canonicalize as strict_canonicalize;
 
 use crate::{
-    Error, NamedSource, OxcDiagnostic, Severity,
+    Error, LineIndexedSource, NamedSource, OxcDiagnostic, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 
@@ -135,7 +135,10 @@ impl DiagnosticService {
                 normalized_path.to_string()
             });
 
-        let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
+        let source = Arc::new(NamedSource::new(
+            path_display,
+            LineIndexedSource::new(source_text.to_owned()),
+        ));
         diagnostics
             .into_iter()
             .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
