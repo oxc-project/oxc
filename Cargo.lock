@@ -2644,6 +2644,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_tasks_common",
  "oxc_transformer",
+ "saphyr",
 ]
 
 [[package]]

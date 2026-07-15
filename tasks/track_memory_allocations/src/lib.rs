@@ -1,11 +1,8 @@
-use std::{
-    fmt::Write as _,
-    fs::File,
-    io::{self, Write},
-};
+use std::{fmt::Write as _, fs, io};
 
 use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
+use saphyr::{LoadableYamlNode, SafelyIndex, Yaml};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{JsFormatOptions, format_program, parse_for_format};
@@ -135,11 +132,11 @@ fn test() {
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
 
-    let mut parser_out = String::new();
-    let mut semantic_out = String::new();
-    let mut transformer_out = String::new();
-    let mut minifier_out = String::new();
-    let mut formatter_out = String::new();
+    let mut parser_entries = Vec::new();
+    let mut semantic_entries = Vec::new();
+    let mut transformer_entries = Vec::new();
+    let mut minifier_entries = Vec::new();
+    let mut formatter_entries = Vec::new();
 
     let mut allocator = Allocator::default();
 
@@ -197,13 +194,13 @@ pub fn run() -> Result<(), io::Error> {
             parsed
         });
 
-        parser_out.push_str(&format_stats(file, &parser_stats));
+        parser_entries.push((file, parser_stats));
 
         let ((), semantic_stats) = record_stats_in(&allocator, || {
             let _ = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
         });
 
-        semantic_out.push_str(&format_stats(file, &semantic_stats));
+        semantic_entries.push((file, semantic_stats));
 
         // Match the production compiler path for transforms: transformers add scopes, symbols, and
         // references, so semantic analysis reserves excess capacity up front.
@@ -225,13 +222,13 @@ pub fn run() -> Result<(), io::Error> {
             .build_with_scoping(scoping, &mut parsed.program);
         });
 
-        transformer_out.push_str(&format_stats(file, &transformer_stats));
+        transformer_entries.push((file, transformer_stats));
 
         let ((), minifier_stats) = record_stats_in(&allocator, || {
             Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
         });
 
-        minifier_out.push_str(&format_stats(file, &minifier_stats));
+        minifier_entries.push((file, minifier_stats));
 
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
         // so re-parse with the formatter's parse options before measuring the formatter
@@ -248,14 +245,14 @@ pub fn run() -> Result<(), io::Error> {
                 .into_code()
         });
 
-        formatter_out.push_str(&format_stats(file, &formatter_stats));
+        formatter_entries.push((file, formatter_stats));
     }
 
-    write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_transformer.snap", &transformer_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_formatter.snap", &formatter_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_parser.yaml", &parser_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_semantic.yaml", &semantic_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_transformer.yaml", &transformer_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_minifier.yaml", &minifier_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_formatter.yaml", &formatter_entries)?;
 
     Ok(())
 }
@@ -311,42 +308,128 @@ where
     (result, stats)
 }
 
-/// Formats the allocator stats for one file as a block of `label: value` lines.
+/// Tolerance in bytes when comparing a measured `arena size` against the value already
+/// in the committed snapshot.
+///
+/// Arena byte totals are not exactly reproducible across architectures: some type layouts
+/// depend on the target (e.g. hashbrown's table control groups are 16 bytes on x86_64 but
+/// 8 bytes on aarch64), so each live `HashMap` in the arena shifts `used_bytes` by a few
+/// bytes per platform. The observed drift between x86_64 and aarch64 is at most 128 bytes
+/// per file. Keeping the committed value when the difference is within this tolerance makes
+/// snapshots generated on one platform pass the `git diff` check on the others.
+/// Real regressions (e.g. growing an AST node type) change arena sizes by orders of
+/// magnitude more than this; changes below the tolerance are treated as noise.
+const ARENA_SIZE_TOLERANCE: usize = 1024;
+
+/// Writes one snapshot file, formatted as a YAML mapping per test file.
+///
+/// The snapshot is YAML so that the committed `arena size` values can be read back with a
+/// YAML parser and compared against the measured ones (see [`snapshot_arena_size`]). It is
+/// still emitted by hand to keep full control over the layout for git diffs.
+fn write_snapshot(file_path: &str, entries: &[(&TestFile, StageStats)]) -> Result<(), io::Error> {
+    let path = project_root().join(file_path);
+    let committed = fs::read_to_string(&path).unwrap_or_default();
+    let committed_docs = Yaml::load_from_str(&committed).unwrap_or_default();
+
+    let mut out = String::new();
+    for (file, stats) in entries {
+        let committed_arena_size = committed_docs
+            .first()
+            .get(file.file_name.as_str())
+            .get("arena size")
+            .and_then(Yaml::as_integer);
+        let file_size = file.source_text.len();
+        render_file_stats(&mut out, &file.file_name, file_size, stats, committed_arena_size);
+    }
+    fs::write(path, out)
+}
+
+/// Formats the allocator stats for one file as a YAML mapping keyed by file name.
 ///
 /// One value per line, with no column alignment, so that a change to one value produces
 /// a one-line diff, and adding a new value later doesn't reformat existing lines.
-/// File names stay at column 0 so they appear in git hunk headers.
-fn format_stats(file: &TestFile, stats: &StageStats) -> String {
+/// File names stay at column 0 so they appear in git hunk headers. Byte sizes are exact
+/// numbers (the value that diffs) with the human-readable form in a trailing comment.
+fn render_file_stats(
+    out: &mut String,
+    file_name: &str,
+    file_size: usize,
+    stats: &StageStats,
+    committed_arena_size: Option<i64>,
+) {
+    let arena_size = snapshot_arena_size(stats.arena_used_bytes, committed_arena_size);
     let counters = &stats.counters;
-    let values = [
-        ("file size", format_size(file.source_text.len(), DECIMAL)),
-        ("sys allocs", counters.sys_allocs.to_string()),
-        ("sys reallocs", counters.sys_reallocs.to_string()),
-        ("arena allocs", counters.arena_allocs.to_string()),
-        ("arena reallocs", counters.arena_reallocs.to_string()),
-        ("arena size", format_bytes(stats.arena_used_bytes)),
-    ];
-
-    let mut out = String::new();
-    out.push_str(&file.file_name);
+    writeln!(out, "{file_name}:").unwrap();
+    writeln!(out, "  file size: {file_size} # {}", format_size(file_size, DECIMAL)).unwrap();
+    writeln!(out, "  sys allocs: {}", counters.sys_allocs).unwrap();
+    writeln!(out, "  sys reallocs: {}", counters.sys_reallocs).unwrap();
+    writeln!(out, "  arena allocs: {}", counters.arena_allocs).unwrap();
+    writeln!(out, "  arena reallocs: {}", counters.arena_reallocs).unwrap();
+    writeln!(out, "  arena size: {arena_size} # {}", format_size(arena_size, DECIMAL)).unwrap();
     out.push('\n');
-    for (label, value) in values {
-        writeln!(out, "  {label}: {value}").unwrap();
+}
+
+/// Chooses the `arena size` value to record: the committed value if the measured one is
+/// within [`ARENA_SIZE_TOLERANCE`] of it, the measured value otherwise.
+fn snapshot_arena_size(measured: usize, committed: Option<i64>) -> usize {
+    let Some(committed) = committed.and_then(|value| usize::try_from(value).ok()) else {
+        return measured;
+    };
+    if measured.abs_diff(committed) <= ARENA_SIZE_TOLERANCE { committed } else { measured }
+}
+
+#[cfg(test)]
+mod tests {
+    use saphyr::{LoadableYamlNode, SafelyIndex, Yaml};
+
+    use super::{
+        ARENA_SIZE_TOLERANCE, AllocatorStats, StageStats, render_file_stats, snapshot_arena_size,
+    };
+
+    fn stage_stats(arena_used_bytes: usize) -> StageStats {
+        StageStats {
+            counters: AllocatorStats {
+                sys_allocs: 1,
+                sys_reallocs: 2,
+                arena_chunk_allocs: 0,
+                arena_allocs: 3,
+                arena_reallocs: 4,
+            },
+            arena_used_bytes,
+        }
     }
-    out.push('\n');
-    out
-}
 
-/// Formats a byte count as the exact number followed by a human-readable size,
-/// e.g. `12582912 (12.58 MB)`. The exact number is what diffs; the human-readable
-/// form is only there for scanning.
-fn format_bytes(bytes: usize) -> String {
-    format!("{bytes} ({})", format_size(bytes, DECIMAL))
-}
+    #[test]
+    fn rendered_snapshot_is_valid_yaml() {
+        let mut out = String::new();
+        render_file_stats(&mut out, "foo.js", 1000, &stage_stats(12345), None);
+        render_file_stats(&mut out, "bar.ts", 2_000_000, &stage_stats(99_999), None);
 
-fn write_snapshot(file_path: &str, contents: &str) -> Result<(), io::Error> {
-    let mut snapshot = File::create(project_root().join(file_path))?;
-    snapshot.write_all(contents.as_bytes())?;
-    snapshot.flush()?;
-    Ok(())
+        let docs = Yaml::load_from_str(&out).unwrap();
+        let doc = docs.first();
+        assert_eq!(doc.get("foo.js").get("arena size").and_then(Yaml::as_integer), Some(12345));
+        assert_eq!(doc.get("foo.js").get("sys allocs").and_then(Yaml::as_integer), Some(1));
+        assert_eq!(doc.get("bar.ts").get("file size").and_then(Yaml::as_integer), Some(2_000_000));
+        assert_eq!(doc.get("bar.ts").get("arena reallocs").and_then(Yaml::as_integer), Some(4));
+    }
+
+    #[test]
+    fn keeps_committed_arena_size_within_tolerance() {
+        assert_eq!(snapshot_arena_size(10_000, Some(10_128)), 10_128);
+        assert_eq!(snapshot_arena_size(10_128, Some(10_000)), 10_000);
+        let committed = i64::try_from(10_000 + ARENA_SIZE_TOLERANCE).unwrap();
+        assert_eq!(snapshot_arena_size(10_000, Some(committed)), 10_000 + ARENA_SIZE_TOLERANCE);
+    }
+
+    #[test]
+    fn takes_measured_arena_size_beyond_tolerance() {
+        assert_eq!(snapshot_arena_size(10_000, Some(20_000)), 10_000);
+        assert_eq!(snapshot_arena_size(20_000, Some(10_000)), 20_000);
+    }
+
+    #[test]
+    fn takes_measured_arena_size_without_valid_committed_value() {
+        assert_eq!(snapshot_arena_size(10_000, None), 10_000);
+        assert_eq!(snapshot_arena_size(10_000, Some(-1)), 10_000);
+    }
 }
