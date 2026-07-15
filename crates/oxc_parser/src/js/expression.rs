@@ -269,6 +269,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
+        self.with_expression_nesting(Self::parse_parenthesized_expression_inner)
+    }
+
+    fn parse_parenthesized_expression_inner(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         // Capture annotation flags before bumping `(` since bump resets them
@@ -511,6 +515,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     [ `ElementList`[?Yield, ?Await] ]
     ///     [ `ElementList`[?Yield, ?Await] , Elisionopt ]
     pub(crate) fn parse_array_expression(&mut self) -> Expression<'a> {
+        self.with_expression_nesting(Self::parse_array_expression_inner)
+    }
+
+    fn parse_array_expression_inner(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
@@ -1142,6 +1150,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_call_arguments(
+        &mut self,
+        lhs_span: u32,
+        lhs: Expression<'a>,
+        optional: bool,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+    ) -> Expression<'a> {
+        self.with_expression_nesting(|parser| {
+            parser.parse_call_arguments_inner(lhs_span, lhs, optional, type_parameters)
+        })
+    }
+
+    fn parse_call_arguments_inner(
         &mut self,
         lhs_span: u32,
         lhs: Expression<'a>,

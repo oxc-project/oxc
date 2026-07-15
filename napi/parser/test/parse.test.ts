@@ -896,6 +896,16 @@ describe("error", () => {
       severity: "Error",
     });
   });
+
+  test.each([
+    ["parenthesized", (depth: number) => "(".repeat(depth) + "0" + ")".repeat(depth)],
+    ["array", (depth: number) => "[".repeat(depth) + "0" + "]".repeat(depth)],
+    ["object", (depth: number) => "const x = " + "{a:".repeat(depth) + "0" + "}".repeat(depth)],
+    ["call", (depth: number) => "f(".repeat(depth) + "0" + ")".repeat(depth)],
+  ])("rejects deeply nested %s expressions without crashing", (_, createSource) => {
+    const ret = parseSync("test.js", createSource(5_000));
+    expect(ret.errors.map((error) => error.message)).toContain("Expression nesting is too deep");
+  });
 });
 
 describe("worker", () => {

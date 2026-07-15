@@ -17,6 +17,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
+        self.with_expression_nesting(Self::parse_object_expression_inner)
+    }
+
+    fn parse_object_expression_inner(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);

@@ -98,6 +98,10 @@ parser_diagnostics! {
         OxcDiagnostic::error("Source length exceeds 4 GiB limit")
     };
 
+    excessive_expression_nesting(span: Span) => {
+        OxcDiagnostic::error("Expression nesting is too deep").with_label(span)
+    };
+
     file_appears_to_be_binary() => {
         ts_error("1490", "File appears to be binary.")
     };
