@@ -1029,7 +1029,7 @@ export interface DummyRuleMap {
   "jsdoc/require-yields-type"?: RuleNoConfig;
   "jsx-a11y/alt-text"?: RuleNoConfig | [AllowWarnDeny, AltTextConfigSchema];
   "jsx-a11y/anchor-ambiguous-text"?: RuleNoConfig | [AllowWarnDeny, AnchorAmbiguousTextConfig];
-  "jsx-a11y/anchor-has-content"?: RuleNoConfig;
+  "jsx-a11y/anchor-has-content"?: RuleNoConfig | [AllowWarnDeny, AnchorHasContentConfig];
   "jsx-a11y/anchor-is-valid"?: RuleNoConfig | [AllowWarnDeny, AnchorIsValidConfig];
   "jsx-a11y/aria-activedescendant-has-tabindex"?: RuleNoConfig;
   "jsx-a11y/aria-props"?: RuleNoConfig;
@@ -2595,6 +2595,12 @@ export interface AnchorAmbiguousTextConfig {
    * List of ambiguous words or phrases that should be flagged in anchor text.
    */
   words?: string[];
+}
+export interface AnchorHasContentConfig {
+  /**
+   * Additional custom component names to treat as anchor elements.
+   */
+  components?: string[];
 }
 export interface AnchorIsValidConfig {
   /**
