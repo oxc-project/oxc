@@ -81,13 +81,8 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
             | Expression::RegExpLiteral(_)
             | Expression::FunctionExpression(_)
             | Expression::ArrowFunctionExpression(_)
-            | Expression::ClassExpression(_) => ValueType::Object,
-            Expression::MetaProperty(meta_prop) => {
-                match (meta_prop.meta.name.as_str(), meta_prop.property.name.as_str()) {
-                    ("import", "meta") => ValueType::Object,
-                    _ => ValueType::Undetermined,
-                }
-            }
+            | Expression::ClassExpression(_)
+            | Expression::ImportMeta(_) => ValueType::Object,
             Expression::Identifier(ident) => {
                 if ctx.is_global_reference(ident) {
                     match ident.name.as_str() {

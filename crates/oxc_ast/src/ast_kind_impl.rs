@@ -261,7 +261,8 @@ impl<'a> AstKind<'a> {
             Expression::StringLiteral(e) => Self::StringLiteral(e),
             Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
             Expression::Identifier(e) => Self::IdentifierReference(e),
-            Expression::MetaProperty(e) => Self::MetaProperty(e),
+            Expression::ImportMeta(e) => Self::ImportMeta(e),
+            Expression::NewTarget(e) => Self::NewTarget(e),
             Expression::Super(e) => Self::Super(e),
             Expression::ArrayExpression(e) => Self::ArrayExpression(e),
             Expression::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
@@ -428,7 +429,8 @@ impl AstKind<'_> {
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
 
-            Self::MetaProperty(_) => "MetaProperty".into(),
+            Self::ImportMeta(_) => "ImportMeta".into(),
+            Self::NewTarget(_) => "NewTarget".into(),
             Self::Super(_) => "Super".into(),
 
             Self::AccessorProperty(_) => "AccessorProperty".into(),

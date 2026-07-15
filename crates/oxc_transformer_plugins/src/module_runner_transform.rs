@@ -107,7 +107,7 @@ impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::Identifier(_) => self.transform_identifier(expr, ctx),
-            Expression::MetaProperty(_) => Self::transform_meta_property(expr, ctx),
+            Expression::ImportMeta(_) => Self::transform_import_meta(expr, ctx),
             Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
             _ => {}
         }
@@ -271,13 +271,13 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     /// Transform `import.meta` to `__vite_ssr_import_meta__`.
     #[inline]
-    fn transform_meta_property(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::MetaProperty(meta) = expr else {
+    fn transform_import_meta(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::ImportMeta(import_meta) = expr else {
             unreachable!();
         };
 
         *expr = ctx.create_unbound_ident_expr(
-            meta.span,
+            import_meta.span,
             static_ident!("__vite_ssr_import_meta__"),
             ReferenceFlags::Read,
         );

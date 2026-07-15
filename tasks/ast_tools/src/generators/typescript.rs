@@ -112,8 +112,13 @@ fn generate_ts_type_def_for_struct(
     program_type_id: TypeId,
     schema: &Schema,
 ) -> Option<String> {
-    // If struct marked with `#[estree(ts_alias = "...")]`, then it needs no type def
-    if struct_def.estree.ts_alias.is_some() {
+    // If struct marked with `#[estree(ts_alias = "...")]`, then it needs no type def.
+    // It is still an AST node unless marked `#[estree(no_type)]`, so register the alias in the
+    // `Node` union. Multiple native nodes may share one ESTree alias.
+    if let Some(ts_alias) = &struct_def.estree.ts_alias {
+        if !struct_def.estree.no_type && !ast_node_names.contains(ts_alias) {
+            ast_node_names.push(ts_alias.clone());
+        }
         return None;
     }
 

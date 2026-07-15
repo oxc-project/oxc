@@ -1,13 +1,145 @@
+use std::cell::Cell;
+
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     Concat2, ConcatElement, ESTree, JsonSafeString, SequenceSerializer, Serializer,
     StructSerializer,
 };
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
 use super::{EmptyArray, Null};
+
+// ----------------------------------------
+// Meta properties
+// ----------------------------------------
+
+fn serialize_meta_property_identifier<S: Serializer>(
+    serializer: S,
+    span: Span,
+    name: &'static str,
+) {
+    IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name: Str::from(name).into() }
+        .serialize(serializer);
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const importStart = DESER[i32](POS_OFFSET.span.start);
+        const importEnd = importStart + 6;
+        const importIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'import',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: importStart,
+            end: importEnd,
+            ...(RANGE && { range: [importStart, importEnd] }),
+            ...(PARENT && { parent }),
+        };
+        importIdent
+    "
+)]
+pub struct ImportMetaMeta<'b>(pub &'b ImportMeta);
+
+impl ESTree for ImportMetaMeta<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        serialize_meta_property_identifier(serializer, Span::sized(self.0.span.start, 6), "import");
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const metaEnd = DESER[i32](POS_OFFSET.span.end);
+        const metaStart = metaEnd - 4;
+        const metaIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'meta',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: metaStart,
+            end: metaEnd,
+            ...(RANGE && { range: [metaStart, metaEnd] }),
+            ...(PARENT && { parent }),
+        };
+        metaIdent
+    "
+)]
+pub struct ImportMetaProperty<'b>(pub &'b ImportMeta);
+
+impl ESTree for ImportMetaProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        serialize_meta_property_identifier(
+            serializer,
+            Span::new(self.0.span.end.saturating_sub(4), self.0.span.end),
+            "meta",
+        );
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const newStart = DESER[i32](POS_OFFSET.span.start);
+        const newEnd = newStart + 3;
+        const newIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'new',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: newStart,
+            end: newEnd,
+            ...(RANGE && { range: [newStart, newEnd] }),
+            ...(PARENT && { parent }),
+        };
+        newIdent
+    "
+)]
+pub struct NewTargetMeta<'b>(pub &'b NewTarget);
+
+impl ESTree for NewTargetMeta<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        serialize_meta_property_identifier(serializer, Span::sized(self.0.span.start, 3), "new");
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const targetEnd = DESER[i32](POS_OFFSET.span.end);
+        const targetStart = targetEnd - 6;
+        const targetIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'target',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: targetStart,
+            end: targetEnd,
+            ...(RANGE && { range: [targetStart, targetEnd] }),
+            ...(PARENT && { parent }),
+        };
+        targetIdent
+    "
+)]
+pub struct NewTargetProperty<'b>(pub &'b NewTarget);
+
+impl ESTree for NewTargetProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        serialize_meta_property_identifier(
+            serializer,
+            Span::new(self.0.span.end.saturating_sub(6), self.0.span.end),
+            "target",
+        );
+    }
+}
 
 // ----------------------------------------
 // Binding patterns and function params

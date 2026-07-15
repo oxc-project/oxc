@@ -1320,7 +1320,8 @@ impl GenExpr for Expression<'_> {
             // Import expression
             Self::ImportExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Meta property
-            Self::MetaProperty(expr) => expr.print(p, ctx),
+            Self::ImportMeta(expr) => expr.print(p, ctx),
+            Self::NewTarget(expr) => expr.print(p, ctx),
             // Chain expression
             Self::ChainExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Private field
@@ -2481,13 +2482,19 @@ impl GenExpr for TSTypeAssertion<'_> {
     }
 }
 
-impl Gen for MetaProperty<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+impl Gen for ImportMeta {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
-        self.meta.print(p, ctx);
-        p.print_ascii_byte(b'.');
-        self.property.print(p, ctx);
+        p.print_str("import.meta");
+    }
+}
+
+impl Gen for NewTarget {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
+        p.print_str("new.target");
     }
 }
 

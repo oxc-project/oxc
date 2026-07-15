@@ -58,14 +58,9 @@ impl<'a> RefreshIdentifierResolver<'a> {
             ));
         };
 
-        if first_part == "import" {
+        if first_part == "import" && second_part == "meta" {
             // Handle `import.meta.$RefreshReg$` expression
-            let mut expr = Expression::new_meta_property(
-                SPAN,
-                IdentifierName::new(SPAN, "import", ast),
-                IdentifierName::new(SPAN, Str::from_str_in(second_part, ast), ast),
-                ast,
-            );
+            let mut expr = Expression::new_import_meta(SPAN, ast);
             if let Some(property) = parts.next() {
                 expr = Expression::new_static_member_expression(
                     SPAN,

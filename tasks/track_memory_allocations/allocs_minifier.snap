@@ -52,5 +52,5 @@ kitchen-sink.tsx
   sys reallocs: 175
   arena allocs: 88129
   arena reallocs: 15654
-  arena size: 10190448 (10.19 MB)
+  arena size: 10190192 (10.19 MB)
 

@@ -1931,13 +1931,9 @@ fn ox_codegen_base_instruction_value<'a>(
             )))
         }
         InstructionValue::MetaProperty { meta, property, .. } => {
-            let meta_ident =
-                oxc_ast::ast::IdentifierName::new(SPAN, ox_str(&cx.ast, meta), &cx.ast);
-            let prop_ident =
-                oxc_ast::ast::IdentifierName::new(SPAN, ox_str(&cx.ast, property), &cx.ast);
-            Ok(OxValue::Expression(oxc_ast::ast::Expression::new_meta_property(
-                SPAN, meta_ident, prop_ident, &cx.ast,
-            )))
+            debug_assert_eq!(meta.as_str(), "import");
+            debug_assert_eq!(property.as_str(), "meta");
+            Ok(OxValue::Expression(oxc_ast::ast::Expression::new_import_meta(SPAN, &cx.ast)))
         }
         InstructionValue::Await { value, .. } => {
             let arg = ox_codegen_place_to_expression(cx, value)?;

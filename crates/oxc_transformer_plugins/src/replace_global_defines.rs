@@ -583,11 +583,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     MemberExpression::PrivateFieldExpression(_) => return false,
                 }
             }
-            Expression::MetaProperty(meta) => {
+            Expression::ImportMeta(_) => {
                 return define.parts.len() == 2
                     && define.parts[0].as_str() == "import"
-                    && define.parts[1].as_str() == "meta"
-                    && is_import_meta(meta);
+                    && define.parts[1].as_str() == "meta";
             }
             _ => return false,
         };
@@ -661,10 +660,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     return true;
                 }
             }
-            Expression::MetaProperty(meta_property) => {
-                if let Some(replacement) = self.config.0.import_meta.clone()
-                    && is_import_meta(meta_property)
-                {
+            Expression::ImportMeta(_) => {
+                if let Some(replacement) = self.config.0.import_meta.clone() {
                     let value = self.parse_value(&replacement);
                     *expr = value;
                     return true;
@@ -772,7 +769,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     /// skip the whole wildcard scan for ordinary member expressions such as `console.log` or
     /// `a.b.c`.
     fn is_import_meta_member(member: &StaticMemberExpression<'a>) -> bool {
-        matches!(member.get_first_object(), Expression::MetaProperty(meta) if is_import_meta(meta))
+        matches!(member.get_first_object(), Expression::ImportMeta(_))
     }
 
     pub fn is_meta_property_define(
@@ -786,7 +783,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         }
         if meta_define.parts.is_empty() && meta_define.postfix_wildcard {
             match &member.object {
-                Expression::MetaProperty(meta) => return is_import_meta(meta),
+                Expression::ImportMeta(_) => return true,
                 _ => return false,
             }
         }
@@ -832,11 +829,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         cur_part_name = &member.property.name;
                         Some(member)
                     }
-                    Expression::MetaProperty(meta) => {
-                        // Only `import.meta` is a valid root; never `new.target`.
-                        if !is_import_meta(meta) {
-                            return false;
-                        }
+                    Expression::ImportMeta(_) => {
                         if meta_define.postfix_wildcard {
                             // `import.meta.env` should not match `import.meta.env.*`
                             return has_matched_part && !is_full_match;
@@ -991,22 +984,19 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         cur_part_name = THIS_STR.as_str();
                         None
                     }
-                    Expression::MetaProperty(meta) => {
+                    Expression::ImportMeta(_) => {
                         // Handle import.meta
-                        // When we encounter a MetaProperty, we need to verify that the remaining
+                        // When we encounter import.meta, verify that the remaining
                         // parts match ["import", "meta"]
-                        if is_import_meta(meta) {
-                            // At this point, i is the current position we're checking
-                            // We need the next two parts (going backwards) to be "meta" then "import"
-                            // i.e., parts[i-1] == "meta" and parts[i-2] == "import"
-                            if i >= 2
-                                && parts[i - 1].as_str() == "meta"
-                                && parts[i - 2].as_str() == "import"
-                            {
-                                // Successfully matched import.meta at the expected position
-                                // Return true if we've consumed all parts (i == 2)
-                                return i == 2;
-                            }
+                        // At this point, i is the current position we're checking
+                        // We need the next two parts (going backwards) to be "meta" then "import"
+                        // i.e., parts[i-1] == "meta" and parts[i-2] == "import"
+                        if i >= 2
+                            && parts[i - 1].as_str() == "meta"
+                            && parts[i - 2].as_str() == "import"
+                        {
+                            // Successfully matched import.meta at the expected position.
+                            return i == 2;
                         }
                         None
                     }
@@ -1122,11 +1112,6 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
 const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
     !scope_flags.contains(ScopeFlags::ClassStaticBlock)
         && (!scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow))
-}
-
-/// Whether `meta` is the `import.meta` meta property (as opposed to `new.target`).
-fn is_import_meta(meta: &MetaProperty) -> bool {
-    meta.meta.name == "import" && meta.property.name == "meta"
 }
 
 fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {

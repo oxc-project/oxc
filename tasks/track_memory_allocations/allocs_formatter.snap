@@ -50,7 +50,7 @@ kitchen-sink.tsx
   file size: 732.90 kB
   sys allocs: 9565
   sys reallocs: 2815
-  arena allocs: 569911
+  arena allocs: 569903
   arena reallocs: 60147
-  arena size: 57887152 (57.89 MB)
+  arena size: 57886576 (57.89 MB)
 

@@ -200,11 +200,7 @@ fn is_referencing_class(
 
             false
         }
-        Expression::MetaProperty(meta)
-            if meta.meta.name == "new" && meta.property.name == "target" =>
-        {
-            true
-        }
+        Expression::NewTarget(_) => true,
         _ => {
             if let Some(member) = expr.as_member_expression()
                 && let Expression::ThisExpression(_) = member.object().get_inner_expression()

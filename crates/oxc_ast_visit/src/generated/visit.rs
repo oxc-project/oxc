@@ -156,8 +156,13 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        walk_meta_property(self, it);
+    fn visit_import_meta(&mut self, it: &ImportMeta) {
+        walk_import_meta(self, it);
+    }
+
+    #[inline]
+    fn visit_new_target(&mut self, it: &NewTarget) {
+        walk_new_target(self, it);
     }
 
     #[inline]
@@ -1389,7 +1394,6 @@ pub mod walk {
             Expression::StringLiteral(it) => visitor.visit_string_literal(it),
             Expression::TemplateLiteral(it) => visitor.visit_template_literal(it),
             Expression::Identifier(it) => visitor.visit_identifier_reference(it),
-            Expression::MetaProperty(it) => visitor.visit_meta_property(it),
             Expression::Super(it) => visitor.visit_super(it),
             Expression::ArrayExpression(it) => visitor.visit_array_expression(it),
             Expression::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
@@ -1418,6 +1422,8 @@ pub mod walk {
             Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
             Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
             Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
+            Expression::ImportMeta(it) => visitor.visit_import_meta(it),
+            Expression::NewTarget(it) => visitor.visit_new_target(it),
             Expression::JSXElement(it) => visitor.visit_jsx_element(it),
             Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
             Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
@@ -1666,12 +1672,18 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_meta_property<'a, V: Visit<'a>>(visitor: &mut V, it: &MetaProperty<'a>) {
-        let kind = AstKind::MetaProperty(visitor.alloc(it));
+    pub fn walk_import_meta<'a, V: Visit<'a>>(visitor: &mut V, it: &ImportMeta) {
+        let kind = AstKind::ImportMeta(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_identifier_name(&it.meta);
-        visitor.visit_identifier_name(&it.property);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_new_target<'a, V: Visit<'a>>(visitor: &mut V, it: &NewTarget) {
+        let kind = AstKind::NewTarget(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
         visitor.leave_node(kind);
     }
 
