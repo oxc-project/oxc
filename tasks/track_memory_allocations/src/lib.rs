@@ -43,7 +43,11 @@ impl AtomicCounter {
     }
 
     fn increment(&self) {
-        self.0.update(SeqCst, SeqCst, |count| count.saturating_add(1));
+        self.add(1);
+    }
+
+    fn add(&self, n: usize) {
+        self.0.update(SeqCst, SeqCst, |count| count.saturating_add(n));
     }
 
     fn reset(&self) {
@@ -55,10 +59,19 @@ impl AtomicCounter {
 static NUM_ALLOC: AtomicCounter = AtomicCounter::new();
 /// Number of system reallocations
 static NUM_REALLOC: AtomicCounter = AtomicCounter::new();
+/// Total number of bytes requested from the system allocator.
+/// Each `realloc` counts its full `new_size`, not just the growth.
+// NOTE: Byte totals vary between platforms (allocation sizes depend on target type layout,
+// e.g. hashbrown tables are wider on x86_64 than aarch64), while allocation *counts* are
+// identical everywhere. Snapshots record the byte values from CI's platform (Linux x64).
+// After regenerating on another platform, expect diffs on byte-value lines only, and take
+// those lines from the CI job's diff output.
+static NUM_ALLOC_BYTES: AtomicCounter = AtomicCounter::new();
 
 fn reset_global_allocs() {
     NUM_ALLOC.reset();
     NUM_REALLOC.reset();
+    NUM_ALLOC_BYTES.reset();
 }
 
 // SAFETY: Methods simply delegate to `MiMalloc` allocator to ensure that the allocator
@@ -69,6 +82,7 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         let ret = unsafe { MiMalloc.alloc(layout) };
         if !ret.is_null() {
             NUM_ALLOC.increment();
+            NUM_ALLOC_BYTES.add(layout.size());
         }
         ret
     }
@@ -81,6 +95,7 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         let ret = unsafe { MiMalloc.alloc_zeroed(layout) };
         if !ret.is_null() {
             NUM_ALLOC.increment();
+            NUM_ALLOC_BYTES.add(layout.size());
         }
         ret
     }
@@ -89,6 +104,7 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         let ret = unsafe { MiMalloc.realloc(ptr, layout, new_size) };
         if !ret.is_null() {
             NUM_REALLOC.increment();
+            NUM_ALLOC_BYTES.add(new_size);
         }
         ret
     }
@@ -114,10 +130,17 @@ struct AllocatorStats {
     sys_allocs: usize,
     /// Number of reallocations made by system allocator
     sys_reallocs: usize,
+    /// Total bytes allocated by system allocator, excluding arena chunk allocations.
+    /// Each reallocation counts its full new size, not just the growth.
+    sys_alloc_bytes: usize,
     /// Number of chunks arenas have requested from the system allocator.
     /// Tracked separately so chunk allocations can be excluded from `sys_allocs`
     /// (see `record_stats_diff`). Not printed in snapshots because the count is platform-dependent.
     arena_chunk_allocs: usize,
+    /// Total bytes of chunks arenas have requested from the system allocator.
+    /// Tracked separately so chunk bytes can be excluded from `sys_alloc_bytes`,
+    /// for the same reason as `arena_chunk_allocs`. Not printed in snapshots.
+    arena_chunk_alloc_bytes: usize,
     /// Number of allocations made by arena allocator
     arena_allocs: usize,
     /// Number of reallocations made by arena allocator
@@ -265,14 +288,23 @@ pub fn run() -> Result<(), io::Error> {
 fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let sys_allocs = NUM_ALLOC.get();
     let sys_reallocs = NUM_REALLOC.get();
+    let sys_alloc_bytes = NUM_ALLOC_BYTES.get();
     #[cfg(not(feature = "is_all_features"))]
-    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, _arena_chunk_alloc_bytes)) =
+    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, arena_chunk_alloc_bytes)) =
         (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_stats());
     #[cfg(feature = "is_all_features")]
-    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, _arena_chunk_alloc_bytes)) =
+    let ((arena_allocs, arena_reallocs), (arena_chunk_allocs, arena_chunk_alloc_bytes)) =
         ((0, 0), (0, 0));
 
-    AllocatorStats { sys_allocs, sys_reallocs, arena_chunk_allocs, arena_allocs, arena_reallocs }
+    AllocatorStats {
+        sys_allocs,
+        sys_reallocs,
+        sys_alloc_bytes,
+        arena_chunk_allocs,
+        arena_chunk_alloc_bytes,
+        arena_allocs,
+        arena_reallocs,
+    }
 }
 
 /// Record current allocation stats since the last recorded stats in `prev`. This is useful
@@ -287,13 +319,20 @@ fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorS
     // close to a chunk boundary on one platform (see #22621 for a previous instance).
     // All other allocation classes grow on element counts, which are identical on all platforms.
     let arena_chunk_allocs = stats.arena_chunk_allocs.saturating_sub(prev.arena_chunk_allocs);
+    let arena_chunk_alloc_bytes =
+        stats.arena_chunk_alloc_bytes.saturating_sub(prev.arena_chunk_alloc_bytes);
     AllocatorStats {
         sys_allocs: stats
             .sys_allocs
             .saturating_sub(prev.sys_allocs)
             .saturating_sub(arena_chunk_allocs),
         sys_reallocs: stats.sys_reallocs.saturating_sub(prev.sys_reallocs),
+        sys_alloc_bytes: stats
+            .sys_alloc_bytes
+            .saturating_sub(prev.sys_alloc_bytes)
+            .saturating_sub(arena_chunk_alloc_bytes),
         arena_chunk_allocs,
+        arena_chunk_alloc_bytes,
         arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
         arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
     }
@@ -323,6 +362,7 @@ fn format_stats(file: &TestFile, stats: &StageStats) -> String {
         ("file size", format_size(file.source_text.len(), DECIMAL)),
         ("sys allocs", counters.sys_allocs.to_string()),
         ("sys reallocs", counters.sys_reallocs.to_string()),
+        ("sys alloc bytes", format_bytes(counters.sys_alloc_bytes)),
         ("arena allocs", counters.arena_allocs.to_string()),
         ("arena reallocs", counters.arena_reallocs.to_string()),
         ("arena size", format_bytes(stats.arena_used_bytes)),
