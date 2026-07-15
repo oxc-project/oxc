@@ -1408,15 +1408,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else if kind.is_binary_operator() {
                 let span = self.end_span(lhs_span);
                 let op = map_binary_operator(kind);
-                if op == BinaryOperator::Exponential
-                    && !lhs_parenthesized
-                    && let Some(key) = match lhs {
-                        Expression::AwaitExpression(_) => Some("await"),
-                        Expression::UnaryExpression(_) => Some("unary"),
+                if op == BinaryOperator::Exponential && !lhs_parenthesized {
+                    let diagnostic = match &lhs {
+                        Expression::AwaitExpression(_) => Some(
+                            diagnostics::unary_exponentiation_left_operand("await", lhs.span()),
+                        ),
+                        Expression::UnaryExpression(unary) => {
+                            Some(diagnostics::unary_exponentiation_left_operand(
+                                unary.operator.as_str(),
+                                lhs.span(),
+                            ))
+                        }
+                        Expression::TSTypeAssertion(_) => Some(
+                            diagnostics::type_assertion_exponentiation_left_operand(lhs.span()),
+                        ),
                         _ => None,
+                    };
+                    if let Some(diagnostic) = diagnostic {
+                        self.error(diagnostic);
                     }
-                {
-                    self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                 }
                 Expression::new_binary_expression(span, lhs, op, rhs, self)
             } else {

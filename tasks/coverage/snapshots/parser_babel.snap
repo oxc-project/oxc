@@ -4817,26 +4817,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                        ╰── yield expression not allowed in formal parameter
    ╰────
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/10/input.js:1:1]
  1 │ -5 ** 6;
    · ──
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/11/input.js:1:1]
  1 │ -(5) ** 6;
    · ────
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/12/input.js:1:2]
  1 │ (-5 ** 6);
    ·  ──
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/13/input.js:1:4]
@@ -4850,40 +4850,40 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ──
    ╰────
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/15/input.js:1:1]
  1 │ -(5) ** 6;
    · ────
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/16/input.js:1:2]
  1 │ (-5 ** 6);
    ·  ──
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/await-before-exponential/input.js:1:13]
  1 │ async () => await 5 ** 6;
    ·             ───────
    ╰────
-  help: Wrap await expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/await-unary-before-exponential/input.js:1:13]
  1 │ async () => await -5 ** 6;
    ·             ────────
    ╰────
-  help: Wrap await expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/nested-unary-before-exponential/input.js:1:2]
  1 │ (-+5 ** 6);
    ·  ───
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
   × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/simple-parameter-list/array-pattern/input.js:2:3]
@@ -13786,19 +13786,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ────
    ╰────
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/await-non-null-before-exponential/input.ts:1:14]
  1 │ async (a) => await a! ** 6;
    ·              ────────
    ╰────
-  help: Wrap await expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/unary-non-null-before-exponential/input.ts:1:8]
  1 │ (a) => +a! ** 6;
    ·        ───
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/declare-invalid/input.ts:1:16]

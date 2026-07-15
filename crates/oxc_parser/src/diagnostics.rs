@@ -1188,10 +1188,21 @@ pub fn mixed_coalesce(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected exponentiation expression")
-        .with_help(format!("Wrap {x0} expression in parentheses to enforce operator precedence"))
-        .with_label(span1)
+pub fn unary_exponentiation_left_operand(operator: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "A unary expression with the '{operator}' operator cannot be used as the left operand of an exponentiation expression"
+    ))
+    .with_help("Wrap the unary expression in parentheses to make the precedence explicit")
+    .with_label(span)
+}
+
+#[cold]
+pub fn type_assertion_exponentiation_left_operand(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "A type assertion cannot be used as the left operand of an exponentiation expression",
+    )
+    .with_help("Wrap the type assertion in parentheses to make the precedence explicit")
+    .with_label(span)
 }
 
 #[cold]
