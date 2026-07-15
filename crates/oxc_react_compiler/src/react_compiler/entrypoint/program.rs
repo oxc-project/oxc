@@ -2157,192 +2157,289 @@ fn ox_build_compiled_expression<'a>(
     }
 }
 
-/// Visitor that replaces every compiled function in the oxc AST in a single
-/// traversal, each matched by its original function's scope. Mirrors the Babel
-/// `ReplaceFnVisitor`, batched so the program is walked once regardless of how
-/// many functions were compiled.
-struct OxcReplaceFnVisitor<'a, 'b> {
+/// Substitute a compiled codegen function into the original `Function` node in
+/// place. Mirrors the Babel `ReplaceFnVisitor` replacement of a function
+/// declaration or expression.
+fn ox_replace_function<'a>(
+    ast: &AstBuilder<'a>,
+    func: &mut Function<'a>,
+    codegen: &CodegenFunction<'a>,
+) {
+    // When the compiled function does not initialize a memo cache, the body is
+    // left essentially intact, so the original TS signature (type parameters,
+    // `this` parameter, return type, and per-parameter type annotations) is
+    // preserved. Functions that memoize drop these types, mirroring Babel.
+    let keep_types = codegen.memo_slots_used == 0;
+    let mut params = codegen.params.clone_in_with_semantic_ids(ast.allocator());
+    if keep_types {
+        copy_param_ts_metadata(ast.allocator(), &mut params, &func.params);
+    } else {
+        func.type_parameters = None;
+        func.return_type = None;
+        func.this_param = None;
+    }
+    func.id = codegen.id.clone_in_with_semantic_ids(ast.allocator());
+    func.params = params;
+    func.body = Some(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
+    func.generator = codegen.generator;
+    func.r#async = codegen.is_async;
+    func.declare = false;
+}
+
+/// Substitute a compiled codegen function into the original
+/// `ArrowFunctionExpression` node in place. Mirrors the Babel
+/// `ReplaceFnVisitor` replacement of an arrow function.
+fn ox_replace_arrow<'a>(
+    ast: &AstBuilder<'a>,
+    arrow: &mut ArrowFunctionExpression<'a>,
+    codegen: &CodegenFunction<'a>,
+) {
+    let keep_types = codegen.memo_slots_used == 0;
+    let mut params = codegen.params.clone_in_with_semantic_ids(ast.allocator());
+    if keep_types {
+        copy_param_ts_metadata(ast.allocator(), &mut params, &arrow.params);
+    } else {
+        arrow.type_parameters = None;
+        arrow.return_type = None;
+    }
+    arrow.params = params;
+    arrow.body = codegen.body.clone_in_with_semantic_ids(ast.allocator());
+    arrow.r#async = codegen.is_async;
+    arrow.expression = false;
+}
+
+/// Build `const <name> = <gating_expression>;`
+fn ox_build_gated_const_decl<'a>(
+    ast: &AstBuilder<'a>,
+    gating_expression: &Expression<'a>,
+    name: &str,
+) -> Statement<'a> {
+    let declarator = VariableDeclarator::new(
+        SPAN,
+        VariableDeclarationKind::Const,
+        BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
+        None::<ArenaBox<TSTypeAnnotation>>,
+        Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
+        false,
+        ast,
+    );
+    Statement::VariableDeclaration(VariableDeclaration::boxed(
+        SPAN,
+        VariableDeclarationKind::Const,
+        ArenaVec::from_value_in(declarator, ast),
+        false,
+        ast,
+    ))
+}
+
+/// The one visitor type behind every oxc-AST traversal of the transform phase,
+/// selected by [`OxcVisitMode`].
+///
+/// Every distinct `Visit`/`VisitMut` implementor monomorphizes the entire
+/// generated AST walk, so the three traversals here (batched function
+/// replacement, gated replacement, original-function lookup) share this single
+/// type — and thereby a single copy of the walk in the binary. Each overridden
+/// method must behave exactly like the default walk in the modes that do not
+/// use it.
+struct OxcVisitor<'a, 'b> {
     ast: &'b AstBuilder<'a>,
-    /// Compiled replacement for each original function, keyed by the function's
-    /// `scope_id` cell. Codegen-built nodes carry no cells, so they are never
-    /// matched.
-    replacements: FxHashMap<ScopeId, &'b CodegenFunction<'a>>,
-    /// Replacements not yet applied; the walk stops once it reaches zero.
-    remaining: usize,
+    mode: OxcVisitMode<'a, 'b>,
 }
 
-impl<'a, 'b> OxcReplaceFnVisitor<'a, 'b> {
-    fn replace_function(&self, func: &mut Function<'a>, codegen: &CodegenFunction<'a>) {
-        // When the compiled function does not initialize a memo cache, the body is
-        // left essentially intact, so the original TS signature (type parameters,
-        // `this` parameter, return type, and per-parameter type annotations) is
-        // preserved. Functions that memoize drop these types, mirroring Babel.
-        let keep_types = codegen.memo_slots_used == 0;
-        let mut params = codegen.params.clone_in_with_semantic_ids(self.ast.allocator());
-        if keep_types {
-            copy_param_ts_metadata(self.ast.allocator(), &mut params, &func.params);
-        } else {
-            func.type_parameters = None;
-            func.return_type = None;
-            func.this_param = None;
-        }
-        func.id = codegen.id.clone_in_with_semantic_ids(self.ast.allocator());
-        func.params = params;
-        func.body = Some(codegen.body.clone_in_with_semantic_ids(self.ast.allocator()));
-        func.generator = codegen.generator;
-        func.r#async = codegen.is_async;
-        func.declare = false;
-    }
-
-    fn replace_arrow(
-        &self,
-        arrow: &mut ArrowFunctionExpression<'a>,
-        codegen: &CodegenFunction<'a>,
-    ) {
-        let keep_types = codegen.memo_slots_used == 0;
-        let mut params = codegen.params.clone_in_with_semantic_ids(self.ast.allocator());
-        if keep_types {
-            copy_param_ts_metadata(self.ast.allocator(), &mut params, &arrow.params);
-        } else {
-            arrow.type_parameters = None;
-            arrow.return_type = None;
-        }
-        arrow.params = params;
-        arrow.body = codegen.body.clone_in_with_semantic_ids(self.ast.allocator());
-        arrow.r#async = codegen.is_async;
-        arrow.expression = false;
-    }
+/// Which traversal an [`OxcVisitor`] performs.
+enum OxcVisitMode<'a, 'b> {
+    /// Replace every compiled function in the oxc AST in a single traversal,
+    /// each matched by its original function's scope. Mirrors the Babel
+    /// `ReplaceFnVisitor`, batched so the program is walked once regardless of
+    /// how many functions were compiled.
+    ReplaceFns {
+        /// Compiled replacement for each original function, keyed by the function's
+        /// `scope_id` cell. Codegen-built nodes carry no cells, so they are never
+        /// matched.
+        replacements: FxHashMap<ScopeId, &'b CodegenFunction<'a>>,
+        /// Replacements not yet applied; the walk stops once it reaches zero.
+        remaining: usize,
+    },
+    /// Replace one function (matched by its scope) with a gated conditional
+    /// expression. Mirrors the Babel `ReplaceWithGatedVisitor`.
+    ReplaceWithGated {
+        scope_id: ScopeId,
+        gating_expression: &'b Expression<'a>,
+        /// Pending `export default Name;` to insert after a named export-default fn.
+        export_default_name: Option<Ident<'a>>,
+        done: bool,
+    },
+    /// Find the function with scope `scope_id` and clone it as an expression
+    /// (a declaration becomes a `FunctionExpression`), for
+    /// [`ox_clone_original_fn_as_expression`]. Mutates nothing.
+    FindOriginalFn { scope_id: ScopeId, found: Option<Expression<'a>> },
 }
 
-impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
-    fn visit_function(&mut self, func: &mut Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
-        if self.remaining == 0 {
-            return;
+impl<'a> OxcVisitor<'a, '_> {
+    /// In [`OxcVisitMode::ReplaceWithGated`]: if `stmt` is the target function
+    /// declaration (bare, `export`-wrapped, or `export default`), substitute
+    /// the gated replacement, mark the mode done, and return `true`.
+    fn try_replace_gated_statement(&mut self, stmt: &mut Statement<'a>) -> bool {
+        let ast = self.ast;
+        let OxcVisitMode::ReplaceWithGated {
+            scope_id,
+            gating_expression,
+            export_default_name,
+            done,
+        } = &mut self.mode
+        else {
+            return false;
+        };
+        let scope_id = *scope_id;
+        let gating_expression = *gating_expression;
+        // FunctionDeclaration → `const Foo = gating() ? ... : ...;`
+        let replace_name: Option<Option<Ident<'a>>> = match &*stmt {
+            Statement::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
+                Some(f.id.as_ref().map(|id| id.name))
+            }
+            Statement::ExportNamedDeclaration(e) => match &e.declaration {
+                Some(Declaration::FunctionDeclaration(f)) if f.scope_id.get() == Some(scope_id) => {
+                    Some(f.id.as_ref().map(|id| id.name))
+                }
+                _ => None,
+            },
+            _ => None,
+        };
+        if let Some(name) = replace_name {
+            let name = name.as_deref().unwrap_or("anonymous");
+            let is_export = matches!(stmt, Statement::ExportNamedDeclaration(_));
+            let const_decl = ox_build_gated_const_decl(ast, gating_expression, name);
+            if is_export {
+                let decl = match const_decl {
+                    Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
+                    _ => unreachable!(),
+                };
+                *stmt = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
+                    SPAN,
+                    Some(decl),
+                    ArenaVec::new_in(ast),
+                    None,
+                    ImportOrExportKind::Value,
+                    None::<ArenaBox<WithClause>>,
+                    ast,
+                ));
+            } else {
+                *stmt = const_decl;
+            }
+            *done = true;
+            return true;
         }
-        if let Some(scope_id) = func.scope_id.get()
-            && let Some(&codegen) = self.replacements.get(&scope_id)
+        // ExportDefaultDeclaration with FunctionDeclaration
+        if let Statement::ExportDefaultDeclaration(e) = &*stmt
+            && let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration
+            && f.scope_id.get() == Some(scope_id)
         {
-            self.replace_function(func, codegen);
-            self.remaining -= 1;
-            return;
+            if let Some(id) = f.id.as_ref().map(|id| id.name) {
+                *stmt = ox_build_gated_const_decl(ast, gating_expression, id.as_str());
+                *export_default_name = Some(id);
+            } else {
+                *stmt = Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+                    SPAN,
+                    ExportDefaultDeclarationKind::from(
+                        gating_expression.clone_in_with_semantic_ids(ast.allocator()),
+                    ),
+                    ast,
+                ));
+            }
+            *done = true;
+            return true;
+        }
+        false
+    }
+}
+
+impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
+        let ast = self.ast;
+        match &mut self.mode {
+            OxcVisitMode::ReplaceFns { replacements, remaining } => {
+                if *remaining == 0 {
+                    return;
+                }
+                if let Some(scope_id) = func.scope_id.get()
+                    && let Some(&codegen) = replacements.get(&scope_id)
+                {
+                    ox_replace_function(ast, func, codegen);
+                    *remaining -= 1;
+                    return;
+                }
+            }
+            OxcVisitMode::ReplaceWithGated { .. } => {}
+            OxcVisitMode::FindOriginalFn { scope_id, found } => {
+                if found.is_some() {
+                    return;
+                }
+                if func.scope_id.get() == Some(*scope_id) {
+                    let f = Function::boxed(
+                        SPAN,
+                        FunctionType::FunctionExpression,
+                        func.id.clone_in_with_semantic_ids(ast.allocator()),
+                        func.generator,
+                        func.r#async,
+                        false,
+                        None::<ArenaBox<TSTypeParameterDeclaration>>,
+                        None::<ArenaBox<TSThisParameter>>,
+                        func.params.clone_in_with_semantic_ids(ast.allocator()),
+                        None::<ArenaBox<TSTypeAnnotation>>,
+                        func.body.clone_in_with_semantic_ids(ast.allocator()),
+                        ast,
+                    );
+                    *found = Some(Expression::FunctionExpression(f));
+                    return;
+                }
+            }
         }
         oxc_ast_visit::walk_mut::walk_function(self, func, flags);
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &mut ArrowFunctionExpression<'a>) {
-        if self.remaining == 0 {
-            return;
-        }
-        if let Some(scope_id) = arrow.scope_id.get()
-            && let Some(&codegen) = self.replacements.get(&scope_id)
-        {
-            self.replace_arrow(arrow, codegen);
-            self.remaining -= 1;
-            return;
+        let ast = self.ast;
+        match &mut self.mode {
+            OxcVisitMode::ReplaceFns { replacements, remaining } => {
+                if *remaining == 0 {
+                    return;
+                }
+                if let Some(scope_id) = arrow.scope_id.get()
+                    && let Some(&codegen) = replacements.get(&scope_id)
+                {
+                    ox_replace_arrow(ast, arrow, codegen);
+                    *remaining -= 1;
+                    return;
+                }
+            }
+            OxcVisitMode::ReplaceWithGated { .. } => {}
+            OxcVisitMode::FindOriginalFn { scope_id, found } => {
+                if found.is_some() {
+                    return;
+                }
+                if arrow.scope_id.get() == Some(*scope_id) {
+                    *found = Some(Expression::ArrowFunctionExpression(ArenaBox::new_in(
+                        arrow.clone_in_with_semantic_ids(ast.allocator()),
+                        ast,
+                    )));
+                    return;
+                }
+            }
         }
         oxc_ast_visit::walk_mut::walk_arrow_function_expression(self, arrow);
     }
-}
 
-/// Visitor that replaces a function (matched by its scope) with a gated
-/// conditional expression. Mirrors the Babel `ReplaceWithGatedVisitor`.
-struct OxcReplaceWithGatedVisitor<'a, 'b> {
-    ast: &'b AstBuilder<'a>,
-    scope_id: ScopeId,
-    gating_expression: &'b Expression<'a>,
-    /// Pending `export default Name;` to insert after a named export-default fn.
-    export_default_name: Option<Ident<'a>>,
-    done: bool,
-}
-
-impl<'a, 'b> OxcReplaceWithGatedVisitor<'a, 'b> {
-    /// Build `const <name> = <gating_expression>;`
-    fn build_const_decl(&self, name: &str) -> Statement<'a> {
-        let declarator = VariableDeclarator::new(
-            SPAN,
-            VariableDeclarationKind::Const,
-            BindingPattern::new_binding_identifier(SPAN, ox_atom(self.ast, name), self.ast),
-            None::<ArenaBox<TSTypeAnnotation>>,
-            Some(self.gating_expression.clone_in_with_semantic_ids(self.ast.allocator())),
-            false,
-            self.ast,
-        );
-        Statement::VariableDeclaration(VariableDeclaration::boxed(
-            SPAN,
-            VariableDeclarationKind::Const,
-            ArenaVec::from_value_in(declarator, self.ast),
-            false,
-            self.ast,
-        ))
-    }
-}
-
-impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> {
     fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+        if !matches!(self.mode, OxcVisitMode::ReplaceWithGated { .. }) {
+            oxc_ast_visit::walk_mut::walk_statements(self, stmts);
+            return;
+        }
         let mut i = 0;
         while i < stmts.len() {
-            if self.done {
+            if matches!(self.mode, OxcVisitMode::ReplaceWithGated { done: true, .. }) {
                 break;
             }
-            // FunctionDeclaration → `const Foo = gating() ? ... : ...;`
-            let replace_name: Option<Option<Ident<'a>>> = match &stmts[i] {
-                Statement::FunctionDeclaration(f) if f.scope_id.get() == Some(self.scope_id) => {
-                    Some(f.id.as_ref().map(|id| id.name))
-                }
-                Statement::ExportNamedDeclaration(e) => match &e.declaration {
-                    Some(Declaration::FunctionDeclaration(f))
-                        if f.scope_id.get() == Some(self.scope_id) =>
-                    {
-                        Some(f.id.as_ref().map(|id| id.name))
-                    }
-                    _ => None,
-                },
-                _ => None,
-            };
-            if let Some(name) = replace_name {
-                let name = name.as_deref().unwrap_or("anonymous");
-                let is_export = matches!(stmts[i], Statement::ExportNamedDeclaration(_));
-                let const_decl = self.build_const_decl(name);
-                if is_export {
-                    let decl = match const_decl {
-                        Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
-                        _ => unreachable!(),
-                    };
-                    stmts[i] = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
-                        SPAN,
-                        Some(decl),
-                        ArenaVec::new_in(self.ast),
-                        None,
-                        ImportOrExportKind::Value,
-                        None::<ArenaBox<WithClause>>,
-                        self.ast,
-                    ));
-                } else {
-                    stmts[i] = const_decl;
-                }
-                self.done = true;
-                break;
-            }
-            // ExportDefaultDeclaration with FunctionDeclaration
-            if let Statement::ExportDefaultDeclaration(e) = &stmts[i]
-                && let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration
-                && f.scope_id.get() == Some(self.scope_id)
-            {
-                if let Some(id) = f.id.as_ref().map(|id| id.name) {
-                    stmts[i] = self.build_const_decl(id.as_str());
-                    self.export_default_name = Some(id);
-                } else {
-                    stmts[i] =
-                        Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
-                            SPAN,
-                            ExportDefaultDeclarationKind::from(
-                                self.gating_expression
-                                    .clone_in_with_semantic_ids(self.ast.allocator()),
-                            ),
-                            self.ast,
-                        ));
-                }
-                self.done = true;
+            if self.try_replace_gated_statement(&mut stmts[i]) {
                 break;
             }
             self.visit_statement(&mut stmts[i]);
@@ -2350,7 +2447,9 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
         }
 
         // Insert `export default Name;` right after the replaced declaration.
-        if let Some(name) = self.export_default_name.take() {
+        if let OxcVisitMode::ReplaceWithGated { export_default_name, .. } = &mut self.mode
+            && let Some(name) = export_default_name.take()
+        {
             let ident = Expression::new_identifier(SPAN, name, self.ast);
             let export = Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
                 SPAN,
@@ -2372,18 +2471,22 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        if self.done {
-            return;
-        }
-        let matched = match expr {
-            Expression::FunctionExpression(f) => f.scope_id.get() == Some(self.scope_id),
-            Expression::ArrowFunctionExpression(f) => f.scope_id.get() == Some(self.scope_id),
-            _ => false,
-        };
-        if matched {
-            *expr = self.gating_expression.clone_in_with_semantic_ids(self.ast.allocator());
-            self.done = true;
-            return;
+        if let OxcVisitMode::ReplaceWithGated { scope_id, gating_expression, done, .. } =
+            &mut self.mode
+        {
+            if *done {
+                return;
+            }
+            let matched = match expr {
+                Expression::FunctionExpression(f) => f.scope_id.get() == Some(*scope_id),
+                Expression::ArrowFunctionExpression(f) => f.scope_id.get() == Some(*scope_id),
+                _ => false,
+            };
+            if matched {
+                *expr = gating_expression.clone_in_with_semantic_ids(self.ast.allocator());
+                *done = true;
+                return;
+            }
         }
         oxc_ast_visit::walk_mut::walk_expression(self, expr);
     }
@@ -2444,12 +2547,14 @@ fn ox_apply_gated_conditional<'a>(
         ast,
     );
 
-    let mut visitor = OxcReplaceWithGatedVisitor {
+    let mut visitor = OxcVisitor {
         ast,
-        scope_id,
-        gating_expression: &gating_expression,
-        export_default_name: None,
-        done: false,
+        mode: OxcVisitMode::ReplaceWithGated {
+            scope_id,
+            gating_expression: &gating_expression,
+            export_default_name: None,
+            done: false,
+        },
     };
     oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
 }
@@ -2457,64 +2562,25 @@ fn ox_apply_gated_conditional<'a>(
 /// Clone the original function with scope `scope_id` as an `Expression`
 /// (FunctionDeclaration becomes a FunctionExpression). Mirrors
 /// `clone_original_fn_as_expression`.
+///
+/// Takes `&mut Program` only because the walk is shared with the mutating
+/// [`OxcVisitor`] modes; [`OxcVisitMode::FindOriginalFn`] mutates nothing.
 fn ox_clone_original_fn_as_expression<'a>(
     ast: &AstBuilder<'a>,
-    program: &Program<'a>,
+    program: &mut Program<'a>,
     scope_id: ScopeId,
 ) -> Option<Expression<'a>> {
-    struct Finder<'a, 'b> {
-        ast: &'b AstBuilder<'a>,
-        scope_id: ScopeId,
-        found: Option<Expression<'a>>,
-    }
-    impl<'a, 'b> oxc_ast_visit::VisitJs<'a> for Finder<'a, 'b> {
-        fn visit_function(&mut self, func: &Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
-            if self.found.is_some() {
-                return;
-            }
-            if func.scope_id.get() == Some(self.scope_id) {
-                let f = Function::boxed(
-                    SPAN,
-                    FunctionType::FunctionExpression,
-                    func.id.clone_in_with_semantic_ids(self.ast.allocator()),
-                    func.generator,
-                    func.r#async,
-                    false,
-                    None::<ArenaBox<TSTypeParameterDeclaration>>,
-                    None::<ArenaBox<TSThisParameter>>,
-                    func.params.clone_in_with_semantic_ids(self.ast.allocator()),
-                    None::<ArenaBox<TSTypeAnnotation>>,
-                    func.body.clone_in_with_semantic_ids(self.ast.allocator()),
-                    self.ast,
-                );
-                self.found = Some(Expression::FunctionExpression(f));
-                return;
-            }
-            oxc_ast_visit::walk_js::walk_function(self, func, flags);
-        }
-        fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
-            if self.found.is_some() {
-                return;
-            }
-            if arrow.scope_id.get() == Some(self.scope_id) {
-                self.found = Some(Expression::ArrowFunctionExpression(ArenaBox::new_in(
-                    arrow.clone_in_with_semantic_ids(self.ast.allocator()),
-                    self.ast,
-                )));
-                return;
-            }
-            oxc_ast_visit::walk_js::walk_arrow_function_expression(self, arrow);
-        }
-    }
-    let mut finder = Finder { ast, scope_id, found: None };
-    oxc_ast_visit::VisitJs::visit_program(&mut finder, program);
-    finder.found.map(|e| e.clone_in_with_semantic_ids(ast.allocator()))
+    let mut finder =
+        OxcVisitor { ast, mode: OxcVisitMode::FindOriginalFn { scope_id, found: None } };
+    oxc_ast_visit::VisitMut::visit_program(&mut finder, program);
+    let OxcVisitMode::FindOriginalFn { found, .. } = finder.mode else { unreachable!() };
+    found.map(|e| e.clone_in_with_semantic_ids(ast.allocator()))
 }
 
 /// Substitute every compiled oxc function into the program in place and add the
 /// required imports.
 ///
-/// The replacement visitors match original functions by their `scope_id` cells
+/// The replacement walks match original functions by their `scope_id` cells
 /// (populated by the caller's semantic build); codegen-built nodes carry no
 /// cells, so they can never be spuriously matched.
 fn ox_transform_program<'a>(
@@ -2544,8 +2610,9 @@ fn ox_transform_program<'a>(
         .map(|r| (r.fn_scope_id, &r.codegen_fn))
         .collect();
     if !replace_map.is_empty() {
-        let mut visitor =
-            OxcReplaceFnVisitor { ast, remaining: replace_map.len(), replacements: replace_map };
+        let mode =
+            OxcVisitMode::ReplaceFns { remaining: replace_map.len(), replacements: replace_map };
+        let mut visitor = OxcVisitor { ast, mode };
         oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     }
 
