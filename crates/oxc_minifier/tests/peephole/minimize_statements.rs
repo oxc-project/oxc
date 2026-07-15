@@ -126,7 +126,7 @@ fn test_object_property_shorthand_normalisation_skips_proto_setter() {
 
 #[test]
 fn test_handle_switch_statement() {
-    test_same("switch (a()){}"); // a()
+    test("switch (a()){}", "a()"); // a()
     test_same("switch (a) { default: }"); // a;
     test_same("switch (a) { default: break;}"); // a;
     test_same("switch (a) { default: var b; break;}"); // a; var b;

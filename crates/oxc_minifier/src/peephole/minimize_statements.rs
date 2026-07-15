@@ -775,6 +775,15 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        if switch_stmt.cases.is_empty() {
+            result.push(Statement::new_expression_statement(
+                switch_stmt.span,
+                switch_stmt.discriminant.take_in(ctx),
+                ctx,
+            ));
+            return;
+        }
+
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
