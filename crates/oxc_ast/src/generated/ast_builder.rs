@@ -15447,7 +15447,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
+    /// * `type_name`
     /// * `type_arguments`
     #[deprecated(
         note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
@@ -15456,7 +15456,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_interface_heritage<T1>(
         self,
         span: Span,
-        expression: Expression<'a>,
+        type_name: TSTypeName<'a>,
         type_arguments: T1,
     ) -> TSInterfaceHeritage<'a>
     where
@@ -15465,7 +15465,7 @@ impl<'a> AstBuilder<'a> {
         TSInterfaceHeritage {
             node_id: Default::default(),
             span,
-            expression,
+            type_name,
             type_arguments: type_arguments.into_in(self.allocator()),
         }
     }

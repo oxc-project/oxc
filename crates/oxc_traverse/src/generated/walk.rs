@@ -4944,12 +4944,12 @@ unsafe fn walk_ts_interface_heritage<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_ts_interface_heritage(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageExpression(
-        ancestor::TSInterfaceHeritageWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageTypeName(
+        ancestor::TSInterfaceHeritageWithoutTypeName(node, PhantomData),
     ));
-    walk_expression(
+    walk_ts_type_name(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION) as *mut Expression,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_TYPE_NAME) as *mut TSTypeName,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)

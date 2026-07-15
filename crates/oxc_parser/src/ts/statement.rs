@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{FileExtension, GetSpan};
 
@@ -236,8 +236,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
         }
-        let (extends, implements) =
-            self.parse_heritage_clause(Self::parse_ts_interface_extends_clause);
+        let (extends, implements) = self.parse_ts_interface_heritage_clause();
         let body = self.parse_ts_interface_body();
         let extends = extends.unwrap_or_else(|| ArenaVec::new_in(self));
         self.verify_modifiers(
@@ -248,14 +247,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
         if let Some((implements_kw_span, _)) = implements {
             self.error(diagnostics::interface_implements(implements_kw_span));
-        }
-        for extend in &extends {
-            if self.fatal_error.is_some() {
-                break;
-            }
-            if !extend.expression.is_entity_name_expression() {
-                self.error(diagnostics::interface_extend(extend.span));
-            }
         }
         Declaration::new_ts_interface_declaration(
             self.end_span(span),
@@ -268,38 +259,88 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
+    #[expect(clippy::type_complexity)]
+    fn parse_ts_interface_heritage_clause(
+        &mut self,
+    ) -> (
+        Option<ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        Option<(Span, ArenaVec<'a, TSClassImplements<'a>>)>,
+    ) {
+        self.parse_heritage_clause(Self::parse_ts_interface_extends_clause)
+    }
+
     fn parse_ts_interface_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {
+        let extends_span = self.cur_token().span();
         self.bump_any(); // bump `extends`
 
         let mut extends = ArenaVec::with_capacity_in(1, self);
+        if self.at(Kind::LCurly) {
+            self.error(diagnostics::empty_extends_clause(extends_span));
+            return extends;
+        }
         loop {
             let span = self.start_span();
-            let mut extend = self.parse_lhs_expression_or_higher();
-            if self.fatal_error.is_some() {
-                break;
-            }
-            let type_argument;
-            if let Expression::TSInstantiationExpression(expr) = extend {
-                let expr = expr.unbox();
-                extend = expr.expression;
-                type_argument = Some(expr.type_arguments);
+            let checkpoint = self.checkpoint();
+            let (type_name, type_argument) = if self.at(Kind::This)
+                || self
+                    .cur_kind()
+                    .is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await())
+            {
+                let has_this = self.at(Kind::This);
+                let type_name = self.parse_ts_interface_heritage_type_name(span);
+                let type_argument = self.parse_type_arguments_of_type_reference();
+                if matches!(
+                    self.cur_kind(),
+                    Kind::Comma | Kind::LCurly | Kind::Extends | Kind::Implements | Kind::Eof
+                ) {
+                    if has_this {
+                        self.error(diagnostics::interface_extend(self.end_span(span)));
+                    }
+                    (type_name, type_argument)
+                } else {
+                    self.rewind(checkpoint);
+                    (self.parse_invalid_ts_interface_heritage_type_name(), None)
+                }
             } else {
-                type_argument = self.try_parse_type_arguments();
-            }
-
+                (self.parse_invalid_ts_interface_heritage_type_name(), None)
+            };
             extends.push(TSInterfaceHeritage::new(
                 self.end_span(span),
-                extend,
+                type_name,
                 type_argument,
                 self,
             ));
 
-            if !self.eat(Kind::Comma) {
+            if !self.at(Kind::Comma) {
+                break;
+            }
+            let comma_span = self.cur_token().span();
+            self.bump_any();
+            if self.at(Kind::LCurly) {
+                self.error(diagnostics::trailing_comma_not_allowed(comma_span));
                 break;
             }
         }
 
         extends
+    }
+
+    fn parse_ts_interface_heritage_type_name(&mut self, span: u32) -> TSTypeName<'a> {
+        let left = if self.at(Kind::This) {
+            self.bump_any();
+            TSTypeName::new_this_expression(self.end_span(span), self)
+        } else {
+            let ident = self.parse_identifier_reference();
+            TSTypeName::new_identifier_reference(ident.span, ident.name, self)
+        };
+        if self.at(Kind::Dot) { self.parse_ts_qualified_type_name(span, left) } else { left }
+    }
+
+    fn parse_invalid_ts_interface_heritage_type_name(&mut self) -> TSTypeName<'a> {
+        let expression = self.parse_assignment_expression_or_higher();
+        let expression_span = expression.span();
+        self.error(diagnostics::interface_extend(expression_span));
+        TSTypeName::dummy(self.allocator())
     }
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {

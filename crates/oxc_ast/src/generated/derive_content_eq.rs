@@ -2229,7 +2229,7 @@ impl ContentEq for TSIndexSignatureName<'_> {
 
 impl ContentEq for TSInterfaceHeritage<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
+        ContentEq::content_eq(&self.type_name, &other.type_name)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }

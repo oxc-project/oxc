@@ -4023,7 +4023,7 @@ pub mod walk_mut {
         let kind = AstType::TSInterfaceHeritage;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_expression(&mut it.expression);
+        visitor.visit_ts_type_name(&mut it.type_name);
         if let Some(type_arguments) = &mut it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }

@@ -2767,7 +2767,7 @@ impl<'a> Dummy<'a> for TSInterfaceHeritage<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            expression: Dummy::dummy(allocator),
+            type_name: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
         }
     }

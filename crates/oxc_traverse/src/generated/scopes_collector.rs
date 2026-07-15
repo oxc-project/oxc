@@ -1837,7 +1837,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_interface_heritage(&mut self, it: &TSInterfaceHeritage<'a>) {
-        self.visit_expression(&it.expression);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }

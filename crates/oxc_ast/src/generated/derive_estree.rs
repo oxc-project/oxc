@@ -2862,7 +2862,10 @@ impl ESTree for TSInterfaceHeritage<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceHeritage"));
-        state.serialize_field("expression", &self.expression);
+        state.serialize_field(
+            "expression",
+            &crate::serialize::ts::TSInterfaceHeritageExpression(self),
+        );
         state.serialize_field("typeArguments", &self.type_arguments);
         state.serialize_span(self.span);
         state.end();

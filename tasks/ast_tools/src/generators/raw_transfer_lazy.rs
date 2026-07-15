@@ -13,8 +13,8 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, OptionDef, PointerDef, PrimitiveDef, Schema, StructDef,
-        TypeDef, TypeId, VecDef,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, OptionDef, PointerDef, PrimitiveDef, Schema,
+        StructDef, TypeDef, TypeId, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{format_cow, upper_case_first, write_it},
@@ -155,6 +155,17 @@ fn generate(
         }
     }
 
+    let identifier_type_id = state.next_non_leaf_node_type_id;
+    state.next_non_leaf_node_type_id += 1;
+    write_it!(state.non_leaf_node_type_ids_map, "['Identifier', {identifier_type_id}],\n");
+
+    let member_expression_type_id = state.next_non_leaf_node_type_id;
+    state.next_non_leaf_node_type_id += 1;
+    write_it!(
+        state.non_leaf_node_type_ids_map,
+        "['MemberExpression', {member_expression_type_id}],\n"
+    );
+
     // Generate file containing constructors
     let constructors = &state.constructors;
     #[rustfmt::skip]
@@ -167,6 +178,8 @@ fn generate(
             {{ fromCodePoint }} = String,
             inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
 
+        {TS_TYPE_NAME_AS_MEMBER_EXPRESSION_CONSTRUCTOR}
+
         {constructors}
     ");
 
@@ -175,9 +188,15 @@ fn generate(
     let walked_constructor_names = &state.walked_constructor_names;
     #[rustfmt::skip]
     let walkers = format!("
-        import {{ {walked_constructor_names} }} from './constructors.js';
+        import {{ {walked_constructor_names} constructIdentifierNameAsIdentifier, constructIdentifierReferenceAsIdentifier, constructTSQualifiedNameAsMemberExpression }} from './constructors.js';
+        import {{ NODE_TYPE_IDS_MAP }} from './type_ids.js';
 
         export {{ walkProgram }};
+
+        const identifierTypeId = NODE_TYPE_IDS_MAP.get('Identifier'),
+            memberExpressionTypeId = NODE_TYPE_IDS_MAP.get('MemberExpression');
+
+        {TS_TYPE_NAME_AS_MEMBER_EXPRESSION_WALKER}
 
         {walkers}
     ");
@@ -654,9 +673,14 @@ fn generate_struct(
         }
 
         let field_type = field.type_def(schema);
-        let needs_cached_prop = local_cache_types.needs_cached_prop(field_type);
+        let is_ts_type_name_as_member_expression_field =
+            is_ts_type_name_as_member_expression_field(struct_def, field);
+        let needs_cached_prop = local_cache_types.needs_cached_prop(field_type)
+            || is_ts_type_name_as_member_expression_field;
         // `Span`'s `start` and `end` can be loaded as `i32`s
-        let value_fn = if is_span {
+        let value_fn = if is_ts_type_name_as_member_expression_field {
+            "constructTSTypeNameAsMemberExpression".to_string()
+        } else if is_span {
             i32_primitive_def.constructor_name(schema)
         } else {
             field_type.constructor_name(schema)
@@ -696,7 +720,11 @@ fn generate_struct(
 
         // Only walk fields which need to be walked themselves
         if walk_statuses[field_type.id()] == WalkStatus::Walk {
-            let inner_walk_fn_name = field_type.walk_name(schema);
+            let inner_walk_fn_name = if is_ts_type_name_as_member_expression_field {
+                "walkTSTypeNameAsMemberExpression".to_string()
+            } else {
+                field_type.walk_name(schema)
+            };
             let pos = pos_offset(field.offset_64());
             write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
         }
@@ -817,6 +845,137 @@ fn generate_struct(
 
     write_it!(state.walked_constructor_names, "{struct_name}, ");
 }
+
+/// Interface heritage and class implements targets are stored in the Rust AST as `TSTypeName`,
+/// but ESTree exposes qualified names as `MemberExpression`s.
+fn is_ts_type_name_as_member_expression_field(struct_def: &StructDef, field: &FieldDef) -> bool {
+    matches!(
+        (struct_def.name(), field.name()),
+        ("TSInterfaceHeritage", "type_name") | ("TSClassImplements", "expression")
+    )
+}
+
+static TS_TYPE_NAME_AS_MEMBER_EXPRESSION_CONSTRUCTOR: &str = "
+    const convertedIdentifiers = new WeakMap(),
+        convertedQualifiedNames = new WeakMap();
+
+    function constructTSTypeNameAsMemberExpression(pos, ast) {
+        return convertTSTypeNameToMemberExpression(constructTSTypeName(pos, ast));
+    }
+
+    export function constructTSQualifiedNameAsMemberExpression(pos, ast) {
+        return convertTSTypeNameToMemberExpression(new TSQualifiedName(pos, ast));
+    }
+
+    export function constructIdentifierReferenceAsIdentifier(pos, ast) {
+        return convertIdentifierToIdentifier(new IdentifierReference(pos, ast));
+    }
+
+    export function constructIdentifierNameAsIdentifier(pos, ast) {
+        return convertIdentifierToIdentifier(new IdentifierName(pos, ast));
+    }
+
+    function convertIdentifierToIdentifier(identifier) {
+        let converted = convertedIdentifiers.get(identifier);
+        if (converted === void 0) {
+            converted = {
+                type: 'Identifier',
+                name: identifier.name,
+                start: identifier.start,
+                end: identifier.end,
+            };
+            convertedIdentifiers.set(identifier, converted);
+        }
+        return converted;
+    }
+
+    function convertTSTypeNameToMemberExpression(expression) {
+        switch (expression.type) {
+            case 'IdentifierReference':
+                return convertIdentifierToIdentifier(expression);
+            case 'ThisExpression':
+                return expression;
+            case 'TSQualifiedName': {
+                let converted = convertedQualifiedNames.get(expression);
+                if (converted === void 0) {
+                    converted = {
+                        type: 'MemberExpression',
+                        object: convertTSTypeNameToMemberExpression(expression.left),
+                        property: convertIdentifierToIdentifier(expression.right),
+                        optional: false,
+                        computed: false,
+                        start: expression.start,
+                        end: expression.end,
+                    };
+                    convertedQualifiedNames.set(expression, converted);
+                }
+                return converted;
+            }
+            default:
+                throw new Error(`Unexpected TSTypeName type ${expression.type}`);
+        }
+    }
+";
+
+static TS_TYPE_NAME_AS_MEMBER_EXPRESSION_WALKER: &str = "
+    function walkTSTypeNameAsMemberExpression(pos, ast, visitors) {
+        switch (ast.buffer[pos]) {
+            case 0:
+                walkBoxIdentifierReferenceAsIdentifier(pos + 8, ast, visitors);
+                return;
+            case 1:
+                walkBoxTSQualifiedNameAsMemberExpression(pos + 8, ast, visitors);
+                return;
+            case 2:
+                walkBoxThisExpression(pos + 8, ast, visitors);
+                return;
+            default:
+                throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeName`);
+        }
+    }
+
+    function walkBoxTSQualifiedNameAsMemberExpression(pos, ast, visitors) {
+        return walkTSQualifiedNameAsMemberExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+    }
+
+    function walkBoxIdentifierReferenceAsIdentifier(pos, ast, visitors) {
+        return walkIdentifierReferenceAsIdentifier(ast.buffer.int32[pos >> 2], ast, visitors);
+    }
+
+    function walkIdentifierReferenceAsIdentifier(pos, ast, visitors) {
+        walkIdentifierAsIdentifier(constructIdentifierReferenceAsIdentifier(pos, ast), visitors);
+    }
+
+    function walkIdentifierNameAsIdentifier(pos, ast, visitors) {
+        walkIdentifierAsIdentifier(constructIdentifierNameAsIdentifier(pos, ast), visitors);
+    }
+
+    function walkIdentifierAsIdentifier(node, visitors) {
+        const enterExit = visitors[identifierTypeId];
+        if (enterExit === null) return;
+
+        const { enter, exit } = enterExit;
+        if (enter !== null) enter(node);
+        if (exit !== null) exit(node);
+    }
+
+    function walkTSQualifiedNameAsMemberExpression(pos, ast, visitors) {
+        const enterExit = visitors[memberExpressionTypeId];
+        let node,
+            enter,
+            exit = null;
+        if (enterExit !== null) {
+            ({ enter, exit } = enterExit);
+            node = constructTSQualifiedNameAsMemberExpression(pos, ast);
+            if (enter !== null) enter(node);
+        }
+
+        walkTSTypeNameAsMemberExpression(pos + 16, ast, visitors);
+        walkIdentifierNameAsIdentifier(pos + 32, ast, visitors);
+
+        if (exit !== null) exit(node);
+    }
+";
 
 /// Generate construct and walk functions for an enum.
 fn generate_enum(
