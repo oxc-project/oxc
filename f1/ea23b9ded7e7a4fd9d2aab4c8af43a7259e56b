@@ -1,0 +1,19 @@
+crates/oxc_isolated_declarations/src/class.rs
+  s_06476a90b76d80::t_ba3d291b61a565 327,331-364,536-539
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f1ea23b9ded7e7a4fd9d2aab4c8af43a7259e56b",
+  "prompts": {},
+  "sessions": {
+    "s_06476a90b76d80": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6b11-d078-71c1-bfac-894f2be45190",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
