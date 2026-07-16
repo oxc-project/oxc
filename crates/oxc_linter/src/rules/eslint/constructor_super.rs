@@ -225,10 +225,8 @@ impl Rule for ConstructorSuper {
             Self::super_class_context(super_class_type, class.super_class.as_ref());
 
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
-            if let ClassElement::MethodDefinition(method) = elem
-                && matches!(method.kind, MethodDefinitionKind::Constructor)
-            {
-                return Some(method);
+            if let ClassElement::Constructor(constructor) = elem {
+                return Some(constructor);
             }
             None
         }) else {
@@ -734,9 +732,12 @@ impl ConstructorSuper {
             match ancestor.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     // Skip if this function is the constructor itself
-                    if let Some(parent) =
-                        ctx.nodes().parent_node(ancestor.id()).kind().as_method_definition()
-                        && matches!(parent.kind, MethodDefinitionKind::Constructor)
+                    if ctx
+                        .nodes()
+                        .parent_node(ancestor.id())
+                        .kind()
+                        .as_class_constructor()
+                        .is_some()
                     {
                         continue;
                     }

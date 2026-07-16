@@ -4,8 +4,9 @@ use bitflags::bitflags;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, FormalParameter, Function, IdentifierName, IdentifierReference,
-        MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
+        ClassConstructor, Expression, FormalParameter, Function, IdentifierName,
+        IdentifierReference, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind,
+        TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -396,6 +397,12 @@ impl NoEmptyFunction {
                     }
                     return ("function", prop.key.name()).into();
                 }
+                AstKind::ClassConstructor(constructor) => {
+                    if self.is_allowed_constructor(constructor) {
+                        return ViolationInfo::default();
+                    }
+                    return ("constructor", Some(Cow::Borrowed("constructor"))).into();
+                }
                 AstKind::MethodDefinition(method) => {
                     if self.is_allowed_method(method) {
                         return ViolationInfo::default();
@@ -410,7 +417,6 @@ impl NoEmptyFunction {
                         }
                         MethodDefinitionKind::Get => "getter",
                         MethodDefinitionKind::Set => "setter",
-                        MethodDefinitionKind::Constructor => "constructor",
                     };
                     return (kind, method.key.name()).into();
                 }
@@ -454,25 +460,6 @@ impl NoEmptyFunction {
             return true;
         }
         match method.kind {
-            MethodDefinitionKind::Constructor => {
-                if self.allow.contains(Allowed::Constructors) {
-                    return true;
-                }
-                // `constructor(private name: string) {}` is allowed b/c it declares
-                // a private property
-                if method.value.params.items.iter().any(FormalParameter::has_modifier) {
-                    return true;
-                }
-                match method.accessibility {
-                    Some(TSAccessibility::Private) => {
-                        self.allow.contains(Allowed::PrivateConstructor)
-                    }
-                    Some(TSAccessibility::Protected) => {
-                        self.allow.contains(Allowed::ProtectedConstructor)
-                    }
-                    _ => false,
-                }
-            }
             MethodDefinitionKind::Get => self.allow.contains(Allowed::Getters),
             MethodDefinitionKind::Set => self.allow.contains(Allowed::Setters),
             MethodDefinitionKind::Method => {
@@ -484,6 +471,21 @@ impl NoEmptyFunction {
                 self.allow.contains(Allowed::Methods)
                     || (method.r#override && self.allow.contains(Allowed::OverrideMethod))
             }
+        }
+    }
+
+    fn is_allowed_constructor(&self, constructor: &ClassConstructor) -> bool {
+        if self.allow.contains(Allowed::Constructors) {
+            return true;
+        }
+        // `constructor(private name: string) {}` is allowed because it declares a private property.
+        if constructor.value.params.items.iter().any(FormalParameter::has_modifier) {
+            return true;
+        }
+        match constructor.accessibility {
+            Some(TSAccessibility::Private) => self.allow.contains(Allowed::PrivateConstructor),
+            Some(TSAccessibility::Protected) => self.allow.contains(Allowed::ProtectedConstructor),
+            _ => false,
         }
     }
 

@@ -164,6 +164,8 @@ impl UnstableAddress for Class<'_> {}
 
 impl UnstableAddress for ClassBody<'_> {}
 
+impl UnstableAddress for ClassConstructor<'_> {}
+
 impl UnstableAddress for MethodDefinition<'_> {}
 
 impl UnstableAddress for PropertyDefinition<'_> {}

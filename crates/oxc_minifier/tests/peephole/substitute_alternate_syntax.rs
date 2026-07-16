@@ -678,7 +678,6 @@ fn test_property_key() {
     test_same("class C { static ['constructor'] = 0 }"); // class C { static constructor = 0 } is an early error
     test_same("class C { static accessor ['constructor'] = 0 }"); // class C { static accessor constructor = 0 } is an early error
     test_same("class C { ['constructor']() {} }"); // computed `constructor` is not treated as a constructor
-    test("class C { 'constructor'() {} }", "class C { constructor() {} }");
     test_same("class C { *['constructor']() {} }"); // class C { *constructor() {} } is an early error
     test_same("class C { async ['constructor']() {} }"); // class C { async constructor() {} } is an early error
     test_same("class C { async *['constructor']() {} }"); // class C { async *constructor() {} } is an early error

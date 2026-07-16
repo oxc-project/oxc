@@ -30,7 +30,10 @@ impl Derive for DeriveContentEq {
     /// Register that accept `#[content_eq]` attr on structs, enums, or struct fields.
     /// Allow attr on structs and enums which don't derive this trait.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[("content_eq", attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField))]
+        &[(
+            "content_eq",
+            attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
+        )]
     }
 
     /// Parse `#[content_eq(skip)]` attr.
@@ -45,6 +48,9 @@ impl Derive for DeriveContentEq {
             AttrLocation::Enum(enum_def) => enum_def.content_eq.skip = true,
             AttrLocation::StructField(struct_def, field_index) => {
                 struct_def.fields[field_index].content_eq.skip = true;
+            }
+            AttrLocation::EnumVariant(enum_def, variant_index) => {
+                enum_def.variants[variant_index].content_eq.skip = true;
             }
             _ => return Err(()),
         }
@@ -120,6 +126,8 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
             let ident = variant.ident();
             if variant.is_fieldless() {
                 quote!( (Self::#ident, Self::#ident) => true )
+            } else if variant.content_eq.skip {
+                quote!( (Self::#ident(_), Self::#ident(_)) => true )
             } else {
                 quote!( (Self::#ident(a), Self::#ident(b)) => a.content_eq(b) )
             }

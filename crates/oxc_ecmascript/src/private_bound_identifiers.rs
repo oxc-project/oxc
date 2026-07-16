@@ -11,7 +11,9 @@ pub trait PrivateBoundIdentifiers {
 impl PrivateBoundIdentifiers for ClassElement<'_> {
     fn private_bound_identifiers(&self) -> Option<PrivateIdentifier<'_>> {
         match self {
-            ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => None,
+            ClassElement::StaticBlock(_)
+            | ClassElement::Constructor(_)
+            | ClassElement::TSIndexSignature(_) => None,
             ClassElement::MethodDefinition(def) => def.private_bound_identifiers(),
             ClassElement::PropertyDefinition(def) => def.private_bound_identifiers(),
             ClassElement::AccessorProperty(def) => def.private_bound_identifiers(),

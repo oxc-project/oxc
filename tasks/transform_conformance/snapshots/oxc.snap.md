@@ -671,7 +671,15 @@ x Output mismatch
 x Output mismatch
 
 * typescript/constructor/decoratorOnClassConstructor1/input.ts
-x Output mismatch
+
+  x Decorators are not valid here.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/constructor/decoratorOnClassConstructor1/input.ts:6:5]
+ 5 | class C {
+ 6 |     @dec constructor() {}
+   :     ^^^^
+ 7 | }
+   `----
+
 
 * typescript/constructor/decoratorOnClassConstructor4/input.ts
 Bindings mismatch:

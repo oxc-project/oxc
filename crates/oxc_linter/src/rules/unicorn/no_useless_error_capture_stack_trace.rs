@@ -133,7 +133,7 @@ fn get_error_subclass_if_in_constructor<'a>(
         match ancestor.kind() {
             AstKind::StaticBlock(_) => return ClassInfo::None,
             AstKind::Function(func) if func.id.is_some() => return ClassInfo::None,
-            AstKind::MethodDefinition(method) if method.kind.is_constructor() => {
+            AstKind::ClassConstructor(_) => {
                 found_constructor = true;
             }
             AstKind::Class(class) => {

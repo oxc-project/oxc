@@ -1476,6 +1476,22 @@ impl ClassBody<'_> {
     }
 }
 
+impl ClassConstructor<'_> {
+    /// Get [`NodeId`] of [`ClassConstructor`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ClassConstructor`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
 impl MethodDefinition<'_> {
     /// Get [`NodeId`] of [`MethodDefinition`].
     ///
@@ -3976,6 +3992,7 @@ impl ClassElement<'_> {
     pub fn node_id(&self) -> NodeId {
         match self {
             Self::StaticBlock(it) => it.node_id(),
+            Self::Constructor(it) => it.node_id(),
             Self::MethodDefinition(it) => it.node_id(),
             Self::PropertyDefinition(it) => it.node_id(),
             Self::AccessorProperty(it) => it.node_id(),

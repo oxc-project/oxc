@@ -5,7 +5,7 @@ eslint/array-callback-return                               |  16812
 eslint/arrow-body-style                                    |   2529
 eslint/block-scoped-var                                    |  31363
 eslint/capitalized-comments                                |      7
-eslint/class-methods-use-this                              |   2676
+eslint/class-methods-use-this                              |   2480
 eslint/complexity                                          |  17572
 eslint/constructor-super                                   |    300
 eslint/curly                                               |  14797
@@ -20,7 +20,7 @@ eslint/func-style                                          |      7
 eslint/getter-return                                       |  10895
 eslint/grouped-accessor-pairs                              |  15349
 eslint/guard-for-in                                        |    105
-eslint/id-length                                           | 178568
+eslint/id-length                                           | 178372
 eslint/init-declarations                                   |  31363
 eslint/logical-assignment-operators                        |  38314
 eslint/max-classes-per-file                                |      3
@@ -127,7 +127,7 @@ eslint/no-throw-literal                                    |    224
 eslint/no-unassigned-vars                                  |  37499
 eslint/no-undef                                            |      7
 eslint/no-undefined                                        | 282877
-eslint/no-underscore-dangle                                | 200305
+eslint/no-underscore-dangle                                | 200109
 eslint/no-unexpected-multiline                             | 100966
 eslint/no-unmodified-loop-condition                        |    782
 eslint/no-unneeded-ternary                                 |   4722
@@ -145,9 +145,9 @@ eslint/no-useless-assignment                               |      7
 eslint/no-useless-backreference                            |  64236
 eslint/no-useless-call                                     |  62606
 eslint/no-useless-catch                                    |    151
-eslint/no-useless-computed-key                             |  36054
+eslint/no-useless-computed-key                             |  35858
 eslint/no-useless-concat                                   |  20604
-eslint/no-useless-constructor                              |   1916
+eslint/no-useless-constructor                              |    196
 eslint/no-useless-escape                                   |  63282
 eslint/no-useless-rename                                   |   2345
 eslint/no-useless-return                                   |  14199
@@ -452,7 +452,7 @@ react/no-string-refs                                       |  15882
 react/no-this-in-sfc                                       |   4308
 react/no-unescaped-entities                                |    672
 react/no-unknown-property                                  |    452
-react/no-unsafe                                            |   6871
+react/no-unsafe                                            |   6773
 react/no-unstable-nested-components                        |   9349
 react/no-will-update-set-state                             |   6567
 react/only-export-components                               |      3
@@ -503,14 +503,14 @@ typescript/no-non-null-asserted-optional-chain             |    577
 typescript/no-non-null-assertion                           |    577
 typescript/no-require-imports                              |  62608
 typescript/no-this-alias                                   |  13590
-typescript/no-unnecessary-parameter-property-assignment    |   1916
+typescript/no-unnecessary-parameter-property-assignment    |    196
 typescript/no-unnecessary-type-constraint                  |    362
 typescript/no-unsafe-declaration-merging                   |    500
 typescript/no-unsafe-function-type                         |  13199
 typescript/no-useless-empty-export                         |     66
 typescript/no-var-requires                                 |  24652
 typescript/no-wrapper-object-types                         |  13199
-typescript/parameter-properties                            |   1070
+typescript/parameter-properties                            |    279
 typescript/prefer-as-const                                 |  12866
 typescript/prefer-enum-initializers                        |     23
 typescript/prefer-for-of                                   |    557
@@ -572,7 +572,7 @@ unicorn/no-object-as-default-parameter                     |  24806
 unicorn/no-process-exit                                    |  62606
 unicorn/no-single-promise-in-promise-methods               |  62606
 unicorn/no-static-only-class                               |    300
-unicorn/no-thenable                                        |  92476
+unicorn/no-thenable                                        |  92280
 unicorn/no-this-assignment                                 |  50504
 unicorn/no-typeof-undefined                                |  20604
 unicorn/no-unnecessary-array-flat-depth                    |  62606

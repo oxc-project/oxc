@@ -2661,15 +2661,68 @@ function deserializeClassElement(pos) {
     case 0:
       return deserializeBoxStaticBlock(pos + 8);
     case 1:
-      return deserializeBoxMethodDefinition(pos + 8);
+      return deserializeBoxClassConstructor(pos + 8);
     case 2:
-      return deserializeBoxPropertyDefinition(pos + 8);
+      return deserializeBoxMethodDefinition(pos + 8);
     case 3:
-      return deserializeBoxAccessorProperty(pos + 8);
+      return deserializeBoxPropertyDefinition(pos + 8);
     case 4:
+      return deserializeBoxAccessorProperty(pos + 8);
+    case 5:
       return deserializeBoxTSIndexSignature(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ClassElement`);
+  }
+}
+
+function deserializeClassConstructor(pos) {
+  let start,
+    end,
+    previousParent = parent,
+    constructor = (parent = {
+      __proto__: NodeProto,
+      type: "MethodDefinition",
+      decorators: [],
+      key: null,
+      value: null,
+      kind: "constructor",
+      computed: false,
+      static: false,
+      override: false,
+      optional: false,
+      accessibility: deserializeOptionTSAccessibility(pos + 12),
+      start: (start = deserializeI32(pos)),
+      end: (end = deserializeI32(pos + 4)),
+      range: [start, end],
+      parent,
+    });
+  constructor.key = deserializeClassConstructorKey(pos + 16);
+  constructor.value = deserializeBoxFunction(pos + 32);
+  parent = previousParent;
+  return constructor;
+}
+
+function deserializeClassConstructorKey(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      let start = deserializeI32(pos + 8),
+        end = deserializeI32(pos + 8 + 4);
+      return {
+        __proto__: NodeProto,
+        type: "Identifier",
+        decorators: [],
+        name: "constructor",
+        optional: false,
+        typeAnnotation: null,
+        start,
+        end,
+        range: [start, end],
+        parent,
+      };
+    case 1:
+      return deserializeBoxStringLiteral(pos + 8);
+    default:
+      throw Error(`Unexpected discriminant ${uint8[pos]} for ClassConstructorKey`);
   }
 }
 
@@ -2758,12 +2811,10 @@ function deserializePropertyDefinitionType(pos) {
 function deserializeMethodDefinitionKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return "constructor";
-    case 1:
       return "method";
-    case 2:
+    case 1:
       return "get";
-    case 3:
+    case 2:
       return "set";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for MethodDefinitionKind`);
@@ -6606,6 +6657,10 @@ function deserializeVecClassElement(pos) {
 
 function deserializeBoxStaticBlock(pos) {
   return deserializeStaticBlock(int32[pos >> 2]);
+}
+
+function deserializeBoxClassConstructor(pos) {
+  return deserializeClassConstructor(int32[pos >> 2]);
 }
 
 function deserializeBoxMethodDefinition(pos) {

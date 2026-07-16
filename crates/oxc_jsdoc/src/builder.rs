@@ -187,6 +187,7 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::FormalParameter(_)
 
         | AstKind::Class(_)
+        | AstKind::ClassConstructor(_)
         | AstKind::MethodDefinition(_)
         | AstKind::PropertyDefinition(_)
         | AstKind::StaticBlock(_)

@@ -2483,13 +2483,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_property_key(&method.key);
         self.current_reference_flags = ReferenceFlags::empty();
-        let flags = match method.kind {
-            MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-            MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-            MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-            MethodDefinitionKind::Method => ScopeFlags::Function,
-        };
-        self.visit_function(&method.value, flags);
+        self.visit_function(&method.value, method.kind.scope_flags());
+        self.leave_node(kind);
+    }
+
+    fn visit_class_constructor(&mut self, constructor: &ClassConstructor<'a>) {
+        let kind = AstKind::ClassConstructor(self.alloc(constructor));
+        self.enter_node(kind);
+        self.visit_span(&constructor.span);
+        self.visit_class_constructor_key(&constructor.key);
+        self.visit_function(&constructor.value, ScopeFlags::Function | ScopeFlags::Constructor);
         self.leave_node(kind);
     }
 

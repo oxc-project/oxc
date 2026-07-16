@@ -905,6 +905,11 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
                 tokens.push(Cow::Borrowed("static"));
             }
         }
+        AstKind::ClassConstructor(constructor) => {
+            if let Some(accessibility) = constructor.accessibility {
+                tokens.push(Cow::Borrowed(accessibility.as_str()));
+            }
+        }
         AstKind::PropertyDefinition(definition) => {
             if !definition.computed && definition.key.is_private_identifier() {
                 tokens.push(Cow::Borrowed("private"));
@@ -928,8 +933,8 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
     }
 
     match parent_node.kind() {
+        AstKind::ClassConstructor(_) => tokens.push(Cow::Borrowed("constructor")),
         AstKind::MethodDefinition(method_definition) => match method_definition.kind {
-            MethodDefinitionKind::Constructor => tokens.push(Cow::Borrowed("constructor")),
             MethodDefinitionKind::Get => tokens.push(Cow::Borrowed("getter")),
             MethodDefinitionKind::Set => tokens.push(Cow::Borrowed("setter")),
             MethodDefinitionKind::Method => tokens.push(Cow::Borrowed("method")),

@@ -923,12 +923,10 @@ pub fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if PrototypePropertyNameList of ClassElementList contains more than one occurrence of "constructor".
     let mut prev_constructor: Option<Span> = None;
     let constructors = class.body.body.iter().filter_map(|e| {
-        if let ClassElement::MethodDefinition(def) = e {
+        if let ClassElement::Constructor(def) = e {
             // is declaration
             def.value.body.as_ref()?;
-            if def.kind == MethodDefinitionKind::Constructor {
-                return def.key.prop_name().map_or(Some(def.span), |(_, node)| Some(node));
-            }
+            return Some(def.key.span());
         }
         None
     });
@@ -1144,14 +1142,13 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                 break;
             }
             AstKind::MethodDefinition(method) => {
-                // Function's parent is a `MethodDefinition` representing a class method/getter/setter/constructor.
+                // Function's parent is a `MethodDefinition` representing a class method/getter/setter.
                 // Check the function is the method itself, not computed key or decorator.
                 // Valid: `class C { method() { super.foo } }`
                 // Invalid: `class C { [ function() { super.foo } ]() {} }`
                 // Invalid: `class C { @(function() { super.foo }) method() {} }`
                 if func_address == method.value.address() {
-                    // `super.foo` is legal here.
-                    // `super()` is only legal if method is class constructor, and class has a super-class.
+                    // `super.foo` is legal here, but `super()` is not.
                     //
                     // > ClassElement : MethodDefinition
                     // > * It is a Syntax Error if PropName of MethodDefinition is not "constructor" and
@@ -1164,23 +1161,26 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                     // >   2. If constructor is empty, return false.
                     // >   3. Return HasDirectSuper of constructor.
                     if super_call_span.is_some() {
-                        if method.kind != MethodDefinitionKind::Constructor {
-                            break;
-                        }
-
-                        let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
-                        let class =
-                            ctx.ancestry().find_kind_by_node_id(class_node_id).as_class().unwrap();
-                        if class.super_class.is_none() {
-                            ctx.error(diagnostics::super_without_derived_class(
-                                sup.span, class.span,
-                            ));
-                        }
+                        break;
                     }
                     return;
                 }
                 // Function is computed key or decorator - illegal
                 break;
+            }
+            AstKind::ClassConstructor(constructor) => {
+                if func_address != constructor.value.address() {
+                    break;
+                }
+                if super_call_span.is_some() {
+                    let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
+                    let class =
+                        ctx.ancestry().find_kind_by_node_id(class_node_id).as_class().unwrap();
+                    if class.super_class.is_none() {
+                        ctx.error(diagnostics::super_without_derived_class(sup.span, class.span));
+                    }
+                }
+                return;
             }
             // Function is not a class or object method/getter/setter/constructor - illegal.
             // > * It is a Syntax Error if FunctionBody Contains SuperProperty is true.

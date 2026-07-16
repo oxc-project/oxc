@@ -1013,6 +1013,19 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
+    fn visit_class_constructor(&mut self, it: &ClassConstructor<'a>) {
+        {
+            let flags = ScopeFlags::Function | ScopeFlags::Constructor;
+            self.visit_function(&it.value, flags);
+        }
+    }
+
+    #[inline(always)]
+    fn visit_class_constructor_key(&mut self, it: &ClassConstructorKey<'a>) {
+        // Enum does not contain a scope. Halt traversal.
+    }
+
+    #[inline]
     fn visit_method_definition(&mut self, it: &MethodDefinition<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
@@ -1020,7 +1033,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             let flags = match it.kind {
                 MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
                 MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
                 MethodDefinitionKind::Method => ScopeFlags::Function,
             };
             self.visit_function(&it.value, flags);

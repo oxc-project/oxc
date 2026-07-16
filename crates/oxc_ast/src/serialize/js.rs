@@ -787,6 +787,86 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // Misc
 // ----------------------------------------
 
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const start = DESER[i32](POS),
+            end = DESER[i32](POS + 4);
+        const node = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'constructor',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start,
+            end,
+            ...(RANGE && { range: [start, end] }),
+            ...(PARENT && { parent }),
+        };
+        node
+    "
+)]
+pub struct ClassConstructorIdentifier<'a>(pub &'a Span);
+
+impl ESTree for ClassConstructorIdentifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        serialize_meta_property_identifier(serializer, *self.0, "constructor");
+    }
+}
+
+/// Serialize the native [`ClassConstructor`] node as an ESTree `MethodDefinition`.
+#[ast_meta]
+#[estree(
+    ts_type = "MethodDefinition",
+    raw_deser = "
+        let start, end;
+        const previousParent = parent;
+        const constructor = parent = {
+            type: 'MethodDefinition',
+            decorators: [],
+            key: null,
+            value: null,
+            kind: 'constructor',
+            computed: false,
+            static: false,
+            ...(IS_TS && {
+                override: false,
+                optional: false,
+                accessibility: DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
+            }),
+            start: start = DESER[i32](POS_OFFSET.span.start),
+            end: end = DESER[i32](POS_OFFSET.span.end),
+            ...(RANGE && { range: [start, end] }),
+            ...(PARENT && { parent }),
+        };
+
+        constructor.key = DESER[ClassConstructorKey](POS_OFFSET.key);
+        constructor.value = DESER[Box<Function>](POS_OFFSET.value);
+        if (PARENT) parent = previousParent;
+        constructor
+    "
+)]
+pub struct ClassConstructorConverter<'a, 'b>(pub &'b ClassConstructor<'a>);
+
+impl ESTree for ClassConstructorConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let constructor = self.0;
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("MethodDefinition"));
+        state.serialize_field("decorators", &EmptyArray(()));
+        state.serialize_field("key", &constructor.key);
+        state.serialize_field("value", &constructor.value);
+        state.serialize_field("kind", &JsonSafeString("constructor"));
+        state.serialize_field("computed", &false);
+        state.serialize_field("static", &false);
+        state.serialize_ts_field("override", &false);
+        state.serialize_ts_field("optional", &false);
+        state.serialize_ts_field("accessibility", &constructor.accessibility);
+        state.serialize_span(constructor.span);
+        state.end();
+    }
+}
+
 /// Serializer for `body` field of `ArrowFunctionExpression`.
 ///
 /// Serialize as either an expression (if `expression` property is set),

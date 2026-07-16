@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind, AstType,
-    ast::{Argument, Expression, MethodDefinitionKind},
+    ast::{Argument, Expression},
 };
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
@@ -151,9 +151,7 @@ impl Rule for NoThisBeforeSuper {
 impl NoThisBeforeSuper {
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
         let parent = ctx.nodes().parent_node(node.id());
-        let method_def = parent.kind().as_method_definition()?;
-
-        if matches!(method_def.kind, MethodDefinitionKind::Constructor) {
+        if parent.kind().as_class_constructor().is_some() {
             let parent_2 = ctx.nodes().parent_node(parent.id());
             let parent_3 = ctx.nodes().parent_node(parent_2.id());
 

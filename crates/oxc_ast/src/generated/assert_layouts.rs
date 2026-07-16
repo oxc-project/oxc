@@ -755,6 +755,18 @@ const _: () = {
     assert!(size_of::<ClassElement>() == 16);
     assert!(align_of::<ClassElement>() == 8);
 
+    // Padding: 3 bytes
+    assert!(size_of::<ClassConstructor>() == 40);
+    assert!(align_of::<ClassConstructor>() == 8);
+    assert!(offset_of!(ClassConstructor, span) == 0);
+    assert!(offset_of!(ClassConstructor, node_id) == 8);
+    assert!(offset_of!(ClassConstructor, accessibility) == 12);
+    assert!(offset_of!(ClassConstructor, key) == 16);
+    assert!(offset_of!(ClassConstructor, value) == 32);
+
+    assert!(size_of::<ClassConstructorKey>() == 16);
+    assert!(align_of::<ClassConstructorKey>() == 8);
+
     // Padding: 5 bytes
     assert!(size_of::<MethodDefinition>() == 72);
     assert!(align_of::<MethodDefinition>() == 8);
@@ -2569,6 +2581,18 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
 
     assert!(size_of::<ClassElement>() == 8);
     assert!(align_of::<ClassElement>() == 4);
+
+    // Padding: 3 bytes
+    assert!(size_of::<ClassConstructor>() == 32);
+    assert!(align_of::<ClassConstructor>() == 4);
+    assert!(offset_of!(ClassConstructor, span) == 0);
+    assert!(offset_of!(ClassConstructor, node_id) == 8);
+    assert!(offset_of!(ClassConstructor, accessibility) == 12);
+    assert!(offset_of!(ClassConstructor, key) == 16);
+    assert!(offset_of!(ClassConstructor, value) == 28);
+
+    assert!(size_of::<ClassConstructorKey>() == 12);
+    assert!(align_of::<ClassConstructorKey>() == 4);
 
     // Padding: 1 bytes
     assert!(size_of::<MethodDefinition>() == 48);

@@ -471,6 +471,12 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_class_constructor(&mut self, it: &mut ClassConstructor<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_class_constructor(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_method_definition(&mut self, it: &mut MethodDefinition<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_method_definition(self, it);
@@ -1132,5 +1138,15 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_js_doc_unknown_type(self, it);
         self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_class_constructor_key(&mut self, it: &mut ClassConstructorKey<'a>) {
+        match it {
+            ClassConstructorKey::Identifier(span) => {
+                self.convert_offset(&mut span.start);
+                self.convert_offset(&mut span.end);
+            }
+            ClassConstructorKey::StringLiteral(_) => walk_mut::walk_class_constructor_key(self, it),
+        }
     }
 }

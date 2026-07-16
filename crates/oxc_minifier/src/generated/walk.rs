@@ -2597,6 +2597,9 @@ unsafe fn walk_class_element<'a, Tr: Traverse<'a>>(
         ClassElement::StaticBlock(node) => {
             walk_static_block(traverser, (&mut **node) as *mut _, ctx)
         }
+        ClassElement::Constructor(node) => {
+            walk_class_constructor(traverser, (&mut **node) as *mut _, ctx)
+        }
         ClassElement::MethodDefinition(node) => {
             walk_method_definition(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -2611,6 +2614,46 @@ unsafe fn walk_class_element<'a, Tr: Traverse<'a>>(
         }
     }
     traverser.exit_class_element(&mut *node, ctx);
+}
+
+unsafe fn walk_class_constructor<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassConstructor<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_constructor(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ClassConstructorKey(
+        ancestor::ClassConstructorWithoutKey(node, PhantomData),
+    ));
+    walk_class_constructor_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CLASS_CONSTRUCTOR_KEY) as *mut ClassConstructorKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ClassConstructorValue);
+    walk_function(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_CLASS_CONSTRUCTOR_VALUE)
+            as *mut ArenaBox<Function>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_class_constructor(&mut *node, ctx);
+}
+
+unsafe fn walk_class_constructor_key<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassConstructorKey<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_constructor_key(&mut *node, ctx);
+    match &mut *node {
+        ClassConstructorKey::Identifier(_) => {}
+        ClassConstructorKey::StringLiteral(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_class_constructor_key(&mut *node, ctx);
 }
 
 unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(

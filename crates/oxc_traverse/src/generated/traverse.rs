@@ -1272,6 +1272,36 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_class_constructor(
+        &mut self,
+        node: &mut ClassConstructor<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_class_constructor(
+        &mut self,
+        node: &mut ClassConstructor<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_class_constructor_key(
+        &mut self,
+        node: &mut ClassConstructorKey<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_class_constructor_key(
+        &mut self,
+        node: &mut ClassConstructorKey<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_method_definition(
         &mut self,
         node: &mut MethodDefinition<'a>,

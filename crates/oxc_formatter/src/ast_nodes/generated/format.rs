@@ -2586,6 +2586,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassElement<'a>> {
                     })
                     .fmt(f);
             }
+            ClassElement::Constructor(inner) => {
+                allocator
+                    .alloc(AstNode::<ClassConstructor> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
             ClassElement::MethodDefinition(inner) => {
                 allocator
                     .alloc(AstNode::<MethodDefinition> {
@@ -2619,6 +2629,40 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassElement<'a>> {
             ClassElement::TSIndexSignature(inner) => {
                 allocator
                     .alloc(AstNode::<TSIndexSignature> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+        }
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassConstructor<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassConstructorKey<'a>> {
+    #[inline]
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let allocator = self.allocator;
+        let parent = self.parent;
+        match self.inner {
+            ClassConstructorKey::Identifier(_) => {}
+            ClassConstructorKey::StringLiteral(inner) => {
+                allocator
+                    .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
                         allocator,

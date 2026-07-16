@@ -1637,6 +1637,11 @@ impl<'a> Class<'a> {
 }
 
 impl<'a> ClassElement<'a> {
+    /// Returns `true` if this is a [`ClassElement::Constructor`].
+    pub fn is_constructor(&self) -> bool {
+        matches!(self, Self::Constructor(_))
+    }
+
     /// Returns `true` if this is a [`ClassElement::StaticBlock`].
     pub fn is_static_block(&self) -> bool {
         matches!(self, Self::StaticBlock(_))
@@ -1660,7 +1665,7 @@ impl<'a> ClassElement<'a> {
     /// ```
     pub fn r#static(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) | Self::Constructor(_) => false,
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
@@ -1679,7 +1684,7 @@ impl<'a> ClassElement<'a> {
     /// ```
     pub fn computed(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) | Self::Constructor(_) => false,
             Self::MethodDefinition(def) => def.computed,
             Self::PropertyDefinition(def) => def.computed,
             Self::AccessorProperty(def) => def.computed,
@@ -1690,6 +1695,7 @@ impl<'a> ClassElement<'a> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         match self {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
+            Self::Constructor(def) => def.accessibility,
             Self::MethodDefinition(def) => def.accessibility,
             Self::PropertyDefinition(def) => def.accessibility,
         }
@@ -1702,7 +1708,8 @@ impl<'a> ClassElement<'a> {
             Self::TSIndexSignature(_)
             | Self::StaticBlock(_)
             | Self::PropertyDefinition(_)
-            | Self::AccessorProperty(_) => None,
+            | Self::AccessorProperty(_)
+            | Self::Constructor(_) => None,
             Self::MethodDefinition(def) => Some(def.kind),
         }
     }
@@ -1712,7 +1719,7 @@ impl<'a> ClassElement<'a> {
     /// This is either the name of the method, property name, or accessor name.
     pub fn property_key(&self) -> Option<&PropertyKey<'a>> {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) | Self::Constructor(_) => None,
             Self::MethodDefinition(def) => Some(&def.key),
             Self::PropertyDefinition(def) => Some(&def.key),
             Self::AccessorProperty(def) => Some(&def.key),
@@ -1724,6 +1731,7 @@ impl<'a> ClassElement<'a> {
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
+            Self::Constructor(_) => Some(Cow::Borrowed("constructor")),
             Self::MethodDefinition(def) => def.key.static_name(),
             Self::PropertyDefinition(def) => def.key.static_name(),
             Self::AccessorProperty(def) => def.key.static_name(),
@@ -1743,6 +1751,7 @@ impl<'a> ClassElement<'a> {
             | Self::StaticBlock(_)
             | Self::AccessorProperty(_)
             | Self::TSIndexSignature(_) => false,
+            Self::Constructor(constructor) => constructor.value.body.is_none(),
             Self::MethodDefinition(method) => method.value.body.is_none(),
         }
     }
@@ -1752,6 +1761,7 @@ impl<'a> ClassElement<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) => true,
+            Self::Constructor(constructor) => constructor.value.is_typescript_syntax(),
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
             Self::PropertyDefinition(property) => {
                 property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
@@ -1767,7 +1777,7 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => !method.decorators.is_empty(),
             Self::PropertyDefinition(property) => !property.decorators.is_empty(),
             Self::AccessorProperty(property) => !property.decorators.is_empty(),
-            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::Constructor(_) => false,
         }
     }
 
@@ -1784,7 +1794,7 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => method.r#type.is_abstract(),
             Self::AccessorProperty(accessor) => accessor.r#type.is_abstract(),
             Self::PropertyDefinition(property) => property.r#type.is_abstract(),
-            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::Constructor(_) => false,
         }
     }
 }
@@ -1797,11 +1807,6 @@ impl PropertyDefinitionType {
 }
 
 impl MethodDefinitionKind {
-    /// `true` for constructors.
-    pub fn is_constructor(self) -> bool {
-        self == Self::Constructor
-    }
-
     /// `true` for regular methods.
     pub fn is_method(self) -> bool {
         self == Self::Method
@@ -1827,7 +1832,6 @@ impl MethodDefinitionKind {
     /// Returns the [`ScopeFlags`] for this method definition kind.
     pub fn scope_flags(self) -> ScopeFlags {
         match self {
-            Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
             Self::Method => ScopeFlags::Function,
             Self::Get => ScopeFlags::GetAccessor | ScopeFlags::Function,
             Self::Set => ScopeFlags::SetAccessor | ScopeFlags::Function,

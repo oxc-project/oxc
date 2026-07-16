@@ -141,6 +141,12 @@ fn private_in() {
 
 #[test]
 fn class() {
+    test_same("class C {\n\t\"constructor\"() {}\n}\n");
+    test_minify(
+        "class C { private \"constr\\u0075ctor\"() {} }",
+        "class C{private constructor(){}}",
+    );
+    test_minify("class C { \"constructor\"() {} }", "class C{constructor(){}}");
     test(
         "export default class Foo { @x @y accessor #aDef = 1 }",
         "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",

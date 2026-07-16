@@ -79,6 +79,11 @@ impl Rule for NoStaticOnlyClass {
         let mut with_type_annotation = false;
         if class.body.body.iter().any(|node| {
             match node {
+                ClassElement::Constructor(v) => {
+                    if v.accessibility.is_some() {
+                        return true;
+                    }
+                }
                 ClassElement::MethodDefinition(v) => {
                     if v.accessibility.is_some() {
                         return true;

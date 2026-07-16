@@ -2555,6 +2555,10 @@ impl Gen for ClassElement<'_> {
                 elem.print(p, ctx);
                 p.print_soft_newline();
             }
+            Self::Constructor(elem) => {
+                elem.print(p, ctx);
+                p.print_soft_newline();
+            }
             Self::MethodDefinition(elem) => {
                 elem.print(p, ctx);
                 p.print_soft_newline();
@@ -2571,6 +2575,38 @@ impl Gen for ClassElement<'_> {
                 elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
+        }
+    }
+}
+
+impl Gen for ClassConstructor<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
+        if let Some(accessibility) = &self.accessibility {
+            p.print_space_before_identifier();
+            p.print_str(accessibility.as_str());
+            p.print_soft_space();
+        }
+        p.add_source_mapping(self.key.span());
+        match &self.key {
+            ClassConstructorKey::Identifier(_) => {
+                p.print_space_before_identifier();
+                p.print_str("constructor");
+            }
+            ClassConstructorKey::StringLiteral(_) if p.options.minify => {
+                p.print_space_before_identifier();
+                p.print_str("constructor");
+            }
+            ClassConstructorKey::StringLiteral(literal) => literal.print(p, ctx),
+        }
+        p.print_ascii_byte(b'(');
+        self.value.params.print(p, ctx);
+        p.print_ascii_byte(b')');
+        if let Some(body) = &self.value.body {
+            p.print_soft_space();
+            body.print(p, ctx);
+        } else {
+            p.print_semicolon();
         }
     }
 }
@@ -2840,7 +2876,7 @@ impl Gen for MethodDefinition<'_> {
             p.print_soft_space();
         }
         match &self.kind {
-            MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
+            MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
                 p.print_space_before_identifier();
                 p.print_str("get");

@@ -139,6 +139,13 @@ trait GetMethod {
 impl GetMethod for ClassElement<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
+            ClassElement::Constructor(def) => Some(Method {
+                name: "constructor".into(),
+                r#static: false,
+                call_signature: false,
+                kind: MethodKind::Normal,
+                span: Span::new(def.span.start, def.key.span().end),
+            }),
             ClassElement::MethodDefinition(def) => def.key.static_name().map(|name| Method {
                 name: name.into(),
                 r#static: def.r#static,

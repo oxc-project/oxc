@@ -519,6 +519,16 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_constructor(&mut self, it: &mut ClassConstructor<'a>) {
+        walk_class_constructor(self, it);
+    }
+
+    #[inline]
+    fn visit_class_constructor_key(&mut self, it: &mut ClassConstructorKey<'a>) {
+        walk_class_constructor_key(self, it);
+    }
+
+    #[inline]
     fn visit_method_definition(&mut self, it: &mut MethodDefinition<'a>) {
         walk_method_definition(self, it);
     }
@@ -2693,15 +2703,43 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_class_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassElement<'a>) {
         // No `AstType` for this type
         match it {
             ClassElement::StaticBlock(it) => visitor.visit_static_block(it),
+            ClassElement::Constructor(it) => visitor.visit_class_constructor(it),
             ClassElement::MethodDefinition(it) => visitor.visit_method_definition(it),
             ClassElement::PropertyDefinition(it) => visitor.visit_property_definition(it),
             ClassElement::AccessorProperty(it) => visitor.visit_accessor_property(it),
             ClassElement::TSIndexSignature(it) => visitor.visit_ts_index_signature(it),
+        }
+    }
+
+    #[inline]
+    pub fn walk_class_constructor<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ClassConstructor<'a>,
+    ) {
+        let kind = AstType::ClassConstructor;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_class_constructor_key(&mut it.key);
+        {
+            let flags = ScopeFlags::Function | ScopeFlags::Constructor;
+            visitor.visit_function(&mut it.value, flags);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_constructor_key<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ClassConstructorKey<'a>,
+    ) {
+        // No `AstType` for this type
+        match it {
+            ClassConstructorKey::Identifier(it) => visitor.visit_span(it),
+            ClassConstructorKey::StringLiteral(it) => visitor.visit_string_literal(it),
         }
     }
 
@@ -2719,7 +2757,6 @@ pub mod walk_mut {
             let flags = match it.kind {
                 MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
                 MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
                 MethodDefinitionKind::Method => ScopeFlags::Function,
             };
             visitor.visit_function(&mut it.value, flags);

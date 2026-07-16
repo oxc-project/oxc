@@ -171,9 +171,8 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
 fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     let mut excluded_properties: FxHashSet<Str<'a>> = FxHashSet::default();
     for element in &class_body.body {
-        if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Constructor
-            && let Some(body) = &method.value.body
+        if let ClassElement::Constructor(constructor) = element
+            && let Some(body) = &constructor.value.body
         {
             let mut collector =
                 ConstructorAssignmentCollector { excluded_properties: &mut excluded_properties };

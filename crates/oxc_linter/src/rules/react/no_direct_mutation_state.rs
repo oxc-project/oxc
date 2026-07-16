@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::MethodDefinitionKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -141,9 +141,7 @@ fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'
     let mut is_component = false;
 
     for parent in ctx.nodes().ancestors(node.id()) {
-        if let AstKind::MethodDefinition(method_def) = parent.kind()
-            && method_def.kind == MethodDefinitionKind::Constructor
-        {
+        if parent.kind().as_class_constructor().is_some() {
             is_constructor = true;
         }
 

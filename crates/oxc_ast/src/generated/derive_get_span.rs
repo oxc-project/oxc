@@ -1005,10 +1005,27 @@ impl GetSpan for ClassElement<'_> {
     fn span(&self) -> Span {
         match self {
             Self::StaticBlock(it) => GetSpan::span(&**it),
+            Self::Constructor(it) => GetSpan::span(&**it),
             Self::MethodDefinition(it) => GetSpan::span(&**it),
             Self::PropertyDefinition(it) => GetSpan::span(&**it),
             Self::AccessorProperty(it) => GetSpan::span(&**it),
             Self::TSIndexSignature(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for ClassConstructor<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ClassConstructorKey<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Identifier(it) => GetSpan::span(it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
         }
     }
 }

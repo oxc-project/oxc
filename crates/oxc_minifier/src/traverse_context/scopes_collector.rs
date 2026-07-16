@@ -1007,14 +1007,13 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
         {
-            let flags = match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::Function,
-            };
-            self.visit_function(&it.value, flags);
+            self.visit_function(&it.value, it.kind.scope_flags());
         }
+    }
+
+    #[inline]
+    fn visit_class_constructor(&mut self, it: &ClassConstructor<'a>) {
+        self.visit_function(&it.value, ScopeFlags::Function | ScopeFlags::Constructor);
     }
 
     #[inline]

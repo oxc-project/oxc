@@ -439,6 +439,7 @@ impl GetAddress for ClassElement<'_> {
     fn address(&self) -> Address {
         match self {
             Self::StaticBlock(it) => GetAddress::address(it),
+            Self::Constructor(it) => GetAddress::address(it),
             Self::MethodDefinition(it) => GetAddress::address(it),
             Self::PropertyDefinition(it) => GetAddress::address(it),
             Self::AccessorProperty(it) => GetAddress::address(it),

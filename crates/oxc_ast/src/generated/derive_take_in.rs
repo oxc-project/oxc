@@ -204,6 +204,10 @@ impl<'a> TakeIn<'a> for ClassBody<'a> {}
 
 impl<'a> TakeIn<'a> for ClassElement<'a> {}
 
+impl<'a> TakeIn<'a> for ClassConstructor<'a> {}
+
+impl<'a> TakeIn<'a> for ClassConstructorKey<'a> {}
+
 impl<'a> TakeIn<'a> for MethodDefinition<'a> {}
 
 impl<'a> TakeIn<'a> for PropertyDefinition<'a> {}

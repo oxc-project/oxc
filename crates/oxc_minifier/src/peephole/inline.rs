@@ -178,7 +178,7 @@ impl<'a> PeepholeOptimizations {
             // A static block runs arbitrary code during class creation and can
             // install setters or define static properties.
             ClassElement::StaticBlock(_) => true,
-            ClassElement::TSIndexSignature(_) => false,
+            ClassElement::Constructor(_) | ClassElement::TSIndexSignature(_) => false,
         })
     }
 
