@@ -47,8 +47,8 @@ pub mod buffer {
 
 pub use oxc_formatter_core::{
     Argument, Arguments, Buffer, BufferExtensions, Format, FormatElement, FormatOptions,
-    FormatState, Formatted, Formatter, GroupId, HeapVecBuffer, MemoizeFormat, Memoized, SourceText,
-    UniqueGroupIdBuilder, VecBuffer,
+    FormatState, Formatted, Formatter, GroupId, HeapVecBuffer, MemoizeFormat, Memoized,
+    ScratchBuffer, SourceText, UniqueGroupIdBuilder, VecBuffer,
 };
 
 pub use self::builders::JoinBuilderJsExt;

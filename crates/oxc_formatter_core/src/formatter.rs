@@ -2,11 +2,11 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
+use oxc_allocator::{Allocator, GetAllocator};
 
 use crate::{
     Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState,
-    buffer::HeapVecBuffer,
+    buffer::{HeapVecBuffer, move_elements_into_arena},
     builders::{FillBuilder, JoinBuilder},
     format::{Format, write},
     format_element::Interned,
@@ -67,8 +67,8 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
         let mut buffer = HeapVecBuffer::new(self.state_mut());
         write(&mut buffer, Arguments::new(&[Argument::new(&content)]));
 
-        // Intentionally not delegated to `intern_vec`:
-        // dispatching on the heap buffer lets the 0/1-element cases return without ever allocating an `ArenaVec`.
+        // Dispatching on the heap buffer lets the 0/1-element cases return
+        // without ever allocating an `ArenaVec`.
         match buffer.len() {
             0 => None,
             // Doesn't get cheaper than calling clone, use the element directly
@@ -77,16 +77,22 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
         }
     }
 
-    #[expect(clippy::unused_self)] // Keep `self` the same as the original source
-    pub fn intern_vec(
+    /// Interns a pre-built element sequence (e.g. a builder's heap accumulator),
+    /// moving it into the arena exactly-sized. The source is cleared,
+    /// retaining its capacity for the caller (a [`crate::ScratchBuffer`] returns it to the cache).
+    pub fn intern_elements(
         &self,
-        mut elements: ArenaVec<'ast, FormatElement<'ast>>,
+        elements: &mut Vec<FormatElement<'ast>>,
     ) -> Option<FormatElement<'ast>> {
         match elements.len() {
             0 => None,
             // Doesn't get cheaper than calling clone, use the element directly
             1 => elements.pop(),
-            _ => Some(FormatElement::Interned(Interned::new(elements))),
+            _ => {
+                let vec = move_elements_into_arena(self.allocator(), elements);
+                elements.clear();
+                Some(FormatElement::Interned(Interned::new(vec)))
+            }
         }
     }
 

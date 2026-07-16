@@ -35,6 +35,8 @@ Pick by what you're building:
   - it moves into the `Document` for free, and heap-staging it costs an extra copy for no benefit
 - Unknown-length staging that ends interned/sliced: `HeapVecBuffer`
   - a watermarked view over a shared, thread-cached scratch vector; the arena receives one exactly-sized copy (see its rustdoc for the full rationale)
+- Accumulating across interleaved `write()` calls (multiple builders open at once): check a `ScratchBuffer` out per builder behind a private `Buffer` adapter, finish via `Formatter::intern_elements`
+  - the shared scratch's LIFO rule rules out `HeapVecBuffer` there (see `ChildListBuffer` in `oxc_formatter`)
 - Known-length sequences: build exact-sized directly (e.g. `ArenaVec::from_iter_in`)
 
 `Formatter::intern` and `BestFitting` already stage on the heap; consumer crates get this for free.
