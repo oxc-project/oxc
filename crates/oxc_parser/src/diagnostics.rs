@@ -61,6 +61,16 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected token").with_label(span)
 }
 
+/// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
+#[cold]
+pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1242",
+        "'abstract' modifier can only appear on a class, method, or property declaration.",
+    )
+    .with_label(span)
+}
+
 #[cold]
 pub fn private_identifier_in_property_name(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Private identifier '#{name}' is not allowed in property names"))

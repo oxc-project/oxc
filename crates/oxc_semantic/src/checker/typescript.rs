@@ -219,10 +219,6 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     let is_abstract = method.r#type.is_abstract();
 
     if is_abstract {
-        // constructors cannot be abstract, no matter what
-        if method.kind.is_constructor() {
-            ctx.error(diagnostics::illegal_abstract_modifier(method.key.span()));
-        }
         // abstract cannot be used with private identifiers
         if method.key.is_private_identifier() {
             ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(

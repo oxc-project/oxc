@@ -810,6 +810,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if method.value.generator {
                     self.error(diagnostics::constructor_generator(span));
                 }
+                if method.r#type.is_abstract() {
+                    self.error(diagnostics::illegal_abstract_modifier(span));
+                }
             }
         }
 

@@ -14575,19 +14575,19 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  9 │ }
    ╰────
 
-  × TS(1183): An implementation cannot be declared in ambient contexts.
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts:2:28]
- 1 │ declare abstract class A {
- 2 │     abstract constructor() {}
-   ·                            ▲
- 3 │ }
-   ╰────
-
   × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts:2:14]
  1 │ declare abstract class A {
  2 │     abstract constructor() {}
    ·              ───────────
+ 3 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts:2:28]
+ 1 │ declare abstract class A {
+ 2 │     abstract constructor() {}
+   ·                            ▲
  3 │ }
    ╰────
 

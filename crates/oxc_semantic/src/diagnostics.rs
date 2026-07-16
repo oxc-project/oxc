@@ -367,16 +367,6 @@ pub fn function_implementation_missing(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-/// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
-#[cold]
-pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
-    ts_error(
-        "1242",
-        "'abstract' modifier can only appear on a class, method, or property declaration.",
-    )
-    .with_label(span)
-}
-
 /// 'abstract' modifier cannot be used with a private identifier. (18019)
 #[cold]
 pub fn abstract_cannot_be_used_with_private_identifier(span: Span) -> OxcDiagnostic {
