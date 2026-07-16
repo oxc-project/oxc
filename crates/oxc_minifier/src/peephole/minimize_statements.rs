@@ -722,7 +722,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn switch_case_is_removable(
+    fn is_switch_case_removable(
         stmt: &SwitchCase,
         allow_break: bool,
         ctx: &TraverseCtx<'a>,
@@ -773,7 +773,7 @@ impl<'a> PeepholeOptimizations {
         let case_count = switch_stmt.cases.len();
         if case_count == 1 {
             // Remove sole case if empty and has no side-effect test
-            if Self::switch_case_is_removable(&switch_stmt.cases[0], true, ctx) {
+            if Self::is_switch_case_removable(&switch_stmt.cases[0], true, ctx) {
                 ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
             }
         } else if case_count > 1 {
@@ -785,7 +785,7 @@ impl<'a> PeepholeOptimizations {
             let (end, allow_break) = if let Some(default_pos) =
                 switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
             {
-                if Self::switch_case_is_removable(&switch_stmt.cases[default_pos], true, ctx) {
+                if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true, ctx) {
                     (case_count, true)
                 } else if default_pos == case_count - 1 {
                     (default_pos, false)
@@ -800,7 +800,7 @@ impl<'a> PeepholeOptimizations {
                 // Last non-removable case index in [0, end]. Returns None if all cases are removable.
                 let last_non_removable_case_before_end = switch_stmt.cases[..end]
                     .iter()
-                    .rposition(|case| !Self::switch_case_is_removable(case, allow_break, ctx));
+                    .rposition(|case| !Self::is_switch_case_removable(case, allow_break, ctx));
 
                 // Calculate the start of the removable suffix.
                 // 1. next case after last non-removable: remove from pos + 1
