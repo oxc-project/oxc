@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, FormalParameterRest,
-        FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
+        Argument, BindingPattern, CallExpression, ClassConstructor, Expression,
+        FormalParameterRest, FormalParameters, FunctionBody, Statement, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -108,12 +108,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessConstructor {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MethodDefinition(constructor) = node.kind() else {
+        let AstKind::ClassConstructor(constructor) = node.kind() else {
             return;
         };
-        if !constructor.kind.is_constructor() {
-            return;
-        }
         let Some(body) = &constructor.value.body else {
             return;
         };
@@ -149,7 +146,7 @@ impl Rule for NoUselessConstructor {
 // Check for an empty constructor in a class without a superclass.
 fn lint_empty_constructor<'a>(
     ctx: &LintContext<'a>,
-    constructor: &MethodDefinition<'a>,
+    constructor: &ClassConstructor<'a>,
     body: &FunctionBody<'a>,
 ) {
     if !body.statements.is_empty() {
@@ -175,7 +172,7 @@ fn lint_empty_constructor<'a>(
 
 fn lint_redundant_super_call<'a>(
     ctx: &LintContext<'a>,
-    constructor: &MethodDefinition<'a>,
+    constructor: &ClassConstructor<'a>,
     body: &FunctionBody<'a>,
 ) {
     let Some(super_call) = is_single_super_call(body) else {

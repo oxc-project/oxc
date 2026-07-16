@@ -162,6 +162,9 @@ impl Rule for RequireParam {
         let settings = &ctx.settings().jsdoc;
 
         // If config disabled checking, skip
+        if func_def_node.kind().as_class_constructor().is_some() && !config.check_constructors {
+            return;
+        }
         if let AstKind::MethodDefinition(method_def) = func_def_node.kind() {
             match method_def.kind {
                 MethodDefinitionKind::Get => {
@@ -171,11 +174,6 @@ impl Rule for RequireParam {
                 }
                 MethodDefinitionKind::Set => {
                     if !config.check_setters {
-                        return;
-                    }
-                }
-                MethodDefinitionKind::Constructor => {
-                    if !config.check_constructors {
                         return;
                     }
                 }

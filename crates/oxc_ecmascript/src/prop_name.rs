@@ -1,8 +1,8 @@
 use oxc_ast::ast::{
-    ClassElement, MethodDefinition, ObjectProperty, ObjectPropertyKind, PropertyDefinition,
-    PropertyKey,
+    ClassConstructor, ClassElement, MethodDefinition, ObjectProperty, ObjectPropertyKind,
+    PropertyDefinition, PropertyKey,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 /// [`PropName`](https://tc39.es/ecma262/#sec-static-semantics-propname)
 pub trait PropName {
@@ -41,10 +41,17 @@ impl PropName for PropertyKey<'_> {
 impl PropName for ClassElement<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
+            ClassElement::Constructor(def) => def.prop_name(),
             ClassElement::MethodDefinition(def) => def.prop_name(),
             ClassElement::PropertyDefinition(def) => def.prop_name(),
             _ => None,
         }
+    }
+}
+
+impl PropName for ClassConstructor<'_> {
+    fn prop_name(&self) -> Option<(&str, Span)> {
+        Some(("constructor", self.key.span()))
     }
 }
 

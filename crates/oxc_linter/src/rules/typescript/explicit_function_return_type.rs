@@ -491,8 +491,7 @@ fn is_constructor_or_setter(node: &AstNode, ctx: &LintContext) -> bool {
 }
 
 fn is_constructor(node: &AstNode) -> bool {
-    let AstKind::MethodDefinition(method_def) = node.kind() else { return false };
-    method_def.kind.is_constructor()
+    node.kind().as_class_constructor().is_some()
 }
 
 fn is_setter(node: &AstNode) -> bool {

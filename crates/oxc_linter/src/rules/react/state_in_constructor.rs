@@ -1,9 +1,10 @@
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -147,11 +148,8 @@ fn has_parent_es6_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 pub fn is_in_constructor(ctx: &LintContext, node_id: NodeId) -> bool {
     ctx.nodes()
         .ancestor_kinds(node_id)
-        .find_map(|kind| match kind {
-            AstKind::MethodDefinition(method) => Some(method),
-            _ => None,
-        })
-        .is_some_and(|method| method.kind.is_constructor())
+        .take_while(|kind| kind.as_class().is_none())
+        .any(|kind| matches!(kind, AstKind::ClassConstructor(_)))
 }
 
 #[test]

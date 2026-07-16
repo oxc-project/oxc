@@ -1254,7 +1254,7 @@ impl RuleRunner for crate::rules::eslint::no_useless_concat::NoUselessConcat {
 
 impl RuleRunner for crate::rules::eslint::no_useless_constructor::NoUselessConstructor {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::MethodDefinition]));
+        Some(&AstTypesBitset::from_types(&[AstType::ClassConstructor]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -1627,6 +1627,7 @@ impl RuleRunner
 {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::AccessorProperty,
+        AstType::ClassConstructor,
         AstType::FormalParameter,
         AstType::MethodDefinition,
         AstType::PropertyDefinition,
@@ -1885,7 +1886,7 @@ impl RuleRunner for crate::rules::typescript::no_unnecessary_condition::NoUnnece
 }
 
 impl RuleRunner for crate::rules::typescript::no_unnecessary_parameter_property_assignment::NoUnnecessaryParameterPropertyAssignment {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[AstType::MethodDefinition]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[AstType::ClassConstructor]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2034,7 +2035,7 @@ impl RuleRunner for crate::rules::typescript::only_throw_error::OnlyThrowError {
 
 impl RuleRunner for crate::rules::typescript::parameter_properties::ParameterProperties {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::Class, AstType::MethodDefinition]));
+        Some(&AstTypesBitset::from_types(&[AstType::Class, AstType::ClassConstructor]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

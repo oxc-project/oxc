@@ -74,7 +74,7 @@ impl<'a> PeepholeOptimizations {
                     Ancestor::PropertyDefinitionValue(_) | Ancestor::AccessorPropertyValue(_) => {
                         return None;
                     }
-                    Ancestor::MethodDefinitionValue(method) if method.kind().is_constructor() => {
+                    Ancestor::ClassConstructorValue(_) => {
                         found_constructor_method = true;
                     }
                     Ancestor::ClassBody(class) if found_constructor_method => {
@@ -1045,9 +1045,9 @@ impl<'a> PeepholeOptimizations {
                     // Save computed key.
                     if e.computed()
                         && let Some(key) = match e {
-                            ClassElement::TSIndexSignature(_) | ClassElement::StaticBlock(_) => {
-                                None
-                            }
+                            ClassElement::TSIndexSignature(_)
+                            | ClassElement::StaticBlock(_)
+                            | ClassElement::Constructor(_) => None,
                             ClassElement::MethodDefinition(def) => Some(&mut def.key),
                             ClassElement::PropertyDefinition(def) => Some(&mut def.key),
                             ClassElement::AccessorProperty(def) => Some(&mut def.key),
@@ -1062,6 +1062,7 @@ impl<'a> PeepholeOptimizations {
                         && let Some(init) = match e {
                             ClassElement::TSIndexSignature(_)
                             | ClassElement::StaticBlock(_)
+                            | ClassElement::Constructor(_)
                             | ClassElement::MethodDefinition(_) => None,
                             ClassElement::PropertyDefinition(def) => def.value.take(),
                             ClassElement::AccessorProperty(def) => def.value.take(),

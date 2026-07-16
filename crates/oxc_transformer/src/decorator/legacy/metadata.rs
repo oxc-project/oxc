@@ -170,10 +170,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
         let should_transform = !(class.is_expression() || class.declare);
 
         let constructor = class.body.body.iter_mut().find_map(|item| match item {
-            ClassElement::MethodDefinition(method)
-                if method.kind.is_constructor() && method.value.body.is_some() =>
-            {
-                Some(method)
+            ClassElement::Constructor(constructor) if constructor.value.body.is_some() => {
+                Some(constructor)
             }
             _ => None,
         });
@@ -199,11 +197,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if method.kind.is_constructor() {
-            // Handle constructor in `enter_class`
-            return;
-        }
-
         let is_typescript_syntax = method.value.is_typescript_syntax();
         let is_decorated = !is_typescript_syntax
             && (!method.decorators.is_empty()

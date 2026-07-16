@@ -126,7 +126,6 @@ impl<'a> ClassProperties<'a> {
                             MethodDefinitionKind::Method => ident.name.as_str(),
                             MethodDefinitionKind::Get => &format!("get_{}", ident.name),
                             MethodDefinitionKind::Set => &format!("set_{}", ident.name),
-                            MethodDefinitionKind::Constructor => unreachable!(),
                         };
                         let binding = ctx.generate_uid(
                             name,
@@ -162,8 +161,8 @@ impl<'a> ClassProperties<'a> {
                         );
                     }
                 }
-                ClassElement::TSIndexSignature(_) => {
-                    // TODO: Need to handle this?
+                ClassElement::Constructor(_) | ClassElement::TSIndexSignature(_) => {
+                    // TODO: Need to handle these?
                 }
             }
         }
@@ -273,11 +272,10 @@ impl<'a> ClassProperties<'a> {
                         self.convert_instance_property(prop, &mut instance_inits, ctx);
                     }
                 }
-                ClassElement::MethodDefinition(method) => {
-                    if method.kind == MethodDefinitionKind::Constructor
-                        && method.value.body.is_some()
-                    {
-                        constructor = Some(method.value.as_mut());
+                ClassElement::MethodDefinition(_) => {}
+                ClassElement::Constructor(ctor) => {
+                    if ctor.value.body.is_some() {
+                        constructor = Some(ctor.value.as_mut());
                     }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
@@ -812,7 +810,9 @@ impl<'a> ClassProperties<'a> {
                         return false;
                     }
                 }
-                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
+                ClassElement::Constructor(_)
+                | ClassElement::AccessorProperty(_)
+                | ClassElement::TSIndexSignature(_) => {
                     // TODO: Need to handle these?
                 }
             }
