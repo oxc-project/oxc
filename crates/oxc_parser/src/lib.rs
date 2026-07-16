@@ -68,6 +68,7 @@ use std::any::Any;
 
 pub mod config;
 mod context;
+mod counting_builder;
 mod cursor;
 mod error_handler;
 mod modifiers;
@@ -90,7 +91,7 @@ pub mod lexer;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
     ast::{Expression, Program, Statement},
-    builder::{AstBuilder, GetAstBuilder},
+    builder::{AstCounts, GetAstBuilder},
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
@@ -102,6 +103,7 @@ use crate::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
     context::{Context, StatementContext},
+    counting_builder::CountingAstBuilder,
     error_handler::FatalError,
     lexer::Lexer,
     module_record::ModuleRecordBuilder,
@@ -177,6 +179,17 @@ pub struct ParserReturn<'a> {
     ///
     /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
     pub tokens: ArenaVec<'a, Token>,
+
+    /// Counts of AST nodes, scopes, symbols, and references in the program.
+    ///
+    /// Counts are upper bounds (see [`AstCounts`]). Convert to `oxc_semantic::Stats` and pass to
+    /// `SemanticBuilder::with_stats` to pre-allocate capacity, avoiding a full-AST counting pass.
+    ///
+    /// These describe the AST *as parsed*, so they only size a `SemanticBuilder::build` on an
+    /// AST the parser produced. Passes which mutate the AST (transformer, minifier) add nodes,
+    /// scopes and symbols the parser never saw. To size a semantic rebuild after such a pass,
+    /// use `Semantic::stats()` from the preceding build, which measures actual counts.
+    pub ast_counts: AstCounts,
 
     /// Whether the parser panicked and terminated early.
     ///
@@ -635,7 +648,7 @@ struct ParserImpl<'a, C: ParserConfig> {
     ctx: Context,
 
     /// Ast builder for creating AST nodes
-    ast: AstBuilder<'a>,
+    ast: CountingAstBuilder<'a>,
 
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
@@ -671,7 +684,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast: CountingAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
@@ -698,6 +711,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             program = Program::dummy(self.allocator());
             program.source_type = self.source_type;
             program.source_text = self.source_text;
+            // Counts reflect the aborted partial parse, not the dummy program
+            self.ast.set_counts(AstCounts::default());
         }
 
         self.check_unfinished_errors();
@@ -755,6 +770,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             diagnostics: errors,
             irregular_whitespaces,
             tokens,
+            ast_counts: self.ast.counts(),
             panicked,
             is_flow_language,
         }
@@ -823,21 +839,30 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
 
+        // The checkpoints hold mid-first-parse count snapshots, so `rewind` would discard
+        // counts for everything parsed after the checkpoint. Accumulate reparse deltas
+        // onto the full first-parse counts instead.
+        let mut counts = self.ast.counts();
+
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
             self.rewind(checkpoint);
+            let counts_before = self.ast.counts();
 
             // Parse the statement with await context enabled (TopLevel context is already set)
             let stmt = self.context_add(Context::Await, |p| {
                 p.parse_statement_list_item(StatementContext::StatementList)
             });
+            counts += self.ast.counts() - counts_before;
 
             // Replace the statement if the index is valid
             if stmt_index < statements.len() {
                 statements[stmt_index] = stmt;
             }
         }
+
+        self.ast.set_counts(counts);
 
         if let Some(original_tokens) = original_tokens {
             self.lexer.set_tokens(original_tokens);
@@ -909,10 +934,10 @@ impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
 }
 
 impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
-    type Builder = AstBuilder<'a>;
+    type Builder = CountingAstBuilder<'a>;
 
     #[inline]
-    fn builder(&self) -> &AstBuilder<'a> {
+    fn builder(&self) -> &CountingAstBuilder<'a> {
         &self.ast
     }
 }

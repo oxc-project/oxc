@@ -3,6 +3,7 @@ use std::cell::Cell;
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
+    builder::AstCounts,
 };
 use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -45,6 +46,7 @@ macro_rules! assert_ge {
 /// `ScopeTree`, and `SymbolTable` to store info for all these items.
 ///
 /// * Obtain `Stats` from an existing [`Semantic`] with [`Semantic::stats`].
+/// * Convert the parser's counts (`ParserReturn::ast_counts`) with `Stats::from`.
 /// * Use [`Stats::count`] to visit AST and obtain accurate counts.
 ///
 /// # Example
@@ -73,6 +75,27 @@ pub struct Stats {
     pub symbols: u32,
     /// Number of identifier references.
     pub references: u32,
+}
+
+/// Convert [`AstCounts`] produced by the parser (`ParserReturn::ast_counts`) to [`Stats`].
+///
+/// The counts are upper bounds, which is sufficient for pre-allocating capacity.
+///
+/// Only valid for a [`Semantic`] built on the AST the parser produced. Once a pass has mutated
+/// the AST, prefer [`Semantic::stats`] from the preceding build - it measures actual counts,
+/// whereas these describe the AST as parsed.
+///
+/// [`Semantic`]: super::Semantic
+/// [`Semantic::stats`]: super::Semantic::stats
+impl From<AstCounts> for Stats {
+    fn from(counts: AstCounts) -> Self {
+        Stats {
+            nodes: counts.nodes,
+            scopes: counts.scopes,
+            symbols: counts.symbols,
+            references: counts.references,
+        }
+    }
 }
 
 impl Stats {

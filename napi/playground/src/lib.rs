@@ -12,7 +12,7 @@ use serde::Serialize;
 
 use oxc::{
     allocator::Allocator,
-    ast::ast::Program,
+    ast::{ast::Program, builder::AstCounts},
     ast_visit::Visit,
     codegen::{Codegen, CodegenOptions, CommentOptions, LegalComment},
     diagnostics::OxcDiagnostic,
@@ -21,7 +21,7 @@ use oxc::{
     minifier::{CompressOptions, Minifier, MinifierOptions, MinifierReturn},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
-        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
+        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, Stats, SymbolFlags, SymbolId,
         dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
@@ -127,12 +127,17 @@ impl Oxc {
             SourceType::from_path(&path).map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
         // Phase 1: Parse source
-        let (mut program, mut module_record) =
+        let (mut program, mut module_record, ast_counts) =
             self.parse_source(&allocator, &source_text, source_type, parser_options);
 
         // Phase 2: Build semantic analysis
-        let semantic =
-            self.build_semantic(&program, run_options, parser_options, &control_flow_options);
+        let semantic = self.build_semantic(
+            &program,
+            ast_counts,
+            run_options,
+            parser_options,
+            &control_flow_options,
+        );
 
         // Phase 3: Run linter
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
@@ -216,7 +221,7 @@ impl Oxc {
         source_text: &'a str,
         source_type: SourceType,
         parser_options: &OxcParserOptions,
-    ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>) {
+    ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>, AstCounts) {
         let parser_options = ParseOptions {
             parse_regular_expression: true,
             allow_return_outside_function: parser_options.allow_return_outside_function,
@@ -224,25 +229,29 @@ impl Oxc {
             allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
             ..ParseOptions::default()
         };
-        let ParserReturn { program, diagnostics, module_record, .. } =
+        let ParserReturn { program, diagnostics, module_record, ast_counts, .. } =
             Parser::new(allocator, source_text, source_type).with_options(parser_options).parse();
         self.diagnostics.extend(diagnostics);
-        (program, module_record)
+        (program, module_record, ast_counts)
     }
 
     fn build_semantic<'a>(
         &mut self,
         program: &'a Program<'a>,
+        ast_counts: AstCounts,
         run_options: &OxcRunOptions,
         parser_options: &OxcParserOptions,
         control_flow_options: &OxcControlFlowOptions,
     ) -> oxc::semantic::Semantic<'a> {
         let mut semantic_builder = SemanticBuilder::new_compiler().with_build_nodes(true);
+        let mut stats = Stats::from(ast_counts);
         if run_options.transform {
             // Estimate transformer will triple scopes, symbols, references
-            semantic_builder = semantic_builder.with_excess_capacity(2.0).with_enum_eval(true);
+            stats = stats.increase_by(2.0);
+            semantic_builder = semantic_builder.with_enum_eval(true);
         }
         let semantic_ret = semantic_builder
+            .with_stats(stats)
             .with_check_syntax_error(parser_options.semantic_errors)
             .with_cfg(run_options.cfg)
             .build(program);

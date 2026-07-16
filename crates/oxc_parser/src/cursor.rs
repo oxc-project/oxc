@@ -1,7 +1,10 @@
 //! Code related to navigating `Token`s from the lexer
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::ast::{BindingRestElement, RegExpFlags};
+use oxc_ast::{
+    ast::{BindingRestElement, RegExpFlags},
+    builder::AstCounts,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -18,6 +21,7 @@ pub struct ParserCheckpoint<'a> {
     prev_span_end: u32,
     errors_pos: usize,
     fatal_error: Option<FatalError>,
+    ast_counts: AstCounts,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -309,6 +313,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
+            ast_counts: self.ast.counts(),
         }
     }
 
@@ -319,18 +324,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
+            ast_counts: self.ast.counts(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
-            checkpoint;
+        let ParserCheckpoint {
+            lexer,
+            cur_token,
+            prev_span_end,
+            errors_pos,
+            fatal_error,
+            ast_counts,
+        } = checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
+        self.ast.set_counts(ast_counts);
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {

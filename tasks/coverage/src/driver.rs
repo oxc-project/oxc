@@ -8,6 +8,7 @@ use oxc::{
     ast::{
         Comment,
         ast::{Program, RegExpLiteral},
+        builder::AstCounts,
     },
     ast_visit::{VisitJs, walk_js},
     codegen::{CodegenOptions, CodegenReturn},
@@ -39,6 +40,8 @@ pub struct Driver {
     pub errors: Diagnostics,
     pub printed: String,
     pub source_type: Option<SourceType>,
+    /// Parser counts from a clean parse, to check against actual semantic counts
+    pub ast_counts: Option<AstCounts>,
 }
 
 impl CompilerInterface for Driver {
@@ -78,9 +81,10 @@ impl CompilerInterface for Driver {
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
-        let ParserReturn { program, panicked, diagnostics, .. } = parser_return;
+        let ParserReturn { program, panicked, diagnostics, ast_counts, .. } = parser_return;
         self.panicked = *panicked;
         self.source_type = Some(program.source_type);
+        self.ast_counts = (!*panicked && diagnostics.is_empty()).then_some(*ast_counts);
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
@@ -94,6 +98,20 @@ impl CompilerInterface for Driver {
     }
 
     fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
+        // Check parser counts are sufficient to pre-allocate semantic's containers.
+        // Counts are upper bounds - cover grammar conversions may over-count.
+        if let Some(counts) = self.ast_counts.take() {
+            let stats = ret.semantic.stats();
+            if counts.nodes < stats.nodes
+                || counts.scopes < stats.scopes
+                || counts.symbols < stats.symbols
+                || counts.references < stats.references
+            {
+                self.errors.push(OxcDiagnostic::error(format!(
+                    "Parser under-counted AST: {counts:?} < actual {stats:?}"
+                )));
+            }
+        }
         if self.check_semantic {
             let program = ret.semantic.nodes().program();
             if let Some(errors) = check_semantic_ids(program) {

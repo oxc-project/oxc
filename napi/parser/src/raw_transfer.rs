@@ -275,7 +275,8 @@ unsafe fn parse_raw_impl(
         // Note: Avoid calling `Error::from_diagnostics_in` unless there are some errors,
         // because it's fairly expensive (it copies whole of source text into a `String`).
         let mut errors = if options.show_semantic_errors == Some(true) {
-            let semantic_ret = SemanticBuilder::new_compiler().build(&program);
+            let semantic_ret =
+                SemanticBuilder::new_compiler().with_stats(ret.ast_counts.into()).build(&program);
 
             if !ret.diagnostics.is_empty() || !semantic_ret.diagnostics.is_empty() {
                 Error::from_diagnostics_in(

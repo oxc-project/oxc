@@ -23,7 +23,8 @@ pub fn detect_code_removal(
 fn collect(code: &str, source_type: SourceType) -> StatsCollector {
     // Parse the way the formatter does (so the before/after comparison matches the formatter's view).
     let allocator = Allocator::default();
-    let ParserReturn { program, diagnostics, .. } = parse_for_format(&allocator, code, source_type);
+    let ParserReturn { program, diagnostics, ast_counts, .. } =
+        parse_for_format(&allocator, code, source_type);
 
     let mut collector = StatsCollector::default();
 
@@ -35,7 +36,8 @@ fn collect(code: &str, source_type: SourceType) -> StatsCollector {
     }
 
     // Using semantic analysis here only to get parent node
-    let semantic_ret = SemanticBuilder::new().with_build_nodes(true).build(&program);
+    let semantic_ret =
+        SemanticBuilder::new().with_build_nodes(true).with_stats(ast_counts.into()).build(&program);
     collector.collect(&program, &semantic_ret.semantic)
 }
 
