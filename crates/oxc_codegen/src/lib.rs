@@ -129,6 +129,9 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
+    /// Trailing comments keyed by the end of the preceding token.
+    trailing_comments: CommentsMap,
+
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
     /// so the emission site can recover verbatim source text instead of a
     /// canonicalised literal (rolldown#9408). The emission site falls back
@@ -195,6 +198,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            trailing_comments: CommentsMap::default(),
             annotation_comments: FxHashMap::default(),
             legal_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]

@@ -225,6 +225,40 @@ fn test_comment_at_top_of_file() {
 }
 
 #[test]
+fn test_trailing_comments_after_node_boundaries() {
+    for (source, expected) in [
+        ("foo; // statement\nbar;", "foo; // statement\nbar;\n"),
+        ("if (foo) {} // statement\nbar;", "if (foo) {} // statement\nbar;\n"),
+        (
+            "function f() {\n foo; /* one */ /* two */\n bar;\n}",
+            "function f() {\n\tfoo; /* one */ /* two */\n\tbar;\n}\n",
+        ),
+    ] {
+        test(source, expected);
+        test_idempotency(source);
+    }
+}
+
+#[test]
+fn test_trailing_comments_outside_statement_boundaries_are_not_printed() {
+    test("const value = foo /* after identifier */\n + bar;", "const value = foo + bar;\n");
+    test("const value = foo() /* after call */\n .bar;", "const value = foo().bar;\n");
+    test("const f = (value /* after parameter */\n) => value;", "const f = (value) => value;\n");
+    test("try {} catch (error) // after paren\n{}", "try {} catch (error) {}\n");
+    test("const xs = [a, // after comma\nb];", "const xs = [a, b];\n");
+    test("const value = a + // after operator\nb;", "const value = a + b;\n");
+}
+
+#[test]
+fn test_trailing_comments_minify_idempotency() {
+    use oxc_codegen::CodegenOptions;
+
+    let options = CodegenOptions { minify: true, ..CodegenOptions::default() };
+    crate::tester::test_options("foo; // trailing\nbar;", "foo;// trailing\nbar;", options.clone());
+    test_idempotency_options("foo; // trailing\nbar;", &options);
+}
+
+#[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
     // A comment-only JSX expression container must not leak a leading space onto

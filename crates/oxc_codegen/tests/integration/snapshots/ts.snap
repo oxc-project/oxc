@@ -310,8 +310,8 @@ import defaultExport, { export1 } from 'module-name';
 import defaultExport, * as name from 'module-name';
 import 'module-name';
 import {} from "mod";
-export let name1, name2;
-export const name3 = 1, name4 = 2;
+export let name1, name2; // also var
+export const name3 = 1, name4 = 2; // also var, let
 export function functionName() {/* … */}
 export class ClassName {}
 export function* generatorFunctionName() {/* … */}

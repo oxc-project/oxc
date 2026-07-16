@@ -17,7 +17,7 @@ pub struct CodegenOptions {
 
     /// Print comments?
     ///
-    /// At present, only some leading comments are preserved.
+    /// Leading comments and trailing comments attached to emitted statements are preserved.
     ///
     /// Default is [CommentOptions::default].
     pub comments: CommentOptions,
@@ -98,8 +98,6 @@ impl CodegenOptions {
 /// Comment Options
 pub struct CommentOptions {
     /// Print normal comments that do not have special meanings.
-    ///
-    /// At present only statement level comments are printed.
     ///
     /// Default is `true`.
     pub normal: bool,

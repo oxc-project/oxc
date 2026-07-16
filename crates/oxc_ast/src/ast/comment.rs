@@ -40,7 +40,7 @@ pub enum CommentPosition {
     #[default]
     Leading = 0,
 
-    /// Comments tailing a token until a newline.
+    /// Comments attached to the end of the preceding token on the same line.
     /// e.g. `token /* trailing */ // trailing`
     Trailing = 1,
 
@@ -144,10 +144,15 @@ pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
     pub span: Span,
 
-    /// Start of token this leading comment is attached to.
+    /// Source boundary this comment is attached to.
+    ///
+    /// Leading comments use the start of the following token:
     /// `/* Leading */ token`
     ///                ^ This start
-    /// NOTE: Trailing comment attachment is not computed yet.
+    ///
+    /// Trailing comments use the end of the preceding token:
+    /// `token /* Trailing */`
+    ///       ^ This end
     #[estree(skip)]
     pub attached_to: u32,
 

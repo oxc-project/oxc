@@ -684,6 +684,14 @@ impl CodeBuffer {
         }
     }
 
+    /// Remove trailing spaces, tabs, and line breaks from the buffer.
+    #[inline]
+    pub fn trim_trailing_ascii_whitespace_and_newlines(&mut self) {
+        while self.buf.last().is_some_and(u8::is_ascii_whitespace) {
+            self.buf.pop();
+        }
+    }
+
     /// Get contents of buffer as a byte slice.
     ///
     /// # Example
@@ -796,6 +804,14 @@ mod test {
 
         let source = code.into_string();
         assert_eq!(source, s);
+    }
+
+    #[test]
+    fn trim_trailing_ascii_whitespace_and_newlines() {
+        let mut code = CodeBuffer::default();
+        code.print_str("foo \t\r\n\t");
+        code.trim_trailing_ascii_whitespace_and_newlines();
+        assert_eq!(code.as_str(), "foo");
     }
 
     #[test]
