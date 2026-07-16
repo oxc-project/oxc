@@ -217,6 +217,10 @@ Deliberate divergences from Prettier. Two admission reasons:
 
 Notable divergences are:
 
+- A trailing `//` comment never counts toward the print width
+  - Emitted as a `line_suffix` (like line comments in every other formatter crate),
+    so the preceding value keeps its own layout: `@x: fade(@white, 4%); // long comment` stays flat
+  - Trailing `/* */` comments still count, matching Prettier (both here and in the JS formatter, self-delimiting comments are inline content)
 - A COMMENTED keyframe selector list is formatted structurally (one selector per line, comments per the separator rule: `60% /* mid */,`)
   - Prettier keeps the whole list verbatim on one line, interior spacing included (`60%   /* mid */  ,   70%` survives untouched)
   - Ours prints commented and uncommented lists with the same layout; layout-only, rare trigger

@@ -1,6 +1,7 @@
 # externals/ng-zorro-antd/components/style/themes/variable.less
 
 > Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
+> Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it.
 
 ## Option 1
 
@@ -14,7 +15,22 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -530,24 +530,18 @@
+@@ -261,13 +261,9 @@
+ @outline-width: 2px;
+ @outline-color: @primary-color; // No use anymore
+ @outline-fade: 20%;
+ 
+-@background-color-light: hsv(
+-  0,
+-  0,
+-  98%
+-); // background of header and selected item
++@background-color-light: hsv(0, 0, 98%); // background of header and selected item
+ @background-color-base: hsv(0, 0, 96%); // Default grey background color
+ @background-color-dark: hsv(0, 0, 94%); // dark grey background color
+ 
+ // Disabled states
+@@ -530,24 +526,18 @@
  @input-padding-horizontal-base: @input-padding-horizontal;
  @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
  @input-padding-horizontal-lg: @input-padding-horizontal;
@@ -45,7 +61,7 @@
    0
  );
  @input-padding-vertical-lg: (
-@@ -910,11 +904,12 @@
+@@ -910,11 +900,12 @@
  @tabs-card-head-background: @background-color-light;
  @tabs-card-height: 40px;
  @tabs-card-active-color: @primary-color;
@@ -331,11 +347,7 @@
 @outline-color: @primary-color; // No use anymore
 @outline-fade: 20%;
 
-@background-color-light: hsv(
-  0,
-  0,
-  98%
-); // background of header and selected item
+@background-color-light: hsv(0, 0, 98%); // background of header and selected item
 @background-color-base: hsv(0, 0, 96%); // Default grey background color
 @background-color-dark: hsv(0, 0, 94%); // dark grey background color
 
