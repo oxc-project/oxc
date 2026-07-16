@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 71/71 (100.00%)
-Positive Passed: 71/71 (100.00%)
-Negative Passed: 152/152 (100.00%)
+AST Parsed     : 72/72 (100.00%)
+Positive Passed: 72/72 (100.00%)
+Negative Passed: 153/153 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -116,6 +116,31 @@ Negative Passed: 152/152 (100.00%)
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:1:1]
+ 1 │ -value ** 2;
+   · ──────
+ 2 │ await value ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:2:1]
+ 1 │ -value ** 2;
+ 2 │ await value ** 2;
+   · ───────────
+ 3 │ <number>value ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:3:1]
+ 2 │ await value ** 2;
+ 3 │ <number>value ** 2;
+   · ─────────────
+   ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[misc/fail/export-equal-with-normal-export.ts:4:1]
