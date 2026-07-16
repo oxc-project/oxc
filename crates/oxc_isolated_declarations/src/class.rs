@@ -324,36 +324,44 @@ impl<'a> IsolatedDeclarations<'a> {
     /// to
     ///
     /// `class C { public x: string; constructor(x: string) {} }`
-    fn transform_constructor_parameter_properties(
+    fn prepend_constructor_parameter_properties(
         &self,
         function: &Function<'a>,
         typed_params: &FormalParameters<'a>,
-    ) -> ArenaVec<'a, ClassElement<'a>> {
-        ArenaVec::from_iter_in(
-            function
-                .params
-                .items
-                .iter()
-                .filter(|param| {
-                    // To follow up `transform_formal_parameters`'s behavior
-                    typed_params.items.len() == function.params.items.len() || param.has_modifier()
-                })
-                .enumerate()
-                .filter_map(|(index, param)| {
-                    if !param.has_modifier() {
-                        return None;
-                    }
-                    let type_annotation =
-                        if param.accessibility.is_some_and(TSAccessibility::is_private) {
-                            None
-                        } else {
-                            // transformed params will definitely have type annotation
-                            typed_params.items[index].type_annotation.clone_in(self.allocator())
-                        };
-                    self.transform_formal_parameter_to_class_property(param, type_annotation)
-                }),
-            self,
-        )
+        elements: &mut ArenaVec<'a, ClassElement<'a>>,
+    ) {
+        let has_all_params = typed_params.items.len() == function.params.items.len();
+        let mut property_params = function
+            .params
+            .items
+            .iter()
+            .filter(move |param| {
+                // To follow up `transform_formal_parameters`'s behavior
+                has_all_params || param.has_modifier()
+            })
+            .enumerate()
+            .filter(|(_, param)| {
+                param.has_modifier() && param.pattern.get_identifier_name().is_some()
+            });
+        let properties_len = property_params.clone().count();
+
+        // Give `splice` an exact size hint so it can move the existing elements only once without
+        // first collecting the properties into a temporary vector.
+        elements.splice(
+            0..0,
+            std::iter::repeat_with(|| {
+                let (index, param) = property_params.next().unwrap();
+                let type_annotation =
+                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                        None
+                    } else {
+                        // transformed params will definitely have type annotation
+                        typed_params.items[index].type_annotation.clone_in(self.allocator())
+                    };
+                self.transform_formal_parameter_to_class_property(param, type_annotation).unwrap()
+            })
+            .take(properties_len),
+        );
     }
 
     /// Collect return_type of getter and first parma type of setter
@@ -525,9 +533,10 @@ impl<'a> IsolatedDeclarations<'a> {
 
                             let params =
                                 self.transform_formal_parameters(&function.params, is_private);
-                            elements.splice(
-                                0..0,
-                                self.transform_constructor_parameter_properties(function, &params),
+                            self.prepend_constructor_parameter_properties(
+                                function,
+                                &params,
+                                &mut elements,
                             );
 
                             if is_function_overloads && function.body.is_some() {
