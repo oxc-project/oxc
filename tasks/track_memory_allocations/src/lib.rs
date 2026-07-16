@@ -48,14 +48,30 @@ impl AtomicCounter {
     }
 }
 
-/// Number of system allocations
-static NUM_ALLOC: AtomicCounter = AtomicCounter::new();
-/// Number of system reallocations
-static NUM_REALLOC: AtomicCounter = AtomicCounter::new();
+/// Live counters for the system (heap) allocator, updated by [`TrackedAllocator`].
+///
+/// To track a new heap metric: add an [`AtomicCounter`] here, update it in the
+/// [`GlobalAlloc`] impl, read it out in [`HeapTracker::read`], and reset it in
+/// [`HeapTracker::reset`].
+struct HeapTracker {
+    /// Number of system allocations
+    allocs: AtomicCounter,
+    /// Number of system reallocations
+    reallocs: AtomicCounter,
+}
 
-fn reset_global_allocs() {
-    NUM_ALLOC.reset();
-    NUM_REALLOC.reset();
+static HEAP: HeapTracker =
+    HeapTracker { allocs: AtomicCounter::new(), reallocs: AtomicCounter::new() };
+
+impl HeapTracker {
+    fn read(&self) -> HeapCounters {
+        HeapCounters { allocs: self.allocs.get(), reallocs: self.reallocs.get() }
+    }
+
+    fn reset(&self) {
+        self.allocs.reset();
+        self.reallocs.reset();
+    }
 }
 
 // SAFETY: Methods simply delegate to `MiMalloc` allocator to ensure that the allocator
@@ -65,7 +81,7 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let ret = unsafe { MiMalloc.alloc(layout) };
         if !ret.is_null() {
-            NUM_ALLOC.increment();
+            HEAP.allocs.increment();
         }
         ret
     }
@@ -77,7 +93,7 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         let ret = unsafe { MiMalloc.alloc_zeroed(layout) };
         if !ret.is_null() {
-            NUM_ALLOC.increment();
+            HEAP.allocs.increment();
         }
         ret
     }
@@ -85,7 +101,7 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
         let ret = unsafe { MiMalloc.realloc(ptr, layout, new_size) };
         if !ret.is_null() {
-            NUM_REALLOC.increment();
+            HEAP.reallocs.increment();
         }
         ret
     }
@@ -94,8 +110,8 @@ unsafe impl GlobalAlloc for TrackedAllocator {
 /// Stores all of the memory allocation stats that will be printed for each file.
 #[derive(Debug)]
 struct StageStats {
-    /// Deltas of the allocation counters across the measured operation
-    counters: AllocatorStats,
+    /// Deltas of the heap and arena counters across the measured operation
+    counters: Counters,
     /// Bytes used in the measured `Allocator`'s arena at the end of the measured operation.
     /// A point-in-time gauge read after the operation completes, not a diffed counter.
     /// The arena is not reset between stages, so this includes content from earlier stages
@@ -103,22 +119,54 @@ struct StageStats {
     arena_used_bytes: usize,
 }
 
-/// Counters of allocations, captured from the global and arena allocators.
-/// Used both as a raw snapshot and as per-operation deltas (see `record_stats_diff`).
+impl StageStats {
+    /// Every metric that appears in a snapshot, in output order.
+    ///
+    /// This is the single place that decides what gets snapshotted. To add a metric:
+    /// measure it — a counter in [`HeapCounters`] / [`ArenaCounters`], or a gauge read in
+    /// [`record_stats_in`] — and list it here with a label and a [`MetricKind`].
+    fn metrics(&self, file_size: usize) -> Vec<Metric> {
+        let Counters { heap, arena } = &self.counters;
+        vec![
+            Metric::exact_bytes("file size", file_size),
+            Metric::count("sys allocs", heap.allocs),
+            Metric::count("sys reallocs", heap.reallocs),
+            Metric::count("arena allocs", arena.allocs),
+            Metric::count("arena reallocs", arena.reallocs),
+            Metric::approx_bytes("arena size", self.arena_used_bytes),
+        ]
+    }
+}
+
+/// Counters captured from the heap and arena allocators.
+/// Used both as a raw snapshot and as per-operation deltas (see [`Counters::diff_since`]).
 #[derive(Debug)]
-struct AllocatorStats {
-    /// Number of allocations made by system allocator, excluding arena chunk allocations
-    sys_allocs: usize,
-    /// Number of reallocations made by system allocator
-    sys_reallocs: usize,
+struct Counters {
+    heap: HeapCounters,
+    arena: ArenaCounters,
+}
+
+/// Counters of the system (heap) allocator.
+#[derive(Debug)]
+struct HeapCounters {
+    /// Number of allocations, excluding arena chunk allocations
+    allocs: usize,
+    /// Number of reallocations
+    reallocs: usize,
+}
+
+/// Counters of an arena [`Allocator`].
+#[derive(Debug)]
+struct ArenaCounters {
     /// Number of chunks arenas have requested from the system allocator.
-    /// Tracked separately so chunk allocations can be excluded from `sys_allocs`
-    /// (see `record_stats_diff`). Not printed in snapshots because the count is platform-dependent.
-    arena_chunk_allocs: usize,
-    /// Number of allocations made by arena allocator
-    arena_allocs: usize,
-    /// Number of reallocations made by arena allocator
-    arena_reallocs: usize,
+    /// Tracked separately so chunk allocations can be excluded from heap `allocs`
+    /// (see [`Counters::diff_since`]). Not printed in snapshots because the count is
+    /// platform-dependent.
+    chunk_allocs: usize,
+    /// Number of allocations
+    allocs: usize,
+    /// Number of reallocations
+    reallocs: usize,
 }
 
 #[test]
@@ -184,7 +232,7 @@ pub fn run() -> Result<(), io::Error> {
         let minifier_options = minifier_options.clone();
 
         allocator.reset();
-        reset_global_allocs();
+        HEAP.reset();
 
         let (mut parsed, parser_stats) = record_stats_in(&allocator, || {
             let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
@@ -233,7 +281,7 @@ pub fn run() -> Result<(), io::Error> {
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
         // so re-parse with the formatter's parse options before measuring the formatter
         allocator.reset();
-        reset_global_allocs();
+        HEAP.reset();
 
         let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
         assert!(parsed.diagnostics.is_empty());
@@ -257,179 +305,175 @@ pub fn run() -> Result<(), io::Error> {
     Ok(())
 }
 
-/// Record current allocation stats from both system allocator and arena allocator.
-#[cfg_attr(feature = "is_all_features", expect(unused))]
-fn record_stats(allocator: &Allocator) -> AllocatorStats {
-    let sys_allocs = NUM_ALLOC.get();
-    let sys_reallocs = NUM_REALLOC.get();
-    #[cfg(not(feature = "is_all_features"))]
-    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) =
-        (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_count());
-    #[cfg(feature = "is_all_features")]
-    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) = ((0, 0), 0);
+impl Counters {
+    /// Record current counters from both the heap allocator and the arena allocator.
+    #[cfg_attr(feature = "is_all_features", expect(unused))]
+    fn record(allocator: &Allocator) -> Self {
+        let heap = HEAP.read();
+        #[cfg(not(feature = "is_all_features"))]
+        let ((allocs, reallocs), chunk_allocs) =
+            (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_count());
+        #[cfg(feature = "is_all_features")]
+        let ((allocs, reallocs), chunk_allocs) = ((0, 0), 0);
 
-    AllocatorStats { sys_allocs, sys_reallocs, arena_chunk_allocs, arena_allocs, arena_reallocs }
-}
+        Self { heap, arena: ArenaCounters { chunk_allocs, allocs, reallocs } }
+    }
 
-/// Record current allocation stats since the last recorded stats in `prev`. This is useful
-/// for measuring allocations made during a specific operation without needing to reset the stats.
-fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorStats {
-    let stats = record_stats(allocator);
-    // Arena chunk allocations go through the system allocator, so they are included in `sys_allocs`.
-    // Exclude them. Whether an arena needs one more chunk depends on the total number of bytes
-    // allocated in the arena, and that byte total varies across platforms with target type layout
-    // and alignment (e.g. hashbrown tables are wider on x86_64 than aarch64). Counting chunk
-    // requests therefore made snapshots platform-dependent whenever an arena's content size sat
-    // close to a chunk boundary on one platform (see #22621 for a previous instance).
-    // All other allocation classes grow on element counts, which are identical on all platforms.
-    let arena_chunk_allocs = stats.arena_chunk_allocs.saturating_sub(prev.arena_chunk_allocs);
-    AllocatorStats {
-        sys_allocs: stats
-            .sys_allocs
-            .saturating_sub(prev.sys_allocs)
-            .saturating_sub(arena_chunk_allocs),
-        sys_reallocs: stats.sys_reallocs.saturating_sub(prev.sys_reallocs),
-        arena_chunk_allocs,
-        arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
-        arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
+    /// Counters accumulated since `prev` was recorded. This is useful for measuring
+    /// allocations made during a specific operation without needing to reset the counters.
+    fn diff_since(&self, prev: &Self) -> Self {
+        // Arena chunk allocations go through the system allocator, so they are included in heap
+        // `allocs`. Exclude them. Whether an arena needs one more chunk depends on the total number
+        // of bytes allocated in the arena, and that byte total varies across platforms with target
+        // type layout and alignment (e.g. hashbrown tables are wider on x86_64 than aarch64).
+        // Counting chunk requests therefore made snapshots platform-dependent whenever an arena's
+        // content size sat close to a chunk boundary on one platform (see #22621 for a previous
+        // instance). All other allocation classes grow on element counts, which are identical on
+        // all platforms.
+        let chunk_allocs = self.arena.chunk_allocs.saturating_sub(prev.arena.chunk_allocs);
+        Self {
+            heap: HeapCounters {
+                allocs: self
+                    .heap
+                    .allocs
+                    .saturating_sub(prev.heap.allocs)
+                    .saturating_sub(chunk_allocs),
+                reallocs: self.heap.reallocs.saturating_sub(prev.heap.reallocs),
+            },
+            arena: ArenaCounters {
+                chunk_allocs,
+                allocs: self.arena.allocs.saturating_sub(prev.arena.allocs),
+                reallocs: self.arena.reallocs.saturating_sub(prev.arena.reallocs),
+            },
+        }
     }
 }
 
-/// Records the allocations stats before and after the given closure is executed.
+/// Records the allocation stats before and after the given closure is executed.
 fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, StageStats)
 where
     F: FnOnce() -> R,
 {
-    let before_stats = record_stats(allocator);
+    let before = Counters::record(allocator);
     let result = f();
-    let counters = record_stats_diff(allocator, &before_stats);
+    let counters = Counters::record(allocator).diff_since(&before);
     let stats = StageStats { counters, arena_used_bytes: allocator.used_bytes() };
 
     (result, stats)
 }
 
-/// Tolerance in bytes when comparing a measured `arena size` against the value already
-/// in the committed snapshot.
+/// Tolerance in bytes when comparing a measured [`MetricKind::ApproxBytes`] metric against
+/// the value already in the committed snapshot.
 ///
-/// Arena byte totals are not exactly reproducible across architectures: some type layouts
-/// depend on the target (e.g. hashbrown's table control groups are 16 bytes on x86_64 but
-/// 8 bytes on aarch64), so each live `HashMap` in the arena shifts `used_bytes` by a few
-/// bytes per platform. The observed drift between x86_64 and aarch64 is at most 128 bytes
-/// per file. Keeping the committed value when the difference is within this tolerance makes
-/// snapshots generated on one platform pass the `git diff` check on the others.
-/// Real regressions (e.g. growing an AST node type) change arena sizes by orders of
+/// Byte totals are not exactly reproducible across architectures: some type layouts depend
+/// on the target (e.g. hashbrown's table control groups are 16 bytes on x86_64 but 8 bytes
+/// on aarch64), so each live `HashMap` shifts byte totals by a few bytes per platform.
+/// The observed drift between x86_64 and aarch64 is at most 128 bytes per file. Keeping the
+/// committed value when the difference is within this tolerance makes snapshots generated
+/// on one platform pass the `git diff` check on the others.
+/// Real regressions (e.g. growing an AST node type) change byte totals by orders of
 /// magnitude more than this; changes below the tolerance are treated as noise.
-const ARENA_SIZE_TOLERANCE: usize = 1024;
+const APPROX_BYTES_TOLERANCE: usize = 1024;
+
+/// One row of a snapshot: a labelled value plus how it should be snapshotted and rendered.
+struct Metric {
+    /// YAML key the metric is written under, and its committed value is looked up under
+    label: &'static str,
+    /// Measured value
+    value: usize,
+    kind: MetricKind,
+}
+
+/// How a metric's value behaves across platforms, which decides how it is snapshotted
+/// and rendered.
+enum MetricKind {
+    /// A count, identical on every platform. Snapshotted exactly.
+    Count,
+    /// A byte total, identical on every platform. Snapshotted exactly and rendered with
+    /// a human-readable size comment.
+    ExactBytes,
+    /// A byte total that varies slightly across architectures. Keeps the committed value
+    /// when within [`APPROX_BYTES_TOLERANCE`] of it, and is rendered with a human-readable
+    /// size comment.
+    ApproxBytes,
+}
+
+impl Metric {
+    fn count(label: &'static str, value: usize) -> Self {
+        Self { label, value, kind: MetricKind::Count }
+    }
+
+    fn exact_bytes(label: &'static str, value: usize) -> Self {
+        Self { label, value, kind: MetricKind::ExactBytes }
+    }
+
+    fn approx_bytes(label: &'static str, value: usize) -> Self {
+        Self { label, value, kind: MetricKind::ApproxBytes }
+    }
+
+    /// The value to record in the snapshot, given the committed value (if any).
+    ///
+    /// [`MetricKind::ApproxBytes`] metrics keep the committed value when the measured one
+    /// is within [`APPROX_BYTES_TOLERANCE`] of it; all other kinds record the measured
+    /// value exactly.
+    fn snapshot_value(&self, committed: Option<i64>) -> usize {
+        if !matches!(self.kind, MetricKind::ApproxBytes) {
+            return self.value;
+        }
+        let Some(committed) = committed.and_then(|value| usize::try_from(value).ok()) else {
+            return self.value;
+        };
+        if self.value.abs_diff(committed) <= APPROX_BYTES_TOLERANCE {
+            committed
+        } else {
+            self.value
+        }
+    }
+}
 
 /// Writes one snapshot file, formatted as a YAML mapping per test file.
 ///
-/// The snapshot is YAML so that the committed `arena size` values can be read back with a
-/// YAML parser and compared against the measured ones (see [`snapshot_arena_size`]). It is
-/// still emitted by hand to keep full control over the layout for git diffs.
+/// The snapshot is YAML so that committed values can be read back with a YAML parser and
+/// compared against the measured ones (see [`Metric::snapshot_value`]). It is still emitted
+/// by hand to keep full control over the layout for git diffs.
 fn write_snapshot(file_path: &str, entries: &[(&TestFile, StageStats)]) -> Result<(), io::Error> {
     let path = project_root().join(file_path);
     let committed = fs::read_to_string(&path).unwrap_or_default();
     let committed_docs = Yaml::load_from_str(&committed).unwrap_or_default();
 
     let mut out = String::new();
+    let committed_doc = committed_docs.first();
     for (file, stats) in entries {
-        let committed_arena_size = committed_docs
-            .first()
-            .get(file.file_name.as_str())
-            .get("arena size")
-            .and_then(Yaml::as_integer);
-        let file_size = file.source_text.len();
-        render_file_stats(&mut out, &file.file_name, file_size, stats, committed_arena_size);
+        let committed_file = committed_doc.get(file.file_name.as_str());
+        let metrics = stats.metrics(file.source_text.len());
+        render_file_stats(&mut out, &file.file_name, &metrics, committed_file);
     }
     fs::write(path, out)
 }
 
-/// Formats the allocator stats for one file as a YAML mapping keyed by file name.
+/// Formats one file's metrics as a YAML mapping keyed by file name.
 ///
-/// One value per line, with no column alignment, so that a change to one value produces
-/// a one-line diff, and adding a new value later doesn't reformat existing lines.
+/// One metric per line, with no column alignment, so that a change to one value produces
+/// a one-line diff, and adding a new metric later doesn't reformat existing lines.
 /// File names stay at column 0 so they appear in git hunk headers. Byte sizes are exact
 /// numbers (the value that diffs) with the human-readable form in a trailing comment.
 fn render_file_stats(
     out: &mut String,
     file_name: &str,
-    file_size: usize,
-    stats: &StageStats,
-    committed_arena_size: Option<i64>,
+    metrics: &[Metric],
+    committed_file: Option<&Yaml<'_>>,
 ) {
-    let arena_size = snapshot_arena_size(stats.arena_used_bytes, committed_arena_size);
-    let counters = &stats.counters;
     writeln!(out, "{file_name}:").unwrap();
-    writeln!(out, "  file size: {file_size} # {}", format_size(file_size, DECIMAL)).unwrap();
-    writeln!(out, "  sys allocs: {}", counters.sys_allocs).unwrap();
-    writeln!(out, "  sys reallocs: {}", counters.sys_reallocs).unwrap();
-    writeln!(out, "  arena allocs: {}", counters.arena_allocs).unwrap();
-    writeln!(out, "  arena reallocs: {}", counters.arena_reallocs).unwrap();
-    writeln!(out, "  arena size: {arena_size} # {}", format_size(arena_size, DECIMAL)).unwrap();
-    out.push('\n');
-}
-
-/// Chooses the `arena size` value to record: the committed value if the measured one is
-/// within [`ARENA_SIZE_TOLERANCE`] of it, the measured value otherwise.
-fn snapshot_arena_size(measured: usize, committed: Option<i64>) -> usize {
-    let Some(committed) = committed.and_then(|value| usize::try_from(value).ok()) else {
-        return measured;
-    };
-    if measured.abs_diff(committed) <= ARENA_SIZE_TOLERANCE { committed } else { measured }
-}
-
-#[cfg(test)]
-mod tests {
-    use saphyr::{LoadableYamlNode, SafelyIndex, Yaml};
-
-    use super::{
-        ARENA_SIZE_TOLERANCE, AllocatorStats, StageStats, render_file_stats, snapshot_arena_size,
-    };
-
-    fn stage_stats(arena_used_bytes: usize) -> StageStats {
-        StageStats {
-            counters: AllocatorStats {
-                sys_allocs: 1,
-                sys_reallocs: 2,
-                arena_chunk_allocs: 0,
-                arena_allocs: 3,
-                arena_reallocs: 4,
-            },
-            arena_used_bytes,
+    for metric in metrics {
+        let committed = committed_file.get(metric.label).and_then(Yaml::as_integer);
+        let value = metric.snapshot_value(committed);
+        match metric.kind {
+            MetricKind::Count => writeln!(out, "  {}: {value}", metric.label),
+            MetricKind::ExactBytes | MetricKind::ApproxBytes => {
+                writeln!(out, "  {}: {value} # {}", metric.label, format_size(value, DECIMAL))
+            }
         }
+        .unwrap();
     }
-
-    #[test]
-    fn rendered_snapshot_is_valid_yaml() {
-        let mut out = String::new();
-        render_file_stats(&mut out, "foo.js", 1000, &stage_stats(12345), None);
-        render_file_stats(&mut out, "bar.ts", 2_000_000, &stage_stats(99_999), None);
-
-        let docs = Yaml::load_from_str(&out).unwrap();
-        let doc = docs.first();
-        assert_eq!(doc.get("foo.js").get("arena size").and_then(Yaml::as_integer), Some(12345));
-        assert_eq!(doc.get("foo.js").get("sys allocs").and_then(Yaml::as_integer), Some(1));
-        assert_eq!(doc.get("bar.ts").get("file size").and_then(Yaml::as_integer), Some(2_000_000));
-        assert_eq!(doc.get("bar.ts").get("arena reallocs").and_then(Yaml::as_integer), Some(4));
-    }
-
-    #[test]
-    fn keeps_committed_arena_size_within_tolerance() {
-        assert_eq!(snapshot_arena_size(10_000, Some(10_128)), 10_128);
-        assert_eq!(snapshot_arena_size(10_128, Some(10_000)), 10_000);
-        let committed = i64::try_from(10_000 + ARENA_SIZE_TOLERANCE).unwrap();
-        assert_eq!(snapshot_arena_size(10_000, Some(committed)), 10_000 + ARENA_SIZE_TOLERANCE);
-    }
-
-    #[test]
-    fn takes_measured_arena_size_beyond_tolerance() {
-        assert_eq!(snapshot_arena_size(10_000, Some(20_000)), 10_000);
-        assert_eq!(snapshot_arena_size(20_000, Some(10_000)), 20_000);
-    }
-
-    #[test]
-    fn takes_measured_arena_size_without_valid_committed_value() {
-        assert_eq!(snapshot_arena_size(10_000, None), 10_000);
-        assert_eq!(snapshot_arena_size(10_000, Some(-1)), 10_000);
-    }
+    out.push('\n');
 }
