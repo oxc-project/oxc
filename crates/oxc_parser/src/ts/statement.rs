@@ -70,6 +70,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_ts_enum_member_name(&mut self) -> TSEnumMemberName<'a> {
+        // Each enum member name creates a symbol, but has no `BindingIdentifier`
+        self.ast.count_extra_symbol();
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string();
