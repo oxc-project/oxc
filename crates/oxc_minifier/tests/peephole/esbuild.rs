@@ -2425,5 +2425,5 @@ fn prune_empty_case_before_default() {
     test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
 
     // No default - nothing to prune
-    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); case 1:}");
+    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); }");
 }

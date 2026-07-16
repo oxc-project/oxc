@@ -26,7 +26,7 @@ pdf.mjs:
   file size: 567296 # 567.30 kB
   sys allocs: 2469
   sys reallocs: 205
-  arena allocs: 47471
+  arena allocs: 47467
   arena reallocs: 7742
   arena size: 6356528 # 6.36 MB
 
@@ -34,9 +34,9 @@ antd.js:
   file size: 6686316 # 6.69 MB
   sys allocs: 1044
   sys reallocs: 56
-  arena allocs: 372632
+  arena allocs: 372552
   arena reallocs: 76745
-  arena size: 49033120 # 49.03 MB
+  arena size: 49031840 # 49.03 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
@@ -50,7 +50,7 @@ kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
   sys allocs: 2309
   sys reallocs: 175
-  arena allocs: 88129
+  arena allocs: 88097
   arena reallocs: 15654
   arena size: 10190368 # 10.19 MB
 
