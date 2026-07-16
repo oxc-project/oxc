@@ -146,7 +146,7 @@ pub trait CompilerInterface {
 
         /* Semantic */
 
-        let mut semantic_return = self.semantic(&program);
+        let mut semantic_return = self.semantic(&program, parser_return.ast_counts.into());
         if !semantic_return.diagnostics.is_empty() {
             self.handle_errors(semantic_return.diagnostics);
             return;
@@ -252,15 +252,19 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+    fn semantic<'a>(&self, program: &'a Program<'a>, stats: Stats) -> SemanticBuilderReturn<'a> {
         let mut builder = SemanticBuilder::new_compiler();
 
-        if self.transform_options().is_some() {
+        let stats = if self.transform_options().is_some() {
+            builder = builder.with_enum_eval(true);
             // Estimate transformer will triple scopes, symbols, references
-            builder = builder.with_excess_capacity(2.0).with_enum_eval(true);
-        }
+            stats.increase_by(2.0)
+        } else {
+            stats
+        };
 
         builder
+            .with_stats(stats)
             .with_check_syntax_error(self.check_semantic_error())
             .with_build_nodes(self.build_semantic_nodes())
             .build(program)
