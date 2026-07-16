@@ -89,12 +89,15 @@ impl<'de> Deserialize<'de> for LanguagePluginEntry {
             PluginEntry::Object(obj) => {
                 let pattern = obj.pattern.map(PatternField::into_vec);
                 let options_json = match obj.options {
-                    Some(Value::Null) => None,
-                    Some(v) => Some(
-                        serde_json::to_string(&v)
-                            .map_err(serde::de::Error::custom)?,
+                    None | Some(Value::Null) => None,
+                    Some(v @ Value::Object(_)) => Some(
+                        serde_json::to_string(&v).map_err(serde::de::Error::custom)?,
                     ),
-                    None => None,
+                    Some(other) => {
+                        return Err(serde::de::Error::custom(format!(
+                            "language plugin `options` must be an object, got {other}"
+                        )));
+                    }
                 };
 
                 match (obj.specifier, obj.name) {
@@ -420,6 +423,17 @@ mod test {
         assert!(serde_json::from_value::<TestConfig>(json).is_err());
 
         let json = serde_json::json!({ "languagePlugins": [{ "pattern": "*.vue" }] });
+        assert!(serde_json::from_value::<TestConfig>(json).is_err());
+
+        // `options` must be an object (schema + LanguagePluginOptions contract)
+        let json = serde_json::json!({
+            "languagePlugins": [{ "name": "vue", "options": [] }]
+        });
+        assert!(serde_json::from_value::<TestConfig>(json).is_err());
+
+        let json = serde_json::json!({
+            "languagePlugins": [{ "name": "vue", "options": "nope" }]
+        });
         assert!(serde_json::from_value::<TestConfig>(json).is_err());
     }
 }

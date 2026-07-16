@@ -699,7 +699,7 @@ export interface Oxlintrc {
    * languagePlugins: [
    * {
    * name: "vue-language-plugin",
-   * pattern: "packages/app/** /*.vue",
+   * pattern: "packages/app/*.vue",
    * },
    * ],
    * });

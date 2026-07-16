@@ -268,7 +268,7 @@ pub struct Oxlintrc {
     ///   languagePlugins: [
     ///     {
     ///       name: "vue-language-plugin",
-    ///       pattern: "packages/app/**/*.vue",
+    ///       pattern: "packages/app/*.vue",
     ///     },
     ///   ],
     /// });
@@ -911,6 +911,12 @@ mod test {
         assert!(
             serde_json::from_str::<Oxlintrc>(r#"{"languagePlugins": [{ "pattern": "*.vue" }]}"#)
                 .is_err()
+        );
+        assert!(
+            serde_json::from_str::<Oxlintrc>(
+                r#"{"languagePlugins": [{ "name": "vue", "options": [] }]}"#
+            )
+            .is_err()
         );
     }
 
