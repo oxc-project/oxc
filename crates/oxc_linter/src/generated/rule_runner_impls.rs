@@ -5085,11 +5085,8 @@ impl RuleRunner for crate::rules::node::no_sync::NoSync {
 }
 
 impl RuleRunner for crate::rules::node::no_top_level_await::NoTopLevelAwait {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::AwaitExpression,
-        AstType::ForOfStatement,
-        AstType::VariableDeclaration,
-    ]));
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Program]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
