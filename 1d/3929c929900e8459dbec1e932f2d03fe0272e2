@@ -1,0 +1,19 @@
+crates/oxc_linter/src/ast_util.rs
+  s_ba44b49dae85a3::t_5bd228bb74d656 887,973
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1d3929c929900e8459dbec1e932f2d03fe0272e2",
+  "prompts": {},
+  "sessions": {
+    "s_ba44b49dae85a3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6b07-6645-7690-8ba3-6b7a7338c4b5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
