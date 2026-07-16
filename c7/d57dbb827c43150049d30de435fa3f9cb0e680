@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/react/state_in_constructor.rs
+  s_d51c6587078a86::t_80370c629e5d36 148-154,303-316
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c7d57dbb827c43150049d30de435fa3f9cb0e680",
+  "prompts": {},
+  "sessions": {
+    "s_d51c6587078a86": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6b0e-7203-79d1-af41-7d240b016add",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
