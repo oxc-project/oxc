@@ -6,7 +6,7 @@ use std::{
     slice,
 };
 
-use crate::{Allocator, Box, CloneIn};
+use crate::{Allocator, Box, CloneIn, CloneInSemanticIds};
 
 const USIZE_BITS: usize = usize::BITS as usize;
 
@@ -177,7 +177,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
 
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> BitSet<'new_alloc> {
         let slice = self.entries.as_ref();

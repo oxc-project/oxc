@@ -75,7 +75,7 @@ pub use allocator::Allocator;
 #[cfg(feature = "bitset")]
 pub use bitset::BitSet;
 pub use boxed::{Box, Box as ArenaBox};
-pub use clone_in::CloneIn;
+pub use clone_in::{CloneIn, CloneInSemanticIds};
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::{HashMap, HashMap as ArenaHashMap};
 pub use hash_set::{HashSet, HashSet as ArenaHashSet};

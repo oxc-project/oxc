@@ -38,19 +38,23 @@ impl Derive for DeriveCloneIn {
         &[("clone_in", attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField))]
     }
 
-    /// Parse `#[clone_in(default)]` on struct, enum, or struct field.
+    /// Parse `#[clone_in(default)]` on struct, enum, or struct field,
+    /// or `#[clone_in(semantic_id)]` on struct.
     fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
         // No need to check attr name is `clone_in`, because that's the only attribute this derive handles.
-        if !matches!(part, AttrPart::Tag("default")) {
-            return Err(());
-        }
-
-        match location {
-            AttrLocation::Struct(struct_def) => struct_def.clone_in.is_default = true,
-            AttrLocation::Enum(enum_def) => enum_def.clone_in.is_default = true,
-            AttrLocation::StructField(struct_def, field_index) => {
-                struct_def.fields[field_index].clone_in.is_default = true;
-            }
+        match part {
+            AttrPart::Tag("default") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.clone_in.is_default = true,
+                AttrLocation::Enum(enum_def) => enum_def.clone_in.is_default = true,
+                AttrLocation::StructField(struct_def, field_index) => {
+                    struct_def.fields[field_index].clone_in.is_default = true;
+                }
+                _ => return Err(()),
+            },
+            AttrPart::Tag("semantic_id") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.clone_in.is_semantic_id = true,
+                _ => return Err(()),
+            },
             _ => return Err(()),
         }
 
@@ -65,7 +69,7 @@ impl Derive for DeriveCloneIn {
             use std::cell::Cell;
 
             ///@@line_break
-            use oxc_allocator::{Allocator, CloneIn};
+            use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
         }
     }
 
@@ -88,10 +92,19 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         let fields = struct_def.fields.iter().map(|field| {
             let field_ident = field.ident();
             if struct_field_is_default(field, schema) {
-                // Fields (or fields whose type is) marked `#[clone_in(default)]` always reset to
-                // their default. Semantic id `Cell`s are *not* marked — they thread the
-                // `with_semantic_ids` flag through their `CloneIn` impl instead (see `oxc_allocator`).
+                // Fields (or fields whose type is) marked `#[clone_in(default)]` always reset to their default
                 quote!( #field_ident: Default::default() )
+            } else if struct_field_is_semantic_id_cell_option(field, schema) {
+                // `Cell<Option<Id>>` semantic ID fields (`scope_id`, `symbol_id`, `reference_id`)
+                // clone via `SemanticId::clone_cell_option_id`, which keeps the ID or resets it to `None`,
+                // depending on `with_semantic_ids`.
+                //
+                // The generic `Option<T>` / `Cell<T>` `CloneIn` impls can't produce that reset -
+                // `Option<T>`'s impl maps over `Some`, which would reset `Some(id)` to `Some(dummy)`, not `None`.
+                //
+                // `SemanticId` lives in `oxc_syntax`, so it's named by its full path here rather than
+                // imported in the prelude (which is shared with crates that don't depend on `oxc_syntax`).
+                quote!( #field_ident: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(&self.#field_ident, with_semantic_ids) )
             } else {
                 quote!( #field_ident: CloneIn::clone_in_impl(&self.#field_ident, with_semantic_ids, allocator) )
             }
@@ -118,6 +131,17 @@ fn struct_field_is_default(field: &FieldDef, schema: &Schema) -> bool {
             _ => false,
         }
     }
+}
+
+/// Get if a struct field is a `Cell<Option<Id>>`, where `Id` is a semantic ID type
+/// (marked `#[clone_in(semantic_id)]`).
+///
+/// Such fields are cloned with `SemanticId::clone_cell_option_id`.
+fn struct_field_is_semantic_id_cell_option(field: &FieldDef, schema: &Schema) -> bool {
+    let TypeDef::Cell(cell_def) = field.type_def(schema) else { return false };
+    let TypeDef::Option(option_def) = cell_def.inner_type(schema) else { return false };
+    let TypeDef::Struct(struct_def) = option_def.inner_type(schema) else { return false };
+    struct_def.clone_in.is_semantic_id
 }
 
 fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
@@ -209,7 +233,7 @@ fn generate_impl(
             #inline
             fn clone_in_impl(
                 &self,
-                #flag_param: bool,
+                #flag_param: CloneInSemanticIds,
                 allocator: &'new_alloc Allocator,
             ) -> Self::Cloned {
                 #clone_in_impl_body
