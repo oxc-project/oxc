@@ -156,15 +156,13 @@ pub fn write_dangling_comments(comments: &[Span], f: &mut GraphqlFormatter<'_, '
     }
 }
 
-/// If the next pending comment sits on the same line as `prev_end` and ends at or
-/// before `upper` (the next piece of user content), drain it and emit it as a
-/// trailing line-suffix comment (` # ...`).
+/// If the next pending comment sits on the same line as `prev_end`
+/// and ends at or before `upper` (the next piece of user content),
+/// drain it and emit it as a trailing line-suffix comment (` # ...`).
 ///
 /// The bound is what keeps a node from claiming a comment across later siblings:
-/// in `f(a: 1, b: 2) # c` everything shares a line, but `# c` ends past `b`'s
-/// start, so `a: 1` leaves it pending for the enclosing node's flush point
-/// (the same bounds discipline as `oxc_formatter_css`).
-/// `expand_parent()` keeps the enclosing container multi-line.
+/// in `f(a: 1, b: 2) # c` everything shares a line, but `# c` ends past `b`'s start,
+/// so `a: 1` leaves it pending for the enclosing node's flush point.
 pub fn write_trailing_same_line_comment<'a>(
     prev_end: u32,
     upper: u32,
