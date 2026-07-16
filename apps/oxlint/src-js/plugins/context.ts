@@ -46,6 +46,22 @@ import type { ModuleKind, Program } from "../generated/types.d.ts";
 // When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
 export let filePath: string | null = null;
 
+/**
+ * Language id for the file being linted (e.g. `"javascript"`, `"typescript"`, `"vue"`).
+ *
+ * Set when a language plugin loads the file; defaults to `"javascript"`.
+ * Exposed as `context.languageOptions.language` (RFC #21936).
+ */
+let languageId: string = "javascript";
+
+/**
+ * Set the language id for the current file.
+ * @param id - Language id (e.g. `"vue"`)
+ */
+export function setLanguageId(id: string): void {
+  languageId = id;
+}
+
 // Current working directory for file being linted.
 // Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
 export let cwd: string | null = null;
@@ -64,6 +80,7 @@ export function setCwd(cwdInput: string) {
  */
 export function setupFileContext(filePathInput: string): void {
   filePath = filePathInput;
+  languageId = "javascript";
 }
 
 /**
@@ -75,6 +92,7 @@ export function setupFileContext(filePathInput: string): void {
  */
 export function resetFileContext(): void {
   filePath = null;
+  languageId = "javascript";
 }
 
 // ECMAScript version. This matches ESLint's default.
@@ -220,6 +238,17 @@ const PARSER_OPTIONS = Object.freeze({
 
 // Singleton object for language options.
 const LANGUAGE_OPTIONS = {
+  /**
+   * Language id for the file being linted.
+   *
+   * For ordinary JS/TS files this is `"javascript"` / `"typescript"`.
+   * When a language plugin handles the file, it is the plugin's `languageId`
+   * (e.g. `"vue"`).
+   */
+  get language(): string {
+    return languageId;
+  },
+
   /**
    * Source type of the file being linted.
    */

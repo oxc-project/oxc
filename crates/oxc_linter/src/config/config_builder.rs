@@ -127,6 +127,16 @@ impl ConfigStoreBuilder {
                 }
             }
 
+            if let Some(language_plugins) = &config.language_plugins {
+                for entry in language_plugins {
+                    if is_relative_plugin_specifier(&entry.specifier) {
+                        return Err(ConfigBuilderError::RelativeLanguagePluginSpecifierInExtends {
+                            plugin_specifier: entry.specifier.clone(),
+                        });
+                    }
+                }
+            }
+
             for r#override in &config.overrides {
                 if let Some(external_plugins) = &r#override.external_plugins {
                     for entry in external_plugins {
@@ -139,8 +149,38 @@ impl ConfigStoreBuilder {
                         }
                     }
                 }
+                if let Some(language_plugins) = &r#override.language_plugins {
+                    for entry in language_plugins {
+                        if is_relative_plugin_specifier(&entry.specifier) {
+                            return Err(
+                                ConfigBuilderError::RelativeLanguagePluginSpecifierInExtends {
+                                    plugin_specifier: entry.specifier.clone(),
+                                },
+                            );
+                        }
+                    }
+                }
             }
 
+            Ok(())
+        }
+
+        fn check_language_plugins_not_implemented(
+            config: &Oxlintrc,
+        ) -> Result<(), ConfigBuilderError> {
+            let has_language_plugins = config
+                .language_plugins
+                .as_ref()
+                .is_some_and(|plugins| !plugins.is_empty())
+                || config.overrides.iter().any(|r#override| {
+                    r#override
+                        .language_plugins
+                        .as_ref()
+                        .is_some_and(|plugins| !plugins.is_empty())
+                });
+            if has_language_plugins {
+                return Err(ConfigBuilderError::LanguagePluginsNotImplemented);
+            }
             Ok(())
         }
 
@@ -229,6 +269,10 @@ impl ConfigStoreBuilder {
         validate_ignore_patterns(&oxlintrc)?;
 
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
+
+        // Language plugin config is accepted (and schema/types exist), but the runtime
+        // parse/load/transform pipeline is not wired up yet.
+        check_language_plugins_not_implemented(&oxlintrc)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -762,6 +806,14 @@ pub enum ConfigBuilderError {
     RelativeExternalPluginSpecifierInExtends {
         plugin_specifier: String,
     },
+    /// A JS config extended via `extends` contained a relative language plugin specifier.
+    RelativeLanguagePluginSpecifierInExtends {
+        plugin_specifier: String,
+    },
+    /// `languagePlugins` was configured, but the language plugin runtime is not implemented yet.
+    ///
+    /// Tracked in <https://github.com/oxc-project/oxc/issues/23207>.
+    LanguagePluginsNotImplemented,
     /// Multiple errors parsing rule configuration options
     RuleConfigurationErrors {
         /// The errors that occurred
@@ -834,6 +886,25 @@ impl Display for ConfigBuilderError {
                      Found: {plugin_specifier:?}\n\
                      \n\
                      Use a package name (e.g. \"eslint-plugin-foo\") or an absolute path instead."
+                )
+            }
+            ConfigBuilderError::RelativeLanguagePluginSpecifierInExtends { plugin_specifier } => {
+                write!(
+                    f,
+                    "Relative language plugin specifiers are not supported in configs provided via `extends` in `oxlint.config.ts`.\n\
+                     \n\
+                     Found: {plugin_specifier:?}\n\
+                     \n\
+                     Use a package name (e.g. \"vue-language-plugin\") or an absolute path instead."
+                )
+            }
+            ConfigBuilderError::LanguagePluginsNotImplemented => {
+                write!(
+                    f,
+                    "`languagePlugins` is configured, but language plugin execution is not implemented yet.\n\
+                     \n\
+                     The `defineLanguagePlugin` API and config shape are available (RFC https://github.com/oxc-project/oxc/discussions/21936).\n\
+                     Full parse/load/transform support is tracked in https://github.com/oxc-project/oxc/issues/23207."
                 )
             }
             ConfigBuilderError::RuleConfigurationErrors { errors } => {
