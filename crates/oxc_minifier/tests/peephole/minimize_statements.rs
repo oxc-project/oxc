@@ -169,6 +169,7 @@ fn test_handle_switch_statement() {
     test_same("switch (a) { case 3: b(); case 2: c(); break;}");
     test("switch (a) { case 3: b(); case 2: case 1: break;}", "switch (a) { case 3: b(); }"); // a === 3 && b();
     test("switch (a) { case 3: b(); case 2: case 1: }", "switch (a) { case 3: b(); }"); // a === 3 && b();
+    test_same("switch (x) { default: case 1: foo(); case 2: }"); // x !== 2 && foo();
     test_same("switch (a) { case 3: if (b) break }"); // a === 3 && b;
     test(
         "switch (a) { case 3: { if(b) {c()} else {break;} }}",

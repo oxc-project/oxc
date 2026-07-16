@@ -782,9 +782,8 @@ impl<'a> PeepholeOptimizations {
             // 2. default exists and is non-removable and last: check only cases before that default.
             // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
             // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
-            let (end, allow_break) = if let Some(default_pos) =
-                switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
-            {
+            let default_pos = switch_stmt.cases.iter().rposition(SwitchCase::is_default_case);
+            let (end, allow_break) = if let Some(default_pos) = default_pos {
                 if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true, ctx) {
                     (case_count, true)
                 } else if default_pos == case_count - 1 {
@@ -811,7 +810,7 @@ impl<'a> PeepholeOptimizations {
                 };
 
                 // Remove the removable suffix if any
-                if start < end {
+                if start < end && default_pos.is_none_or(|pos| pos >= start) {
                     for removed_case in switch_stmt.cases.drain(start..end) {
                         ctx.drop_switch_case(&removed_case);
                     }
