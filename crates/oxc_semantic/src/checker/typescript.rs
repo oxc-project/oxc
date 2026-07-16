@@ -218,15 +218,6 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     let is_abstract = method.r#type.is_abstract();
 
-    if is_abstract {
-        // abstract cannot be used with private identifiers
-        if method.key.is_private_identifier() {
-            ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(
-                method.key.span(),
-            ));
-        }
-    }
-
     let is_empty_body = method.value.r#type == FunctionType::TSEmptyBodyFunctionExpression;
     // Illegal to have `constructor(public foo);`
     if method.kind.is_constructor() && is_empty_body {
