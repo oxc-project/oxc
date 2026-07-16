@@ -228,3 +228,47 @@ function Component() {
     }
   });
 });
+
+// `environment` mirrors the option upstream's Babel plugin leads with. Several passes are
+// off by default, so without it these diagnostics are unreachable from JS.
+describe("plugins.reactCompiler.environment", () => {
+  const setStateInEffect = `import { useEffect, useState } from "react";
+export function Component() {
+  const [x, setX] = useState(0);
+  useEffect(() => { setX(1); }, []);
+  return <div>{x}</div>;
+}
+`;
+
+  // This pass needs both the flag and `outputMode: 'lint'` — the pipeline gates it on
+  // `env.config.validate_no_set_state_in_effects && env.output_mode == Lint`.
+  it("reaches a validation that is off by default", () => {
+    const off = transformSync("Component.tsx", setStateInEffect, {
+      plugins: { reactCompiler: { outputMode: "lint" } },
+      jsx: { runtime: "automatic" },
+    });
+    // Flag defaults to false, so the pass never runs and reports nothing.
+    expect(off.errors.some((e) => /setState|effect/i.test(e.message))).toBe(false);
+
+    const on = transformSync("Component.tsx", setStateInEffect, {
+      plugins: {
+        reactCompiler: {
+          outputMode: "lint",
+          environment: { validateNoSetStateInEffects: true },
+        },
+      },
+      jsx: { runtime: "automatic" },
+    });
+    expect(on.errors.length).toBeGreaterThan(0);
+    expect(on.errors.some((e) => /setState|effect/i.test(e.message))).toBe(true);
+  });
+
+  it("leaves unset flags at the compiler's defaults", () => {
+    const { code, errors } = transformSync("Component.tsx", fixture, {
+      plugins: { reactCompiler: { environment: { enableForest: false } } },
+      jsx: { runtime: "automatic" },
+    });
+    expect(errors).toEqual([]);
+    expect(code).toContain("_c(");
+  });
+});

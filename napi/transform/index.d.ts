@@ -347,6 +347,52 @@ export interface ReactCompilerDynamicGating {
   source: string
 }
 
+/**
+ * Feature flags and validation toggles for the React Compiler's passes.
+ *
+ * Field names mirror the upstream `EnvironmentConfig` one-for-one, so a value that
+ * works in a Babel `environment` config works here unchanged. Every field is optional;
+ * omitting one keeps the compiler's default. Several of these gate passes that are off
+ * by default, so setting them is the only way to reach those diagnostics.
+ *
+ * @see {@link ReactCompilerOptions#environment}
+ */
+export interface ReactCompilerEnvironmentOptions {
+  customMacros?: Array<string>
+  enableResetCacheOnSourceFileChanges?: boolean
+  enablePreserveExistingMemoizationGuarantees?: boolean
+  validatePreserveExistingMemoizationGuarantees?: boolean
+  validateExhaustiveMemoizationDependencies?: boolean
+  enableOptionalDependencies?: boolean
+  enableNameAnonymousFunctions?: boolean
+  validateHooksUsage?: boolean
+  validateRefAccessDuringRender?: boolean
+  validateNoSetStateInRender?: boolean
+  enableUseKeyedState?: boolean
+  validateNoSetStateInEffects?: boolean
+  validateNoDerivedComputationsInEffects?: boolean
+  validateNoDerivedComputationsInEffectsExp?: boolean
+  validateNoJsxInTryStatements?: boolean
+  validateStaticComponents?: boolean
+  validateNoCapitalizedCalls?: Array<string>
+  validateBlocklistedImports?: Array<string>
+  validateSourceLocations?: boolean
+  validateNoImpureFunctionsInRender?: boolean
+  validateNoFreezingKnownMutableFunctions?: boolean
+  enableAssumeHooksFollowRulesOfReact?: boolean
+  enableTransitivelyFreezeFunctionExpressions?: boolean
+  enableFunctionOutlining?: boolean
+  enableJsxOutlining?: boolean
+  assertValidMutableRanges?: boolean
+  enableCustomTypeDefinitionForReanimated?: boolean
+  enableTreatRefLikeIdentifiersAsRefs?: boolean
+  enableTreatSetIdentifiersAsStateSetters?: boolean
+  validateNoVoidUseMemo?: boolean
+  enableAllowSetStateFromRefsInEffects?: boolean
+  enableVerboseNoSetStateInEffect?: boolean
+  enableForest?: boolean
+}
+
 /** Static gating for {@link ReactCompilerOptions#gating}. */
 export interface ReactCompilerGating {
   /** Module the gating import comes from. */
@@ -358,8 +404,7 @@ export interface ReactCompilerGating {
 /**
  * Options for the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
  *
- * Mirrors the compiler's `PluginOptions`. The deep `environment` configuration
- * (inference / validation flags) is not surfaced here.
+ * Mirrors the compiler's `PluginOptions`.
  *
  * @see {@link PluginsOptions#reactCompiler}
  */
@@ -416,6 +461,13 @@ export interface ReactCompilerOptions {
   gating?: ReactCompilerGating
   /** Dynamically-gated compilation. */
   dynamicGating?: ReactCompilerDynamicGating
+  /**
+   * Feature flags and validation toggles for the compilation passes.
+   *
+   * Each field left unset keeps the compiler's own default, matching the
+   * `Partial<EnvironmentConfig>` shape of the upstream Babel plugin's option.
+   */
+  environment?: ReactCompilerEnvironmentOptions
 }
 
 export interface ReactRefreshOptions {
