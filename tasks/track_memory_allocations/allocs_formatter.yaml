@@ -11,16 +11,16 @@ App.tsx:
   sys allocs: 2532
   sys reallocs: 80
   arena allocs: 211998
-  arena reallocs: 1679
-  arena size: 22302080 # 22.30 MB
+  arena reallocs: 1645
+  arena size: 22023480 # 22.02 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
   sys allocs: 54
-  sys reallocs: 26
+  sys reallocs: 28
   arena allocs: 1155
-  arena reallocs: 69
-  arena size: 168288 # 168.29 kB
+  arena reallocs: 0
+  arena size: 155608 # 155.61 kB
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
@@ -51,6 +51,6 @@ kitchen-sink.tsx:
   sys allocs: 9565
   sys reallocs: 2815
   arena allocs: 567769
-  arena reallocs: 5992
-  arena size: 48529696 # 48.53 MB
+  arena reallocs: 5195
+  arena size: 48002616 # 48.00 MB
 

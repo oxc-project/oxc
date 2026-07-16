@@ -13,16 +13,20 @@ thread_local! {
         const { RefCell::new(Vec::new()) };
 }
 
-/// The heap staging vector backing [`crate::HeapVecBuffer`] (see there for why staging is heap-backed).
-/// One vector per format run, shared by all nesting levels like a stack via watermarks:
-/// each buffer records the length at creation, pushes its elements, and drains its own tail on completion.
-/// Sound because IR staging is strictly LIFO (an inner buffer always completes before its enclosing one resumes).
+/// A heap staging vector checked out of the thread-local `SCRATCH_CACHE` on creation and returned on drop (panics included),
+/// so its high-water capacity is reused across checkouts.
 ///
-/// Checked out of [`SCRATCH_CACHE`] on creation and returned on drop (panics included).
+/// Two users:
+/// - [`FormatState`] holds one per format run, shared by all [`crate::HeapVecBuffer`]s like a stack via watermarks:
+///   each buffer records the length at creation, pushes its elements, and drains its own tail on completion.
+///   Sound because IR staging is strictly LIFO (an inner buffer always completes before its enclosing one resumes)
+/// - Accumulators that outlive a single staging scope (interleaved builders, see `ChildListBuffer` in `oxc_formatter`) check out their own.
+///   The cache itself is an unordered pool with no LIFO requirement
+#[derive(Debug)]
 pub struct ScratchBuffer<'ast>(Vec<FormatElement<'ast>>);
 
 impl<'ast> ScratchBuffer<'ast> {
-    fn checkout() -> Self {
+    pub fn checkout() -> Self {
         let vec = SCRATCH_CACHE.with_borrow_mut(Vec::pop).unwrap_or_default();
         // SAFETY: cached vectors are always empty (checkin clears them);
         // an empty vector holds no values, so re-branding its element lifetime is sound.
@@ -32,15 +36,28 @@ impl<'ast> ScratchBuffer<'ast> {
     }
 }
 
+impl<'ast> std::ops::Deref for ScratchBuffer<'ast> {
+    type Target = Vec<FormatElement<'ast>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for ScratchBuffer<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 impl Drop for ScratchBuffer<'_> {
     fn drop(&mut self) {
-        // Every `HeapVecBuffer` drains its own tail on completion;
-        // a leftover means a buffer leaked elements past its watermark.
-        // Checked here because every format run: root, fragment, or embedded — ends by dropping its `FormatState`.
+        // Every user drains the vector on completion (`HeapVecBuffer`s their own tail,
+        // accumulators via `Formatter::intern_elements`); a leftover means elements leaked.
         // (Skipped mid-unwind: buffers up the stack haven't truncated their tails yet.)
         debug_assert!(
             self.0.is_empty() || std::thread::panicking(),
-            "scratch buffer not fully drained at the end of the format run"
+            "scratch buffer returned to the cache before being fully drained"
         );
         let mut vec = mem::take(&mut self.0);
         // A buffer that never grew has nothing worth caching
