@@ -233,4 +233,6 @@ fn test_handle_switch_statement() {
     test_same("switch (1) { case 2: var x=0;}"); // if (0) var x;
     test_same("switch (b) { case 2: switch (a) { case 2: a();break;case 3: foo();break;}}"); // ;
     test_same("switch (b) { case 2: switch (a) { case 2: foo()}}"); // if (b === 2 && a === 2) foo()
+
+    test_same("function f(){ switch (0) { case x: break; } let x = 1; }"); // TDZ
 }
