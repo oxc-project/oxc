@@ -11,8 +11,8 @@ use std::{
 };
 
 use oxc_allocator::{
-    Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, GetAllocator, IdentBuildHasher,
-    ident_hash,
+    Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
+    IdentBuildHasher, ident_hash,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
@@ -454,7 +454,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
     #[inline]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         let s = allocator.alloc_str(self.as_str());

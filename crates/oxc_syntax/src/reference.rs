@@ -3,15 +3,16 @@ use oxc_index::define_nonmax_u32_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 
-use crate::{node::NodeId, scope::ScopeId, symbol::SymbolId};
+use crate::{node::NodeId, scope::ScopeId, semantic_id::SemanticId, symbol::SymbolId};
 
 use oxc_ast_macros::ast;
 
 define_nonmax_u32_index_type! {
     #[ast]
     #[builder(default)]
+    #[clone_in(semantic_id)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct ReferenceId;
@@ -21,17 +22,13 @@ impl<'alloc> CloneIn<'alloc> for ReferenceId {
     type Cloned = Self;
 
     #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn clone_in_impl(&self, with_semantic_ids: bool, _: &'alloc Allocator) -> Self {
-        if with_semantic_ids {
-            *self
-        } else {
-            // `with_semantic_ids == false` should never reach this, because `CloneIn` skips
-            // `reference_id` field, filling it with its default instead.
-            unreachable!();
-        }
+    #[inline(always)] // Because this method only delegates
+    fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
+        self.clone_id(with_semantic_ids)
     }
 }
+
+impl SemanticId for ReferenceId {}
 
 bitflags! {
     /// Describes how a symbol is being referenced in the AST.
@@ -226,7 +223,7 @@ impl<'alloc> CloneIn<'alloc> for ReferenceFlags {
 
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         _: &'alloc oxc_allocator::Allocator,
     ) -> Self::Cloned {
         *self

@@ -167,8 +167,6 @@ pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
                 ctx.error(diagnostics::class_static_block_await(span));
             }
         }
-        // TODO: Revisit this match arm when we add `Ident` and pre-hash the identifier names and see if a HashSet
-        // becomes better for performance again.
         "implements" | "interface" | "let" | "package" | "private" | "protected" | "public"
         | "static" | "yield" => {
             if !ctx.strict_mode() || ctx.in_ambient_context() {

@@ -8,20 +8,36 @@ use std::{
 
 use crate::{Allocator, Box, HashMap, Vec};
 
+/// Option to pass to [`CloneIn::clone_in_impl`] to determine how to clone semantic IDs.
+///
+/// * [`CloneInSemanticIds::With`] to clone by copying current value.
+/// * [`CloneInSemanticIds::Without`] to clone by substituting a dummy value -
+///   `NonMaxU32(0)` for a plain ID, `None` for an optional ID.
+///
+/// This is designed so that cloning semantic IDs is branchless and cheap.
+/// See `SemanticId` trait in `oxc_syntax` crate.
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+pub enum CloneInSemanticIds {
+    With = 0,
+    Without = u32::MAX,
+}
+
 /// A trait to explicitly clone an object into an arena allocator.
 ///
 /// As a convention `Cloned` associated type should always be the same as `Self`,
 /// It'd only differ in the lifetime, Here's an example:
 ///
 /// ```
-/// # use oxc_allocator::{Allocator, CloneIn, Vec};
+/// # use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec};
 /// # struct Struct<'a> {a: Vec<'a, u8>, b: u8}
 ///
 /// impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Struct<'old_alloc> {
 ///     type Cloned = Struct<'new_alloc>;
+///
 ///     fn clone_in_impl(
 ///         &self,
-///         with_semantic_ids: bool,
+///         with_semantic_ids: CloneInSemanticIds,
 ///         allocator: &'new_alloc Allocator,
 ///     ) -> Self::Cloned {
 ///         Struct {
@@ -32,9 +48,8 @@ use crate::{Allocator, Box, HashMap, Vec};
 /// }
 /// ```
 ///
-/// Implementations of this trait on non-allocated items usually short-circuit to `Clone::clone`;
+/// Implementations of this trait on non-allocated items usually delegate to `Clone::clone`.
 /// However, it **isn't** guaranteed.
-///
 pub trait CloneIn<'new_alloc>: Sized {
     /// The type of the cloned object.
     ///
@@ -47,7 +62,7 @@ pub trait CloneIn<'new_alloc>: Sized {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        self.clone_in_impl(false, allocator)
+        self.clone_in_impl(CloneInSemanticIds::Without, allocator)
     }
 
     /// Almost identical as `clone_in`, but for some special type, it will also clone the semantic ids.
@@ -56,25 +71,28 @@ pub trait CloneIn<'new_alloc>: Sized {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        self.clone_in_impl(true, allocator)
+        self.clone_in_impl(CloneInSemanticIds::With, allocator)
     }
 
     /// Clone `self` into `allocator`, threading whether semantic ids should be preserved as a
-    /// runtime `with_semantic_ids` flag rather than as two separate methods. This is the method
-    /// that implementors provide; `clone_in` and `clone_in_with_semantic_ids` are thin wrappers
-    /// around it.
+    /// runtime `with_semantic_ids` flag rather than as two separate methods.
     ///
-    /// It exists so the `CloneIn` derive can emit a *single* recursive traversal that serves both
-    /// `clone_in` (`with_semantic_ids == false`) and `clone_in_with_semantic_ids`
-    /// (`with_semantic_ids == true`), instead of monomorphizing two near-identical traversals over
-    /// the whole AST. Id fields recurse when `with_semantic_ids` is `true` and reset to their
-    /// default when it is `false`.
+    /// This is the method that implementors provide.
+    /// `clone_in` and `clone_in_with_semantic_ids` are thin wrappers around it.
     ///
-    /// Prefer calling `clone_in` or `clone_in_with_semantic_ids` at call sites — they name the
-    /// intent and delegate here.
+    /// It exists so the `CloneIn` derive can emit a *single* recursive traversal that serves both:
+    /// * `clone_in`: `with_semantic_ids == CloneInSemanticIds::Without`
+    /// * `clone_in_with_semantic_ids`: `with_semantic_ids == CloneInSemanticIds::With`
+    ///
+    /// This is instead of monomorphizing two near-identical traversals over the whole AST.
+    /// ID fields copy existing values when `with_semantic_ids == CloneInSemanticIds::With`,
+    /// and reset to their default when `CloneInSemanticIds::Without`.
+    ///
+    /// Prefer calling `clone_in` or `clone_in_with_semantic_ids` at call sites —
+    /// they name the intent and delegate here.
     fn clone_in_impl(
         &self,
-        with_semantic_ids: bool,
+        with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned;
 }
@@ -86,7 +104,11 @@ where
     type Cloned = Option<C>;
 
     #[inline]
-    fn clone_in_impl(&self, with_semantic_ids: bool, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'alloc Allocator,
+    ) -> Self::Cloned {
         self.as_ref().map(|it| it.clone_in_impl(with_semantic_ids, allocator))
     }
 }
@@ -100,7 +122,7 @@ where
     #[inline]
     fn clone_in_impl(
         &self,
-        with_semantic_ids: bool,
+        with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         Box::new_in(self.as_ref().clone_in_impl(with_semantic_ids, allocator), &allocator)
@@ -115,7 +137,7 @@ where
 
     fn clone_in_impl(
         &self,
-        with_semantic_ids: bool,
+        with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         let slice = self.as_ref();
@@ -165,7 +187,7 @@ where
 
     fn clone_in_impl(
         &self,
-        with_semantic_ids: bool,
+        with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         // The implementation below is equivalent to:
@@ -206,7 +228,7 @@ where
 
     fn clone_in_impl(
         &self,
-        with_semantic_ids: bool,
+        with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         // Keys in original hash map are guaranteed to be unique.
@@ -227,21 +249,19 @@ where
     }
 }
 
-impl<'alloc, T: Copy + Default> CloneIn<'alloc> for Cell<T> {
-    type Cloned = Cell<T>;
+impl<'alloc, T, C> CloneIn<'alloc> for Cell<T>
+where
+    T: Copy + CloneIn<'alloc, Cloned = C>,
+{
+    type Cloned = Cell<C>;
 
-    // `#[inline(never)]` so the `with_semantic_ids` branch below is *not* inlined at every id-field
-    // clone site. Consumers that only clone *without* semantic ids (e.g. the napi transform/parse
-    // bindings, via `oxc_transformer`) would otherwise carry the dead preserve branch at every site
-    // — ~16 KiB on the transform binary. Outlining it to one function per `Cell<T>` keeps those
-    // binaries at their pre-`clone_in_impl` size, while consumers that clone *with* ids (rolldown,
-    // oxlint's react compiler) are unaffected — their win comes from the shared traversal, not this leaf.
-    #[inline(never)]
-    fn clone_in_impl(&self, with_semantic_ids: bool, _: &'alloc Allocator) -> Self::Cloned {
-        // `Cell` in the AST only ever holds semantic ids (`Cell<NodeId>`, `Cell<Option<ScopeId>>`,
-        // etc.). Preserve them when cloning *with* semantic ids, otherwise reset to the default
-        // (`NodeId::DUMMY`, `None`, ...) so ids aren't carried into a fresh clone.
-        if with_semantic_ids { Cell::new(self.get()) } else { Cell::new(T::default()) }
+    #[inline]
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'alloc Allocator,
+    ) -> Self::Cloned {
+        Cell::new(self.get().clone_in_impl(with_semantic_ids, allocator))
     }
 }
 
@@ -250,7 +270,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for &str {
 
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         allocator.alloc_str(self)
@@ -263,7 +283,7 @@ macro_rules! impl_clone_in {
             impl<'alloc> CloneIn<'alloc> for $t {
                 type Cloned = Self;
                 #[inline(always)]
-                fn clone_in_impl(&self, _with_semantic_ids: bool, _: &'alloc Allocator) -> Self {
+                fn clone_in_impl(&self, _with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
                     *self
                 }
             }
