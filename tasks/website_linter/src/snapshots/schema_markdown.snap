@@ -401,6 +401,99 @@ type: `string`
 Path or package name of the plugin
 
 
+## languagePlugins
+
+type: `array`
+
+
+Language plugins for embedded frameworks (Vue, Svelte, Angular templates, etc.).
+
+Language plugins provide a framework-native AST for JS rules, plus an optional
+virtual JS/TS transform for Rust rules and typed tooling.
+
+See the RFC:
+<https://github.com/oxc-project/oxc/discussions/21936>
+
+Note: Language plugins are experimental. Config and the `defineLanguagePlugin`
+API are available; the full parse / load / transform pipeline is still being
+implemented (tracked in <https://github.com/oxc-project/oxc/issues/23207>).
+
+Examples:
+
+```json
+{
+  "languagePlugins": [
+    "vue-language-plugin"
+  ]
+}
+```
+
+```ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+languagePlugins: [
+{
+name: "vue-language-plugin",
+pattern: "packages/app/**/*.vue",
+},
+],
+});
+```
+
+
+### languagePlugins[n]
+
+type: `object | string`
+
+
+
+
+
+#### languagePlugins[n].name
+
+type: `string`
+
+
+Plugin alias, or the plugin specifier when `specifier` is omitted.
+
+When both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`).
+
+
+#### languagePlugins[n].options
+
+type: `object`
+
+
+Options forwarded to the language plugin
+
+
+#### languagePlugins[n].pattern
+
+type: `array | string`
+
+
+Optional project-owned globs selecting files for this language plugin.
+
+When omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`).
+
+
+##### languagePlugins[n].pattern[n]
+
+type: `string`
+
+
+
+
+
+#### languagePlugins[n].specifier
+
+type: `string`
+
+
+Path or package name of the language plugin
+
+
 ## options
 
 type: `object`
@@ -596,6 +689,68 @@ type: `string`
 
 
 Path or package name of the plugin
+
+
+#### overrides[n].languagePlugins
+
+type: `array`
+
+
+Language plugins for this override.
+
+See [`crate::config::oxlintrc::Oxlintrc::language_plugins`].
+
+
+##### overrides[n].languagePlugins[n]
+
+type: `object | string`
+
+
+
+
+
+###### overrides[n].languagePlugins[n].name
+
+type: `string`
+
+
+Plugin alias, or the plugin specifier when `specifier` is omitted.
+
+When both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`).
+
+
+###### overrides[n].languagePlugins[n].options
+
+type: `object`
+
+
+Options forwarded to the language plugin
+
+
+###### overrides[n].languagePlugins[n].pattern
+
+type: `array | string`
+
+
+Optional project-owned globs selecting files for this language plugin.
+
+When omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`).
+
+
+####### overrides[n].languagePlugins[n].pattern[n]
+
+type: `string`
+
+
+
+
+
+###### overrides[n].languagePlugins[n].specifier
+
+type: `string`
+
+
+Path or package name of the language plugin
 
 
 #### overrides[n].plugins
@@ -1118,3 +1273,6 @@ default: `false`
 Whether to enable typecheck mode for Vitest rules.
 When enabled, some rules will skip certain checks for describe blocks
 to accommodate TypeScript type checking scenarios.
+
+
+

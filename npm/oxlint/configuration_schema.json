@@ -72,6 +72,22 @@
       ],
       "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
     },
+    "languagePlugins": {
+      "description": "Language plugins for embedded frameworks (Vue, Svelte, Angular templates, etc.).\n\nLanguage plugins provide a framework-native AST for JS rules, plus an optional\nvirtual JS/TS transform for Rust rules and typed tooling.\n\nSee the RFC:\n<https://github.com/oxc-project/oxc/discussions/21936>\n\nNote: Language plugins are experimental. Config and the `defineLanguagePlugin`\nAPI are available; the full parse / load / transform pipeline is still being\nimplemented (tracked in <https://github.com/oxc-project/oxc/issues/23207>).\n\nExamples:\n\n```json\n{\n\"languagePlugins\": [\"vue-language-plugin\"]\n}\n```\n\n```ts\nimport { defineConfig } from \"oxlint\";\n\nexport default defineConfig({\nlanguagePlugins: [\n{\nname: \"vue-language-plugin\",\npattern: \"packages/app/**/*.vue\",\n},\n],\n});\n```",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LanguagePluginEntry"
+          },
+          "uniqueItems": true
+        }
+      ],
+      "markdownDescription": "Language plugins for embedded frameworks (Vue, Svelte, Angular templates, etc.).\n\nLanguage plugins provide a framework-native AST for JS rules, plus an optional\nvirtual JS/TS transform for Rust rules and typed tooling.\n\nSee the RFC:\n<https://github.com/oxc-project/oxc/discussions/21936>\n\nNote: Language plugins are experimental. Config and the `defineLanguagePlugin`\nAPI are available; the full parse / load / transform pipeline is still being\nimplemented (tracked in <https://github.com/oxc-project/oxc/issues/23207>).\n\nExamples:\n\n```json\n{\n\"languagePlugins\": [\"vue-language-plugin\"]\n}\n```\n\n```ts\nimport { defineConfig } from \"oxlint\";\n\nexport default defineConfig({\nlanguagePlugins: [\n{\nname: \"vue-language-plugin\",\npattern: \"packages/app/**/*.vue\",\n},\n],\n});\n```"
+    },
     "options": {
       "description": "Oxlint config options.",
       "allOf": [
@@ -150,21 +166,6 @@
         }
       ],
       "markdownDescription": "Plugin-specific configuration for both built-in and custom plugins.\nThis includes settings for built-in plugins such as `react` and `jsdoc`\nas well as configuring settings for JS custom plugins loaded via `jsPlugins`."
-    },
-    "languagePlugins": {
-      "description": "Language plugins for embedded frameworks (Vue, Svelte, Angular templates, etc.).\n\nLanguage plugins provide a framework-native AST for JS rules, plus an optional virtual JS/TS transform for Rust rules and typed tooling.\n\nSee the RFC: https://github.com/oxc-project/oxc/discussions/21936\n\nNote: Language plugins are experimental. Config and the `defineLanguagePlugin` API are available; the full parse / load / transform pipeline is still being implemented (tracked in https://github.com/oxc-project/oxc/issues/23207).",
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/definitions/LanguagePluginEntry"
-          }
-        }
-      ]
     }
   },
   "additionalProperties": false,
@@ -11892,14 +11893,14 @@
       "type": "object",
       "properties": {
         "version": {
-          "description": "Jest version \u2014 accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
+          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
           "default": null,
           "allOf": [
             {
               "$ref": "#/definitions/JestVersionSchema"
             }
           ],
-          "markdownDescription": "Jest version \u2014 accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::"
+          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::"
         }
       },
       "markdownDescription": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference."
@@ -12434,6 +12435,97 @@
         }
       },
       "additionalProperties": false
+    },
+    "LanguagePluginEntry": {
+      "anyOf": [
+        {
+          "description": "Path or package name of the language plugin (e.g. `vue-language-plugin`)",
+          "type": "string",
+          "markdownDescription": "Path or package name of the language plugin (e.g. `vue-language-plugin`)"
+        },
+        {
+          "description": "Language plugin identified by `name` (RFC-style, or alias when `specifier` is also set)",
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "description": "Plugin alias, or the plugin specifier when `specifier` is omitted.\n\nWhen both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`).",
+              "type": "string",
+              "markdownDescription": "Plugin alias, or the plugin specifier when `specifier` is omitted.\n\nWhen both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`)."
+            },
+            "options": {
+              "description": "Options forwarded to the language plugin",
+              "type": "object",
+              "markdownDescription": "Options forwarded to the language plugin"
+            },
+            "pattern": {
+              "description": "Optional project-owned globs selecting files for this language plugin.\n\nWhen omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`).",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "markdownDescription": "Optional project-owned globs selecting files for this language plugin.\n\nWhen omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`)."
+            },
+            "specifier": {
+              "description": "Path or package name of the language plugin",
+              "type": "string",
+              "markdownDescription": "Path or package name of the language plugin"
+            }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "Language plugin identified by `name` (RFC-style, or alias when `specifier` is also set)"
+        },
+        {
+          "description": "Language plugin identified by `specifier` (optional `name` alias, pattern, options)",
+          "type": "object",
+          "required": [
+            "specifier"
+          ],
+          "properties": {
+            "name": {
+              "description": "Plugin alias, or the plugin specifier when `specifier` is omitted.\n\nWhen both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`).",
+              "type": "string",
+              "markdownDescription": "Plugin alias, or the plugin specifier when `specifier` is omitted.\n\nWhen both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`)."
+            },
+            "options": {
+              "description": "Options forwarded to the language plugin",
+              "type": "object",
+              "markdownDescription": "Options forwarded to the language plugin"
+            },
+            "pattern": {
+              "description": "Optional project-owned globs selecting files for this language plugin.\n\nWhen omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`).",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "markdownDescription": "Optional project-owned globs selecting files for this language plugin.\n\nWhen omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`)."
+            },
+            "specifier": {
+              "description": "Path or package name of the language plugin",
+              "type": "string",
+              "markdownDescription": "Path or package name of the language plugin"
+            }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "Language plugin identified by `specifier` (optional `name` alias, pattern, options)"
+        }
+      ]
     },
     "LibFrom": {
       "type": "string",
@@ -14569,10 +14661,10 @@
       "type": "object",
       "properties": {
         "allowEscape": {
-          "description": "When set to `true`, the rule allows any grouping of code points\ninside a character class as long as they are written using escape sequences.\n\nExamples of **incorrect** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\uD83D]/; // backslash can be omitted\nnew RegExp(\"[\\ud83d\" + \"\\udc4d]\");\n```\n\nExamples of **correct** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\ud83d\\udc4d]/;\n/[\\u00B7\\u0300-\\u036F]/u;\n/[\ud83d\udc68\\u200d\ud83d\udc69]/u;\nnew RegExp(\"[\\x41\\u0301]\");\nnew RegExp(`[\\u{1F1EF}\\u{1F1F5}]`, \"u\");\nnew RegExp(\"[\\\\u{1F1EF}\\\\u{1F1F5}]\", \"u\");\n```",
+          "description": "When set to `true`, the rule allows any grouping of code points\ninside a character class as long as they are written using escape sequences.\n\nExamples of **incorrect** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\uD83D]/; // backslash can be omitted\nnew RegExp(\"[\\ud83d\" + \"\\udc4d]\");\n```\n\nExamples of **correct** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\ud83d\\udc4d]/;\n/[\\u00B7\\u0300-\\u036F]/u;\n/[👨\\u200d👩]/u;\nnew RegExp(\"[\\x41\\u0301]\");\nnew RegExp(`[\\u{1F1EF}\\u{1F1F5}]`, \"u\");\nnew RegExp(\"[\\\\u{1F1EF}\\\\u{1F1F5}]\", \"u\");\n```",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "When set to `true`, the rule allows any grouping of code points\ninside a character class as long as they are written using escape sequences.\n\nExamples of **incorrect** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\uD83D]/; // backslash can be omitted\nnew RegExp(\"[\\ud83d\" + \"\\udc4d]\");\n```\n\nExamples of **correct** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\ud83d\\udc4d]/;\n/[\\u00B7\\u0300-\\u036F]/u;\n/[\ud83d\udc68\\u200d\ud83d\udc69]/u;\nnew RegExp(\"[\\x41\\u0301]\");\nnew RegExp(`[\\u{1F1EF}\\u{1F1F5}]`, \"u\");\nnew RegExp(\"[\\\\u{1F1EF}\\\\u{1F1F5}]\", \"u\");\n```"
+          "markdownDescription": "When set to `true`, the rule allows any grouping of code points\ninside a character class as long as they are written using escape sequences.\n\nExamples of **incorrect** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\uD83D]/; // backslash can be omitted\nnew RegExp(\"[\\ud83d\" + \"\\udc4d]\");\n```\n\nExamples of **correct** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\ud83d\\udc4d]/;\n/[\\u00B7\\u0300-\\u036F]/u;\n/[👨\\u200d👩]/u;\nnew RegExp(\"[\\x41\\u0301]\");\nnew RegExp(`[\\u{1F1EF}\\u{1F1F5}]`, \"u\");\nnew RegExp(\"[\\\\u{1F1EF}\\\\u{1F1F5}]\", \"u\");\n```"
         }
       },
       "additionalProperties": false
@@ -16317,10 +16409,10 @@
       "type": "object",
       "properties": {
         "allowConstantExport": {
-          "description": "Allow exporting primitive constants (string/number/boolean/template literal)\nalongside component exports without triggering a violation. Recommended when your\nbundler\u2019s Fast Refresh integration supports this (enabled by the plugin\u2019s `vite`\npreset).\n\n```jsx\n// Allowed when allowConstantExport: true\nexport const VERSION = \"3\";\nexport const Foo = () => null;\n```",
+          "description": "Allow exporting primitive constants (string/number/boolean/template literal)\nalongside component exports without triggering a violation. Recommended when your\nbundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`\npreset).\n\n```jsx\n// Allowed when allowConstantExport: true\nexport const VERSION = \"3\";\nexport const Foo = () => null;\n```",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "Allow exporting primitive constants (string/number/boolean/template literal)\nalongside component exports without triggering a violation. Recommended when your\nbundler\u2019s Fast Refresh integration supports this (enabled by the plugin\u2019s `vite`\npreset).\n\n```jsx\n// Allowed when allowConstantExport: true\nexport const VERSION = \"3\";\nexport const Foo = () => null;\n```"
+          "markdownDescription": "Allow exporting primitive constants (string/number/boolean/template literal)\nalongside component exports without triggering a violation. Recommended when your\nbundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`\npreset).\n\n```jsx\n// Allowed when allowConstantExport: true\nexport const VERSION = \"3\";\nexport const Foo = () => null;\n```"
         },
         "allowExportNames": {
           "description": "Treat specific named exports as HMR-safe (useful for frameworks that hot-replace\ncertain exports). For example, in Remix:\n`{ \"allowExportNames\": [\"meta\", \"links\", \"headers\", \"loader\", \"action\"] }`",
@@ -16583,6 +16675,22 @@
           ],
           "markdownDescription": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver."
         },
+        "languagePlugins": {
+          "description": "Language plugins for this override.\n\nSee [`crate::config::oxlintrc::Oxlintrc::language_plugins`].",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/LanguagePluginEntry"
+              },
+              "uniqueItems": true
+            }
+          ],
+          "markdownDescription": "Language plugins for this override.\n\nSee [`crate::config::oxlintrc::Oxlintrc::language_plugins`]."
+        },
         "plugins": {
           "description": "Optionally change what plugins are enabled for this override. When\nomitted, the base config's plugins are used.",
           "default": null,
@@ -16598,21 +16706,6 @@
           "allOf": [
             {
               "$ref": "#/definitions/OxlintRules"
-            }
-          ]
-        },
-        "languagePlugins": {
-          "description": "Language plugins for embedded frameworks (Vue, Svelte, Angular templates, etc.).\n\nLanguage plugins provide a framework-native AST for JS rules, plus an optional virtual JS/TS transform for Rust rules and typed tooling.\n\nSee the RFC: https://github.com/oxc-project/oxc/discussions/21936\n\nNote: Language plugins are experimental. Config and the `defineLanguagePlugin` API are available; the full parse / load / transform pipeline is still being implemented (tracked in https://github.com/oxc-project/oxc/issues/23207).",
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "array",
-              "uniqueItems": true,
-              "items": {
-                "$ref": "#/definitions/LanguagePluginEntry"
-              }
             }
           ]
         }
@@ -17456,10 +17549,10 @@
       "type": "object",
       "properties": {
         "disallowRedundantWrapping": {
-          "description": "By default, this rule doesn\u2019t check when a regex literal is unnecessarily wrapped in a `RegExp` constructor call.\nWhen the option `disallowRedundantWrapping` is set to `true`, the rule will also disallow such unnecessary patterns.\n\nExamples of **incorrect** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\nnew RegExp(/abc/);\nnew RegExp(/abc/, 'u');\n```\n\nExamples of **correct** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\n/abc/;\n/abc/u;\nnew RegExp(/abc/, flags);\n```",
+          "description": "By default, this rule doesn’t check when a regex literal is unnecessarily wrapped in a `RegExp` constructor call.\nWhen the option `disallowRedundantWrapping` is set to `true`, the rule will also disallow such unnecessary patterns.\n\nExamples of **incorrect** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\nnew RegExp(/abc/);\nnew RegExp(/abc/, 'u');\n```\n\nExamples of **correct** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\n/abc/;\n/abc/u;\nnew RegExp(/abc/, flags);\n```",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "By default, this rule doesn\u2019t check when a regex literal is unnecessarily wrapped in a `RegExp` constructor call.\nWhen the option `disallowRedundantWrapping` is set to `true`, the rule will also disallow such unnecessary patterns.\n\nExamples of **incorrect** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\nnew RegExp(/abc/);\nnew RegExp(/abc/, 'u');\n```\n\nExamples of **correct** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\n/abc/;\n/abc/u;\nnew RegExp(/abc/, flags);\n```"
+          "markdownDescription": "By default, this rule doesn’t check when a regex literal is unnecessarily wrapped in a `RegExp` constructor call.\nWhen the option `disallowRedundantWrapping` is set to `true`, the rule will also disallow such unnecessary patterns.\n\nExamples of **incorrect** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\nnew RegExp(/abc/);\nnew RegExp(/abc/, 'u');\n```\n\nExamples of **correct** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\n/abc/;\n/abc/u;\nnew RegExp(/abc/, flags);\n```"
         }
       },
       "additionalProperties": false
@@ -17698,10 +17791,10 @@
       "type": "object",
       "properties": {
         "reportAllBailouts": {
-          "description": "Also report compiler bail-outs \u2014 places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
+          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "Also report compiler bail-outs \u2014 places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
         }
       },
       "additionalProperties": false
@@ -19093,47 +19186,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "LanguagePluginEntry": {
-      "anyOf": [
-        {
-          "description": "Path or package name of the language plugin (e.g. `vue-language-plugin`)",
-          "type": "string"
-        },
-        {
-          "description": "Language plugin with optional alias, file pattern, and options",
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "name": {
-              "description": "Plugin alias, or the plugin specifier when `specifier` is omitted.\n\nWhen both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`).",
-              "type": "string"
-            },
-            "specifier": {
-              "description": "Path or package name of the language plugin",
-              "type": "string"
-            },
-            "pattern": {
-              "description": "Optional project-owned globs selecting files for this language plugin.\n\nWhen omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`).",
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              ]
-            },
-            "options": {
-              "description": "Options forwarded to the language plugin",
-              "type": "object"
-            }
-          }
-        }
-      ]
     }
   },
   "markdownDescription": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n},\n\"custom\": { \"option\": true }\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```\n\n`oxlint.config.ts`\n\n```ts\nimport { defineConfig } from \"oxlint\";\n\nexport default defineConfig({\nplugins: [\"import\", \"typescript\", \"unicorn\"],\nenv: {\n\"browser\": true\n},\nglobals: {\n\"foo\": \"readonly\"\n},\nsettings: {\nreact: {\nversion: \"18.2.0\"\n},\ncustom: { option: true }\n},\nrules: {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\noverrides: [\n{\nfiles: [\"*.test.ts\", \"*.spec.ts\"],\nrules: {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n});\n```"

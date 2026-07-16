@@ -254,10 +254,10 @@ impl JsonSchema for LanguagePluginEntry {
                             instance_type: Some(InstanceType::Array.into()),
                             array: Some(Box::new(ArrayValidation {
                                 items: Some(
-                                    SchemaObject {
+                                    Schema::Object(SchemaObject {
                                         instance_type: Some(InstanceType::String.into()),
                                         ..Default::default()
-                                    }
+                                    })
                                     .into(),
                                 ),
                                 ..Default::default()
@@ -285,16 +285,36 @@ impl JsonSchema for LanguagePluginEntry {
             .into(),
         );
 
-        let object_schema = SchemaObject {
+        let object_with_name = SchemaObject {
             instance_type: Some(InstanceType::Object.into()),
             metadata: Some(Box::new(Metadata {
                 description: Some(
-                    "Language plugin with optional alias, file pattern, and options".to_string(),
+                    "Language plugin identified by `name` (RFC-style, or alias when `specifier` is also set)"
+                        .to_string(),
+                ),
+                ..Default::default()
+            })),
+            object: Some(Box::new(ObjectValidation {
+                properties: object_properties.clone(),
+                required: ["name".to_string()].into_iter().collect(),
+                additional_properties: Some(Box::new(Schema::Bool(false))),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+
+        let object_with_specifier = SchemaObject {
+            instance_type: Some(InstanceType::Object.into()),
+            metadata: Some(Box::new(Metadata {
+                description: Some(
+                    "Language plugin identified by `specifier` (optional `name` alias, pattern, options)"
+                        .to_string(),
                 ),
                 ..Default::default()
             })),
             object: Some(Box::new(ObjectValidation {
                 properties: object_properties,
+                required: ["specifier".to_string()].into_iter().collect(),
                 additional_properties: Some(Box::new(Schema::Bool(false))),
                 ..Default::default()
             })),
@@ -303,7 +323,11 @@ impl JsonSchema for LanguagePluginEntry {
 
         SchemaObject {
             subschemas: Some(Box::new(SubschemaValidation {
-                any_of: Some(vec![string_schema.into(), object_schema.into()]),
+                any_of: Some(vec![
+                    string_schema.into(),
+                    object_with_name.into(),
+                    object_with_specifier.into(),
+                ]),
                 ..Default::default()
             })),
             ..Default::default()

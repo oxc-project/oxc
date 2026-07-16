@@ -926,6 +926,7 @@ mod test {
         assert_eq!(merged.language_plugins.as_ref().unwrap().len(), 2);
     }
 
+    #[test]
     fn test_oxlintrc_schema_field() {
         // Test that $schema field is accepted and deserialized correctly
         let config: Oxlintrc = serde_json::from_str(

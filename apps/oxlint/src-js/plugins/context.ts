@@ -62,6 +62,27 @@ export function setLanguageId(id: string): void {
   languageId = id;
 }
 
+/**
+ * Infer language id for ordinary JS/TS files from the path extension.
+ * Language plugins should call {@link setLanguageId} with their own id (e.g. `"vue"`).
+ */
+function languageIdFromFilePath(filePathInput: string): string {
+  // Strip query/hash if present; take final path segment extension.
+  const base = filePathInput.split(/[?#]/, 1)[0]!;
+  const dot = base.lastIndexOf(".");
+  if (dot === -1) return "javascript";
+  const ext = base.slice(dot + 1).toLowerCase();
+  switch (ext) {
+    case "ts":
+    case "mts":
+    case "cts":
+    case "tsx":
+      return "typescript";
+    default:
+      return "javascript";
+  }
+}
+
 // Current working directory for file being linted.
 // Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
 export let cwd: string | null = null;
@@ -80,7 +101,7 @@ export function setCwd(cwdInput: string) {
  */
 export function setupFileContext(filePathInput: string): void {
   filePath = filePathInput;
-  languageId = "javascript";
+  languageId = languageIdFromFilePath(filePathInput);
 }
 
 /**
