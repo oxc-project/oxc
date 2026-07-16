@@ -19,7 +19,7 @@ use oxc_ast::ast as oxc;
 use oxc_ast::ast::BinaryOperator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str, format_ident};
+use oxc_str::{Ident, Str, format_ident, static_ident};
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
@@ -419,7 +419,7 @@ fn lower_block_statement_inner<'a>(
         }
 
         // Sort by first reference position to match TS traversal order
-        will_hoist.sort_by_key(|h| h.first_ref_span.start);
+        will_hoist.sort_unstable_by_key(|h| h.first_ref_span.start);
 
         // Emit DeclareContext for hoisted bindings
         for info in &will_hoist {
@@ -3343,7 +3343,7 @@ fn gather_captured_context(
     // Sort captured entries by source position so context declarations appear
     // in source order, matching the TS compiler's position-ordered traversal.
     let mut sorted: Vec<_> = captured.into_iter().collect();
-    sorted.sort_by_key(|(_, (pos, _))| *pos);
+    sorted.sort_unstable_by_key(|(_, (pos, _))| *pos);
 
     sorted.into_iter().map(|(sid, (_, span))| (sid, span)).collect()
 }
@@ -3750,22 +3750,21 @@ fn lower_expression<'a>(
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
-        oxc::Expression::MetaProperty(meta) => {
-            let span = Some(meta.span);
-            if meta.meta.name == "import" && meta.property.name == "meta" {
-                Ok(InstructionValue::MetaProperty {
-                    meta: meta.meta.name,
-                    property: meta.property.name,
-                    span,
-                })
-            } else {
-                builder.record_error(
-                    ErrorCategory::Todo
-                        .diagnostic("(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta")
-                        .with_labels(span),
-                )?;
-                Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
-            }
+        oxc::Expression::ImportMeta(import_meta) => Ok(InstructionValue::MetaProperty {
+            meta: static_ident!("import"),
+            property: static_ident!("meta"),
+            span: Some(import_meta.span),
+        }),
+        oxc::Expression::NewTarget(new_target) => {
+            let span = Some(new_target.span);
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic(
+                        "(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta",
+                    )
+                    .with_labels(span),
+            )?;
+            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
         oxc::Expression::ClassExpression(cls) => {
             let span = Some(cls.span);
@@ -5251,7 +5250,7 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
         oxc::Expression::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
         oxc::Expression::AwaitExpression(_) => "AwaitExpression",
         oxc::Expression::YieldExpression(_) => "YieldExpression",
-        oxc::Expression::MetaProperty(_) => "MetaProperty",
+        oxc::Expression::ImportMeta(_) | oxc::Expression::NewTarget(_) => "MetaProperty",
         oxc::Expression::ClassExpression(_) => "ClassExpression",
         oxc::Expression::Super(_) => "Super",
         oxc::Expression::ImportExpression(_) => "Import",

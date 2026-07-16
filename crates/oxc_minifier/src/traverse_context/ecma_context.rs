@@ -4,8 +4,7 @@ use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     GlobalContext,
     constant_evaluation::{
-        ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType,
-        binary_operation_evaluate_value,
+        ConstantEvaluationCtx, ConstantValue, ValueType, binary_operation_evaluate_value,
     },
     side_effects::{
         MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects, is_pure_function,
@@ -189,7 +188,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         if e.may_have_side_effects(self) {
             None
         } else {
-            e.evaluate_value(self).map(|v| self.value_to_expr(e.span, v))
+            let v = self.eval_binary_operation(e.operator, &e.left, &e.right)?;
+            // Bail instead of materializing the shadow-safe division form:
+            // replacing `0 / 0` with `0 / 0` would set the changed flag on
+            // every pass and the fixed-point loop would never converge. The
+            // other `eval_binary_operation` callers fold bitwise operators
+            // only, whose results are always finite, so the guard lives here.
+            if let ConstantValue::Number(n) = &v
+                && self.non_finite_global_shadowed(*n)
+            {
+                return None;
+            }
+            Some(self.value_to_expr(e.span, v))
         }
     }
 
@@ -202,9 +212,41 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         binary_operation_evaluate_value(operator, left, right, self)
     }
 
+    /// Whether materializing `n` prints a global name (`NaN`, `Infinity`)
+    /// that a binding in the current scope chain captures: in
+    /// `function f() { let NaN = 1; return 0 / 0; }`, folding the division
+    /// to a NaN literal makes `f` return `1`.
+    fn non_finite_global_shadowed(&self, n: f64) -> bool {
+        let name = if n.is_nan() {
+            "NaN"
+        } else if n.is_infinite() {
+            "Infinity"
+        } else {
+            return false;
+        };
+        self.scoping().find_binding(self.scoping.current_scope_id(), name.into()).is_some()
+    }
+
+    /// `NaN` → `0 / 0`, `Infinity` → `1 / 0`, `-Infinity` → `-1 / 0`: the
+    /// same value with no capturable name attached. Used when a non-finite
+    /// constant must be materialized where its global name is shadowed.
+    fn non_finite_to_division_expr(&self, span: Span, n: f64) -> Expression<'a> {
+        let numerator = if n.is_nan() { 0.0 } else { 1.0 };
+        let mut left =
+            Expression::new_numeric_literal(span, numerator, None, NumberBase::Decimal, self);
+        if n == f64::NEG_INFINITY {
+            left = Expression::new_unary_expression(span, UnaryOperator::UnaryNegation, left, self);
+        }
+        let right = Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, self);
+        Expression::new_binary_expression(span, left, BinaryOperator::Division, right, self)
+    }
+
     pub fn value_to_expr(&self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
+                if !n.is_finite() && self.non_finite_global_shadowed(n) {
+                    return self.non_finite_to_division_expr(span, n);
+                }
                 let number_base =
                     if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
                 Expression::new_numeric_literal(span, n, None, number_base, self)
@@ -478,6 +520,16 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
         self.dirty_diff().visit_variable_declarator(decl);
+        self.state.record_mutation();
+    }
+
+    /// Mark a switch case subtree as about to be dropped. Walks the entire case —
+    /// test expression (if present) and all statements in the consequent. Same contract
+    /// as `drop_expression`. Use this helper when removing a case from a switch statement's
+    /// case vector to properly notify the scope tracking system about dropped references.
+    #[inline]
+    pub fn drop_switch_case(&mut self, switch_case: &SwitchCase<'a>) {
+        self.dirty_diff().visit_switch_case(switch_case);
         self.state.record_mutation();
     }
 }

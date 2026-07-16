@@ -2447,6 +2447,7 @@ dependencies = [
  "oxc_str",
  "oxc_syntax",
  "rustc-hash",
+ "smallvec",
 ]
 
 [[package]]
@@ -2643,6 +2644,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_tasks_common",
  "oxc_transformer",
+ "saphyr",
 ]
 
 [[package]]

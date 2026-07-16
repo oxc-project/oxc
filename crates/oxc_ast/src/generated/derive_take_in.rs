@@ -58,7 +58,9 @@ impl<'a> TakeIn<'a> for CallExpression<'a> {}
 
 impl<'a> TakeIn<'a> for NewExpression<'a> {}
 
-impl<'a> TakeIn<'a> for MetaProperty<'a> {}
+impl<'a> TakeIn<'a> for ImportMeta {}
+
+impl<'a> TakeIn<'a> for NewTarget {}
 
 impl<'a> TakeIn<'a> for SpreadElement<'a> {}
 

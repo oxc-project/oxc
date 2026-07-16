@@ -1206,7 +1206,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::ts_import_type_options_expected_with(key_span));
         }
         // Use the actual string from the source (not a static string) to ensure it's in the arena
-        let key_name = self.cur_string();
+        let key_name = self.ident(self.cur_string());
         let with_key_span = self.start_span();
         self.bump_any();
         let with_key = IdentifierName::boxed(self.end_span(with_key_span), key_name, self);

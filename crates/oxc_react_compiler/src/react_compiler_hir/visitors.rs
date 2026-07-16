@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use oxc_index::IndexSlice;
 
@@ -19,10 +20,14 @@ use crate::react_compiler_hir::{
 // Iterator functions (return Vec instead of generators)
 // =============================================================================
 
+/// Operand/lvalue lists are almost always 1-4 entries; keep them inline instead
+/// of heap-allocating a `Vec` for every instruction visited.
+pub type PlaceList = SmallVec<[Place; 4]>;
+
 /// Yields `instr.lvalue` plus the value's lvalues.
 /// Equivalent to TS `eachInstructionLValue`.
-pub fn each_instruction_lvalue(instr: &Instruction) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
+    let mut result = PlaceList::new();
     result.push(instr.lvalue.clone());
     result.extend(each_instruction_value_lvalue(&instr.value));
     result
@@ -30,8 +35,8 @@ pub fn each_instruction_lvalue(instr: &Instruction) -> Vec<Place> {
 
 /// Yields lvalues from DeclareLocal/StoreLocal/DeclareContext/StoreContext/Destructure/PostfixUpdate/PrefixUpdate.
 /// Equivalent to TS `eachInstructionValueLValue`.
-pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
+    let mut result = PlaceList::new();
     match value {
         InstructionValue::DeclareContext { lvalue, .. }
         | InstructionValue::StoreContext { lvalue, .. }
@@ -88,13 +93,13 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
 
 /// Delegates to each_instruction_value_operand.
 /// Equivalent to TS `eachInstructionOperand`.
-pub fn each_instruction_operand(instr: &Instruction, env: &Environment) -> Vec<Place> {
+pub fn each_instruction_operand(instr: &Instruction, env: &Environment) -> PlaceList {
     each_instruction_value_operand(&instr.value, env)
 }
 
 /// Yields operand places from an InstructionValue.
 /// Equivalent to TS `eachInstructionValueOperand`.
-pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environment) -> Vec<Place> {
+pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environment) -> PlaceList {
     each_instruction_value_operand_with_functions(value, &env.functions)
 }
 
@@ -103,8 +108,8 @@ pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environmen
 pub fn each_instruction_value_operand_with_functions(
     value: &InstructionValue,
     functions: &IndexSlice<FunctionId, [HirFunction]>,
-) -> Vec<Place> {
-    let mut result = Vec::new();
+) -> PlaceList {
+    let mut result = PlaceList::new();
     match value {
         InstructionValue::NewExpression { callee, args, .. }
         | InstructionValue::CallExpression { callee, args, .. } => {
@@ -282,8 +287,8 @@ pub fn each_instruction_value_operand_with_functions(
 
 /// Yields each arg's place.
 /// Equivalent to TS `eachCallArgument`.
-pub fn each_call_argument(args: &[PlaceOrSpread]) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_call_argument(args: &[PlaceOrSpread]) -> PlaceList {
+    let mut result = PlaceList::new();
     for arg in args {
         match arg {
             PlaceOrSpread::Place(place) => {
@@ -299,8 +304,8 @@ pub fn each_call_argument(args: &[PlaceOrSpread]) -> Vec<Place> {
 
 /// Yields places from array/object patterns.
 /// Equivalent to TS `eachPatternOperand`.
-pub fn each_pattern_operand(pattern: &Pattern) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_pattern_operand(pattern: &Pattern) -> PlaceList {
+    let mut result = PlaceList::new();
     match pattern {
         Pattern::Array(arr) => {
             for item in &arr.items {
@@ -421,8 +426,8 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
 
 /// Yields places used by terminal.
 /// Equivalent to TS `eachTerminalOperand`.
-pub fn each_terminal_operand(terminal: &Terminal) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_terminal_operand(terminal: &Terminal) -> PlaceList {
+    let mut result = PlaceList::new();
     match terminal {
         Terminal::If { test, .. } => {
             result.push(test.clone());

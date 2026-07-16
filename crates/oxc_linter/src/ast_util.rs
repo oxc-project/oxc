@@ -575,12 +575,38 @@ fn could_be_error_impl(
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
-                    if let Some(init) = &decl.init {
-                        could_be_error_impl(ctx, init, visited)
-                    } else {
-                        // TODO: warn about throwing undefined
-                        false
+                    if decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| could_be_error_impl(ctx, init, visited))
+                    {
+                        return true;
                     }
+
+                    ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
+                        if !reference.is_write() {
+                            return false;
+                        }
+
+                        let reference_node = ctx.nodes().get_node(reference.node_id());
+                        if reference_node.span().end > ident.span.start {
+                            return false;
+                        }
+
+                        let AstKind::AssignmentExpression(assignment) =
+                            ctx.nodes().parent_kind(reference.node_id())
+                        else {
+                            return false;
+                        };
+
+                        assignment.operator == AssignmentOperator::Assign
+                            && matches!(
+                                &assignment.left,
+                                AssignmentTarget::AssignmentTargetIdentifier(target)
+                                    if target.span == reference_node.span()
+                            )
+                            && could_be_error_impl(ctx, &assignment.right, visited)
+                    })
                 }
                 AstKind::Function(_)
                 | AstKind::Class(_)

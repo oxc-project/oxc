@@ -25,7 +25,8 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             | Expression::BigIntLiteral(_)
             | Expression::NullLiteral(_)
             | Expression::RegExpLiteral(_)
-            | Expression::MetaProperty(_)
+            | Expression::ImportMeta(_)
+            | Expression::NewTarget(_)
             | Expression::ArrowFunctionExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Super(_) => false,

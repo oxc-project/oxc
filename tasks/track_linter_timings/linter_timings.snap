@@ -20,7 +20,7 @@ eslint/func-style                                          |      7
 eslint/getter-return                                       |  10895
 eslint/grouped-accessor-pairs                              |  15349
 eslint/guard-for-in                                        |    105
-eslint/id-length                                           | 178576
+eslint/id-length                                           | 178568
 eslint/init-declarations                                   |  31363
 eslint/logical-assignment-operators                        |  38314
 eslint/max-classes-per-file                                |      3
@@ -410,6 +410,7 @@ react/display-name                                         |      7
 react/exhaustive-deps                                      |  62606
 react/forbid-component-props                               |    452
 react/forward-ref-uses-ref                                 |  62606
+react/function-component-definition                        |  16812
 react/hook-use-state                                       |  62606
 react/iframe-missing-sandbox                               |  63058
 react/jsx-boolean-value                                    |    452
@@ -613,7 +614,7 @@ unicorn/prefer-dom-node-text-content                       |  77232
 unicorn/prefer-event-target                                | 209565
 unicorn/prefer-export-from                                 |    103
 unicorn/prefer-global-this                                 | 209565
-unicorn/prefer-import-meta-properties                      |      4
+unicorn/prefer-import-meta-properties                      |      3
 unicorn/prefer-includes                                    |  20604
 unicorn/prefer-keyboard-event-key                          |  77225
 unicorn/prefer-logical-operator-over-ternary               |   4722
@@ -687,6 +688,7 @@ vitest/no-test-prefixes                                    |      0
 vitest/no-test-return-statement                            |  76889
 vitest/no-unneeded-async-expect-function                   |      0
 vitest/padding-around-after-all-blocks                     |      0
+vitest/padding-around-test-blocks                          |      0
 vitest/prefer-called-exactly-once-with                     |  14953
 vitest/prefer-called-once                                  |      0
 vitest/prefer-called-times                                 |      0

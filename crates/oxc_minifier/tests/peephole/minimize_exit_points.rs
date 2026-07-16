@@ -279,13 +279,10 @@ fn test_dont_test_break_in_do_while_if_condition_has_side_effects() {
 
 #[test]
 fn test_switch_exit_points() {
-    test("switch (x) { case 1: f(); break; }", "switch (x) { case 1: f();        }");
-    test("function f(){switch(x){case 1:return;}}", "function f(){switch(x){case 1:}}");
-    test("function f(){switch(x){case 1:break;}}", "function f(){switch(x){case 1:}}");
-    test(
-        "function f(){switch(x){case 1:return;case 2:return;}}",
-        "function f(){switch(x){case 1:return;case 2:}}",
-    );
+    test("switch (x) { case 1: f(); break; }", "switch (x) { case 1: f(); }");
+    test("function f(){switch(x){case 1:return;}}", "function f(){x;}");
+    test("function f(){switch(x){case 1:break;}}", "function f(){x;}");
+    test("function f(){switch(x){case 1:return;case 2:return;}}", "function f(){x;}");
 }
 
 #[test]

@@ -53,7 +53,7 @@ use oxc_allocator::{
     UnstableAddress,
 };
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{Visit, VisitMut};
+use oxc_ast_visit::{VisitJs, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
@@ -1481,7 +1481,7 @@ struct PrivateInExpressionDetector {
     has_private_in_expression: bool,
 }
 
-impl Visit<'_> for PrivateInExpressionDetector {
+impl VisitJs<'_> for PrivateInExpressionDetector {
     fn visit_private_in_expression(&mut self, _it: &PrivateInExpression<'_>) {
         self.has_private_in_expression = true;
     }

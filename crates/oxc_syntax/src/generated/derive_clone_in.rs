@@ -5,7 +5,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 
 use crate::number::*;
 use crate::operator::*;
@@ -16,7 +16,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for NumberBase {
     #[inline(always)]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self
@@ -29,7 +29,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BigintBase {
     #[inline(always)]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self
@@ -42,7 +42,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentOperator {
     #[inline(always)]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self
@@ -55,7 +55,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BinaryOperator {
     #[inline(always)]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self
@@ -68,7 +68,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for LogicalOperator {
     #[inline(always)]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self
@@ -81,7 +81,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for UnaryOperator {
     #[inline(always)]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self
@@ -94,7 +94,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for UpdateOperator {
     #[inline(always)]
     fn clone_in_impl(
         &self,
-        _with_semantic_ids: bool,
+        _with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self

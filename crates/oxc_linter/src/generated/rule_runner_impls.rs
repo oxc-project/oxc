@@ -2581,6 +2581,14 @@ impl RuleRunner for crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner
+    for crate::rules::react::function_component_definition::FunctionComponentDefinition
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::react::hook_use_state::HookUseState {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
@@ -3598,7 +3606,7 @@ impl RuleRunner
     for crate::rules::unicorn::prefer_import_meta_properties::PreferImportMetaProperties
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::MetaProperty]));
+        Some(&AstTypesBitset::from_types(&[AstType::ImportMeta]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -4784,6 +4792,11 @@ impl RuleRunner
 impl RuleRunner
     for crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks
 {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
+impl RuleRunner for crate::rules::vitest::padding_around_test_blocks::PaddingAroundTestBlocks {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }

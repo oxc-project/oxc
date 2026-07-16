@@ -565,7 +565,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn consume_pending_indent_space(&mut self) -> bool {
         if self.print_next_indent_as_space {
-            self.print_hard_space();
+            self.print_soft_space();
             self.print_next_indent_as_space = false;
             true
         } else {

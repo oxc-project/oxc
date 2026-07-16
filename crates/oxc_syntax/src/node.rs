@@ -2,13 +2,16 @@
 
 use bitflags::bitflags;
 
-use oxc_allocator::{Allocator, CloneIn, Dummy};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
 use oxc_ast_macros::ast;
 use oxc_index::define_nonmax_u32_index_type;
+
+use crate::semantic_id::SemanticId;
 
 define_nonmax_u32_index_type! {
     /// AST Node ID
     #[ast]
+    #[clone_in(semantic_id)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct NodeId;
@@ -41,17 +44,14 @@ impl<'a> Dummy<'a> for NodeId {
 impl<'alloc> CloneIn<'alloc> for NodeId {
     type Cloned = Self;
 
-    #[inline]
-    fn clone_in_impl(&self, with_semantic_ids: bool, _: &'alloc Allocator) -> Self {
-        if with_semantic_ids {
-            *self
-        } else {
-            // `with_semantic_ids == false` should never reach this, because `CloneIn` skips
-            // `node_id` field, filling it with its default instead.
-            unreachable!();
-        }
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this method only delegates
+    fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
+        self.clone_id(with_semantic_ids)
     }
 }
+
+impl SemanticId for NodeId {}
 
 bitflags! {
     /// Contains additional information about an AST node.

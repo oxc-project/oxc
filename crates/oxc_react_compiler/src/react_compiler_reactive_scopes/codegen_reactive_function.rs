@@ -682,7 +682,7 @@ fn ox_codegen_reactive_scope<'a>(
     let mut change_exprs: Vec<oxc::Expression<'a>> = Vec::new();
 
     let mut deps = scope_deps;
-    deps.sort_by(|a, b| compare_scope_dependency(a, b, cx.env));
+    deps.sort_unstable_by(|a, b| compare_scope_dependency(a, b, cx.env));
 
     for dep in &deps {
         let index = cx.alloc_cache_index();
@@ -716,7 +716,7 @@ fn ox_codegen_reactive_scope<'a>(
     let mut first_output_index: Option<u32> = None;
 
     let mut decls = scope_decls;
-    decls.sort_by(|(_id_a, a), (_id_b, b)| compare_scope_declaration(a, b, cx.env));
+    decls.sort_unstable_by(|(_id_a, a), (_id_b, b)| compare_scope_declaration(a, b, cx.env));
 
     for (_ident_id, decl) in &decls {
         let index = cx.alloc_cache_index();
@@ -1931,13 +1931,9 @@ fn ox_codegen_base_instruction_value<'a>(
             )))
         }
         InstructionValue::MetaProperty { meta, property, .. } => {
-            let meta_ident =
-                oxc_ast::ast::IdentifierName::new(SPAN, ox_str(&cx.ast, meta), &cx.ast);
-            let prop_ident =
-                oxc_ast::ast::IdentifierName::new(SPAN, ox_str(&cx.ast, property), &cx.ast);
-            Ok(OxValue::Expression(oxc_ast::ast::Expression::new_meta_property(
-                SPAN, meta_ident, prop_ident, &cx.ast,
-            )))
+            debug_assert_eq!(meta.as_str(), "import");
+            debug_assert_eq!(property.as_str(), "meta");
+            Ok(OxValue::Expression(oxc_ast::ast::Expression::new_import_meta(SPAN, &cx.ast)))
         }
         InstructionValue::Await { value, .. } => {
             let arg = ox_codegen_place_to_expression(cx, value)?;

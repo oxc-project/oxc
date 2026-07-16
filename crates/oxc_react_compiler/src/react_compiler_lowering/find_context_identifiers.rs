@@ -13,7 +13,7 @@
 //! * a `function_stack` of the inner function scopes currently being walked
 //!   (empty at the top level of the function being compiled).
 //!
-//! The `Visit` impl below reproduces both stacks exactly: the generic stack is
+//! The `VisitJs` impl below reproduces both stacks exactly: the generic stack is
 //! pushed for every scope-creating node the original `AstWalker` pushed for
 //! (functions, arrows, blocks, for-loops, switch, catch, class static blocks),
 //! while the function stack is pushed only for nested function nodes — mirroring
@@ -21,7 +21,9 @@
 //!
 //! Identifiers inside TS type subtrees are deliberately NOT visited here: the
 //! original walker walked type positions as opaque `RawNode`s, which never fired
-//! `enter_identifier`. The post-walk supplement loop (driven by
+//! `enter_identifier`. `VisitJs` skips type-space natively; enum and namespace
+//! bodies — runtime JS which it WOULD walk — are stubbed out to match the same
+//! RawNode treatment. The post-walk supplement loop (driven by
 //! `ref_node_id_to_binding`, which DOES include type references) recovers any
 //! captured references hiding inside type annotations, matching the TS pass.
 
@@ -31,7 +33,7 @@ use rustc_hash::FxHashSet;
 use oxc_ast::ast::AssignmentTargetMaybeDefault;
 use oxc_ast::ast::*;
 use oxc_ast::match_assignment_target;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
@@ -137,7 +139,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
+impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
     // ---- function scopes (push BOTH the generic scope and the function stack) ----
 
     fn visit_function(&mut self, it: &Function<'a>, _flags: ScopeFlags) {
@@ -145,15 +147,11 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
         let fn_pushed = self.push_function_scope(it.scope_id.get());
         // The original Babel walker never visited the function NAME identifier
         // (`it.id`); it only walked the type-bearing parts (as opaque RawNodes),
-        // then params, then body. oxc's `walk_function` DOES visit `it.id` via
-        // `visit_binding_identifier`, which — with the inner function already on
-        // `function_stack` — would spuriously mark a hoisted nested-function name
-        // as referenced_by_inner_fn. Walk the parts manually, skipping `it.id`.
-        // (Type parameters / return type are no-ops via the `visit_ts_*`
-        // overrides, mirroring the original RawNode walk.)
-        if let Some(this_param) = &it.this_param {
-            self.visit_ts_this_parameter(this_param);
-        }
+        // then params, then body. oxc's `walk_js::walk_function` DOES visit
+        // `it.id` via `visit_binding_identifier`, which — with the inner function
+        // already on `function_stack` — would spuriously mark a hoisted
+        // nested-function name as referenced_by_inner_fn. Walk the parts
+        // manually, skipping `it.id`.
         self.visit_formal_parameters(&it.params);
         if let Some(body) = &it.body {
             self.visit_function_body(body);
@@ -165,7 +163,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         let scope_pushed = self.enter_scope(it.scope_id.get());
         let fn_pushed = self.push_function_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_arrow_function_expression(self, it);
+        oxc_ast_visit::walk_js::walk_arrow_function_expression(self, it);
         self.pop_function_scope(fn_pushed);
         self.exit_scope(scope_pushed);
     }
@@ -174,43 +172,43 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_block_statement(self, it);
+        oxc_ast_visit::walk_js::walk_block_statement(self, it);
         self.exit_scope(pushed);
     }
 
     fn visit_for_statement(&mut self, it: &ForStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_for_statement(self, it);
+        oxc_ast_visit::walk_js::walk_for_statement(self, it);
         self.exit_scope(pushed);
     }
 
     fn visit_for_in_statement(&mut self, it: &ForInStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_for_in_statement(self, it);
+        oxc_ast_visit::walk_js::walk_for_in_statement(self, it);
         self.exit_scope(pushed);
     }
 
     fn visit_for_of_statement(&mut self, it: &ForOfStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_for_of_statement(self, it);
+        oxc_ast_visit::walk_js::walk_for_of_statement(self, it);
         self.exit_scope(pushed);
     }
 
     fn visit_switch_statement(&mut self, it: &SwitchStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_switch_statement(self, it);
+        oxc_ast_visit::walk_js::walk_switch_statement(self, it);
         self.exit_scope(pushed);
     }
 
     fn visit_catch_clause(&mut self, it: &CatchClause<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_catch_clause(self, it);
+        oxc_ast_visit::walk_js::walk_catch_clause(self, it);
         self.exit_scope(pushed);
     }
 
     fn visit_static_block(&mut self, it: &StaticBlock<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
-        oxc_ast_visit::walk::walk_static_block(self, it);
+        oxc_ast_visit::walk_js::walk_static_block(self, it);
         self.exit_scope(pushed);
     }
 
@@ -255,7 +253,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
         if self.error.is_none() {
             self.walk_assignment_target_for_reassignment(&it.left, current_scope);
         }
-        oxc_ast_visit::walk::walk_assignment_expression(self, it);
+        oxc_ast_visit::walk_js::walk_assignment_expression(self, it);
     }
 
     fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
@@ -263,7 +261,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
             let current_scope = self.current_scope();
             self.handle_reassignment_identifier(&ident.name, current_scope);
         }
-        oxc_ast_visit::walk::walk_update_expression(self, it);
+        oxc_ast_visit::walk_js::walk_update_expression(self, it);
     }
 
     // ---- positions deliberately NOT visited, matching the original walker ----
@@ -288,19 +286,9 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
         // class contributes nothing to the walker-based capture analysis.
     }
 
-    // ---- skip TS type subtrees (the original walked them as opaque RawNodes) ----
-
-    fn visit_ts_type(&mut self, _it: &TSType<'a>) {}
-
-    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {}
-
-    fn visit_ts_type_parameter_instantiation(&mut self, _it: &TSTypeParameterInstantiation<'a>) {}
-
-    fn visit_ts_type_parameter_declaration(&mut self, _it: &TSTypeParameterDeclaration<'a>) {}
-
-    fn visit_ts_type_alias_declaration(&mut self, _it: &TSTypeAliasDeclaration<'a>) {}
-
-    fn visit_ts_interface_declaration(&mut self, _it: &TSInterfaceDeclaration<'a>) {}
+    // ---- skip enum/namespace bodies (the original walked them as opaque RawNodes) ----
+    // `VisitJs` already prunes type-space, but these two TS containers carry
+    // runtime JS which it WOULD walk, so they still need explicit stubs.
 
     fn visit_ts_enum_declaration(&mut self, _it: &TSEnumDeclaration<'a>) {}
 
@@ -436,9 +424,6 @@ pub fn find_context_identifiers(
     // itself is not re-entered, so it is never pushed onto `function_stack`.
     match func {
         FunctionNode::Function(f) => {
-            if let Some(this_param) = &f.this_param {
-                visitor.visit_ts_this_parameter(this_param);
-            }
             visitor.visit_formal_parameters(&f.params);
             if let Some(body) = &f.body {
                 visitor.visit_function_body(body);

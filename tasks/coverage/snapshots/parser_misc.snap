@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 71/71 (100.00%)
-Positive Passed: 71/71 (100.00%)
-Negative Passed: 150/150 (100.00%)
+AST Parsed     : 72/72 (100.00%)
+Positive Passed: 72/72 (100.00%)
+Negative Passed: 153/153 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -116,6 +116,31 @@ Negative Passed: 150/150 (100.00%)
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:1:1]
+ 1 │ -value ** 2;
+   · ──────
+ 2 │ await value ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:2:1]
+ 1 │ -value ** 2;
+ 2 │ await value ** 2;
+   · ───────────
+ 3 │ <number>value ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:3:1]
+ 2 │ await value ** 2;
+ 3 │ <number>value ** 2;
+   · ─────────────
+   ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[misc/fail/export-equal-with-normal-export.ts:4:1]
@@ -3601,6 +3626,65 @@ Negative Passed: 150/150 (100.00%)
  1 │ x = (/* a */)
    ·     ─────────
    ╰────
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:1:5]
+ 1 │ new import('').prop;
+   ·     ───────────────
+ 2 │ new import.source('<module source>').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:2:5]
+ 1 │ new import('').prop;
+ 2 │ new import.source('<module source>').prop;
+   ·     ─────────────────────────────────────
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:3:5]
+ 2 │ new import.source('<module source>').prop;
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ·     ───────────────────────────────────────
+ 4 │ new import('x').prop``;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:4:5]
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+ 4 │ new import('x').prop``;
+   ·     ──────────────────
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:1:5]
+ 1 │ new import('x').prop!;
+   ·     ─────────────────
+ 2 │ new import('x').prop as Foo;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:2:5]
+ 1 │ new import('x').prop!;
+ 2 │ new import('x').prop as Foo;
+   ·     ────────────────
+ 3 │ new import('x').prop satisfies Foo;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:3:5]
+ 2 │ new import('x').prop as Foo;
+ 3 │ new import('x').prop satisfies Foo;
+   ·     ────────────────
+   ╰────
+  help: Wrap this with parenthesis
 
   × Expected 'with' in import type options
     ╭─[misc/fail/oxc-2394.ts:20:22]

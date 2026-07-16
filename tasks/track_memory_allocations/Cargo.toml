@@ -28,6 +28,7 @@ oxc_transformer = { workspace = true }
 
 humansize = { workspace = true }
 mimalloc-safe = { workspace = true }
+saphyr = { workspace = true }
 
 [features]
 # Sentinel flag that should only get enabled if we're running under `--all-features`

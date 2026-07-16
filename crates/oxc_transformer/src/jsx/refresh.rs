@@ -17,8 +17,8 @@ use oxc_ast::{
     match_expression,
 };
 use oxc_ast_visit::{
-    Visit,
-    walk::{walk_call_expression, walk_declaration},
+    VisitJs,
+    walk_js::{walk_call_expression, walk_declaration},
 };
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
@@ -58,14 +58,9 @@ impl<'a> RefreshIdentifierResolver<'a> {
             ));
         };
 
-        if first_part == "import" {
+        if first_part == "import" && second_part == "meta" {
             // Handle `import.meta.$RefreshReg$` expression
-            let mut expr = Expression::new_meta_property(
-                SPAN,
-                IdentifierName::new(SPAN, "import", ast),
-                IdentifierName::new(SPAN, Str::from_str_in(second_part, ast), ast),
-                ast,
-            );
+            let mut expr = Expression::new_import_meta(SPAN, ast);
             if let Some(property) = parts.next() {
                 expr = Expression::new_static_member_expression(
                     SPAN,
@@ -1008,7 +1003,7 @@ impl<'a, 'b> UsedInJSXBindingsCollector<'a, 'b> {
     }
 }
 
-impl<'a> Visit<'a> for UsedInJSXBindingsCollector<'a, '_> {
+impl<'a> VisitJs<'a> for UsedInJSXBindingsCollector<'a, '_> {
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         walk_call_expression(self, it);
 
@@ -1036,11 +1031,6 @@ impl<'a> Visit<'a> for UsedInJSXBindingsCollector<'a, '_> {
         {
             self.bindings.insert(symbol_id);
         }
-    }
-
-    #[inline]
-    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {
-        // Skip type annotations because it definitely doesn't have any JSX bindings
     }
 
     #[inline]

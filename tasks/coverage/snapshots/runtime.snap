@@ -1,8 +1,8 @@
-commit: de8e621c
+commit: d1d583db
 
 runtime Summary:
 AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17285/18277 (94.57%)
+Positive Passed: 17306/18277 (94.69%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -18,11 +18,17 @@ Test262Error: Expected a TypeError to be thrown but no exception was thrown at a
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: f descriptor should be enumerable; f descriptor should be writable
 
+codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-non-configurable.js
+TypeError: Identifier 'f' has already been declared
+
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-var-init-global-exstng.js
 Test262Error: x descriptor should not be configurable
 
 codegen Error: tasks/coverage/test262/test/language/eval-code/indirect/var-env-func-init-global-update-configurable.js
 Test262Error: f descriptor should be enumerable; f descriptor should be writable
+
+codegen Error: tasks/coverage/test262/test/language/eval-code/indirect/var-env-func-init-global-update-non-configurable.js
+TypeError: Identifier 'f' has already been declared
 
 codegen Error: tasks/coverage/test262/test/language/eval-code/indirect/var-env-var-init-global-exstng.js
 Test262Error: x descriptor should not be configurable
@@ -111,26 +117,8 @@ Test262Error: Expected true but got false
 codegen Error: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 Test262Error: name descriptor value should be ; name value should be 
 
-transform Error: tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b1/async-arrow-function-forbidden-ext-direct-access-prop-arguments.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b1/async-arrow-function-forbidden-ext-direct-access-prop-caller.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
 transform Error: tasks/coverage/test262/test/language/expressions/async-arrow-function/prototype.js
 Test262Error: Expected SameValue(«function () { [native code] }», «[object AsyncFunction]») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-named-forbidden-ext-direct-access-prop-arguments.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-named-forbidden-ext-direct-access-prop-caller.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-nameless-forbidden-ext-direct-access-prop-arguments.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-nameless-forbidden-ext-direct-access-prop-caller.js
-Test262Error: Expected SameValue(«true», «false») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/async-function/name.js
 Test262Error: name descriptor value should be func; name value should be func
@@ -234,21 +222,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/expressions/async-generator/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-transform Error: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-func-expr-forbidden-ext-direct-access-prop-arguments.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-func-expr-forbidden-ext-direct-access-prop-caller.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-arguments.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-caller.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/async-generator/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
-
 minify Error: tasks/coverage/test262/test/language/expressions/async-generator/name.js
 Test262Error: name descriptor value should be func; name value should be func
 
@@ -338,9 +311,6 @@ throw-arg-1
 
 transform Error: tasks/coverage/test262/test/language/expressions/await/await-monkey-patched-promise.js
 Test262Error: Monkey-patched "then" on native promises should not be called. Expected SameValue(«1», «0») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/call/eval-spread.js
-Test262Error: Expected SameValue(«"local"», «1») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/class/accessor-name-inst/computed-err-to-prop-key.js
 Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
@@ -1197,9 +1167,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/expressions/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-codegen Error: tasks/coverage/test262/test/language/expressions/generators/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
-
 minify Error: tasks/coverage/test262/test/language/expressions/generators/name.js
 Test262Error: name descriptor value should be func; name value should be func
 
@@ -1401,18 +1368,6 @@ TypeError: Cannot read properties of undefined (reading 'enumerable')
 minify Error: tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 Test262Error: Expected SameValue(«"a"», «""») to be true
 
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-getvalue.js
-Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-compound-assign.js
-Test262Error: Expected SameValue(«0», «2») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-increment.js
-Test262Error: Expected SameValue(«0», «2») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue.js
-Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
-
 minify Error: tasks/coverage/test262/test/language/function-code/block-decl-onlystrict.js
 TypeError: Cannot read properties of undefined (reading 'constructor')
 
@@ -1461,12 +1416,6 @@ SyntaxError: Invalid or unexpected token
 codegen Error: tasks/coverage/test262/test/language/import/import-bytes/bytes-from-txt.js
 SyntaxError: Unexpected identifier 'World'
 
-transform Error: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-arguments.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-caller.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
 minify Error: tasks/coverage/test262/test/language/statements/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -1502,15 +1451,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/async-generator/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-transform Error: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-arguments.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-caller.js
-Test262Error: Expected SameValue(«true», «false») to be true
-
-codegen Error: tasks/coverage/test262/test/language/statements/async-generator/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
 transform Error: tasks/coverage/test262/test/language/statements/async-generator/return-undefined-implicit-and-explicit.js
 Test262Error: Actual [tick 1, tick 2, g1 ret, g2 ret, g3 ret, g4 ret] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
@@ -2933,9 +2873,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-codegen Error: tasks/coverage/test262/test/language/statements/generators/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/let/block-local-use-before-initialization-in-prior-statement.js
 Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all

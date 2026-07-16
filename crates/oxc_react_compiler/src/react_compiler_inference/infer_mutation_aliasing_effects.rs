@@ -63,6 +63,8 @@ use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 use crate::react_compiler_hir::visitors;
 use oxc_span::Span;
+use smallvec::SmallVec;
+use smallvec::smallvec;
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -734,7 +736,7 @@ enum EffectKey {
         receiver: IdentifierId,
         function: IdentifierId,
         mutates_function: bool,
-        args: Vec<ArgKey>,
+        args: SmallVec<[ArgKey; 4]>,
         into: IdentifierId,
     },
     CreateFrom {
@@ -801,7 +803,7 @@ enum EffectKey {
     CreateFunction {
         into: IdentifierId,
         function_id: FunctionId,
-        captures: Vec<IdentifierId>,
+        captures: SmallVec<[IdentifierId; 4]>,
     },
     /// Synthetic keys used by the `Assign` handler for kind-preserving copies;
     /// they share the ValueId cache but never collide with real-effect keys.
@@ -826,7 +828,7 @@ enum ArgKey {
 fn effect_key(effect: &AliasingEffect) -> EffectKey {
     match effect {
         AliasingEffect::Apply { receiver, function, mutates_function, args, into, .. } => {
-            let mut key_args: Vec<ArgKey> = args
+            let mut key_args: SmallVec<[ArgKey; 4]> = args
                 .iter()
                 .map(|a| match a {
                     PlaceOrSpreadOrHole::Hole => ArgKey::Hole,
@@ -3275,29 +3277,31 @@ fn create_temp_place(env: &mut Environment, span: Option<Span>) -> Place {
 /// successors but NOT pseudo-successors (fallthroughs). Fallthroughs for
 /// Logical/Ternary/Optional and Try/Scope/PrunedScope are reached naturally
 /// via the block iteration order (blocks are stored in topological order).
-fn terminal_successors(terminal: &Terminal) -> Vec<BlockId> {
+fn terminal_successors(terminal: &Terminal) -> SmallVec<[BlockId; 2]> {
     match terminal {
-        Terminal::Goto { block, .. } => vec![*block],
-        Terminal::If { consequent, alternate, .. } => vec![*consequent, *alternate],
-        Terminal::Branch { consequent, alternate, .. } => vec![*consequent, *alternate],
+        Terminal::Goto { block, .. } => smallvec![*block],
+        Terminal::If { consequent, alternate, .. } => smallvec![*consequent, *alternate],
+        Terminal::Branch { consequent, alternate, .. } => smallvec![*consequent, *alternate],
         Terminal::Switch { cases, .. } => cases.iter().map(|c| c.block).collect(),
-        Terminal::For { init, .. } => vec![*init],
-        Terminal::ForOf { init, .. } | Terminal::ForIn { init, .. } => vec![*init],
-        Terminal::DoWhile { loop_block, .. } => vec![*loop_block],
-        Terminal::While { test, .. } => vec![*test],
-        Terminal::Return { .. } | Terminal::Throw { .. } | Terminal::Unreachable { .. } => vec![],
-        Terminal::Try { block, .. } => vec![*block],
+        Terminal::For { init, .. } => smallvec![*init],
+        Terminal::ForOf { init, .. } | Terminal::ForIn { init, .. } => smallvec![*init],
+        Terminal::DoWhile { loop_block, .. } => smallvec![*loop_block],
+        Terminal::While { test, .. } => smallvec![*test],
+        Terminal::Return { .. } | Terminal::Throw { .. } | Terminal::Unreachable { .. } => {
+            smallvec![]
+        }
+        Terminal::Try { block, .. } => smallvec![*block],
         Terminal::MaybeThrow { continuation, handler, .. } => {
-            let mut v = vec![*continuation];
+            let mut v = smallvec![*continuation];
             if let Some(h) = handler {
                 v.push(*h);
             }
             v
         }
-        Terminal::Label { block, .. } | Terminal::Sequence { block, .. } => vec![*block],
-        Terminal::Logical { test, .. } | Terminal::Ternary { test, .. } => vec![*test],
-        Terminal::Optional { test, .. } => vec![*test],
-        Terminal::Scope { block, .. } | Terminal::PrunedScope { block, .. } => vec![*block],
+        Terminal::Label { block, .. } | Terminal::Sequence { block, .. } => smallvec![*block],
+        Terminal::Logical { test, .. } | Terminal::Ternary { test, .. } => smallvec![*test],
+        Terminal::Optional { test, .. } => smallvec![*test],
+        Terminal::Scope { block, .. } | Terminal::PrunedScope { block, .. } => smallvec![*block],
     }
 }
 

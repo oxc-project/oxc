@@ -1,17 +1,15 @@
-use std::{
-    fs::File,
-    io::{self, Write},
-};
+use std::{fmt::Write as _, fs, io};
 
 use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
+use saphyr::{LoadableYamlNode, SafelyIndex, Yaml};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{JsFormatOptions, format_program, parse_for_format};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_tasks_common::{TestFiles, project_root};
+use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer::{TransformOptions, Transformer};
 
 use std::alloc::{GlobalAlloc, Layout};
@@ -24,8 +22,8 @@ struct TrackedAllocator;
 
 /// Atomic counter.
 ///
-/// Mainly just a wrapper around `AtomicUsize`, but `increment` method ensures that counter value
-/// doesn't wrap around if counter reaches `usize::MAX`.
+/// Mainly just a wrapper around `AtomicUsize`, but its methods saturate at `usize::MAX`
+/// instead of wrapping around.
 /// This is practically infeasible on 64-bit systems, but might just be possible on 32-bit.
 ///
 /// Note: `SeqCst` ordering may be stronger than required, but performance is not the primary concern here,
@@ -51,11 +49,8 @@ impl AtomicCounter {
 }
 
 /// Number of system allocations
-// NOTE: We are only tracking the number of system allocations here, and not the number of bytes that are allocated.
-// The original version of this tool did track the number of bytes, but there was some variance between platforms that
-// made it less reliable as a measurement. In general, the number of allocations is closely correlated with the size of
-// allocations, so just tracking the number of allocations is sufficient for our purposes.
 static NUM_ALLOC: AtomicCounter = AtomicCounter::new();
+/// Number of system reallocations
 static NUM_REALLOC: AtomicCounter = AtomicCounter::new();
 
 fn reset_global_allocs() {
@@ -98,6 +93,19 @@ unsafe impl GlobalAlloc for TrackedAllocator {
 
 /// Stores all of the memory allocation stats that will be printed for each file.
 #[derive(Debug)]
+struct StageStats {
+    /// Deltas of the allocation counters across the measured operation
+    counters: AllocatorStats,
+    /// Bytes used in the measured `Allocator`'s arena at the end of the measured operation.
+    /// A point-in-time gauge read after the operation completes, not a diffed counter.
+    /// The arena is not reset between stages, so this includes content from earlier stages
+    /// (e.g. the AST the parser built).
+    arena_used_bytes: usize,
+}
+
+/// Counters of allocations, captured from the global and arena allocators.
+/// Used both as a raw snapshot and as per-operation deltas (see `record_stats_diff`).
+#[derive(Debug)]
 struct AllocatorStats {
     /// Number of allocations made by system allocator, excluding arena chunk allocations
     sys_allocs: usize,
@@ -123,19 +131,12 @@ fn test() {
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
-    // Width of each column in the output table
-    let width = 14;
-    // Width of the longest file name, used for formatting the first column
-    let fixture_width = files.files().iter().map(|file| file.file_name.len()).max().unwrap();
 
-    // Table header, which should be same for each file
-    let table_header = format_table_header(fixture_width, width);
-
-    let mut parser_out = table_header.clone();
-    let mut semantic_out = table_header.clone();
-    let mut transformer_out = table_header.clone();
-    let mut minifier_out = table_header.clone();
-    let mut formatter_out = table_header;
+    let mut parser_entries = Vec::new();
+    let mut semantic_entries = Vec::new();
+    let mut transformer_entries = Vec::new();
+    let mut minifier_entries = Vec::new();
+    let mut formatter_entries = Vec::new();
 
     let mut allocator = Allocator::default();
 
@@ -193,25 +194,13 @@ pub fn run() -> Result<(), io::Error> {
             parsed
         });
 
-        parser_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &parser_stats,
-            fixture_width,
-            width,
-        ));
+        parser_entries.push((file, parser_stats));
 
         let ((), semantic_stats) = record_stats_in(&allocator, || {
             let _ = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
         });
 
-        semantic_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &semantic_stats,
-            fixture_width,
-            width,
-        ));
+        semantic_entries.push((file, semantic_stats));
 
         // Match the production compiler path for transforms: transformers add scopes, symbols, and
         // references, so semantic analysis reserves excess capacity up front.
@@ -233,25 +222,13 @@ pub fn run() -> Result<(), io::Error> {
             .build_with_scoping(scoping, &mut parsed.program);
         });
 
-        transformer_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &transformer_stats,
-            fixture_width,
-            width,
-        ));
+        transformer_entries.push((file, transformer_stats));
 
         let ((), minifier_stats) = record_stats_in(&allocator, || {
             Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
         });
 
-        minifier_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &minifier_stats,
-            fixture_width,
-            width,
-        ));
+        minifier_entries.push((file, minifier_stats));
 
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
         // so re-parse with the formatter's parse options before measuring the formatter
@@ -268,20 +245,14 @@ pub fn run() -> Result<(), io::Error> {
                 .into_code()
         });
 
-        formatter_out.push_str(&format_table_row(
-            file.file_name.as_str(),
-            file.source_text.len(),
-            &formatter_stats,
-            fixture_width,
-            width,
-        ));
+        formatter_entries.push((file, formatter_stats));
     }
 
-    write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_transformer.snap", &transformer_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
-    write_snapshot("tasks/track_memory_allocations/allocs_formatter.snap", &formatter_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_parser.yaml", &parser_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_semantic.yaml", &semantic_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_transformer.yaml", &transformer_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_minifier.yaml", &minifier_entries)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_formatter.yaml", &formatter_entries)?;
 
     Ok(())
 }
@@ -292,13 +263,10 @@ fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let sys_allocs = NUM_ALLOC.get();
     let sys_reallocs = NUM_REALLOC.get();
     #[cfg(not(feature = "is_all_features"))]
-    let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
+    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) =
+        (allocator.get_allocation_stats(), Allocator::global_chunk_allocation_count());
     #[cfg(feature = "is_all_features")]
-    let (arena_allocs, arena_reallocs) = (0, 0);
-    #[cfg(not(feature = "is_all_features"))]
-    let arena_chunk_allocs = Allocator::global_chunk_allocation_count();
-    #[cfg(feature = "is_all_features")]
-    let arena_chunk_allocs = 0;
+    let ((arena_allocs, arena_reallocs), arena_chunk_allocs) = ((0, 0), 0);
 
     AllocatorStats { sys_allocs, sys_reallocs, arena_chunk_allocs, arena_allocs, arena_reallocs }
 }
@@ -328,58 +296,140 @@ fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorS
 }
 
 /// Records the allocations stats before and after the given closure is executed.
-fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, AllocatorStats)
+fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, StageStats)
 where
     F: FnOnce() -> R,
 {
     let before_stats = record_stats(allocator);
     let result = f();
-    let diff_stats = record_stats_diff(allocator, &before_stats);
+    let counters = record_stats_diff(allocator, &before_stats);
+    let stats = StageStats { counters, arena_used_bytes: allocator.used_bytes() };
 
-    (result, diff_stats)
+    (result, stats)
 }
 
-/// Formats a single row of the allocator stats table
-fn format_table_row(
+/// Tolerance in bytes when comparing a measured `arena size` against the value already
+/// in the committed snapshot.
+///
+/// Arena byte totals are not exactly reproducible across architectures: some type layouts
+/// depend on the target (e.g. hashbrown's table control groups are 16 bytes on x86_64 but
+/// 8 bytes on aarch64), so each live `HashMap` in the arena shifts `used_bytes` by a few
+/// bytes per platform. The observed drift between x86_64 and aarch64 is at most 128 bytes
+/// per file. Keeping the committed value when the difference is within this tolerance makes
+/// snapshots generated on one platform pass the `git diff` check on the others.
+/// Real regressions (e.g. growing an AST node type) change arena sizes by orders of
+/// magnitude more than this; changes below the tolerance are treated as noise.
+const ARENA_SIZE_TOLERANCE: usize = 1024;
+
+/// Writes one snapshot file, formatted as a YAML mapping per test file.
+///
+/// The snapshot is YAML so that the committed `arena size` values can be read back with a
+/// YAML parser and compared against the measured ones (see [`snapshot_arena_size`]). It is
+/// still emitted by hand to keep full control over the layout for git diffs.
+fn write_snapshot(file_path: &str, entries: &[(&TestFile, StageStats)]) -> Result<(), io::Error> {
+    let path = project_root().join(file_path);
+    let committed = fs::read_to_string(&path).unwrap_or_default();
+    let committed_docs = Yaml::load_from_str(&committed).unwrap_or_default();
+
+    let mut out = String::new();
+    for (file, stats) in entries {
+        let committed_arena_size = committed_docs
+            .first()
+            .get(file.file_name.as_str())
+            .get("arena size")
+            .and_then(Yaml::as_integer);
+        let file_size = file.source_text.len();
+        render_file_stats(&mut out, &file.file_name, file_size, stats, committed_arena_size);
+    }
+    fs::write(path, out)
+}
+
+/// Formats the allocator stats for one file as a YAML mapping keyed by file name.
+///
+/// One value per line, with no column alignment, so that a change to one value produces
+/// a one-line diff, and adding a new value later doesn't reformat existing lines.
+/// File names stay at column 0 so they appear in git hunk headers. Byte sizes are exact
+/// numbers (the value that diffs) with the human-readable form in a trailing comment.
+fn render_file_stats(
+    out: &mut String,
     file_name: &str,
     file_size: usize,
-    stats: &AllocatorStats,
-    fixture_width: usize,
-    width: usize,
-) -> String {
-    format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$}\n\n",
-        file_name,
-        format_size(file_size, DECIMAL),
-        stats.sys_allocs,
-        stats.sys_reallocs,
-        stats.arena_allocs,
-        stats.arena_reallocs,
-        fixture_width = fixture_width,
-        width = width
-    )
-}
-
-fn format_table_header(fixture_width: usize, width: usize) -> String {
-    let mut out = format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} \n",
-        "File",
-        "File size",
-        "Sys allocs",
-        "Sys reallocs",
-        "Arena allocs",
-        "Arena reallocs",
-        fixture_width = fixture_width,
-        width = width
-    );
-    out.push_str(&str::repeat("-", width * 6 + fixture_width + 13));
+    stats: &StageStats,
+    committed_arena_size: Option<i64>,
+) {
+    let arena_size = snapshot_arena_size(stats.arena_used_bytes, committed_arena_size);
+    let counters = &stats.counters;
+    writeln!(out, "{file_name}:").unwrap();
+    writeln!(out, "  file size: {file_size} # {}", format_size(file_size, DECIMAL)).unwrap();
+    writeln!(out, "  sys allocs: {}", counters.sys_allocs).unwrap();
+    writeln!(out, "  sys reallocs: {}", counters.sys_reallocs).unwrap();
+    writeln!(out, "  arena allocs: {}", counters.arena_allocs).unwrap();
+    writeln!(out, "  arena reallocs: {}", counters.arena_reallocs).unwrap();
+    writeln!(out, "  arena size: {arena_size} # {}", format_size(arena_size, DECIMAL)).unwrap();
     out.push('\n');
-    out
 }
 
-fn write_snapshot(file_path: &str, contents: &str) -> Result<(), io::Error> {
-    let mut snapshot = File::create(project_root().join(file_path))?;
-    snapshot.write_all(contents.as_bytes())?;
-    snapshot.flush()?;
-    Ok(())
+/// Chooses the `arena size` value to record: the committed value if the measured one is
+/// within [`ARENA_SIZE_TOLERANCE`] of it, the measured value otherwise.
+fn snapshot_arena_size(measured: usize, committed: Option<i64>) -> usize {
+    let Some(committed) = committed.and_then(|value| usize::try_from(value).ok()) else {
+        return measured;
+    };
+    if measured.abs_diff(committed) <= ARENA_SIZE_TOLERANCE { committed } else { measured }
+}
+
+#[cfg(test)]
+mod tests {
+    use saphyr::{LoadableYamlNode, SafelyIndex, Yaml};
+
+    use super::{
+        ARENA_SIZE_TOLERANCE, AllocatorStats, StageStats, render_file_stats, snapshot_arena_size,
+    };
+
+    fn stage_stats(arena_used_bytes: usize) -> StageStats {
+        StageStats {
+            counters: AllocatorStats {
+                sys_allocs: 1,
+                sys_reallocs: 2,
+                arena_chunk_allocs: 0,
+                arena_allocs: 3,
+                arena_reallocs: 4,
+            },
+            arena_used_bytes,
+        }
+    }
+
+    #[test]
+    fn rendered_snapshot_is_valid_yaml() {
+        let mut out = String::new();
+        render_file_stats(&mut out, "foo.js", 1000, &stage_stats(12345), None);
+        render_file_stats(&mut out, "bar.ts", 2_000_000, &stage_stats(99_999), None);
+
+        let docs = Yaml::load_from_str(&out).unwrap();
+        let doc = docs.first();
+        assert_eq!(doc.get("foo.js").get("arena size").and_then(Yaml::as_integer), Some(12345));
+        assert_eq!(doc.get("foo.js").get("sys allocs").and_then(Yaml::as_integer), Some(1));
+        assert_eq!(doc.get("bar.ts").get("file size").and_then(Yaml::as_integer), Some(2_000_000));
+        assert_eq!(doc.get("bar.ts").get("arena reallocs").and_then(Yaml::as_integer), Some(4));
+    }
+
+    #[test]
+    fn keeps_committed_arena_size_within_tolerance() {
+        assert_eq!(snapshot_arena_size(10_000, Some(10_128)), 10_128);
+        assert_eq!(snapshot_arena_size(10_128, Some(10_000)), 10_000);
+        let committed = i64::try_from(10_000 + ARENA_SIZE_TOLERANCE).unwrap();
+        assert_eq!(snapshot_arena_size(10_000, Some(committed)), 10_000 + ARENA_SIZE_TOLERANCE);
+    }
+
+    #[test]
+    fn takes_measured_arena_size_beyond_tolerance() {
+        assert_eq!(snapshot_arena_size(10_000, Some(20_000)), 10_000);
+        assert_eq!(snapshot_arena_size(20_000, Some(10_000)), 20_000);
+    }
+
+    #[test]
+    fn takes_measured_arena_size_without_valid_committed_value() {
+        assert_eq!(snapshot_arena_size(10_000, None), 10_000);
+        assert_eq!(snapshot_arena_size(10_000, Some(-1)), 10_000);
+    }
 }

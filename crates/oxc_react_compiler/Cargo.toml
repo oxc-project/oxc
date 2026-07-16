@@ -6,7 +6,7 @@
 # This crate owns the oxc <-> react_compiler_ast conversion layer, plus the React
 # Compiler *core* itself, vendored in-tree under `src/react_compiler*` (one module
 # per upstream crate, from the MIT fork at oxc-project/forked-react-compiler). The
-# core is frontend-agnostic (serde/indexmap only, never oxc); the AST/scope
+# core is frontend-agnostic (small utility crates only, never oxc); the AST/scope
 # conversion on our side is written against the live workspace oxc AST.
 
 [package]
@@ -40,10 +40,11 @@ oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 # External crates the vendored React Compiler modules (`src/react_compiler*`) depend
-# on. The compiler core is frontend-agnostic — serde/indexmap/hashing only, no oxc.
+# on. The compiler core is frontend-agnostic — small utility crates only, no oxc.
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }
 cow-utils = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
 # The example and integration tests parse source and print the compiled program; the

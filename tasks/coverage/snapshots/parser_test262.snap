@@ -3,133 +3,7 @@ commit: d1d583db
 parser_test262 Summary:
 AST Parsed     : 47267/47267 (100.00%)
 Positive Passed: 47267/47267 (100.00%)
-Negative Passed: 4588/4651 (98.65%)
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-source-no-new-call-expression-prop-access.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-no-new-call-expression-prop-access.js
-
+Negative Passed: 4651/4651 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -15030,6 +14904,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-new-call-expression-prop-access.js:43:19]
+ 42 │ 
+ 43 │ let f = () => new import.defer('./empty_FIXTURE.js').prop;
+    ·                   ───────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-new-call-expression.js:38:19]
  37 │ 
  38 │ let f = () => new import.defer('./empty_FIXTURE.js');
@@ -15053,6 +14935,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-source-no-new-call-expression-prop-access.js:43:19]
+ 42 │ 
+ 43 │ let f = () => new import.source('<module source>').prop;
+    ·                   ─────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-source-no-new-call-expression.js:38:19]
  37 │ 
  38 │ let f = () => new import.source('<module source>');
@@ -15066,6 +14956,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
  43 │ let f = () => import.source(...['<module source>']);
     ·                             ───
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-no-new-call-expression-prop-access.js:42:19]
+ 41 │ 
+ 42 │ let f = () => new import('').prop;
+    ·                   ───────────────
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-no-new-call-expression.js:37:19]
@@ -15132,6 +15030,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-new-call-expression-prop-access.js:44:7]
+ 43 │ let f = () => {
+ 44 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 45 │ };
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-new-call-expression.js:39:7]
  38 │ let f = () => {
  39 │   new import.defer('./empty_FIXTURE.js');
@@ -15157,6 +15064,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-source-no-new-call-expression-prop-access.js:44:7]
+ 43 │ let f = () => {
+ 44 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 45 │ };
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-source-no-new-call-expression.js:39:7]
  38 │ let f = () => {
  39 │   new import.source('<module source>');
@@ -15172,6 +15088,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  45 │ };
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-no-new-call-expression-prop-access.js:43:7]
+ 42 │ let f = () => {
+ 43 │   new import('').prop;
+    ·       ───────────────
+ 44 │ };
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-no-new-call-expression.js:38:7]
@@ -15249,6 +15174,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-new-call-expression-prop-access.js:44:13]
+ 43 │ (async () => {
+ 44 │   await new import.defer('./empty_FIXTURE.js').prop
+    ·             ───────────────────────────────────────
+ 45 │ });
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-new-call-expression.js:39:13]
  38 │ (async () => {
  39 │   await new import.defer('./empty_FIXTURE.js')
@@ -15274,6 +15208,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-source-no-new-call-expression-prop-access.js:44:13]
+ 43 │ (async () => {
+ 44 │   await new import.source('<module source>').prop
+    ·             ─────────────────────────────────────
+ 45 │ });
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-source-no-new-call-expression.js:39:13]
  38 │ (async () => {
  39 │   await new import.source('<module source>')
@@ -15289,6 +15232,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                       ───
  45 │ });
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-no-new-call-expression-prop-access.js:43:13]
+ 42 │ (async () => {
+ 43 │   await new import('').prop
+    ·             ───────────────
+ 44 │ });
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-no-new-call-expression.js:38:13]
@@ -15366,6 +15318,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-new-call-expression-prop-access.js:43:24]
+ 42 │ 
+ 43 │ (async () => await new import.defer('./empty_FIXTURE.js').prop)
+    ·                        ───────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-new-call-expression.js:38:24]
  37 │ 
  38 │ (async () => await new import.defer('./empty_FIXTURE.js'))
@@ -15389,6 +15349,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-source-no-new-call-expression-prop-access.js:43:24]
+ 42 │ 
+ 43 │ (async () => await new import.source('<module source>').prop)
+    ·                        ─────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-source-no-new-call-expression.js:38:24]
  37 │ 
  38 │ (async () => await new import.source('<module source>'))
@@ -15402,6 +15370,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
  43 │ (async () => await import.source(...['<module source>']))
     ·                                  ───
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-no-new-call-expression-prop-access.js:42:24]
+ 41 │ 
+ 42 │ (async () => await new import('').prop)
+    ·                        ───────────────
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-no-new-call-expression.js:37:24]
@@ -15484,6 +15460,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-new-call-expression-prop-access.js:44:13]
+ 43 │ async function f() {
+ 44 │   await new import.defer('./empty_FIXTURE.js').prop;
+    ·             ───────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-new-call-expression.js:39:13]
  38 │ async function f() {
  39 │   await new import.defer('./empty_FIXTURE.js');
@@ -15509,6 +15494,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-source-no-new-call-expression-prop-access.js:44:13]
+ 43 │ async function f() {
+ 44 │   await new import.source('<module source>').prop;
+    ·             ─────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-source-no-new-call-expression.js:39:13]
  38 │ async function f() {
  39 │   await new import.source('<module source>');
@@ -15524,6 +15518,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                       ───
  45 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-no-new-call-expression-prop-access.js:43:13]
+ 42 │ async function f() {
+ 43 │   await new import('').prop;
+    ·             ───────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-no-new-call-expression.js:38:13]
@@ -15593,6 +15596,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-new-call-expression-prop-access.js:44:7]
+ 43 │ async function f() {
+ 44 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-new-call-expression.js:39:7]
  38 │ async function f() {
  39 │   new import.defer('./empty_FIXTURE.js');
@@ -15618,6 +15630,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-source-no-new-call-expression-prop-access.js:44:7]
+ 43 │ async function f() {
+ 44 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-source-no-new-call-expression.js:39:7]
  38 │ async function f() {
  39 │   new import.source('<module source>');
@@ -15633,6 +15654,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  45 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-no-new-call-expression-prop-access.js:43:7]
+ 42 │ async function f() {
+ 43 │   new import('').prop;
+    ·       ───────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-no-new-call-expression.js:38:7]
@@ -15684,6 +15714,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-new-call-expression-prop-access.js:44:20]
+ 43 │ async function f() {
+ 44 │   return await new import.defer('./empty_FIXTURE.js').prop;
+    ·                    ───────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-new-call-expression.js:39:20]
  38 │ async function f() {
  39 │   return await new import.defer('./empty_FIXTURE.js');
@@ -15709,6 +15748,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-source-no-new-call-expression-prop-access.js:44:20]
+ 43 │ async function f() {
+ 44 │   return await new import.source('<module source>').prop;
+    ·                    ─────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-source-no-new-call-expression.js:39:20]
  38 │ async function f() {
  39 │   return await new import.source('<module source>');
@@ -15724,6 +15772,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                              ───
  45 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-no-new-call-expression-prop-access.js:43:20]
+ 42 │ async function f() {
+ 43 │   return await new import('').prop;
+    ·                    ───────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-no-new-call-expression.js:38:20]
@@ -15827,6 +15884,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-new-call-expression-prop-access.js:44:13]
+ 43 │ async function * f() {
+ 44 │   await new import.defer('./empty_FIXTURE.js').prop
+    ·             ───────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-new-call-expression.js:39:13]
  38 │ async function * f() {
  39 │   await new import.defer('./empty_FIXTURE.js')
@@ -15852,6 +15918,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-source-no-new-call-expression-prop-access.js:44:13]
+ 43 │ async function * f() {
+ 44 │   await new import.source('<module source>').prop
+    ·             ─────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-source-no-new-call-expression.js:39:13]
  38 │ async function * f() {
  39 │   await new import.source('<module source>')
@@ -15867,6 +15942,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                       ───
  45 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-no-new-call-expression-prop-access.js:43:13]
+ 42 │ async function * f() {
+ 43 │   await new import('').prop
+    ·             ───────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-no-new-call-expression.js:38:13]
@@ -15944,6 +16028,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-new-call-expression-prop-access.js:44:7]
+ 43 │ {
+ 44 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 45 │ };
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-new-call-expression.js:39:7]
  38 │ {
  39 │   new import.defer('./empty_FIXTURE.js');
@@ -15967,6 +16060,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·   ───────────────
  37 │ };
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-source-no-new-call-expression-prop-access.js:44:7]
+ 43 │ {
+ 44 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 45 │ };
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-source-no-new-call-expression.js:39:7]
@@ -16010,6 +16112,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-new-call-expression-prop-access.js:44:7]
+ 43 │ label: {
+ 44 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 45 │ };
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-new-call-expression.js:39:7]
  38 │ label: {
  39 │   new import.defer('./empty_FIXTURE.js');
@@ -16035,6 +16146,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-source-no-new-call-expression-prop-access.js:44:7]
+ 43 │ label: {
+ 44 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 45 │ };
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-source-no-new-call-expression.js:39:7]
  38 │ label: {
  39 │   new import.source('<module source>');
@@ -16050,6 +16170,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  45 │ };
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-no-new-call-expression-prop-access.js:43:7]
+ 42 │ label: {
+ 43 │   new import('').prop;
+    ·       ───────────────
+ 44 │ };
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-no-new-call-expression.js:38:7]
@@ -16101,6 +16230,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                ─
  36 │ };
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-no-new-call-expression-prop-access.js:43:7]
+ 42 │ {
+ 43 │   new import('').prop;
+    ·       ───────────────
+ 44 │ };
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-no-new-call-expression.js:38:7]
@@ -16178,6 +16316,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-new-call-expression-prop-access.js:44:7]
+ 43 │ do {
+ 44 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 45 │ } while (false);
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-new-call-expression.js:39:7]
  38 │ do {
  39 │   new import.defer('./empty_FIXTURE.js');
@@ -16203,6 +16350,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-source-no-new-call-expression-prop-access.js:44:7]
+ 43 │ do {
+ 44 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 45 │ } while (false);
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-source-no-new-call-expression.js:39:7]
  38 │ do {
  39 │   new import.source('<module source>');
@@ -16218,6 +16374,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  45 │ } while (false);
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-no-new-call-expression-prop-access.js:43:7]
+ 42 │ do {
+ 43 │   new import('').prop;
+    ·       ───────────────
+ 44 │ } while (false);
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-no-new-call-expression.js:38:7]
@@ -16303,6 +16468,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-new-call-expression-prop-access.js:45:12]
+ 44 │ 
+ 45 │ } else new import.defer('./empty_FIXTURE.js').prop;
+    ·            ───────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-new-call-expression.js:40:12]
  39 │ 
  40 │ } else new import.defer('./empty_FIXTURE.js');
@@ -16326,6 +16499,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-source-no-new-call-expression-prop-access.js:45:12]
+ 44 │ 
+ 45 │ } else new import.source('<module source>').prop;
+    ·            ─────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-source-no-new-call-expression.js:40:12]
  39 │ 
  40 │ } else new import.source('<module source>');
@@ -16339,6 +16520,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
  45 │ } else import.source(...['<module source>']);
     ·                      ───
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-no-new-call-expression-prop-access.js:44:12]
+ 43 │ 
+ 44 │ } else new import('').prop;
+    ·            ───────────────
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-no-new-call-expression.js:39:12]
@@ -16405,6 +16594,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-new-call-expression-prop-access.js:46:7]
+ 45 │ } else {
+ 46 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 47 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-new-call-expression.js:41:7]
  40 │ } else {
  41 │   new import.defer('./empty_FIXTURE.js');
@@ -16430,6 +16628,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-source-no-new-call-expression-prop-access.js:46:7]
+ 45 │ } else {
+ 46 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 47 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-source-no-new-call-expression.js:41:7]
  40 │ } else {
  41 │   new import.source('<module source>');
@@ -16445,6 +16652,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  47 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-no-new-call-expression-prop-access.js:45:7]
+ 44 │ } else {
+ 45 │   new import('').prop;
+    ·       ───────────────
+ 46 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-no-new-call-expression.js:40:7]
@@ -16522,6 +16738,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-new-call-expression-prop-access.js:44:7]
+ 43 │ function fn() {
+ 44 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-new-call-expression.js:39:7]
  38 │ function fn() {
  39 │   new import.defer('./empty_FIXTURE.js');
@@ -16547,6 +16772,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-source-no-new-call-expression-prop-access.js:44:7]
+ 43 │ function fn() {
+ 44 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-source-no-new-call-expression.js:39:7]
  38 │ function fn() {
  39 │   new import.source('<module source>');
@@ -16562,6 +16796,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  45 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-no-new-call-expression-prop-access.js:43:7]
+ 42 │ function fn() {
+ 43 │   new import('').prop;
+    ·       ───────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-no-new-call-expression.js:38:7]
@@ -16613,6 +16856,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-new-call-expression-prop-access.js:44:14]
+ 43 │ function fn() {
+ 44 │   return new import.defer('./empty_FIXTURE.js').prop;
+    ·              ───────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-new-call-expression.js:39:14]
  38 │ function fn() {
  39 │   return new import.defer('./empty_FIXTURE.js');
@@ -16638,6 +16890,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-source-no-new-call-expression-prop-access.js:44:14]
+ 43 │ function fn() {
+ 44 │   return new import.source('<module source>').prop;
+    ·              ─────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-source-no-new-call-expression.js:39:14]
  38 │ function fn() {
  39 │   return new import.source('<module source>');
@@ -16653,6 +16914,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                        ───
  45 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-no-new-call-expression-prop-access.js:43:14]
+ 42 │ function fn() {
+ 43 │   return new import('').prop;
+    ·              ───────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-no-new-call-expression.js:38:14]
@@ -16764,6 +17034,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-new-call-expression-prop-access.js:43:15]
+ 42 │ 
+ 43 │ if (true) new import.defer('./empty_FIXTURE.js').prop;
+    ·               ───────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-new-call-expression.js:38:15]
  37 │ 
  38 │ if (true) new import.defer('./empty_FIXTURE.js');
@@ -16787,6 +17065,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-source-no-new-call-expression-prop-access.js:43:15]
+ 42 │ 
+ 43 │ if (true) new import.source('<module source>').prop;
+    ·               ─────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-source-no-new-call-expression.js:38:15]
  37 │ 
  38 │ if (true) new import.source('<module source>');
@@ -16800,6 +17086,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
  43 │ if (true) import.source(...['<module source>']);
     ·                         ───
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-no-new-call-expression-prop-access.js:42:15]
+ 41 │ 
+ 42 │ if (true) new import('').prop;
+    ·               ───────────────
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-no-new-call-expression.js:37:15]
@@ -16866,6 +17160,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-new-call-expression-prop-access.js:44:7]
+ 43 │ if (true) {
+ 44 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-new-call-expression.js:39:7]
  38 │ if (true) {
  39 │   new import.defer('./empty_FIXTURE.js');
@@ -16891,6 +17194,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-source-no-new-call-expression-prop-access.js:44:7]
+ 43 │ if (true) {
+ 44 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 45 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-source-no-new-call-expression.js:39:7]
  38 │ if (true) {
  39 │   new import.source('<module source>');
@@ -16906,6 +17218,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  45 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-no-new-call-expression-prop-access.js:43:7]
+ 42 │ if (true) {
+ 43 │   new import('').prop;
+    ·       ───────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-no-new-call-expression.js:38:7]
@@ -16983,6 +17304,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-new-call-expression-prop-access.js:46:7]
+ 45 │   x++;
+ 46 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 47 │ };
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-new-call-expression.js:41:7]
  40 │   x++;
  41 │   new import.defer('./empty_FIXTURE.js');
@@ -17008,6 +17338,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-source-no-new-call-expression-prop-access.js:46:7]
+ 45 │   x++;
+ 46 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 47 │ };
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-source-no-new-call-expression.js:41:7]
  40 │   x++;
  41 │   new import.source('<module source>');
@@ -17023,6 +17362,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  47 │ };
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-no-new-call-expression-prop-access.js:45:7]
+ 44 │   x++;
+ 45 │   new import('').prop;
+    ·       ───────────────
+ 46 │ };
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-no-new-call-expression.js:40:7]
@@ -17108,6 +17456,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-new-call-expression-prop-access.js:42:11]
+ 41 │ 
+ 42 │ with (new import.defer('./empty_FIXTURE.js').prop) {}
+    ·           ───────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-new-call-expression.js:37:11]
  36 │ 
  37 │ with (new import.defer('./empty_FIXTURE.js')) {}
@@ -17131,6 +17487,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-source-no-new-call-expression-prop-access.js:42:11]
+ 41 │ 
+ 42 │ with (new import.source('<module source>').prop) {}
+    ·           ─────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-source-no-new-call-expression.js:37:11]
  36 │ 
  37 │ with (new import.source('<module source>')) {}
@@ -17144,6 +17508,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
  42 │ with (import.source(...['<module source>'])) {}
     ·                     ───
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-no-new-call-expression-prop-access.js:41:11]
+ 40 │ 
+ 41 │ with (new import('').prop) {}
+    ·           ───────────────
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-no-new-call-expression.js:36:11]
@@ -17210,6 +17582,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-new-call-expression-prop-access.js:43:7]
+ 42 │ with ({}) {
+ 43 │   new import.defer('./empty_FIXTURE.js').prop;
+    ·       ───────────────────────────────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-new-call-expression.js:38:7]
  37 │ with ({}) {
  38 │   new import.defer('./empty_FIXTURE.js');
@@ -17235,6 +17616,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-source-no-new-call-expression-prop-access.js:43:7]
+ 42 │ with ({}) {
+ 43 │   new import.source('<module source>').prop;
+    ·       ─────────────────────────────────────
+ 44 │ }
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-source-no-new-call-expression.js:38:7]
  37 │ with ({}) {
  38 │   new import.source('<module source>');
@@ -17250,6 +17640,15 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ·                 ───
  44 │ }
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-no-new-call-expression-prop-access.js:42:7]
+ 41 │ with ({}) {
+ 42 │   new import('').prop;
+    ·       ───────────────
+ 43 │ }
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-no-new-call-expression.js:37:7]
@@ -17327,6 +17726,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-new-call-expression-prop-access.js:33:5]
+ 32 │ 
+ 33 │ new import.defer('./empty_FIXTURE.js').prop;
+    ·     ───────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-new-call-expression.js:28:5]
  27 │ 
  28 │ new import.defer('./empty_FIXTURE.js');
@@ -17350,6 +17757,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
     ╰────
 
   × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-source-no-new-call-expression-prop-access.js:33:5]
+ 32 │ 
+ 33 │ new import.source('<module source>').prop;
+    ·     ─────────────────────────────────────
+    ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-source-no-new-call-expression.js:28:5]
  27 │ 
  28 │ new import.source('<module source>');
@@ -17363,6 +17778,14 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
  33 │ import.source(...['<module source>']);
     ·               ───
     ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-no-new-call-expression-prop-access.js:32:5]
+ 31 │ 
+ 32 │ new import('').prop;
+    ·     ───────────────
+    ╰────
+  help: Wrap this with parenthesis
 
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-no-new-call-expression.js:27:5]
@@ -17412,61 +17835,61 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-im
  25 │ 
     ╰────
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ ~3 ** 2;
     · ──
     ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ delete o.p ** 2;
     · ──────────
     ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ !1 ** 2;
     · ──
     ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-negate-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ -3 ** 2;
     · ──
     ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-plus-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ +1 ** 2;
     · ──
     ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-typeof-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ typeof 1 ** 2;
     · ────────
     ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-void-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ void 1 ** 2;
     · ──────
     ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/function/array-destructuring-param-strict-body.js:132:3]

@@ -79,7 +79,7 @@ where
         let item_span = item.span();
         let start = item_span.start;
         if let Some(pe) = prev_end {
-            write_trailing_same_line_comment(pe, f);
+            write_trailing_same_line_comment(pe, start, f);
             // Measure the gap up to the next pending comment (if it precedes the item),
             // so a blank line in front of a leading comment is still preserved.
             let anchor = f

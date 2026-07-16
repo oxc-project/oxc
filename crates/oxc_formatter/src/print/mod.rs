@@ -46,7 +46,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_formatter_core::arena_cow_str;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -58,7 +58,7 @@ use crate::{
         token::number::{format_number_token, format_trimmed_number, is_simple_number},
         trivia::{
             DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments,
+            FormatTrailingComments, format_leading_comments, format_trailing_comments,
         },
     },
     options::{FormatTrailingCommas, Semicolons, TrailingSeparator},
@@ -252,10 +252,37 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, MetaProperty<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ImportMeta> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [self.meta(), ".", self.property()]);
+        write_meta_property(f, self.span, "import", "meta");
     }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, NewTarget> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write_meta_property(f, self.span, "new", "target");
+    }
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "`import`, `meta`, `new`, `target`, and `.` have lengths that fit in `u32`"
+)]
+fn write_meta_property(
+    f: &mut JsFormatter<'_, '_>,
+    span: Span,
+    meta: &'static str,
+    property: &'static str,
+) {
+    debug_assert!(span.size() >= meta.len() as u32 + property.len() as u32 + ".".len() as u32);
+    let meta_span = Span::sized(span.start, meta.len() as u32);
+    let property_span = Span::sized(span.end - property.len() as u32, span.end);
+
+    write!(f, [meta]);
+    format_trailing_comments(span, meta_span, property_span.start).fmt(f);
+    write!(f, ["."]);
+    format_leading_comments(property_span).fmt(f);
+    write!(f, [property]);
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SpreadElement<'a>> {

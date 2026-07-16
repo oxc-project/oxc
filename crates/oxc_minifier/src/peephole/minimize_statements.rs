@@ -2,7 +2,7 @@ use std::{iter, ops::ControlFlow};
 
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
@@ -696,6 +696,22 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
+        let is_empty = if stmt.consequent.len() == 1 {
+            match stmt.consequent.last() {
+                Some(Statement::EmptyStatement(_)) => true,
+                Some(Statement::BreakStatement(break_stmt)) => {
+                    allow_break && break_stmt.label.is_none()
+                }
+                _ => false,
+            }
+        } else {
+            stmt.consequent.is_empty()
+        };
+
+        is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
+    }
+
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -719,34 +735,66 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
 
-        // Prune empty case clauses before a trailing default
-        // e.g., `switch (x) { case 0: foo(); break; case 1: default: bar() }`
-        // => `switch (x) { case 0: foo(); break; default: bar() }`
+        // Remove empty case clauses that don't affect behavior.
+        // Handles fall-through semantics: remove empty cases before default or at end (if no default).
+        // e.g., `switch(x){ case 0: foo(); break; case 1: default: bar() }`
+        // => `switch(x){ case 0: foo(); break; default: bar() }`
         // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
-        if let Some(last_case) = switch_stmt.cases.last()
-            && last_case.test.is_none()
-        {
-            let default_idx = switch_stmt.cases.len() - 1;
-            let mut first_empty_idx = default_idx;
-            // Iterate backward through preceding cases
-            while first_empty_idx > 0 {
-                let case = &switch_stmt.cases[first_empty_idx - 1];
-                // Only remove empty cases with primitive literal tests
-                if case.consequent.is_empty()
-                    && case.test.as_ref().is_some_and(Expression::is_literal)
-                {
-                    first_empty_idx -= 1;
+        let case_count = switch_stmt.cases.len();
+        if case_count == 1 {
+            // Remove sole case if empty and has no side-effect test
+            if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
+                ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
+            }
+        } else if case_count > 1 {
+            // Determine the range [0, end] to check for removable cases.
+            // 1. default exists and is empty: check the full switch.
+            // 2. default exists and is non-removable and last: check only cases before that default.
+            // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
+            // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
+            let default_pos = switch_stmt.cases.iter().rposition(SwitchCase::is_default_case);
+            let (end, allow_break) = if let Some(default_pos) = default_pos {
+                if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true) {
+                    (case_count, true)
+                } else if default_pos == case_count - 1 {
+                    (default_pos, false)
                 } else {
-                    break;
+                    (0, false)
+                }
+            } else {
+                (case_count, true)
+            };
+
+            if end > 0 {
+                // Last non-removable case index in [0, end]. Returns None if all cases are removable.
+                let last_non_removable_case_before_end = switch_stmt.cases[..end]
+                    .iter()
+                    .rposition(|case| !Self::is_switch_case_removable(case, allow_break));
+
+                // Calculate the start of the removable suffix.
+                // 1. next case after last non-removable: remove from pos + 1
+                // 2. no non-removable case: all cases are removable, start from 0
+                let start = match last_non_removable_case_before_end {
+                    Some(pos) => pos + 1,
+                    None => 0,
+                };
+
+                // Remove the removable suffix if any
+                if start < end && default_pos.is_none_or(|pos| pos >= start) {
+                    for removed_case in switch_stmt.cases.drain(start..end) {
+                        ctx.drop_switch_case(&removed_case);
+                    }
                 }
             }
-            // If we found cases to remove, keep cases [0..first_empty_idx] + [default]
-            if first_empty_idx < default_idx {
-                let default_case = switch_stmt.cases.pop().unwrap();
-                switch_stmt.cases.truncate(first_empty_idx);
-                switch_stmt.cases.push(default_case);
-                ctx.notice_change();
-            }
+        }
+
+        if switch_stmt.cases.is_empty() {
+            result.push(Statement::new_expression_statement(
+                switch_stmt.span,
+                switch_stmt.discriminant.take_in(ctx),
+                ctx,
+            ));
+            return;
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));

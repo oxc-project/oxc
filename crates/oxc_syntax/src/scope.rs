@@ -1,12 +1,15 @@
 use bitflags::bitflags;
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 use oxc_index::define_nonmax_u32_index_type;
 
 use oxc_ast_macros::ast;
 
+use crate::semantic_id::SemanticId;
+
 define_nonmax_u32_index_type! {
     #[ast]
     #[builder(default)]
+    #[clone_in(semantic_id)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct ScopeId;
@@ -16,17 +19,13 @@ impl<'alloc> CloneIn<'alloc> for ScopeId {
     type Cloned = Self;
 
     #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn clone_in_impl(&self, with_semantic_ids: bool, _: &'alloc Allocator) -> Self {
-        if with_semantic_ids {
-            *self
-        } else {
-            // `with_semantic_ids == false` should never reach this, because `CloneIn` skips
-            // `scope_id` field, filling it with its default instead.
-            unreachable!();
-        }
+    #[inline(always)] // Because this method only delegates
+    fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
+        self.clone_id(with_semantic_ids)
     }
 }
+
+impl SemanticId for ScopeId {}
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

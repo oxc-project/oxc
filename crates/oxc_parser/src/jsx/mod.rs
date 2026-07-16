@@ -178,7 +178,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
 
         if is_reference {
-            JSXElementName::new_identifier_reference(identifier.span, identifier.name, self)
+            JSXElementName::new_identifier_reference(
+                identifier.span,
+                self.ident(identifier.name.as_str()),
+                self,
+            )
         } else if name == "this" {
             JSXElementName::new_this_expression(identifier.span, self)
         } else {
@@ -197,7 +201,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut object = if object.name == "this" {
             JSXMemberExpressionObject::new_this_expression(object.span, self)
         } else {
-            JSXMemberExpressionObject::new_identifier_reference(object.span, object.name, self)
+            JSXMemberExpressionObject::new_identifier_reference(
+                object.span,
+                self.ident(object.name.as_str()),
+                self,
+            )
         };
 
         let mut span = Span::new(span, 0);

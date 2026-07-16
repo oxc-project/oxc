@@ -153,7 +153,6 @@ impl<'a> ArrayExpressionElement<'a> {
                 | Self::StringLiteral(_)
                 | Self::TemplateLiteral(_)
                 | Self::Identifier(_)
-                | Self::MetaProperty(_)
                 | Self::Super(_)
                 | Self::ArrayExpression(_)
                 | Self::ArrowFunctionExpression(_)
@@ -177,6 +176,8 @@ impl<'a> ArrayExpressionElement<'a> {
                 | Self::UpdateExpression(_)
                 | Self::YieldExpression(_)
                 | Self::PrivateInExpression(_)
+                | Self::ImportMeta(_)
+                | Self::NewTarget(_)
                 | Self::JSXElement(_)
                 | Self::JSXFragment(_)
                 | Self::TSAsExpression(_)
@@ -288,7 +289,6 @@ impl<'a> TryFrom<ArrayExpressionElement<'a>> for Expression<'a> {
             ArrayExpressionElement::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
             ArrayExpressionElement::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
             ArrayExpressionElement::Identifier(o) => Ok(Expression::Identifier(o)),
-            ArrayExpressionElement::MetaProperty(o) => Ok(Expression::MetaProperty(o)),
             ArrayExpressionElement::Super(o) => Ok(Expression::Super(o)),
             ArrayExpressionElement::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
             ArrayExpressionElement::ArrowFunctionExpression(o) => {
@@ -324,6 +324,8 @@ impl<'a> TryFrom<ArrayExpressionElement<'a>> for Expression<'a> {
             ArrayExpressionElement::PrivateInExpression(o) => {
                 Ok(Expression::PrivateInExpression(o))
             }
+            ArrayExpressionElement::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
+            ArrayExpressionElement::NewTarget(o) => Ok(Expression::NewTarget(o)),
             ArrayExpressionElement::JSXElement(o) => Ok(Expression::JSXElement(o)),
             ArrayExpressionElement::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
             ArrayExpressionElement::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
@@ -369,7 +371,6 @@ impl<'a> From<Expression<'a>> for ArrayExpressionElement<'a> {
             Expression::StringLiteral(o) => ArrayExpressionElement::StringLiteral(o),
             Expression::TemplateLiteral(o) => ArrayExpressionElement::TemplateLiteral(o),
             Expression::Identifier(o) => ArrayExpressionElement::Identifier(o),
-            Expression::MetaProperty(o) => ArrayExpressionElement::MetaProperty(o),
             Expression::Super(o) => ArrayExpressionElement::Super(o),
             Expression::ArrayExpression(o) => ArrayExpressionElement::ArrayExpression(o),
             Expression::ArrowFunctionExpression(o) => {
@@ -401,6 +402,8 @@ impl<'a> From<Expression<'a>> for ArrayExpressionElement<'a> {
             Expression::UpdateExpression(o) => ArrayExpressionElement::UpdateExpression(o),
             Expression::YieldExpression(o) => ArrayExpressionElement::YieldExpression(o),
             Expression::PrivateInExpression(o) => ArrayExpressionElement::PrivateInExpression(o),
+            Expression::ImportMeta(o) => ArrayExpressionElement::ImportMeta(o),
+            Expression::NewTarget(o) => ArrayExpressionElement::NewTarget(o),
             Expression::JSXElement(o) => ArrayExpressionElement::JSXElement(o),
             Expression::JSXFragment(o) => ArrayExpressionElement::JSXFragment(o),
             Expression::TSAsExpression(o) => ArrayExpressionElement::TSAsExpression(o),
@@ -577,7 +580,6 @@ impl<'a> PropertyKey<'a> {
                 | Self::StringLiteral(_)
                 | Self::TemplateLiteral(_)
                 | Self::Identifier(_)
-                | Self::MetaProperty(_)
                 | Self::Super(_)
                 | Self::ArrayExpression(_)
                 | Self::ArrowFunctionExpression(_)
@@ -601,6 +603,8 @@ impl<'a> PropertyKey<'a> {
                 | Self::UpdateExpression(_)
                 | Self::YieldExpression(_)
                 | Self::PrivateInExpression(_)
+                | Self::ImportMeta(_)
+                | Self::NewTarget(_)
                 | Self::JSXElement(_)
                 | Self::JSXFragment(_)
                 | Self::TSAsExpression(_)
@@ -712,7 +716,6 @@ impl<'a> TryFrom<PropertyKey<'a>> for Expression<'a> {
             PropertyKey::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
             PropertyKey::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
             PropertyKey::Identifier(o) => Ok(Expression::Identifier(o)),
-            PropertyKey::MetaProperty(o) => Ok(Expression::MetaProperty(o)),
             PropertyKey::Super(o) => Ok(Expression::Super(o)),
             PropertyKey::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
             PropertyKey::ArrowFunctionExpression(o) => Ok(Expression::ArrowFunctionExpression(o)),
@@ -736,6 +739,8 @@ impl<'a> TryFrom<PropertyKey<'a>> for Expression<'a> {
             PropertyKey::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
             PropertyKey::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
             PropertyKey::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
+            PropertyKey::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
+            PropertyKey::NewTarget(o) => Ok(Expression::NewTarget(o)),
             PropertyKey::JSXElement(o) => Ok(Expression::JSXElement(o)),
             PropertyKey::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
             PropertyKey::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
@@ -769,7 +774,6 @@ impl<'a> From<Expression<'a>> for PropertyKey<'a> {
             Expression::StringLiteral(o) => PropertyKey::StringLiteral(o),
             Expression::TemplateLiteral(o) => PropertyKey::TemplateLiteral(o),
             Expression::Identifier(o) => PropertyKey::Identifier(o),
-            Expression::MetaProperty(o) => PropertyKey::MetaProperty(o),
             Expression::Super(o) => PropertyKey::Super(o),
             Expression::ArrayExpression(o) => PropertyKey::ArrayExpression(o),
             Expression::ArrowFunctionExpression(o) => PropertyKey::ArrowFunctionExpression(o),
@@ -793,6 +797,8 @@ impl<'a> From<Expression<'a>> for PropertyKey<'a> {
             Expression::UpdateExpression(o) => PropertyKey::UpdateExpression(o),
             Expression::YieldExpression(o) => PropertyKey::YieldExpression(o),
             Expression::PrivateInExpression(o) => PropertyKey::PrivateInExpression(o),
+            Expression::ImportMeta(o) => PropertyKey::ImportMeta(o),
+            Expression::NewTarget(o) => PropertyKey::NewTarget(o),
             Expression::JSXElement(o) => PropertyKey::JSXElement(o),
             Expression::JSXFragment(o) => PropertyKey::JSXFragment(o),
             Expression::TSAsExpression(o) => PropertyKey::TSAsExpression(o),
@@ -953,7 +959,6 @@ impl<'a> Argument<'a> {
                 | Self::StringLiteral(_)
                 | Self::TemplateLiteral(_)
                 | Self::Identifier(_)
-                | Self::MetaProperty(_)
                 | Self::Super(_)
                 | Self::ArrayExpression(_)
                 | Self::ArrowFunctionExpression(_)
@@ -977,6 +982,8 @@ impl<'a> Argument<'a> {
                 | Self::UpdateExpression(_)
                 | Self::YieldExpression(_)
                 | Self::PrivateInExpression(_)
+                | Self::ImportMeta(_)
+                | Self::NewTarget(_)
                 | Self::JSXElement(_)
                 | Self::JSXFragment(_)
                 | Self::TSAsExpression(_)
@@ -1088,7 +1095,6 @@ impl<'a> TryFrom<Argument<'a>> for Expression<'a> {
             Argument::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
             Argument::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
             Argument::Identifier(o) => Ok(Expression::Identifier(o)),
-            Argument::MetaProperty(o) => Ok(Expression::MetaProperty(o)),
             Argument::Super(o) => Ok(Expression::Super(o)),
             Argument::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
             Argument::ArrowFunctionExpression(o) => Ok(Expression::ArrowFunctionExpression(o)),
@@ -1112,6 +1118,8 @@ impl<'a> TryFrom<Argument<'a>> for Expression<'a> {
             Argument::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
             Argument::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
             Argument::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
+            Argument::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
+            Argument::NewTarget(o) => Ok(Expression::NewTarget(o)),
             Argument::JSXElement(o) => Ok(Expression::JSXElement(o)),
             Argument::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
             Argument::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
@@ -1143,7 +1151,6 @@ impl<'a> From<Expression<'a>> for Argument<'a> {
             Expression::StringLiteral(o) => Argument::StringLiteral(o),
             Expression::TemplateLiteral(o) => Argument::TemplateLiteral(o),
             Expression::Identifier(o) => Argument::Identifier(o),
-            Expression::MetaProperty(o) => Argument::MetaProperty(o),
             Expression::Super(o) => Argument::Super(o),
             Expression::ArrayExpression(o) => Argument::ArrayExpression(o),
             Expression::ArrowFunctionExpression(o) => Argument::ArrowFunctionExpression(o),
@@ -1167,6 +1174,8 @@ impl<'a> From<Expression<'a>> for Argument<'a> {
             Expression::UpdateExpression(o) => Argument::UpdateExpression(o),
             Expression::YieldExpression(o) => Argument::YieldExpression(o),
             Expression::PrivateInExpression(o) => Argument::PrivateInExpression(o),
+            Expression::ImportMeta(o) => Argument::ImportMeta(o),
+            Expression::NewTarget(o) => Argument::NewTarget(o),
             Expression::JSXElement(o) => Argument::JSXElement(o),
             Expression::JSXFragment(o) => Argument::JSXFragment(o),
             Expression::TSAsExpression(o) => Argument::TSAsExpression(o),
@@ -2904,7 +2913,6 @@ impl<'a> ForStatementInit<'a> {
                 | Self::StringLiteral(_)
                 | Self::TemplateLiteral(_)
                 | Self::Identifier(_)
-                | Self::MetaProperty(_)
                 | Self::Super(_)
                 | Self::ArrayExpression(_)
                 | Self::ArrowFunctionExpression(_)
@@ -2928,6 +2936,8 @@ impl<'a> ForStatementInit<'a> {
                 | Self::UpdateExpression(_)
                 | Self::YieldExpression(_)
                 | Self::PrivateInExpression(_)
+                | Self::ImportMeta(_)
+                | Self::NewTarget(_)
                 | Self::JSXElement(_)
                 | Self::JSXFragment(_)
                 | Self::TSAsExpression(_)
@@ -3039,7 +3049,6 @@ impl<'a> TryFrom<ForStatementInit<'a>> for Expression<'a> {
             ForStatementInit::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
             ForStatementInit::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
             ForStatementInit::Identifier(o) => Ok(Expression::Identifier(o)),
-            ForStatementInit::MetaProperty(o) => Ok(Expression::MetaProperty(o)),
             ForStatementInit::Super(o) => Ok(Expression::Super(o)),
             ForStatementInit::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
             ForStatementInit::ArrowFunctionExpression(o) => {
@@ -3069,6 +3078,8 @@ impl<'a> TryFrom<ForStatementInit<'a>> for Expression<'a> {
             ForStatementInit::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
             ForStatementInit::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
             ForStatementInit::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
+            ForStatementInit::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
+            ForStatementInit::NewTarget(o) => Ok(Expression::NewTarget(o)),
             ForStatementInit::JSXElement(o) => Ok(Expression::JSXElement(o)),
             ForStatementInit::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
             ForStatementInit::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
@@ -3108,7 +3119,6 @@ impl<'a> From<Expression<'a>> for ForStatementInit<'a> {
             Expression::StringLiteral(o) => ForStatementInit::StringLiteral(o),
             Expression::TemplateLiteral(o) => ForStatementInit::TemplateLiteral(o),
             Expression::Identifier(o) => ForStatementInit::Identifier(o),
-            Expression::MetaProperty(o) => ForStatementInit::MetaProperty(o),
             Expression::Super(o) => ForStatementInit::Super(o),
             Expression::ArrayExpression(o) => ForStatementInit::ArrayExpression(o),
             Expression::ArrowFunctionExpression(o) => ForStatementInit::ArrowFunctionExpression(o),
@@ -3134,6 +3144,8 @@ impl<'a> From<Expression<'a>> for ForStatementInit<'a> {
             Expression::UpdateExpression(o) => ForStatementInit::UpdateExpression(o),
             Expression::YieldExpression(o) => ForStatementInit::YieldExpression(o),
             Expression::PrivateInExpression(o) => ForStatementInit::PrivateInExpression(o),
+            Expression::ImportMeta(o) => ForStatementInit::ImportMeta(o),
+            Expression::NewTarget(o) => ForStatementInit::NewTarget(o),
             Expression::JSXElement(o) => ForStatementInit::JSXElement(o),
             Expression::JSXFragment(o) => ForStatementInit::JSXFragment(o),
             Expression::TSAsExpression(o) => ForStatementInit::TSAsExpression(o),
@@ -3897,7 +3909,6 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
                 | Self::StringLiteral(_)
                 | Self::TemplateLiteral(_)
                 | Self::Identifier(_)
-                | Self::MetaProperty(_)
                 | Self::Super(_)
                 | Self::ArrayExpression(_)
                 | Self::ArrowFunctionExpression(_)
@@ -3921,6 +3932,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
                 | Self::UpdateExpression(_)
                 | Self::YieldExpression(_)
                 | Self::PrivateInExpression(_)
+                | Self::ImportMeta(_)
+                | Self::NewTarget(_)
                 | Self::JSXElement(_)
                 | Self::JSXFragment(_)
                 | Self::TSAsExpression(_)
@@ -4032,7 +4045,6 @@ impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for Expression<'a> {
             ExportDefaultDeclarationKind::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
             ExportDefaultDeclarationKind::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
             ExportDefaultDeclarationKind::Identifier(o) => Ok(Expression::Identifier(o)),
-            ExportDefaultDeclarationKind::MetaProperty(o) => Ok(Expression::MetaProperty(o)),
             ExportDefaultDeclarationKind::Super(o) => Ok(Expression::Super(o)),
             ExportDefaultDeclarationKind::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
             ExportDefaultDeclarationKind::ArrowFunctionExpression(o) => {
@@ -4082,6 +4094,8 @@ impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for Expression<'a> {
             ExportDefaultDeclarationKind::PrivateInExpression(o) => {
                 Ok(Expression::PrivateInExpression(o))
             }
+            ExportDefaultDeclarationKind::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
+            ExportDefaultDeclarationKind::NewTarget(o) => Ok(Expression::NewTarget(o)),
             ExportDefaultDeclarationKind::JSXElement(o) => Ok(Expression::JSXElement(o)),
             ExportDefaultDeclarationKind::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
             ExportDefaultDeclarationKind::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
@@ -4127,7 +4141,6 @@ impl<'a> From<Expression<'a>> for ExportDefaultDeclarationKind<'a> {
             Expression::StringLiteral(o) => ExportDefaultDeclarationKind::StringLiteral(o),
             Expression::TemplateLiteral(o) => ExportDefaultDeclarationKind::TemplateLiteral(o),
             Expression::Identifier(o) => ExportDefaultDeclarationKind::Identifier(o),
-            Expression::MetaProperty(o) => ExportDefaultDeclarationKind::MetaProperty(o),
             Expression::Super(o) => ExportDefaultDeclarationKind::Super(o),
             Expression::ArrayExpression(o) => ExportDefaultDeclarationKind::ArrayExpression(o),
             Expression::ArrowFunctionExpression(o) => {
@@ -4167,6 +4180,8 @@ impl<'a> From<Expression<'a>> for ExportDefaultDeclarationKind<'a> {
             Expression::PrivateInExpression(o) => {
                 ExportDefaultDeclarationKind::PrivateInExpression(o)
             }
+            Expression::ImportMeta(o) => ExportDefaultDeclarationKind::ImportMeta(o),
+            Expression::NewTarget(o) => ExportDefaultDeclarationKind::NewTarget(o),
             Expression::JSXElement(o) => ExportDefaultDeclarationKind::JSXElement(o),
             Expression::JSXFragment(o) => ExportDefaultDeclarationKind::JSXFragment(o),
             Expression::TSAsExpression(o) => ExportDefaultDeclarationKind::TSAsExpression(o),
@@ -4345,7 +4360,6 @@ impl<'a> JSXExpression<'a> {
                 | Self::StringLiteral(_)
                 | Self::TemplateLiteral(_)
                 | Self::Identifier(_)
-                | Self::MetaProperty(_)
                 | Self::Super(_)
                 | Self::ArrayExpression(_)
                 | Self::ArrowFunctionExpression(_)
@@ -4369,6 +4383,8 @@ impl<'a> JSXExpression<'a> {
                 | Self::UpdateExpression(_)
                 | Self::YieldExpression(_)
                 | Self::PrivateInExpression(_)
+                | Self::ImportMeta(_)
+                | Self::NewTarget(_)
                 | Self::JSXElement(_)
                 | Self::JSXFragment(_)
                 | Self::TSAsExpression(_)
@@ -4480,7 +4496,6 @@ impl<'a> TryFrom<JSXExpression<'a>> for Expression<'a> {
             JSXExpression::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
             JSXExpression::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
             JSXExpression::Identifier(o) => Ok(Expression::Identifier(o)),
-            JSXExpression::MetaProperty(o) => Ok(Expression::MetaProperty(o)),
             JSXExpression::Super(o) => Ok(Expression::Super(o)),
             JSXExpression::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
             JSXExpression::ArrowFunctionExpression(o) => Ok(Expression::ArrowFunctionExpression(o)),
@@ -4506,6 +4521,8 @@ impl<'a> TryFrom<JSXExpression<'a>> for Expression<'a> {
             JSXExpression::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
             JSXExpression::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
             JSXExpression::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
+            JSXExpression::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
+            JSXExpression::NewTarget(o) => Ok(Expression::NewTarget(o)),
             JSXExpression::JSXElement(o) => Ok(Expression::JSXElement(o)),
             JSXExpression::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
             JSXExpression::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
@@ -4541,7 +4558,6 @@ impl<'a> From<Expression<'a>> for JSXExpression<'a> {
             Expression::StringLiteral(o) => JSXExpression::StringLiteral(o),
             Expression::TemplateLiteral(o) => JSXExpression::TemplateLiteral(o),
             Expression::Identifier(o) => JSXExpression::Identifier(o),
-            Expression::MetaProperty(o) => JSXExpression::MetaProperty(o),
             Expression::Super(o) => JSXExpression::Super(o),
             Expression::ArrayExpression(o) => JSXExpression::ArrayExpression(o),
             Expression::ArrowFunctionExpression(o) => JSXExpression::ArrowFunctionExpression(o),
@@ -4565,6 +4581,8 @@ impl<'a> From<Expression<'a>> for JSXExpression<'a> {
             Expression::UpdateExpression(o) => JSXExpression::UpdateExpression(o),
             Expression::YieldExpression(o) => JSXExpression::YieldExpression(o),
             Expression::PrivateInExpression(o) => JSXExpression::PrivateInExpression(o),
+            Expression::ImportMeta(o) => JSXExpression::ImportMeta(o),
+            Expression::NewTarget(o) => JSXExpression::NewTarget(o),
             Expression::JSXElement(o) => JSXExpression::JSXElement(o),
             Expression::JSXFragment(o) => JSXExpression::JSXFragment(o),
             Expression::TSAsExpression(o) => JSXExpression::TSAsExpression(o),
@@ -5071,7 +5089,6 @@ macro_rules! match_expression {
             | $ty::StringLiteral(_)
             | $ty::TemplateLiteral(_)
             | $ty::Identifier(_)
-            | $ty::MetaProperty(_)
             | $ty::Super(_)
             | $ty::ArrayExpression(_)
             | $ty::ArrowFunctionExpression(_)
@@ -5095,6 +5112,8 @@ macro_rules! match_expression {
             | $ty::UpdateExpression(_)
             | $ty::YieldExpression(_)
             | $ty::PrivateInExpression(_)
+            | $ty::ImportMeta(_)
+            | $ty::NewTarget(_)
             | $ty::JSXElement(_)
             | $ty::JSXFragment(_)
             | $ty::TSAsExpression(_)

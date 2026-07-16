@@ -7,7 +7,7 @@ use oxc_ast::{
         Function, IdentifierReference, Statement, WhileStatement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{Visit, VisitJs, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ScopeId, SymbolId};
@@ -521,7 +521,7 @@ struct LoopFunctionCollector {
     function_node_ids: Vec<NodeId>,
 }
 
-impl<'a> Visit<'a> for LoopFunctionCollector {
+impl<'a> VisitJs<'a> for LoopFunctionCollector {
     fn visit_function(&mut self, function: &Function<'a>, _flags: ScopeFlags) {
         if function.is_expression() || function.is_declaration() {
             self.function_node_ids.push(function.node_id());

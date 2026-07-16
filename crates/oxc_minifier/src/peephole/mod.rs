@@ -18,7 +18,9 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::{Visit, walk::walk_call_expression};
+#[cfg(debug_assertions)]
+use oxc_ast_visit::Visit;
+use oxc_ast_visit::{VisitJs, walk_js::walk_call_expression};
 use oxc_semantic::Scoping;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
@@ -361,7 +363,7 @@ impl<'a> PeepholeOptimizations {
         struct DirectEvalFlagCheck<'s> {
             scoping: &'s Scoping,
         }
-        impl<'a> Visit<'a> for DirectEvalFlagCheck<'_> {
+        impl<'a> VisitJs<'a> for DirectEvalFlagCheck<'_> {
             fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
                 if let Some(ident) = as_direct_eval_call(it)
                     && let Some(reference_id) = ident.reference_id.get()
@@ -904,7 +906,7 @@ impl<'s> LiveDirectEvalCollector<'s> {
     }
 }
 
-impl<'a> Visit<'a> for LiveDirectEvalCollector<'_> {
+impl<'a> VisitJs<'a> for LiveDirectEvalCollector<'_> {
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         if let Some(ident) = as_direct_eval_call(it)
             && let Some(reference_id) = ident.reference_id.get()

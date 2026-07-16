@@ -56,7 +56,9 @@ impl<'a> ReplaceWith<'a> for CallExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for NewExpression<'a> {}
 
-impl<'a> ReplaceWith<'a> for MetaProperty<'a> {}
+impl ReplaceWith<'_> for ImportMeta {}
+
+impl ReplaceWith<'_> for NewTarget {}
 
 impl<'a> ReplaceWith<'a> for SpreadElement<'a> {}
 

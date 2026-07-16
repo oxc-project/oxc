@@ -180,10 +180,18 @@ pub fn write_trailing_same_line_comment(prev_end: u32, upper: u32, f: &mut CssFo
         return;
     }
     f.context().comments().take_before(comment.span.end);
-    // Plain content, NOT a line suffix: Prettier prints trailing comments as
-    // regular doc parts, so they count towards the line width during the
-    // preceding value group's fits measurement (`x: min(...); /* long */`
-    // breaks the `min(` group even when the value alone would fit).
+    if comment.inline {
+        // A trailing `//` comment is an EOL annotation:
+        // Use `line_suffix`, excluded from fits, like line comments in every formatter crate here.
+        // NOTE: Prettier is inconsistent here,
+        // they do not distinguish between `// c` and `/* c */` for CSS/SCSS/Less.
+        let content = format_with(move |f: &mut CssFormatter<'_, '_>| {
+            write!(f, space());
+            write_single_comment(comment, f);
+        });
+        write!(f, [line_suffix(&content), expand_parent()]);
+        return;
+    }
     write!(f, space());
     write_single_comment(comment, f);
 }

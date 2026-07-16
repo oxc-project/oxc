@@ -346,8 +346,8 @@ impl NewExpression<'_> {
     }
 }
 
-impl MetaProperty<'_> {
-    /// Get [`NodeId`] of [`MetaProperty`].
+impl ImportMeta {
+    /// Get [`NodeId`] of [`ImportMeta`].
     ///
     /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
@@ -355,7 +355,23 @@ impl MetaProperty<'_> {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`MetaProperty`].
+    /// Set [`NodeId`] of [`ImportMeta`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl NewTarget {
+    /// Get [`NodeId`] of [`NewTarget`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`NewTarget`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
@@ -3471,7 +3487,6 @@ impl Expression<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::Identifier(it) => it.node_id(),
-            Self::MetaProperty(it) => it.node_id(),
             Self::Super(it) => it.node_id(),
             Self::ArrayExpression(it) => it.node_id(),
             Self::ArrowFunctionExpression(it) => it.node_id(),
@@ -3495,6 +3510,8 @@ impl Expression<'_> {
             Self::UpdateExpression(it) => it.node_id(),
             Self::YieldExpression(it) => it.node_id(),
             Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
             Self::JSXFragment(it) => it.node_id(),
             Self::TSAsExpression(it) => it.node_id(),
@@ -3526,7 +3543,6 @@ impl ArrayExpressionElement<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::Identifier(it) => it.node_id(),
-            Self::MetaProperty(it) => it.node_id(),
             Self::Super(it) => it.node_id(),
             Self::ArrayExpression(it) => it.node_id(),
             Self::ArrowFunctionExpression(it) => it.node_id(),
@@ -3550,6 +3566,8 @@ impl ArrayExpressionElement<'_> {
             Self::UpdateExpression(it) => it.node_id(),
             Self::YieldExpression(it) => it.node_id(),
             Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
             Self::JSXFragment(it) => it.node_id(),
             Self::TSAsExpression(it) => it.node_id(),
@@ -3593,7 +3611,6 @@ impl PropertyKey<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::Identifier(it) => it.node_id(),
-            Self::MetaProperty(it) => it.node_id(),
             Self::Super(it) => it.node_id(),
             Self::ArrayExpression(it) => it.node_id(),
             Self::ArrowFunctionExpression(it) => it.node_id(),
@@ -3617,6 +3634,8 @@ impl PropertyKey<'_> {
             Self::UpdateExpression(it) => it.node_id(),
             Self::YieldExpression(it) => it.node_id(),
             Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
             Self::JSXFragment(it) => it.node_id(),
             Self::TSAsExpression(it) => it.node_id(),
@@ -3660,7 +3679,6 @@ impl Argument<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::Identifier(it) => it.node_id(),
-            Self::MetaProperty(it) => it.node_id(),
             Self::Super(it) => it.node_id(),
             Self::ArrayExpression(it) => it.node_id(),
             Self::ArrowFunctionExpression(it) => it.node_id(),
@@ -3684,6 +3702,8 @@ impl Argument<'_> {
             Self::UpdateExpression(it) => it.node_id(),
             Self::YieldExpression(it) => it.node_id(),
             Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
             Self::JSXFragment(it) => it.node_id(),
             Self::TSAsExpression(it) => it.node_id(),
@@ -3874,7 +3894,6 @@ impl ForStatementInit<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::Identifier(it) => it.node_id(),
-            Self::MetaProperty(it) => it.node_id(),
             Self::Super(it) => it.node_id(),
             Self::ArrayExpression(it) => it.node_id(),
             Self::ArrowFunctionExpression(it) => it.node_id(),
@@ -3898,6 +3917,8 @@ impl ForStatementInit<'_> {
             Self::UpdateExpression(it) => it.node_id(),
             Self::YieldExpression(it) => it.node_id(),
             Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
             Self::JSXFragment(it) => it.node_id(),
             Self::TSAsExpression(it) => it.node_id(),
@@ -4021,7 +4042,6 @@ impl ExportDefaultDeclarationKind<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::Identifier(it) => it.node_id(),
-            Self::MetaProperty(it) => it.node_id(),
             Self::Super(it) => it.node_id(),
             Self::ArrayExpression(it) => it.node_id(),
             Self::ArrowFunctionExpression(it) => it.node_id(),
@@ -4045,6 +4065,8 @@ impl ExportDefaultDeclarationKind<'_> {
             Self::UpdateExpression(it) => it.node_id(),
             Self::YieldExpression(it) => it.node_id(),
             Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
             Self::JSXFragment(it) => it.node_id(),
             Self::TSAsExpression(it) => it.node_id(),
@@ -4116,7 +4138,6 @@ impl JSXExpression<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::Identifier(it) => it.node_id(),
-            Self::MetaProperty(it) => it.node_id(),
             Self::Super(it) => it.node_id(),
             Self::ArrayExpression(it) => it.node_id(),
             Self::ArrowFunctionExpression(it) => it.node_id(),
@@ -4140,6 +4161,8 @@ impl JSXExpression<'_> {
             Self::UpdateExpression(it) => it.node_id(),
             Self::YieldExpression(it) => it.node_id(),
             Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
             Self::JSXFragment(it) => it.node_id(),
             Self::TSAsExpression(it) => it.node_id(),
