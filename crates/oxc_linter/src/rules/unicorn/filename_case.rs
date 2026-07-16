@@ -1,3 +1,5 @@
+use std::path::Component;
+
 use convert_case::{Boundary, Case, Converter};
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
@@ -39,6 +41,7 @@ pub struct FilenameCaseConfig {
     screaming_snake_case: bool,
     ignore: Vec<Regex>,
     multiple_file_extensions: bool,
+    check_directories: bool,
 }
 
 impl Default for FilenameCaseConfig {
@@ -52,6 +55,7 @@ impl Default for FilenameCaseConfig {
             screaming_snake_case: false,
             ignore: vec![],
             multiple_file_extensions: true,
+            check_directories: true,
         }
     }
 }
@@ -111,11 +115,22 @@ pub struct FilenameCaseConfigJson {
     /// parts of the extension rather than parts of the filename.
     #[serde(default = "default_true")]
     multiple_file_extensions: bool,
+    /// Whether to check directory names in the file's path, in addition to
+    /// the filename. Directory segments starting with `.` or `$` are always
+    /// skipped, as are segments matching an `ignore` pattern.
+    #[serde(default = "default_true")]
+    check_directories: bool,
 }
 
 impl Default for FilenameCaseConfigJson {
     fn default() -> Self {
-        Self { cases: None, case: None, ignore: vec![], multiple_file_extensions: true }
+        Self {
+            cases: None,
+            case: None,
+            ignore: vec![],
+            multiple_file_extensions: true,
+            check_directories: true,
+        }
     }
 }
 
@@ -153,6 +168,9 @@ declare_oxc_lint!(
     ///
     /// Enforces a consistent case style for filenames to improve project organization and maintainability.
     /// By default, `kebab-case` is enforced, but other styles can be configured.
+    ///
+    /// Directory names in the file's path are validated as well, unless the `checkDirectories`
+    /// option is set to `false`. Directory segments starting with `.` or `$` are always skipped.
     ///
     /// Files named `index.js`, `index.ts`, etc. are exempt from this rule as they cannot reliably be
     /// renamed to other casings (mainly just a problem with PascalCase).
@@ -244,6 +262,120 @@ impl CaseCheck {
     }
 }
 
+impl FilenameCase {
+    /// Collects the enabled case checks that `name` does not satisfy.
+    /// Returns `None` if `name` already matches at least one enabled case.
+    fn collect_valid_cases(&self, name: &str) -> Option<Vec<(CaseCheck, &'static str)>> {
+        let cases = [
+            (self.camel_case, CaseCheck::Convert(Case::Camel), "camelCase"),
+            (self.kebab_case, CaseCheck::Convert(Case::Kebab), "kebab-case"),
+            (self.snake_case, CaseCheck::Convert(Case::Snake), "snake_case"),
+            (self.pascal_case, CaseCheck::Convert(Case::Pascal), "PascalCase"),
+            (self.lowercase, CaseCheck::Lowercase, "lowercase"),
+            (
+                self.screaming_snake_case,
+                CaseCheck::Convert(Case::UpperSnake),
+                "SCREAMING_SNAKE_CASE",
+            ),
+        ];
+
+        let mut valid_cases = Vec::new();
+        for (enabled, case, case_name) in cases {
+            if enabled {
+                if case.convert(name) == name {
+                    return None;
+                }
+
+                valid_cases.push((case, case_name));
+            }
+        }
+
+        Some(valid_cases)
+    }
+
+    /// Checks the directory names in the linted file's path. Returns `true`
+    /// if a diagnostic was reported.
+    fn check_directory_names(&self, ctx: &LintContext<'_>) -> bool {
+        let path = ctx.file_path();
+        let relative = if path.is_absolute() {
+            let Some(relative) = ctx.cwd().and_then(|cwd| path.strip_prefix(cwd).ok()) else {
+                return false;
+            };
+            relative
+        } else {
+            path
+        };
+        let Some(parent) = relative.parent() else {
+            return false;
+        };
+
+        for component in parent.components() {
+            let Component::Normal(segment) = component else {
+                continue;
+            };
+            let Some(segment) = segment.to_str() else {
+                continue;
+            };
+
+            if segment.starts_with('.')
+                || segment.starts_with('$')
+                || self.ignore.iter().any(|r| r.is_match(segment))
+            {
+                continue;
+            }
+
+            let trimmed_segment = segment.trim_matches('_');
+            if trimmed_segment.is_empty() {
+                continue;
+            }
+
+            if let Some(valid_cases) = self.collect_valid_cases(trimmed_segment) {
+                ctx.diagnostic(build_case_diagnostic(
+                    "Directory name",
+                    "directory",
+                    segment,
+                    trimmed_segment,
+                    valid_cases,
+                ));
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
+fn build_case_diagnostic(
+    subject: &str,
+    rename_subject: &str,
+    raw_name: &str,
+    trimmed_name: &str,
+    valid_cases: Vec<(CaseCheck, &'static str)>,
+) -> OxcDiagnostic {
+    let valid_cases_len = valid_cases.len();
+
+    let mut message = format!("{subject} should be in ");
+    let mut help_message = format!("Rename the {rename_subject} to ");
+
+    for (i, (case, name)) in valid_cases.into_iter().enumerate() {
+        let renamed =
+            format!("'{}'", raw_name.cow_replace(trimmed_name, &case.convert(trimmed_name)));
+
+        let (name, renamed) = if i == 0 {
+            (name, renamed.as_ref())
+        } else if i == valid_cases_len - 1 {
+            (&*format!(", or {name}"), &*format!(", or {renamed}"))
+        } else {
+            (&*format!(", {name}"), &*format!(", {renamed}"))
+        };
+
+        message.push_str(name);
+        help_message.push_str(renamed);
+    }
+
+    filename_case_diagnostic(message, help_message)
+}
+
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let json = serde_json::from_value::<DefaultRuleConfig<FilenameCaseConfigJson>>(value)?
@@ -251,6 +383,7 @@ impl Rule for FilenameCase {
         let mut config = FilenameCaseConfig {
             ignore: json.ignore,
             multiple_file_extensions: json.multiple_file_extensions,
+            check_directories: json.check_directories,
             ..Default::default()
         };
 
@@ -283,6 +416,10 @@ impl Rule for FilenameCase {
             return;
         }
 
+        if self.check_directories && self.check_directory_names(ctx) {
+            return;
+        }
+
         let filename = if self.multiple_file_extensions {
             raw_filename.split('.').next()
         } else {
@@ -300,54 +437,17 @@ impl Rule for FilenameCase {
 
         let trimmed_filename = filename.trim_matches('_');
 
-        let cases = [
-            (self.camel_case, CaseCheck::Convert(Case::Camel), "camelCase"),
-            (self.kebab_case, CaseCheck::Convert(Case::Kebab), "kebab-case"),
-            (self.snake_case, CaseCheck::Convert(Case::Snake), "snake_case"),
-            (self.pascal_case, CaseCheck::Convert(Case::Pascal), "PascalCase"),
-            (self.lowercase, CaseCheck::Lowercase, "lowercase"),
-            (
-                self.screaming_snake_case,
-                CaseCheck::Convert(Case::UpperSnake),
-                "SCREAMING_SNAKE_CASE",
-            ),
-        ];
+        let Some(valid_cases) = self.collect_valid_cases(trimmed_filename) else {
+            return;
+        };
 
-        let mut valid_cases = Vec::new();
-        for (enabled, case, name) in cases {
-            if enabled {
-                if case.convert(trimmed_filename) == trimmed_filename {
-                    return;
-                }
-
-                valid_cases.push((case, name));
-            }
-        }
-
-        let valid_cases_len = valid_cases.len();
-
-        let mut message = String::from("Filename should be in ");
-        let mut help_message = String::from("Rename the file to ");
-
-        for (i, (case, name)) in valid_cases.into_iter().enumerate() {
-            let filename = format!(
-                "'{}'",
-                raw_filename.cow_replace(trimmed_filename, &case.convert(trimmed_filename))
-            );
-
-            let (name, filename) = if i == 0 {
-                (name, filename.as_ref())
-            } else if i == valid_cases_len - 1 {
-                (&*format!(", or {name}"), &*format!(", or {filename}"))
-            } else {
-                (&*format!(", {name}"), &*format!(", {filename}"))
-            };
-
-            message.push_str(name);
-            help_message.push_str(filename);
-        }
-
-        ctx.diagnostic(filename_case_diagnostic(message, help_message));
+        ctx.diagnostic(build_case_diagnostic(
+            "Filename",
+            "file",
+            raw_filename,
+            trimmed_filename,
+            valid_cases,
+        ));
     }
 
     fn should_run(&self, ctx: &ContextHost<'_>) -> bool {
@@ -409,6 +509,21 @@ fn test() {
         ("", Some(options), None, Some(PathBuf::from(path)))
     }
 
+    // Like `test_case`, but with directory name checking disabled, for cases
+    // that exercise filename behavior with non-conforming directories in the
+    // path.
+    fn test_case_no_dir_check(
+        path: &'static str,
+        casing: &'static str,
+    ) -> (&'static str, Option<Value>, Option<Value>, Option<PathBuf>) {
+        (
+            "",
+            Some(serde_json::json!([{ "case": casing, "checkDirectories": false }])),
+            None,
+            Some(PathBuf::from(path)),
+        )
+    }
+
     let pass = vec![
         // Default is to allow kebab-case
         ("", None, None, Some(PathBuf::from("foo-bar.tsx"))),
@@ -437,12 +552,12 @@ fn test() {
         test_case("src/foo/foo-bar.test-utils.js", "kebabCase"),
         test_case("src/foo/foo-bar.test_utils.js", "kebabCase"),
         test_case("src/foo/.test_utils.js", "kebabCase"),
-        test_case("src/foo/Foo.js", "pascalCase"),
-        test_case("src/foo/FooBar.js", "pascalCase"),
-        test_case("src/foo/Foo.test.js", "pascalCase"),
-        test_case("src/foo/FooBar.test.js", "pascalCase"),
-        test_case("src/foo/FooBar.test-utils.js", "pascalCase"),
-        test_case("src/foo/FooBar.test_utils.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/Foo.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/FooBar.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/Foo.test.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/FooBar.test.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/FooBar.test-utils.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/FooBar.test_utils.js", "pascalCase"),
         test_case("src/foo/.test_utils.js", "pascalCase"),
         test_case("spec/iss47Spec.js", "camelCase"),
         test_case("spec/iss47Spec100.js", "camelCase"),
@@ -455,9 +570,9 @@ fn test() {
         test_case("spec/iss_47_spec.js", "snakeCase"),
         test_case("spec/iss47_100spec.js", "snakeCase"),
         test_case("spec/i18n.js", "snakeCase"),
-        test_case("spec/Iss47Spec.js", "pascalCase"),
-        test_case("spec/Iss47.100spec.js", "pascalCase"),
-        test_case("spec/I18n.js", "pascalCase"),
+        test_case_no_dir_check("spec/Iss47Spec.js", "pascalCase"),
+        test_case_no_dir_check("spec/Iss47.100spec.js", "pascalCase"),
+        test_case_no_dir_check("spec/I18n.js", "pascalCase"),
         test_case("src/foo/foo.js", "lowercase"),
         test_case("src/foo/foobar.js", "lowercase"),
         test_case("src/foo/foobar.test.js", "lowercase"),
@@ -467,14 +582,14 @@ fn test() {
         // `lowercase` allows separators; only uppercase letters are rejected
         test_case("src/foo/foo-bar.js", "lowercase"),
         test_case("src/foo/foo_bar.js", "lowercase"),
-        test_case("src/foo/FOO.js", "screamingSnakeCase"),
-        test_case("src/foo/FOO_BAR.js", "screamingSnakeCase"),
-        test_case("src/foo/FOO_BAR.test.js", "screamingSnakeCase"),
-        test_case("src/foo/FOO_BAR.test_utils.js", "screamingSnakeCase"),
-        test_case("src/foo/_FOO_BAR.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/FOO.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/FOO_BAR.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/FOO_BAR.test.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/FOO_BAR.test_utils.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/_FOO_BAR.js", "screamingSnakeCase"),
         // digits stay attached to their word
-        test_case("src/foo/V2_API.js", "screamingSnakeCase"),
-        test_case("src/foo/FOO2BAR.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/V2_API.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/FOO2BAR.js", "screamingSnakeCase"),
         test_case("", "lowercase"),
         test_case("", "screamingSnakeCase"),
         test_case("", "camelCase"),
@@ -487,9 +602,9 @@ fn test() {
         test_case("src/foo/___foo_bar.js", "snakeCase"),
         test_case("src/foo/_foo-bar.js", "kebabCase"),
         test_case("src/foo/___foo-bar.js", "kebabCase"),
-        test_case("src/foo/_FooBar.js", "pascalCase"),
-        test_case("src/foo/___FooBar.js", "pascalCase"),
-        test_case("src/foo/$foo.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/_FooBar.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/___FooBar.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/$foo.js", "pascalCase"),
         test_case("src/foo/[fooBar].js", "camelCase"),
         test_case("src/foo/{foo_bar}.js", "snakeCase"),
         test_cases("src/foo/foo-bar.js", []),
@@ -498,8 +613,20 @@ fn test() {
         test_cases("src/foo/___foo_bar.js", ["snakeCase", "pascalCase"]),
         test_cases("src/foo/foobar.js", ["lowercase"]),
         test_cases("src/foo/foo_bar.js", ["lowercase"]),
-        test_cases("src/foo/FOO_BAR.js", ["screamingSnakeCase"]),
-        test_cases("src/foo/FooBar.js", ["pascalCase", "screamingSnakeCase"]),
+        test_case_with_options(
+            "src/foo/FOO_BAR.js",
+            serde_json::json!([{
+                "cases": { "screamingSnakeCase": true },
+                "checkDirectories": false
+            }]),
+        ),
+        test_case_with_options(
+            "src/foo/FooBar.js",
+            serde_json::json!([{
+                "cases": { "pascalCase": true, "screamingSnakeCase": true },
+                "checkDirectories": false
+            }]),
+        ),
         test_cases("src/foo/FOO_BAR.js", ["lowercase", "screamingSnakeCase"]),
         // `ignore` option (array of regular expression patterns).
         // An undefined/empty filename should not crash.
@@ -659,7 +786,30 @@ fn test() {
         test_case("index.vue", "pascalCase"),
         test_case("index.js", "lowercase"),
         test_case("index.js", "screamingSnakeCase"),
-        test_case("foo/bar/index.vue", "pascalCase"),
+        test_case_no_dir_check("foo/bar/index.vue", "pascalCase"),
+        // `checkDirectories` option: valid directory names.
+        ("", None, None, Some(PathBuf::from("some-dir/nested-dir/foo-bar.js"))),
+        test_case_with_options(
+            "foo-bar/baz.js",
+            serde_json::json!([{ "case": "kebabCase", "checkDirectories": true }]),
+        ),
+        // Invalid directory names are not checked when `checkDirectories` is `false`.
+        test_case_with_options(
+            "Foo_Bar/foo-bar.js",
+            serde_json::json!([{ "case": "kebabCase", "checkDirectories": false }]),
+        ),
+        // Directory segments starting with `$` or `.` are skipped.
+        ("", None, None, Some(PathBuf::from("$FooBar/foo-bar.js"))),
+        ("", None, None, Some(PathBuf::from(".GitHub/foo-bar.js"))),
+        // Leading underscores of directory segments are ignored.
+        ("", None, None, Some(PathBuf::from("_private-dir/foo-bar.js"))),
+        // Directory segments matching an `ignore` pattern are skipped.
+        test_case_with_options(
+            "FOOBAR/baz.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["FOOBAR"] }]),
+        ),
+        test_case("fooBar/bazQux/quux.js", "camelCase"),
+        test_case("FooBar/BazQux/Quux.js", "pascalCase"),
     ];
 
     let fail = vec![
@@ -679,23 +829,23 @@ fn test() {
         test_case("test/foo/fooBar.js", "kebabCase"),
         test_case("test/foo/fooBar.test.js", "kebabCase"),
         test_case("test/foo/fooBar.testUtils.js", "kebabCase"),
-        test_case("test/foo/fooBar.js", "pascalCase"),
-        test_case("test/foo/foo_bar.test.js", "pascalCase"),
-        test_case("test/foo/foo-bar.test-utils.js", "pascalCase"),
+        test_case_no_dir_check("test/foo/fooBar.js", "pascalCase"),
+        test_case_no_dir_check("test/foo/foo_bar.test.js", "pascalCase"),
+        test_case_no_dir_check("test/foo/foo-bar.test-utils.js", "pascalCase"),
         test_case("src/foo/fooBar.js", "lowercase"),
         test_case("src/foo/FooBar.js", "lowercase"),
-        test_case("src/foo/foo_bar.js", "screamingSnakeCase"),
-        test_case("src/foo/FooBar.js", "screamingSnakeCase"),
-        test_case("src/foo/fooBar.js", "screamingSnakeCase"),
-        test_case("src/foo/FOO-BAR.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/foo_bar.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/FooBar.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/fooBar.js", "screamingSnakeCase"),
+        test_case_no_dir_check("src/foo/FOO-BAR.js", "screamingSnakeCase"),
         test_case("src/foo/_FOO-BAR.js", "camelCase"),
         test_case("src/foo/___FOO-BAR.js", "camelCase"),
         test_case("src/foo/_FOO-BAR.js", "snakeCase"),
         test_case("src/foo/___FOO-BAR.js", "snakeCase"),
         test_case("src/foo/_FOO-BAR.js", "kebabCase"),
         test_case("src/foo/___FOO-BAR.js", "kebabCase"),
-        test_case("src/foo/_FOO-BAR.js", "pascalCase"),
-        test_case("src/foo/___FOO-BAR.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/_FOO-BAR.js", "pascalCase"),
+        test_case_no_dir_check("src/foo/___FOO-BAR.js", "pascalCase"),
         test_cases("src/foo/foo_bar.js", []),
         test_cases("src/foo/foo-bar.js", ["camelCase", "pascalCase"]),
         test_cases("src/foo/_foo_bar.js", ["camelCase", "pascalCase", "kebabCase"]),
@@ -767,6 +917,22 @@ fn test() {
         ("", None, None, Some(PathBuf::from("FooBar.tsx"))),
         // should only report once
         ("<script></script><script setup></script>", None, None, Some(PathBuf::from("FooBar.vue"))),
+        // `checkDirectories` option: invalid directory names.
+        ("", None, None, Some(PathBuf::from("Foo_Bar/foo-bar.js"))),
+        test_case_with_options(
+            "FooBar/foo-bar.js",
+            serde_json::json!([{ "case": "kebabCase", "checkDirectories": true }]),
+        ),
+        test_case("foo_bar/bazQux.js", "camelCase"),
+        test_case("src/Foo.js", "pascalCase"),
+        // Only the first invalid directory is reported.
+        ("", None, None, Some(PathBuf::from("Bad_Dir/Another_Bad/foo-bar.js"))),
+        test_cases("Foo_Bar/fooBar.js", ["camelCase"]),
+        // `ignore` patterns that do not match the directory segment.
+        test_case_with_options(
+            "FOOBAR/foo-bar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^BAZ$"] }]),
+        ),
     ];
 
     Tester::new(FilenameCase::NAME, FilenameCase::PLUGIN, pass, fail).test_and_snapshot();
