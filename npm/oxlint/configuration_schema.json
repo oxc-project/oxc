@@ -5115,7 +5115,25 @@
           ]
         },
         "no-restricted-globals": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-restricted-imports": {
           "anyOf": [
@@ -11278,6 +11296,24 @@
       },
       "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
     },
+    "GlobalNameOrObject": {
+      "anyOf": [
+        {
+          "description": "The name of a restricted global.",
+          "type": "string",
+          "markdownDescription": "The name of a restricted global."
+        },
+        {
+          "description": "A restricted global with an optional custom message.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/RestrictedGlobal"
+            }
+          ],
+          "markdownDescription": "A restricted global with an optional custom message."
+        }
+      ]
+    },
     "GlobalValue": {
       "type": "string",
       "enum": [
@@ -15067,6 +15103,58 @@
       },
       "additionalProperties": false
     },
+    "NoRestrictedGlobalsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedGlobal"
+        },
+        {
+          "$ref": "#/definitions/NoRestrictedGlobalsObjectConfig"
+        }
+      ]
+    },
+    "NoRestrictedGlobalsConfigValue": {
+      "additionalItems": {
+        "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+      }
+    },
+    "NoRestrictedGlobalsObjectConfig": {
+      "description": "Object form of the configuration, which additionally allows detecting\nrestricted globals accessed via global objects.",
+      "type": "object",
+      "required": [
+        "globals"
+      ],
+      "properties": {
+        "checkGlobalObject": {
+          "description": "Whether to also detect restricted globals accessed via global objects. Default is `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also detect restricted globals accessed via global objects. Default is `false`."
+        },
+        "globalObjects": {
+          "description": "Additional global object names to check when `checkGlobalObject` is enabled.\nBy default, the rule checks these global objects: `globalThis`, `self`, and `window`.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional global object names to check when `checkGlobalObject` is enabled.\nBy default, the rule checks these global objects: `globalThis`, `self`, and `window`."
+        },
+        "globals": {
+          "description": "The restricted globals, as names or `{ \"name\", \"message\" }` objects.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GlobalNameOrObject"
+          },
+          "markdownDescription": "The restricted globals, as names or `{ \"name\", \"message\" }` objects."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Object form of the configuration, which additionally allows detecting\nrestricted globals accessed via global objects."
+    },
     "NoRestrictedImportsConfig": {
       "type": "object",
       "properties": {
@@ -18203,6 +18291,27 @@
         }
       },
       "additionalProperties": false
+    },
+    "RestrictedGlobal": {
+      "description": "A restricted global with an optional custom message.",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "message": {
+          "description": "A custom message shown when the restricted global is used.",
+          "type": "string",
+          "markdownDescription": "A custom message shown when the restricted global is used."
+        },
+        "name": {
+          "description": "The name of the restricted global.",
+          "type": "string",
+          "markdownDescription": "The name of the restricted global."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "A restricted global with an optional custom message."
     },
     "RestrictedPath": {
       "type": "object",
