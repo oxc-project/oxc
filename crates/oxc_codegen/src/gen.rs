@@ -99,6 +99,9 @@ impl Gen for Directive<'_> {
         quote.print(p);
         p.print_ascii_byte(b';');
         p.print_soft_newline();
+        if p.has_trailing_comments() {
+            p.print_trailing_comments(self.span.end);
+        }
     }
 }
 
@@ -196,6 +199,9 @@ impl Gen for Statement<'_> {
                 decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
+        }
+        if p.has_trailing_comments() {
+            p.print_trailing_comments(self.span().end);
         }
     }
 }

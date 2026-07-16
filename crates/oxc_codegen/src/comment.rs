@@ -87,29 +87,51 @@ impl Codegen<'_> {
                 continue;
             }
             let mut add = false;
-            if comment.is_leading() {
-                if comment.is_legal() && self.options.print_legal_comment() {
-                    add = true;
-                }
-                if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
-                    add = true;
-                }
-                if comment.is_annotation() && self.options.print_annotation_comment() {
-                    add = true;
-                }
-                if comment.is_normal() && self.options.print_normal_comment() {
-                    add = true;
-                }
+            if comment.is_legal() && self.options.print_legal_comment() {
+                add = true;
+            }
+            if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
+                add = true;
+            }
+            if comment.is_annotation() && self.options.print_annotation_comment() {
+                add = true;
+            }
+            if comment.is_normal() && self.options.print_normal_comment() {
+                add = true;
             }
             if add {
-                if comment.is_legal()
-                    && let Err(idx) = self.legal_comment_keys.binary_search(&comment.attached_to)
-                {
-                    self.legal_comment_keys.insert(idx, comment.attached_to);
+                if comment.is_leading() {
+                    if comment.is_legal()
+                        && let Err(idx) =
+                            self.legal_comment_keys.binary_search(&comment.attached_to)
+                    {
+                        self.legal_comment_keys.insert(idx, comment.attached_to);
+                    }
+                    self.comments.entry(comment.attached_to).or_default().push(*comment);
+                } else if comment.is_trailing() {
+                    self.trailing_comments.entry(comment.attached_to).or_default().push(*comment);
                 }
-                self.comments.entry(comment.attached_to).or_default().push(*comment);
             }
         }
+    }
+
+    #[inline]
+    pub(crate) fn has_trailing_comments(&self) -> bool {
+        !self.trailing_comments.is_empty()
+    }
+
+    #[cold]
+    pub(crate) fn print_trailing_comments(&mut self, end: u32) {
+        let Some(comments) = self.trailing_comments.remove(&end) else { return };
+
+        // Statement printers normally leave a newline behind, while minified
+        // expression statements defer their semicolon. Restore the token end
+        // before placing the same-line group after it.
+        self.print_semicolon_if_needed();
+        self.code.trim_trailing_ascii_whitespace_and_newlines();
+        self.clear_pending_indent_space();
+        self.print_soft_space();
+        self.print_comments(&comments);
     }
 
     pub(crate) fn has_comment(&self, start: u32) -> bool {

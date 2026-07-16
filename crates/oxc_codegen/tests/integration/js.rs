@@ -904,7 +904,7 @@ fn html_comments() {
     );
     test_unambiguous(
         "const test = 'a'; <!-- comment\nconsole.log('test');\n",
-        "const test = \"a\";\nconsole.log(\"test\");\n",
+        "const test = \"a\"; <!-- comment\nconsole.log(\"test\");\n",
     );
     test_unambiguous("const x = 1;\n--> comment\n", "const x = 1;\n--> comment\n");
     test_unambiguous(
@@ -914,12 +914,12 @@ fn html_comments() {
     // `<!--` comments out rest of line - everything after is a comment
     test_unambiguous(
         "const test = 'a'; <!-- Test --> console.log('not executed'); //\n",
-        "const test = \"a\";\n",
+        "const test = \"a\"; <!-- Test --> console.log('not executed'); //\n",
     );
     // Injection: `<!--` comments out rest of line, but code on NEXT line executes
     test_unambiguous(
         "const test = 'a'; <!--\nconsole.log('injection');\n",
-        "const test = \"a\";\nconsole.log(\"injection\");\n",
+        "const test = \"a\"; <!--\nconsole.log(\"injection\");\n",
     );
     // `-->` at start of line is also a comment
     test_unambiguous(
