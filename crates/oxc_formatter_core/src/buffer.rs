@@ -7,7 +7,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     Argument, Arguments, Format, FormatElement, FormatState,
@@ -44,11 +44,12 @@ pub trait Buffer<'ast, C> {
 
     /// Replaces the elements starting at `start` with `replacement`.
     ///
-    /// Used by streaming IR transforms (currently `SortImportsTransform`) to splice a reordered
-    /// chunk back into the buffer. Only `VecBuffer` supports this; the wrapper buffers
-    /// (`PreambleBuffer`, `Inspect`, `RemoveSoftLinesBuffer`) are only ever active inside
-    /// inner-expression contexts, never on the call stack while a streaming chunk is being
-    /// flushed, so they implement this as `unreachable!()`.
+    /// Used by streaming IR transforms (currently `SortImportsTransform`)
+    /// to splice a reordered chunk back into the buffer.
+    /// Only the vector-backed buffers (`VecBuffer`, `HeapVecBuffer`) support this;
+    /// the wrapper buffers (`PreambleBuffer`, `Inspect`, `RemoveSoftLinesBuffer`) are only ever active
+    /// inside inner-expression contexts, never on the call stack while a streaming chunk is being flushed,
+    /// so they implement this as `unreachable!()`.
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]);
 }
 
@@ -110,11 +111,6 @@ impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
     pub fn into_vec(self) -> ArenaVec<'ast, FormatElement<'ast>> {
         self.elements
     }
-
-    /// Takes the elements without consuming self
-    pub fn take_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        self.elements.take_in(self.state)
-    }
 }
 
 impl<'ast, C> Deref for VecBuffer<'_, 'ast, C> {
@@ -132,6 +128,93 @@ impl<C> DerefMut for VecBuffer<'_, '_, C> {
 }
 
 impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
+    fn write_element(&mut self, element: FormatElement<'ast>) {
+        self.elements.push(element);
+    }
+
+    fn elements(&self) -> &[FormatElement<'ast>] {
+        self
+    }
+
+    fn state(&self) -> &FormatState<'ast, C> {
+        self.state
+    }
+
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
+        self.state
+    }
+
+    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
+        self.elements.splice(start.., replacement.iter().cloned());
+    }
+}
+
+/// Heap-backed [`Buffer`], the staging twin of [`VecBuffer`].
+///
+/// Use it to build an element sequence whose final length isn't known up front
+/// (interned content, best-fitting variants), then move the result into the arena
+/// exactly-sized via [`HeapVecBuffer::take_into_arena_vec`] / [`HeapVecBuffer::take_into_arena_slice`].
+///
+/// Growing a vector directly in the arena strands every grown-out-of allocation for the rest of the format run
+/// (the arena is a bump allocator and never reclaims;
+/// growth can reuse the allocation only when nothing else was bumped in between, which practically never holds while formatting).
+/// Heap growth is reclaimed by the system allocator, and the arena receives only the final, exactly-sized copy.
+///
+/// The backing vector is borrowed from the [`FormatState`] scratch pool and returned on drop,
+/// so nested/repeated staging allocates nothing in the steady state.
+pub struct HeapVecBuffer<'buf, 'ast, C> {
+    state: &'buf mut FormatState<'ast, C>,
+    elements: Vec<FormatElement<'ast>>,
+}
+
+impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
+    pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
+        let elements = state.take_scratch_buffer();
+        Self { state, elements }
+    }
+
+    /// Removes the last element written to this buffer, if any.
+    pub fn pop(&mut self) -> Option<FormatElement<'ast>> {
+        self.elements.pop()
+    }
+
+    /// Moves the buffered elements into an exactly-sized arena vector, leaving the buffer empty.
+    pub fn take_into_arena_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
+        let len = self.elements.len();
+        let allocator = self.state.allocator();
+        let mut vec = ArenaVec::with_capacity_in(len, &allocator);
+        // SAFETY: `vec` has capacity for `len` elements, and the heap and arena buffers cannot overlap.
+        // `FormatElement` is not `Drop` (`ArenaVec` const-asserts `!needs_drop` on construction),
+        // so the bitwise move duplicates no owning state and the `clear()` below merely forgets the moved-out elements.
+        unsafe {
+            std::ptr::copy_nonoverlapping(self.elements.as_ptr(), vec.as_mut_ptr(), len);
+            vec.set_len(len);
+        }
+        self.elements.clear();
+        vec
+    }
+
+    /// Moves the buffered elements into an exactly-sized arena slice, leaving the buffer empty.
+    pub fn take_into_arena_slice(&mut self) -> &'ast [FormatElement<'ast>] {
+        self.take_into_arena_vec().into_arena_slice()
+    }
+}
+
+impl<C> Drop for HeapVecBuffer<'_, '_, C> {
+    fn drop(&mut self) {
+        self.state.return_scratch_buffer(std::mem::take(&mut self.elements));
+    }
+}
+
+impl<'ast, C> Deref for HeapVecBuffer<'_, 'ast, C> {
+    type Target = [FormatElement<'ast>];
+
+    fn deref(&self) -> &Self::Target {
+        &self.elements
+    }
+}
+
+impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
     fn write_element(&mut self, element: FormatElement<'ast>) {
         self.elements.push(element);
     }

@@ -39,8 +39,8 @@ pub mod test_support;
 
 pub use arguments::{Argument, Arguments};
 pub use buffer::{
-    Buffer, BufferExtensions, Inspect, PreambleBuffer, Recorded, Recording, RemoveSoftLinesBuffer,
-    VecBuffer,
+    Buffer, BufferExtensions, HeapVecBuffer, Inspect, PreambleBuffer, Recorded, Recording,
+    RemoveSoftLinesBuffer, VecBuffer,
 };
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 pub use embedded::{
