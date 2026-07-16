@@ -9,7 +9,7 @@ use oxc_allocator::ArenaVec;
 
 use crate::{
     Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
-    GroupId, VecBuffer,
+    GroupId, HeapVecBuffer,
     format::write,
     format_element::{
         self, LineMode, PrintMode, TextWidth,
@@ -883,7 +883,9 @@ impl<'fmt, 'ast, C> BestFitting<'fmt, 'ast, C> {
 
 impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        let mut buffer = VecBuffer::new(f.state_mut());
+        // Stage each variant on the heap,
+        // so only the exactly-sized variant slices land in the arena (see `HeapVecBuffer`).
+        let mut buffer = HeapVecBuffer::new(f.state_mut());
         let variants = self.variants.items();
 
         let mut formatted_variants = Vec::with_capacity(variants.len());
@@ -893,8 +895,9 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
             buffer.write_fmt(Arguments::from(variant));
             buffer.write_element(FormatElement::Tag(EndEntry));
 
-            formatted_variants.push(buffer.take_vec().into_arena_slice());
+            formatted_variants.push(buffer.take_into_arena_slice());
         }
+        drop(buffer);
 
         let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);
 

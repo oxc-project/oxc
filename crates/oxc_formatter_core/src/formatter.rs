@@ -5,7 +5,8 @@ use std::borrow::Cow;
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
-    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, VecBuffer,
+    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState,
+    buffer::HeapVecBuffer,
     builders::{FillBuilder, JoinBuilder},
     format::{Format, write},
     format_element::Interned,
@@ -60,12 +61,20 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
+    /// The content is staged in a [`HeapVecBuffer`] and lands in the arena exactly-sized,
+    /// so the arena only ever holds the final interned slice, not the staging growth.
     pub fn intern(&mut self, content: &dyn Format<'ast, C>) -> Option<FormatElement<'ast>> {
-        let mut buffer = VecBuffer::new(self.state_mut());
+        let mut buffer = HeapVecBuffer::new(self.state_mut());
         write(&mut buffer, Arguments::new(&[Argument::new(&content)]));
-        let elements = buffer.into_vec();
 
-        self.intern_vec(elements)
+        // Intentionally not delegated to `intern_vec`:
+        // dispatching on the heap buffer lets the 0/1-element cases return without ever allocating an `ArenaVec`.
+        match buffer.len() {
+            0 => None,
+            // Doesn't get cheaper than calling clone, use the element directly
+            1 => buffer.pop(),
+            _ => Some(FormatElement::Interned(Interned::new(buffer.take_into_arena_vec()))),
+        }
     }
 
     #[expect(clippy::unused_self)] // Keep `self` the same as the original source
