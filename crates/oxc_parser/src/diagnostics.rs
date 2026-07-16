@@ -1257,6 +1257,11 @@ pub fn abstract_with_private_identifier(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
+}
+
+#[cold]
 pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
     ts_error("18007", "JSX expressions may not use the comma operator")
         .with_help("Did you mean to write an array?")

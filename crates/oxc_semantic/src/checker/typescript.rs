@@ -87,17 +87,6 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
     }
-
-    let mut has_optional = false;
-
-    for param in &params.items {
-        // function a(optional?: number, required: number) { }
-        if param.optional {
-            has_optional = true;
-        } else if has_optional && param.initializer.is_none() {
-            ctx.error(diagnostics::required_parameter_after_optional_parameter(param.span));
-        }
-    }
 }
 
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {

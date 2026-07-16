@@ -126,8 +126,8 @@ Identifier `show` has already been declared
 Identifier `size` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
-A parameter cannot have a question mark and an initializer.
 A required parameter cannot follow an optional parameter.
+A parameter cannot have a question mark and an initializer.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 Identifier `x` has already been declared
@@ -230,6 +230,9 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 A required parameter cannot follow an optional parameter.
+Bindings mismatch:
+after transform: ScopeId(0): ["f"]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/overloads/input.ts
 Bindings mismatch:

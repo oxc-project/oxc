@@ -7355,6 +7355,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Try inserting a semicolon here
 
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:9]
+ 1 │ (arg1?, arg2) => 101;
+   ·         ────
+ 2 │ (...arg?) => 102;
+   ╰────
+
   × TS(1047): A rest parameter cannot be optional
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:2:8]
  1 │ (arg1?, arg2) => 101;
@@ -23291,6 +23298,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·               ╰── It can not be redeclared here
  18 │ 
     ╰────
+
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:2:27]
+ 1 │ //Function overload signature with optional parameter followed by non-optional parameter
+ 2 │ function fn4a(x?: number, y: string);
+   ·                           ─────────
+ 3 │ function fn4a() { }
+   ╰────
+
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:5:38]
+ 4 │ 
+ 5 │ function fn4b(n: string, x?: number, y: string);
+   ·                                      ─────────
+ 6 │ function fn4b() { }
+   ╰────
 
   × A rest parameter must be last in a parameter list
     ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
