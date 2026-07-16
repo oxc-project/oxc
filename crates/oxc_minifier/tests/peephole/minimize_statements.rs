@@ -246,5 +246,7 @@ fn test_handle_switch_statement() {
     ); // ;
     test("switch (b) { case 2: switch (a) { case 2: foo()}}", "b === 2 && a === 2 && foo();");
 
-    test_same("function f(){ switch (0) { case x: break; } let x = 1; }"); // TDZ; x; { let x = 1; }
+    // TODO: expected TDZ issue, https://github.com/oxc-project/oxc/issues/24589
+    test("function f(){ switch (0) { case x: break; } let x = 1; }", "function f() { let x = 1; }"); // TDZ; function f() { x; let x = 1; }
+    test_same("function f(){ switch (0) { case x: case y: } let x = 1; }"); // TDZ; function f() { x, y; let x = 1; }
 }

@@ -113,14 +113,14 @@ impl<'a> PeepholeOptimizations {
                 )
             } else {
                 let mut stmts = ArenaVec::new_in(ctx);
-                if discriminant.may_have_side_effects(ctx) {
+                if !discriminant.is_literal() {
                     stmts.push(Statement::new_expression_statement(
                         discriminant.span(),
                         discriminant,
                         ctx,
                     ));
                 }
-                if !Self::is_switch_case_empty(&case, true) {
+                if !Self::is_switch_case_removable(&case, true) {
                     stmts.extend(case.consequent);
                 }
                 Statement::new_block_statement_with_scope_id(
@@ -131,20 +131,6 @@ impl<'a> PeepholeOptimizations {
                 )
             };
             ctx.replace_statement(stmt, new_stmt);
-        }
-    }
-
-    fn is_switch_case_empty(stmt: &SwitchCase, allow_break: bool) -> bool {
-        if stmt.consequent.len() == 1 {
-            match stmt.consequent.last() {
-                Some(Statement::EmptyStatement(_)) => true,
-                Some(Statement::BreakStatement(break_stmt)) => {
-                    allow_break && break_stmt.label.is_none()
-                }
-                _ => false,
-            }
-        } else {
-            stmt.consequent.is_empty()
         }
     }
 

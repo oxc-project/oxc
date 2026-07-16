@@ -722,7 +722,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
+    pub fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
         let is_empty = if stmt.consequent.len() == 1 {
             match stmt.consequent.last() {
                 Some(Statement::EmptyStatement(_)) => true,
