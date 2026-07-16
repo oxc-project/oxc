@@ -24,9 +24,9 @@ fn is_pife_function(expression: &Expression<'_>) -> bool {
 }
 
 fn should_print_operand_comment_group(comments: &[Comment]) -> bool {
-    !comments.iter().any(|comment| comment.is_legal())
-        && (comments.iter().any(|comment| comment.is_annotation())
-            || comments.iter().all(|comment| !comment.is_statement_leading()))
+    comments.iter().any(|comment| comment.is_annotation())
+        || (!comments.iter().any(|comment| comment.is_legal())
+            && comments.iter().all(|comment| !comment.is_statement_leading()))
 }
 
 /// Which annotation kind an emission site expects to recover from

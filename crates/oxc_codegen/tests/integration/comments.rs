@@ -175,6 +175,15 @@ fn test_normal_comment_before_operand_positions() {
         "const value = a ? // operator comment\n// operand comment\n/*#__PURE__*/ (() => b)() : c;",
     );
 
+    // Operand groups print all-or-nothing. If an annotation shares an anchor
+    // with a legal comment, deferring the group would strand the annotation
+    // because orphan handling extracts only the legal comment.
+    test(
+        "const value = a ?? /*! legal */ /* istanbul ignore next */ f();",
+        "const value = a ?? /*! legal */ /* istanbul ignore next */ f();\n",
+    );
+    test_idempotency("const value = a ?? /*! legal */ /* istanbul ignore next */ f();");
+
     // Legal comments defer to statement-boundary orphan handling.
     test("const value = a ?? /*! legal */ [];", "const value = a ?? [];\n/*! legal */\n");
 }
