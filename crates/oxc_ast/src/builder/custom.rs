@@ -183,12 +183,15 @@ impl<'a> ExportNamedDeclaration<'a> {
     /// * `specifiers`
     /// * `source`
     #[inline]
-    pub fn boxed_plain<B: GetAstBuilder<'a>>(
+    pub fn boxed_plain<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        specifiers: T1,
         source: Option<StringLiteral<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    {
         ExportNamedDeclaration::boxed(
             span,
             None,
