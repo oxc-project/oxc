@@ -102,7 +102,7 @@ use oxc_syntax::{
     line_terminator::is_line_terminator,
     reference::ReferenceFlags,
     symbol::SymbolFlags,
-    xml_entities::XML_ENTITIES,
+    xml_entities::decode_entities,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -915,7 +915,7 @@ impl<'a> JsxImpl<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 let mut decoded = None;
-                Self::decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx);
+                decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx.allocator());
                 let jsx_text = if let Some(decoded) = decoded {
                     // Text contains HTML entities which were decoded.
                     // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Str`.
@@ -1115,7 +1115,7 @@ impl<'a> JsxImpl<'a> {
         }
 
         // Decode any HTML entities in this line
-        Self::decode_entities(trimmed_line.as_str(), acc, text_len, ctx);
+        decode_entities(trimmed_line.as_str(), acc, text_len, ctx.allocator());
 
         if acc.is_none() {
             // This is the first line containing text, and there are no HTML entities in this line.
@@ -1123,82 +1123,6 @@ impl<'a> JsxImpl<'a> {
             // If this turns out to be the only line, we won't need to construct an `ArenaString`,
             // so avoid all copying.
             *only_line = Some(trimmed_line);
-        }
-    }
-
-    /// Replace entities like "&nbsp;", "&#123;", and "&#xDEADBEEF;" with the characters they encode.
-    /// * See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>
-    ///   Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
-    ///
-    /// If either:
-    /// (a) Text contains any HTML entities that need to be decoded, or
-    /// (b) accumulator `acc` passed in to this method is `Some`
-    /// then push the decoded string to `acc` (initializing it first if required).
-    ///
-    /// Otherwise, leave `acc` as `None`. This indicates that the text contains no HTML entities.
-    /// Caller can use a slice of the original text, rather than making any copies.
-    fn decode_entities(
-        s: &str,
-        acc: &mut Option<ArenaStringBuilder<'a>>,
-        text_len: usize,
-        ctx: &TraverseCtx<'a>,
-    ) {
-        let mut chars = s.char_indices();
-        let mut prev = 0;
-        while let Some((i, c)) = chars.next() {
-            if c == '&' {
-                let mut start = i;
-                let mut end = None;
-                for (j, c) in chars.by_ref() {
-                    if c == ';' {
-                        end.replace(j);
-                        break;
-                    } else if c == '&' {
-                        start = j;
-                    }
-                }
-                if let Some(end) = end {
-                    let buffer = acc.get_or_insert_with(|| {
-                        ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator())
-                    });
-
-                    buffer.push_str(&s[prev..start]);
-                    prev = end + 1;
-                    let word = &s[start + 1..end];
-                    if let Some(decimal) = word.strip_prefix('#') {
-                        if let Some(hex) = decimal.strip_prefix('x') {
-                            if let Some(c) =
-                                u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
-                            {
-                                // `&#x0123;`
-                                buffer.push(c);
-                                continue;
-                            }
-                        } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32)
-                        {
-                            // `&#0123;`
-                            buffer.push(c);
-                            continue;
-                        }
-                    } else if let Some(c) = XML_ENTITIES.get(word) {
-                        // e.g. `&quote;`, `&amp;`
-                        buffer.push(*c);
-                        continue;
-                    }
-                    // Fallback
-                    buffer.push('&');
-                    buffer.push_str(word);
-                    buffer.push(';');
-                } else {
-                    // Reached end of text without finding a `;` after the `&`.
-                    // No point searching for a further `&`, so exit the loop.
-                    break;
-                }
-            }
-        }
-
-        if let Some(buffer) = acc.as_mut() {
-            buffer.push_str(&s[prev..]);
         }
     }
 
@@ -1416,14 +1340,5 @@ mod test {
         let Expression::Identifier(object) = &member.object else { panic!() };
         assert_eq!(object.name, "React");
         assert_eq!(member.property.name, "Fragment");
-    }
-    #[test]
-    fn entity_after_stray_amp() {
-        setup!(traverse_ctx, _transform_ctx);
-        let input = "& &amp;";
-        let mut acc = None;
-        super::JsxImpl::decode_entities(input, &mut acc, input.len(), traverse_ctx);
-        let out = acc.as_ref().unwrap().as_str();
-        assert_eq!(out, "& &");
     }
 }
