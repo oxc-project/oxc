@@ -20,7 +20,7 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Box, GetAllocator, arena::Arena, vec2::Vec as InnerVecGeneric};
+use crate::{Box, BoxedSlice, GetAllocator, arena::Arena, vec2::Vec as InnerVecGeneric};
 
 type InnerVec<'a, T> = InnerVecGeneric<'a, T, Arena>;
 
@@ -219,20 +219,18 @@ impl<'alloc, T> Vec<'alloc, T> {
         Self(vec)
     }
 
-    /// Convert [`Vec<T>`] into [`Box<[T]>`].
+    /// Convert [`Vec<T>`] into [`BoxedSlice<T>`].
     ///
     /// Any spare capacity in the `Vec` is lost.
-    ///
-    /// [`Box<[T]>`]: Box
     #[inline]
-    pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
+    pub fn into_boxed_slice(self) -> BoxedSlice<'alloc, T> {
         let slice = self.0.into_arena_slice_mut();
         let ptr = NonNull::from(slice);
         // SAFETY: `ptr` points to a valid `[T]`.
         // Contents of the `Vec` are in an arena.
-        // The returned `Box` has same lifetime as the `Vec`.
+        // The returned `BoxedSlice` has same lifetime as the `Vec`.
         // `Vec` is not `Drop`, so we don't need to free any unused capacity in the `Vec`.
-        unsafe { Box::from_non_null(ptr) }
+        unsafe { BoxedSlice::from_non_null(ptr) }
     }
 
     /// Converts [`Vec<T>`] into [`&'alloc [T]`].
@@ -404,9 +402,9 @@ where
     }
 }
 
-impl<'a, T: 'a> From<Vec<'a, T>> for Box<'a, [T]> {
+impl<'a, T: 'a> From<Vec<'a, T>> for BoxedSlice<'a, T> {
     #[inline(always)]
-    fn from(v: Vec<'a, T>) -> Box<'a, [T]> {
+    fn from(v: Vec<'a, T>) -> BoxedSlice<'a, T> {
         v.into_boxed_slice()
     }
 }

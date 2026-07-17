@@ -44,6 +44,7 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
+mod boxed_slice;
 mod cage;
 mod clone_in;
 mod convert;
@@ -76,6 +77,7 @@ pub use allocator::Allocator;
 #[cfg(feature = "bitset")]
 pub use bitset::BitSet;
 pub use boxed::{Box, Box as ArenaBox};
+pub use boxed_slice::{BoxedSlice, BoxedSlice as ArenaBoxedSlice};
 pub use clone_in::{CloneIn, CloneInSemanticIds};
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::{HashMap, HashMap as ArenaHashMap};

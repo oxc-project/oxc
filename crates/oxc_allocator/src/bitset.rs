@@ -6,13 +6,13 @@ use std::{
     slice,
 };
 
-use crate::{Allocator, Box, CloneIn, CloneInSemanticIds};
+use crate::{Allocator, BoxedSlice, CloneIn, CloneInSemanticIds};
 
 const USIZE_BITS: usize = usize::BITS as usize;
 
 /// A bitset allocated in an arena.
 pub struct BitSet<'alloc> {
-    entries: Box<'alloc, [usize]>,
+    entries: BoxedSlice<'alloc, usize>,
     max_bit_count: usize,
 }
 
@@ -34,7 +34,7 @@ impl<'alloc> BitSet<'alloc> {
         let slice = unsafe { slice::from_raw_parts_mut(ptr.as_ptr(), capacity) };
         // SAFETY: `NonNull::from(slice)` produces a valid pointer. The data in the arena.
         // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
-        let entries = unsafe { Box::from_non_null(NonNull::from(slice)) };
+        let entries = unsafe { BoxedSlice::from_non_null(NonNull::from(slice)) };
 
         Self { entries, max_bit_count }
     }
@@ -194,7 +194,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
         let new_slice = unsafe { slice::from_raw_parts_mut(dst_ptr.as_ptr(), slice.len()) };
         // SAFETY: `NonNull::from(new_slice)` produces a valid pointer. The data is in the arena.
         // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
-        let entries = unsafe { Box::from_non_null(NonNull::from(new_slice)) };
+        let entries = unsafe { BoxedSlice::from_non_null(NonNull::from(new_slice)) };
 
         BitSet { entries, max_bit_count: self.max_bit_count }
     }

@@ -3,7 +3,7 @@ use std::{
     vec::Vec as StdVec,
 };
 
-use crate::{Allocator, Box, Dummy, Vec};
+use crate::{Allocator, Box, BoxedSlice, Dummy, Vec};
 
 /// A trait to replace an existing AST node in place with a new node built from the old one.
 pub trait ReplaceWith<'a>: Dummy<'a> {
@@ -191,7 +191,7 @@ pub trait ReplaceWith<'a>: Dummy<'a> {
 impl<'a, T: ReplaceWith<'a>> ReplaceWith<'a> for Option<T> {}
 
 impl<'a, T: Dummy<'a>> ReplaceWith<'a> for Box<'a, T> {}
-impl<'a, T> ReplaceWith<'a> for Box<'a, [T]> {}
+impl<'a, T> ReplaceWith<'a> for BoxedSlice<'a, T> {}
 
 impl<'a, T> ReplaceWith<'a> for Vec<'a, T> {}
 
