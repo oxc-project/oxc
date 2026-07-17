@@ -22,7 +22,7 @@ catalog:
   publint: 0.3.21
   rolldown: 1.2.0
   tsdown: 0.22.9
-  vite-plus: 0.2.4
+  vite-plus: 0.2.5
   vitest: 4.1.10
 
 overrides:
