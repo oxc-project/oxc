@@ -285,11 +285,11 @@ fn js_parser_test() {
     test("while(1) { async function* x() {} }", "for (;;) { async function* x() { }}");
     test(
         "function _() { x(); switch (y) { case z: return w; } }",
-        "function _() { switch (x(), y) { case z:  return w; }}",
+        "function _() { if (x(), y === z) return w; }",
     );
     test(
         "function _() { if (t) { x(); switch (y) { case z: return w; } } }",
-        "function _() { if (t) switch (x(), y) { case z:  return w; } }",
+        "function _() { if (t && (x(), y === z)) return w; }",
     );
     test("a = '' + 0", "a = '0';");
     test("a = 0 + ''", "a = '0';");
@@ -2021,7 +2021,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
-        "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
+        "function wrapper(arg0, arg1) { if (arg0 === 0) return 1; }",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",
@@ -2407,13 +2407,13 @@ fn prune_empty_case_before_default() {
     test("switch (x) { default: case 1: bar() }", "switch (x) { default: case 1: bar();}");
 
     // String literals should also be removed
-    test("switch (x) { case 'a': case 'b': default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 'a': case 'b': default: bar() }", "x, bar();");
 
     // null literal (booleans get transformed to !0/!1 before this optimization runs)
-    test("switch (x) { case null: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case null: default: bar() }", "x, bar();");
 
     // BigInt literals
-    test("switch (x) { case 1n: case 2n: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 1n: case 2n: default: bar() }", "x, bar();");
 
     // Non-empty case should stop the pruning
     test(
@@ -2422,8 +2422,8 @@ fn prune_empty_case_before_default() {
     );
 
     // Only default - nothing to prune
-    test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { default: bar() }", "x, bar();");
 
     // No default - nothing to prune
-    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); }");
+    test("switch (x) { case 0: foo(); case 1: }", "x === 0 && foo();");
 }

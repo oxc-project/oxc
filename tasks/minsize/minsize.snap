@@ -3,7 +3,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 -------------------------------------------------------------------------------------
 72.14 kB   | 23.12 kB   | 23.70 kB   | 8.34 kB    | 8.54 kB    |          2 | react.development.js 
 
-173.90 kB  | 59.40 kB   | 59.82 kB   | 19.15 kB   | 19.33 kB   |          2 | moment.js  
+173.90 kB  | 59.38 kB   | 59.82 kB   | 19.15 kB   | 19.33 kB   |          2 | moment.js  
 
 287.63 kB  | 89.24 kB   | 90.07 kB   | 30.91 kB   | 31.95 kB   |          2 | jquery.js  
 
@@ -21,7 +21,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 3.20 MB    | 1.00 MB    | 1.01 MB    | 322.59 kB  | 331.56 kB  |          2 | echarts.js 
 
-6.69 MB    | 2.13 MB    | 2.31 MB    | 455.48 kB  | 488.28 kB  |          5 | antd.js    
+6.69 MB    | 2.13 MB    | 2.31 MB    | 455.49 kB  | 488.28 kB  |          5 | antd.js    
 
-10.95 MB   | 3.33 MB    | 3.49 MB    | 853.03 kB  | 915.50 kB  |          4 | typescript.js 
+10.95 MB   | 3.33 MB    | 3.49 MB    | 853.04 kB  | 915.50 kB  |          4 | typescript.js 
 

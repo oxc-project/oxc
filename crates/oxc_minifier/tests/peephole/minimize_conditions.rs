@@ -68,7 +68,7 @@ fn test_fold_one_child_blocks() {
     );
 
     test_same("function f(){foo()}");
-    test_same("switch(x){case y: foo()}");
+    test("switch(x){case y: foo()}", "x === y && foo();");
     test(
         "try{foo()}catch(ex){bar()}finally{baz()}",
         "try { foo(); } catch { bar(); } finally { baz(); }",

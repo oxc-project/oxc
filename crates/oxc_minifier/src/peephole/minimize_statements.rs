@@ -9,7 +9,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{TraverseCtx, keep_var::KeepVar};
@@ -738,6 +738,22 @@ impl<'a> PeepholeOptimizations {
         is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
     }
 
+    pub fn create_block_from_switch_case(
+        vec: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        if vec.len() == 1 && matches!(vec.first(), Some(Statement::BlockStatement(_))) {
+            vec.pop().unwrap()
+        } else {
+            Statement::new_block_statement_with_scope_id(
+                SPAN,
+                vec.take_in(ctx),
+                ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                ctx,
+            )
+        }
+    }
+
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -814,13 +830,56 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if switch_stmt.cases.is_empty() {
-            result.push(Statement::new_expression_statement(
-                switch_stmt.span,
-                switch_stmt.discriminant.take_in(ctx),
-                ctx,
-            ));
-            return;
+        match switch_stmt.cases.len() {
+            0 => {
+                result.push(Statement::new_expression_statement(
+                    switch_stmt.span,
+                    switch_stmt.discriminant.take_in(ctx),
+                    ctx,
+                ));
+                ctx.notice_change();
+                return;
+            }
+            1 if !ctx.state.dce && Self::can_switch_case_be_inlined(&switch_stmt.cases[0]) => {
+                ctx.notice_change();
+
+                let mut case = switch_stmt.cases.pop().unwrap();
+
+                if let Some(Statement::BreakStatement(break_stmt)) = case.consequent.last()
+                    && break_stmt.label.is_none()
+                {
+                    case.consequent.pop();
+                }
+
+                if let Some(test) = case.test {
+                    result.push(Statement::new_if_statement(
+                        switch_stmt.span,
+                        Expression::new_binary_expression(
+                            SPAN,
+                            switch_stmt.discriminant.take_in(ctx),
+                            BinaryOperator::StrictEquality,
+                            test,
+                            ctx,
+                        ),
+                        Self::create_block_from_switch_case(&mut case.consequent, ctx),
+                        None,
+                        ctx,
+                    ));
+                    return;
+                }
+
+                if !switch_stmt.discriminant.is_literal() {
+                    result.push(Statement::new_expression_statement(
+                        switch_stmt.discriminant.span(),
+                        switch_stmt.discriminant.take_in(ctx),
+                        ctx,
+                    ));
+                }
+
+                result.push(Self::create_block_from_switch_case(&mut case.consequent, ctx));
+                return;
+            }
+            _ => {}
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));

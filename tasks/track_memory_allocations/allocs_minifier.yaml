@@ -34,8 +34,8 @@ antd.js:
   file size: 6686316 # 6.69 MB
   sys allocs: 1044
   sys reallocs: 56
-  arena allocs: 372552
-  arena reallocs: 76745
+  arena allocs: 372547
+  arena reallocs: 76735
   arena size: 49031840 # 49.03 MB
 
 binder.ts:
