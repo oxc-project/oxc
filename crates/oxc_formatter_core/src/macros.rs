@@ -58,9 +58,9 @@ macro_rules! format_args {
 /// assert_eq!(
 ///     buffer.into_vec(),
 ///     vec![
-///         FormatElement::Token { text: "Hello" },
+///         FormatElement::token("Hello", &allocator),
 ///         FormatElement::Space,
-///         FormatElement::Token { text: "World" },
+///         FormatElement::token("World", &allocator),
 ///     ]
 ///  );
 /// #  Ok(())
@@ -93,7 +93,7 @@ macro_rules! write {
 /// dbg_write!(buffer, [token("Hello")])?;
 /// // ^-- prints: [src/main.rs:7][0] = StaticToken("Hello")
 ///
-/// assert_eq!(buffer.into_vec(), vec![FormatElement::Token { text: "Hello" }]);
+/// assert_eq!(buffer.into_vec(), vec![FormatElement::token("Hello", &allocator)]);
 /// # Ok(())
 /// # }
 /// ```

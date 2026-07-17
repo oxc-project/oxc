@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
+use oxc_allocator::{Allocator, GetAllocator};
 
 use crate::{
     Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState,
@@ -68,12 +68,12 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
         write(&mut buffer, Arguments::new(&[Argument::new(&content)]));
 
         // Dispatching on the heap buffer lets the 0/1-element cases return
-        // without ever allocating an `ArenaVec`.
+        // without ever allocating in the arena.
         match buffer.len() {
             0 => None,
             // Doesn't get cheaper than calling clone, use the element directly
             1 => buffer.pop(),
-            _ => Some(FormatElement::Interned(Interned::new(buffer.take_into_arena_vec()))),
+            _ => Some(FormatElement::Interned(buffer.take_into_interned())),
         }
     }
 
@@ -89,9 +89,9 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
             // Doesn't get cheaper than calling clone, use the element directly
             1 => elements.pop(),
             _ => {
-                // `Drain`'s exact size hint makes `from_iter_in` allocate exactly-sized
-                let vec = ArenaVec::from_iter_in(elements.drain(..), &self.allocator());
-                Some(FormatElement::Interned(Interned::new(vec)))
+                let interned = Interned::new_in(elements, self.allocator());
+                elements.clear();
+                Some(FormatElement::Interned(interned))
             }
         }
     }

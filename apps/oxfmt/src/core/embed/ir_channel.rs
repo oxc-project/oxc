@@ -11,11 +11,11 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, debug_span};
 
-use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_formatter::HtmlEmbedMeta;
 use oxc_formatter_core::{
     DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, FormatElement, IndentWidth,
-    LineMode, TextWidth, UniqueGroupIdBuilder,
+    LineMode, UniqueGroupIdBuilder,
 };
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
@@ -234,11 +234,11 @@ fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a Allo
             ir[write + 1] = FormatElement::ExpandParent;
             write += 2;
             read += 4;
-        } else if matches!(ir[read], FormatElement::Text { .. }) {
+        } else if matches!(ir[read], FormatElement::ArenaText(_)) {
             // Merge consecutive Text nodes
             let run_start = read;
             read += 1;
-            while read < ir.len() && matches!(ir[read], FormatElement::Text { .. }) {
+            while read < ir.len() && matches!(ir[read], FormatElement::ArenaText(_)) {
                 read += 1;
             }
 
@@ -247,15 +247,15 @@ fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a Allo
                     ir[write] = ir[run_start].clone();
                 }
             } else {
-                let mut sb = ArenaStringBuilder::new_in(allocator);
+                // Heap staging: the merged text lands in the arena exactly-sized below.
+                let mut sb = String::new();
                 for element in &ir[run_start..read] {
-                    if let FormatElement::Text { text, .. } = element {
-                        sb.push_str(text);
+                    if let FormatElement::ArenaText(text) = element {
+                        sb.push_str(text.text());
                     }
                 }
-                let text = sb.into_str();
-                let width = TextWidth::from_text(text, IndentWidth::default());
-                ir[write] = FormatElement::Text { text, width };
+                ir[write] =
+                    FormatElement::arena_text_measured(&sb, IndentWidth::default(), allocator);
             }
             write += 1;
         } else {

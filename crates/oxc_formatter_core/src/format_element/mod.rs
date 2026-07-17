@@ -10,46 +10,16 @@ use std::{borrow::Cow, ops::Deref};
 
 use unicode_width::UnicodeWidthStr;
 
-use oxc_allocator::ArenaVec;
-
 use crate::IndentWidth;
 
 use self::tag::{LabelId, Tag, TagKind};
 
-#[cfg(debug_assertions)]
+// In debug builds `GroupId`/`LabelId` carry `&'static str` debug names, so the element is larger.
 const _: () = {
-    if cfg!(target_pointer_width = "64") {
-        assert!(
-            size_of::<FormatElement>() == 40,
-            "`FormatElement` size exceeds 40 bytes, expected 40 bytes in 64-bit platforms"
-        );
-    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
-        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
-        //
-        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
-        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
-        assert!(
-            size_of::<FormatElement>() == 24,
-            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 32-bit platforms"
-        );
-    }
-};
-
-#[cfg(not(debug_assertions))]
-const _: () = {
-    if cfg!(target_pointer_width = "64") {
-        assert!(
-            size_of::<FormatElement>() == 24,
-            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 64-bit platforms"
-        );
-    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
-        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
-        //
-        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
-        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
+    if cfg!(target_pointer_width = "64") && !cfg!(debug_assertions) {
         assert!(
             size_of::<FormatElement>() == 16,
-            "`FormatElement` size exceeds 16 bytes, expected 16 bytes in 32-bit platforms"
+            "`FormatElement` size exceeds 16 bytes on 64-bit platforms"
         );
     }
 };
@@ -67,11 +37,19 @@ pub enum FormatElement<'a> {
     /// Forces the parent group to print in expanded mode.
     ExpandParent,
 
-    /// A ASCII only Token that contains no line breaks or tab characters.
-    Token { text: &'static str },
+    /// A short (≤ 7 bytes) ASCII token without line breaks or tab characters, stored inline.
+    /// Longer tokens fall back to [`FormatElement::ArenaText`].
+    /// Build via [`FormatElement::token`].
+    Token { len: u8, bytes: [u8; 7] },
 
-    /// An arbitrary text that can contain tabs, newlines, and unicode characters.
-    Text { text: &'a str, width: TextWidth },
+    /// ASCII single-line text borrowed from the document source: display width equals `len`,
+    /// the characters are resolved against the printer's source text at print time.
+    /// Texts that don't qualify fall back to [`FormatElement::ArenaText`].
+    SourceText { offset: u32, len: u32 },
+
+    /// Any other text (multiline, non-ASCII, tabs, owned/normalized or embedded-language
+    /// content): copied into the arena together with its precomputed [`TextWidth`].
+    ArenaText(ArenaText<'a>),
 
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
     /// line suffixes, potentially by inserting a hard line break.
@@ -106,8 +84,13 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::Space => fmt.write_str("Space"),
             FormatElement::Line(mode) => fmt.debug_tuple("Line").field(mode).finish(),
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
-            FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
-            FormatElement::Text { text, .. } => fmt.debug_tuple("Text").field(text).finish(),
+            FormatElement::Token { .. } => {
+                fmt.debug_tuple("Token").field(&self.token_text()).finish()
+            }
+            FormatElement::SourceText { offset, len } => {
+                std::write!(fmt, "SourceText({}..{})", offset, offset + len)
+            }
+            FormatElement::ArenaText(text) => fmt.debug_tuple("Text").field(&text.text()).finish(),
             FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
@@ -166,12 +149,130 @@ impl PrintMode {
     }
 }
 
-#[derive(Clone)]
-pub struct Interned<'a>(&'a [FormatElement<'a>]);
+/// Allocates one arena block holding `header` followed by a bitwise copy of `items`,
+/// returning a reference to the written header.
+///
+/// This is the single building block behind every thin-pointer payload of
+/// [`FormatElement`] ([`Interned`], [`BestFittingElement`], [`ArenaText`]): keeping the
+/// length (and any metadata) in the arena instead of a fat pointer keeps each variant
+/// at one word. Read the payload back with [`trailing`].
+///
+/// The bitwise copy is sound for any `!needs_drop` payload (checked at compile time);
+/// the borrowed `items` are left untouched.
+fn alloc_header_with_trailing<'a, H, T>(
+    header: H,
+    items: &[T],
+    allocator: &'a oxc_allocator::Allocator,
+) -> &'a H {
+    const {
+        assert!(!std::mem::needs_drop::<T>());
+        assert!(align_of::<T>() <= align_of::<H>());
+        assert!(size_of::<H>().is_multiple_of(align_of::<T>()));
+    }
+    let layout = std::alloc::Layout::from_size_align(
+        size_of::<H>().checked_add(size_of_val(items)).expect("thin slice payload too large"),
+        align_of::<H>(),
+    )
+    .expect("thin slice payload too large");
+    let ptr = allocator.alloc_layout(layout);
+    // SAFETY: `ptr` is a fresh allocation big enough for the header plus the payload,
+    // aligned for both (asserted above); the regions cannot overlap the borrowed `items`.
+    unsafe {
+        let header_ptr = ptr.as_ptr().cast::<H>();
+        header_ptr.write(header);
+        let target = header_ptr.add(1).cast::<T>();
+        ptr::copy_nonoverlapping(items.as_ptr(), target, items.len());
+        &*header_ptr
+    }
+}
+
+/// Reads back the `len` payload items following `header`.
+///
+/// # Safety
+/// `header` must come from [`alloc_header_with_trailing`] called with `len` items of type `T`.
+unsafe fn trailing<H, T>(header: &H, len: usize) -> &[T] {
+    // SAFETY: `alloc_header_with_trailing` wrote `len` `T`s immediately after the header.
+    unsafe {
+        let ptr = (&raw const *header).add(1).cast::<T>();
+        std::slice::from_raw_parts(ptr, len)
+    }
+}
+
+/// Header of a thin slice: the payload follows immediately after it in the same arena
+/// allocation (see [`alloc_header_with_trailing`]).
+#[repr(C, align(8))]
+pub(crate) struct ThinSliceHeader {
+    len: u32,
+}
+
+impl ThinSliceHeader {
+    fn alloc_in<'a, T>(items: &[T], allocator: &'a oxc_allocator::Allocator) -> &'a Self {
+        let len = u32::try_from(items.len()).expect("thin slice longer than u32::MAX");
+        alloc_header_with_trailing(Self { len }, items, allocator)
+    }
+}
+
+/// Header of an arena text: `len` UTF-8 bytes follow immediately after it in the same
+/// arena allocation, with the precomputed [`TextWidth`] kept alongside.
+#[repr(C, align(4))]
+pub(crate) struct ArenaTextHeader {
+    width: TextWidth,
+    len: u32,
+}
+
+/// A text stored in the arena with its metadata, thin-pointer sized (see `ArenaTextHeader`).
+#[derive(Clone, Copy)]
+pub struct ArenaText<'a>(&'a ArenaTextHeader);
+
+impl<'a> ArenaText<'a> {
+    pub(crate) fn alloc_in(
+        text: &str,
+        width: TextWidth,
+        allocator: &'a oxc_allocator::Allocator,
+    ) -> Self {
+        let len = u32::try_from(text.len()).expect("text longer than u32::MAX");
+        Self(alloc_header_with_trailing(ArenaTextHeader { width, len }, text.as_bytes(), allocator))
+    }
+
+    pub fn text(self) -> &'a str {
+        // SAFETY: `alloc_in` stored `len` bytes of a valid `&str` after the header.
+        unsafe { std::str::from_utf8_unchecked(trailing::<_, u8>(self.0, self.0.len as usize)) }
+    }
+
+    pub fn width(self) -> TextWidth {
+        self.0.width
+    }
+}
+
+impl PartialEq for ArenaText<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.width() == other.width() && self.text() == other.text()
+    }
+}
+
+impl Eq for ArenaText<'_> {}
+
+impl std::fmt::Debug for ArenaText<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.text().fmt(f)
+    }
+}
+
+/// A shared, immutable slice of format elements, thin-pointer sized (see `ThinSliceHeader`).
+#[derive(Clone, Copy)]
+pub struct Interned<'a>(&'a ThinSliceHeader);
 
 impl<'a> Interned<'a> {
-    pub(crate) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
-        Self(content.into_arena_slice())
+    pub(crate) fn new_in(
+        elements: &[FormatElement<'a>],
+        allocator: &'a oxc_allocator::Allocator,
+    ) -> Self {
+        Self(ThinSliceHeader::alloc_in(elements, allocator))
+    }
+
+    fn as_slice(&self) -> &[FormatElement<'a>] {
+        // SAFETY: `new_in` stored `len` elements after the header.
+        unsafe { trailing(self.0, self.0.len as usize) }
     }
 }
 
@@ -185,13 +286,13 @@ impl Eq for Interned<'_> {}
 
 impl Hash for Interned<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.as_ptr().addr().hash(state);
+        (&raw const *self.0).addr().hash(state);
     }
 }
 
 impl std::fmt::Debug for Interned<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        (**self).fmt(f)
     }
 }
 
@@ -199,7 +300,7 @@ impl<'a> Deref for Interned<'a> {
     type Target = [FormatElement<'a>];
 
     fn deref(&self) -> &Self::Target {
-        self.0
+        self.as_slice()
     }
 }
 
@@ -237,7 +338,7 @@ pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) ->
     }
 }
 
-impl FormatElement<'_> {
+impl<'a> FormatElement<'a> {
     /// Returns `true` if self is a [FormatElement::Tag]
     pub const fn is_tag(&self) -> bool {
         matches!(self, FormatElement::Tag(_))
@@ -260,7 +361,134 @@ impl FormatElement<'_> {
     }
 
     pub const fn is_text(&self) -> bool {
-        matches!(self, FormatElement::Text { .. } | FormatElement::Token { .. })
+        matches!(
+            self,
+            FormatElement::SourceText { .. }
+                | FormatElement::ArenaText(_)
+                | FormatElement::Token { .. }
+        )
+    }
+
+    /// Maximum byte length of an inline [`FormatElement::Token`].
+    pub const INLINE_TOKEN_MAX: usize = 7;
+
+    /// Builds a token element from a static ASCII string: inline if it fits
+    /// [`FormatElement::INLINE_TOKEN_MAX`], otherwise copied into the arena.
+    ///
+    /// Prefer [`crate::builders::token`] in formatting code — it routes long tokens
+    /// through the per-document cache instead of allocating per write.
+    pub fn token(text: &'static str, allocator: &'a oxc_allocator::Allocator) -> Self {
+        #[expect(clippy::cast_possible_truncation)]
+        Self::token_inline(text).unwrap_or_else(|| {
+            FormatElement::ArenaText(ArenaText::alloc_in(
+                text,
+                TextWidth::single(text.len() as u32),
+                allocator,
+            ))
+        })
+    }
+
+    /// The inline form of [`FormatElement::token`]; `None` if `text` exceeds
+    /// [`FormatElement::INLINE_TOKEN_MAX`].
+    pub(crate) fn token_inline(text: &str) -> Option<Self> {
+        let len = text.len();
+        if len <= Self::INLINE_TOKEN_MAX {
+            let mut bytes = [0u8; Self::INLINE_TOKEN_MAX];
+            bytes[..len].copy_from_slice(text.as_bytes());
+            #[expect(clippy::cast_possible_truncation)]
+            Some(FormatElement::Token { len: len as u8, bytes })
+        } else {
+            None
+        }
+    }
+
+    /// Builds the right text element for `text`: offset-based [`FormatElement::SourceText`]
+    /// if it borrows from the document source and is printable ASCII, arena-copied otherwise.
+    /// `width` is only evaluated for the non-ASCII/multiline arena fallback.
+    pub fn text<C: crate::FormatContext>(
+        text: &str,
+        width: impl FnOnce() -> TextWidth,
+        state: &crate::FormatState<'a, C>,
+    ) -> Self {
+        if is_all_printable_ascii(text) {
+            #[expect(clippy::cast_possible_truncation)]
+            let len = text.len() as u32;
+            if let Some(offset) = state.source_offset_of(text) {
+                FormatElement::SourceText { offset, len }
+            } else {
+                FormatElement::ArenaText(ArenaText::alloc_in(
+                    text,
+                    TextWidth::single(len),
+                    state.allocator(),
+                ))
+            }
+        } else {
+            FormatElement::ArenaText(ArenaText::alloc_in(text, width(), state.allocator()))
+        }
+    }
+
+    /// Builds an [`FormatElement::ArenaText`] by copying `text` into the arena together
+    /// with its precomputed width. Use [`FormatElement::text`] when the text may borrow
+    /// from the document source, and [`FormatElement::arena_text_measured`] when the
+    /// width hasn't been computed yet.
+    pub fn arena_text(
+        text: &str,
+        width: TextWidth,
+        allocator: &'a oxc_allocator::Allocator,
+    ) -> Self {
+        FormatElement::ArenaText(ArenaText::alloc_in(text, width, allocator))
+    }
+
+    /// [`FormatElement::arena_text`] that measures the width itself, so callers can't
+    /// pair a text with a stale width computed from a different string.
+    pub fn arena_text_measured(
+        text: &str,
+        indent_width: IndentWidth,
+        allocator: &'a oxc_allocator::Allocator,
+    ) -> Self {
+        Self::arena_text(text, TextWidth::from_text(text, indent_width), allocator)
+    }
+
+    /// The text of a [`FormatElement::Token`] / [`FormatElement::SourceText`] /
+    /// [`FormatElement::ArenaText`] element, resolving source offsets against `source`
+    /// (the source text of the document the element belongs to).
+    /// Returns `None` for non-text elements.
+    pub fn text_content<'s>(&'s self, source: &'s str) -> Option<&'s str> {
+        match self {
+            FormatElement::Token { .. } => Some(self.token_text()),
+            _ => self.long_lived_text(source),
+        }
+    }
+
+    /// Like [`FormatElement::text_content`], but only for the text variants whose text
+    /// outlives the element itself (`SourceText` resolves into `source`, `ArenaText`
+    /// into the arena). Returns `None` for inline tokens and non-text elements.
+    pub fn long_lived_text<'s>(&self, source: &'s str) -> Option<&'s str>
+    where
+        'a: 's,
+    {
+        match self {
+            FormatElement::SourceText { offset, len } => {
+                Some(&source[*offset as usize..(*offset + *len) as usize])
+            }
+            FormatElement::ArenaText(text) => Some(text.text()),
+            _ => None,
+        }
+    }
+
+    /// The text of an inline [`FormatElement::Token`].
+    ///
+    /// # Panics
+    /// Panics if `self` is not a [`FormatElement::Token`].
+    #[inline]
+    pub fn token_text(&self) -> &str {
+        match self {
+            FormatElement::Token { len, bytes } => {
+                // SAFETY: `token` copies a prefix of a valid ASCII `&str` into `bytes`.
+                unsafe { std::str::from_utf8_unchecked(&bytes[..*len as usize]) }
+            }
+            _ => panic!("`token_text` called on a non-token element"),
+        }
     }
 
     pub const fn is_space(&self) -> bool {
@@ -278,13 +506,14 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::Text { text: _, width } => width.propagates_expand(),
+            FormatElement::ArenaText(text) => text.width().propagates_expand(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
             FormatElement::BestFitting(best_fitting) => best_fitting.most_flat().will_break(),
-            // `FormatElement::Token` cannot contain line breaks
+            // Tokens and source texts cannot contain line breaks
             FormatElement::Token { .. }
+            | FormatElement::SourceText { .. }
             | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
@@ -321,31 +550,42 @@ impl FormatElements for FormatElement<'_> {
 /// can pick the best fitting variant.
 ///
 /// Best fitting is defined as the variant that takes the most horizontal space but fits on the line.
-#[derive(Clone, Eq, PartialEq)]
-pub struct BestFittingElement<'a> {
-    /// The different variants for this element.
-    /// The first element is the one that takes up the most space horizontally (the most flat),
-    /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: &'a [&'a [FormatElement<'a>]],
+/// Thin-pointer sized: the header's payload is the list of fat variant slices
+/// (see `alloc_header_with_trailing`).
+#[derive(Clone, Copy)]
+pub struct BestFittingElement<'a>(&'a ThinSliceHeader);
+
+impl PartialEq for BestFittingElement<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        ptr::eq(self.0, other.0)
+    }
 }
+
+impl Eq for BestFittingElement<'_> {}
 
 impl<'a> BestFittingElement<'a> {
     /// Creates a new best fitting IR with the given variants. The method itself isn't unsafe
     /// but it is to discourage people from using it because the printer will panic if
     /// the slice doesn't contain at least the least and most expanded variants.
     ///
+    /// The first variant must be the one that takes up the most horizontal space (the most flat),
+    /// the last the one that takes up the least (the most expanded).
+    ///
     /// You're looking for a way to create a `BestFitting` object, use the `best_fitting![least_expanded, most_expanded]` macro.
     ///
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: ArenaVec<'a, &'a [FormatElement<'a>]>) -> Self {
+    pub unsafe fn from_slices_unchecked(
+        variants: &[&'a [FormatElement<'a>]],
+        allocator: &'a oxc_allocator::Allocator,
+    ) -> Self {
         debug_assert!(
             variants.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
         );
 
-        Self { variants: variants.into_arena_slice() }
+        Self(ThinSliceHeader::alloc_in(variants, allocator))
     }
 
     /// Returns the most expanded variant
@@ -354,7 +594,7 @@ impl<'a> BestFittingElement<'a> {
     ///
     /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_expanded(&self) -> &[FormatElement<'a>] {
-        self.variants.last().expect(
+        self.variants().last().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",
         )
     }
@@ -362,13 +602,14 @@ impl<'a> BestFittingElement<'a> {
     /// Splits the variants into the most expanded and the remaining flat variants
     pub fn split_to_most_expanded_and_flat_variants(
         &self,
-    ) -> (&&[FormatElement<'a>], &[&[FormatElement<'a>]]) {
+    ) -> (&&'a [FormatElement<'a>], &[&'a [FormatElement<'a>]]) {
         // SAFETY: We have already asserted that there are at least two variants for creating this struct.
-        unsafe { self.variants.split_last().unwrap_unchecked() }
+        unsafe { self.variants().split_last().unwrap_unchecked() }
     }
 
-    pub fn variants(&self) -> &[&'a [FormatElement<'a>]] {
-        self.variants
+    pub fn variants(self) -> &'a [&'a [FormatElement<'a>]] {
+        // SAFETY: `from_slices_unchecked` stored `len` fat variant slices after the header.
+        unsafe { trailing(self.0, self.0.len as usize) }
     }
 
     /// Returns the least expanded variant
@@ -377,7 +618,7 @@ impl<'a> BestFittingElement<'a> {
     ///
     /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_flat(&self) -> &[FormatElement<'a>] {
-        self.variants.first().expect(
+        self.variants().first().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",
         )
     }
@@ -385,7 +626,7 @@ impl<'a> BestFittingElement<'a> {
 
 impl std::fmt::Debug for BestFittingElement<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_list().entries(self.variants).finish()
+        f.debug_list().entries(self.variants()).finish()
     }
 }
 

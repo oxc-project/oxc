@@ -32,6 +32,9 @@ pub fn format<'a>(
 
     let context = GraphqlFormatContext::new(options, source, comments);
     let mut state = FormatState::new(context, allocator);
+    // Entry point: the document is printed against this context's own source,
+    // so offset-based `SourceText` storage is safe.
+    state.enable_source_text();
     // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
     let mut buffer = VecBuffer::new(&mut state);
 
@@ -67,6 +70,9 @@ pub fn format_to_ir<'a>(
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
+    // NOTE: As an embedded (`format_to_ir`) entry point, this run must NOT call
+    // `enable_source_text()`: the IR is spliced into a host document and printed
+    // against the host's source text.
     let mut state = FormatState::new(context, allocator);
     let mut buffer = VecBuffer::new(&mut state);
 

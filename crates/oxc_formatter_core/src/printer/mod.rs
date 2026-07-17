@@ -11,7 +11,7 @@ pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
 use crate::{
-    ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
+    ActualStart, BestFittingElement, DedentMode, FormatElement, GroupId, IndentStyle,
     InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextRange, TextWidth,
 };
 
@@ -64,11 +64,17 @@ impl Printed {
 pub struct Printer<'a> {
     options: PrinterOptions,
     state: PrinterState<'a>,
+    /// The document source text; [`FormatElement::SourceText`] offsets resolve against it.
+    source: &'a str,
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(options: PrinterOptions, sorted_tailwind_classes: &'a [String]) -> Self {
-        Self::with_capacity(0, options, sorted_tailwind_classes)
+    pub fn new(
+        source: &'a str,
+        options: PrinterOptions,
+        sorted_tailwind_classes: &'a [String],
+    ) -> Self {
+        Self::with_capacity(0, source, options, sorted_tailwind_classes)
     }
 
     /// Construct a [`Printer`] with the underlying output buffer pre-sized to
@@ -80,6 +86,7 @@ impl<'a> Printer<'a> {
     /// which copies the full buffer's bytes).
     pub fn with_capacity(
         capacity: usize,
+        source: &'a str,
         options: PrinterOptions,
         sorted_tailwind_classes: &'a [String],
     ) -> Self {
@@ -90,7 +97,12 @@ impl<'a> Printer<'a> {
             }
         };
         let buffer = CodeBuffer::with_capacity_and_indent(capacity, indent_char, indent_width);
-        Self { options, state: PrinterState::new(buffer, sorted_tailwind_classes) }
+        Self { options, state: PrinterState::new(buffer, sorted_tailwind_classes), source }
+    }
+
+    /// Resolves a [`FormatElement::SourceText`] against the document source.
+    fn source_slice(&self, offset: u32, len: u32) -> &'a str {
+        &self.source[offset as usize..(offset + len) as usize]
     }
 
     /// Prints the passed in element as well as all its content
@@ -151,9 +163,13 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            FormatElement::Token { text } => self.print_text(Text::Token(text)),
-            FormatElement::Text { text, width } => {
-                self.print_text(Text::Text { text, width: *width });
+            FormatElement::Token { .. } => self.print_text(Text::Token(element.token_text())),
+            FormatElement::SourceText { offset, len } => {
+                // ASCII single-line by construction, same invariants as a token
+                self.print_text(Text::Token(self.source_slice(*offset, *len)));
+            }
+            FormatElement::ArenaText(text) => {
+                self.print_text(Text::Text { text: text.text(), width: text.width() });
             }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
@@ -292,13 +308,13 @@ impl<'a> Printer<'a> {
                 indent_stack.end_mark_root();
             }
 
-            FormatElement::Tag(StartConditionalContent(Condition { mode, group_id })) => {
-                let group_mode = match group_id {
+            FormatElement::Tag(StartConditionalContent(condition)) => {
+                let group_mode = match condition.group_id() {
                     None => args.mode(),
-                    Some(id) => self.state.group_modes.unwrap_print_mode(*id, element),
+                    Some(id) => self.state.group_modes.unwrap_print_mode(id, element),
                 };
 
-                if group_mode == *mode {
+                if group_mode == condition.mode() {
                     stack.push(TagKind::ConditionalContent, args);
                 } else {
                     queue.skip_content(TagKind::ConditionalContent);
@@ -1162,11 +1178,15 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
             }
 
-            FormatElement::Token { text } => {
-                return Ok(self.fits_text(Text::Token(text)));
+            // ASCII single-line by construction: only the byte length matters for fitting.
+            FormatElement::Token { len, .. } => {
+                return Ok(self.fits_text_width(*len as usize));
             }
-            FormatElement::Text { text, width } => {
-                return Ok(self.fits_text(Text::Text { text, width: *width }));
+            FormatElement::SourceText { len, .. } => {
+                return Ok(self.fits_text_width(*len as usize));
+            }
+            FormatElement::ArenaText(text) => {
+                return Ok(self.fits_text(Text::Text { text: text.text(), width: text.width() }));
             }
 
             FormatElement::LineSuffixBoundary => {
@@ -1230,14 +1250,14 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             }
 
             FormatElement::Tag(StartConditionalContent(condition)) => {
-                let group_mode = match condition.group_id {
+                let group_mode = match condition.group_id() {
                     None => args.mode(),
                     Some(group_id) => {
                         self.group_modes().get_print_mode(group_id).unwrap_or_else(|| args.mode())
                     }
                 };
 
-                if group_mode == condition.mode {
+                if group_mode == condition.mode() {
                     self.stack.push(TagKind::ConditionalContent, args);
                 } else {
                     self.queue.skip_content(TagKind::ConditionalContent);
@@ -1316,21 +1336,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     }
 
     fn fits_text(&mut self, text: Text) -> Fits {
-        let indent = std::mem::take(&mut self.state.pending_indent);
-        self.state.line_width += indent.level() as usize
-            * self.options().indent_width().value() as usize
-            + indent.align() as usize;
-
-        if self.state.pending_space {
-            self.state.line_width += 1;
-        }
-
         match text {
-            Text::Token(text) => {
-                self.state.line_width += text.len();
-            }
+            Text::Token(text) => self.fits_text_width(text.len()),
             Text::Text { text: _, width } => {
                 if width.is_multiline() {
+                    self.flush_pending_indent_and_space();
                     return if self.must_be_flat
                         || self.state.line_width + width.value() as usize
                             > usize::from(self.options().print_width)
@@ -1341,9 +1351,27 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     };
                 }
 
-                self.state.line_width += width.value() as usize;
+                self.fits_text_width(width.value() as usize)
             }
         }
+    }
+
+    fn flush_pending_indent_and_space(&mut self) {
+        let indent = std::mem::take(&mut self.state.pending_indent);
+        self.state.line_width += indent.level() as usize
+            * self.options().indent_width().value() as usize
+            + indent.align() as usize;
+
+        if self.state.pending_space {
+            self.state.line_width += 1;
+        }
+    }
+
+    /// [`FitsMeasurer::fits_text`] for single-line text whose display width is already
+    /// known: the characters themselves never matter for fitting.
+    fn fits_text_width(&mut self, width: usize) -> Fits {
+        self.flush_pending_indent_and_space();
+        self.state.line_width += width;
 
         if self.state.line_width > usize::from(self.options().print_width) {
             return Fits::No;
@@ -1503,7 +1531,7 @@ mod tests {
         let elements = buffer.into_vec();
         let document = Document::new(elements, Vec::default());
         document.propagate_expand();
-        Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
+        Printer::new("", options, &[]).print(document.elements()).expect("Document to be valid")
     }
 
     #[test]
@@ -1948,6 +1976,7 @@ two lines`,
         let document = Document::new(buffer.into_vec(), Vec::default());
 
         let printed = Printer::new(
+            "",
             PrinterOptions::default()
                 .with_indent_style(IndentStyle::Tab)
                 .with_print_width(PrintWidth::new(10)),

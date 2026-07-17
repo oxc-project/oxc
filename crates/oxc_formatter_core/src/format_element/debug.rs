@@ -11,8 +11,6 @@
 //! without Tailwind support get the default `None` and an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>`
 //! marker if a `FormatElement::TailwindClass` ever appears.
 
-#![expect(clippy::mutable_key_type)]
-
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
@@ -24,7 +22,7 @@ use crate::{
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
     format::write,
     format_element::{
-        LineMode, TextWidth,
+        LineMode,
         tag::{self, DedentMode, GroupMode, Tag},
     },
     write as w,
@@ -73,7 +71,7 @@ impl std::fmt::Display for DisplayDocument<'_, '_> {
 
         let printer_options = PrinterOptions::default();
         let (rendered_elements, sorted) = document.into_elements_and_tailwind_classes();
-        let printed = Printer::new(printer_options, &sorted)
+        let printed = Printer::new(self.source_text, printer_options, &sorted)
             .print(rendered_elements)
             .expect("Expected a valid document");
 
@@ -116,7 +114,8 @@ where
             match element {
                 element @ (FormatElement::Space
                 | FormatElement::Token { .. }
-                | FormatElement::Text { .. }) => {
+                | FormatElement::SourceText { .. }
+                | FormatElement::ArenaText(_)) => {
                     if !in_text {
                         w!(f, [token("\"")]);
                     }
@@ -128,21 +127,19 @@ where
                             w!(f, [token(" ")]);
                         }
                         element if element.is_text() => {
-                            // escape quotes
-                            let new_element = match element {
-                                // except for static text because source_position is unknown
-                                FormatElement::Token { .. } => element.clone(),
-                                FormatElement::Text { text, width: _ } => {
-                                    let text = text.cow_replace('"', "\\\"");
-                                    FormatElement::Text {
-                                        text: f.allocator().alloc_str(&text),
-                                        width: TextWidth::from_text(
-                                            &text,
-                                            f.options().indent_width(),
-                                        ),
-                                    }
-                                }
-                                _ => unreachable!(),
+                            // escape quotes (tokens can't contain quotes, pass through)
+                            let new_element = if let FormatElement::Token { .. } = element {
+                                element.clone()
+                            } else {
+                                let raw = element
+                                    .text_content(f.context().source_code())
+                                    .expect("`is_text` guarantees a text element");
+                                let text = raw.cow_replace('"', "\\\"");
+                                FormatElement::arena_text_measured(
+                                    &text,
+                                    f.options().indent_width(),
+                                    f.allocator(),
+                                )
                             };
                             f.write_element(new_element);
                         }
@@ -206,7 +203,7 @@ where
                     match interned_elements.get(interned).copied() {
                         None => {
                             let index = interned_elements.len();
-                            interned_elements.insert(interned.clone(), index);
+                            interned_elements.insert(*interned, index);
 
                             w!(
                                 f,

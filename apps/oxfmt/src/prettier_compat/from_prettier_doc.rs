@@ -13,7 +13,7 @@ use serde_json::Value;
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+    PrintMode, Tag, UniqueGroupIdBuilder,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -77,13 +77,15 @@ fn convert_doc<'a>(
     match doc {
         Value::String(s) => {
             if !s.is_empty() {
-                let text = ctx.allocator.alloc_str(s);
                 // NOTE: `IndentWidth` only affects tab character width calculation.
                 // If a `Doc = string` node contained `\t` (e.g. inside a string literal like `"\t"`?),
                 // the width could be miscalculated when `options.indent_width` != 2.
                 // However, the default value is sufficient in practice.
-                let width = TextWidth::from_text(text, IndentWidth::default());
-                out.push(FormatElement::Text { text, width });
+                out.push(FormatElement::arena_text_measured(
+                    s,
+                    IndentWidth::default(),
+                    ctx.allocator,
+                ));
             }
             Ok(())
         }

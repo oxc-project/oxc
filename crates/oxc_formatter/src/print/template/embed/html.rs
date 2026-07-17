@@ -166,8 +166,8 @@ pub(super) fn format_html_doc<'a>(
     let placeholder_count: usize = ir
         .iter()
         .map(|el| match el {
-            FormatElement::Text { text, .. } => {
-                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
+            FormatElement::ArenaText(text) => {
+                super::count_placeholders(text.text(), PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
             }
             _ => 0,
         })
@@ -180,9 +180,12 @@ pub(super) fn format_html_doc<'a>(
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
         for element in ir {
             match &element {
-                FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts =
-                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
+                FormatElement::ArenaText(text) if text.text().contains(PLACEHOLDER_PREFIX) => {
+                    let parts = super::split_on_placeholders(
+                        text.text(),
+                        PLACEHOLDER_PREFIX,
+                        PLACEHOLDER_SUFFIX,
+                    );
                     for (i, part) in parts.iter().enumerate() {
                         if i.is_multiple_of(2) {
                             if !part.is_empty() {

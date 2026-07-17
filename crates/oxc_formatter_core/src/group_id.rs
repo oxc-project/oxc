@@ -17,6 +17,19 @@ mod debug {
         pub(super) fn new(value: NonZeroU32, debug_name: &'static str) -> Self {
             Self { value, name: debug_name }
         }
+
+        /// Reconstructs an id from its packed representation (see `tag::Group`).
+        pub(crate) fn from_value(value: NonZeroU32, debug_name: &'static str) -> Self {
+            Self::new(value, debug_name)
+        }
+
+        pub(crate) fn value(self) -> NonZeroU32 {
+            self.value
+        }
+
+        pub(crate) fn debug_name(self) -> &'static str {
+            self.name
+        }
     }
 
     impl std::fmt::Debug for GroupId {
@@ -44,6 +57,15 @@ mod release {
         #[cfg_attr(debug_assertions, expect(unused))]
         pub(super) fn new(value: NonZeroU32, _: &'static str) -> Self {
             Self { value }
+        }
+
+        /// Reconstructs an id from its packed representation (see `tag::Group`).
+        pub(crate) fn from_value(value: NonZeroU32, debug_name: &'static str) -> Self {
+            Self::new(value, debug_name)
+        }
+
+        pub(crate) fn value(self) -> NonZeroU32 {
+            self.value
         }
     }
 
@@ -75,9 +97,12 @@ impl UniqueGroupIdBuilder {
     ///
     /// # Panics
     ///
-    /// Panics if the internal counter overflows `u32::MAX`.
+    /// Panics if the internal counter leaves the 30-bit range that the bit-packed
+    /// `tag::Group` / `tag::Condition` representations can hold.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        assert!(id < (1 << 30), "group id counter left the packable 30-bit range");
+        // The counter starts at 1, so `id` is never zero.
         let id = NonZeroU32::new(id).unwrap_or_else(|| panic!("Group ID counter overflowed"));
 
         GroupId::new(id, debug_name)

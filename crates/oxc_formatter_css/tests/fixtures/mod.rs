@@ -100,9 +100,7 @@ impl FixtureFormatter for CssHarness {
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
 fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{
-        Document, EmbeddedContext, FormatElement, FormatOptions, Printer, TextWidth,
-    };
+    use oxc_formatter_core::{Document, EmbeddedContext, FormatElement, FormatOptions, Printer};
 
     let allocator = Allocator::default();
     let group_id_builder = oxc_formatter_core::UniqueGroupIdBuilder::default();
@@ -122,11 +120,8 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
     let elements = ArenaVec::from_iter_in(
         elements.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
-                let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
-                FormatElement::Text {
-                    text,
-                    width: TextWidth::from_text(text, options.indent_width),
-                }
+                let text = std::format!("`PLACEHOLDER-{index}`");
+                FormatElement::arena_text_measured(&text, options.indent_width, &allocator)
             }
             other => other.clone(),
         }),
@@ -134,7 +129,7 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
     )
     .into_arena_slice();
     let mut code =
-        Printer::with_capacity(source.len(), options.as_print_options(), &tailwind_classes)
+        Printer::with_capacity(source.len(), source, options.as_print_options(), &tailwind_classes)
             .print(elements)
             .expect("print should succeed")
             .into_code();

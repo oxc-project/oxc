@@ -42,6 +42,17 @@ Pick by what you're building:
 
 `Formatter::intern` and `BestFitting` already stage on the heap; consumer crates get this for free.
 
+### Source-offset text storage (`SourceText`)
+
+Texts borrowed from the document source can be stored as offset-based `FormatElement::SourceText`
+(8 bytes, resolved against the source at print time) instead of arena copies.
+This is opt-in per format run (`FormatState::enable_source_text`), and the polarity is deliberate:
+
+- `format()`-style entry points (the document is printed against the context's own source) opt in
+- `format_to_ir()`-style embedded entry points must NOT: their IR is spliced into a host
+  document and printed against the host's source, where offsets would resolve to the wrong text
+- Forgetting the opt-in only costs memory (texts fall back to arena copies), never correctness
+
 ### Generic context design
 
 The core is parameterized over a consumer-supplied context so it stays language-agnostic:

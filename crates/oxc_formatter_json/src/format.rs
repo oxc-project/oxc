@@ -35,6 +35,9 @@ pub fn format<'a>(
         parsed.source_offset,
     );
     let mut state = FormatState::new(context, allocator);
+    // Entry point: the document is printed against this context's own source,
+    // so offset-based `SourceText` storage is safe.
+    state.enable_source_text();
     // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
     let mut buffer = VecBuffer::new(&mut state);
 

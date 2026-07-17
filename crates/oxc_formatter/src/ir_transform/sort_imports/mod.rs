@@ -40,10 +40,11 @@ use crate::{
 /// # Panics
 /// Panics if `sort_imports` option is not enabled.
 pub fn sort_imports_chunk(formatter: &mut JsFormatter<'_, '_>, chunk_start: usize) {
+    let source = formatter.context().source_text().as_str();
     let elements = &formatter.elements()[chunk_start..];
     let options = formatter.options().sort_imports.as_ref().unwrap();
 
-    let sorted_elements = transform(elements, options, formatter.allocator());
+    let sorted_elements = transform(elements, options, formatter.allocator(), source);
     formatter.replace_end(chunk_start, &sorted_elements);
 }
 
@@ -64,6 +65,7 @@ fn transform<'a>(
     elements: &[FormatElement<'a>],
     options: &SortImportsOptions,
     allocator: &'a Allocator,
+    source: &'a str,
 ) -> ArenaVec<'a, FormatElement<'a>> {
     // Parse string based groups into our internal representation for performance
     let group_matcher = GroupMatcher::new(&options.groups, &options.custom_groups);
@@ -149,6 +151,7 @@ fn transform<'a>(
                     prev_elements,
                     current_line_start..idx,
                     LineMode::Hard,
+                    source,
                 ));
             }
             current_line_start = idx + 1;
@@ -169,6 +172,7 @@ fn transform<'a>(
             prev_elements,
             current_line_start..prev_elements.len(),
             LineMode::Hard,
+            source,
         ));
     }
 

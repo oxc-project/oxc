@@ -74,6 +74,9 @@ pub fn format<'ast>(
     let capacity = (context.source_text().len() * 2) / 5;
 
     let mut state = FormatState::new(context, allocator);
+    // Entry point: the document is printed against this context's own source,
+    // so offset-based `SourceText` storage is safe.
+    state.enable_source_text();
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);

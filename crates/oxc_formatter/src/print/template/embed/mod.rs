@@ -3,13 +3,13 @@ mod graphql;
 mod html;
 mod markdown;
 
-use oxc_allocator::{Allocator, ArenaStringBuilder};
+use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_formatter_core::IndentWidth;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatElement, format_element::TextWidth, prelude::*},
+    formatter::{FormatElement, prelude::*},
     write,
 };
 
@@ -285,9 +285,8 @@ fn write_text_with_line_breaks<'a>(
         }
         first = false;
         if !line.is_empty() {
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            f.write_element(FormatElement::Text { text: arena_text, width });
+            let element = FormatElement::arena_text_measured(line, indent_width, allocator);
+            f.write_element(element);
         }
     }
 }
@@ -302,7 +301,7 @@ fn escape_template_chars_in_ir<'a>(
     allocator: &'a Allocator,
     indent_width: IndentWidth,
 ) {
-    map_text_in_ir(ir, indent_width, |s| escape_template_chars(s, allocator));
+    map_text_in_ir(ir, allocator, indent_width, escape_template_chars);
 }
 
 /// Re-escape backticks in `Text` elements of an embedded IR using Prettier's "raw" escape rule.
@@ -312,22 +311,25 @@ fn escape_backticks_raw_in_ir<'a>(
     allocator: &'a Allocator,
     indent_width: IndentWidth,
 ) {
-    map_text_in_ir(ir, indent_width, |s| escape_backticks_raw(s, allocator));
+    map_text_in_ir(ir, allocator, indent_width, escape_backticks_raw);
 }
 
 /// Walk an embedded IR (a flat tag stream)
 /// and replace each `Text` element whose string the closure rewrites.
 /// `None` from the closure leaves the element untouched.
-fn map_text_in_ir<'a, F>(ir: &mut [FormatElement<'a>], indent_width: IndentWidth, mut rewrite: F)
-where
-    F: FnMut(&'a str) -> Option<&'a str>,
+fn map_text_in_ir<'a, F>(
+    ir: &mut [FormatElement<'a>],
+    allocator: &'a Allocator,
+    indent_width: IndentWidth,
+    mut rewrite: F,
+) where
+    F: FnMut(&str) -> Option<String>,
 {
     for element in ir.iter_mut() {
-        if let FormatElement::Text { text, .. } = element
-            && let Some(new_text) = rewrite(text)
+        if let FormatElement::ArenaText(text) = element
+            && let Some(new_text) = rewrite(text.text())
         {
-            let width = TextWidth::from_text(new_text, indent_width);
-            *element = FormatElement::Text { text: new_text, width };
+            *element = FormatElement::arena_text_measured(&new_text, indent_width, allocator);
         }
     }
 }
@@ -338,7 +340,7 @@ where
 /// `cookedValue.replaceAll(/([\\`]|\$\{)/gu, String.raw`\$1`);`
 ///
 /// Returns `None` when no escape is needed.
-fn escape_template_chars<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a str> {
+fn escape_template_chars(s: &str) -> Option<String> {
     // All escape targets (`\`, `` ` ``, `${`) are single-byte ASCII;
     // UTF-8 continuation bytes never match, so byte scans/copies are safe.
     let bytes = s.as_bytes();
@@ -346,7 +348,8 @@ fn escape_template_chars<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a
         b == b'\\' || b == b'`' || (b == b'$' && bytes.get(i + 1) == Some(&b'{'))
     })?;
 
-    let mut result = ArenaStringBuilder::with_capacity_in(bytes.len(), allocator);
+    // Heap staging: the escaped text is copied into the arena exactly-sized by the caller.
+    let mut result = String::with_capacity(bytes.len());
     result.push_str(&s[..first]);
 
     let mut run_start = first;
@@ -370,7 +373,7 @@ fn escape_template_chars<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a
     }
     result.push_str(&s[run_start..]);
 
-    Some(result.into_str())
+    Some(result)
 }
 
 /// Escape backticks in raw mode for markdown-in-JS template literals.
@@ -385,14 +388,15 @@ fn escape_template_chars<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a
 /// - `` \\` `` → `` \\\\\` ``
 ///
 /// Returns `None` when no escape is needed.
-fn escape_backticks_raw<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a str> {
+fn escape_backticks_raw(s: &str) -> Option<String> {
     // `` ` `` and `\` are ASCII; UTF-8 continuation bytes never match,
     // so the byte walk is safe and avoids per-char decode.
     let bytes = s.as_bytes();
     if !bytes.contains(&b'`') {
         return None;
     }
-    let mut result = ArenaStringBuilder::with_capacity_in(bytes.len() + 1, allocator);
+    // Heap staging: the escaped text is copied into the arena exactly-sized by the caller.
+    let mut result = String::with_capacity(bytes.len() + 1);
     let mut run_start = 0;
     let mut bs_count: usize = 0;
     for (i, &b) in bytes.iter().enumerate() {
@@ -415,7 +419,7 @@ fn escape_backticks_raw<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a 
         }
     }
     result.push_str(&s[run_start..]);
-    Some(result.into_str())
+    Some(result)
 }
 
 /// Count placeholder occurrences matching `{prefix}{digits}(_{digits})?{suffix}`.

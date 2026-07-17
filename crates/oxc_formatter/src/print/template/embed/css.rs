@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{FormatElement, format_element::TextWidth, prelude::*},
+    formatter::{FormatElement, prelude::*},
     write,
 };
 
@@ -18,14 +18,14 @@ use crate::{
 const PLACEHOLDER_PREFIX: &str = "`PLACEHOLDER-";
 const PLACEHOLDER_SUFFIX: &str = "`";
 
-/// Re-emit a (already arena-backed) text slice as a `Text` element.
+/// Re-emit a text slice as an arena-copied `Text` element.
 /// No-op for an empty slice.
-fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsFormatter<'_, 'a>) {
+fn write_text_piece(text: &str, indent_width: IndentWidth, f: &mut JsFormatter<'_, '_>) {
     if text.is_empty() {
         return;
     }
-    let width = TextWidth::from_text(text, indent_width);
-    f.write_element(FormatElement::Text { text, width });
+    let element = FormatElement::arena_text_measured(text, indent_width, f.allocator());
+    f.write_element(element);
 }
 
 /// Format a CSS-in-JS template literal via the Doc→IR path with placeholder replacement.
@@ -118,8 +118,8 @@ pub(super) fn format_css_doc<'a>(
         .iter()
         .map(|el| match el {
             FormatElement::EmbedPlaceholder(_) => 1,
-            FormatElement::Text { text, .. } => {
-                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
+            FormatElement::ArenaText(text) => {
+                super::count_placeholders(text.text(), PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
             }
             _ => 0,
         })
@@ -177,9 +177,12 @@ pub(super) fn format_css_doc<'a>(
                 // Same scan as html.rs: `split_on_placeholders` yields alternating
                 // [literal, index, literal, ...] (invalid matches fold into the literal),
                 // so even parts are text and odd parts are a placeholder.
-                FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts =
-                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
+                FormatElement::ArenaText(text) if text.text().contains(PLACEHOLDER_PREFIX) => {
+                    let parts = super::split_on_placeholders(
+                        text.text(),
+                        PLACEHOLDER_PREFIX,
+                        PLACEHOLDER_SUFFIX,
+                    );
                     for (i, part) in parts.iter().enumerate() {
                         if i % 2 == 0 {
                             write_text_piece(part, indent_width, f);

@@ -30,6 +30,7 @@ impl<'a> SourceLine<'a> {
         elements: &[FormatElement<'a>],
         range: Range<usize>,
         line_mode: LineMode,
+        source: &'a str,
     ) -> Self {
         debug_assert!(
             !range.is_empty(),
@@ -43,7 +44,7 @@ impl<'a> SourceLine<'a> {
         // Textual prefix checks would be fragile against.
         // (e.g. formatted JSDoc, which splits a single comment into a mix of `Token`/`Text` elements.)
         let mut has_import = false;
-        let mut source = None;
+        let mut source_str = None;
         let mut is_side_effect = true;
         let mut is_type_import = false;
         let mut has_default_specifier = false;
@@ -65,7 +66,7 @@ impl<'a> SourceLine<'a> {
             }
 
             match element {
-                FormatElement::Token { text } => match *text {
+                FormatElement::Token { .. } => match element.token_text() {
                     "import" => {
                         // Look ahead to determine import type (skip spaces)
                         // Continue scanning to find all specifier types (default, namespace, named)
@@ -78,14 +79,16 @@ impl<'a> SourceLine<'a> {
                             }
 
                             match &elements[idx + offset] {
-                                FormatElement::Token { text } => match *text {
-                                    "type" if first_token => is_type_import = true,
-                                    "*" => has_namespace_specifier = true,
-                                    "{" => has_named_specifier = true,
-                                    "from" => break, // Stop when we reach "from"
-                                    _ => {}
-                                },
-                                FormatElement::Text { .. } => {
+                                element @ FormatElement::Token { .. } => {
+                                    match element.token_text() {
+                                        "type" if first_token => is_type_import = true,
+                                        "*" => has_namespace_specifier = true,
+                                        "{" => has_named_specifier = true,
+                                        "from" => break, // Stop when we reach "from"
+                                        _ => {}
+                                    }
+                                }
+                                FormatElement::SourceText { .. } | FormatElement::ArenaText(_) => {
                                     has_default_specifier = true;
                                 }
                                 _ => {}
@@ -96,12 +99,14 @@ impl<'a> SourceLine<'a> {
                     }
                     "from" => {
                         is_side_effect = false;
-                        source = None;
+                        source_str = None;
                     }
                     _ => {}
                 },
-                FormatElement::Text { text, .. } if source.is_none() => {
-                    source = Some(text);
+                FormatElement::SourceText { .. } | FormatElement::ArenaText(_)
+                    if source_str.is_none() =>
+                {
+                    source_str = element.long_lived_text(source);
                 }
                 _ => {}
             }
@@ -114,7 +119,7 @@ impl<'a> SourceLine<'a> {
         SourceLine::Import(
             range,
             ImportLineMetadata {
-                source: source.expect("`ImportDeclaration` must have a source"),
+                source: source_str.expect("`ImportDeclaration` must have a source"),
                 is_side_effect,
                 is_type_import,
                 has_default_specifier,

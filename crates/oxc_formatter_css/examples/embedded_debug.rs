@@ -49,6 +49,7 @@ fn main() {
             let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
             match Printer::with_capacity(
                 source_text.len(),
+                &source_text,
                 options.as_print_options(),
                 &tailwind_classes,
             )

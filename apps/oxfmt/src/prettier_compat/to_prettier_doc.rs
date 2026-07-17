@@ -35,9 +35,10 @@ use oxc_formatter_core::{
 /// Output is unchanged because Prettier identifies groups by `id`, not by JS object identity.
 pub fn format_elements_to_prettier_doc(
     elements: &[FormatElement],
+    source: &str,
     sorted_tailwind_classes: &[String],
 ) -> Result<Value, String> {
-    let mut state = ConvertState::new(sorted_tailwind_classes);
+    let mut state = ConvertState::new(source, sorted_tailwind_classes);
     let children = convert_elements(elements, &mut state)?;
     let doc = normalize_array(children);
     Ok(json!({ "doc": doc, "refs": Value::Array(state.refs) }))
@@ -46,6 +47,8 @@ pub fn format_elements_to_prettier_doc(
 type InternedCacheKey = (usize, usize);
 
 struct ConvertState<'a> {
+    /// The document source text; `FormatElement::SourceText` offsets resolve against it.
+    source: &'a str,
     sorted_tailwind_classes: &'a [String],
     /// Maps `Interned` slice pointer to its ref id in `refs`.
     interned_to_ref: FxHashMap<InternedCacheKey, usize>,
@@ -54,8 +57,13 @@ struct ConvertState<'a> {
 }
 
 impl<'a> ConvertState<'a> {
-    fn new(sorted_tailwind_classes: &'a [String]) -> Self {
-        Self { sorted_tailwind_classes, interned_to_ref: FxHashMap::default(), refs: Vec::new() }
+    fn new(source: &'a str, sorted_tailwind_classes: &'a [String]) -> Self {
+        Self {
+            source,
+            sorted_tailwind_classes,
+            interned_to_ref: FxHashMap::default(),
+            refs: Vec::new(),
+        }
     }
 }
 
@@ -148,12 +156,15 @@ fn convert_elements(
                 printer.pending_space = true;
                 printer.last_was_hardline = false;
             }
-            FormatElement::Token { text } => {
+            FormatElement::Token { .. } => {
                 printer.flush_pending_space(&mut stack)?;
-                concat_string(current_children_mut(&mut stack)?, text);
+                concat_string(current_children_mut(&mut stack)?, element.token_text());
                 printer.last_was_hardline = false;
             }
-            FormatElement::Text { text, .. } => {
+            FormatElement::SourceText { .. } | FormatElement::ArenaText(_) => {
+                let text = element
+                    .text_content(state.source)
+                    .expect("`SourceText`/`ArenaText` always carry text");
                 printer.flush_pending_space(&mut stack)?;
                 push_text(current_children_mut(&mut stack)?, text);
                 printer.last_was_hardline = false;
@@ -314,7 +325,7 @@ fn convert_elements(
             }
             FormatElement::BestFitting(best_fitting) => {
                 printer.flush_pending_space(&mut stack)?;
-                let doc = convert_best_fitting(best_fitting, state)?;
+                let doc = convert_best_fitting(*best_fitting, state)?;
                 current_children_mut(&mut stack)?.push(doc);
                 printer.last_was_hardline = false;
             }
@@ -550,7 +561,7 @@ fn build_doc(start_info: Option<&StartTagInfo>, children: Vec<Value>) -> Value {
 }
 
 fn convert_best_fitting(
-    best_fitting: &BestFittingElement,
+    best_fitting: BestFittingElement,
     state: &mut ConvertState,
 ) -> Result<Value, String> {
     let variants = best_fitting.variants();

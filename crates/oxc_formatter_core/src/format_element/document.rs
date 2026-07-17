@@ -1,4 +1,3 @@
-#![expect(clippy::mutable_key_type)]
 use std::ops::Deref;
 
 use oxc_allocator::ArenaVec;
@@ -147,7 +146,7 @@ impl Document<'_> {
                         false
                     }
                     // `FormatElement::Token` cannot contain line breaks
-                    FormatElement::Text { text: _, width } => width.propagates_expand(),
+                    FormatElement::ArenaText(text) => text.width().propagates_expand(),
                     FormatElement::ExpandParent => true,
                     FormatElement::Line(mode) => mode.will_break(),
                     _ => false,

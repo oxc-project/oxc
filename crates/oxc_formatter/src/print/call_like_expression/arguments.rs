@@ -853,9 +853,9 @@ fn write_grouped_arguments<'a>(
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
-    let variants = if grouped_breaks {
+    let variants: smallvec::SmallVec<[_; 3]> = if grouped_breaks {
         write!(f, [expand_parent()]);
-        ArenaVec::from_array_in([middle_variant, most_expanded], f)
+        smallvec::smallvec![middle_variant, most_expanded]
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = best_fitting_variant(f.state_mut(), |buffer| {
@@ -879,7 +879,7 @@ fn write_grouped_arguments<'a>(
             );
         });
 
-        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f)
+        smallvec::smallvec![most_flat, middle_variant, most_expanded]
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:
@@ -888,9 +888,10 @@ fn write_grouped_arguments<'a>(
     // * most expanded
     // ... and best fitting only requires the most flat/and expanded.
     unsafe {
-        f.write_element(FormatElement::BestFitting(
-            format_element::BestFittingElement::from_vec_unchecked(variants),
-        ));
+        let element = FormatElement::BestFitting(
+            format_element::BestFittingElement::from_slices_unchecked(&variants, f.allocator()),
+        );
+        f.write_element(element);
     }
 }
 

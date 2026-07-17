@@ -699,8 +699,9 @@ impl<'a> EachTemplateTable<'a> {
 
             // let range = element.range();
             let print_options = f.options().as_print_options();
+            let source = f.context().source_text().as_str();
             // TODO: if `unwrap()` panics here, it's a internal error
-            let printed = Printer::new(print_options, &[]).print(&root).unwrap();
+            let printed = Printer::new(source, print_options, &[]).print(&root).unwrap();
             let text = f.allocator().alloc_str(&printed.into_code());
             let will_break = text.contains('\n');
 

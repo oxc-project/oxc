@@ -5,8 +5,6 @@
 
 use std::num::NonZeroU8;
 
-use oxc_allocator::ArenaVec;
-
 use crate::{
     Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, FormatState,
     Formatter, GroupId, HeapVecBuffer,
@@ -177,7 +175,12 @@ impl<T> std::fmt::Debug for FormatOnce<T> {
 // Token
 // ---------------------------------------------------------------------------
 
-/// Creates a [`FormatElement::Token`] that gets written as is to the output.
+/// Creates a token element that gets written as is to the output.
+///
+/// Short tokens (≤ [`FormatElement::INLINE_TOKEN_MAX`] bytes) are stored inline as
+/// [`FormatElement::Token`]; longer ones land in the arena as
+/// [`FormatElement::ArenaText`], deduplicated per document. IR consumers that match
+/// on the `Token` variant by shape (e.g. keyword scanners) must keep that split in mind.
 ///
 /// # SAFETY
 ///
@@ -203,7 +206,9 @@ pub struct Token {
 
 impl<C> Format<'_, C> for Token {
     fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
-        f.write_element(FormatElement::Token { text: self.text });
+        let element = FormatElement::token_inline(self.text)
+            .unwrap_or_else(|| f.state_mut().long_token(self.text));
+        f.write_element(element);
     }
 }
 
@@ -220,7 +225,7 @@ impl std::fmt::Debug for Token {
 /// Creates a text from a dynamic string and a range of the input source
 pub fn text(text: &str) -> Text<'_> {
     debug_assert_no_cr_line_break(text);
-    Text { text, width: None, expand_parent: true }
+    Text { text, no_whitespace: false, expand_parent: true }
 }
 
 /// Creates a text from a dynamic string that contains no whitespace characters
@@ -229,14 +234,16 @@ pub fn text_without_whitespace(text: &str) -> Text<'_> {
         text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
         "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
     );
-    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)), expand_parent: true }
+    Text { text, no_whitespace: true, expand_parent: true }
 }
 
 #[derive(Eq, PartialEq)]
 pub struct Text<'a> {
     #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     text: &'a str,
-    width: Option<TextWidth>,
+    /// The text is whitespace-free, so the (lazily computed) width can use the
+    /// cheaper [`TextWidth::from_non_whitespace_str`] scan.
+    no_whitespace: bool,
     expand_parent: bool,
 }
 
@@ -252,16 +259,24 @@ impl Text<'_> {
     }
 }
 
-impl<'a, C> Format<'a, C> for Text<'a>
+impl<'a, C> Format<'a, C> for Text<'_>
 where
     C: FormatContext,
 {
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
-        let width = self
-            .width
-            .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width()));
-        let width = if self.expand_parent { width } else { width.without_expand_parent() };
-        f.write_element(FormatElement::Text { text: self.text, width });
+        let element = FormatElement::text(
+            self.text,
+            || {
+                let width = if self.no_whitespace {
+                    TextWidth::from_non_whitespace_str(self.text)
+                } else {
+                    TextWidth::from_text(self.text, f.options().indent_width())
+                };
+                if self.expand_parent { width } else { width.without_expand_parent() }
+            },
+            f.state(),
+        );
+        f.write_element(element);
     }
 }
 
@@ -909,13 +924,12 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
             }));
         }
 
-        let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);
-
         // SAFETY: The constructor guarantees that there are always at least two variants. It's, therefore,
-        // safe to call into the unsafe `from_vec_unchecked` function
+        // safe to call into the unsafe `from_slices_unchecked` function
         let element = unsafe {
-            FormatElement::BestFitting(format_element::BestFittingElement::from_vec_unchecked(
-                formatted_variants,
+            FormatElement::BestFitting(format_element::BestFittingElement::from_slices_unchecked(
+                &formatted_variants,
+                f.allocator(),
             ))
         };
 

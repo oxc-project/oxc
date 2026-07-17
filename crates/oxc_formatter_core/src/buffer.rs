@@ -1,4 +1,3 @@
-#![expect(clippy::mutable_key_type)]
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -196,6 +195,16 @@ impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
     /// Moves the buffered elements into an exactly-sized arena slice, leaving the buffer empty.
     pub fn take_into_arena_slice(&mut self) -> &'ast [FormatElement<'ast>] {
         self.take_into_arena_vec().into_arena_slice()
+    }
+
+    /// Moves the buffered elements into a thin interned slice, leaving the buffer empty.
+    pub fn take_into_interned(&mut self) -> Interned<'ast> {
+        let allocator = self.state.allocator();
+        let watermark = self.watermark;
+        let scratch = self.state.scratch_mut();
+        let interned = Interned::new_in(&scratch[watermark..], allocator);
+        scratch.truncate(watermark);
+        interned
     }
 }
 
@@ -425,7 +434,7 @@ impl<'buf, 'ast, C> RemoveSoftLinesBuffer<'buf, 'ast, C> {
         self.conditional_content_stack
             .iter()
             .last()
-            .is_some_and(|condition| condition.mode == PrintMode::Expanded)
+            .is_some_and(|condition| condition.mode() == PrintMode::Expanded)
     }
 }
 
@@ -437,7 +446,7 @@ fn clean_interned<'ast>(
     allocator: &'ast Allocator,
 ) -> Interned<'ast> {
     if let Some(cleaned) = interned_cache.get(&interned) {
-        cleaned.clone()
+        *cleaned
     } else {
         // Find the first soft line break element, interned element, or conditional expanded
         // content that must be changed.
@@ -445,21 +454,19 @@ fn clean_interned<'ast>(
             FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace)
             | FormatElement::Tag(Tag::StartConditionalContent(_) | Tag::EndConditionalContent)
             | FormatElement::BestFitting(_) => {
-                let cleaned = ArenaVec::from_iter_in(interned[..index].iter().cloned(), &allocator);
+                // Stage the rewrite on the heap: the arena only receives the final,
+                // exactly-sized interned copy below.
+                let cleaned = interned[..index].to_vec();
                 Some((cleaned, &interned[index..]))
             }
             FormatElement::Interned(inner) => {
-                let cleaned_inner = clean_interned(
-                    inner.clone(),
-                    interned_cache,
-                    condition_content_stack,
-                    allocator,
-                );
+                let cleaned_inner =
+                    clean_interned(*inner, interned_cache, condition_content_stack, allocator);
 
                 if &cleaned_inner == inner {
                     None
                 } else {
-                    let mut cleaned = ArenaVec::with_capacity_in(interned.len(), &allocator);
+                    let mut cleaned = Vec::with_capacity(interned.len());
                     cleaned.extend(interned[..index].iter().cloned());
                     cleaned.push(FormatElement::Interned(cleaned_inner));
                     Some((cleaned, &interned[index + 1..]))
@@ -481,13 +488,13 @@ fn clean_interned<'ast>(
                     );
                 }
 
-                Interned::new(cleaned)
+                Interned::new_in(&cleaned, allocator)
             }
             // No change necessary, return existing interned element
-            None => interned.clone(),
+            None => interned,
         };
 
-        interned_cache.insert(interned, result.clone());
+        interned_cache.insert(interned, result);
         result
     }
 }
@@ -498,7 +505,7 @@ fn clean_interned<'ast>(
 /// The two `match`es must stay rule-for-rule in sync.
 fn push_cleaned_element<'ast>(
     element: &FormatElement<'ast>,
-    cleaned: &mut ArenaVec<'ast, FormatElement<'ast>>,
+    cleaned: &mut Vec<FormatElement<'ast>>,
     interned_cache: &mut FxHashMap<Interned<'ast>, Interned<'ast>>,
     condition_content_stack: &mut Vec<Condition>,
     allocator: &'ast Allocator,
@@ -514,7 +521,7 @@ fn push_cleaned_element<'ast>(
         // If there's a matching flat variant, that will still get kept.
         _ if condition_content_stack
             .last()
-            .is_some_and(|condition| condition.mode == PrintMode::Expanded) => {}
+            .is_some_and(|condition| condition.mode() == PrintMode::Expanded) => {}
 
         FormatElement::Line(LineMode::Soft) => {}
         FormatElement::Line(LineMode::SoftOrSpace) => {
@@ -523,7 +530,7 @@ fn push_cleaned_element<'ast>(
 
         FormatElement::Interned(interned) => {
             cleaned.push(FormatElement::Interned(clean_interned(
-                interned.clone(),
+                *interned,
                 interned_cache,
                 condition_content_stack,
                 allocator,

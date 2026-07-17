@@ -1,4 +1,7 @@
-use std::{cell::Cell, num::NonZeroU8};
+use std::{
+    cell::Cell,
+    num::{NonZeroU8, NonZeroU32},
+};
 
 use crate::GroupId;
 
@@ -139,17 +142,19 @@ pub enum TagKind {
     MarkAsRoot,
 }
 
+// The discriminants are the bit encoding used by `Group`'s packed representation.
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]
+#[repr(u8)]
 pub enum GroupMode {
     /// Print group in flat mode.
     #[default]
-    Flat,
+    Flat = 0,
 
     /// The group should be printed in expanded mode
-    Expand,
+    Expand = 1,
 
     /// Expand mode has been propagated from an enclosing group to this group.
-    Propagated,
+    Propagated = 2,
 }
 
 impl GroupMode {
@@ -158,41 +163,109 @@ impl GroupMode {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
-pub struct Group {
-    id: Option<GroupId>,
-    mode: Cell<GroupMode>,
+/// Debug-name storage for a bit-packed group id: zero-sized in release builds,
+/// mirroring how [`GroupId`] itself only carries its name in debug builds.
+#[derive(Debug, Clone, Copy, Default)]
+struct PackedIdName {
+    #[cfg(debug_assertions)]
+    name: Option<&'static str>,
 }
 
+impl PackedIdName {
+    #[cfg_attr(not(debug_assertions), expect(unused_variables))]
+    fn of(id: Option<GroupId>) -> Self {
+        Self {
+            #[cfg(debug_assertions)]
+            name: id.map(GroupId::debug_name),
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    fn get(self) -> &'static str {
+        self.name.unwrap_or("group")
+    }
+
+    #[cfg(not(debug_assertions))]
+    fn get(self) -> &'static str {
+        "group"
+    }
+}
+
+/// Bit position of the group id shared by [`Group`] and [`Condition`]:
+/// the id occupies bits 2.., mode flags live in bits 0..2.
+const PACKED_ID_SHIFT: u32 = 2;
+
+/// Packs a group id into bits 2.. of a `u32` (0 = none).
+/// The 30-bit limit is enforced where ids are minted ([`crate::UniqueGroupIdBuilder`]).
+fn pack_group_id(id: Option<GroupId>) -> u32 {
+    let id_bits = id.map_or(0, |id| id.value().get());
+    debug_assert!(id_bits < (1 << 30), "group id exceeds the 30 bits available when packed");
+    id_bits << PACKED_ID_SHIFT
+}
+
+fn unpack_group_id(packed: u32, name: PackedIdName) -> Option<GroupId> {
+    NonZeroU32::new(packed >> PACKED_ID_SHIFT).map(|value| GroupId::from_value(value, name.get()))
+}
+
+/// Group id and mode, bit-packed to keep [`Tag`] (and with it [`super::FormatElement`]) small.
+///
+/// Bits 2.. hold the id value (see `pack_group_id`), bits 0..2 the [`GroupMode`].
+/// Interior-mutable ([`Cell`]) so [`Group::propagate_expand`] can flip the mode through a `&self`
+/// reference while the element sits in the document.
+#[derive(Debug, Clone, Default)]
+pub struct Group {
+    packed: Cell<u32>,
+    id_name: PackedIdName,
+}
+
+impl PartialEq for Group {
+    fn eq(&self, other: &Self) -> bool {
+        self.packed == other.packed
+    }
+}
+
+impl Eq for Group {}
+
 impl Group {
+    const MODE_MASK: u32 = 0b11;
+
     pub fn new() -> Self {
-        Self { id: None, mode: Cell::new(GroupMode::Flat) }
+        Self::default()
     }
 
     #[must_use]
     pub fn with_id(mut self, id: Option<GroupId>) -> Self {
-        self.id = id;
+        self.packed.set(pack_group_id(id) | (self.packed.get() & Self::MODE_MASK));
+        self.id_name = PackedIdName::of(id);
         self
     }
 
     #[must_use]
-    pub fn with_mode(mut self, mode: GroupMode) -> Self {
-        self.mode = Cell::new(mode);
+    pub fn with_mode(self, mode: GroupMode) -> Self {
+        self.set_mode(mode);
         self
     }
 
+    fn set_mode(&self, mode: GroupMode) {
+        self.packed.set((self.packed.get() & !Self::MODE_MASK) | mode as u32);
+    }
+
     pub fn mode(&self) -> GroupMode {
-        self.mode.get()
+        match self.packed.get() & Self::MODE_MASK {
+            0 => GroupMode::Flat,
+            1 => GroupMode::Expand,
+            _ => GroupMode::Propagated,
+        }
     }
 
     pub fn propagate_expand(&self) {
-        if self.mode.get() == GroupMode::Flat {
-            self.mode.set(GroupMode::Propagated);
+        if self.mode() == GroupMode::Flat {
+            self.set_mode(GroupMode::Propagated);
         }
     }
 
     pub fn id(&self) -> Option<GroupId> {
-        self.id
+        unpack_group_id(self.packed.get(), self.id_name)
     }
 }
 
@@ -205,34 +278,51 @@ pub enum DedentMode {
     Root,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+/// Print-mode condition, bit-packed like [`Group`]: bit 0 holds the [`PrintMode`],
+/// bits 2.. the referenced group id (0 = the enclosing group).
+///
+/// * `Flat` -> Omitted if the enclosing group is a multiline group, printed for groups fitting on a single line
+/// * `Expanded` -> Omitted if the enclosing group fits on a single line, printed if the group breaks over multiple lines.
+#[derive(Debug, Clone)]
 pub struct Condition {
-    /// * Flat -> Omitted if the enclosing group is a multiline group, printed for groups fitting on a single line
-    /// * Multiline -> Omitted if the enclosing group fits on a single line, printed if the group breaks over multiple lines.
-    pub(crate) mode: PrintMode,
-
-    /// The id of the group for which it should check if it breaks or not. The group must appear in the document
-    /// before the conditional group (but doesn't have to be in the ancestor chain).
-    pub(crate) group_id: Option<GroupId>,
+    packed: u32,
+    id_name: PackedIdName,
 }
 
+impl PartialEq for Condition {
+    fn eq(&self, other: &Self) -> bool {
+        self.packed == other.packed
+    }
+}
+
+impl Eq for Condition {}
+
 impl Condition {
+    const MODE_MASK: u32 = 0b1;
+
     pub fn new(mode: PrintMode) -> Self {
-        Self { mode, group_id: None }
+        Self {
+            packed: match mode {
+                PrintMode::Flat => 0,
+                PrintMode::Expanded => 1,
+            },
+            id_name: PackedIdName::default(),
+        }
     }
 
     #[must_use]
     pub fn with_group_id(mut self, id: Option<GroupId>) -> Self {
-        self.group_id = id;
+        self.packed = pack_group_id(id) | (self.packed & Self::MODE_MASK);
+        self.id_name = PackedIdName::of(id);
         self
     }
 
     pub fn mode(&self) -> PrintMode {
-        self.mode
+        if self.packed & Self::MODE_MASK == 0 { PrintMode::Flat } else { PrintMode::Expanded }
     }
 
     pub fn group_id(&self) -> Option<GroupId> {
-        self.group_id
+        unpack_group_id(self.packed, self.id_name)
     }
 }
 
@@ -251,7 +341,8 @@ impl Align {
 
 #[derive(Debug, Eq, Copy, Clone)]
 pub struct LabelId {
-    value: u64,
+    // `u32` keeps `Tag` small; label ids are tiny per-language enum discriminants.
+    value: u32,
     #[cfg(debug_assertions)]
     name: &'static str,
 }
@@ -277,8 +368,11 @@ impl PartialEq for LabelId {
 impl LabelId {
     #[expect(clippy::needless_pass_by_value)] // The `Label` trait is unnecessary, would refactor it later.
     pub fn of<T: Label>(label: T) -> Self {
+        let value = label.id();
+        debug_assert!(u32::try_from(value).is_ok(), "label id exceeds `u32`");
         Self {
-            value: label.id(),
+            #[expect(clippy::cast_possible_truncation)]
+            value: value as u32,
             #[cfg(debug_assertions)]
             name: label.debug_name(),
         }

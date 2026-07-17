@@ -169,8 +169,12 @@ fn run_full(
 
     external_formatter.cleanup();
     Some(
-        to_prettier_doc::format_elements_to_prettier_doc(elements, &sorted_tailwind_classes)
-            .expect("Formatter IR to Prettier Doc conversion should not fail"),
+        to_prettier_doc::format_elements_to_prettier_doc(
+            elements,
+            source_text,
+            &sorted_tailwind_classes,
+        )
+        .expect("Formatter IR to Prettier Doc conversion should not fail"),
     )
 }
 
@@ -227,8 +231,12 @@ fn run_fragment(
     let (elements, sorted_tailwind_classes) =
         formatted.into_document().into_elements_and_tailwind_classes();
     Some(
-        to_prettier_doc::format_elements_to_prettier_doc(elements, &sorted_tailwind_classes)
-            .expect("Formatter IR to Prettier Doc conversion should not fail"),
+        to_prettier_doc::format_elements_to_prettier_doc(
+            elements,
+            source_text,
+            &sorted_tailwind_classes,
+        )
+        .expect("Formatter IR to Prettier Doc conversion should not fail"),
     )
 }
 
