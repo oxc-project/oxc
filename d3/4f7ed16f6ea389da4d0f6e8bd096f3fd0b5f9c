@@ -1,0 +1,21 @@
+apps/oxlint/src-js/package/config.generated.ts
+  s_319eba742105b2::t_0098ce87aa8606 1271,4151-4152
+npm/oxlint/configuration_schema.json
+  s_319eba742105b2::t_d1add28f6db788 5990,17019,17025-17038
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d34f7ed16f6ea389da4d0f6e8bd096f3fd0b5f9c",
+  "prompts": {},
+  "sessions": {
+    "s_319eba742105b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6f9f-89c4-73e1-90c2-a92f9d48c90c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
