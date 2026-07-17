@@ -1,6 +1,6 @@
 //! `Drop` implementation for `Arena`, and `reset` method.
 
-use std::{alloc, ptr::NonNull};
+use std::ptr::NonNull;
 
 use super::{Arena, ChunkFooter, utils::is_pointer_aligned_to};
 
@@ -117,7 +117,7 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
     let (backing_alloc_ptr, layout, is_fixed_size) = {
         // SAFETY: Caller guarantees that `footer_ptr` points to a valid `ChunkFooter`
         let footer = unsafe { footer_ptr.as_ref() };
-        (footer.backing_alloc_ptr.as_ptr(), footer.layout, footer.is_fixed_size)
+        (footer.backing_alloc_ptr, footer.layout, footer.is_fixed_size)
     };
 
     // If is a fixed-size allocator, delegate to `dealloc_fixed_size_arena_chunk`
@@ -155,7 +155,9 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     crate::tracking::start_chunk_operation();
 
+    // PROTOTYPE: Chunk memory comes from the pointer-compression cage, which never reuses
+    // virtual address space. "Deallocation" just advises the OS to reclaim the physical pages.
     // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
-    // `is_fixed_size` is `false`, so backing allocation was made via global allocator.
-    unsafe { alloc::dealloc(backing_alloc_ptr, layout) };
+    // `is_fixed_size` is `false`, so backing allocation was made from the cage.
+    crate::cage::dealloc_chunk(backing_alloc_ptr, layout);
 }

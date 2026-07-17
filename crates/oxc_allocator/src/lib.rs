@@ -44,6 +44,7 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
+mod cage;
 mod clone_in;
 mod convert;
 #[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]

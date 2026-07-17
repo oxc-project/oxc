@@ -1,11 +1,6 @@
 //! Methods to create an `Arena`.
 
-use std::{
-    alloc::{self, Layout},
-    cell::Cell,
-    cmp::max,
-    ptr::NonNull,
-};
+use std::{alloc::Layout, cell::Cell, cmp::max, ptr::NonNull};
 
 use super::bumpalo_alloc::AllocErr;
 
@@ -416,9 +411,10 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         crate::tracking::start_chunk_operation();
 
         // Allocate memory for the chunk.
-        // SAFETY: `layout` has non-zero size.
-        let start_ptr = unsafe { alloc::alloc(layout) };
-        let start_ptr = NonNull::new(start_ptr)?;
+        // PROTOTYPE: Chunk memory comes from the process-global pointer-compression cage,
+        // instead of the global allocator. Only the *source* of the bytes changes -
+        // chunk alignment and footer layout are exactly as before.
+        let start_ptr = crate::cage::alloc_chunk(layout)?;
 
         // The `ChunkFooter` is at the end of the chunk.
         // SAFETY: We allocated `new_size_without_footer + CHUNK_FOOTER_SIZE` bytes, starting at `start_ptr`,

@@ -1740,6 +1740,7 @@ version = "0.140.0"
 dependencies = [
  "allocator-api2",
  "hashbrown 0.17.1",
+ "libc",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_data_structures",
