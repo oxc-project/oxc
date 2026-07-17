@@ -1,0 +1,44 @@
+crates/oxc_syntax/src/xml_entities.rs
+  s_18dbd8d6e6fe7e::t_02c3e827be2fdc 2,3,6,266,268,303,307-308,311,315,321-322,326,350-351,354,356-359,369,394-395,397,401-402
+  s_18dbd8d6e6fe7e::t_0f184d84b5ab8b 4-5,267,269-302,304-306,309-310,312-314,316-320,323-325,327-349,352-353,355,360-368,370-393,396,398-400
+crates/oxc_codegen/src/gen.rs
+  s_18dbd8d6e6fe7e::t_b520cea9d324f4 2680-2689,2777
+crates/oxc_formatter/src/print/jsx/child_list.rs
+  s_18dbd8d6e6fe7e::t_2a653148450331 15,389-390
+crates/oxc_formatter/src/print/jsx/element.rs
+  s_18dbd8d6e6fe7e::t_d62de24f6cdb76 12,332
+crates/oxc_formatter/src/print/jsx/mod.rs
+  s_18dbd8d6e6fe7e::t_416be2b069ecca 407
+crates/oxc_formatter/src/print/jsx/opening_element.rs
+  s_18dbd8d6e6fe7e::t_2bda035269b8f3 66,161-162
+crates/oxc_formatter/src/utils/jsx.rs
+  s_18dbd8d6e6fe7e::t_deedd7b2a1b3a3 44-49,283-284
+crates/oxc_linter/src/rules/react/jsx_curly_brace_presence.rs
+  s_18dbd8d6e6fe7e::t_4527f86bfc250b 13,385,428,511-519
+crates/oxc_linter/src/rules/react/jsx_no_comment_textnodes.rs
+  s_18dbd8d6e6fe7e::t_0b150be47b6391 64-65
+crates/oxc_parser/src/jsx/mod.rs
+  s_18dbd8d6e6fe7e::t_28fdfa0f17d04a 7,462-463,510
+crates/oxc_transformer/src/jsx/jsx_impl.rs
+  s_18dbd8d6e6fe7e::t_eb2b597d54a5bc 105,917,1002-1009,1027,1029,1032-1033,1036-1039,1042-1043,1049,1052,1069,1088,1101,1117-1126
+tasks/coverage/snapshots/estree_acorn_jsx.snap
+  s_18dbd8d6e6fe7e::t_7b7236a74ba2e6 5
+tasks/coverage/snapshots/estree_typescript.snap
+  s_18dbd8d6e6fe7e::t_d560b8d9f4bffb 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "464dd031de31e8eb168866b02e55b5e174f7fa03",
+  "prompts": {},
+  "sessions": {
+    "s_18dbd8d6e6fe7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6f60-68fc-7413-add2-399df60f46b4",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
