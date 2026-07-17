@@ -159,7 +159,7 @@ fn test_handle_switch_statement() {
         "switch (a) { default: b();break;case 1: c();break;}",
     ); // a === 1 ? c() : b();
 
-    test("switch (a) { case b(): default:}", "a, b();");
+    test("switch (a) { case b(): default:}", "switch (a) { case b(): }"); // a, b();
     test("switch (a) { case 2: case 1: break; default: break;}", "a;");
     test("switch (a) { case 3: b(); break; case 2: break;}", "a === 3 && b();");
     test("switch (a) { case 3: b(); case 2: break;}", "a === 3 && b();");

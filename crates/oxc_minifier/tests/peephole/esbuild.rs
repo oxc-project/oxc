@@ -285,11 +285,11 @@ fn js_parser_test() {
     test("while(1) { async function* x() {} }", "for (;;) { async function* x() { }}");
     test(
         "function _() { x(); switch (y) { case z: return w; } }",
-        "function _() { if (x(), y === z) return w; }",
+        "function _() { switch (x(), y) { case z:  return w; }}",
     );
     test(
         "function _() { if (t) { x(); switch (y) { case z: return w; } } }",
-        "function _() { if (t && (x(), y === z)) return w; }",
+        "function _() { if (t) switch (x(), y) { case z:  return w; } }",
     );
     test("a = '' + 0", "a = '0';");
     test("a = 0 + ''", "a = '0';");

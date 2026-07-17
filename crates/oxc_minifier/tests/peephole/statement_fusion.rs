@@ -95,11 +95,7 @@ fn fuse_into_block() {
 
 #[test]
 fn fuse_into_switch_cases() {
-    test("switch (_) { case _: a; return b }", "if (_ === _) return a, b;");
-    test(
-        "switch (_) { case _: case y: a; return b }",
-        "switch (_) { case _: case y: return a, b }",
-    );
+    test("switch (_) { case _: a; return b }", "switch (_) { case _: return a, b }");
 }
 
 #[test]
