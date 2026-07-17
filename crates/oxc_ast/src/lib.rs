@@ -106,23 +106,25 @@ pub use trivia::{
 //  I have concluded that the first options is more performant and more ergonomic to use.
 //  The following test make sure all enum variants are boxed, resulting 16 bytes for each enum.
 //  Read `https://nnethercote.github.io/perf-book/type-sizes.html` for more details.
+// PROTOTYPE: With pointer compression, `Box` is 4 bytes, so all-boxed enums are
+// 8 bytes (1-byte tag + 3 bytes padding + 4-byte compressed pointer) instead of 16.
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
     use crate::ast;
 
-    assert_eq!(size_of::<ast::Statement>(), 16);
-    assert_eq!(size_of::<ast::Expression>(), 16);
-    assert_eq!(size_of::<ast::Declaration>(), 16);
-    assert_eq!(size_of::<ast::BindingPattern>(), 16);
-    assert_eq!(size_of::<ast::ModuleDeclaration>(), 16);
-    assert_eq!(size_of::<ast::ClassElement>(), 16);
-    assert_eq!(size_of::<ast::ExportDefaultDeclarationKind>(), 16);
-    assert_eq!(size_of::<ast::AssignmentTargetPattern>(), 16);
-    assert_eq!(size_of::<ast::AssignmentTargetMaybeDefault>(), 16);
-    assert_eq!(size_of::<ast::AssignmentTargetProperty>(), 16);
-    assert_eq!(size_of::<ast::TSLiteral>(), 16);
-    assert_eq!(size_of::<ast::TSType>(), 16);
+    assert_eq!(size_of::<ast::Statement>(), 8);
+    assert_eq!(size_of::<ast::Expression>(), 8);
+    assert_eq!(size_of::<ast::Declaration>(), 8);
+    assert_eq!(size_of::<ast::BindingPattern>(), 8);
+    assert_eq!(size_of::<ast::ModuleDeclaration>(), 8);
+    assert_eq!(size_of::<ast::ClassElement>(), 8);
+    assert_eq!(size_of::<ast::ExportDefaultDeclarationKind>(), 8);
+    assert_eq!(size_of::<ast::AssignmentTargetPattern>(), 8);
+    assert_eq!(size_of::<ast::AssignmentTargetMaybeDefault>(), 8);
+    assert_eq!(size_of::<ast::AssignmentTargetProperty>(), 8);
+    assert_eq!(size_of::<ast::TSLiteral>(), 8);
+    assert_eq!(size_of::<ast::TSType>(), 8);
 }
 
 #[test]
