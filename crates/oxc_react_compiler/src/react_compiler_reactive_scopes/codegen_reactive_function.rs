@@ -2582,7 +2582,7 @@ fn ox_codegen_function_expression<'a>(
             None,
             &cx.ast,
         ));
-        let prop = oxc_ast::ast::ObjectProperty::new(
+        let prop = oxc_ast::ast::ObjectPropertyKind::new_object_property(
             SPAN,
             oxc::PropertyKind::Init,
             key,
@@ -2592,13 +2592,7 @@ fn ox_codegen_function_expression<'a>(
             false,
             &cx.ast,
         );
-        let object = oxc_ast::ast::Expression::new_object_expression(
-            SPAN,
-            [oxc::ObjectPropertyKind::ObjectProperty(oxc_allocator::ArenaBox::new_in(
-                prop, &cx.ast,
-            ))],
-            &cx.ast,
-        );
+        let object = oxc_ast::ast::Expression::new_object_expression(SPAN, [prop], &cx.ast);
         let member = oxc_ast::ast::MemberExpression::new_computed_member_expression(
             SPAN,
             object,
