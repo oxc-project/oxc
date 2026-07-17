@@ -5987,7 +5987,7 @@
                   "$ref": "#/definitions/PreferDestructuringOption"
                 },
                 {
-                  "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+                  "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
                 }
               ],
               "maxItems": 3,
@@ -17016,11 +17016,25 @@
           "$ref": "#/definitions/PreferDestructuringOption"
         },
         {
-          "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+          "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
         }
       ],
       "maxItems": 2,
       "minItems": 2
+    },
+    "PreferDestructuringEnforcementConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForDeclarationWithTypeAnnotation": {
+          "default": false,
+          "type": "boolean"
+        },
+        "enforceForRenamedProperties": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     },
     "PreferDestructuringOption": {
       "anyOf": [
@@ -17031,16 +17045,6 @@
           "$ref": "#/definitions/PreferDestructuringAssignmentConfig"
         }
       ]
-    },
-    "PreferDestructuringRenamedPropertiesConfig": {
-      "type": "object",
-      "properties": {
-        "enforceForRenamedProperties": {
-          "default": false,
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
     },
     "PreferDestructuringTargetOption": {
       "type": "object",
