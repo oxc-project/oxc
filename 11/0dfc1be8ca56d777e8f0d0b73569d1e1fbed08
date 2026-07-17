@@ -1,0 +1,21 @@
+crates/oxc_linter/src/snapshots/eslint_prefer_destructuring.snap
+  s_319eba742105b2::t_32ae22d1dfab74 47-60
+crates/oxc_linter/src/rules/eslint/prefer_destructuring.rs
+  s_319eba742105b2::t_7ebe2d6700f077 283,305-306,331-332,636-655
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "110dfc1be8ca56d777e8f0d0b73569d1e1fbed08",
+  "prompts": {},
+  "sessions": {
+    "s_319eba742105b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6f9f-89c4-73e1-90c2-a92f9d48c90c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
