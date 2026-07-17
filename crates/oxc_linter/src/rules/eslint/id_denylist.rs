@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 use schemars::{
     JsonSchema, SchemaGenerator,
-    schema::{ArrayValidation, Schema, SchemaObject},
+    schema::{ArrayValidation, InstanceType, Schema, SchemaObject},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -45,8 +45,10 @@ impl JsonSchema for IdDenylist {
 
     fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
         Schema::Object(SchemaObject {
+            instance_type: Some(InstanceType::Array.into()),
             array: Some(Box::new(ArrayValidation {
                 additional_items: Some(Box::new(r#gen.subschema_for::<String>())),
+                unique_items: Some(true),
                 ..Default::default()
             })),
             ..Default::default()

@@ -2541,6 +2541,7 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
+              "type": "array",
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
@@ -2552,7 +2553,8 @@
               "additionalItems": {
                 "type": "string"
               },
-              "minItems": 2
+              "minItems": 2,
+              "uniqueItems": true
             }
           ]
         },
@@ -11434,9 +11436,11 @@
       "additionalProperties": false
     },
     "IdDenylist": {
+      "type": "array",
       "additionalItems": {
         "type": "string"
-      }
+      },
+      "uniqueItems": true
     },
     "IdLengthConfig": {
       "type": "object",
