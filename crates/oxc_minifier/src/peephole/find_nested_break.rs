@@ -2,7 +2,7 @@ use crate::peephole::PeepholeOptimizations;
 use oxc_ast::ast::{
     BreakStatement, Expression, IfStatement, Statement, SwitchCase, TryStatement, WithStatement,
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
 use crate::TraverseCtx;
@@ -40,7 +40,7 @@ impl FindNestedBreak {
     }
 }
 
-impl<'a> Visit<'a> for FindNestedBreak {
+impl<'a> VisitJs<'a> for FindNestedBreak {
     fn visit_expression(&mut self, _it: &Expression<'a>) {
         // do nothing
     }
@@ -55,14 +55,14 @@ impl<'a> Visit<'a> for FindNestedBreak {
             | Statement::ContinueStatement(_)
             | Statement::ReturnStatement(_)
             | Statement::ExpressionStatement(_) => {}
-            _ => walk::walk_statement(self, it),
+            _ => walk_js::walk_statement(self, it),
         }
     }
 
     fn visit_if_statement(&mut self, it: &IfStatement<'a>) {
         let was_top = self.top_level;
         self.top_level = false;
-        walk::walk_if_statement(self, it);
+        walk_js::walk_if_statement(self, it);
         self.top_level = was_top;
     }
 
@@ -75,14 +75,14 @@ impl<'a> Visit<'a> for FindNestedBreak {
     fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
         let was_top = self.top_level;
         self.top_level = false;
-        walk::walk_with_statement(self, it);
+        walk_js::walk_with_statement(self, it);
         self.top_level = was_top;
     }
 
     fn visit_try_statement(&mut self, it: &TryStatement<'a>) {
         let was_top = self.top_level;
         self.top_level = false;
-        walk::walk_try_statement(self, it);
+        walk_js::walk_try_statement(self, it);
         self.top_level = was_top;
     }
 }
