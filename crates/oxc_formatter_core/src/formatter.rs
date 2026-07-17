@@ -2,11 +2,11 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, GetAllocator};
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
     Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState,
-    buffer::{HeapVecBuffer, move_elements_into_arena},
+    buffer::HeapVecBuffer,
     builders::{FillBuilder, JoinBuilder},
     format::{Format, write},
     format_element::Interned,
@@ -89,8 +89,8 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
             // Doesn't get cheaper than calling clone, use the element directly
             1 => elements.pop(),
             _ => {
-                let vec = move_elements_into_arena(self.allocator(), elements);
-                elements.clear();
+                // `Drain`'s exact size hint makes `from_iter_in` allocate exactly-sized
+                let vec = ArenaVec::from_iter_in(elements.drain(..), &self.allocator());
                 Some(FormatElement::Interned(Interned::new(vec)))
             }
         }
