@@ -1,0 +1,2 @@
+ERROR@0:4 "unterminated string value" """\
+EOF@4:4

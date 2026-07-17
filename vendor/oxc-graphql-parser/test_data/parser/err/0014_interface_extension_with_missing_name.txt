@@ -1,0 +1,21 @@
+- DOCUMENT@0..35
+    - INTERFACE_TYPE_EXTENSION@0..35
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - interface_KW@7..16 "interface"
+        - WHITESPACE@16..17 " "
+        - FIELDS_DEFINITION@17..35
+            - L_CURLY@17..18 "{"
+            - WHITESPACE@18..23 "\n    "
+            - FIELD_DEFINITION@23..33
+                - NAME@23..28
+                    - IDENT@23..28 "value"
+                - COLON@28..29 ":"
+                - WHITESPACE@29..30 " "
+                - NAMED_TYPE@30..33
+                    - NAME@30..33
+                        - IDENT@30..33 "Int"
+            - WHITESPACE@33..34 "\n"
+            - R_CURLY@34..35 "}"
+- ERROR@17:18 "expected a Name" {
+recursion limit: 500, high: 0

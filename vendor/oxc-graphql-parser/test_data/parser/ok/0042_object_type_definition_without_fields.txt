@@ -1,0 +1,35 @@
+- DOCUMENT@0..107
+    - OBJECT_TYPE_DEFINITION@0..54
+        - DESCRIPTION@0..23
+            - STRING_VALUE@0..23
+                - STRING@0..23 "\"A type with no fields\""
+        - WHITESPACE@23..24 "\n"
+        - type_KW@24..28 "type"
+        - WHITESPACE@28..29 " "
+        - NAME@29..54
+            - IDENT@29..54 "AnObjectTypeWithoutFields"
+    - WHITESPACE@54..56 "\n\n"
+    - OBJECT_TYPE_EXTENSION@56..107
+        - extend_KW@56..62 "extend"
+        - WHITESPACE@62..63 " "
+        - type_KW@63..67 "type"
+        - WHITESPACE@67..68 " "
+        - NAME@68..93
+            - IDENT@68..93 "AnObjectTypeWithoutFields"
+        - WHITESPACE@93..94 " "
+        - FIELDS_DEFINITION@94..107
+            - L_CURLY@94..95 "{"
+            - WHITESPACE@95..98 "\n  "
+            - FIELD_DEFINITION@98..105
+                - NAME@98..100
+                    - IDENT@98..100 "id"
+                - COLON@100..101 ":"
+                - WHITESPACE@101..102 " "
+                - NON_NULL_TYPE@102..105
+                    - NAMED_TYPE@102..104
+                        - NAME@102..104
+                            - IDENT@102..104 "ID"
+                    - BANG@104..105 "!"
+            - WHITESPACE@105..106 "\n"
+            - R_CURLY@106..107 "}"
+recursion limit: 500, high: 0

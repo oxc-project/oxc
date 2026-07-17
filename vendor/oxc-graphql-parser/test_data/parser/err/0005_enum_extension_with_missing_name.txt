@@ -1,0 +1,22 @@
+- DOCUMENT@0..34
+    - ENUM_TYPE_EXTENSION@0..34
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - enum_KW@7..11 "enum"
+        - WHITESPACE@11..12 " "
+        - ENUM_VALUES_DEFINITION@12..34
+            - L_CURLY@12..13 "{"
+            - WHITESPACE@13..18 "\n    "
+            - ENUM_VALUE_DEFINITION@18..23
+                - ENUM_VALUE@18..23
+                    - NAME@18..23
+                        - IDENT@18..23 "NORTH"
+            - WHITESPACE@23..28 "\n    "
+            - ENUM_VALUE_DEFINITION@28..32
+                - ENUM_VALUE@28..32
+                    - NAME@28..32
+                        - IDENT@28..32 "EAST"
+            - WHITESPACE@32..33 "\n"
+            - R_CURLY@33..34 "}"
+- ERROR@12:13 "expected a Name" {
+recursion limit: 500, high: 0

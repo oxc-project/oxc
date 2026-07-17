@@ -284,6 +284,9 @@ ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi", "oxc_lexe
 # Force the registry request to resolve to the workspace copy so there's a single instance.
 [patch.crates-io]
 oxc_allocator = { path = "crates/oxc_allocator" }
+# PROTOTYPE: vendored copy with compile-time size asserts disabled - pointer compression
+# changes the size of all AST types in this crate (it uses oxc_allocator's Box).
+oxc-graphql-parser = { path = "vendor/oxc-graphql-parser" }
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

@@ -1,0 +1,54 @@
+- DOCUMENT@0..119
+    - OPERATION_DEFINITION@0..119
+        - OPERATION_TYPE@0..5
+            - query_KW@0..5 "query"
+        - WHITESPACE@5..6 " "
+        - NAME@6..13
+            - IDENT@6..13 "myQuery"
+        - WHITESPACE@13..14 " "
+        - SELECTION_SET@14..119
+            - L_CURLY@14..15 "{"
+            - WHITESPACE@15..20 "\n    "
+            - FIELD@20..31
+                - ALIAS@20..27
+                    - NAME@20..26
+                        - IDENT@20..26 "animal"
+                    - COLON@26..27 ":"
+                - WHITESPACE@27..28 " "
+                - NAME@28..31
+                    - IDENT@28..31 "cat"
+            - WHITESPACE@31..36 "\n    "
+            - FIELD@36..108
+                - NAME@36..39
+                    - IDENT@36..39 "dog"
+                - WHITESPACE@39..40 " "
+                - SELECTION_SET@40..108
+                    - L_CURLY@40..41 "{"
+                    - WHITESPACE@41..50 "\n        "
+                    - FIELD@50..102
+                        - NAME@50..55
+                            - IDENT@50..55 "panda"
+                        - WHITESPACE@55..56 " "
+                        - SELECTION_SET@56..102
+                            - L_CURLY@56..57 "{"
+                            - WHITESPACE@57..70 "\n            "
+                            - FIELD@70..92
+                                - NAME@70..80
+                                    - IDENT@70..80 "anotherCat"
+                                - WHITESPACE@80..81 " "
+                                - DIRECTIVES@81..92
+                                    - DIRECTIVE@81..92
+                                        - AT@81..82 "@"
+                                        - NAME@82..92
+                                            - IDENT@82..92 "deprecated"
+                            - WHITESPACE@92..101 "\n        "
+                            - R_CURLY@101..102 "}"
+                    - WHITESPACE@102..107 "\n    "
+                    - R_CURLY@107..108 "}"
+            - WHITESPACE@108..113 "\n    "
+            - FIELD@113..117
+                - NAME@113..117
+                    - IDENT@113..117 "lion"
+            - WHITESPACE@117..118 "\n"
+            - R_CURLY@118..119 "}"
+recursion limit: 500, high: 3

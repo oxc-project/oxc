@@ -1,0 +1,36 @@
+- DOCUMENT@0..122
+    - INTERFACE_TYPE_DEFINITION@0..64
+        - DESCRIPTION@0..29
+            - STRING_VALUE@0..29
+                - STRING@0..29 "\"An interface with no fields\""
+        - WHITESPACE@29..30 "\n"
+        - interface_KW@30..39 "interface"
+        - WHITESPACE@39..40 " "
+        - NAME@40..64
+            - IDENT@40..64 "AnInterfaceWithoutFields"
+    - WHITESPACE@64..66 "\n\n"
+    - INTERFACE_TYPE_EXTENSION@66..121
+        - extend_KW@66..72 "extend"
+        - WHITESPACE@72..73 " "
+        - interface_KW@73..82 "interface"
+        - WHITESPACE@82..83 " "
+        - NAME@83..107
+            - IDENT@83..107 "AnInterfaceWithoutFields"
+        - WHITESPACE@107..108 " "
+        - FIELDS_DEFINITION@108..121
+            - L_CURLY@108..109 "{"
+            - WHITESPACE@109..112 "\n  "
+            - FIELD_DEFINITION@112..119
+                - NAME@112..114
+                    - IDENT@112..114 "id"
+                - COLON@114..115 ":"
+                - WHITESPACE@115..116 " "
+                - NON_NULL_TYPE@116..119
+                    - NAMED_TYPE@116..118
+                        - NAME@116..118
+                            - IDENT@116..118 "ID"
+                    - BANG@118..119 "!"
+            - WHITESPACE@119..120 "\n"
+            - R_CURLY@120..121 "}"
+    - WHITESPACE@121..122 "\n"
+recursion limit: 500, high: 0

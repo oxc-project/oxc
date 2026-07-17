@@ -1,0 +1,12 @@
+- DOCUMENT@0..27
+    - INPUT_OBJECT_TYPE_DEFINITION@0..27
+        - input_KW@0..5 "input"
+        - WHITESPACE@5..6 " "
+        - NAME@6..24
+            - IDENT@6..24 "ExampleInputObject"
+        - WHITESPACE@24..25 " "
+        - INPUT_FIELDS_DEFINITION@25..27
+            - L_CURLY@25..26 "{"
+            - R_CURLY@26..27 "}"
+- ERROR@26:27 "expected an Input Value Definition" }
+recursion limit: 500, high: 0

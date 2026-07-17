@@ -1,0 +1,19 @@
+# Both IntValue and FloatValue are specified with [lookahead != {Digit, `.`, NameStart}]
+00
+2.
+2.2.
+2.2.2
+2e2.
+2e2.2
+2.2e2.
+2.2e2.2
+2_
+2.2_
+2e2_
+2.2e2_
+2x
+2.2x
+2e2x
+2.2e2x
+2e2e
+2e2e2

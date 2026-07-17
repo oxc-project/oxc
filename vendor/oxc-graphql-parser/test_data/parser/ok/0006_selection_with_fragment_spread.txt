@@ -1,0 +1,116 @@
+- DOCUMENT@0..210
+    - OPERATION_DEFINITION@0..209
+        - SELECTION_SET@0..209
+            - L_CURLY@0..1 "{"
+            - WHITESPACE@1..4 "\n  "
+            - FIELD@4..7
+                - NAME@4..7
+                    - IDENT@4..7 "pet"
+            - WHITESPACE@7..10 "\n  "
+            - FRAGMENT_SPREAD@10..27
+                - SPREAD@10..13 "..."
+                - FRAGMENT_NAME@13..27
+                    - NAME@13..27
+                        - IDENT@13..27 "snackSelection"
+            - WHITESPACE@27..30 "\n  "
+            - INLINE_FRAGMENT@30..81
+                - SPREAD@30..33 "..."
+                - WHITESPACE@33..34 " "
+                - TYPE_CONDITION@34..40
+                    - on_KW@34..36 "on"
+                    - WHITESPACE@36..37 " "
+                    - NAMED_TYPE@37..40
+                        - NAME@37..40
+                            - IDENT@37..40 "Nap"
+                - WHITESPACE@40..41 " "
+                - SELECTION_SET@41..81
+                    - L_CURLY@41..42 "{"
+                    - WHITESPACE@42..47 "\n    "
+                    - FIELD@47..59
+                        - NAME@47..59
+                            - IDENT@47..59 "cozyLocation"
+                    - WHITESPACE@59..64 "\n    "
+                    - FIELD@64..77
+                        - NAME@64..77
+                            - IDENT@64..77 "durationOfNap"
+                    - WHITESPACE@77..80 "\n  "
+                    - R_CURLY@80..81 "}"
+            - WHITESPACE@81..84 "\n  "
+            - FRAGMENT_SPREAD@84..113
+                - SPREAD@84..87 "..."
+                - FRAGMENT_NAME@87..101
+                    - NAME@87..101
+                        - IDENT@87..101 "snackSelection"
+                - WHITESPACE@101..102 " "
+                - DIRECTIVES@102..113
+                    - DIRECTIVE@102..113
+                        - AT@102..103 "@"
+                        - NAME@103..113
+                            - IDENT@103..113 "deprecated"
+            - WHITESPACE@113..116 "\n  "
+            - INLINE_FRAGMENT@116..180
+                - SPREAD@116..119 "..."
+                - WHITESPACE@119..120 " "
+                - TYPE_CONDITION@120..126
+                    - on_KW@120..122 "on"
+                    - WHITESPACE@122..123 " "
+                    - NAMED_TYPE@123..126
+                        - NAME@123..126
+                            - IDENT@123..126 "Nap"
+                - WHITESPACE@126..127 " "
+                - DIRECTIVES@127..157
+                    - DIRECTIVE@127..157
+                        - AT@127..128 "@"
+                        - NAME@128..136
+                            - IDENT@128..136 "provides"
+                        - ARGUMENTS@136..157
+                            - L_PAREN@136..137 "("
+                            - ARGUMENT@137..156
+                                - NAME@137..145
+                                    - IDENT@137..145 "duration"
+                                - COLON@145..146 ":"
+                                - WHITESPACE@146..147 " "
+                                - STRING_VALUE@147..156
+                                    - STRING@147..156 "\"2 hours\""
+                            - R_PAREN@156..157 ")"
+                - WHITESPACE@157..158 " "
+                - SELECTION_SET@158..180
+                    - L_CURLY@158..159 "{"
+                    - WHITESPACE@159..164 "\n    "
+                    - FIELD@164..176
+                        - NAME@164..176
+                            - IDENT@164..176 "cozyLocation"
+                    - WHITESPACE@176..179 "\n  "
+                    - R_CURLY@179..180 "}"
+            - WHITESPACE@180..183 "\n  "
+            - INLINE_FRAGMENT@183..207
+                - SPREAD@183..186 "..."
+                - WHITESPACE@186..187 " "
+                - DIRECTIVES@187..195
+                    - DIRECTIVE@187..195
+                        - AT@187..188 "@"
+                        - NAME@188..189
+                            - IDENT@188..189 "J"
+                        - ARGUMENTS@189..195
+                            - L_PAREN@189..190 "("
+                            - ARGUMENT@190..194
+                                - NAME@190..191
+                                    - IDENT@190..191 "N"
+                                - COLON@191..192 ":"
+                                - WHITESPACE@192..193 " "
+                                - INT_VALUE@193..194
+                                    - INT@193..194 "0"
+                            - R_PAREN@194..195 ")"
+                - WHITESPACE@195..196 " "
+                - SELECTION_SET@196..207
+                    - L_CURLY@196..197 "{"
+                    - WHITESPACE@197..202 "\n    "
+                    - FIELD@202..203
+                        - NAME@202..203
+                            - IDENT@202..203 "a"
+                    - WHITESPACE@203..206 "\n  "
+                    - R_CURLY@206..207 "}"
+            - WHITESPACE@207..208 "\n"
+            - R_CURLY@208..209 "}"
+    - WHITESPACE@209..210 "\n"
+recursion limit: 500, high: 2

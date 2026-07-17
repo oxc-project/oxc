@@ -1,0 +1,13 @@
+- DOCUMENT@0..25
+    - SCALAR_TYPE_EXTENSION@0..25
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - scalar_KW@7..13 "scalar"
+        - WHITESPACE@13..14 " "
+        - DIRECTIVES@14..25
+            - DIRECTIVE@14..25
+                - AT@14..15 "@"
+                - NAME@15..25
+                    - IDENT@15..25 "deprecated"
+- ERROR@14:15 "expected a Name" @
+recursion limit: 500, high: 0

@@ -1,0 +1,34 @@
+NAME@0:8 "mutation"
+WHITESPACE@8:9 " "
+L_CURLY@9:10 "{"
+WHITESPACE@10:13 "\n  "
+NAME@13:24 "createStore"
+L_PAREN@24:25 "("
+NAME@25:30 "draft"
+COLON@30:31 ":"
+WHITESPACE@31:32 " "
+L_CURLY@32:33 "{"
+WHITESPACE@33:38 "\n    "
+NAME@38:42 "name"
+COLON@42:43 ":"
+WHITESPACE@43:44 " "
+L_BRACKET@44:45 "["
+L_CURLY@45:46 "{"
+WHITESPACE@46:47 " "
+NAME@47:53 "locale"
+COLON@53:54 ":"
+WHITESPACE@54:55 " "
+STRING_VALUE@55:59 "\"en\""
+COMMA@59:60 ","
+WHITESPACE@60:61 " "
+NAME@61:66 "value"
+COLON@66:67 ":"
+WHITESPACE@67:68 " "
+ERROR@68:106 "unexpected line terminator" "my store }]
+  }) {
+    name(locale: "
+NAME@106:108 "en"
+ERROR@108:116 "unterminated string value" ")
+  }
+}
+EOF@116:116

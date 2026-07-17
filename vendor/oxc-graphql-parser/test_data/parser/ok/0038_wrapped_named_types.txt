@@ -1,0 +1,220 @@
+- DOCUMENT@0..224
+    - OBJECT_TYPE_DEFINITION@0..107
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..14
+            - IDENT@5..14 "ObjectDef"
+        - WHITESPACE@14..15 " "
+        - FIELDS_DEFINITION@15..107
+            - L_CURLY@15..16 "{"
+            - WHITESPACE@16..21 "\n    "
+            - FIELD_DEFINITION@21..30
+                - NAME@21..22
+                    - IDENT@21..22 "a"
+                - COLON@22..23 ":"
+                - WHITESPACE@23..24 " "
+                - NAMED_TYPE@24..30
+                    - NAME@24..30
+                        - IDENT@24..30 "String"
+            - WHITESPACE@30..35 "\n    "
+            - FIELD_DEFINITION@35..42
+                - NAME@35..36
+                    - IDENT@35..36 "b"
+                - COLON@36..37 ":"
+                - WHITESPACE@37..38 " "
+                - NON_NULL_TYPE@38..42
+                    - NAMED_TYPE@38..41
+                        - NAME@38..41
+                            - IDENT@38..41 "Int"
+                    - BANG@41..42 "!"
+            - WHITESPACE@42..47 "\n    "
+            - FIELD_DEFINITION@47..57
+                - NAME@47..48
+                    - IDENT@47..48 "c"
+                - COLON@48..49 ":"
+                - WHITESPACE@49..50 " "
+                - NON_NULL_TYPE@50..57
+                    - LIST_TYPE@50..56
+                        - L_BRACK@50..51 "["
+                        - NON_NULL_TYPE@51..55
+                            - NAMED_TYPE@51..54
+                                - NAME@51..54
+                                    - IDENT@51..54 "Int"
+                            - BANG@54..55 "!"
+                        - R_BRACK@55..56 "]"
+                    - BANG@56..57 "!"
+            - WHITESPACE@57..62 "\n    "
+            - FIELD_DEFINITION@62..78
+                - NAME@62..63
+                    - IDENT@62..63 "d"
+                - COLON@63..64 ":"
+                - WHITESPACE@64..65 " "
+                - LIST_TYPE@65..78
+                    - L_BRACK@65..66 "["
+                    - LIST_TYPE@66..77
+                        - L_BRACK@66..67 "["
+                        - LIST_TYPE@67..76
+                            - L_BRACK@67..68 "["
+                            - LIST_TYPE@68..75
+                                - L_BRACK@68..69 "["
+                                - LIST_TYPE@69..74
+                                    - L_BRACK@69..70 "["
+                                    - NAMED_TYPE@70..73
+                                        - NAME@70..73
+                                            - IDENT@70..73 "Int"
+                                    - R_BRACK@73..74 "]"
+                                - R_BRACK@74..75 "]"
+                            - R_BRACK@75..76 "]"
+                        - R_BRACK@76..77 "]"
+                    - R_BRACK@77..78 "]"
+            - WHITESPACE@78..83 "\n    "
+            - FIELD_DEFINITION@83..105
+                - NAME@83..84
+                    - IDENT@83..84 "d"
+                - COLON@84..85 ":"
+                - WHITESPACE@85..86 " "
+                - NON_NULL_TYPE@86..105
+                    - LIST_TYPE@86..104
+                        - L_BRACK@86..87 "["
+                        - NON_NULL_TYPE@87..103
+                            - LIST_TYPE@87..102
+                                - L_BRACK@87..88 "["
+                                - NON_NULL_TYPE@88..101
+                                    - LIST_TYPE@88..100
+                                        - L_BRACK@88..89 "["
+                                        - NON_NULL_TYPE@89..99
+                                            - LIST_TYPE@89..98
+                                                - L_BRACK@89..90 "["
+                                                - NON_NULL_TYPE@90..97
+                                                    - LIST_TYPE@90..96
+                                                        - L_BRACK@90..91 "["
+                                                        - NON_NULL_TYPE@91..95
+                                                            - NAMED_TYPE@91..94
+                                                                - NAME@91..94
+                                                                    - IDENT@91..94 "Int"
+                                                            - BANG@94..95 "!"
+                                                        - R_BRACK@95..96 "]"
+                                                    - BANG@96..97 "!"
+                                                - R_BRACK@97..98 "]"
+                                            - BANG@98..99 "!"
+                                        - R_BRACK@99..100 "]"
+                                    - BANG@100..101 "!"
+                                - R_BRACK@101..102 "]"
+                            - BANG@102..103 "!"
+                        - R_BRACK@103..104 "]"
+                    - BANG@104..105 "!"
+            - WHITESPACE@105..106 "\n"
+            - R_CURLY@106..107 "}"
+    - WHITESPACE@107..109 "\n\n"
+    - OBJECT_TYPE_DEFINITION@109..224
+        - type_KW@109..113 "type"
+        - WHITESPACE@113..114 " "
+        - NAME@114..126
+            - IDENT@114..126 "ObjectDefTwo"
+        - WHITESPACE@126..127 " "
+        - FIELDS_DEFINITION@127..224
+            - L_CURLY@127..128 "{"
+            - WHITESPACE@128..133 "\n    "
+            - FIELD_DEFINITION@133..142
+                - NAME@133..134
+                    - IDENT@133..134 "a"
+                - COLON@134..135 ":"
+                - WHITESPACE@135..136 " "
+                - NAMED_TYPE@136..142
+                    - NAME@136..142
+                        - IDENT@136..142 "String"
+            - COMMA@142..143 ","
+            - WHITESPACE@143..148 "\n    "
+            - FIELD_DEFINITION@148..155
+                - NAME@148..149
+                    - IDENT@148..149 "b"
+                - COLON@149..150 ":"
+                - WHITESPACE@150..151 " "
+                - NON_NULL_TYPE@151..155
+                    - NAMED_TYPE@151..154
+                        - NAME@151..154
+                            - IDENT@151..154 "Int"
+                    - BANG@154..155 "!"
+            - COMMA@155..156 ","
+            - WHITESPACE@156..161 "\n    "
+            - FIELD_DEFINITION@161..171
+                - NAME@161..162
+                    - IDENT@161..162 "c"
+                - COLON@162..163 ":"
+                - WHITESPACE@163..164 " "
+                - NON_NULL_TYPE@164..171
+                    - LIST_TYPE@164..170
+                        - L_BRACK@164..165 "["
+                        - NON_NULL_TYPE@165..169
+                            - NAMED_TYPE@165..168
+                                - NAME@165..168
+                                    - IDENT@165..168 "Int"
+                            - BANG@168..169 "!"
+                        - R_BRACK@169..170 "]"
+                    - BANG@170..171 "!"
+            - COMMA@171..172 ","
+            - WHITESPACE@172..177 "\n    "
+            - FIELD_DEFINITION@177..193
+                - NAME@177..178
+                    - IDENT@177..178 "d"
+                - COLON@178..179 ":"
+                - WHITESPACE@179..180 " "
+                - LIST_TYPE@180..193
+                    - L_BRACK@180..181 "["
+                    - LIST_TYPE@181..192
+                        - L_BRACK@181..182 "["
+                        - LIST_TYPE@182..191
+                            - L_BRACK@182..183 "["
+                            - LIST_TYPE@183..190
+                                - L_BRACK@183..184 "["
+                                - LIST_TYPE@184..189
+                                    - L_BRACK@184..185 "["
+                                    - NAMED_TYPE@185..188
+                                        - NAME@185..188
+                                            - IDENT@185..188 "Int"
+                                    - R_BRACK@188..189 "]"
+                                - R_BRACK@189..190 "]"
+                            - R_BRACK@190..191 "]"
+                        - R_BRACK@191..192 "]"
+                    - R_BRACK@192..193 "]"
+            - COMMA@193..194 ","
+            - WHITESPACE@194..199 "\n    "
+            - FIELD_DEFINITION@199..221
+                - NAME@199..200
+                    - IDENT@199..200 "d"
+                - COLON@200..201 ":"
+                - WHITESPACE@201..202 " "
+                - NON_NULL_TYPE@202..221
+                    - LIST_TYPE@202..220
+                        - L_BRACK@202..203 "["
+                        - NON_NULL_TYPE@203..219
+                            - LIST_TYPE@203..218
+                                - L_BRACK@203..204 "["
+                                - NON_NULL_TYPE@204..217
+                                    - LIST_TYPE@204..216
+                                        - L_BRACK@204..205 "["
+                                        - NON_NULL_TYPE@205..215
+                                            - LIST_TYPE@205..214
+                                                - L_BRACK@205..206 "["
+                                                - NON_NULL_TYPE@206..213
+                                                    - LIST_TYPE@206..212
+                                                        - L_BRACK@206..207 "["
+                                                        - NON_NULL_TYPE@207..211
+                                                            - NAMED_TYPE@207..210
+                                                                - NAME@207..210
+                                                                    - IDENT@207..210 "Int"
+                                                            - BANG@210..211 "!"
+                                                        - R_BRACK@211..212 "]"
+                                                    - BANG@212..213 "!"
+                                                - R_BRACK@213..214 "]"
+                                            - BANG@214..215 "!"
+                                        - R_BRACK@215..216 "]"
+                                    - BANG@216..217 "!"
+                                - R_BRACK@217..218 "]"
+                            - BANG@218..219 "!"
+                        - R_BRACK@219..220 "]"
+                    - BANG@220..221 "!"
+            - COMMA@221..222 ","
+            - WHITESPACE@222..223 "\n"
+            - R_CURLY@223..224 "}"
+recursion limit: 500, high: 5

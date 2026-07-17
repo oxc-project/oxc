@@ -1,0 +1,13 @@
+- DOCUMENT@0..18
+    - ENUM_TYPE_DEFINITION@0..18
+        - enum_KW@0..4 "enum"
+        - WHITESPACE@4..5 " "
+        - NAME@5..14
+            - IDENT@5..14 "Direction"
+        - WHITESPACE@14..15 " "
+        - ENUM_VALUES_DEFINITION@15..18
+            - L_CURLY@15..16 "{"
+            - WHITESPACE@16..17 "\n"
+            - R_CURLY@17..18 "}"
+- ERROR@17:18 "expected Enum Value Definition" }
+recursion limit: 500, high: 0

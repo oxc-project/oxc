@@ -1,0 +1,42 @@
+- DOCUMENT@0..86
+    - DIRECTIVE_DEFINITION@0..86
+        - directive_KW@0..9 "directive"
+        - WHITESPACE@9..10 " "
+        - AT@10..11 "@"
+        - NAME@11..18
+            - IDENT@11..18 "example"
+        - ARGUMENTS_DEFINITION@18..55
+            - L_PAREN@18..19 "("
+            - INPUT_VALUE_DEFINITION@19..35
+                - NAME@19..26
+                    - IDENT@19..26 "isTreat"
+                - COLON@26..27 ":"
+                - WHITESPACE@27..28 " "
+                - NAMED_TYPE@28..35
+                    - NAME@28..35
+                        - IDENT@28..35 "Boolean"
+            - COMMA@35..36 ","
+            - WHITESPACE@36..37 " "
+            - INPUT_VALUE_DEFINITION@37..54
+                - NAME@37..46
+                    - IDENT@37..46 "treatKind"
+                - COLON@46..47 ":"
+                - WHITESPACE@47..48 " "
+                - NAMED_TYPE@48..54
+                    - NAME@48..54
+                        - IDENT@48..54 "String"
+            - R_PAREN@54..55 ")"
+        - WHITESPACE@55..56 " "
+        - repeatable_KW@56..66 "repeatable"
+        - WHITESPACE@66..67 " "
+        - on_KW@67..69 "on"
+        - WHITESPACE@69..70 " "
+        - DIRECTIVE_LOCATIONS@70..86
+            - DIRECTIVE_LOCATION@70..75
+                - FIELD_KW@70..75 "FIELD"
+            - WHITESPACE@75..76 " "
+            - PIPE@76..77 "|"
+            - WHITESPACE@77..78 " "
+            - DIRECTIVE_LOCATION@78..86
+                - MUTATION_KW@78..86 "MUTATION"
+recursion limit: 500, high: 0

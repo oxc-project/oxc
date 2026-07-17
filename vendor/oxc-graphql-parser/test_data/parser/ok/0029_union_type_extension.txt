@@ -1,0 +1,28 @@
+- DOCUMENT@0..54
+    - UNION_TYPE_EXTENSION@0..54
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - union_KW@7..12 "union"
+        - WHITESPACE@12..13 " "
+        - NAME@13..25
+            - IDENT@13..25 "SearchResult"
+        - WHITESPACE@25..26 " "
+        - DIRECTIVES@26..37
+            - DIRECTIVE@26..37
+                - AT@26..27 "@"
+                - NAME@27..37
+                    - IDENT@27..37 "deprecated"
+        - WHITESPACE@37..38 " "
+        - UNION_MEMBER_TYPES@38..54
+            - EQ@38..39 "="
+            - WHITESPACE@39..40 " "
+            - NAMED_TYPE@40..45
+                - NAME@40..45
+                    - IDENT@40..45 "Photo"
+            - WHITESPACE@45..46 " "
+            - PIPE@46..47 "|"
+            - WHITESPACE@47..48 " "
+            - NAMED_TYPE@48..54
+                - NAME@48..54
+                    - IDENT@48..54 "Person"
+recursion limit: 500, high: 0

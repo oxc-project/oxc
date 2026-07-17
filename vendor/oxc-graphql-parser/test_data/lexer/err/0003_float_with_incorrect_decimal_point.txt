@@ -1,0 +1,3 @@
+ERROR@0:7 "Unexpected character `.` as float suffix" 456E34.
+INT@7:9 "54"
+EOF@9:9

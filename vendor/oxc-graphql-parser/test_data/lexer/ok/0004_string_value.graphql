@@ -1,0 +1,15 @@
+""
+"simple"
+" white space "
+"unicode \u1234\u5678\u90AB\uCDEF"
+"string with \"escaped\" characters"
+"string with multiple languages котя, 猫, ねこ, قطة"
+"""
+block string with unusual whitespaces
+a b  c
+d
+
+e	f
+g  h
+ijk﻿l‎‏m
+"""

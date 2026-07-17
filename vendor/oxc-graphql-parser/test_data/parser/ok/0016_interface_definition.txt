@@ -1,0 +1,21 @@
+- DOCUMENT@0..41
+    - INTERFACE_TYPE_DEFINITION@0..41
+        - interface_KW@0..9 "interface"
+        - WHITESPACE@9..10 " "
+        - NAME@10..22
+            - IDENT@10..22 "ValuedEntity"
+        - WHITESPACE@22..23 " "
+        - FIELDS_DEFINITION@23..41
+            - L_CURLY@23..24 "{"
+            - WHITESPACE@24..29 "\n    "
+            - FIELD_DEFINITION@29..39
+                - NAME@29..34
+                    - IDENT@29..34 "value"
+                - COLON@34..35 ":"
+                - WHITESPACE@35..36 " "
+                - NAMED_TYPE@36..39
+                    - NAME@36..39
+                        - IDENT@36..39 "Int"
+            - WHITESPACE@39..40 "\n"
+            - R_CURLY@40..41 "}"
+recursion limit: 500, high: 0

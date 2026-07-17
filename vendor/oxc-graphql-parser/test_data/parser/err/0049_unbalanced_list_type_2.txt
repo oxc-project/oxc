@@ -1,0 +1,31 @@
+- DOCUMENT@0..40
+    - OBJECT_TYPE_DEFINITION@0..39
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..10
+            - IDENT@5..10 "Query"
+        - WHITESPACE@10..11 " "
+        - FIELDS_DEFINITION@11..39
+            - L_CURLY@11..12 "{"
+            - WHITESPACE@12..17 "\n    "
+            - FIELD_DEFINITION@17..37
+                - NAME@17..27
+                    - IDENT@17..27 "unbalanced"
+                - COLON@27..28 ":"
+                - WHITESPACE@28..29 " "
+                - LIST_TYPE@29..37
+                    - L_BRACK@29..30 "["
+                    - LIST_TYPE@30..37
+                        - L_BRACK@30..31 "["
+                        - LIST_TYPE@31..36
+                            - L_BRACK@31..32 "["
+                            - NAMED_TYPE@32..35
+                                - NAME@32..35
+                                    - IDENT@32..35 "Int"
+                            - R_BRACK@35..36 "]"
+                        - R_BRACK@36..37 "]"
+            - WHITESPACE@37..38 "\n"
+            - R_CURLY@38..39 "}"
+    - WHITESPACE@39..40 "\n"
+- ERROR@38:39 "expected R_BRACK, got }" }
+recursion limit: 500, high: 3

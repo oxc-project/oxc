@@ -1,0 +1,20 @@
+- DOCUMENT@0..24
+    - OBJECT_TYPE_DEFINITION@0..24
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..11
+            - IDENT@5..11 "Person"
+        - WHITESPACE@11..12 " "
+        - FIELDS_DEFINITION@12..24
+            - L_CURLY@12..13 "{"
+            - WHITESPACE@13..14 " "
+            - FIELD_DEFINITION@14..24
+                - NAME@14..16
+                    - IDENT@14..16 "id"
+                - COLON@16..17 ":"
+                - WHITESPACE@17..18 " "
+                - NAMED_TYPE@18..24
+                    - NAME@18..24
+                        - IDENT@18..24 "String"
+- ERROR@24:24 "expected R_CURLY, got EOF" EOF
+recursion limit: 500, high: 0

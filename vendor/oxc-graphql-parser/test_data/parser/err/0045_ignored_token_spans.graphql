@@ -1,0 +1,9 @@
+cats
+# https://github.com/oxc-project/oxc-graphql-parser/issues/325
+
+interface X
+
+cats
+type Query {
+    name: String
+}

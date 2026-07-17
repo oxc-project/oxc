@@ -1,0 +1,32 @@
+- DOCUMENT@0..40
+    - OBJECT_TYPE_DEFINITION@0..39
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..10
+            - IDENT@5..10 "Query"
+        - WHITESPACE@10..11 " "
+        - FIELDS_DEFINITION@11..39
+            - L_CURLY@11..12 "{"
+            - WHITESPACE@12..13 " "
+            - FIELD_DEFINITION@13..24
+                - NAME@13..18
+                    - IDENT@13..18 "field"
+                - COLON@18..19 ":"
+                - WHITESPACE@19..20 " "
+                - NAMED_TYPE@20..24
+                    - NAME@20..24
+                        - IDENT@20..24 "Type"
+            - ERROR@24..27 "日"
+            - ERROR@27..30 "本"
+            - ERROR@30..33 "語"
+            - FIELD_DEFINITION@33..37
+                - NAME@33..37
+                    - IDENT@33..37 "Name"
+            - WHITESPACE@37..38 " "
+            - R_CURLY@38..39 "}"
+    - WHITESPACE@39..40 "\n"
+- ERROR@24:27 "Unexpected character \"日\"" 日
+- ERROR@27:30 "Unexpected character \"本\"" 本
+- ERROR@30:33 "Unexpected character \"語\"" 語
+- ERROR@38:39 "expected a type" }
+recursion limit: 500, high: 0

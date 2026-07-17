@@ -1,0 +1,28 @@
+- DOCUMENT@0..35
+    - OBJECT_TYPE_DEFINITION@0..34
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..10
+            - IDENT@5..10 "Query"
+        - WHITESPACE@10..11 " "
+        - FIELDS_DEFINITION@11..34
+            - L_CURLY@11..12 "{"
+            - WHITESPACE@12..13 " "
+            - FIELD_DEFINITION@13..19
+                - NAME@13..18
+                    - IDENT@13..18 "field"
+                - COLON@18..19 ":"
+            - WHITESPACE@19..20 " "
+            - ERROR@20..23 "中"
+            - ERROR@23..26 "文"
+            - ERROR@26..29 "类"
+            - ERROR@29..32 "型"
+            - WHITESPACE@32..33 " "
+            - R_CURLY@33..34 "}"
+    - WHITESPACE@34..35 "\n"
+- ERROR@20:23 "Unexpected character \"中\"" 中
+- ERROR@23:26 "Unexpected character \"文\"" 文
+- ERROR@26:29 "Unexpected character \"类\"" 类
+- ERROR@29:32 "Unexpected character \"型\"" 型
+- ERROR@33:34 "expected a Type" }
+recursion limit: 500, high: 0

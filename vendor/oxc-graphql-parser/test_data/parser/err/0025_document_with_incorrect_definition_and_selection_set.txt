@@ -1,0 +1,18 @@
+- DOCUMENT@0..41
+    - ERROR@0..14 "uasdf21230jkdw"
+    - WHITESPACE@14..16 "\n\n"
+    - OPERATION_DEFINITION@16..41
+        - SELECTION_SET@16..41
+            - L_CURLY@16..17 "{"
+            - WHITESPACE@17..22 "\n    "
+            - FIELD@22..25
+                - NAME@22..25
+                    - IDENT@22..25 "pet"
+            - WHITESPACE@25..30 "\n    "
+            - FIELD@30..39
+                - NAME@30..39
+                    - IDENT@30..39 "faveSnack"
+            - WHITESPACE@39..40 "\n"
+            - R_CURLY@40..41 "}"
+- ERROR@0:14 "expected definition" uasdf21230jkdw
+recursion limit: 500, high: 1

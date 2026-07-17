@@ -72,93 +72,93 @@ const DebugProgram = class Program {};
 function constructExpression(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 4, ast);
     case 2:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 3:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 4:
-      return constructBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 4, ast);
     case 5:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 6:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 7:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 8:
-      return constructBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 4, ast);
     case 9:
-      return constructBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 4, ast);
     case 10:
-      return constructBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 4, ast);
     case 11:
-      return constructBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 4, ast);
     case 12:
-      return constructBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 4, ast);
     case 13:
-      return constructBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 4, ast);
     case 14:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 15:
-      return constructBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 4, ast);
     case 16:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 17:
-      return constructBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 4, ast);
     case 18:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 19:
-      return constructBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 4, ast);
     case 20:
-      return constructBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 4, ast);
     case 21:
-      return constructBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 4, ast);
     case 22:
-      return constructBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 4, ast);
     case 23:
-      return constructBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 4, ast);
     case 24:
-      return constructBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 4, ast);
     case 25:
-      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 4, ast);
     case 26:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 27:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     case 28:
-      return constructBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 4, ast);
     case 29:
-      return constructBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 4, ast);
     case 30:
-      return constructBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 4, ast);
     case 31:
-      return constructBoxImportMeta(pos + 8, ast);
+      return constructBoxImportMeta(pos + 4, ast);
     case 32:
-      return constructBoxNewTarget(pos + 8, ast);
+      return constructBoxNewTarget(pos + 4, ast);
     case 33:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 34:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 35:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 36:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 37:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 38:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 39:
-      return constructBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 4, ast);
     case 40:
-      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Expression`);
   }
@@ -450,97 +450,97 @@ const DebugArrayExpression = class ArrayExpression {};
 function constructArrayExpressionElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 4, ast);
     case 2:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 3:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 4:
-      return constructBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 4, ast);
     case 5:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 6:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 7:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 8:
-      return constructBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 4, ast);
     case 9:
-      return constructBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 4, ast);
     case 10:
-      return constructBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 4, ast);
     case 11:
-      return constructBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 4, ast);
     case 12:
-      return constructBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 4, ast);
     case 13:
-      return constructBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 4, ast);
     case 14:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 15:
-      return constructBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 4, ast);
     case 16:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 17:
-      return constructBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 4, ast);
     case 18:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 19:
-      return constructBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 4, ast);
     case 20:
-      return constructBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 4, ast);
     case 21:
-      return constructBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 4, ast);
     case 22:
-      return constructBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 4, ast);
     case 23:
-      return constructBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 4, ast);
     case 24:
-      return constructBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 4, ast);
     case 25:
-      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 4, ast);
     case 26:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 27:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     case 28:
-      return constructBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 4, ast);
     case 29:
-      return constructBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 4, ast);
     case 30:
-      return constructBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 4, ast);
     case 31:
-      return constructBoxImportMeta(pos + 8, ast);
+      return constructBoxImportMeta(pos + 4, ast);
     case 32:
-      return constructBoxNewTarget(pos + 8, ast);
+      return constructBoxNewTarget(pos + 4, ast);
     case 33:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 34:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 35:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 36:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 37:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 38:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 39:
-      return constructBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 4, ast);
     case 40:
-      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     case 64:
-      return constructBoxSpreadElement(pos + 8, ast);
+      return constructBoxSpreadElement(pos + 4, ast);
     case 65:
-      return constructBoxElision(pos + 8, ast);
+      return constructBoxElision(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ArrayExpressionElement`);
   }
@@ -637,9 +637,9 @@ const DebugObjectExpression = class ObjectExpression {};
 function constructObjectPropertyKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxObjectProperty(pos + 8, ast);
+      return constructBoxObjectProperty(pos + 4, ast);
     case 1:
-      return constructBoxSpreadElement(pos + 8, ast);
+      return constructBoxSpreadElement(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectPropertyKind`);
   }
@@ -672,32 +672,32 @@ export class ObjectProperty {
 
   get kind() {
     const internal = this.#internal;
-    return constructPropertyKind(internal.pos + 12, internal.ast);
+    return constructPropertyKind(internal.pos + 28, internal.ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 16, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   get method() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 29, internal.ast);
   }
 
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 30, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 15, internal.ast);
+    return constructBool(internal.pos + 31, internal.ast);
   }
 
   toJSON() {
@@ -724,97 +724,97 @@ const DebugObjectProperty = class ObjectProperty {};
 function constructPropertyKey(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 4, ast);
     case 2:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 3:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 4:
-      return constructBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 4, ast);
     case 5:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 6:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 7:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 8:
-      return constructBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 4, ast);
     case 9:
-      return constructBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 4, ast);
     case 10:
-      return constructBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 4, ast);
     case 11:
-      return constructBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 4, ast);
     case 12:
-      return constructBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 4, ast);
     case 13:
-      return constructBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 4, ast);
     case 14:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 15:
-      return constructBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 4, ast);
     case 16:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 17:
-      return constructBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 4, ast);
     case 18:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 19:
-      return constructBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 4, ast);
     case 20:
-      return constructBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 4, ast);
     case 21:
-      return constructBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 4, ast);
     case 22:
-      return constructBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 4, ast);
     case 23:
-      return constructBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 4, ast);
     case 24:
-      return constructBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 4, ast);
     case 25:
-      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 4, ast);
     case 26:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 27:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     case 28:
-      return constructBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 4, ast);
     case 29:
-      return constructBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 4, ast);
     case 30:
-      return constructBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 4, ast);
     case 31:
-      return constructBoxImportMeta(pos + 8, ast);
+      return constructBoxImportMeta(pos + 4, ast);
     case 32:
-      return constructBoxNewTarget(pos + 8, ast);
+      return constructBoxNewTarget(pos + 4, ast);
     case 33:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 34:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 35:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 36:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 37:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 38:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 39:
-      return constructBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 4, ast);
     case 40:
-      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     case 64:
-      return constructBoxIdentifierName(pos + 8, ast);
+      return constructBoxIdentifierName(pos + 4, ast);
     case 65:
-      return constructBoxPrivateIdentifier(pos + 8, ast);
+      return constructBoxPrivateIdentifier(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKey`);
   }
@@ -916,17 +916,17 @@ export class TaggedTemplateExpression {
 
   get tag() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   get quasi() {
     const internal = this.#internal;
-    return new TemplateLiteral(internal.pos + 40, internal.ast);
+    return new TemplateLiteral(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -1044,11 +1044,11 @@ const DebugTemplateElementValue = class TemplateElementValue {};
 function constructMemberExpression(pos, ast) {
   switch (ast.buffer[pos]) {
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for MemberExpression`);
   }
@@ -1081,17 +1081,17 @@ export class ComputedMemberExpression {
 
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -1139,17 +1139,17 @@ export class StaticMemberExpression {
 
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 32, internal.ast);
+    return new IdentifierName(internal.pos + 24, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -1197,17 +1197,17 @@ export class PrivateFieldExpression {
 
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return new PrivateIdentifier(internal.pos + 32, internal.ast);
+    return new PrivateIdentifier(internal.pos + 24, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -1255,24 +1255,24 @@ export class CallExpression {
 
   get callee() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   get arguments() {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return (internal.$arguments = constructVecArgument(internal.pos + 40, internal.ast));
+    return (internal.$arguments = constructVecArgument(internal.pos + 24, internal.ast));
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -1321,19 +1321,19 @@ export class NewExpression {
 
   get callee() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   get arguments() {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return (internal.$arguments = constructVecArgument(internal.pos + 40, internal.ast));
+    return (internal.$arguments = constructVecArgument(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -1461,7 +1461,7 @@ export class SpreadElement {
 
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -1483,95 +1483,95 @@ const DebugSpreadElement = class SpreadElement {};
 function constructArgument(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 4, ast);
     case 2:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 3:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 4:
-      return constructBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 4, ast);
     case 5:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 6:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 7:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 8:
-      return constructBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 4, ast);
     case 9:
-      return constructBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 4, ast);
     case 10:
-      return constructBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 4, ast);
     case 11:
-      return constructBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 4, ast);
     case 12:
-      return constructBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 4, ast);
     case 13:
-      return constructBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 4, ast);
     case 14:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 15:
-      return constructBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 4, ast);
     case 16:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 17:
-      return constructBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 4, ast);
     case 18:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 19:
-      return constructBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 4, ast);
     case 20:
-      return constructBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 4, ast);
     case 21:
-      return constructBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 4, ast);
     case 22:
-      return constructBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 4, ast);
     case 23:
-      return constructBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 4, ast);
     case 24:
-      return constructBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 4, ast);
     case 25:
-      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 4, ast);
     case 26:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 27:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     case 28:
-      return constructBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 4, ast);
     case 29:
-      return constructBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 4, ast);
     case 30:
-      return constructBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 4, ast);
     case 31:
-      return constructBoxImportMeta(pos + 8, ast);
+      return constructBoxImportMeta(pos + 4, ast);
     case 32:
-      return constructBoxNewTarget(pos + 8, ast);
+      return constructBoxNewTarget(pos + 4, ast);
     case 33:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 34:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 35:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 36:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 37:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 38:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 39:
-      return constructBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 4, ast);
     case 40:
-      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     case 64:
-      return constructBoxSpreadElement(pos + 8, ast);
+      return constructBoxSpreadElement(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Argument`);
   }
@@ -1604,17 +1604,17 @@ export class UpdateExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructUpdateOperator(internal.pos + 12, internal.ast);
+    return constructUpdateOperator(internal.pos + 20, internal.ast);
   }
 
   get prefix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 21, internal.ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return constructSimpleAssignmentTarget(internal.pos + 16, internal.ast);
+    return constructSimpleAssignmentTarget(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -1662,12 +1662,12 @@ export class UnaryExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructUnaryOperator(internal.pos + 12, internal.ast);
+    return constructUnaryOperator(internal.pos + 20, internal.ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -1714,17 +1714,17 @@ export class BinaryExpression {
 
   get left() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return constructBinaryOperator(internal.pos + 12, internal.ast);
+    return constructBinaryOperator(internal.pos + 28, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -1772,12 +1772,12 @@ export class PrivateInExpression {
 
   get left() {
     const internal = this.#internal;
-    return new PrivateIdentifier(internal.pos + 16, internal.ast);
+    return new PrivateIdentifier(internal.pos + 24, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 48, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -1824,17 +1824,17 @@ export class LogicalExpression {
 
   get left() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return constructLogicalOperator(internal.pos + 12, internal.ast);
+    return constructLogicalOperator(internal.pos + 28, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -1882,17 +1882,17 @@ export class ConditionalExpression {
 
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get consequent() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   get alternate() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 48, internal.ast);
+    return constructExpression(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -1940,17 +1940,17 @@ export class AssignmentExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructAssignmentOperator(internal.pos + 12, internal.ast);
+    return constructAssignmentOperator(internal.pos + 28, internal.ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 16, internal.ast);
+    return constructAssignmentTarget(internal.pos + 12, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -1974,25 +1974,25 @@ const DebugAssignmentExpression = class AssignmentExpression {};
 function constructAssignmentTarget(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 1:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 2:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 3:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 4:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 8:
-      return constructBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 4, ast);
     case 9:
-      return constructBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTarget`);
   }
@@ -2001,21 +2001,21 @@ function constructAssignmentTarget(pos, ast) {
 function constructSimpleAssignmentTarget(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 1:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 2:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 3:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 4:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for SimpleAssignmentTarget`);
   }
@@ -2024,9 +2024,9 @@ function constructSimpleAssignmentTarget(pos, ast) {
 function constructAssignmentTargetPattern(pos, ast) {
   switch (ast.buffer[pos]) {
     case 8:
-      return constructBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 4, ast);
     case 9:
-      return constructBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetPattern`);
   }
@@ -2161,7 +2161,7 @@ export class AssignmentTargetRest {
 
   get argument() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 16, internal.ast);
+    return constructAssignmentTarget(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -2183,27 +2183,27 @@ const DebugAssignmentTargetRest = class AssignmentTargetRest {};
 function constructAssignmentTargetMaybeDefault(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 1:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 2:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 3:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 4:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 8:
-      return constructBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 4, ast);
     case 9:
-      return constructBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 4, ast);
     case 16:
-      return constructBoxAssignmentTargetWithDefault(pos + 8, ast);
+      return constructBoxAssignmentTargetWithDefault(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     default:
       throw new Error(
         `Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeDefault`,
@@ -2238,12 +2238,12 @@ export class AssignmentTargetWithDefault {
 
   get left() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 16, internal.ast);
+    return constructAssignmentTarget(internal.pos + 12, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -2266,9 +2266,9 @@ const DebugAssignmentTargetWithDefault = class AssignmentTargetWithDefault {};
 function constructAssignmentTargetProperty(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxAssignmentTargetPropertyIdentifier(pos + 8, ast);
+      return constructBoxAssignmentTargetPropertyIdentifier(pos + 4, ast);
     case 1:
-      return constructBoxAssignmentTargetPropertyProperty(pos + 8, ast);
+      return constructBoxAssignmentTargetPropertyProperty(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetProperty`);
   }
@@ -2301,12 +2301,12 @@ export class AssignmentTargetPropertyIdentifier {
 
   get key() {
     const internal = this.#internal;
-    return new IdentifierReference(internal.pos + 16, internal.ast);
+    return new IdentifierReference(internal.pos + 24, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 48, internal.ast);
+    return constructOptionExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -2353,17 +2353,17 @@ export class AssignmentTargetPropertyProperty {
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 16, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructAssignmentTargetMaybeDefault(internal.pos + 32, internal.ast);
+    return constructAssignmentTargetMaybeDefault(internal.pos + 20, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -2499,7 +2499,7 @@ export class AwaitExpression {
 
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -2545,7 +2545,7 @@ export class ChainExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructChainElement(internal.pos + 16, internal.ast);
+    return constructChainElement(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -2567,15 +2567,15 @@ const DebugChainExpression = class ChainExpression {};
 function constructChainElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 1:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ChainElement`);
   }
@@ -2608,7 +2608,7 @@ export class ParenthesizedExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -2630,71 +2630,71 @@ const DebugParenthesizedExpression = class ParenthesizedExpression {};
 function constructStatement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBlockStatement(pos + 8, ast);
+      return constructBoxBlockStatement(pos + 4, ast);
     case 1:
-      return constructBoxBreakStatement(pos + 8, ast);
+      return constructBoxBreakStatement(pos + 4, ast);
     case 2:
-      return constructBoxContinueStatement(pos + 8, ast);
+      return constructBoxContinueStatement(pos + 4, ast);
     case 3:
-      return constructBoxDebuggerStatement(pos + 8, ast);
+      return constructBoxDebuggerStatement(pos + 4, ast);
     case 4:
-      return constructBoxDoWhileStatement(pos + 8, ast);
+      return constructBoxDoWhileStatement(pos + 4, ast);
     case 5:
-      return constructBoxEmptyStatement(pos + 8, ast);
+      return constructBoxEmptyStatement(pos + 4, ast);
     case 6:
-      return constructBoxExpressionStatement(pos + 8, ast);
+      return constructBoxExpressionStatement(pos + 4, ast);
     case 7:
-      return constructBoxForInStatement(pos + 8, ast);
+      return constructBoxForInStatement(pos + 4, ast);
     case 8:
-      return constructBoxForOfStatement(pos + 8, ast);
+      return constructBoxForOfStatement(pos + 4, ast);
     case 9:
-      return constructBoxForStatement(pos + 8, ast);
+      return constructBoxForStatement(pos + 4, ast);
     case 10:
-      return constructBoxIfStatement(pos + 8, ast);
+      return constructBoxIfStatement(pos + 4, ast);
     case 11:
-      return constructBoxLabeledStatement(pos + 8, ast);
+      return constructBoxLabeledStatement(pos + 4, ast);
     case 12:
-      return constructBoxReturnStatement(pos + 8, ast);
+      return constructBoxReturnStatement(pos + 4, ast);
     case 13:
-      return constructBoxSwitchStatement(pos + 8, ast);
+      return constructBoxSwitchStatement(pos + 4, ast);
     case 14:
-      return constructBoxThrowStatement(pos + 8, ast);
+      return constructBoxThrowStatement(pos + 4, ast);
     case 15:
-      return constructBoxTryStatement(pos + 8, ast);
+      return constructBoxTryStatement(pos + 4, ast);
     case 16:
-      return constructBoxWhileStatement(pos + 8, ast);
+      return constructBoxWhileStatement(pos + 4, ast);
     case 17:
-      return constructBoxWithStatement(pos + 8, ast);
+      return constructBoxWithStatement(pos + 4, ast);
     case 32:
-      return constructBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 4, ast);
     case 33:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 34:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 35:
-      return constructBoxTSTypeAliasDeclaration(pos + 8, ast);
+      return constructBoxTSTypeAliasDeclaration(pos + 4, ast);
     case 36:
-      return constructBoxTSInterfaceDeclaration(pos + 8, ast);
+      return constructBoxTSInterfaceDeclaration(pos + 4, ast);
     case 37:
-      return constructBoxTSEnumDeclaration(pos + 8, ast);
+      return constructBoxTSEnumDeclaration(pos + 4, ast);
     case 38:
-      return constructBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSModuleDeclaration(pos + 4, ast);
     case 39:
-      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+      return constructBoxTSGlobalDeclaration(pos + 4, ast);
     case 40:
-      return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
+      return constructBoxTSImportEqualsDeclaration(pos + 4, ast);
     case 64:
-      return constructBoxImportDeclaration(pos + 8, ast);
+      return constructBoxImportDeclaration(pos + 4, ast);
     case 65:
-      return constructBoxExportAllDeclaration(pos + 8, ast);
+      return constructBoxExportAllDeclaration(pos + 4, ast);
     case 66:
-      return constructBoxExportDefaultDeclaration(pos + 8, ast);
+      return constructBoxExportDefaultDeclaration(pos + 4, ast);
     case 67:
-      return constructBoxExportNamedDeclaration(pos + 8, ast);
+      return constructBoxExportNamedDeclaration(pos + 4, ast);
     case 68:
-      return constructBoxTSExportAssignment(pos + 8, ast);
+      return constructBoxTSExportAssignment(pos + 4, ast);
     case 69:
-      return constructBoxTSNamespaceExportDeclaration(pos + 8, ast);
+      return constructBoxTSNamespaceExportDeclaration(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Statement`);
   }
@@ -2853,23 +2853,23 @@ const DebugBlockStatement = class BlockStatement {};
 function constructDeclaration(pos, ast) {
   switch (ast.buffer[pos]) {
     case 32:
-      return constructBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 4, ast);
     case 33:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 34:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 35:
-      return constructBoxTSTypeAliasDeclaration(pos + 8, ast);
+      return constructBoxTSTypeAliasDeclaration(pos + 4, ast);
     case 36:
-      return constructBoxTSInterfaceDeclaration(pos + 8, ast);
+      return constructBoxTSInterfaceDeclaration(pos + 4, ast);
     case 37:
-      return constructBoxTSEnumDeclaration(pos + 8, ast);
+      return constructBoxTSEnumDeclaration(pos + 4, ast);
     case 38:
-      return constructBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSModuleDeclaration(pos + 4, ast);
     case 39:
-      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+      return constructBoxTSGlobalDeclaration(pos + 4, ast);
     case 40:
-      return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
+      return constructBoxTSImportEqualsDeclaration(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Declaration`);
   }
@@ -2982,17 +2982,17 @@ export class VariableDeclarator {
 
   get id() {
     const internal = this.#internal;
-    return constructBindingPattern(internal.pos + 16, internal.ast);
+    return constructBindingPattern(internal.pos + 12, internal.ast);
   }
 
   get init() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 40, internal.ast);
+    return constructOptionExpression(internal.pos + 24, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 33, internal.ast);
   }
 
   toJSON() {
@@ -3080,7 +3080,7 @@ export class ExpressionStatement {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -3126,17 +3126,17 @@ export class IfStatement {
 
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get consequent() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 32, internal.ast);
+    return constructStatement(internal.pos + 20, internal.ast);
   }
 
   get alternate() {
     const internal = this.#internal;
-    return constructOptionStatement(internal.pos + 48, internal.ast);
+    return constructOptionStatement(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -3184,12 +3184,12 @@ export class DoWhileStatement {
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 16, internal.ast);
+    return constructStatement(internal.pos + 12, internal.ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -3236,12 +3236,12 @@ export class WhileStatement {
 
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 32, internal.ast);
+    return constructStatement(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -3288,22 +3288,22 @@ export class ForStatement {
 
   get init() {
     const internal = this.#internal;
-    return constructOptionForStatementInit(internal.pos + 16, internal.ast);
+    return constructOptionForStatementInit(internal.pos + 12, internal.ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 32, internal.ast);
+    return constructOptionExpression(internal.pos + 20, internal.ast);
   }
 
   get update() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 48, internal.ast);
+    return constructOptionExpression(internal.pos + 28, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 64, internal.ast);
+    return constructStatement(internal.pos + 36, internal.ast);
   }
 
   toJSON() {
@@ -3328,95 +3328,95 @@ const DebugForStatement = class ForStatement {};
 function constructForStatementInit(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 4, ast);
     case 2:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 3:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 4:
-      return constructBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 4, ast);
     case 5:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 6:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 7:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 8:
-      return constructBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 4, ast);
     case 9:
-      return constructBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 4, ast);
     case 10:
-      return constructBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 4, ast);
     case 11:
-      return constructBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 4, ast);
     case 12:
-      return constructBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 4, ast);
     case 13:
-      return constructBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 4, ast);
     case 14:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 15:
-      return constructBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 4, ast);
     case 16:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 17:
-      return constructBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 4, ast);
     case 18:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 19:
-      return constructBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 4, ast);
     case 20:
-      return constructBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 4, ast);
     case 21:
-      return constructBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 4, ast);
     case 22:
-      return constructBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 4, ast);
     case 23:
-      return constructBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 4, ast);
     case 24:
-      return constructBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 4, ast);
     case 25:
-      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 4, ast);
     case 26:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 27:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     case 28:
-      return constructBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 4, ast);
     case 29:
-      return constructBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 4, ast);
     case 30:
-      return constructBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 4, ast);
     case 31:
-      return constructBoxImportMeta(pos + 8, ast);
+      return constructBoxImportMeta(pos + 4, ast);
     case 32:
-      return constructBoxNewTarget(pos + 8, ast);
+      return constructBoxNewTarget(pos + 4, ast);
     case 33:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 34:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 35:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 36:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 37:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 38:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 39:
-      return constructBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 4, ast);
     case 40:
-      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     case 64:
-      return constructBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ForStatementInit`);
   }
@@ -3449,17 +3449,17 @@ export class ForInStatement {
 
   get left() {
     const internal = this.#internal;
-    return constructForStatementLeft(internal.pos + 16, internal.ast);
+    return constructForStatementLeft(internal.pos + 12, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 48, internal.ast);
+    return constructStatement(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -3483,27 +3483,27 @@ const DebugForInStatement = class ForInStatement {};
 function constructForStatementLeft(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 1:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 2:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 3:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 4:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 8:
-      return constructBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 4, ast);
     case 9:
-      return constructBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 4, ast);
     case 16:
-      return constructBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ForStatementLeft`);
   }
@@ -3536,22 +3536,22 @@ export class ForOfStatement {
 
   get await() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 64, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return constructForStatementLeft(internal.pos + 16, internal.ast);
+    return constructForStatementLeft(internal.pos + 12, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 48, internal.ast);
+    return constructStatement(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -3692,7 +3692,7 @@ export class ReturnStatement {
 
   get argument() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 16, internal.ast);
+    return constructOptionExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -3738,12 +3738,12 @@ export class WithStatement {
 
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 32, internal.ast);
+    return constructStatement(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -3790,14 +3790,14 @@ export class SwitchStatement {
 
   get discriminant() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get cases() {
     const internal = this.#internal,
       cached = internal.$cases;
     if (cached !== void 0) return cached;
-    return (internal.$cases = constructVecSwitchCase(internal.pos + 32, internal.ast));
+    return (internal.$cases = constructVecSwitchCase(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -3844,14 +3844,14 @@ export class SwitchCase {
 
   get test() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 16, internal.ast);
+    return constructOptionExpression(internal.pos + 12, internal.ast);
   }
 
   get consequent() {
     const internal = this.#internal,
       cached = internal.$consequent;
     if (cached !== void 0) return cached;
-    return (internal.$consequent = constructVecStatement(internal.pos + 32, internal.ast));
+    return (internal.$consequent = constructVecStatement(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -3898,12 +3898,12 @@ export class LabeledStatement {
 
   get label() {
     const internal = this.#internal;
-    return new LabelIdentifier(internal.pos + 16, internal.ast);
+    return new LabelIdentifier(internal.pos + 24, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 48, internal.ast);
+    return constructStatement(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -3950,7 +3950,7 @@ export class ThrowStatement {
 
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -3996,17 +3996,17 @@ export class TryStatement {
 
   get block() {
     const internal = this.#internal;
-    return constructBoxBlockStatement(internal.pos + 16, internal.ast);
+    return constructBoxBlockStatement(internal.pos + 12, internal.ast);
   }
 
   get handler() {
     const internal = this.#internal;
-    return constructOptionBoxCatchClause(internal.pos + 24, internal.ast);
+    return constructOptionBoxCatchClause(internal.pos + 16, internal.ast);
   }
 
   get finalizer() {
     const internal = this.#internal;
-    return constructOptionBoxBlockStatement(internal.pos + 32, internal.ast);
+    return constructOptionBoxBlockStatement(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -4059,7 +4059,7 @@ export class CatchClause {
 
   get body() {
     const internal = this.#internal;
-    return constructBoxBlockStatement(internal.pos + 56, internal.ast);
+    return constructBoxBlockStatement(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -4105,7 +4105,7 @@ export class CatchParameter {
 
   get pattern() {
     const internal = this.#internal;
-    return constructBindingPattern(internal.pos + 16, internal.ast);
+    return constructBindingPattern(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -4166,13 +4166,13 @@ const DebugDebuggerStatement = class DebuggerStatement {};
 function constructBindingPattern(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBindingIdentifier(pos + 8, ast);
+      return constructBoxBindingIdentifier(pos + 4, ast);
     case 1:
-      return constructBoxObjectPattern(pos + 8, ast);
+      return constructBoxObjectPattern(pos + 4, ast);
     case 2:
-      return constructBoxArrayPattern(pos + 8, ast);
+      return constructBoxArrayPattern(pos + 4, ast);
     case 3:
-      return constructBoxAssignmentPattern(pos + 8, ast);
+      return constructBoxAssignmentPattern(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for BindingPattern`);
   }
@@ -4205,12 +4205,12 @@ export class AssignmentPattern {
 
   get left() {
     const internal = this.#internal;
-    return constructBindingPattern(internal.pos + 16, internal.ast);
+    return constructBindingPattern(internal.pos + 12, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -4305,22 +4305,22 @@ export class BindingProperty {
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 16, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructBindingPattern(internal.pos + 32, internal.ast);
+    return constructBindingPattern(internal.pos + 20, internal.ast);
   }
 
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 29, internal.ast);
   }
 
   toJSON() {
@@ -4417,7 +4417,7 @@ export class BindingRestElement {
 
   get argument() {
     const internal = this.#internal;
-    return constructBindingPattern(internal.pos + 16, internal.ast);
+    return constructBindingPattern(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -4462,7 +4462,7 @@ export class Function {
 
   get type() {
     const internal = this.#internal;
-    return constructFunctionType(internal.pos + 88, internal.ast);
+    return constructFunctionType(internal.pos + 68, internal.ast);
   }
 
   get id() {
@@ -4472,37 +4472,37 @@ export class Function {
 
   get generator() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 89, internal.ast);
+    return constructBool(internal.pos + 69, internal.ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 90, internal.ast);
+    return constructBool(internal.pos + 70, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 91, internal.ast);
+    return constructBool(internal.pos + 71, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 64, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 52, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 72, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 56, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructOptionBoxFunctionBody(internal.pos + 80, internal.ast);
+    return constructOptionBoxFunctionBody(internal.pos + 60, internal.ast);
   }
 
   toJSON() {
@@ -4570,7 +4570,7 @@ export class FormalParameters {
 
   get kind() {
     const internal = this.#internal;
-    return constructFormalParameterKind(internal.pos + 12, internal.ast);
+    return constructFormalParameterKind(internal.pos + 40, internal.ast);
   }
 
   get items() {
@@ -4625,27 +4625,27 @@ export class FormalParameter {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return (internal.$decorators = constructVecDecorator(internal.pos + 16, internal.ast));
+    return (internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast));
   }
 
   get pattern() {
     const internal = this.#internal;
-    return constructBindingPattern(internal.pos + 40, internal.ast);
+    return constructBindingPattern(internal.pos + 12, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 56, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   get initializer() {
     const internal = this.#internal;
-    return constructOptionBoxExpression(internal.pos + 64, internal.ast);
+    return constructOptionBoxExpression(internal.pos + 48, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 52, internal.ast);
   }
 
   toJSON() {
@@ -4757,32 +4757,32 @@ export class ArrowFunctionExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 48, internal.ast);
+    return constructBool(internal.pos + 32, internal.ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 49, internal.ast);
+    return constructBool(internal.pos + 33, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 16, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 24, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 16, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxFunctionBody(internal.pos + 40, internal.ast);
+    return constructBoxFunctionBody(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -4833,12 +4833,12 @@ export class YieldExpression {
 
   get delegate() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 20, internal.ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 16, internal.ast);
+    return constructOptionExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -4884,7 +4884,7 @@ export class Class {
 
   get type() {
     const internal = this.#internal;
-    return constructClassType(internal.pos + 136, internal.ast);
+    return constructClassType(internal.pos + 116, internal.ast);
   }
 
   get decorators() {
@@ -4901,39 +4901,39 @@ export class Class {
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 72, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get superClass() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 80, internal.ast);
+    return constructOptionExpression(internal.pos + 96, internal.ast);
   }
 
   get superTypeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 96, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 104, internal.ast);
   }
 
   get implements() {
     const internal = this.#internal,
       cached = internal.$implements;
     if (cached !== void 0) return cached;
-    return (internal.$implements = constructVecTSClassImplements(internal.pos + 104, internal.ast));
+    return (internal.$implements = constructVecTSClassImplements(internal.pos + 72, internal.ast));
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxClassBody(internal.pos + 128, internal.ast);
+    return constructBoxClassBody(internal.pos + 108, internal.ast);
   }
 
   get abstract() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 137, internal.ast);
+    return constructBool(internal.pos + 117, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 138, internal.ast);
+    return constructBool(internal.pos + 118, internal.ast);
   }
 
   toJSON() {
@@ -5022,15 +5022,15 @@ const DebugClassBody = class ClassBody {};
 function constructClassElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxStaticBlock(pos + 8, ast);
+      return constructBoxStaticBlock(pos + 4, ast);
     case 1:
-      return constructBoxMethodDefinition(pos + 8, ast);
+      return constructBoxMethodDefinition(pos + 4, ast);
     case 2:
-      return constructBoxPropertyDefinition(pos + 8, ast);
+      return constructBoxPropertyDefinition(pos + 4, ast);
     case 3:
-      return constructBoxAccessorProperty(pos + 8, ast);
+      return constructBoxAccessorProperty(pos + 4, ast);
     case 4:
-      return constructBoxTSIndexSignature(pos + 8, ast);
+      return constructBoxTSIndexSignature(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ClassElement`);
   }
@@ -5062,54 +5062,54 @@ export class MethodDefinition {
 
   get type() {
     const internal = this.#internal;
-    return constructMethodDefinitionType(internal.pos + 12, internal.ast);
+    return constructMethodDefinitionType(internal.pos + 48, internal.ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return (internal.$decorators = constructVecDecorator(internal.pos + 16, internal.ast));
+    return (internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast));
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 40, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructBoxFunction(internal.pos + 56, internal.ast);
+    return constructBoxFunction(internal.pos + 20, internal.ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return constructMethodDefinitionKind(internal.pos + 13, internal.ast);
+    return constructMethodDefinitionKind(internal.pos + 49, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 50, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 15, internal.ast);
+    return constructBool(internal.pos + 51, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 64, internal.ast);
+    return constructBool(internal.pos + 52, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 65, internal.ast);
+    return constructBool(internal.pos + 53, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 66, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 54, internal.ast);
   }
 
   toJSON() {
@@ -5173,69 +5173,69 @@ export class PropertyDefinition {
 
   get type() {
     const internal = this.#internal;
-    return constructPropertyDefinitionType(internal.pos + 12, internal.ast);
+    return constructPropertyDefinitionType(internal.pos + 56, internal.ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return (internal.$decorators = constructVecDecorator(internal.pos + 16, internal.ast));
+    return (internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast));
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 40, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 56, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 64, internal.ast);
+    return constructOptionExpression(internal.pos + 48, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 57, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 58, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 15, internal.ast);
+    return constructBool(internal.pos + 59, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 80, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 81, internal.ast);
+    return constructBool(internal.pos + 61, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 82, internal.ast);
+    return constructBool(internal.pos + 62, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 83, internal.ast);
+    return constructBool(internal.pos + 63, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 84, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 64, internal.ast);
   }
 
   toJSON() {
@@ -5390,17 +5390,17 @@ const DebugStaticBlock = class StaticBlock {};
 function constructModuleDeclaration(pos, ast) {
   switch (ast.buffer[pos]) {
     case 64:
-      return constructBoxImportDeclaration(pos + 8, ast);
+      return constructBoxImportDeclaration(pos + 4, ast);
     case 65:
-      return constructBoxExportAllDeclaration(pos + 8, ast);
+      return constructBoxExportAllDeclaration(pos + 4, ast);
     case 66:
-      return constructBoxExportDefaultDeclaration(pos + 8, ast);
+      return constructBoxExportDefaultDeclaration(pos + 4, ast);
     case 67:
-      return constructBoxExportNamedDeclaration(pos + 8, ast);
+      return constructBoxExportNamedDeclaration(pos + 4, ast);
     case 68:
-      return constructBoxTSExportAssignment(pos + 8, ast);
+      return constructBoxTSExportAssignment(pos + 4, ast);
     case 69:
-      return constructBoxTSNamespaceExportDeclaration(pos + 8, ast);
+      return constructBoxTSNamespaceExportDeclaration(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleDeclaration`);
   }
@@ -5443,54 +5443,54 @@ export class AccessorProperty {
 
   get type() {
     const internal = this.#internal;
-    return constructAccessorPropertyType(internal.pos + 12, internal.ast);
+    return constructAccessorPropertyType(internal.pos + 56, internal.ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return (internal.$decorators = constructVecDecorator(internal.pos + 16, internal.ast));
+    return (internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast));
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 40, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 56, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 64, internal.ast);
+    return constructOptionExpression(internal.pos + 48, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 57, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 58, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 15, internal.ast);
+    return constructBool(internal.pos + 59, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 80, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 81, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 61, internal.ast);
   }
 
   toJSON() {
@@ -5544,17 +5544,17 @@ export class ImportExpression {
 
   get source() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get options() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 32, internal.ast);
+    return constructOptionExpression(internal.pos + 20, internal.ast);
   }
 
   get phase() {
     const internal = this.#internal;
-    return constructOptionImportPhase(internal.pos + 12, internal.ast);
+    return constructOptionImportPhase(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -5617,17 +5617,17 @@ export class ImportDeclaration {
 
   get phase() {
     const internal = this.#internal;
-    return constructOptionImportPhase(internal.pos + 12, internal.ast);
+    return constructOptionImportPhase(internal.pos + 88, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 88, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 12, internal.ast);
   }
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 13, internal.ast);
+    return constructImportOrExportKind(internal.pos + 89, internal.ast);
   }
 
   toJSON() {
@@ -5664,11 +5664,11 @@ function constructImportPhase(pos, ast) {
 function constructImportDeclarationSpecifier(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxImportSpecifier(pos + 8, ast);
+      return constructBoxImportSpecifier(pos + 4, ast);
     case 1:
-      return constructBoxImportDefaultSpecifier(pos + 8, ast);
+      return constructBoxImportDefaultSpecifier(pos + 4, ast);
     case 2:
-      return constructBoxImportNamespaceSpecifier(pos + 8, ast);
+      return constructBoxImportNamespaceSpecifier(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ImportDeclarationSpecifier`);
   }
@@ -5948,29 +5948,29 @@ export class ExportNamedDeclaration {
 
   get declaration() {
     const internal = this.#internal;
-    return constructOptionDeclaration(internal.pos + 16, internal.ast);
+    return constructOptionDeclaration(internal.pos + 12, internal.ast);
   }
 
   get specifiers() {
     const internal = this.#internal,
       cached = internal.$specifiers;
     if (cached !== void 0) return cached;
-    return (internal.$specifiers = constructVecExportSpecifier(internal.pos + 32, internal.ast));
+    return (internal.$specifiers = constructVecExportSpecifier(internal.pos + 24, internal.ast));
   }
 
   get source() {
     const internal = this.#internal;
-    return constructOptionStringLiteral(internal.pos + 56, internal.ast);
+    return constructOptionStringLiteral(internal.pos + 48, internal.ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 12, internal.ast);
+    return constructImportOrExportKind(internal.pos + 96, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 104, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -6020,7 +6020,7 @@ export class ExportDefaultDeclaration {
 
   get declaration() {
     const internal = this.#internal;
-    return constructExportDefaultDeclarationKind(internal.pos + 16, internal.ast);
+    return constructExportDefaultDeclarationKind(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -6076,12 +6076,12 @@ export class ExportAllDeclaration {
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 120, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 12, internal.ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 12, internal.ast);
+    return constructImportOrExportKind(internal.pos + 120, internal.ast);
   }
 
   toJSON() {
@@ -6164,99 +6164,99 @@ const DebugExportSpecifier = class ExportSpecifier {};
 function constructExportDefaultDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 4, ast);
     case 2:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 3:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 4:
-      return constructBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 4, ast);
     case 5:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 6:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 7:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 8:
-      return constructBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 4, ast);
     case 9:
-      return constructBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 4, ast);
     case 10:
-      return constructBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 4, ast);
     case 11:
-      return constructBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 4, ast);
     case 12:
-      return constructBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 4, ast);
     case 13:
-      return constructBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 4, ast);
     case 14:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 15:
-      return constructBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 4, ast);
     case 16:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 17:
-      return constructBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 4, ast);
     case 18:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 19:
-      return constructBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 4, ast);
     case 20:
-      return constructBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 4, ast);
     case 21:
-      return constructBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 4, ast);
     case 22:
-      return constructBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 4, ast);
     case 23:
-      return constructBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 4, ast);
     case 24:
-      return constructBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 4, ast);
     case 25:
-      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 4, ast);
     case 26:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 27:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     case 28:
-      return constructBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 4, ast);
     case 29:
-      return constructBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 4, ast);
     case 30:
-      return constructBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 4, ast);
     case 31:
-      return constructBoxImportMeta(pos + 8, ast);
+      return constructBoxImportMeta(pos + 4, ast);
     case 32:
-      return constructBoxNewTarget(pos + 8, ast);
+      return constructBoxNewTarget(pos + 4, ast);
     case 33:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 34:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 35:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 36:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 37:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 38:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 39:
-      return constructBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 4, ast);
     case 40:
-      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     case 64:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 65:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 66:
-      return constructBoxTSInterfaceDeclaration(pos + 8, ast);
+      return constructBoxTSInterfaceDeclaration(pos + 4, ast);
     default:
       throw new Error(
         `Unexpected discriminant ${ast.buffer[pos]} for ExportDefaultDeclarationKind`,
@@ -6762,19 +6762,19 @@ export class JSXElement {
 
   get openingElement() {
     const internal = this.#internal;
-    return constructBoxJSXOpeningElement(internal.pos + 16, internal.ast);
+    return constructBoxJSXOpeningElement(internal.pos + 12, internal.ast);
   }
 
   get children() {
     const internal = this.#internal,
       cached = internal.$children;
     if (cached !== void 0) return cached;
-    return (internal.$children = constructVecJSXChild(internal.pos + 24, internal.ast));
+    return (internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast));
   }
 
   get closingElement() {
     const internal = this.#internal;
-    return constructOptionBoxJSXClosingElement(internal.pos + 48, internal.ast);
+    return constructOptionBoxJSXClosingElement(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -6822,19 +6822,19 @@ export class JSXOpeningElement {
 
   get name() {
     const internal = this.#internal;
-    return constructJSXElementName(internal.pos + 16, internal.ast);
+    return constructJSXElementName(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal,
       cached = internal.$attributes;
     if (cached !== void 0) return cached;
-    return (internal.$attributes = constructVecJSXAttributeItem(internal.pos + 40, internal.ast));
+    return (internal.$attributes = constructVecJSXAttributeItem(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -6882,7 +6882,7 @@ export class JSXClosingElement {
 
   get name() {
     const internal = this.#internal;
-    return constructJSXElementName(internal.pos + 16, internal.ast);
+    return constructJSXElementName(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -7044,15 +7044,15 @@ const DebugJSXClosingFragment = class JSXClosingFragment {};
 function constructJSXElementName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxJSXIdentifier(pos + 8, ast);
+      return constructBoxJSXIdentifier(pos + 4, ast);
     case 1:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 2:
-      return constructBoxJSXNamespacedName(pos + 8, ast);
+      return constructBoxJSXNamespacedName(pos + 4, ast);
     case 3:
-      return constructBoxJSXMemberExpression(pos + 8, ast);
+      return constructBoxJSXMemberExpression(pos + 4, ast);
     case 4:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXElementName`);
   }
@@ -7137,12 +7137,12 @@ export class JSXMemberExpression {
 
   get object() {
     const internal = this.#internal;
-    return constructJSXMemberExpressionObject(internal.pos + 16, internal.ast);
+    return constructJSXMemberExpressionObject(internal.pos + 12, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return new JSXIdentifier(internal.pos + 32, internal.ast);
+    return new JSXIdentifier(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -7165,11 +7165,11 @@ const DebugJSXMemberExpression = class JSXMemberExpression {};
 function constructJSXMemberExpressionObject(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 1:
-      return constructBoxJSXMemberExpression(pos + 8, ast);
+      return constructBoxJSXMemberExpression(pos + 4, ast);
     case 2:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXMemberExpressionObject`);
   }
@@ -7202,7 +7202,7 @@ export class JSXExpressionContainer {
 
   get expression() {
     const internal = this.#internal;
-    return constructJSXExpression(internal.pos + 16, internal.ast);
+    return constructJSXExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -7224,95 +7224,95 @@ const DebugJSXExpressionContainer = class JSXExpressionContainer {};
 function constructJSXExpression(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 4, ast);
     case 2:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 3:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 4:
-      return constructBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 4, ast);
     case 5:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 6:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 7:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 8:
-      return constructBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 4, ast);
     case 9:
-      return constructBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 4, ast);
     case 10:
-      return constructBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 4, ast);
     case 11:
-      return constructBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 4, ast);
     case 12:
-      return constructBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 4, ast);
     case 13:
-      return constructBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 4, ast);
     case 14:
-      return constructBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 4, ast);
     case 15:
-      return constructBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 4, ast);
     case 16:
-      return constructBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 4, ast);
     case 17:
-      return constructBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 4, ast);
     case 18:
-      return constructBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 4, ast);
     case 19:
-      return constructBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 4, ast);
     case 20:
-      return constructBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 4, ast);
     case 21:
-      return constructBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 4, ast);
     case 22:
-      return constructBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 4, ast);
     case 23:
-      return constructBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 4, ast);
     case 24:
-      return constructBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 4, ast);
     case 25:
-      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 4, ast);
     case 26:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 27:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     case 28:
-      return constructBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 4, ast);
     case 29:
-      return constructBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 4, ast);
     case 30:
-      return constructBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 4, ast);
     case 31:
-      return constructBoxImportMeta(pos + 8, ast);
+      return constructBoxImportMeta(pos + 4, ast);
     case 32:
-      return constructBoxNewTarget(pos + 8, ast);
+      return constructBoxNewTarget(pos + 4, ast);
     case 33:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 34:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 35:
-      return constructBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 4, ast);
     case 36:
-      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 4, ast);
     case 37:
-      return constructBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 4, ast);
     case 38:
-      return constructBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 4, ast);
     case 39:
-      return constructBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 4, ast);
     case 40:
-      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 4, ast);
     case 48:
-      return constructBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 4, ast);
     case 49:
-      return constructBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 4, ast);
     case 50:
-      return constructBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 4, ast);
     case 64:
-      return constructBoxJSXEmptyExpression(pos + 8, ast);
+      return constructBoxJSXEmptyExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXExpression`);
   }
@@ -7361,9 +7361,9 @@ const DebugJSXEmptyExpression = class JSXEmptyExpression {};
 function constructJSXAttributeItem(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxJSXAttribute(pos + 8, ast);
+      return constructBoxJSXAttribute(pos + 4, ast);
     case 1:
-      return constructBoxJSXSpreadAttribute(pos + 8, ast);
+      return constructBoxJSXSpreadAttribute(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeItem`);
   }
@@ -7396,12 +7396,12 @@ export class JSXAttribute {
 
   get name() {
     const internal = this.#internal;
-    return constructJSXAttributeName(internal.pos + 16, internal.ast);
+    return constructJSXAttributeName(internal.pos + 12, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionJSXAttributeValue(internal.pos + 32, internal.ast);
+    return constructOptionJSXAttributeValue(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -7448,7 +7448,7 @@ export class JSXSpreadAttribute {
 
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -7470,9 +7470,9 @@ const DebugJSXSpreadAttribute = class JSXSpreadAttribute {};
 function constructJSXAttributeName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxJSXIdentifier(pos + 8, ast);
+      return constructBoxJSXIdentifier(pos + 4, ast);
     case 1:
-      return constructBoxJSXNamespacedName(pos + 8, ast);
+      return constructBoxJSXNamespacedName(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeName`);
   }
@@ -7481,13 +7481,13 @@ function constructJSXAttributeName(pos, ast) {
 function constructJSXAttributeValue(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 1:
-      return constructBoxJSXExpressionContainer(pos + 8, ast);
+      return constructBoxJSXExpressionContainer(pos + 4, ast);
     case 2:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 3:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeValue`);
   }
@@ -7544,15 +7544,15 @@ const DebugJSXIdentifier = class JSXIdentifier {};
 function constructJSXChild(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxJSXText(pos + 8, ast);
+      return constructBoxJSXText(pos + 4, ast);
     case 1:
-      return constructBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 4, ast);
     case 2:
-      return constructBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 4, ast);
     case 3:
-      return constructBoxJSXExpressionContainer(pos + 8, ast);
+      return constructBoxJSXExpressionContainer(pos + 4, ast);
     case 4:
-      return constructBoxJSXSpreadChild(pos + 8, ast);
+      return constructBoxJSXSpreadChild(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXChild`);
   }
@@ -7585,7 +7585,7 @@ export class JSXSpreadChild {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -7687,7 +7687,7 @@ export class TSThisParameter {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -7845,12 +7845,12 @@ export class TSEnumMember {
 
   get id() {
     const internal = this.#internal;
-    return constructTSEnumMemberName(internal.pos + 16, internal.ast);
+    return constructTSEnumMemberName(internal.pos + 12, internal.ast);
   }
 
   get initializer() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 32, internal.ast);
+    return constructOptionExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -7873,13 +7873,13 @@ const DebugTSEnumMember = class TSEnumMember {};
 function constructTSEnumMemberName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierName(pos + 8, ast);
+      return constructBoxIdentifierName(pos + 4, ast);
     case 1:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 2:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 3:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSEnumMemberName`);
   }
@@ -7912,7 +7912,7 @@ export class TSTypeAnnotation {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -7958,7 +7958,7 @@ export class TSLiteralType {
 
   get literal() {
     const internal = this.#internal;
-    return constructTSLiteral(internal.pos + 16, internal.ast);
+    return constructTSLiteral(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -7980,17 +7980,17 @@ const DebugTSLiteralType = class TSLiteralType {};
 function constructTSLiteral(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 4, ast);
     case 1:
-      return constructBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 4, ast);
     case 2:
-      return constructBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 4, ast);
     case 3:
-      return constructBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 4, ast);
     case 4:
-      return constructBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 4, ast);
     case 5:
-      return constructBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSLiteral`);
   }
@@ -7999,79 +7999,79 @@ function constructTSLiteral(pos, ast) {
 function constructTSType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxTSAnyKeyword(pos + 8, ast);
+      return constructBoxTSAnyKeyword(pos + 4, ast);
     case 1:
-      return constructBoxTSBigIntKeyword(pos + 8, ast);
+      return constructBoxTSBigIntKeyword(pos + 4, ast);
     case 2:
-      return constructBoxTSBooleanKeyword(pos + 8, ast);
+      return constructBoxTSBooleanKeyword(pos + 4, ast);
     case 3:
-      return constructBoxTSIntrinsicKeyword(pos + 8, ast);
+      return constructBoxTSIntrinsicKeyword(pos + 4, ast);
     case 4:
-      return constructBoxTSNeverKeyword(pos + 8, ast);
+      return constructBoxTSNeverKeyword(pos + 4, ast);
     case 5:
-      return constructBoxTSNullKeyword(pos + 8, ast);
+      return constructBoxTSNullKeyword(pos + 4, ast);
     case 6:
-      return constructBoxTSNumberKeyword(pos + 8, ast);
+      return constructBoxTSNumberKeyword(pos + 4, ast);
     case 7:
-      return constructBoxTSObjectKeyword(pos + 8, ast);
+      return constructBoxTSObjectKeyword(pos + 4, ast);
     case 8:
-      return constructBoxTSStringKeyword(pos + 8, ast);
+      return constructBoxTSStringKeyword(pos + 4, ast);
     case 9:
-      return constructBoxTSSymbolKeyword(pos + 8, ast);
+      return constructBoxTSSymbolKeyword(pos + 4, ast);
     case 10:
-      return constructBoxTSThisType(pos + 8, ast);
+      return constructBoxTSThisType(pos + 4, ast);
     case 11:
-      return constructBoxTSUndefinedKeyword(pos + 8, ast);
+      return constructBoxTSUndefinedKeyword(pos + 4, ast);
     case 12:
-      return constructBoxTSUnknownKeyword(pos + 8, ast);
+      return constructBoxTSUnknownKeyword(pos + 4, ast);
     case 13:
-      return constructBoxTSVoidKeyword(pos + 8, ast);
+      return constructBoxTSVoidKeyword(pos + 4, ast);
     case 14:
-      return constructBoxTSArrayType(pos + 8, ast);
+      return constructBoxTSArrayType(pos + 4, ast);
     case 15:
-      return constructBoxTSConditionalType(pos + 8, ast);
+      return constructBoxTSConditionalType(pos + 4, ast);
     case 16:
-      return constructBoxTSConstructorType(pos + 8, ast);
+      return constructBoxTSConstructorType(pos + 4, ast);
     case 17:
-      return constructBoxTSFunctionType(pos + 8, ast);
+      return constructBoxTSFunctionType(pos + 4, ast);
     case 18:
-      return constructBoxTSImportType(pos + 8, ast);
+      return constructBoxTSImportType(pos + 4, ast);
     case 19:
-      return constructBoxTSIndexedAccessType(pos + 8, ast);
+      return constructBoxTSIndexedAccessType(pos + 4, ast);
     case 20:
-      return constructBoxTSInferType(pos + 8, ast);
+      return constructBoxTSInferType(pos + 4, ast);
     case 21:
-      return constructBoxTSIntersectionType(pos + 8, ast);
+      return constructBoxTSIntersectionType(pos + 4, ast);
     case 22:
-      return constructBoxTSLiteralType(pos + 8, ast);
+      return constructBoxTSLiteralType(pos + 4, ast);
     case 23:
-      return constructBoxTSMappedType(pos + 8, ast);
+      return constructBoxTSMappedType(pos + 4, ast);
     case 24:
-      return constructBoxTSNamedTupleMember(pos + 8, ast);
+      return constructBoxTSNamedTupleMember(pos + 4, ast);
     case 26:
-      return constructBoxTSTemplateLiteralType(pos + 8, ast);
+      return constructBoxTSTemplateLiteralType(pos + 4, ast);
     case 27:
-      return constructBoxTSTupleType(pos + 8, ast);
+      return constructBoxTSTupleType(pos + 4, ast);
     case 28:
-      return constructBoxTSTypeLiteral(pos + 8, ast);
+      return constructBoxTSTypeLiteral(pos + 4, ast);
     case 29:
-      return constructBoxTSTypeOperator(pos + 8, ast);
+      return constructBoxTSTypeOperator(pos + 4, ast);
     case 30:
-      return constructBoxTSTypePredicate(pos + 8, ast);
+      return constructBoxTSTypePredicate(pos + 4, ast);
     case 31:
-      return constructBoxTSTypeQuery(pos + 8, ast);
+      return constructBoxTSTypeQuery(pos + 4, ast);
     case 32:
-      return constructBoxTSTypeReference(pos + 8, ast);
+      return constructBoxTSTypeReference(pos + 4, ast);
     case 33:
-      return constructBoxTSUnionType(pos + 8, ast);
+      return constructBoxTSUnionType(pos + 4, ast);
     case 34:
-      return constructBoxTSParenthesizedType(pos + 8, ast);
+      return constructBoxTSParenthesizedType(pos + 4, ast);
     case 35:
-      return constructBoxJSDocNullableType(pos + 8, ast);
+      return constructBoxJSDocNullableType(pos + 4, ast);
     case 36:
-      return constructBoxJSDocNonNullableType(pos + 8, ast);
+      return constructBoxJSDocNonNullableType(pos + 4, ast);
     case 37:
-      return constructBoxJSDocUnknownType(pos + 8, ast);
+      return constructBoxJSDocUnknownType(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSType`);
   }
@@ -8104,22 +8104,22 @@ export class TSConditionalType {
 
   get checkType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   get extendsType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 32, internal.ast);
+    return constructTSType(internal.pos + 20, internal.ast);
   }
 
   get trueType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 48, internal.ast);
+    return constructTSType(internal.pos + 28, internal.ast);
   }
 
   get falseType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 64, internal.ast);
+    return constructTSType(internal.pos + 36, internal.ast);
   }
 
   toJSON() {
@@ -8264,7 +8264,7 @@ export class TSParenthesizedType {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -8310,12 +8310,12 @@ export class TSTypeOperator {
 
   get operator() {
     const internal = this.#internal;
-    return constructTSTypeOperatorOperator(internal.pos + 12, internal.ast);
+    return constructTSTypeOperatorOperator(internal.pos + 20, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -8375,7 +8375,7 @@ export class TSArrayType {
 
   get elementType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -8421,12 +8421,12 @@ export class TSIndexedAccessType {
 
   get objectType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   get indexType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 32, internal.ast);
+    return constructTSType(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -8521,17 +8521,17 @@ export class TSNamedTupleMember {
 
   get label() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 16, internal.ast);
+    return new IdentifierName(internal.pos + 24, internal.ast);
   }
 
   get elementType() {
     const internal = this.#internal;
-    return constructTSTupleElement(internal.pos + 48, internal.ast);
+    return constructTSTupleElement(internal.pos + 12, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -8579,7 +8579,7 @@ export class TSOptionalType {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -8625,7 +8625,7 @@ export class TSRestType {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -8647,83 +8647,83 @@ const DebugTSRestType = class TSRestType {};
 function constructTSTupleElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxTSAnyKeyword(pos + 8, ast);
+      return constructBoxTSAnyKeyword(pos + 4, ast);
     case 1:
-      return constructBoxTSBigIntKeyword(pos + 8, ast);
+      return constructBoxTSBigIntKeyword(pos + 4, ast);
     case 2:
-      return constructBoxTSBooleanKeyword(pos + 8, ast);
+      return constructBoxTSBooleanKeyword(pos + 4, ast);
     case 3:
-      return constructBoxTSIntrinsicKeyword(pos + 8, ast);
+      return constructBoxTSIntrinsicKeyword(pos + 4, ast);
     case 4:
-      return constructBoxTSNeverKeyword(pos + 8, ast);
+      return constructBoxTSNeverKeyword(pos + 4, ast);
     case 5:
-      return constructBoxTSNullKeyword(pos + 8, ast);
+      return constructBoxTSNullKeyword(pos + 4, ast);
     case 6:
-      return constructBoxTSNumberKeyword(pos + 8, ast);
+      return constructBoxTSNumberKeyword(pos + 4, ast);
     case 7:
-      return constructBoxTSObjectKeyword(pos + 8, ast);
+      return constructBoxTSObjectKeyword(pos + 4, ast);
     case 8:
-      return constructBoxTSStringKeyword(pos + 8, ast);
+      return constructBoxTSStringKeyword(pos + 4, ast);
     case 9:
-      return constructBoxTSSymbolKeyword(pos + 8, ast);
+      return constructBoxTSSymbolKeyword(pos + 4, ast);
     case 10:
-      return constructBoxTSThisType(pos + 8, ast);
+      return constructBoxTSThisType(pos + 4, ast);
     case 11:
-      return constructBoxTSUndefinedKeyword(pos + 8, ast);
+      return constructBoxTSUndefinedKeyword(pos + 4, ast);
     case 12:
-      return constructBoxTSUnknownKeyword(pos + 8, ast);
+      return constructBoxTSUnknownKeyword(pos + 4, ast);
     case 13:
-      return constructBoxTSVoidKeyword(pos + 8, ast);
+      return constructBoxTSVoidKeyword(pos + 4, ast);
     case 14:
-      return constructBoxTSArrayType(pos + 8, ast);
+      return constructBoxTSArrayType(pos + 4, ast);
     case 15:
-      return constructBoxTSConditionalType(pos + 8, ast);
+      return constructBoxTSConditionalType(pos + 4, ast);
     case 16:
-      return constructBoxTSConstructorType(pos + 8, ast);
+      return constructBoxTSConstructorType(pos + 4, ast);
     case 17:
-      return constructBoxTSFunctionType(pos + 8, ast);
+      return constructBoxTSFunctionType(pos + 4, ast);
     case 18:
-      return constructBoxTSImportType(pos + 8, ast);
+      return constructBoxTSImportType(pos + 4, ast);
     case 19:
-      return constructBoxTSIndexedAccessType(pos + 8, ast);
+      return constructBoxTSIndexedAccessType(pos + 4, ast);
     case 20:
-      return constructBoxTSInferType(pos + 8, ast);
+      return constructBoxTSInferType(pos + 4, ast);
     case 21:
-      return constructBoxTSIntersectionType(pos + 8, ast);
+      return constructBoxTSIntersectionType(pos + 4, ast);
     case 22:
-      return constructBoxTSLiteralType(pos + 8, ast);
+      return constructBoxTSLiteralType(pos + 4, ast);
     case 23:
-      return constructBoxTSMappedType(pos + 8, ast);
+      return constructBoxTSMappedType(pos + 4, ast);
     case 24:
-      return constructBoxTSNamedTupleMember(pos + 8, ast);
+      return constructBoxTSNamedTupleMember(pos + 4, ast);
     case 26:
-      return constructBoxTSTemplateLiteralType(pos + 8, ast);
+      return constructBoxTSTemplateLiteralType(pos + 4, ast);
     case 27:
-      return constructBoxTSTupleType(pos + 8, ast);
+      return constructBoxTSTupleType(pos + 4, ast);
     case 28:
-      return constructBoxTSTypeLiteral(pos + 8, ast);
+      return constructBoxTSTypeLiteral(pos + 4, ast);
     case 29:
-      return constructBoxTSTypeOperator(pos + 8, ast);
+      return constructBoxTSTypeOperator(pos + 4, ast);
     case 30:
-      return constructBoxTSTypePredicate(pos + 8, ast);
+      return constructBoxTSTypePredicate(pos + 4, ast);
     case 31:
-      return constructBoxTSTypeQuery(pos + 8, ast);
+      return constructBoxTSTypeQuery(pos + 4, ast);
     case 32:
-      return constructBoxTSTypeReference(pos + 8, ast);
+      return constructBoxTSTypeReference(pos + 4, ast);
     case 33:
-      return constructBoxTSUnionType(pos + 8, ast);
+      return constructBoxTSUnionType(pos + 4, ast);
     case 34:
-      return constructBoxTSParenthesizedType(pos + 8, ast);
+      return constructBoxTSParenthesizedType(pos + 4, ast);
     case 35:
-      return constructBoxJSDocNullableType(pos + 8, ast);
+      return constructBoxJSDocNullableType(pos + 4, ast);
     case 36:
-      return constructBoxJSDocNonNullableType(pos + 8, ast);
+      return constructBoxJSDocNonNullableType(pos + 4, ast);
     case 37:
-      return constructBoxJSDocUnknownType(pos + 8, ast);
+      return constructBoxJSDocUnknownType(pos + 4, ast);
     case 64:
-      return constructBoxTSOptionalType(pos + 8, ast);
+      return constructBoxTSOptionalType(pos + 4, ast);
     case 65:
-      return constructBoxTSRestType(pos + 8, ast);
+      return constructBoxTSRestType(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTupleElement`);
   }
@@ -9316,12 +9316,12 @@ export class TSTypeReference {
 
   get typeName() {
     const internal = this.#internal;
-    return constructTSTypeName(internal.pos + 16, internal.ast);
+    return constructTSTypeName(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -9344,11 +9344,11 @@ const DebugTSTypeReference = class TSTypeReference {};
 function constructTSTypeName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 1:
-      return constructBoxTSQualifiedName(pos + 8, ast);
+      return constructBoxTSQualifiedName(pos + 4, ast);
     case 2:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeName`);
   }
@@ -9381,12 +9381,12 @@ export class TSQualifiedName {
 
   get left() {
     const internal = this.#internal;
-    return constructTSTypeName(internal.pos + 16, internal.ast);
+    return constructTSTypeName(internal.pos + 12, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 32, internal.ast);
+    return new IdentifierName(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -9481,32 +9481,32 @@ export class TSTypeParameter {
 
   get name() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 16, internal.ast);
+    return new BindingIdentifier(internal.pos + 32, internal.ast);
   }
 
   get constraint() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 48, internal.ast);
+    return constructOptionTSType(internal.pos + 12, internal.ast);
   }
 
   get default() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 64, internal.ast);
+    return constructOptionTSType(internal.pos + 20, internal.ast);
   }
 
   get in() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   get out() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 29, internal.ast);
   }
 
   get const() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 30, internal.ast);
   }
 
   toJSON() {
@@ -9610,17 +9610,17 @@ export class TSTypeAliasDeclaration {
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 56, internal.ast);
+    return constructTSType(internal.pos + 48, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   toJSON() {
@@ -9682,12 +9682,12 @@ export class TSClassImplements {
 
   get expression() {
     const internal = this.#internal;
-    return constructTSTypeName(internal.pos + 16, internal.ast);
+    return constructTSTypeName(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -9739,24 +9739,24 @@ export class TSInterfaceDeclaration {
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get extends() {
     const internal = this.#internal,
       cached = internal.$extends;
     if (cached !== void 0) return cached;
-    return (internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 56, internal.ast));
+    return (internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 48, internal.ast));
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxTSInterfaceBody(internal.pos + 80, internal.ast);
+    return constructBoxTSInterfaceBody(internal.pos + 72, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 88, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   toJSON() {
@@ -9854,27 +9854,27 @@ export class TSPropertySignature {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 24, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 25, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 26, internal.ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 16, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -9900,15 +9900,15 @@ const DebugTSPropertySignature = class TSPropertySignature {};
 function constructTSSignature(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxTSIndexSignature(pos + 8, ast);
+      return constructBoxTSIndexSignature(pos + 4, ast);
     case 1:
-      return constructBoxTSPropertySignature(pos + 8, ast);
+      return constructBoxTSPropertySignature(pos + 4, ast);
     case 2:
-      return constructBoxTSCallSignatureDeclaration(pos + 8, ast);
+      return constructBoxTSCallSignatureDeclaration(pos + 4, ast);
     case 3:
-      return constructBoxTSConstructSignatureDeclaration(pos + 8, ast);
+      return constructBoxTSConstructSignatureDeclaration(pos + 4, ast);
     case 4:
-      return constructBoxTSMethodSignature(pos + 8, ast);
+      return constructBoxTSMethodSignature(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSSignature`);
   }
@@ -9951,17 +9951,17 @@ export class TSIndexSignature {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 12, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 41, internal.ast);
   }
 
   toJSON() {
@@ -10010,17 +10010,17 @@ export class TSCallSignatureDeclaration {
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 16, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 32, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 20, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -10081,37 +10081,37 @@ export class TSMethodSignature {
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 16, internal.ast);
+    return constructPropertyKey(internal.pos + 12, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 64, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 65, internal.ast);
+    return constructBool(internal.pos + 41, internal.ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return constructTSMethodSignatureKind(internal.pos + 66, internal.ast);
+    return constructTSMethodSignatureKind(internal.pos + 42, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 20, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 48, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 28, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 56, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -10163,17 +10163,17 @@ export class TSConstructSignatureDeclaration {
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 16, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 24, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 16, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -10228,7 +10228,7 @@ export class TSIndexSignatureName {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -10275,12 +10275,12 @@ export class TSInterfaceHeritage {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -10327,17 +10327,17 @@ export class TSTypePredicate {
 
   get parameterName() {
     const internal = this.#internal;
-    return constructTSTypePredicateName(internal.pos + 16, internal.ast);
+    return constructTSTypePredicateName(internal.pos + 12, internal.ast);
   }
 
   get asserts() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 24, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -10361,9 +10361,9 @@ const DebugTSTypePredicate = class TSTypePredicate {};
 function constructTSTypePredicateName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierName(pos + 8, ast);
+      return constructBoxIdentifierName(pos + 4, ast);
     case 1:
-      return constructBoxTSThisType(pos + 8, ast);
+      return constructBoxTSThisType(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypePredicateName`);
   }
@@ -10396,22 +10396,22 @@ export class TSModuleDeclaration {
 
   get id() {
     const internal = this.#internal;
-    return constructTSModuleDeclarationName(internal.pos + 16, internal.ast);
+    return constructTSModuleDeclarationName(internal.pos + 24, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructOptionTSModuleDeclarationBody(internal.pos + 72, internal.ast);
+    return constructOptionTSModuleDeclarationBody(internal.pos + 12, internal.ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return constructTSModuleDeclarationKind(internal.pos + 88, internal.ast);
+    return constructTSModuleDeclarationKind(internal.pos + 80, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 89, internal.ast);
+    return constructBool(internal.pos + 81, internal.ast);
   }
 
   toJSON() {
@@ -10458,9 +10458,9 @@ function constructTSModuleDeclarationName(pos, ast) {
 function constructTSModuleDeclarationBody(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSModuleDeclaration(pos + 4, ast);
     case 1:
-      return constructBoxTSModuleBlock(pos + 8, ast);
+      return constructBoxTSModuleBlock(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationBody`);
   }
@@ -10641,7 +10641,7 @@ export class TSInferType {
 
   get typeParameter() {
     const internal = this.#internal;
-    return constructBoxTSTypeParameter(internal.pos + 16, internal.ast);
+    return constructBoxTSTypeParameter(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -10687,12 +10687,12 @@ export class TSTypeQuery {
 
   get exprName() {
     const internal = this.#internal;
-    return constructTSTypeQueryExprName(internal.pos + 16, internal.ast);
+    return constructTSTypeQueryExprName(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -10715,13 +10715,13 @@ const DebugTSTypeQuery = class TSTypeQuery {};
 function constructTSTypeQueryExprName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 1:
-      return constructBoxTSQualifiedName(pos + 8, ast);
+      return constructBoxTSQualifiedName(pos + 4, ast);
     case 2:
-      return constructBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 4, ast);
     case 3:
-      return constructBoxTSImportType(pos + 8, ast);
+      return constructBoxTSImportType(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeQueryExprName`);
   }
@@ -10759,17 +10759,17 @@ export class TSImportType {
 
   get options() {
     const internal = this.#internal;
-    return constructOptionBoxObjectExpression(internal.pos + 64, internal.ast);
+    return constructOptionBoxObjectExpression(internal.pos + 12, internal.ast);
   }
 
   get qualifier() {
     const internal = this.#internal;
-    return constructOptionTSImportTypeQualifier(internal.pos + 72, internal.ast);
+    return constructOptionTSImportTypeQualifier(internal.pos + 64, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 88, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 72, internal.ast);
   }
 
   toJSON() {
@@ -10794,9 +10794,9 @@ const DebugTSImportType = class TSImportType {};
 function constructTSImportTypeQualifier(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierName(pos + 8, ast);
+      return constructBoxIdentifierName(pos + 4, ast);
     case 1:
-      return constructBoxTSImportTypeQualifiedName(pos + 8, ast);
+      return constructBoxTSImportTypeQualifiedName(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSImportTypeQualifier`);
   }
@@ -10829,12 +10829,12 @@ export class TSImportTypeQualifiedName {
 
   get left() {
     const internal = this.#internal;
-    return constructTSImportTypeQualifier(internal.pos + 16, internal.ast);
+    return constructTSImportTypeQualifier(internal.pos + 12, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 32, internal.ast);
+    return new IdentifierName(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -10881,17 +10881,17 @@ export class TSFunctionType {
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 16, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 32, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 20, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -10939,22 +10939,22 @@ export class TSConstructorType {
 
   get abstract() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 16, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 12, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 24, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 16, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -11003,32 +11003,32 @@ export class TSMappedType {
 
   get key() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 16, internal.ast);
+    return new BindingIdentifier(internal.pos + 40, internal.ast);
   }
 
   get constraint() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 48, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   get nameType() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 64, internal.ast);
+    return constructOptionTSType(internal.pos + 20, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 80, internal.ast);
+    return constructOptionTSType(internal.pos + 28, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 96, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 72, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 97, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 73, internal.ast);
   }
 
   toJSON() {
@@ -11150,12 +11150,12 @@ export class TSAsExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 32, internal.ast);
+    return constructTSType(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -11202,12 +11202,12 @@ export class TSSatisfiesExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 32, internal.ast);
+    return constructTSType(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -11254,12 +11254,12 @@ export class TSTypeAssertion {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -11306,17 +11306,17 @@ export class TSImportEqualsDeclaration {
 
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 16, internal.ast);
+    return new BindingIdentifier(internal.pos + 24, internal.ast);
   }
 
   get moduleReference() {
     const internal = this.#internal;
-    return constructTSModuleReference(internal.pos + 48, internal.ast);
+    return constructTSModuleReference(internal.pos + 12, internal.ast);
   }
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 12, internal.ast);
+    return constructImportOrExportKind(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -11340,11 +11340,11 @@ const DebugTSImportEqualsDeclaration = class TSImportEqualsDeclaration {};
 function constructTSModuleReference(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxTSExternalModuleReference(pos + 8, ast);
+      return constructBoxTSExternalModuleReference(pos + 4, ast);
     case 1:
-      return constructBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 4, ast);
     case 2:
-      return constructBoxTSQualifiedName(pos + 8, ast);
+      return constructBoxTSQualifiedName(pos + 4, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleReference`);
   }
@@ -11423,7 +11423,7 @@ export class TSNonNullExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -11469,7 +11469,7 @@ export class Decorator {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -11515,7 +11515,7 @@ export class TSExportAssignment {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -11607,12 +11607,12 @@ export class TSInstantiationExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructExpression(internal.pos + 12, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructBoxTSTypeParameterInstantiation(internal.pos + 32, internal.ast);
+    return constructBoxTSTypeParameterInstantiation(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -11670,12 +11670,12 @@ export class JSDocNullableType {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   get postfix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -11722,12 +11722,12 @@ export class JSDocNonNullableType {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 16, internal.ast);
+    return constructTSType(internal.pos + 12, internal.ast);
   }
 
   get postfix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return constructBool(internal.pos + 20, internal.ast);
   }
 
   toJSON() {
@@ -12734,7 +12734,7 @@ function constructDirective(pos, ast) {
 function constructVecStatement(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructStatement, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructStatement, ast);
 }
 
 function constructBoxBooleanLiteral(pos, ast) {
@@ -12904,7 +12904,7 @@ function constructBoxV8IntrinsicExpression(pos, ast) {
 function constructVecArrayExpressionElement(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructArrayExpressionElement, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructArrayExpressionElement, ast);
 }
 
 function constructBoxSpreadElement(pos, ast) {
@@ -12918,7 +12918,7 @@ function constructBoxElision(pos, ast) {
 function constructVecObjectPropertyKind(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructObjectPropertyKind, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructObjectPropertyKind, ast);
 }
 
 function constructBoxObjectProperty(pos, ast) {
@@ -12950,7 +12950,7 @@ function constructTemplateElement(pos, ast) {
 function constructVecExpression(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructExpression, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructExpression, ast);
 }
 
 function constructBoxTSTypeParameterInstantiation(pos, ast) {
@@ -12958,7 +12958,7 @@ function constructBoxTSTypeParameterInstantiation(pos, ast) {
 }
 
 function constructOptionBoxTSTypeParameterInstantiation(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxTSTypeParameterInstantiation(pos, ast);
 }
 
@@ -12982,7 +12982,7 @@ function constructBoxPrivateFieldExpression(pos, ast) {
 function constructVecArgument(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructArgument, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructArgument, ast);
 }
 
 function constructBoxArrayAssignmentTarget(pos, ast) {
@@ -13004,7 +13004,7 @@ function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
   return new NodeArray(
     int32[pos32],
     int32[pos32 + 2],
-    16,
+    8,
     constructOptionAssignmentTargetMaybeDefault,
     ast,
   );
@@ -13015,14 +13015,14 @@ function constructBoxAssignmentTargetRest(pos, ast) {
 }
 
 function constructOptionBoxAssignmentTargetRest(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxAssignmentTargetRest(pos, ast);
 }
 
 function constructVecAssignmentTargetProperty(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructAssignmentTargetProperty, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructAssignmentTargetProperty, ast);
 }
 
 function constructBoxAssignmentTargetWithDefault(pos, ast) {
@@ -13145,7 +13145,7 @@ function constructBoxTSImportEqualsDeclaration(pos, ast) {
 function constructVecVariableDeclarator(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 56, constructVariableDeclarator, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 40, constructVariableDeclarator, ast);
 }
 
 function constructVariableDeclarator(pos, ast) {
@@ -13157,7 +13157,7 @@ function constructBoxTSTypeAnnotation(pos, ast) {
 }
 
 function constructOptionBoxTSTypeAnnotation(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxTSTypeAnnotation(pos, ast);
 }
 
@@ -13179,7 +13179,7 @@ function constructOptionLabelIdentifier(pos, ast) {
 function constructVecSwitchCase(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 56, constructSwitchCase, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 48, constructSwitchCase, ast);
 }
 
 function constructSwitchCase(pos, ast) {
@@ -13191,17 +13191,17 @@ function constructBoxCatchClause(pos, ast) {
 }
 
 function constructOptionBoxCatchClause(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxCatchClause(pos, ast);
 }
 
 function constructOptionBoxBlockStatement(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxBlockStatement(pos, ast);
 }
 
 function constructOptionCatchParameter(pos, ast) {
-  if (ast.buffer[pos + 16] === 255) return null;
+  if (ast.buffer[pos + 12] === 255) return null;
   return new CatchParameter(pos, ast);
 }
 
@@ -13224,7 +13224,7 @@ function constructBoxAssignmentPattern(pos, ast) {
 function constructVecBindingProperty(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 48, constructBindingProperty, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructBindingProperty, ast);
 }
 
 function constructBindingProperty(pos, ast) {
@@ -13236,7 +13236,7 @@ function constructBoxBindingRestElement(pos, ast) {
 }
 
 function constructOptionBoxBindingRestElement(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxBindingRestElement(pos, ast);
 }
 
@@ -13248,7 +13248,7 @@ function constructOptionBindingPattern(pos, ast) {
 function constructVecOptionBindingPattern(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructOptionBindingPattern, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructOptionBindingPattern, ast);
 }
 
 function constructOptionBindingIdentifier(pos, ast) {
@@ -13261,7 +13261,7 @@ function constructBoxTSTypeParameterDeclaration(pos, ast) {
 }
 
 function constructOptionBoxTSTypeParameterDeclaration(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxTSTypeParameterDeclaration(pos, ast);
 }
 
@@ -13270,7 +13270,7 @@ function constructBoxTSThisParameter(pos, ast) {
 }
 
 function constructOptionBoxTSThisParameter(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxTSThisParameter(pos, ast);
 }
 
@@ -13283,14 +13283,14 @@ function constructBoxFunctionBody(pos, ast) {
 }
 
 function constructOptionBoxFunctionBody(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxFunctionBody(pos, ast);
 }
 
 function constructVecFormalParameter(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 72, constructFormalParameter, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 56, constructFormalParameter, ast);
 }
 
 function constructFormalParameter(pos, ast) {
@@ -13300,7 +13300,7 @@ function constructFormalParameter(pos, ast) {
 function constructVecDecorator(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructDecorator, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 24, constructDecorator, ast);
 }
 
 function constructDecorator(pos, ast) {
@@ -13312,7 +13312,7 @@ function constructBoxExpression(pos, ast) {
 }
 
 function constructOptionBoxExpression(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxExpression(pos, ast);
 }
 
@@ -13324,7 +13324,7 @@ function constructOptionTSAccessibility(pos, ast) {
 function constructVecTSClassImplements(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 40, constructTSClassImplements, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 24, constructTSClassImplements, ast);
 }
 
 function constructTSClassImplements(pos, ast) {
@@ -13338,7 +13338,7 @@ function constructBoxClassBody(pos, ast) {
 function constructVecClassElement(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructClassElement, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructClassElement, ast);
 }
 
 function constructBoxStaticBlock(pos, ast) {
@@ -13393,13 +13393,7 @@ function constructOptionImportPhase(pos, ast) {
 function constructVecImportDeclarationSpecifier(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    int32[pos32],
-    int32[pos32 + 2],
-    16,
-    constructImportDeclarationSpecifier,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructImportDeclarationSpecifier, ast);
 }
 
 function constructOptionVecImportDeclarationSpecifier(pos, ast) {
@@ -13412,7 +13406,7 @@ function constructBoxWithClause(pos, ast) {
 }
 
 function constructOptionBoxWithClause(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxWithClause(pos, ast);
 }
 
@@ -13478,7 +13472,7 @@ function constructBoxJSXOpeningElement(pos, ast) {
 function constructVecJSXChild(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructJSXChild, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructJSXChild, ast);
 }
 
 function constructBoxJSXClosingElement(pos, ast) {
@@ -13486,14 +13480,14 @@ function constructBoxJSXClosingElement(pos, ast) {
 }
 
 function constructOptionBoxJSXClosingElement(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxJSXClosingElement(pos, ast);
 }
 
 function constructVecJSXAttributeItem(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructJSXAttributeItem, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructJSXAttributeItem, ast);
 }
 
 function constructBoxJSXIdentifier(pos, ast) {
@@ -13540,7 +13534,7 @@ function constructBoxJSXSpreadChild(pos, ast) {
 function constructVecTSEnumMember(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 48, constructTSEnumMember, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructTSEnumMember, ast);
 }
 
 function constructTSEnumMember(pos, ast) {
@@ -13698,13 +13692,13 @@ function constructBoxJSDocUnknownType(pos, ast) {
 function constructVecTSType(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructTSType, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructTSType, ast);
 }
 
 function constructVecTSTupleElement(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructTSTupleElement, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructTSTupleElement, ast);
 }
 
 function constructBoxTSOptionalType(pos, ast) {
@@ -13727,7 +13721,7 @@ function constructOptionTSType(pos, ast) {
 function constructVecTSTypeParameter(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 80, constructTSTypeParameter, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 64, constructTSTypeParameter, ast);
 }
 
 function constructTSTypeParameter(pos, ast) {
@@ -13737,7 +13731,7 @@ function constructTSTypeParameter(pos, ast) {
 function constructVecTSInterfaceHeritage(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 40, constructTSInterfaceHeritage, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 24, constructTSInterfaceHeritage, ast);
 }
 
 function constructTSInterfaceHeritage(pos, ast) {
@@ -13751,7 +13745,7 @@ function constructBoxTSInterfaceBody(pos, ast) {
 function constructVecTSSignature(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructTSSignature, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructTSSignature, ast);
 }
 
 function constructBoxTSPropertySignature(pos, ast) {
@@ -13773,7 +13767,7 @@ function constructBoxTSMethodSignature(pos, ast) {
 function constructVecTSIndexSignatureName(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 40, constructTSIndexSignatureName, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructTSIndexSignatureName, ast);
 }
 
 function constructTSIndexSignatureName(pos, ast) {
@@ -13794,7 +13788,7 @@ function constructBoxTSTypeParameter(pos, ast) {
 }
 
 function constructOptionBoxObjectExpression(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  if (ast.buffer.int32[pos >> 2] === 0) return null;
   return constructBoxObjectExpression(pos, ast);
 }
 

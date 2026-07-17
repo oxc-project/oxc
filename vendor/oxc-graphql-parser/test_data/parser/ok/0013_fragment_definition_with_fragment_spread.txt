@@ -1,0 +1,34 @@
+- DOCUMENT@0..75
+    - FRAGMENT_DEFINITION@0..75
+        - fragment_KW@0..8 "fragment"
+        - WHITESPACE@8..9 " "
+        - FRAGMENT_NAME@9..21
+            - NAME@9..21
+                - IDENT@9..21 "friendFields"
+        - WHITESPACE@21..22 " "
+        - TYPE_CONDITION@22..29
+            - on_KW@22..24 "on"
+            - WHITESPACE@24..25 " "
+            - NAMED_TYPE@25..29
+                - NAME@25..29
+                    - IDENT@25..29 "User"
+        - WHITESPACE@29..30 " "
+        - SELECTION_SET@30..75
+            - L_CURLY@30..31 "{"
+            - WHITESPACE@31..36 "\n    "
+            - FIELD@36..38
+                - NAME@36..38
+                    - IDENT@36..38 "id"
+            - WHITESPACE@38..43 "\n    "
+            - FIELD@43..47
+                - NAME@43..47
+                    - IDENT@43..47 "name"
+            - WHITESPACE@47..52 "\n    "
+            - FRAGMENT_SPREAD@52..73
+                - SPREAD@52..55 "..."
+                - FRAGMENT_NAME@55..73
+                    - NAME@55..73
+                        - IDENT@55..73 "standardProfilePic"
+            - WHITESPACE@73..74 "\n"
+            - R_CURLY@74..75 "}"
+recursion limit: 500, high: 1

@@ -1,0 +1,29 @@
+- DOCUMENT@0..55
+    - INPUT_OBJECT_TYPE_EXTENSION@0..55
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - input_KW@7..12 "input"
+        - WHITESPACE@12..13 " "
+        - NAME@13..31
+            - IDENT@13..31 "ExampleInputObject"
+        - WHITESPACE@31..32 " "
+        - DIRECTIVES@32..37
+            - DIRECTIVE@32..37
+                - AT@32..33 "@"
+                - NAME@33..37
+                    - IDENT@33..37 "skip"
+        - WHITESPACE@37..38 " "
+        - INPUT_FIELDS_DEFINITION@38..55
+            - L_CURLY@38..39 "{"
+            - WHITESPACE@39..44 "\n    "
+            - INPUT_VALUE_DEFINITION@44..53
+                - NAME@44..45
+                    - IDENT@44..45 "a"
+                - COLON@45..46 ":"
+                - WHITESPACE@46..47 " "
+                - NAMED_TYPE@47..53
+                    - NAME@47..53
+                        - IDENT@47..53 "String"
+            - WHITESPACE@53..54 "\n"
+            - R_CURLY@54..55 "}"
+recursion limit: 500, high: 0

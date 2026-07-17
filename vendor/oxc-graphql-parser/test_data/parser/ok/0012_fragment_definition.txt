@@ -1,0 +1,48 @@
+- DOCUMENT@0..83
+    - FRAGMENT_DEFINITION@0..83
+        - fragment_KW@0..8 "fragment"
+        - WHITESPACE@8..9 " "
+        - FRAGMENT_NAME@9..21
+            - NAME@9..21
+                - IDENT@9..21 "friendFields"
+        - WHITESPACE@21..22 " "
+        - TYPE_CONDITION@22..29
+            - on_KW@22..24 "on"
+            - WHITESPACE@24..25 " "
+            - NAMED_TYPE@25..29
+                - NAME@25..29
+                    - IDENT@25..29 "User"
+        - WHITESPACE@29..30 " "
+        - DIRECTIVES@30..38
+            - DIRECTIVE@30..38
+                - AT@30..31 "@"
+                - NAME@31..38
+                    - IDENT@31..38 "example"
+        - WHITESPACE@38..39 " "
+        - SELECTION_SET@39..83
+            - L_CURLY@39..40 "{"
+            - WHITESPACE@40..45 "\n    "
+            - FIELD@45..47
+                - NAME@45..47
+                    - IDENT@45..47 "id"
+            - WHITESPACE@47..52 "\n    "
+            - FIELD@52..56
+                - NAME@52..56
+                    - IDENT@52..56 "name"
+            - WHITESPACE@56..61 "\n    "
+            - FIELD@61..81
+                - NAME@61..71
+                    - IDENT@61..71 "profilePic"
+                - ARGUMENTS@71..81
+                    - L_PAREN@71..72 "("
+                    - ARGUMENT@72..80
+                        - NAME@72..76
+                            - IDENT@72..76 "size"
+                        - COLON@76..77 ":"
+                        - WHITESPACE@77..78 " "
+                        - INT_VALUE@78..80
+                            - INT@78..80 "50"
+                    - R_PAREN@80..81 ")"
+            - WHITESPACE@81..82 "\n"
+            - R_CURLY@82..83 "}"
+recursion limit: 500, high: 1

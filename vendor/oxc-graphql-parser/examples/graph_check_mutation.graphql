@@ -1,0 +1,27 @@
+mutation GraphCheckMutation(
+  $graph_id: ID!
+  $proposed_schema: String
+  $variant: String
+  $git_context: GitContextInput!
+  $config: HistoricQueryParameters!
+) {
+  service(id: $graph_id) {
+    checkSchema(
+      proposedSchemaDocument: $proposed_schema
+      baseSchemaTag: $variant
+      gitContext: $git_context
+      historicParameters: $config
+    ) {
+      targetUrl
+      diffToPrevious {
+        severity
+        numberOfCheckedOperations
+        changes {
+          severity
+          code
+          description
+        }
+      }
+    }
+  }
+}

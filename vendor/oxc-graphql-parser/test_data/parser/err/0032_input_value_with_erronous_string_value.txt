@@ -1,0 +1,41 @@
+- DOCUMENT@0..78
+    - OBJECT_TYPE_DEFINITION@0..78
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..11
+            - IDENT@5..11 "Person"
+        - WHITESPACE@11..12 " "
+        - FIELDS_DEFINITION@12..78
+            - L_CURLY@12..13 "{"
+            - WHITESPACE@13..16 "\n  "
+            - FIELD_DEFINITION@16..28
+                - NAME@16..20
+                    - IDENT@16..20 "name"
+                - COLON@20..21 ":"
+                - WHITESPACE@21..22 " "
+                - NAMED_TYPE@22..28
+                    - NAME@22..28
+                        - IDENT@22..28 "String"
+            - WHITESPACE@28..31 "\n  "
+            - FIELD_DEFINITION@31..76
+                - NAME@31..38
+                    - IDENT@31..38 "picture"
+                - ARGUMENTS_DEFINITION@38..71
+                    - L_PAREN@38..39 "("
+                    - INPUT_VALUE_DEFINITION@39..49
+                        - NAME@39..48
+                            - IDENT@39..48 "reference"
+                        - COLON@48..49 ":"
+                    - WHITESPACE@49..50 " "
+                    - ERROR@50..70 "\"\\a reference image\""
+                    - R_PAREN@70..71 ")"
+                - COLON@71..72 ":"
+                - WHITESPACE@72..73 " "
+                - NAMED_TYPE@73..76
+                    - NAME@73..76
+                        - IDENT@73..76 "Url"
+            - WHITESPACE@76..77 "\n"
+            - R_CURLY@77..78 "}"
+- ERROR@50:70 "unexpected escaped character" "\a reference image"
+- ERROR@70:71 "expected a Type" )
+recursion limit: 500, high: 0

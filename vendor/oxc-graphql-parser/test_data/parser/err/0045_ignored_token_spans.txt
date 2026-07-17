@@ -1,0 +1,36 @@
+- DOCUMENT@0..119
+    - ERROR@0..4 "cats"
+    - WHITESPACE@4..5 "\n"
+    - COMMENT@5..67 "# https://github.com/oxc-project/oxc-graphql-parser/issues/325"
+    - WHITESPACE@67..69 "\n\n"
+    - INTERFACE_TYPE_DEFINITION@69..80
+        - interface_KW@69..78 "interface"
+        - WHITESPACE@78..79 " "
+        - NAME@79..80
+            - IDENT@79..80 "X"
+    - WHITESPACE@80..82 "\n\n"
+    - ERROR@82..86 "cats"
+    - WHITESPACE@86..87 "\n"
+    - OBJECT_TYPE_DEFINITION@87..118
+        - type_KW@87..91 "type"
+        - WHITESPACE@91..92 " "
+        - NAME@92..97
+            - IDENT@92..97 "Query"
+        - WHITESPACE@97..98 " "
+        - FIELDS_DEFINITION@98..118
+            - L_CURLY@98..99 "{"
+            - WHITESPACE@99..104 "\n    "
+            - FIELD_DEFINITION@104..116
+                - NAME@104..108
+                    - IDENT@104..108 "name"
+                - COLON@108..109 ":"
+                - WHITESPACE@109..110 " "
+                - NAMED_TYPE@110..116
+                    - NAME@110..116
+                        - IDENT@110..116 "String"
+            - WHITESPACE@116..117 "\n"
+            - R_CURLY@117..118 "}"
+    - WHITESPACE@118..119 "\n"
+- ERROR@0:4 "expected definition" cats
+- ERROR@82:86 "expected definition" cats
+recursion limit: 500, high: 0

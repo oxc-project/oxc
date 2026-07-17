@@ -1,0 +1,127 @@
+- DOCUMENT@0..197
+    - OBJECT_TYPE_DEFINITION@0..58
+        - DESCRIPTION@0..20
+            - STRING_VALUE@0..20
+                - STRING@0..20 "\"Just one interface\""
+        - WHITESPACE@20..21 "\n"
+        - type_KW@21..25 "type"
+        - WHITESPACE@25..26 " "
+        - NAME@26..29
+            - IDENT@26..29 "One"
+        - WHITESPACE@29..30 " "
+        - IMPLEMENTS_INTERFACES@30..42
+            - implements_KW@30..40 "implements"
+            - WHITESPACE@40..41 " "
+            - NAMED_TYPE@41..42
+                - NAME@41..42
+                    - IDENT@41..42 "A"
+        - WHITESPACE@42..43 " "
+        - FIELDS_DEFINITION@43..58
+            - L_CURLY@43..44 "{"
+            - WHITESPACE@44..45 " "
+            - FIELD_DEFINITION@45..56
+                - NAME@45..50
+                    - IDENT@45..50 "field"
+                - COLON@50..51 ":"
+                - WHITESPACE@51..52 " "
+                - NON_NULL_TYPE@52..56
+                    - NAMED_TYPE@52..55
+                        - NAME@52..55
+                            - IDENT@52..55 "Int"
+                    - BANG@55..56 "!"
+            - WHITESPACE@56..57 " "
+            - R_CURLY@57..58 "}"
+    - WHITESPACE@58..60 "\n\n"
+    - OBJECT_TYPE_DEFINITION@60..126
+        - DESCRIPTION@60..80
+            - STRING_VALUE@60..80
+                - STRING@60..80 "\"Several interfaces\""
+        - WHITESPACE@80..81 "\n"
+        - type_KW@81..85 "type"
+        - WHITESPACE@85..86 " "
+        - NAME@86..89
+            - IDENT@86..89 "Two"
+        - WHITESPACE@89..90 " "
+        - IMPLEMENTS_INTERFACES@90..110
+            - implements_KW@90..100 "implements"
+            - WHITESPACE@100..101 " "
+            - NAMED_TYPE@101..102
+                - NAME@101..102
+                    - IDENT@101..102 "A"
+            - WHITESPACE@102..103 " "
+            - AMP@103..104 "&"
+            - WHITESPACE@104..105 " "
+            - NAMED_TYPE@105..106
+                - NAME@105..106
+                    - IDENT@105..106 "B"
+            - WHITESPACE@106..107 " "
+            - AMP@107..108 "&"
+            - WHITESPACE@108..109 " "
+            - NAMED_TYPE@109..110
+                - NAME@109..110
+                    - IDENT@109..110 "C"
+        - WHITESPACE@110..111 " "
+        - FIELDS_DEFINITION@111..126
+            - L_CURLY@111..112 "{"
+            - WHITESPACE@112..113 " "
+            - FIELD_DEFINITION@113..124
+                - NAME@113..118
+                    - IDENT@113..118 "field"
+                - COLON@118..119 ":"
+                - WHITESPACE@119..120 " "
+                - NON_NULL_TYPE@120..124
+                    - NAMED_TYPE@120..123
+                        - NAME@120..123
+                            - IDENT@120..123 "Int"
+                    - BANG@123..124 "!"
+            - WHITESPACE@124..125 " "
+            - R_CURLY@125..126 "}"
+    - WHITESPACE@126..128 "\n\n"
+    - OBJECT_TYPE_DEFINITION@128..196
+        - DESCRIPTION@128..140
+            - STRING_VALUE@128..140
+                - STRING@128..140 "\"&-prefixed\""
+        - WHITESPACE@140..141 "\n"
+        - type_KW@141..145 "type"
+        - WHITESPACE@145..146 " "
+        - NAME@146..151
+            - IDENT@146..151 "Three"
+        - WHITESPACE@151..152 " "
+        - IMPLEMENTS_INTERFACES@152..180
+            - implements_KW@152..162 "implements"
+            - WHITESPACE@162..165 "\n  "
+            - AMP@165..166 "&"
+            - WHITESPACE@166..167 " "
+            - NAMED_TYPE@167..168
+                - NAME@167..168
+                    - IDENT@167..168 "A"
+            - WHITESPACE@168..171 "\n  "
+            - AMP@171..172 "&"
+            - WHITESPACE@172..173 " "
+            - NAMED_TYPE@173..174
+                - NAME@173..174
+                    - IDENT@173..174 "B"
+            - WHITESPACE@174..177 "\n  "
+            - AMP@177..178 "&"
+            - WHITESPACE@178..179 " "
+            - NAMED_TYPE@179..180
+                - NAME@179..180
+                    - IDENT@179..180 "C"
+        - WHITESPACE@180..181 "\n"
+        - FIELDS_DEFINITION@181..196
+            - L_CURLY@181..182 "{"
+            - WHITESPACE@182..183 " "
+            - FIELD_DEFINITION@183..194
+                - NAME@183..188
+                    - IDENT@183..188 "field"
+                - COLON@188..189 ":"
+                - WHITESPACE@189..190 " "
+                - NON_NULL_TYPE@190..194
+                    - NAMED_TYPE@190..193
+                        - NAME@190..193
+                            - IDENT@190..193 "Int"
+                    - BANG@193..194 "!"
+            - WHITESPACE@194..195 " "
+            - R_CURLY@195..196 "}"
+    - WHITESPACE@196..197 "\n"
+recursion limit: 500, high: 0

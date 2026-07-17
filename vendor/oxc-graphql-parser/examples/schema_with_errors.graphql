@@ -1,0 +1,20 @@
+directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE
+"Exposes a URL that specifies the behaviour of this scalar."
+directive ("The URL that specifies the behaviour of this scalar." url: String!) on SCALAR
+type Query {
+    "A simple type for getting started!"
+    hello: String
+    cats(cat: [String]! = ): [String]!
+}
+input BooleanQueryOperatorInput {
+    eq: Boolean
+    ne: Boolean
+    in: [Boolean]
+    nin: [Boolean]
+}
+enum CacheControlScope {
+    PUBLIC
+    PRIVATE
+}
+"The `Upload` scalar type represents a file upload."
+scalar Upload

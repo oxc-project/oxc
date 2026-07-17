@@ -1,0 +1,11 @@
+- DOCUMENT@0..18
+    - OPERATION_DEFINITION@0..18
+        - OPERATION_TYPE@0..5
+            - query_KW@0..5 "query"
+        - WHITESPACE@5..6 " "
+        - NAME@6..16
+            - IDENT@6..16 "__typename"
+        - WHITESPACE@16..17 " "
+        - ERROR@17..18 "}"
+- ERROR@17:18 "expected a Selection Set" }
+recursion limit: 500, high: 0

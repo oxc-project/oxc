@@ -1,0 +1,61 @@
+- DOCUMENT@0..163
+    - OBJECT_TYPE_DEFINITION@0..162
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..11
+            - IDENT@5..11 "Object"
+        - WHITESPACE@11..12 " "
+        - FIELDS_DEFINITION@12..162
+            - L_CURLY@12..13 "{"
+            - WHITESPACE@13..16 "\n  "
+            - COMMENT@16..81 "#(apparently you can stick a comma in there?? please dont do it!)"
+            - WHITESPACE@81..84 "\n  "
+            - FIELD_DEFINITION@84..100
+                - NAME@84..89
+                    - IDENT@84..89 "field"
+                - WHITESPACE@89..90 " "
+                - COLON@90..91 ":"
+                - WHITESPACE@91..92 " "
+                - LIST_TYPE@92..100
+                    - L_BRACK@92..93 "["
+                    - NON_NULL_TYPE@93..99
+                        - NAMED_TYPE@93..96
+                            - NAME@93..96
+                                - IDENT@93..96 "Int"
+                        - WHITESPACE@96..97 " "
+                        - COMMA@97..98 ","
+                        - BANG@98..99 "!"
+                    - R_BRACK@99..100 "]"
+            - WHITESPACE@100..101 " "
+            - COMMENT@101..110 "# comment"
+            - WHITESPACE@110..113 "\n  "
+            - FIELD_DEFINITION@113..127
+                - NAME@113..119
+                    - IDENT@113..119 "_other"
+                - COLON@119..120 ":"
+                - WHITESPACE@120..121 "\n"
+                - NAMED_TYPE@121..127
+                    - NAME@121..127
+                        - IDENT@121..127 "String"
+            - COMMA@127..128 ","
+            - COMMA@128..129 ","
+            - COMMA@129..130 ","
+            - WHITESPACE@130..133 "   "
+            - COMMA@133..134 ","
+            - WHITESPACE@134..135 "\n"
+            - COMMENT@135..143 "#garbage"
+            - WHITESPACE@143..146 "\n  "
+            - FIELD_DEFINITION@146..160
+                - NAME@146..155
+                    - IDENT@146..155 "realField"
+                - COLON@155..156 ":"
+                - WHITESPACE@156..157 " "
+                - NON_NULL_TYPE@157..160
+                    - NAMED_TYPE@157..159
+                        - NAME@157..159
+                            - IDENT@157..159 "ID"
+                    - BANG@159..160 "!"
+            - WHITESPACE@160..161 "\n"
+            - R_CURLY@161..162 "}"
+    - WHITESPACE@162..163 "\n"
+recursion limit: 500, high: 1

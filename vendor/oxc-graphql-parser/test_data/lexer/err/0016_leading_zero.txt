@@ -1,0 +1,87 @@
+COMMENT@0:11 "# No error:"
+WHITESPACE@11:14 "\n  "
+INT@14:15 "0"
+WHITESPACE@15:18 "   "
+INT@18:19 "1"
+WHITESPACE@19:22 "   "
+INT@22:24 "42"
+WHITESPACE@24:27 "   "
+FLOAT@27:30 "1.1"
+WHITESPACE@30:33 "   "
+FLOAT@33:36 "0.2"
+WHITESPACE@36:39 "   "
+FLOAT@39:43 "1e04"
+WHITESPACE@43:46 "   "
+FLOAT@46:51 "1e+04"
+WHITESPACE@51:54 "   "
+FLOAT@54:59 "1e-04"
+WHITESPACE@59:61 "\n "
+INT@61:63 "-0"
+WHITESPACE@63:65 "  "
+INT@65:67 "-1"
+WHITESPACE@67:69 "  "
+INT@69:72 "-42"
+WHITESPACE@72:74 "  "
+FLOAT@74:78 "-1.1"
+WHITESPACE@78:80 "  "
+FLOAT@80:84 "-0.2"
+WHITESPACE@84:86 "  "
+FLOAT@86:91 "-1e04"
+WHITESPACE@91:93 "  "
+FLOAT@93:99 "-1e+04"
+WHITESPACE@99:101 "  "
+FLOAT@101:107 "-1e-04"
+WHITESPACE@107:108 "\n"
+COMMENT@108:117 "# Errors:"
+WHITESPACE@117:119 "\n "
+ERROR@119:121 "Numbers must not have non-significant leading zeroes" 00
+WHITESPACE@121:123 "  "
+ERROR@123:125 "Numbers must not have non-significant leading zeroes" 01
+WHITESPACE@125:127 "  "
+ERROR@127:129 "Numbers must not have non-significant leading zeroes" 04
+INT@129:130 "2"
+WHITESPACE@130:132 "  "
+ERROR@132:134 "Numbers must not have non-significant leading zeroes" 01
+ERROR@134:136 "Unterminated spread operator" .1
+WHITESPACE@136:138 "  "
+ERROR@138:140 "Numbers must not have non-significant leading zeroes" 00
+ERROR@140:142 "Unterminated spread operator" .2
+WHITESPACE@142:144 "  "
+ERROR@144:146 "Numbers must not have non-significant leading zeroes" 01
+NAME@146:149 "e04"
+WHITESPACE@149:151 "  "
+ERROR@151:153 "Numbers must not have non-significant leading zeroes" 01
+NAME@153:154 "e"
+ERROR@154:155 "Unexpected character \"+\"" +
+ERROR@155:157 "Numbers must not have non-significant leading zeroes" 04
+WHITESPACE@157:159 "  "
+ERROR@159:161 "Numbers must not have non-significant leading zeroes" 01
+NAME@161:162 "e"
+ERROR@162:165 "Numbers must not have non-significant leading zeroes" -04
+WHITESPACE@165:166 "\n"
+ERROR@166:169 "Numbers must not have non-significant leading zeroes" -00
+WHITESPACE@169:170 " "
+ERROR@170:173 "Numbers must not have non-significant leading zeroes" -01
+WHITESPACE@173:174 " "
+ERROR@174:177 "Numbers must not have non-significant leading zeroes" -04
+INT@177:178 "2"
+WHITESPACE@178:179 " "
+ERROR@179:182 "Numbers must not have non-significant leading zeroes" -01
+ERROR@182:184 "Unterminated spread operator" .1
+WHITESPACE@184:185 " "
+ERROR@185:188 "Numbers must not have non-significant leading zeroes" -00
+ERROR@188:190 "Unterminated spread operator" .2
+WHITESPACE@190:191 " "
+ERROR@191:194 "Numbers must not have non-significant leading zeroes" -01
+NAME@194:197 "e04"
+WHITESPACE@197:198 " "
+ERROR@198:201 "Numbers must not have non-significant leading zeroes" -01
+NAME@201:202 "e"
+ERROR@202:203 "Unexpected character \"+\"" +
+ERROR@203:205 "Numbers must not have non-significant leading zeroes" 04
+WHITESPACE@205:206 " "
+ERROR@206:209 "Numbers must not have non-significant leading zeroes" -01
+NAME@209:210 "e"
+ERROR@210:213 "Numbers must not have non-significant leading zeroes" -04
+WHITESPACE@213:214 "\n"
+EOF@214:214

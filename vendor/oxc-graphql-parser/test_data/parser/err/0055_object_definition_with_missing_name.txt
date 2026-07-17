@@ -1,0 +1,19 @@
+- DOCUMENT@0..22
+    - OBJECT_TYPE_DEFINITION@0..22
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..6 "  "
+        - FIELDS_DEFINITION@6..22
+            - L_CURLY@6..7 "{"
+            - WHITESPACE@7..10 "\n  "
+            - FIELD_DEFINITION@10..20
+                - NAME@10..12
+                    - IDENT@10..12 "id"
+                - COLON@12..13 ":"
+                - WHITESPACE@13..14 " "
+                - NAMED_TYPE@14..20
+                    - NAME@14..20
+                        - IDENT@14..20 "String"
+            - WHITESPACE@20..21 "\n"
+            - R_CURLY@21..22 "}"
+- ERROR@6:7 "expected a name" {
+recursion limit: 500, high: 0

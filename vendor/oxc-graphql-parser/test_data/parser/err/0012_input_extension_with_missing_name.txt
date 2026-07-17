@@ -1,0 +1,21 @@
+- DOCUMENT@0..30
+    - INPUT_OBJECT_TYPE_EXTENSION@0..30
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - input_KW@7..12 "input"
+        - WHITESPACE@12..13 " "
+        - INPUT_FIELDS_DEFINITION@13..30
+            - L_CURLY@13..14 "{"
+            - WHITESPACE@14..19 "\n    "
+            - INPUT_VALUE_DEFINITION@19..28
+                - NAME@19..20
+                    - IDENT@19..20 "a"
+                - COLON@20..21 ":"
+                - WHITESPACE@21..22 " "
+                - NAMED_TYPE@22..28
+                    - NAME@22..28
+                        - IDENT@22..28 "String"
+            - WHITESPACE@28..29 "\n"
+            - R_CURLY@29..30 "}"
+- ERROR@13:14 "expected a Name" {
+recursion limit: 500, high: 0

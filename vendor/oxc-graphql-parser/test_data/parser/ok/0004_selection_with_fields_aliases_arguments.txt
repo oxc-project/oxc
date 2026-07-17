@@ -1,0 +1,74 @@
+- DOCUMENT@0..202
+    - WHITESPACE@0..1 "\n"
+    - OPERATION_DEFINITION@1..202
+        - SELECTION_SET@1..202
+            - L_CURLY@1..2 "{"
+            - WHITESPACE@2..7 "\n    "
+            - FIELD@7..173
+                - NAME@7..10
+                    - IDENT@7..10 "pet"
+                - WHITESPACE@10..11 " "
+                - SELECTION_SET@11..173
+                    - L_CURLY@11..12 "{"
+                    - WHITESPACE@12..21 "\n        "
+                    - FIELD@21..35
+                        - ALIAS@21..26
+                            - NAME@21..25
+                                - IDENT@21..25 "name"
+                            - COLON@25..26 ":"
+                        - WHITESPACE@26..27 " "
+                        - NAME@27..35
+                            - IDENT@27..35 "nickname"
+                    - WHITESPACE@35..44 "\n        "
+                    - FIELD@44..98
+                        - NAME@44..52
+                            - IDENT@44..52 "birthday"
+                        - WHITESPACE@52..53 " "
+                        - SELECTION_SET@53..98
+                            - L_CURLY@53..54 "{"
+                            - WHITESPACE@54..67 "\n            "
+                            - FIELD@67..72
+                                - NAME@67..72
+                                    - IDENT@67..72 "month"
+                            - WHITESPACE@72..85 "\n            "
+                            - FIELD@85..88
+                                - NAME@85..88
+                                    - IDENT@85..88 "day"
+                            - WHITESPACE@88..97 "\n        "
+                            - R_CURLY@97..98 "}"
+                    - WHITESPACE@98..107 "\n        "
+                    - FIELD@107..167
+                        - NAME@107..116
+                            - IDENT@107..116 "playmates"
+                        - WHITESPACE@116..117 " "
+                        - SELECTION_SET@117..167
+                            - L_CURLY@117..118 "{"
+                            - WHITESPACE@118..131 "\n            "
+                            - FIELD@131..135
+                                - NAME@131..135
+                                    - IDENT@131..135 "name"
+                            - WHITESPACE@135..148 "\n            "
+                            - FIELD@148..157
+                                - NAME@148..157
+                                    - IDENT@148..157 "faveSnack"
+                            - WHITESPACE@157..166 "\n        "
+                            - R_CURLY@166..167 "}"
+                    - WHITESPACE@167..172 "\n    "
+                    - R_CURLY@172..173 "}"
+            - WHITESPACE@173..178 "\n    "
+            - FIELD@178..200
+                - NAME@178..187
+                    - IDENT@178..187 "faveSnack"
+                - ARGUMENTS@187..200
+                    - L_PAREN@187..188 "("
+                    - ARGUMENT@188..199
+                        - NAME@188..196
+                            - IDENT@188..196 "quantity"
+                        - COLON@196..197 ":"
+                        - WHITESPACE@197..198 " "
+                        - INT_VALUE@198..199
+                            - INT@198..199 "4"
+                    - R_PAREN@199..200 ")"
+            - WHITESPACE@200..201 "\n"
+            - R_CURLY@201..202 "}"
+recursion limit: 500, high: 3

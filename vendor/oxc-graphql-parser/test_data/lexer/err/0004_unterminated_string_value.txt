@@ -1,0 +1,2 @@
+ERROR@0:1 "unexpected end of data while lexing string value" "
+EOF@1:1

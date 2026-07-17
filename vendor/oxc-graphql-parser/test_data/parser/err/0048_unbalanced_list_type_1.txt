@@ -1,0 +1,32 @@
+- DOCUMENT@0..40
+    - OBJECT_TYPE_DEFINITION@0..36
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..10
+            - IDENT@5..10 "Query"
+        - WHITESPACE@10..11 " "
+        - FIELDS_DEFINITION@11..36
+            - L_CURLY@11..12 "{"
+            - WHITESPACE@12..17 "\n    "
+            - FIELD_DEFINITION@17..36
+                - NAME@17..27
+                    - IDENT@17..27 "unbalanced"
+                - COLON@27..28 ":"
+                - WHITESPACE@28..29 " "
+                - LIST_TYPE@29..36
+                    - L_BRACK@29..30 "["
+                    - LIST_TYPE@30..35
+                        - L_BRACK@30..31 "["
+                        - NAMED_TYPE@31..34
+                            - NAME@31..34
+                                - IDENT@31..34 "Int"
+                        - R_BRACK@34..35 "]"
+                    - R_BRACK@35..36 "]"
+    - ERROR@36..37 "]"
+    - WHITESPACE@37..38 "\n"
+    - ERROR@38..39 "}"
+    - WHITESPACE@39..40 "\n"
+- ERROR@36:37 "expected R_CURLY, got ]" ]
+- ERROR@36:37 "expected a StringValue, Name or OperationDefinition" ]
+- ERROR@38:39 "expected a StringValue, Name or OperationDefinition" }
+recursion limit: 500, high: 2

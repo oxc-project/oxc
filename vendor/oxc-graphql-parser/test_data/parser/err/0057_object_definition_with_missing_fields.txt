@@ -1,0 +1,13 @@
+- DOCUMENT@0..15
+    - OBJECT_TYPE_DEFINITION@0..15
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..11
+            - IDENT@5..11 "Person"
+        - WHITESPACE@11..12 " "
+        - FIELDS_DEFINITION@12..15
+            - L_CURLY@12..13 "{"
+            - WHITESPACE@13..14 "\n"
+            - R_CURLY@14..15 "}"
+- ERROR@14:15 "expected Field Definition" }
+recursion limit: 500, high: 0

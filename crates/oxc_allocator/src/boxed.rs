@@ -444,11 +444,9 @@ mod test {
         let allocator = Allocator::default();
         let allocator = &allocator;
         let b = Box::new_in((), &allocator);
-        #[expect(clippy::unit_cmp, clippy::let_unit_value)]
-        {
-            let unit = b.unbox();
-            assert_eq!(unit, ());
-        }
+        b.unbox();
+        let b = Box::new_in(0u64, &allocator);
+        assert_eq!(*b, 0);
     }
 
     #[test]

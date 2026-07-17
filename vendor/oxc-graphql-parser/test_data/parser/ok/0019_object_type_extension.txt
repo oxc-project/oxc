@@ -1,0 +1,54 @@
+- DOCUMENT@0..98
+    - OBJECT_TYPE_EXTENSION@0..98
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - type_KW@7..11 "type"
+        - WHITESPACE@11..12 " "
+        - NAME@12..18
+            - IDENT@12..18 "Person"
+        - WHITESPACE@18..19 " "
+        - IMPLEMENTS_INTERFACES@19..35
+            - implements_KW@19..29 "implements"
+            - WHITESPACE@29..30 " "
+            - NAMED_TYPE@30..35
+                - NAME@30..35
+                    - IDENT@30..35 "Human"
+        - WHITESPACE@35..36 " "
+        - DIRECTIVES@36..47
+            - DIRECTIVE@36..47
+                - AT@36..37 "@"
+                - NAME@37..47
+                    - IDENT@37..47 "deprecated"
+        - WHITESPACE@47..48 " "
+        - FIELDS_DEFINITION@48..98
+            - L_CURLY@48..49 "{"
+            - WHITESPACE@49..54 "\n    "
+            - FIELD_DEFINITION@54..66
+                - NAME@54..58
+                    - IDENT@54..58 "name"
+                - COLON@58..59 ":"
+                - WHITESPACE@59..60 " "
+                - NAMED_TYPE@60..66
+                    - NAME@60..66
+                        - IDENT@60..66 "String"
+            - WHITESPACE@66..71 "\n    "
+            - FIELD_DEFINITION@71..79
+                - NAME@71..74
+                    - IDENT@71..74 "age"
+                - COLON@74..75 ":"
+                - WHITESPACE@75..76 " "
+                - NAMED_TYPE@76..79
+                    - NAME@76..79
+                        - IDENT@76..79 "Int"
+            - WHITESPACE@79..84 "\n    "
+            - FIELD_DEFINITION@84..96
+                - NAME@84..91
+                    - IDENT@84..91 "picture"
+                - COLON@91..92 ":"
+                - WHITESPACE@92..93 " "
+                - NAMED_TYPE@93..96
+                    - NAME@93..96
+                        - IDENT@93..96 "Url"
+            - WHITESPACE@96..97 "\n"
+            - R_CURLY@97..98 "}"
+recursion limit: 500, high: 0

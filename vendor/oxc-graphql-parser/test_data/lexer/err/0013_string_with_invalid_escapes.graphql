@@ -1,0 +1,14 @@
+type Query {
+  "This is \"\"a test \a\d\q description"
+  invalidPlainEscape: String
+  "\u008"
+  incompleteUnicodeEscape: String
+  "\uF"
+  incompleteUnicodeEscape2: String
+  "\uzzzz"
+  invalidUnicodeEscape: String
+  "\u123k"
+  invalidUnicodeEscape2: String
+  "\'"
+  invalidEscapeChar: String
+}

@@ -1,0 +1,28 @@
+- DOCUMENT@0..36
+    - FRAGMENT_DEFINITION@0..36
+        - fragment_KW@0..8 "fragment"
+        - WHITESPACE@8..9 " "
+        - FRAGMENT_NAME@9..9
+        - TYPE_CONDITION@9..16
+            - on_KW@9..11 "on"
+            - WHITESPACE@11..12 " "
+            - NAMED_TYPE@12..16
+                - NAME@12..16
+                    - IDENT@12..16 "User"
+        - WHITESPACE@16..17 " "
+        - DIRECTIVES@17..25
+            - DIRECTIVE@17..25
+                - AT@17..18 "@"
+                - NAME@18..25
+                    - IDENT@18..25 "example"
+        - WHITESPACE@25..26 " "
+        - SELECTION_SET@26..36
+            - L_CURLY@26..27 "{"
+            - WHITESPACE@27..32 "\n    "
+            - FIELD@32..34
+                - NAME@32..34
+                    - IDENT@32..34 "id"
+            - WHITESPACE@34..35 "\n"
+            - R_CURLY@35..36 "}"
+- ERROR@9:11 "Fragment Name cannot be 'on'" on
+recursion limit: 500, high: 1

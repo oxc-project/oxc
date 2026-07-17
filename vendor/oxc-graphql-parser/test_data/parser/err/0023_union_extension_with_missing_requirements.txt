@@ -1,0 +1,10 @@
+- DOCUMENT@0..25
+    - UNION_TYPE_EXTENSION@0..25
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - union_KW@7..12 "union"
+        - WHITESPACE@12..13 " "
+        - NAME@13..25
+            - IDENT@13..25 "SearchResult"
+- ERROR@25:25 "expected Directives or Union Member Types" EOF
+recursion limit: 500, high: 0

@@ -1,0 +1,45 @@
+- DOCUMENT@0..80
+    - SCHEMA_DEFINITION@0..23
+        - schema_KW@0..6 "schema"
+        - WHITESPACE@6..7 " "
+        - L_CURLY@7..8 "{"
+        - WHITESPACE@8..11 "\n  "
+        - ROOT_OPERATION_TYPE_DEFINITION@11..23
+            - OPERATION_TYPE@11..16
+                - query_KW@11..16 "query"
+            - COLON@16..17 ":"
+            - WHITESPACE@17..18 " "
+            - NAMED_TYPE@18..23
+                - NAME@18..23
+                    - IDENT@18..23 "Query"
+    - WHITESPACE@23..26 "\n  "
+    - OPERATION_DEFINITION@26..79
+        - SELECTION_SET@26..79
+            - L_CURLY@26..27 "{"
+            - WHITESPACE@27..28 " "
+            - FIELD@28..79
+                - ALIAS@28..37
+                    - NAME@28..36
+                        - IDENT@28..36 "mutation"
+                    - COLON@36..37 ":"
+                - WHITESPACE@37..38 " "
+                - NAME@38..46
+                    - IDENT@38..46 "Mutation"
+                - WHITESPACE@46..49 "\n  "
+                - SELECTION_SET@49..79
+                    - L_CURLY@49..50 "{"
+                    - WHITESPACE@50..51 " "
+                    - FIELD@51..77
+                        - ALIAS@51..64
+                            - NAME@51..63
+                                - IDENT@51..63 "subscription"
+                            - COLON@63..64 ":"
+                        - WHITESPACE@64..65 " "
+                        - NAME@65..77
+                            - IDENT@65..77 "Subscription"
+                    - WHITESPACE@77..78 "\n"
+                    - R_CURLY@78..79 "}"
+    - WHITESPACE@79..80 "\n"
+- ERROR@26:27 "expected R_CURLY, got {" {
+- ERROR@80:80 "expected R_CURLY, got EOF" EOF
+recursion limit: 500, high: 2

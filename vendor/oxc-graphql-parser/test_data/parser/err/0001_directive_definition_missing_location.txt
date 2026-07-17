@@ -1,0 +1,11 @@
+- DOCUMENT@0..21
+    - DIRECTIVE_DEFINITION@0..21
+        - directive_KW@0..9 "directive"
+        - WHITESPACE@9..10 " "
+        - AT@10..11 "@"
+        - NAME@11..18
+            - IDENT@11..18 "example"
+        - WHITESPACE@18..19 " "
+        - on_KW@19..21 "on"
+- ERROR@21:21 "expected valid Directive Location" EOF
+recursion limit: 500, high: 0

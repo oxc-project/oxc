@@ -1,0 +1,48 @@
+- DOCUMENT@0..91
+    - OBJECT_TYPE_DEFINITION@0..91
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..13
+            - IDENT@5..13 "Mutation"
+        - WHITESPACE@13..14 " "
+        - FIELDS_DEFINITION@14..91
+            - L_CURLY@14..15 "{"
+            - WHITESPACE@15..18 "\n  "
+            - FIELD_DEFINITION@18..89
+                - NAME@18..23
+                    - IDENT@18..23 "login"
+                - ARGUMENTS_DEFINITION@23..83
+                    - L_PAREN@23..24 "("
+                    - INPUT_VALUE_DEFINITION@24..82
+                        - NAME@24..30
+                            - IDENT@24..30 "userId"
+                        - COLON@30..31 ":"
+                        - WHITESPACE@31..32 " "
+                        - NAMED_TYPE@32..38
+                            - NAME@32..38
+                                - IDENT@32..38 "String"
+                        - WHITESPACE@38..39 " "
+                        - DIRECTIVES@39..82
+                            - DIRECTIVE@39..82
+                                - AT@39..40 "@"
+                                - NAME@40..50
+                                    - IDENT@40..50 "deprecated"
+                                - ARGUMENTS@50..82
+                                    - L_PAREN@50..51 "("
+                                    - ARGUMENT@51..81
+                                        - NAME@51..57
+                                            - IDENT@51..57 "reason"
+                                        - COLON@57..58 ":"
+                                        - WHITESPACE@58..59 " "
+                                        - STRING_VALUE@59..81
+                                            - STRING@59..81 "\"Use username instead\""
+                                    - R_PAREN@81..82 ")"
+                    - R_PAREN@82..83 ")"
+                - COLON@83..84 ":"
+                - WHITESPACE@84..85 " "
+                - NAMED_TYPE@85..89
+                    - NAME@85..89
+                        - IDENT@85..89 "User"
+            - WHITESPACE@89..90 "\n"
+            - R_CURLY@90..91 "}"
+recursion limit: 500, high: 0

@@ -1,0 +1,36 @@
+- DOCUMENT@0..122
+    - INPUT_OBJECT_TYPE_DEFINITION@0..63
+        - DESCRIPTION@0..31
+            - STRING_VALUE@0..31
+                - STRING@0..31 "\"An input with no input values\""
+        - WHITESPACE@31..32 "\n"
+        - input_KW@32..37 "input"
+        - WHITESPACE@37..38 " "
+        - NAME@38..63
+            - IDENT@38..63 "AnInputWithoutInputValues"
+    - WHITESPACE@63..65 "\n\n"
+    - INPUT_OBJECT_TYPE_EXTENSION@65..121
+        - extend_KW@65..71 "extend"
+        - WHITESPACE@71..72 " "
+        - input_KW@72..77 "input"
+        - WHITESPACE@77..78 " "
+        - NAME@78..103
+            - IDENT@78..103 "AnInputWithoutInputValues"
+        - WHITESPACE@103..104 " "
+        - INPUT_FIELDS_DEFINITION@104..121
+            - L_CURLY@104..105 "{"
+            - WHITESPACE@105..108 "\n  "
+            - INPUT_VALUE_DEFINITION@108..119
+                - NAME@108..113
+                    - IDENT@108..113 "limit"
+                - COLON@113..114 ":"
+                - WHITESPACE@114..115 " "
+                - NON_NULL_TYPE@115..119
+                    - NAMED_TYPE@115..118
+                        - NAME@115..118
+                            - IDENT@115..118 "Int"
+                    - BANG@118..119 "!"
+            - WHITESPACE@119..120 "\n"
+            - R_CURLY@120..121 "}"
+    - WHITESPACE@121..122 "\n"
+recursion limit: 500, high: 0

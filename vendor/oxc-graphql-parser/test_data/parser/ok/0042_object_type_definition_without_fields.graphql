@@ -1,0 +1,6 @@
+"A type with no fields"
+type AnObjectTypeWithoutFields
+
+extend type AnObjectTypeWithoutFields {
+  id: ID!
+}

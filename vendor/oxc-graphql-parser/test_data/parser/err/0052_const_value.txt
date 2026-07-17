@@ -1,0 +1,166 @@
+- DOCUMENT@0..219
+    - OPERATION_DEFINITION@0..113
+        - OPERATION_TYPE@0..5
+            - query_KW@0..5 "query"
+        - VARIABLE_DEFINITIONS@5..55
+            - L_PAREN@5..6 "("
+            - WHITESPACE@6..11 "\n    "
+            - VARIABLE_DEFINITION@11..26
+                - VARIABLE@11..16
+                    - DOLLAR@11..12 "$"
+                    - NAME@12..16
+                        - IDENT@12..16 "var1"
+                - COLON@16..17 ":"
+                - WHITESPACE@17..18 " "
+                - NON_NULL_TYPE@18..26
+                    - NAMED_TYPE@18..25
+                        - NAME@18..25
+                            - IDENT@18..25 "Boolean"
+                    - BANG@25..26 "!"
+            - WHITESPACE@26..31 "\n    "
+            - VARIABLE_DEFINITION@31..53
+                - VARIABLE@31..36
+                    - DOLLAR@31..32 "$"
+                    - NAME@32..36
+                        - IDENT@32..36 "var2"
+                - COLON@36..37 ":"
+                - WHITESPACE@37..38 " "
+                - NON_NULL_TYPE@38..46
+                    - NAMED_TYPE@38..45
+                        - NAME@38..45
+                            - IDENT@38..45 "Boolean"
+                    - BANG@45..46 "!"
+                - WHITESPACE@46..47 " "
+                - DEFAULT_VALUE@47..53
+                    - EQ@47..48 "="
+                    - WHITESPACE@48..49 " "
+                    - VARIABLE@49..53
+                        - DOLLAR@49..50 "$"
+                        - NAME@50..53
+                            - IDENT@50..53 "var"
+            - WHITESPACE@53..54 "\n"
+            - R_PAREN@54..55 ")"
+        - WHITESPACE@55..56 " "
+        - SELECTION_SET@56..113
+            - L_CURLY@56..57 "{"
+            - WHITESPACE@57..62 "\n    "
+            - FIELD@62..84
+                - NAME@62..64
+                    - IDENT@62..64 "f1"
+                - WHITESPACE@64..65 " "
+                - DIRECTIVES@65..84
+                    - DIRECTIVE@65..84
+                        - AT@65..66 "@"
+                        - NAME@66..73
+                            - IDENT@66..73 "include"
+                        - ARGUMENTS@73..84
+                            - L_PAREN@73..74 "("
+                            - ARGUMENT@74..83
+                                - NAME@74..76
+                                    - IDENT@74..76 "if"
+                                - COLON@76..77 ":"
+                                - WHITESPACE@77..78 " "
+                                - VARIABLE@78..83
+                                    - DOLLAR@78..79 "$"
+                                    - NAME@79..83
+                                        - IDENT@79..83 "var1"
+                            - R_PAREN@83..84 ")"
+            - WHITESPACE@84..89 "\n    "
+            - FIELD@89..111
+                - NAME@89..91
+                    - IDENT@89..91 "f2"
+                - WHITESPACE@91..92 " "
+                - DIRECTIVES@92..111
+                    - DIRECTIVE@92..111
+                        - AT@92..93 "@"
+                        - NAME@93..100
+                            - IDENT@93..100 "include"
+                        - ARGUMENTS@100..111
+                            - L_PAREN@100..101 "("
+                            - ARGUMENT@101..110
+                                - NAME@101..103
+                                    - IDENT@101..103 "if"
+                                - COLON@103..104 ":"
+                                - WHITESPACE@104..105 " "
+                                - VARIABLE@105..110
+                                    - DOLLAR@105..106 "$"
+                                    - NAME@106..110
+                                        - IDENT@106..110 "var2"
+                            - R_PAREN@110..111 ")"
+            - WHITESPACE@111..112 "\n"
+            - R_CURLY@112..113 "}"
+    - WHITESPACE@113..115 "\n\n"
+    - DIRECTIVE_DEFINITION@115..157
+        - directive_KW@115..124 "directive"
+        - WHITESPACE@124..125 " "
+        - AT@125..126 "@"
+        - NAME@126..133
+            - IDENT@126..133 "someDir"
+        - ARGUMENTS_DEFINITION@133..147
+            - L_PAREN@133..134 "("
+            - INPUT_VALUE_DEFINITION@134..146
+                - NAME@134..137
+                    - IDENT@134..137 "arg"
+                - COLON@137..138 ":"
+                - WHITESPACE@138..139 " "
+                - NAMED_TYPE@139..146
+                    - NAME@139..146
+                        - IDENT@139..146 "Boolean"
+            - R_PAREN@146..147 ")"
+        - WHITESPACE@147..148 " "
+        - on_KW@148..150 "on"
+        - WHITESPACE@150..151 " "
+        - DIRECTIVE_LOCATIONS@151..157
+            - DIRECTIVE_LOCATION@151..157
+                - OBJECT_KW@151..157 "OBJECT"
+    - WHITESPACE@157..159 "\n\n"
+    - OBJECT_TYPE_DEFINITION@159..218
+        - type_KW@159..163 "type"
+        - WHITESPACE@163..164 " "
+        - NAME@164..169
+            - IDENT@164..169 "Query"
+        - WHITESPACE@169..170 " "
+        - DIRECTIVES@170..190
+            - DIRECTIVE@170..190
+                - AT@170..171 "@"
+                - NAME@171..178
+                    - IDENT@171..178 "someDir"
+                - ARGUMENTS@178..190
+                    - L_PAREN@178..179 "("
+                    - ARGUMENT@179..189
+                        - NAME@179..182
+                            - IDENT@179..182 "arg"
+                        - COLON@182..183 ":"
+                        - WHITESPACE@183..184 " "
+                        - VARIABLE@184..189
+                            - DOLLAR@184..185 "$"
+                            - NAME@185..189
+                                - IDENT@185..189 "var1"
+                    - R_PAREN@189..190 ")"
+        - WHITESPACE@190..191 " "
+        - FIELDS_DEFINITION@191..218
+            - L_CURLY@191..192 "{"
+            - WHITESPACE@192..197 "\n    "
+            - FIELD_DEFINITION@197..204
+                - NAME@197..199
+                    - IDENT@197..199 "f1"
+                - COLON@199..200 ":"
+                - WHITESPACE@200..201 " "
+                - NAMED_TYPE@201..204
+                    - NAME@201..204
+                        - IDENT@201..204 "Int"
+            - WHITESPACE@204..209 "\n    "
+            - FIELD_DEFINITION@209..216
+                - NAME@209..211
+                    - IDENT@209..211 "f2"
+                - COLON@211..212 ":"
+                - WHITESPACE@212..213 " "
+                - NAMED_TYPE@213..216
+                    - NAME@213..216
+                        - IDENT@213..216 "Int"
+            - WHITESPACE@216..217 "\n"
+            - R_CURLY@217..218 "}"
+    - WHITESPACE@218..219 "\n"
+- ERROR@49:50 "unexpected variable value in a Const context" $
+- ERROR@184:185 "unexpected variable value in a Const context" $
+recursion limit: 500, high: 1

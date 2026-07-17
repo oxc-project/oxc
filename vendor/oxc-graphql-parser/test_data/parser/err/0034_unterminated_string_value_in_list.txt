@@ -1,0 +1,52 @@
+- DOCUMENT@0..237
+    - SCHEMA_EXTENSION@0..140
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - schema_KW@7..13 "schema"
+        - WHITESPACE@13..16 "\n  "
+        - DIRECTIVES@16..140
+            - DIRECTIVE@16..140
+                - AT@16..17 "@"
+                - NAME@17..21
+                    - IDENT@17..21 "link"
+                - ARGUMENTS@21..140
+                    - L_PAREN@21..22 "("
+                    - ARGUMENT@22..69
+                        - NAME@22..25
+                            - IDENT@22..25 "url"
+                        - COLON@25..26 ":"
+                        - WHITESPACE@26..27 " "
+                        - STRING_VALUE@27..69
+                            - STRING@27..69 "\"https://specs.apollo.dev/federation/v2.0\""
+                    - COMMA@69..70 ","
+                    - WHITESPACE@70..79 "\n        "
+                    - ARGUMENT@79..140
+                        - NAME@79..85
+                            - IDENT@79..85 "import"
+                        - COLON@85..86 ":"
+                        - WHITESPACE@86..87 " "
+                        - LIST_VALUE@87..140
+                            - L_BRACK@87..88 "["
+                            - STRING_VALUE@88..94
+                                - STRING@88..94 "\"@key\""
+                            - COMMA@94..95 ","
+                            - WHITESPACE@95..96 " "
+                            - ERROR@96..138 "\"@external])\n\n\ntype Vehicle @key(fields: \""
+                            - ENUM_VALUE@138..140
+                                - NAME@138..140
+                                    - IDENT@138..140 "id"
+    - ERROR@140..237 "\") {\n  id: ID!,\n  type: String,\n  modelCode: String,\n  brandName: String,\n  launchDate: String\n}\n"
+- ERROR@96:138 "unexpected line terminator" "@external])
+
+
+type Vehicle @key(fields: "
+- ERROR@140:237 "unterminated string value" ") {
+  id: ID!,
+  type: String,
+  modelCode: String,
+  brandName: String,
+  launchDate: String
+}
+
+- ERROR@237:237 "expected R_PAREN, got EOF" EOF
+recursion limit: 500, high: 1

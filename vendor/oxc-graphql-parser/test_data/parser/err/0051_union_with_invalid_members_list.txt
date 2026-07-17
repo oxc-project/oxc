@@ -1,0 +1,75 @@
+- DOCUMENT@0..175
+    - UNION_TYPE_DEFINITION@0..46
+        - DESCRIPTION@0..19
+            - STRING_VALUE@0..19
+                - STRING@0..19 "\"Missing separator\""
+        - WHITESPACE@19..20 "\n"
+        - union_KW@20..25 "union"
+        - WHITESPACE@25..26 " "
+        - NAME@26..38
+            - IDENT@26..38 "SearchResult"
+        - WHITESPACE@38..39 " "
+        - UNION_MEMBER_TYPES@39..46
+            - EQ@39..40 "="
+            - WHITESPACE@40..41 " "
+            - NAMED_TYPE@41..46
+                - NAME@41..46
+                    - IDENT@41..46 "Photo"
+    - WHITESPACE@46..47 " "
+    - ERROR@47..53 "Person"
+    - WHITESPACE@53..55 "\n\n"
+    - UNION_TYPE_DEFINITION@55..111
+        - DESCRIPTION@55..73
+            - STRING_VALUE@55..73
+                - STRING@55..73 "\"Double separator\""
+        - WHITESPACE@73..74 "\n"
+        - union_KW@74..79 "union"
+        - WHITESPACE@79..80 " "
+        - NAME@80..93
+            - IDENT@80..93 "SearchResult2"
+        - WHITESPACE@93..94 " "
+        - UNION_MEMBER_TYPES@94..111
+            - EQ@94..95 "="
+            - WHITESPACE@95..96 " "
+            - NAMED_TYPE@96..101
+                - NAME@96..101
+                    - IDENT@96..101 "Photo"
+            - WHITESPACE@101..102 " "
+            - PIPE@102..103 "|"
+            - PIPE@103..104 "|"
+            - WHITESPACE@104..105 " "
+            - NAMED_TYPE@105..111
+                - NAME@105..111
+                    - IDENT@105..111 "Person"
+    - WHITESPACE@111..113 "\n\n"
+    - UNION_TYPE_DEFINITION@113..174
+        - DESCRIPTION@113..133
+            - STRING_VALUE@113..133
+                - STRING@113..133 "\"Dangling separator\""
+        - WHITESPACE@133..134 "\n"
+        - union_KW@134..139 "union"
+        - WHITESPACE@139..140 " "
+        - NAME@140..153
+            - IDENT@140..153 "SearchResult3"
+        - WHITESPACE@153..154 " "
+        - UNION_MEMBER_TYPES@154..174
+            - EQ@154..155 "="
+            - WHITESPACE@155..156 " "
+            - PIPE@156..157 "|"
+            - WHITESPACE@157..158 " "
+            - NAMED_TYPE@158..163
+                - NAME@158..163
+                    - IDENT@158..163 "Photo"
+            - WHITESPACE@163..164 " "
+            - PIPE@164..165 "|"
+            - WHITESPACE@165..166 " "
+            - NAMED_TYPE@166..172
+                - NAME@166..172
+                    - IDENT@166..172 "Person"
+            - WHITESPACE@172..173 " "
+            - PIPE@173..174 "|"
+    - WHITESPACE@174..175 "\n"
+- ERROR@47:53 "expected definition" Person
+- ERROR@103:104 "expected Union Member Type" |
+- ERROR@175:175 "expected Union Member Type" EOF
+recursion limit: 500, high: 0

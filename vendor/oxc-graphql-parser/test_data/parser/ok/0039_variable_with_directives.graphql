@@ -1,0 +1,3 @@
+query getOutput($input: Int @deprecated, $config: String = "Config" @tag(name: "team-customers")) {
+  animal
+}

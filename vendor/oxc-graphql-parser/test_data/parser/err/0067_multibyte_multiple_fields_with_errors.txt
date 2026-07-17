@@ -1,0 +1,46 @@
+- DOCUMENT@0..48
+    - OBJECT_TYPE_DEFINITION@0..27
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..10
+            - IDENT@5..10 "Query"
+        - WHITESPACE@10..11 " "
+        - FIELDS_DEFINITION@11..27
+            - L_CURLY@11..12 "{"
+            - WHITESPACE@12..13 " "
+            - FIELD_DEFINITION@13..27
+                - NAME@13..14
+                    - IDENT@13..14 "a"
+                - COLON@14..15 ":"
+                - WHITESPACE@15..16 " "
+                - ERROR@16..19 "日"
+                - ERROR@19..22 "本"
+                - ERROR@22..25 "語"
+                - WHITESPACE@25..26 " "
+                - NAMED_TYPE@26..27
+                    - NAME@26..27
+                        - IDENT@26..27 "b"
+    - ERROR@27..28 ":"
+    - WHITESPACE@28..29 " "
+    - ERROR@29..32 "中"
+    - ERROR@32..35 "文"
+    - WHITESPACE@35..36 " "
+    - ERROR@36..37 "c"
+    - ERROR@37..38 ":"
+    - WHITESPACE@38..39 " "
+    - ERROR@39..45 "String"
+    - WHITESPACE@45..46 " "
+    - ERROR@46..47 "}"
+    - WHITESPACE@47..48 "\n"
+- ERROR@16:19 "Unexpected character \"日\"" 日
+- ERROR@19:22 "Unexpected character \"本\"" 本
+- ERROR@22:25 "Unexpected character \"語\"" 語
+- ERROR@27:28 "expected R_CURLY, got :" :
+- ERROR@27:28 "expected a StringValue, Name or OperationDefinition" :
+- ERROR@29:32 "Unexpected character \"中\"" 中
+- ERROR@32:35 "Unexpected character \"文\"" 文
+- ERROR@36:37 "expected definition" c
+- ERROR@37:38 "expected a StringValue, Name or OperationDefinition" :
+- ERROR@39:45 "expected definition" String
+- ERROR@46:47 "expected a StringValue, Name or OperationDefinition" }
+recursion limit: 500, high: 0

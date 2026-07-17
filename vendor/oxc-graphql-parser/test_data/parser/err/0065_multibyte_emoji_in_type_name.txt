@@ -1,0 +1,26 @@
+- DOCUMENT@0..35
+    - OBJECT_TYPE_DEFINITION@0..34
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..10
+            - IDENT@5..10 "Query"
+        - WHITESPACE@10..11 " "
+        - FIELDS_DEFINITION@11..34
+            - L_CURLY@11..12 "{"
+            - WHITESPACE@12..13 " "
+            - FIELD_DEFINITION@13..19
+                - NAME@13..18
+                    - IDENT@13..18 "field"
+                - COLON@18..19 ":"
+            - WHITESPACE@19..20 " "
+            - ERROR@20..24 "🦀"
+            - ERROR@24..28 "🚀"
+            - ERROR@28..32 "💡"
+            - WHITESPACE@32..33 " "
+            - R_CURLY@33..34 "}"
+    - WHITESPACE@34..35 "\n"
+- ERROR@20:24 "Unexpected character \"🦀\"" 🦀
+- ERROR@24:28 "Unexpected character \"🚀\"" 🚀
+- ERROR@28:32 "Unexpected character \"💡\"" 💡
+- ERROR@33:34 "expected a Type" }
+recursion limit: 500, high: 0

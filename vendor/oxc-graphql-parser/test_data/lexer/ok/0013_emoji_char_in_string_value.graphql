@@ -1,0 +1,7 @@
+mutation UpdateStuff {
+  stuffUpdate(input: { tags: "really great 👻 halloween" }) {
+    stuff {
+      tags
+    }
+  }
+}

@@ -1,0 +1,60 @@
+- DOCUMENT@0..69
+    - OBJECT_TYPE_DEFINITION@0..63
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..9
+            - IDENT@5..9 "List"
+        - WHITESPACE@9..10 " "
+        - FIELDS_DEFINITION@10..63
+            - L_CURLY@10..11 "{"
+            - WHITESPACE@11..14 "\n  "
+            - FIELD_DEFINITION@14..37
+                - NAME@14..19
+                    - IDENT@14..19 "field"
+                - COLON@19..20 ":"
+                - WHITESPACE@20..21 " "
+                - LIST_TYPE@21..22
+                    - L_BRACK@21..22 "["
+                - WHITESPACE@22..23 " "
+                - DIRECTIVES@23..37
+                    - DIRECTIVE@23..37
+                        - AT@23..24 "@"
+                        - NAME@24..37
+                            - IDENT@24..37 "coolDirective"
+            - WHITESPACE@37..40 "\n  "
+            - FIELD_DEFINITION@40..58
+                - NAME@40..49
+                    - IDENT@40..49 "deepError"
+                - COLON@49..50 ":"
+                - WHITESPACE@50..51 " "
+                - LIST_TYPE@51..58
+                    - L_BRACK@51..52 "["
+                    - LIST_TYPE@52..58
+                        - L_BRACK@52..53 "["
+                        - LIST_TYPE@53..58
+                            - L_BRACK@53..54 "["
+                            - NAMED_TYPE@54..58
+                                - NAME@54..58
+                                    - IDENT@54..58 "Item"
+            - WHITESPACE@58..59 " "
+            - FIELD_DEFINITION@59..63
+                - NAME@59..63
+                    - IDENT@59..63 "Type"
+    - ERROR@63..64 "]"
+    - ERROR@64..65 "]"
+    - ERROR@65..66 "]"
+    - WHITESPACE@66..67 "\n"
+    - ERROR@67..68 "}"
+    - WHITESPACE@68..69 "\n"
+- ERROR@22:23 "expected item type" ]
+- ERROR@23:24 "expected R_BRACK, got  "  
+- ERROR@60:64 "expected R_BRACK, got Type" Type
+- ERROR@60:64 "expected R_BRACK, got Type" Type
+- ERROR@60:64 "expected R_BRACK, got Type" Type
+- ERROR@64:65 "expected a type" ]
+- ERROR@64:65 "expected R_CURLY, got ]" ]
+- ERROR@64:65 "expected a StringValue, Name or OperationDefinition" ]
+- ERROR@65:66 "expected a StringValue, Name or OperationDefinition" ]
+- ERROR@66:67 "expected a StringValue, Name or OperationDefinition" ]
+- ERROR@68:69 "expected a StringValue, Name or OperationDefinition" }
+recursion limit: 500, high: 3

@@ -1,0 +1,6 @@
+"An interface with no fields"
+interface AnInterfaceWithoutFields
+
+extend interface AnInterfaceWithoutFields {
+  id: ID!
+}

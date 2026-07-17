@@ -1,0 +1,14 @@
+query(
+    $var1: Boolean!
+    $var2: Boolean! = $var
+) {
+    f1 @include(if: $var1)
+    f2 @include(if: $var2)
+}
+
+directive @someDir(arg: Boolean) on OBJECT
+
+type Query @someDir(arg: $var1) {
+    f1: Int
+    f2: Int
+}

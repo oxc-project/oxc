@@ -1,0 +1,42 @@
+COMMENT@0:88 "# Both IntValue and FloatValue are specified with [lookahead != {Digit, `.`, NameStart}]"
+WHITESPACE@88:89 "\n"
+ERROR@89:91 "Numbers must not have non-significant leading zeroes" 00
+WHITESPACE@91:92 "\n"
+ERROR@92:95 "Unexpected character `\n`, expected fractional digit" 2.
+
+ERROR@95:99 "Unexpected character `.` as float suffix" 2.2.
+WHITESPACE@99:100 "\n"
+ERROR@100:104 "Unexpected character `.` as float suffix" 2.2.
+INT@104:105 "2"
+WHITESPACE@105:106 "\n"
+ERROR@106:110 "Unexpected character `.` as float suffix" 2e2.
+WHITESPACE@110:111 "\n"
+ERROR@111:115 "Unexpected character `.` as float suffix" 2e2.
+INT@115:116 "2"
+WHITESPACE@116:117 "\n"
+ERROR@117:123 "Unexpected character `.` as float suffix" 2.2e2.
+WHITESPACE@123:124 "\n"
+ERROR@124:130 "Unexpected character `.` as float suffix" 2.2e2.
+INT@130:131 "2"
+WHITESPACE@131:132 "\n"
+ERROR@132:134 "Unexpected character `_` as integer suffix" 2_
+WHITESPACE@134:135 "\n"
+ERROR@135:139 "Unexpected character `_` as float suffix" 2.2_
+WHITESPACE@139:140 "\n"
+ERROR@140:144 "Unexpected character `_` as float suffix" 2e2_
+WHITESPACE@144:145 "\n"
+ERROR@145:151 "Unexpected character `_` as float suffix" 2.2e2_
+WHITESPACE@151:152 "\n"
+ERROR@152:154 "Unexpected character `x` as integer suffix" 2x
+WHITESPACE@154:155 "\n"
+ERROR@155:159 "Unexpected character `x` as float suffix" 2.2x
+WHITESPACE@159:160 "\n"
+ERROR@160:164 "Unexpected character `x` as float suffix" 2e2x
+WHITESPACE@164:165 "\n"
+ERROR@165:171 "Unexpected character `x` as float suffix" 2.2e2x
+WHITESPACE@171:172 "\n"
+ERROR@172:176 "Unexpected character `e` as float suffix" 2e2e
+WHITESPACE@176:177 "\n"
+ERROR@177:181 "Unexpected character `e` as float suffix" 2e2e
+INT@181:182 "2"
+EOF@182:182

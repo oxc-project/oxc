@@ -1,0 +1,39 @@
+- DOCUMENT@0..62
+    - OBJECT_TYPE_EXTENSION@0..62
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - type_KW@7..11 "type"
+        - WHITESPACE@11..12 " "
+        - FIELDS_DEFINITION@12..62
+            - L_CURLY@12..13 "{"
+            - WHITESPACE@13..18 "\n    "
+            - FIELD_DEFINITION@18..30
+                - NAME@18..22
+                    - IDENT@18..22 "name"
+                - COLON@22..23 ":"
+                - WHITESPACE@23..24 " "
+                - NAMED_TYPE@24..30
+                    - NAME@24..30
+                        - IDENT@24..30 "String"
+            - WHITESPACE@30..35 "\n    "
+            - FIELD_DEFINITION@35..43
+                - NAME@35..38
+                    - IDENT@35..38 "age"
+                - COLON@38..39 ":"
+                - WHITESPACE@39..40 " "
+                - NAMED_TYPE@40..43
+                    - NAME@40..43
+                        - IDENT@40..43 "Int"
+            - WHITESPACE@43..48 "\n    "
+            - FIELD_DEFINITION@48..60
+                - NAME@48..55
+                    - IDENT@48..55 "picture"
+                - COLON@55..56 ":"
+                - WHITESPACE@56..57 " "
+                - NAMED_TYPE@57..60
+                    - NAME@57..60
+                        - IDENT@57..60 "Url"
+            - WHITESPACE@60..61 "\n"
+            - R_CURLY@61..62 "}"
+- ERROR@12:13 "expected a Name" {
+recursion limit: 500, high: 0

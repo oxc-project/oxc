@@ -1,0 +1,10 @@
+- DOCUMENT@0..21
+    - ENUM_TYPE_EXTENSION@0..21
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - enum_KW@7..11 "enum"
+        - WHITESPACE@11..12 " "
+        - NAME@12..21
+            - IDENT@12..21 "Direction"
+- ERROR@21:21 "expected Directive or Enum Values Definition" EOF
+recursion limit: 500, high: 0

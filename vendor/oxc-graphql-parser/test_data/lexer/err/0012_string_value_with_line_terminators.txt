@@ -1,0 +1,4 @@
+ERROR@0:9 "unexpected line terminator" "
+hello
+"
+EOF@9:9

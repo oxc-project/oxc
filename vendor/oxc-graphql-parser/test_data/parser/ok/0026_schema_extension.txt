@@ -1,0 +1,30 @@
+- DOCUMENT@0..63
+    - SCHEMA_EXTENSION@0..63
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - schema_KW@7..13 "schema"
+        - WHITESPACE@13..14 " "
+        - DIRECTIVES@14..28
+            - DIRECTIVE@14..19
+                - AT@14..15 "@"
+                - NAME@15..19
+                    - IDENT@15..19 "skip"
+            - WHITESPACE@19..20 " "
+            - DIRECTIVE@20..28
+                - AT@20..21 "@"
+                - NAME@21..28
+                    - IDENT@21..28 "example"
+        - WHITESPACE@28..29 " "
+        - L_CURLY@29..30 "{"
+        - WHITESPACE@30..35 "\n    "
+        - ROOT_OPERATION_TYPE_DEFINITION@35..61
+            - OPERATION_TYPE@35..40
+                - query_KW@35..40 "query"
+            - COLON@40..41 ":"
+            - WHITESPACE@41..42 " "
+            - NAMED_TYPE@42..61
+                - NAME@42..61
+                    - IDENT@42..61 "MyExtendedQueryType"
+        - WHITESPACE@61..62 "\n"
+        - R_CURLY@62..63 "}"
+recursion limit: 500, high: 0

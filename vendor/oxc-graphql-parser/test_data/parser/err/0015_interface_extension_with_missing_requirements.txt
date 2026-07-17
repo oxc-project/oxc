@@ -1,0 +1,10 @@
+- DOCUMENT@0..29
+    - INTERFACE_TYPE_EXTENSION@0..29
+        - extend_KW@0..6 "extend"
+        - WHITESPACE@6..7 " "
+        - interface_KW@7..16 "interface"
+        - WHITESPACE@16..17 " "
+        - NAME@17..29
+            - IDENT@17..29 "ValuedEntity"
+- ERROR@29:29 "expected an Implements Interfaces, Directives, or a Fields Definition" EOF
+recursion limit: 500, high: 0

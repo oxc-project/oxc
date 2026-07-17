@@ -1,0 +1,47 @@
+- DOCUMENT@0..62
+    - OPERATION_DEFINITION@0..34
+        - OPERATION_TYPE@0..5
+            - query_KW@0..5 "query"
+        - WHITESPACE@5..6 " "
+        - SELECTION_SET@6..34
+            - L_CURLY@6..7 "{"
+            - WHITESPACE@7..10 "\n  "
+            - INLINE_FRAGMENT@10..32
+                - SPREAD@10..13 "..."
+                - WHITESPACE@13..14 " "
+                - TYPE_CONDITION@14..16
+                    - on_KW@14..16 "on"
+                - WHITESPACE@16..17 " "
+                - SELECTION_SET@17..32
+                    - L_CURLY@17..18 "{"
+                    - WHITESPACE@18..23 "\n    "
+                    - FIELD@23..28
+                        - NAME@23..28
+                            - IDENT@23..28 "field"
+                    - WHITESPACE@28..31 "\n  "
+                    - R_CURLY@31..32 "}"
+            - WHITESPACE@32..33 "\n"
+            - R_CURLY@33..34 "}"
+    - WHITESPACE@34..36 "\n\n"
+    - FRAGMENT_DEFINITION@36..61
+        - fragment_KW@36..44 "fragment"
+        - WHITESPACE@44..45 " "
+        - FRAGMENT_NAME@45..46
+            - NAME@45..46
+                - IDENT@45..46 "F"
+        - WHITESPACE@46..47 " "
+        - TYPE_CONDITION@47..49
+            - on_KW@47..49 "on"
+        - WHITESPACE@49..50 " "
+        - SELECTION_SET@50..61
+            - L_CURLY@50..51 "{"
+            - WHITESPACE@51..54 "\n  "
+            - FIELD@54..59
+                - NAME@54..59
+                    - IDENT@54..59 "field"
+            - WHITESPACE@59..60 "\n"
+            - R_CURLY@60..61 "}"
+    - WHITESPACE@61..62 "\n"
+- ERROR@17:18 "expected a Name in Type Condition" {
+- ERROR@50:51 "expected a Name in Type Condition" {
+recursion limit: 500, high: 2

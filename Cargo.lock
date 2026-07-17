@@ -1679,8 +1679,6 @@ dependencies = [
 [[package]]
 name = "oxc-graphql-parser"
 version = "0.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa04aff7d58f2066181ea45b6d6eb7837ed2ca4c4bdbfc139142dde39796b3fc"
 dependencies = [
  "memchr",
  "oxc_allocator",

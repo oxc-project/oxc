@@ -1,0 +1,9 @@
+- DOCUMENT@0..7
+    - UNION_TYPE_DEFINITION@0..7
+        - union_KW@0..5 "union"
+        - WHITESPACE@5..6 " "
+        - UNION_MEMBER_TYPES@6..7
+            - EQ@6..7 "="
+- ERROR@6:7 "expected a Name" =
+- ERROR@7:7 "expected Union Member Type" EOF
+recursion limit: 500, high: 0

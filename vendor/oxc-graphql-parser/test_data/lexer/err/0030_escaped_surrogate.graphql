@@ -1,0 +1,12 @@
+# TODO: move these cases back to ok/0004_string_value.graphql when
+# https://github.com/oxc-project/oxc-graphql-parser/issues/657 is implemented
+"string with unicode surrogate pair escape \uD83D\uDE00"
+"string with minimal surrogate pair escape \uD800\uDC00"
+"string with maximal surrogate pair escape \uDBFF\uDFFF"
+
+# TODO: emit two errors: https://github.com/oxc-project/oxc-graphql-parser/issues/319
+"split pair \uD83D \uDE00"
+
+"Backwards pair \uDE00\uD83D"
+"Lone lead surrogate \uD83E"
+"Lone trail surrogate \uDD80"

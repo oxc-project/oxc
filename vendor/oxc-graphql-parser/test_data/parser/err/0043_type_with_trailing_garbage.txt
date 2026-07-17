@@ -1,0 +1,61 @@
+- DOCUMENT@0..82
+    - OBJECT_TYPE_DEFINITION@0..81
+        - type_KW@0..4 "type"
+        - WHITESPACE@4..5 " "
+        - NAME@5..11
+            - IDENT@5..11 "Person"
+        - WHITESPACE@11..12 " "
+        - FIELDS_DEFINITION@12..81
+            - L_CURLY@12..13 "{"
+            - WHITESPACE@13..16 "\n  "
+            - FIELD_DEFINITION@16..23
+                - NAME@16..18
+                    - IDENT@16..18 "id"
+                - COLON@18..19 ":"
+                - WHITESPACE@19..20 " "
+                - NON_NULL_TYPE@20..23
+                    - NAMED_TYPE@20..22
+                        - NAME@20..22
+                            - IDENT@20..22 "ID"
+                    - BANG@22..23 "!"
+            - WHITESPACE@23..26 "\n  "
+            - FIELD_DEFINITION@26..44
+                - NAME@26..36
+                    - IDENT@26..36 "appearedIn"
+                - COLON@36..37 ":"
+                - WHITESPACE@37..38 " "
+                - LIST_TYPE@38..44
+                    - L_BRACK@38..39 "["
+                    - NAMED_TYPE@39..43
+                        - NAME@39..43
+                            - IDENT@39..43 "Film"
+                    - R_BRACK@43..44 "]"
+            - FIELD_DEFINITION@44..45
+                - NAME@44..45
+                    - IDENT@44..45 "s"
+            - WHITESPACE@45..48 "\n  "
+            - FIELD_DEFINITION@48..60
+                - NAME@48..52
+                    - IDENT@48..52 "name"
+                - COLON@52..53 ":"
+                - WHITESPACE@53..54 " "
+                - NAMED_TYPE@54..60
+                    - NAME@54..60
+                        - IDENT@54..60 "String"
+            - WHITESPACE@60..63 "\n  "
+            - FIELD_DEFINITION@63..79
+                - NAME@63..71
+                    - IDENT@63..71 "directed"
+                - COLON@71..72 ":"
+                - WHITESPACE@72..73 " "
+                - LIST_TYPE@73..79
+                    - L_BRACK@73..74 "["
+                    - NAMED_TYPE@74..78
+                        - NAME@74..78
+                            - IDENT@74..78 "Film"
+                    - R_BRACK@78..79 "]"
+            - WHITESPACE@79..80 "\n"
+            - R_CURLY@80..81 "}"
+    - WHITESPACE@81..82 "\n"
+- ERROR@48:52 "expected a type" name
+recursion limit: 500, high: 1
