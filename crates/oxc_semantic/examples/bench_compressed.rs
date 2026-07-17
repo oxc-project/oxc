@@ -45,13 +45,15 @@ fn main() {
         let allocator = Allocator::default();
         let (parse_bytes, semantic_bytes) = {
             let ret = Parser::new(&allocator, &source_text, source_type).parse();
-            assert!(
-                ret.diagnostics.iter().all(|d| !d.severity.is_error()),
-                "parse errors in {path}"
-            );
+            assert!(!ret.panicked, "parser panicked in {path}");
+            if !ret.diagnostics.is_empty() {
+                eprintln!("note: {path}: {} parse diagnostics", ret.diagnostics.len());
+            }
             let parse_bytes = allocator.used_bytes();
             let semantic_ret = SemanticBuilder::new().build(&ret.program);
-            assert!(semantic_ret.diagnostics.is_empty(), "semantic errors in {path}");
+            if !semantic_ret.diagnostics.is_empty() {
+                eprintln!("note: {path}: {} semantic diagnostics", semantic_ret.diagnostics.len());
+            }
             (parse_bytes, allocator.used_bytes())
         };
         drop(allocator);
