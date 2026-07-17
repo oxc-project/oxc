@@ -40,8 +40,8 @@ catalogs:
       specifier: 0.3.21
       version: 0.3.21
     tsdown:
-      specifier: 0.22.8
-      version: 0.22.8
+      specifier: 0.22.9
+      version: 0.22.9
     vite-plus:
       specifier: 0.2.4
       version: 0.2.4
@@ -114,7 +114,7 @@ importers:
         version: 5.56.4(@typescript-eslint/types@8.63.0)
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.8(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.0)(typescript@5.6.1-rc)
+        version: 0.22.9(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.0)(typescript@5.6.1-rc)
       vite-plus:
         specifier: 'catalog:'
         version: 0.2.4(@arethetypeswrong/core@0.18.5)(@types/node@24.1.0)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.63.0))(terser@5.44.1)(tsx@4.23.0)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.0))
@@ -210,7 +210,7 @@ importers:
         version: 7.0.7
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.8(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.0)(typescript@5.6.1-rc)
+        version: 0.22.9(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.0)(typescript@5.6.1-rc)
       tsx:
         specifier: ^4.21.0
         version: 4.23.0
@@ -5293,14 +5293,14 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  tsdown@0.22.8:
-    resolution: {integrity: sha512-6FOLlr1iLcE3LheqQt13hVUWtTduJNwF2akPskPe8Tf1hr+N5UULHzrNZYTMNwL6lr2UyQ8iefVBB6tdqp1PCQ==}
+  tsdown@0.22.9:
+    resolution: {integrity: sha512-/0QEjQEhOU1t1YxOIAGzFN7bIssd8P0pBpkOmNLCQi3c5UtrcMF5bvq3f30xHJNW9QCA9aUNcNAorMr2CTd6Lg==}
     engines: {node: ^22.18.0 || >=24.11.0}
     hasBin: true
     peerDependencies:
       '@arethetypeswrong/core': ^0.18.1
-      '@tsdown/css': 0.22.8
-      '@tsdown/exe': 0.22.8
+      '@tsdown/css': 0.22.9
+      '@tsdown/exe': 0.22.9
       '@vitejs/devtools': '*'
       publint: ^0.3.8
       tsx: '*'
@@ -10070,7 +10070,7 @@ snapshots:
     dependencies:
       typescript: 5.6.1-rc
 
-  tsdown@0.22.8(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.0)(typescript@5.6.1-rc):
+  tsdown@0.22.9(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.0)(typescript@5.6.1-rc):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0
