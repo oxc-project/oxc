@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/react/jsx_no_literals.rs
+  s_9a95a862f588dd::t_d367d819c2c5f2 20,169-173,270,335,678
+crates/oxc_react_compiler/src/react_compiler_lowering/build_hir.rs
+  s_9a95a862f588dd::t_b2ed71cb059437 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "574fd4ea63d1ad9ba6f7af3dc65ddd7fd5b57d6a",
+  "prompts": {},
+  "sessions": {
+    "s_9a95a862f588dd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f7051-f4ad-7090-9c97-234956e47bc9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
