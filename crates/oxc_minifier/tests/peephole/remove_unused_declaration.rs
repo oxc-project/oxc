@@ -1,8 +1,8 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, TreeShakeOptions, test_options, test_options_source_type, test_same_options,
-    test_same_options_source_type, test_same_smallest, test_smallest,
+    CompressOptions, ModuleSideEffects, TreeShakeOptions, test_options, test_options_source_type,
+    test_same_options, test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
 // Leak regression: dropping an unused declarator must walk the whole
@@ -464,6 +464,47 @@ fn remove_unused_import_specifiers() {
     test_same_options("import a from 'a'; eval('a');", &options);
     test_same_options("import * as a from 'a'; eval('a');", &options);
     test_same_options("import { a } from 'a'; function f() { eval('a'); }", &options);
+}
+
+#[test]
+fn remove_side_effect_free_imports() {
+    use rustc_hash::FxHashSet;
+
+    let only_a = CompressOptions {
+        treeshake: TreeShakeOptions {
+            module_side_effects: ModuleSideEffects::Only(FxHashSet::from_iter(["a".to_string()])),
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+    test_options("import a from 'a'; import b from 'b';", "import 'a';", &only_a);
+    test_options("import 'a'; import 'b';", "import 'a';", &only_a);
+    test_same_options("import a from 'a'; foo(a);", &only_a);
+    test_same_options("import b from 'b'; eval('b');", &only_a);
+
+    let validate_imports = CompressOptions {
+        treeshake: TreeShakeOptions {
+            invalid_import_side_effects: true,
+            module_side_effects: ModuleSideEffects::Only(FxHashSet::default()),
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+    test_same_options("import b from 'b';", &validate_imports);
+
+    let all_except_b = CompressOptions {
+        treeshake: TreeShakeOptions {
+            module_side_effects: ModuleSideEffects::AllExcept(FxHashSet::from_iter([
+                "b".to_string()
+            ])),
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+    test_options("import a from 'a'; import b from 'b';", "import 'a';", &all_except_b);
+    test_options("import {} from 'b' with { type: 'json' };", "", &all_except_b);
+
+    test_options("import value from 'b'; if (false) console.log(value);", "", &all_except_b);
 }
 
 #[test]

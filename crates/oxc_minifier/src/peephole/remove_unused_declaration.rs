@@ -154,9 +154,9 @@ impl<'a> PeepholeOptimizations {
 
     /// Remove unused specifiers from import declarations.
     ///
-    /// Since we don't know if an import has side effects, we convert imports
-    /// with all unused specifiers to side-effect-only imports (`import 'x'`)
-    /// rather than removing them entirely.
+    /// By default, imports with all unused specifiers become side-effect-only imports
+    /// (`import 'x'`). Callers can provide module side-effect information to remove the whole
+    /// declaration when loading the imported module is known to be side-effect-free.
     ///
     /// ## Example
     ///
@@ -202,7 +202,17 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
+        let source_has_side_effects = ctx
+            .options()
+            .treeshake
+            .module_side_effects
+            .has_side_effects(import_decl.source.value.as_str());
+
         let Some(specifiers) = &mut import_decl.specifiers else {
+            if !source_has_side_effects {
+                let new_stmt = Statement::new_empty_statement(import_decl.span, ctx);
+                ctx.replace_statement(stmt, new_stmt);
+            }
             return;
         };
 
@@ -224,8 +234,13 @@ impl<'a> PeepholeOptimizations {
         }
 
         if specifiers.is_empty() {
-            import_decl.specifiers = None;
-            ctx.notice_change();
+            if source_has_side_effects {
+                import_decl.specifiers = None;
+                ctx.notice_change();
+            } else {
+                let new_stmt = Statement::new_empty_statement(import_decl.span, ctx);
+                ctx.replace_statement(stmt, new_stmt);
+            }
         }
     }
 }

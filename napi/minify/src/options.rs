@@ -5,6 +5,32 @@ use oxc_compat::EngineTargets;
 use oxc_str::CompactStr;
 
 #[napi(object)]
+pub struct ModuleSideEffects {
+    /// Only these module specifiers may have side effects.
+    pub only: Option<Vec<String>>,
+
+    /// These module specifiers are side-effect-free; all others may have side effects.
+    pub all_except: Option<Vec<String>>,
+}
+
+impl TryFrom<&ModuleSideEffects> for oxc_minifier::ModuleSideEffects {
+    type Error = String;
+
+    fn try_from(options: &ModuleSideEffects) -> Result<Self, Self::Error> {
+        match (&options.only, &options.all_except) {
+            (Some(sources), None) => Ok(Self::Only(sources.iter().cloned().collect())),
+            (None, Some(sources)) => Ok(Self::AllExcept(sources.iter().cloned().collect())),
+            (Some(_), Some(_)) => {
+                Err("moduleSideEffects cannot specify both 'only' and 'allExcept'.".to_string())
+            }
+            (None, None) => {
+                Err("moduleSideEffects must specify either 'only' or 'allExcept'.".to_string())
+            }
+        }
+    }
+}
+
+#[napi(object)]
 pub struct TreeShakeOptions {
     /// Whether to respect the pure annotations.
     ///
@@ -49,6 +75,10 @@ pub struct TreeShakeOptions {
     ///
     /// @default true
     pub invalid_import_side_effects: Option<bool>,
+
+    /// Declare which module specifiers may have side effects when loaded.
+    /// Module specifiers are matched exactly as written in the source.
+    pub module_side_effects: Option<ModuleSideEffects>,
 }
 
 impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
@@ -82,6 +112,10 @@ impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
             invalid_import_side_effects: o
                 .invalid_import_side_effects
                 .unwrap_or(default.invalid_import_side_effects),
+            module_side_effects: match &o.module_side_effects {
+                Some(options) => oxc_minifier::ModuleSideEffects::try_from(options)?,
+                None => default.module_side_effects,
+            },
         })
     }
 }
