@@ -30,14 +30,15 @@
 
 use std::{
     alloc::Layout,
+    cell::UnsafeCell,
     ptr::NonNull,
     sync::{
-        LazyLock, Mutex, Once,
-        atomic::{AtomicPtr, AtomicUsize, Ordering},
+        Once,
+        atomic::{AtomicBool, AtomicPtr, AtomicUsize, Ordering},
     },
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use super::arena::CHUNK_ALIGN;
 
@@ -86,8 +87,46 @@ static CAGE_INIT: Once = Once::new();
 /// This is deliberately dumb (no splitting, no coalescing): chunks are only ever reused for
 /// an allocation of *exactly* the same size, so alignment (>= `CHUNK_ALIGN`) is preserved.
 /// A production allocator would want something better.
-static FREE_CHUNKS: LazyLock<Mutex<FxHashMap<usize, Vec<usize>>>> =
-    LazyLock::new(|| Mutex::new(FxHashMap::default()));
+///
+/// Guarded by a spin lock, NOT `std::sync::Mutex`: on macOS, `Mutex` lazily boxes a pthread
+/// mutex on first lock, and the cage's *allocation* path must never allocate from the global
+/// heap (arena allocation is documented to work even when the global allocator fails).
+/// Critical sections are a few instructions, so spinning is fine.
+static FREE_CHUNKS: SpinLock<FxHashMap<usize, Vec<usize>>> =
+    SpinLock::new(FxHashMap::with_hasher(FxBuildHasher));
+
+/// A minimal allocation-free spin lock.
+struct SpinLock<T> {
+    locked: AtomicBool,
+    value: UnsafeCell<T>,
+}
+
+// SAFETY: `SpinLock` provides mutual exclusion, so `&SpinLock<T>` can be shared across
+// threads if `T` can be sent between them.
+unsafe impl<T: Send> Sync for SpinLock<T> {}
+
+impl<T> SpinLock<T> {
+    const fn new(value: T) -> Self {
+        Self { locked: AtomicBool::new(false), value: UnsafeCell::new(value) }
+    }
+
+    /// Run `f` with exclusive access to the value.
+    ///
+    /// If `f` panics, the lock is left held (all callers pass non-panicking closures).
+    fn with<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
+        while self
+            .locked
+            .compare_exchange_weak(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
+        {
+            std::hint::spin_loop();
+        }
+        // SAFETY: The `locked` flag guarantees exclusive access.
+        let result = f(unsafe { &mut *self.value.get() });
+        self.locked.store(false, Ordering::Release);
+        result
+    }
+}
 
 /// Get the cage base address.
 ///
@@ -189,11 +228,7 @@ pub fn alloc_chunk(layout: Layout) -> Option<NonNull<u8>> {
     // Freed chunk offsets are always aligned to at least `CHUNK_ALIGN`; only reuse when
     // that's sufficient for the requested alignment.
     if align <= CHUNK_ALIGN {
-        let offset = {
-            let mut free_chunks =
-                FREE_CHUNKS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-            free_chunks.get_mut(&size).and_then(Vec::pop)
-        };
+        let offset = FREE_CHUNKS.with(|free_chunks| free_chunks.get_mut(&size).and_then(Vec::pop));
         if let Some(offset) = offset {
             let base = cage_base_ptr();
             debug_assert!(!base.is_null());
@@ -268,8 +303,18 @@ pub fn dealloc_chunk(ptr: NonNull<u8>, layout: Layout) {
 
     let offset = ptr.addr().get().wrapping_sub(cage_base());
     debug_assert!(offset >= BURNED_PREFIX && offset + layout.size() <= CAGE_SIZE);
-    let mut free_chunks = FREE_CHUNKS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    free_chunks.entry(layout.size()).or_default().push(offset);
+    // Free-list bookkeeping lives on the global heap. Deallocation must never fail or panic,
+    // so under global-allocator memory pressure, fall back to leaking the chunk
+    // (the cage's address range stays mapped either way).
+    FREE_CHUNKS.with(|free_chunks| {
+        if free_chunks.try_reserve(1).is_err() {
+            return;
+        }
+        let list = free_chunks.entry(layout.size()).or_default();
+        if list.try_reserve(1).is_ok() {
+            list.push(offset);
+        }
+    });
 }
 
 #[cfg(test)]
