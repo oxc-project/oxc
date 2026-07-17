@@ -10,7 +10,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName, JSXExpression,
-        JSXExpressionContainer,
+        JSXExpressionContainer, JSXText, StringLiteral,
     },
 };
 use oxc_codegen::CodegenOptions;
@@ -382,7 +382,7 @@ impl JsxCurlyBracePresence {
                     self.check_expression_container(ctx, container, node, false);
                 }
                 JSXChild::Text(text) => {
-                    let text_value = text.value.as_str();
+                    let text_value = jsx_text_source(text);
                     if self.children.is_always()
                         && !contains_only_html_entities(text_value)
                         && !is_whitespace(text_value)
@@ -425,7 +425,7 @@ impl JsxCurlyBracePresence {
                     report_missing_curly_for_string_attribute_value(
                         ctx,
                         string.span,
-                        string.value.as_str(),
+                        jsx_attribute_string_source(string),
                     );
                 }
             }
@@ -506,6 +506,15 @@ impl JsxCurlyBracePresence {
             _ => {}
         }
     }
+}
+
+fn jsx_text_source<'a>(text: &JSXText<'a>) -> &'a str {
+    text.raw.as_ref().unwrap().as_str()
+}
+
+fn jsx_attribute_string_source<'a>(string: &StringLiteral<'a>) -> &'a str {
+    let raw = string.raw.as_ref().unwrap();
+    &raw.as_str()[1..raw.len() - 1]
 }
 
 fn is_allowed_string_like_in_container<'a>(

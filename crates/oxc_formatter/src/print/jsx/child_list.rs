@@ -12,7 +12,7 @@ use crate::{
     utils::{
         jsx::{
             JsxChild, JsxChildrenIterator, JsxRawSpace, JsxSpace, is_meaningful_jsx_text,
-            is_whitespace_jsx_expression, jsx_split_children,
+            is_whitespace_jsx_expression, jsx_split_children, jsx_text_source,
         },
         suppressed::FormatSuppressedNode,
     },
@@ -386,8 +386,8 @@ impl FormatJsxChildList {
                     }
                 }
                 JSXChild::Text(text) => {
-                    meta.meaningful_text =
-                        meta.meaningful_text || is_meaningful_jsx_text(&text.value);
+                    meta.meaningful_text = meta.meaningful_text
+                        || is_meaningful_jsx_text(jsx_text_source(text).as_str());
                 }
                 JSXChild::Spread(_) => {}
             }

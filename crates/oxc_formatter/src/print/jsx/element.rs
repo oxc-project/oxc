@@ -9,7 +9,7 @@ use crate::{
     parentheses::NeedsParentheses,
     print::jsx::{FormatChildrenResult, FormatOpeningElement},
     utils::{
-        jsx::{WrapState, is_meaningful_jsx_text},
+        jsx::{WrapState, is_meaningful_jsx_text, jsx_text_source},
         suppressed::FormatSuppressedNode,
     },
     write,
@@ -329,7 +329,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
 
                 match child.as_ast_nodes() {
                     AstNodes::JSXText(text) => {
-                        if is_meaningful_jsx_text(&text.value) {
+                        if is_meaningful_jsx_text(jsx_text_source(text.as_ref()).as_str()) {
                             ElementLayout::Default
                         } else {
                             ElementLayout::NoChildren

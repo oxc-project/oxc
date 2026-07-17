@@ -102,7 +102,7 @@ use oxc_syntax::{
     line_terminator::is_line_terminator,
     reference::ReferenceFlags,
     symbol::SymbolFlags,
-    xml_entities::decode_entities,
+    xml_entities::decode_entities_into,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -914,17 +914,7 @@ impl<'a> JsxImpl<'a> {
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
-                let mut decoded = None;
-                decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx.allocator());
-                let jsx_text = if let Some(decoded) = decoded {
-                    // Text contains HTML entities which were decoded.
-                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Str`.
-                    Str::from(decoded)
-                } else {
-                    // No HTML entities needed to be decoded. Use the original `Str` without copying.
-                    s.value
-                };
-                Expression::new_string_literal(s.span, jsx_text, None, ctx)
+                Expression::new_string_literal(s.span, s.value, None, ctx)
             }
             Some(JSXAttributeValue::Element(e)) => self.transform_jsx_element(e, ctx),
             Some(JSXAttributeValue::Fragment(e)) => {
@@ -1009,8 +999,14 @@ impl<'a> JsxImpl<'a> {
     }
 
     fn transform_jsx_text(text: &JSXText<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
-        Self::fixup_whitespace_and_decode_entities(text.value, ctx)
-            .map(|value| Expression::new_string_literal(text.span, value, None, ctx))
+        let value = match text.raw {
+            Some(raw) if raw.chars().any(is_line_terminator) => {
+                Self::fixup_whitespace(raw, true, ctx)
+            }
+            Some(_) => Some(text.value),
+            None => Self::fixup_whitespace(text.value, false, ctx),
+        };
+        value.map(|value| Expression::new_string_literal(text.span, value, None, ctx))
     }
 
     /// JSX trims whitespace at the end and beginning of lines, except that the
@@ -1028,31 +1024,32 @@ impl<'a> JsxImpl<'a> {
     /// - Remove empty lines and join the rest with " ".
     ///
     /// <https://github.com/microsoft/TypeScript/blob/f0374ce2a9c465e27a15b7fa4a347e2bd9079450/src/compiler/transformers/jsx.ts#L557-L608>
-    fn fixup_whitespace_and_decode_entities(
+    fn fixup_whitespace(
         text: Str<'a>,
+        should_decode_entities: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Str<'a>> {
-        // Avoid copying strings in the common case where there's only 1 line of text,
-        // and it contains no HTML entities that need decoding.
+        // Avoid copying strings in the common case where there's only 1 line of text and no
+        // character references need decoding.
         //
         // Where we do have to decode HTML entities, or concatenate multiple lines, assemble the
-        // concatenated text directly in arena, in an `ArenaString` (the accumulator `acc`),
-        // to avoid allocations. Initialize that `ArenaString` with capacity equal to length of
-        // the original text. This may be a bit more capacity than is required, once whitespace
-        // is removed, but it's highly unlikely to be insufficient capacity, so the `ArenaString`
-        // shouldn't need to reallocate while it's being constructed.
+        // concatenated text directly in an arena string builder (the accumulator `acc`) to avoid
+        // intermediate allocations. Initialize it with capacity equal to the original text length.
+        // This may be a bit more capacity than required once whitespace is removed, but it is
+        // unlikely to be insufficient, so the builder should not need to reallocate.
         //
         // When first line containing some text is found:
-        // * If it contains HTML entities, decode them and write decoded text to accumulator `acc`.
+        // * If entity decoding is enabled and it contains an ampersand, write decoded text to
+        //   accumulator `acc`.
         // * Otherwise, store trimmed text in `only_line` as a `Str<'a>`.
         //
         // When another line containing some text is found:
         // * If accumulator isn't already initialized, initialize it, starting with `only_line`.
         // * Push a space to the accumulator.
-        // * Decode current line into the accumulator.
+        // * Append current line to the accumulator, decoding it when requested.
         //
         // At the end:
-        // * If accumulator is initialized, convert the `ArenaString` to a `Str` and return it.
+        // * If accumulator is initialized, convert the arena string builder to a `Str` and return it.
         // * If `only_line` contains a string, that means only 1 line contained text, and that line
         //   didn't contain any HTML entities which needed decoding.
         //   So we can just return the `Str` that's in `only_line` (without any copying).
@@ -1069,6 +1066,7 @@ impl<'a> JsxImpl<'a> {
                         &mut acc,
                         &mut only_line,
                         text.len(),
+                        should_decode_entities,
                         ctx,
                     );
                 }
@@ -1087,6 +1085,7 @@ impl<'a> JsxImpl<'a> {
                 &mut acc,
                 &mut only_line,
                 text.len(),
+                should_decode_entities,
                 ctx,
             );
         }
@@ -1099,6 +1098,7 @@ impl<'a> JsxImpl<'a> {
         acc: &mut Option<ArenaStringBuilder<'a>>,
         only_line: &mut Option<Str<'a>>,
         text_len: usize,
+        should_decode_entities: bool,
         ctx: &TraverseCtx<'a>,
     ) {
         if let Some(buffer) = acc.as_mut() {
@@ -1114,8 +1114,16 @@ impl<'a> JsxImpl<'a> {
             *acc = Some(buffer);
         }
 
-        // Decode any HTML entities in this line
-        decode_entities(trimmed_line.as_str(), acc, text_len, ctx.allocator());
+        if should_decode_entities {
+            if acc.is_none() && trimmed_line.contains('&') {
+                *acc = Some(ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator()));
+            }
+            if let Some(buffer) = acc.as_mut() {
+                decode_entities_into(trimmed_line.as_str(), buffer);
+            }
+        } else if let Some(buffer) = acc.as_mut() {
+            buffer.push_str(trimmed_line.as_str());
+        }
 
         if acc.is_none() {
             // This is the first line containing text, and there are no HTML entities in this line.
