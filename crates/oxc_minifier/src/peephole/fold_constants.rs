@@ -94,7 +94,7 @@ impl<'a> PeepholeOptimizations {
                 let new_expr = if base_has_side_effects {
                     Expression::new_sequence_expression(
                         span,
-                        ArenaVec::from_array_in([base, Expression::new_void_0(span, ctx)], ctx),
+                        [base, Expression::new_void_0(span, ctx)],
                         ctx,
                     )
                 } else {
@@ -146,19 +146,16 @@ impl<'a> PeepholeOptimizations {
                 if should_keep_indirect_access {
                     return Some(Expression::new_sequence_expression(
                         logical_expr.span,
-                        ArenaVec::from_array_in(
-                            [
-                                Expression::new_numeric_literal(
-                                    logical_expr.left.span(),
-                                    0.0,
-                                    None,
-                                    NumberBase::Decimal,
-                                    ctx,
-                                ),
-                                logical_expr.right.take_in(ctx),
-                            ],
-                            ctx,
-                        ),
+                        [
+                            Expression::new_numeric_literal(
+                                logical_expr.left.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                                ctx,
+                            ),
+                            logical_expr.right.take_in(ctx),
+                        ],
                         ctx,
                     ));
                 }
@@ -171,8 +168,8 @@ impl<'a> PeepholeOptimizations {
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
             let left = logical_expr.left.take_in(ctx);
             let right = logical_expr.right.take_in(ctx);
-            let vec = ArenaVec::from_array_in([left, right], ctx);
-            let sequence_expr = Expression::new_sequence_expression(logical_expr.span, vec, ctx);
+            let sequence_expr =
+                Expression::new_sequence_expression(logical_expr.span, [left, right], ctx);
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left
             && left_child.operator == logical_expr.operator
@@ -215,10 +212,8 @@ impl<'a> PeepholeOptimizations {
             ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects(ctx) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
-                    let expressions = ArenaVec::from_array_in(
-                        [logical_expr.left.take_in(ctx), logical_expr.right.take_in(ctx)],
-                        ctx,
-                    );
+                    let expressions =
+                        [logical_expr.left.take_in(ctx), logical_expr.right.take_in(ctx)];
                     Expression::new_sequence_expression(logical_expr.span, expressions, ctx)
                 } else {
                     let should_keep_indirect_access =
@@ -227,19 +222,16 @@ impl<'a> PeepholeOptimizations {
                     if should_keep_indirect_access {
                         return Some(Expression::new_sequence_expression(
                             logical_expr.span,
-                            ArenaVec::from_array_in(
-                                [
-                                    Expression::new_numeric_literal(
-                                        logical_expr.left.span(),
-                                        0.0,
-                                        None,
-                                        NumberBase::Decimal,
-                                        ctx,
-                                    ),
-                                    logical_expr.right.take_in(ctx),
-                                ],
-                                ctx,
-                            ),
+                            [
+                                Expression::new_numeric_literal(
+                                    logical_expr.left.span(),
+                                    0.0,
+                                    None,
+                                    NumberBase::Decimal,
+                                    ctx,
+                                ),
+                                logical_expr.right.take_in(ctx),
+                            ],
                             ctx,
                         ));
                     }
@@ -258,19 +250,16 @@ impl<'a> PeepholeOptimizations {
                 if should_keep_indirect_access {
                     return Some(Expression::new_sequence_expression(
                         logical_expr.span,
-                        ArenaVec::from_array_in(
-                            [
-                                Expression::new_numeric_literal(
-                                    logical_expr.right.span(),
-                                    0.0,
-                                    None,
-                                    NumberBase::Decimal,
-                                    ctx,
-                                ),
-                                logical_expr.left.take_in(ctx),
-                            ],
-                            ctx,
-                        ),
+                        [
+                            Expression::new_numeric_literal(
+                                logical_expr.right.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                                ctx,
+                            ),
+                            logical_expr.left.take_in(ctx),
+                        ],
                         ctx,
                     ));
                 }

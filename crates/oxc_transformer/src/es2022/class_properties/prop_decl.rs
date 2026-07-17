@@ -369,31 +369,28 @@ impl<'a> ClassProperties<'a> {
         // `{writable: true, value: <value>}`
         let prop_def = Expression::new_object_expression(
             SPAN,
-            ArenaVec::from_array_in(
-                [
-                    ObjectPropertyKind::new_object_property(
-                        SPAN,
-                        PropertyKind::Init,
-                        PropertyKey::new_static_identifier(SPAN, "writable", ctx),
-                        Expression::new_boolean_literal(SPAN, true, ctx),
-                        false,
-                        false,
-                        false,
-                        ctx,
-                    ),
-                    ObjectPropertyKind::new_object_property(
-                        SPAN,
-                        PropertyKind::Init,
-                        PropertyKey::new_static_identifier(SPAN, "value", ctx),
-                        value,
-                        false,
-                        false,
-                        false,
-                        ctx,
-                    ),
-                ],
-                ctx,
-            ),
+            [
+                ObjectPropertyKind::new_object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    PropertyKey::new_static_identifier(SPAN, "writable", ctx),
+                    Expression::new_boolean_literal(SPAN, true, ctx),
+                    false,
+                    false,
+                    false,
+                    ctx,
+                ),
+                ObjectPropertyKind::new_object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    PropertyKey::new_static_identifier(SPAN, "value", ctx),
+                    value,
+                    false,
+                    false,
+                    false,
+                    ctx,
+                ),
+            ],
             ctx,
         );
 

@@ -594,10 +594,7 @@ impl<'a> PeepholeOptimizations {
                     (false, false) => {
                         let new_expr = Expression::new_sequence_expression(
                             binary_expr.span,
-                            ArenaVec::from_array_in(
-                                [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
-                                ctx,
-                            ),
+                            [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
                             ctx,
                         );
                         ctx.replace_expression(e, new_expr);

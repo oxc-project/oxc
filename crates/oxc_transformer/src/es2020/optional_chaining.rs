@@ -49,7 +49,7 @@
 
 use std::mem;
 
-use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
+use oxc_allocator::{CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
@@ -551,8 +551,7 @@ impl<'a> OptionalChaining<'a> {
                 // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
                 let zero = Expression::new_number_0(ctx);
                 expr.replace_with(|original_callee| {
-                    let expressions = ArenaVec::from_array_in([zero, original_callee], ctx);
-                    Expression::new_sequence_expression(SPAN, expressions, ctx)
+                    Expression::new_sequence_expression(SPAN, [zero, original_callee], ctx)
                 });
             }
 

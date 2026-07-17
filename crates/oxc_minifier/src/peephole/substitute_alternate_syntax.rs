@@ -1577,13 +1577,10 @@ impl<'a> PeepholeOptimizations {
 
         let new_callee = Expression::new_sequence_expression(
             span,
-            ArenaVec::from_array_in(
-                [
-                    Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx),
-                    arg_expr.take_in(ctx),
-                ],
-                ctx,
-            ),
+            [
+                Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx),
+                arg_expr.take_in(ctx),
+            ],
             ctx,
         );
         ctx.replace_expression(&mut expr.callee, new_callee);

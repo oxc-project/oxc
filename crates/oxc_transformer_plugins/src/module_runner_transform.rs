@@ -232,8 +232,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
                 let zero =
                     Expression::new_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal, ctx);
-                let expressions = ArenaVec::from_array_in([zero, expr], ctx);
-                Expression::new_sequence_expression(ident.span, expressions, ctx)
+                Expression::new_sequence_expression(ident.span, [zero, expr], ctx)
             } else {
                 expr
             }
@@ -806,14 +805,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);
         let object = Expression::new_object_expression(
             SPAN,
-            ArenaVec::from_array_in(
-                [
-                    Self::create_object_property("enumerable", None, ctx),
-                    Self::create_object_property("configurable", None, ctx),
-                    Self::create_object_property("get", Some(getter), ctx),
-                ],
-                ctx,
-            ),
+            [
+                Self::create_object_property("enumerable", None, ctx),
+                Self::create_object_property("configurable", None, ctx),
+                Self::create_object_property("get", Some(getter), ctx),
+            ],
             ctx,
         );
 

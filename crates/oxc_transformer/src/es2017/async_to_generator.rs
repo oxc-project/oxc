@@ -592,8 +592,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 generator_function_id,
                 ctx,
             );
-            let statements = ArenaVec::from_array_in([statement, caller_function], ctx);
-            let body = FunctionBody::boxed(SPAN, [], statements, ctx);
+            let body = FunctionBody::boxed(SPAN, [], [statement, caller_function], ctx);
             let params = Self::create_empty_params(ctx);
             let wrapper_function = Self::create_function(
                 FunctionType::FunctionExpression,

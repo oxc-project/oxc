@@ -281,29 +281,26 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 Some(ForStatementInit::new_variable_declaration(
                     SPAN,
                     VariableDeclarationKind::Var,
-                    ArenaVec::from_array_in(
-                        [
-                            VariableDeclarator::new(
-                                SPAN,
-                                VariableDeclarationKind::Var,
-                                iterator_key.create_binding_pattern(ctx),
-                                NONE,
-                                Some(iterator),
-                                false,
-                                ctx,
-                            ),
-                            VariableDeclarator::new(
-                                SPAN,
-                                VariableDeclarationKind::Var,
-                                step_key.create_binding_pattern(ctx),
-                                NONE,
-                                None,
-                                false,
-                                ctx,
-                            ),
-                        ],
-                        ctx,
-                    ),
+                    [
+                        VariableDeclarator::new(
+                            SPAN,
+                            VariableDeclarationKind::Var,
+                            iterator_key.create_binding_pattern(ctx),
+                            NONE,
+                            Some(iterator),
+                            false,
+                            ctx,
+                        ),
+                        VariableDeclarator::new(
+                            SPAN,
+                            VariableDeclarationKind::Var,
+                            step_key.create_binding_pattern(ctx),
+                            NONE,
+                            None,
+                            false,
+                            ctx,
+                        ),
+                    ],
                     false,
                     ctx,
                 )),
@@ -392,33 +389,30 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 {
                     BlockStatement::new_with_scope_id(
                         SPAN,
-                        ArenaVec::from_array_in(
-                            [
-                                Statement::new_expression_statement(
+                        [
+                            Statement::new_expression_statement(
+                                SPAN,
+                                Expression::new_assignment_expression(
                                     SPAN,
-                                    Expression::new_assignment_expression(
-                                        SPAN,
-                                        AssignmentOperator::Assign,
-                                        iterator_had_error_key.create_write_target(ctx),
-                                        Expression::new_boolean_literal(SPAN, true, ctx),
-                                        ctx,
-                                    ),
+                                    AssignmentOperator::Assign,
+                                    iterator_had_error_key.create_write_target(ctx),
+                                    Expression::new_boolean_literal(SPAN, true, ctx),
                                     ctx,
                                 ),
-                                Statement::new_expression_statement(
+                                ctx,
+                            ),
+                            Statement::new_expression_statement(
+                                SPAN,
+                                Expression::new_assignment_expression(
                                     SPAN,
-                                    Expression::new_assignment_expression(
-                                        SPAN,
-                                        AssignmentOperator::Assign,
-                                        iterator_error_key.create_write_target(ctx),
-                                        err_ident.create_read_expression(ctx),
-                                        ctx,
-                                    ),
+                                    AssignmentOperator::Assign,
+                                    iterator_error_key.create_write_target(ctx),
+                                    err_ident.create_read_expression(ctx),
                                     ctx,
                                 ),
-                            ],
-                            ctx,
-                        ),
+                                ctx,
+                            ),
+                        ],
                         block_scope_id,
                         ctx,
                     )

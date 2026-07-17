@@ -96,10 +96,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 SPAN,
                                 TSType::new_ts_union_type(
                                     SPAN,
-                                    ArenaVec::from_array_in(
-                                        [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
-                                        self,
-                                    ),
+                                    [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
                                     self,
                                 ),
                                 self,

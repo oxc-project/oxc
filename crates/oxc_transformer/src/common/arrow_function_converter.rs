@@ -1366,8 +1366,7 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
         expr.replace_with(|expr| {
-            let exprs = ArenaVec::from_array_in([expr, assignment], self.ctx);
-            Expression::new_sequence_expression(span, exprs, self.ctx)
+            Expression::new_sequence_expression(span, [expr, assignment], self.ctx)
         });
     }
 

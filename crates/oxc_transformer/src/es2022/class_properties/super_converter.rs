@@ -522,11 +522,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         if prefix {
             // Source = `++super$prop` (prefix `++`)
             // `(_super$prop = _superPropGet(_Class, prop, _Class), ++_super$prop)`
-            let value = Expression::new_sequence_expression(
-                SPAN,
-                ArenaVec::from_array_in([assignment, update_expr], ctx),
-                ctx,
-            );
+            let value = Expression::new_sequence_expression(SPAN, [assignment, update_expr], ctx);
             // `_superPropSet(_Class, prop, value, _Class, 1)`
             self.create_super_prop_set(span, property1, value, ctx)
         } else {
@@ -538,10 +534,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
             let value = Expression::new_sequence_expression(
                 SPAN,
-                ArenaVec::from_array_in(
-                    [assignment, assignment2, temp_binding.create_read_expression(ctx)],
-                    ctx,
-                ),
+                [assignment, assignment2, temp_binding.create_read_expression(ctx)],
                 ctx,
             );
 
@@ -550,7 +543,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
             // `(_superPropSet(_Class, prop, value, _Class, 1), _super$prop2)`
             Expression::new_sequence_expression(
                 span,
-                ArenaVec::from_array_in([set_call, temp_binding2.create_read_expression(ctx)], ctx),
+                [set_call, temp_binding2.create_read_expression(ctx)],
                 ctx,
             )
         }

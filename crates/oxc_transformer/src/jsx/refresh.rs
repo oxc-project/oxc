@@ -189,13 +189,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             ));
 
             let callee = self.refresh_reg.to_expression(ctx);
-            let arguments = ArenaVec::from_array_in(
-                [
-                    Argument::from(binding.create_read_expression(ctx)),
-                    Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
-                ],
-                ctx,
-            );
+            let arguments = [
+                Argument::from(binding.create_read_expression(ctx)),
+                Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
+            ];
             Statement::new_expression_statement(
                 SPAN,
                 Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
