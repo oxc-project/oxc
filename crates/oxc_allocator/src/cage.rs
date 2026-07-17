@@ -12,11 +12,11 @@
 //!   reservation itself consumes (almost) no physical memory.
 //! * [`CAGE_BASE`] holds the base pointer (null until initialized).
 //! * [`CAGE_CURSOR`] is a monotonic bump offset for handing out chunks.
-//!   Chunk memory is *never* returned to the cage - deallocation is a no-op
-//!   (plus `madvise(MADV_FREE)` for RSS hygiene). Virtual address space is burned,
-//!   but allocator reuse (reset / pool) keeps chunks alive as today, so the burn is
-//!   bounded in practice. This is a prototype limitation - a production version needs
-//!   a free-list of cage regions.
+//!   "Deallocated" chunks go onto a global exact-size free-list ([`FREE_CHUNKS`]) and are
+//!   reused by later allocations of the same size (plus `madvise(MADV_FREE)` for RSS
+//!   hygiene while they sit unused). The address range is never unmapped, and chunks are
+//!   never split or coalesced, so virtual address use only grows to the high-water mark of
+//!   live + same-size-recyclable chunks. A production version needs real VA reuse.
 //! * The first 64 bytes of the cage are never handed out, so no allocation can sit at
 //!   offset 0. This gives compressed pointers a `NonZeroU32` niche, making
 //!   `Option<Box<T>>` 4 bytes.
@@ -32,10 +32,12 @@ use std::{
     alloc::Layout,
     ptr::NonNull,
     sync::{
-        Once,
+        LazyLock, Mutex, Once,
         atomic::{AtomicPtr, AtomicUsize, Ordering},
     },
 };
+
+use rustc_hash::FxHashMap;
 
 use super::arena::CHUNK_ALIGN;
 
@@ -73,6 +75,19 @@ static CAGE_CURSOR: AtomicUsize = AtomicUsize::new(BURNED_PREFIX);
 
 /// One-time initialization guard for the cage reservation.
 static CAGE_INIT: Once = Once::new();
+
+/// Free-list of "deallocated" chunks, keyed by exact chunk size (in bytes).
+/// Values are cage-relative byte offsets of the chunk starts.
+///
+/// Without this, workloads which create and drop many `Allocator`s (e.g. conformance runs
+/// parsing 100k+ files) burn through the whole 32 GiB reservation. Chunk sizes follow the
+/// arena's doubling ladder, so exact-size matches recycle nearly everything.
+///
+/// This is deliberately dumb (no splitting, no coalescing): chunks are only ever reused for
+/// an allocation of *exactly* the same size, so alignment (>= `CHUNK_ALIGN`) is preserved.
+/// A production allocator would want something better.
+static FREE_CHUNKS: LazyLock<Mutex<FxHashMap<usize, Vec<usize>>>> =
+    LazyLock::new(|| Mutex::new(FxHashMap::default()));
 
 /// Get the cage base address.
 ///
@@ -160,15 +175,34 @@ fn reserve_cage() -> NonNull<u8> {
 /// Returns `None` if the cage is exhausted (callers convert this to an OOM panic),
 /// or if `layout` is degenerate.
 ///
-/// The returned memory is zero-initialized (fresh anonymous pages), read-write,
-/// and valid until the process exits. It is never reused after "deallocation"
-/// ([`dealloc_chunk`] is a no-op). The address is always `>= cage_base() + 64`,
-/// so scaled offsets into the chunk are always non-zero.
+/// The returned memory is uninitialized (fresh anonymous pages read as zero; recycled
+/// chunks may hold old data), read-write, and valid until "deallocated" via
+/// [`dealloc_chunk`]. The address is always `>= cage_base() + 64`, so scaled offsets
+/// into the chunk are always non-zero.
 pub(crate) fn alloc_chunk(layout: Layout) -> Option<NonNull<u8>> {
     ensure_cage_init();
 
     let size = layout.size();
     let align = layout.align().max(CHUNK_ALIGN);
+
+    // Try to reuse a previously-freed chunk of exactly this size.
+    // Freed chunk offsets are always aligned to at least `CHUNK_ALIGN`; only reuse when
+    // that's sufficient for the requested alignment.
+    if align <= CHUNK_ALIGN {
+        let offset = {
+            let mut free_chunks = FREE_CHUNKS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+            free_chunks.get_mut(&size).and_then(Vec::pop)
+        };
+        if let Some(offset) = offset {
+            let base = cage_base_ptr();
+            debug_assert!(!base.is_null());
+            debug_assert!(offset.is_multiple_of(CHUNK_ALIGN) && offset >= BURNED_PREFIX);
+            // SAFETY: `offset` was previously handed out by `alloc_chunk` for a chunk of
+            // `size` bytes, so `base + offset .. base + offset + size` is within the cage.
+            // The chunk was freed (via `dealloc_chunk`), so nothing else references it.
+            return Some(unsafe { NonNull::new_unchecked(base.add(offset)) });
+        }
+    }
 
     // Bump `CAGE_CURSOR` atomically. Relaxed ordering is sufficient: the cursor is just
     // an offset allotter; the memory itself is already mapped, and any cross-thread handoff
@@ -200,17 +234,20 @@ fn cage_exhausted(size: usize) -> Option<NonNull<u8>> {
     panic!(
         "pointer-compression cage exhausted: cannot allocate {size} bytes \
          (cage size: {CAGE_SIZE} bytes, used: {} bytes). \
-         The prototype cage never reuses chunk memory - long-running processes \
-         which create and drop many allocators will exhaust it.",
+         The prototype cage only reuses freed chunks of identical size - workloads \
+         with highly varied allocator sizes can exhaust it.",
         CAGE_CURSOR.load(Ordering::Relaxed)
     );
 }
 
 /// "Deallocate" a chunk previously returned by [`alloc_chunk`].
 ///
-/// The virtual address range is leaked (never reused). To keep resident memory (RSS) in check,
-/// the page-aligned interior of the chunk is passed to `madvise(MADV_FREE)`, which lets the OS
-/// reclaim the physical pages lazily.
+/// The chunk is pushed onto [`FREE_CHUNKS`] for reuse by a future allocation of exactly the
+/// same size. The virtual address range is never unmapped. To keep resident memory (RSS) in
+/// check while a chunk sits on the free-list, the page-aligned interior of the chunk is passed
+/// to `madvise(MADV_FREE)`, which lets the OS reclaim the physical pages lazily
+/// (they read back as zeros, or the old contents - either is fine for uninitialized
+/// chunk memory).
 pub(crate) fn dealloc_chunk(ptr: NonNull<u8>, layout: Layout) {
     #[cfg(unix)]
     {
@@ -227,10 +264,11 @@ pub(crate) fn dealloc_chunk(ptr: NonNull<u8>, layout: Layout) {
             }
         }
     }
-    #[cfg(not(unix))]
-    {
-        let _ = (ptr, layout);
-    }
+
+    let offset = ptr.addr().get().wrapping_sub(cage_base());
+    debug_assert!(offset >= BURNED_PREFIX && offset + layout.size() <= CAGE_SIZE);
+    let mut free_chunks = FREE_CHUNKS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    free_chunks.entry(layout.size()).or_default().push(offset);
 }
 
 #[cfg(test)]
@@ -260,11 +298,11 @@ mod tests {
             assert_eq!(p1.read(), 0xAB);
         }
 
-        // Dealloc is a no-op (must not crash), memory stays mapped
+        // Dealloc pushes the chunk to the free-list; an allocation of the same size reuses it.
+        // (Other tests in this process also hit the free-list, so accept any in-cage result.)
         dealloc_chunk(p1, layout);
-        unsafe {
-            p1.write_bytes(0xCD, 1024);
-            assert_eq!(p1.read(), 0xCD);
-        }
+        let p3 = alloc_chunk(layout).unwrap();
+        assert!(p3.addr().get() >= base + BURNED_PREFIX);
+        assert!(p3.addr().get() + 1024 <= base + CAGE_SIZE);
     }
 }
