@@ -112,7 +112,8 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     let mut diagnostics = ret.diagnostics;
 
     if options.show_semantic_errors == Some(true) {
-        let semantic_ret = SemanticBuilder::new_compiler().build(&program);
+        let semantic_ret =
+            SemanticBuilder::new_compiler().with_stats(ret.ast_counts.into()).build(&program);
         diagnostics.extend(semantic_ret.diagnostics);
     }
 

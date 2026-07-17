@@ -1081,7 +1081,7 @@ fn module_runner_transform_impl(
     let mut program = parser_ret.program;
 
     let SemanticBuilderReturn { semantic, diagnostics } =
-        SemanticBuilder::new_compiler().build(&program);
+        SemanticBuilder::new_compiler().with_stats(parser_ret.ast_counts.into()).build(&program);
     parser_ret.diagnostics.extend(diagnostics);
 
     let scoping = semantic.into_scoping();
