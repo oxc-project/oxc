@@ -3,7 +3,10 @@ use std::{cell::RefCell, mem};
 use oxc_allocator::{Allocator, GetAllocator};
 use rustc_hash::FxHashMap;
 
-use crate::{FormatElement, GroupId, UniqueGroupIdBuilder, format_element::Interned};
+use crate::{
+    FormatElement, GroupId, UniqueGroupIdBuilder, buffer::AccumulatorBuffer,
+    format_element::Interned,
+};
 
 thread_local! {
     /// Cache of heap staging vectors, keeping their high-water capacity alive across format runs on the same thread.
@@ -20,7 +23,7 @@ thread_local! {
 /// - [`FormatState`] holds one per format run, shared by all [`crate::HeapVecBuffer`]s like a stack via watermarks:
 ///   each buffer records the length at creation, pushes its elements, and drains its own tail on completion.
 ///   Sound because IR staging is strictly LIFO (an inner buffer always completes before its enclosing one resumes)
-/// - Accumulators that outlive a single staging scope (interleaved builders, see `ChildListBuffer` in `oxc_formatter`) check out their own.
+/// - Accumulators that outlive a single staging scope (interleaved or suspended use, written through [`crate::AccumulatorBuffer`]) check out their own.
 ///   The cache itself is an unordered pool with no LIFO requirement
 #[derive(Debug)]
 pub struct ScratchBuffer<'ast>(Vec<FormatElement<'ast>>);
@@ -33,6 +36,23 @@ impl<'ast> ScratchBuffer<'ast> {
         Self(unsafe {
             mem::transmute::<Vec<FormatElement<'static>>, Vec<FormatElement<'ast>>>(vec)
         })
+    }
+
+    /// An unpooled, empty scratch buffer, for accumulators that may never be written (e.g. a builder born disabled):
+    /// costs no thread-local access on creation, nor on drop while still empty.
+    pub const fn empty() -> Self {
+        Self(Vec::new())
+    }
+
+    /// Adapts this scratch vector into a [`Buffer`](crate::Buffer) writing into it.
+    ///
+    /// This is the only way to construct an [`AccumulatorBuffer`],
+    /// so an accumulator always writes into a pooled vector guarded by the drain-before-drop assertion below.
+    pub fn writer<'buf, C>(
+        &'buf mut self,
+        state: &'buf mut FormatState<'ast, C>,
+    ) -> AccumulatorBuffer<'buf, 'ast, C> {
+        AccumulatorBuffer::new(state, &mut self.0)
     }
 }
 
