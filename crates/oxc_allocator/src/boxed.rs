@@ -415,8 +415,8 @@ mod test {
     fn box_unbox() {
         let allocator = Allocator::default();
         let allocator = &allocator;
-        let b = Box::new_in(3.14_f64, &allocator);
-        assert!((b.unbox() - 3.14).abs() < f64::EPSILON);
+        let b = Box::new_in(1.25_f64, &allocator);
+        assert!((b.unbox() - 1.25).abs() < f64::EPSILON);
     }
 
     #[test]

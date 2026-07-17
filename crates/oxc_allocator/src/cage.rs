@@ -61,7 +61,7 @@ const BURNED_PREFIX: usize = 64;
 
 const _: () = {
     assert!(BURNED_PREFIX >= 1 << COMPRESSED_SCALE_SHIFT);
-    assert!(BURNED_PREFIX % CHUNK_ALIGN == 0);
+    assert!(BURNED_PREFIX.is_multiple_of(CHUNK_ALIGN));
 };
 
 /// Base pointer of the cage. Null until the cage is reserved.
@@ -111,7 +111,7 @@ pub fn cage_base() -> usize {
 // `#[inline(always)]` because this is a single relaxed atomic load.
 #[expect(clippy::inline_always)]
 #[inline(always)]
-pub(crate) fn cage_base_ptr() -> *mut u8 {
+pub fn cage_base_ptr() -> *mut u8 {
     CAGE_BASE.load(Ordering::Relaxed)
 }
 
@@ -179,7 +179,7 @@ fn reserve_cage() -> NonNull<u8> {
 /// chunks may hold old data), read-write, and valid until "deallocated" via
 /// [`dealloc_chunk`]. The address is always `>= cage_base() + 64`, so scaled offsets
 /// into the chunk are always non-zero.
-pub(crate) fn alloc_chunk(layout: Layout) -> Option<NonNull<u8>> {
+pub fn alloc_chunk(layout: Layout) -> Option<NonNull<u8>> {
     ensure_cage_init();
 
     let size = layout.size();
@@ -190,7 +190,8 @@ pub(crate) fn alloc_chunk(layout: Layout) -> Option<NonNull<u8>> {
     // that's sufficient for the requested alignment.
     if align <= CHUNK_ALIGN {
         let offset = {
-            let mut free_chunks = FREE_CHUNKS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+            let mut free_chunks =
+                FREE_CHUNKS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
             free_chunks.get_mut(&size).and_then(Vec::pop)
         };
         if let Some(offset) = offset {
@@ -248,7 +249,7 @@ fn cage_exhausted(size: usize) -> Option<NonNull<u8>> {
 /// to `madvise(MADV_FREE)`, which lets the OS reclaim the physical pages lazily
 /// (they read back as zeros, or the old contents - either is fine for uninitialized
 /// chunk memory).
-pub(crate) fn dealloc_chunk(ptr: NonNull<u8>, layout: Layout) {
+pub fn dealloc_chunk(ptr: NonNull<u8>, layout: Layout) {
     #[cfg(unix)]
     {
         // Round inward to page boundaries; `madvise` requires page-aligned addresses.
@@ -293,6 +294,7 @@ mod tests {
         assert!(p1.addr().get().is_multiple_of(CHUNK_ALIGN));
 
         // Memory is writable and readable
+        // SAFETY: `p1` points to a fresh 1024-byte chunk we own
         unsafe {
             p1.write_bytes(0xAB, 1024);
             assert_eq!(p1.read(), 0xAB);

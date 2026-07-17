@@ -155,8 +155,8 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     crate::tracking::start_chunk_operation();
 
-    // PROTOTYPE: Chunk memory comes from the pointer-compression cage, which never reuses
-    // virtual address space. "Deallocation" just advises the OS to reclaim the physical pages.
+    // PROTOTYPE: Chunk memory comes from the pointer-compression cage. "Deallocation" pushes
+    // the chunk to the cage's free-list and advises the OS to reclaim the physical pages.
     // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
     // `is_fixed_size` is `false`, so backing allocation was made from the cage.
     crate::cage::dealloc_chunk(backing_alloc_ptr, layout);
