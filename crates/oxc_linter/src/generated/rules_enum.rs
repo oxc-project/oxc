@@ -30,6 +30,7 @@ pub use crate::rules::eslint::func_style::FuncStyle as EslintFuncStyle;
 pub use crate::rules::eslint::getter_return::GetterReturn as EslintGetterReturn;
 pub use crate::rules::eslint::grouped_accessor_pairs::GroupedAccessorPairs as EslintGroupedAccessorPairs;
 pub use crate::rules::eslint::guard_for_in::GuardForIn as EslintGuardForIn;
+pub use crate::rules::eslint::id_denylist::IdDenylist as EslintIdDenylist;
 pub use crate::rules::eslint::id_length::IdLength as EslintIdLength;
 pub use crate::rules::eslint::id_match::IdMatch as EslintIdMatch;
 pub use crate::rules::eslint::init_declarations::InitDeclarations as EslintInitDeclarations;
@@ -917,6 +918,7 @@ pub enum RuleEnum {
     EslintGetterReturn(EslintGetterReturn),
     EslintGroupedAccessorPairs(EslintGroupedAccessorPairs),
     EslintGuardForIn(EslintGuardForIn),
+    EslintIdDenylist(EslintIdDenylist),
     EslintIdLength(EslintIdLength),
     EslintIdMatch(EslintIdMatch),
     EslintInitDeclarations(EslintInitDeclarations),
@@ -1770,7 +1772,8 @@ const ESLINT_FUNC_STYLE_ID: usize = ESLINT_FUNC_NAMES_ID + 1usize;
 const ESLINT_GETTER_RETURN_ID: usize = ESLINT_FUNC_STYLE_ID + 1usize;
 const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = ESLINT_GETTER_RETURN_ID + 1usize;
 const ESLINT_GUARD_FOR_IN_ID: usize = ESLINT_GROUPED_ACCESSOR_PAIRS_ID + 1usize;
-const ESLINT_ID_LENGTH_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
+const ESLINT_ID_DENYLIST_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
+const ESLINT_ID_LENGTH_ID: usize = ESLINT_ID_DENYLIST_ID + 1usize;
 const ESLINT_ID_MATCH_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
 const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_MATCH_ID + 1usize;
 const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
@@ -2728,6 +2731,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => ESLINT_GETTER_RETURN_ID,
             Self::EslintGroupedAccessorPairs(_) => ESLINT_GROUPED_ACCESSOR_PAIRS_ID,
             Self::EslintGuardForIn(_) => ESLINT_GUARD_FOR_IN_ID,
+            Self::EslintIdDenylist(_) => ESLINT_ID_DENYLIST_ID,
             Self::EslintIdLength(_) => ESLINT_ID_LENGTH_ID,
             Self::EslintIdMatch(_) => ESLINT_ID_MATCH_ID,
             Self::EslintInitDeclarations(_) => ESLINT_INIT_DECLARATIONS_ID,
@@ -3704,6 +3708,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::NAME,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::NAME,
             Self::EslintGuardForIn(_) => EslintGuardForIn::NAME,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::NAME,
             Self::EslintIdLength(_) => EslintIdLength::NAME,
             Self::EslintIdMatch(_) => EslintIdMatch::NAME,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::NAME,
@@ -4668,6 +4673,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::CATEGORY,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::CATEGORY,
             Self::EslintGuardForIn(_) => EslintGuardForIn::CATEGORY,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::CATEGORY,
             Self::EslintIdLength(_) => EslintIdLength::CATEGORY,
             Self::EslintIdMatch(_) => EslintIdMatch::CATEGORY,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::CATEGORY,
@@ -5687,6 +5693,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::FIX,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::FIX,
             Self::EslintGuardForIn(_) => EslintGuardForIn::FIX,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::FIX,
             Self::EslintIdLength(_) => EslintIdLength::FIX,
             Self::EslintIdMatch(_) => EslintIdMatch::FIX,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::FIX,
@@ -6656,6 +6663,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::documentation(),
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::documentation(),
             Self::EslintGuardForIn(_) => EslintGuardForIn::documentation(),
+            Self::EslintIdDenylist(_) => EslintIdDenylist::documentation(),
             Self::EslintIdLength(_) => EslintIdLength::documentation(),
             Self::EslintIdMatch(_) => EslintIdMatch::documentation(),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::documentation(),
@@ -7965,6 +7973,8 @@ impl RuleEnum {
             }
             Self::EslintGuardForIn(_) => EslintGuardForIn::config_schema(generator)
                 .or_else(|| EslintGuardForIn::schema(generator)),
+            Self::EslintIdDenylist(_) => EslintIdDenylist::config_schema(generator)
+                .or_else(|| EslintIdDenylist::schema(generator)),
             Self::EslintIdLength(_) => EslintIdLength::config_schema(generator)
                 .or_else(|| EslintIdLength::schema(generator)),
             Self::EslintIdMatch(_) => {
@@ -10313,6 +10323,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => "eslint",
             Self::EslintGroupedAccessorPairs(_) => "eslint",
             Self::EslintGuardForIn(_) => "eslint",
+            Self::EslintIdDenylist(_) => "eslint",
             Self::EslintIdLength(_) => "eslint",
             Self::EslintIdMatch(_) => "eslint",
             Self::EslintInitDeclarations(_) => "eslint",
@@ -11263,6 +11274,9 @@ impl RuleEnum {
             )),
             Self::EslintGuardForIn(_) => {
                 Ok(Self::EslintGuardForIn(EslintGuardForIn::from_configuration(value)?))
+            }
+            Self::EslintIdDenylist(_) => {
+                Ok(Self::EslintIdDenylist(EslintIdDenylist::from_configuration(value)?))
             }
             Self::EslintIdLength(_) => {
                 Ok(Self::EslintIdLength(EslintIdLength::from_configuration(value)?))
@@ -13886,6 +13900,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.to_configuration(),
             Self::EslintGroupedAccessorPairs(rule) => rule.to_configuration(),
             Self::EslintGuardForIn(rule) => rule.to_configuration(),
+            Self::EslintIdDenylist(rule) => rule.to_configuration(),
             Self::EslintIdLength(rule) => rule.to_configuration(),
             Self::EslintIdMatch(rule) => rule.to_configuration(),
             Self::EslintInitDeclarations(rule) => rule.to_configuration(),
@@ -14739,6 +14754,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run(node, ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run(node, ctx),
             Self::EslintGuardForIn(rule) => rule.run(node, ctx),
+            Self::EslintIdDenylist(rule) => rule.run(node, ctx),
             Self::EslintIdLength(rule) => rule.run(node, ctx),
             Self::EslintIdMatch(rule) => rule.run(node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run(node, ctx),
@@ -15600,6 +15616,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_once(ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_once(ctx),
             Self::EslintGuardForIn(rule) => rule.run_once(ctx),
+            Self::EslintIdDenylist(rule) => rule.run_once(ctx),
             Self::EslintIdLength(rule) => rule.run_once(ctx),
             Self::EslintIdMatch(rule) => rule.run_once(ctx),
             Self::EslintInitDeclarations(rule) => rule.run_once(ctx),
@@ -16464,6 +16481,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintIdDenylist(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdMatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17440,6 +17458,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.should_run(ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.should_run(ctx),
             Self::EslintGuardForIn(rule) => rule.should_run(ctx),
+            Self::EslintIdDenylist(rule) => rule.should_run(ctx),
             Self::EslintIdLength(rule) => rule.should_run(ctx),
             Self::EslintIdMatch(rule) => rule.should_run(ctx),
             Self::EslintInitDeclarations(rule) => rule.should_run(ctx),
@@ -18294,6 +18313,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::IS_TSGOLINT_RULE,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::IS_TSGOLINT_RULE,
             Self::EslintGuardForIn(_) => EslintGuardForIn::IS_TSGOLINT_RULE,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::IS_TSGOLINT_RULE,
             Self::EslintIdLength(_) => EslintIdLength::IS_TSGOLINT_RULE,
             Self::EslintIdMatch(_) => EslintIdMatch::IS_TSGOLINT_RULE,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::IS_TSGOLINT_RULE,
@@ -19522,6 +19542,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::VERSION,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::VERSION,
             Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::VERSION,
             Self::EslintIdLength(_) => EslintIdLength::VERSION,
             Self::EslintIdMatch(_) => EslintIdMatch::VERSION,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
@@ -20543,6 +20564,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::HAS_CONFIG,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::HAS_CONFIG,
             Self::EslintGuardForIn(_) => EslintGuardForIn::HAS_CONFIG,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::HAS_CONFIG,
             Self::EslintIdLength(_) => EslintIdLength::HAS_CONFIG,
             Self::EslintIdMatch(_) => EslintIdMatch::HAS_CONFIG,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::HAS_CONFIG,
@@ -21603,6 +21625,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::INFO,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::INFO,
             Self::EslintGuardForIn(_) => EslintGuardForIn::INFO,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::INFO,
             Self::EslintIdLength(_) => EslintIdLength::INFO,
             Self::EslintIdMatch(_) => EslintIdMatch::INFO,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::INFO,
@@ -22570,6 +22593,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.types_info(),
             Self::EslintGroupedAccessorPairs(rule) => rule.types_info(),
             Self::EslintGuardForIn(rule) => rule.types_info(),
+            Self::EslintIdDenylist(rule) => rule.types_info(),
             Self::EslintIdLength(rule) => rule.types_info(),
             Self::EslintIdMatch(rule) => rule.types_info(),
             Self::EslintInitDeclarations(rule) => rule.types_info(),
@@ -23418,6 +23442,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_info(),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_info(),
             Self::EslintGuardForIn(rule) => rule.run_info(),
+            Self::EslintIdDenylist(rule) => rule.run_info(),
             Self::EslintIdLength(rule) => rule.run_info(),
             Self::EslintIdMatch(rule) => rule.run_info(),
             Self::EslintInitDeclarations(rule) => rule.run_info(),
@@ -24288,6 +24313,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintGetterReturn(EslintGetterReturn::default()),
         RuleEnum::EslintGroupedAccessorPairs(EslintGroupedAccessorPairs::default()),
         RuleEnum::EslintGuardForIn(EslintGuardForIn::default()),
+        RuleEnum::EslintIdDenylist(EslintIdDenylist::default()),
         RuleEnum::EslintIdLength(EslintIdLength::default()),
         RuleEnum::EslintIdMatch(EslintIdMatch::default()),
         RuleEnum::EslintInitDeclarations(EslintInitDeclarations::default()),

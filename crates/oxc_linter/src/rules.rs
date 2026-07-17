@@ -62,6 +62,7 @@ pub(crate) mod eslint {
     pub mod getter_return;
     pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
+    pub mod id_denylist;
     pub mod id_length;
     pub mod id_match;
     pub mod init_declarations;
