@@ -326,20 +326,12 @@ pub fn write_tailwind_template_element<'a>(
 ) {
     let content = f.source_text().text_for(element);
 
-    if ctx.preserve_whitespace {
-        let index = f.context_mut().add_tailwind_class(content.to_string());
-        f.write_element(FormatElement::TailwindClass(index));
-        return;
-    }
-
     // Get quasi position from context (set when the quasi was written in template.rs)
     let is_first = ctx.is_first_quasi;
     let is_last = ctx.is_last_quasi;
 
-    // Check if binary expression context requires preserving boundary whitespace
-    let collapse = can_collapse_whitespace_template(element, is_first, is_last, f);
-
-    // Split into prefix/sortable/suffix
+    // Split into prefix/sortable/suffix.
+    // Classes glued to an adjacent `${...}` expression must stay in place even when preserving whitespace;
     let (prefix, sortable, suffix) = split_template_content(content, is_first, is_last);
 
     // Write prefix (unsorted class touching previous expression)
@@ -348,14 +340,18 @@ pub fn write_tailwind_template_element<'a>(
     }
 
     // Write sortable content
-    let trimmed = sortable.trim();
-
-    if trimmed.is_empty() {
+    if ctx.preserve_whitespace {
+        // Whitespace (including whitespace-only content) round-trips through the sorter unchanged
+        let index = f.context_mut().add_tailwind_class(sortable.to_string());
+        f.write_element(FormatElement::TailwindClass(index));
+    } else if sortable.trim().is_empty() {
         // Whitespace-only → normalize to single space
         if !sortable.is_empty() {
             write!(f, text(" "));
         }
     } else {
+        // Check if binary expression context requires preserving boundary whitespace
+        let collapse = can_collapse_whitespace_template(element, is_first, is_last, f);
         let has_leading_ws = sortable.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = sortable.ends_with(|c: char| c.is_ascii_whitespace());
 
@@ -365,7 +361,7 @@ pub fn write_tailwind_template_element<'a>(
             write!(f, text(" "));
         }
 
-        let index = f.context_mut().add_tailwind_class(trimmed.to_string());
+        let index = f.context_mut().add_tailwind_class(sortable.trim().to_string());
         f.write_element(FormatElement::TailwindClass(index));
 
         // Trailing space: required if not at end of template, or if binary context requires it
