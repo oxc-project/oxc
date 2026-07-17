@@ -777,14 +777,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let kind = FormalParameterKind::FormalParameter;
-        let params = FormalParameters::new(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
+        let params = FormalParameters::new(SPAN, kind, [], NONE, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
-        let body = FunctionBody::new(
-            SPAN,
-            ArenaVec::new_in(ctx),
-            ArenaVec::from_value_in(statement, ctx),
-            ctx,
-        );
+        let body = FunctionBody::new(SPAN, [], ArenaVec::from_value_in(statement, ctx), ctx);
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
         Expression::new_function_expression_with_scope_id_and_pure_and_pife(

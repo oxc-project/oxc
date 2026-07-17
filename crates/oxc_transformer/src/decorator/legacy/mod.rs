@@ -411,7 +411,7 @@ impl<'a> LegacyDecorator<'a> {
             new_body.push(ClassElement::new_property_definition(
                 SPAN,
                 PropertyDefinitionType::PropertyDefinition,
-                ArenaVec::new_in(ctx),
+                [],
                 PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
                 NONE,
                 accessor.value.take(),
@@ -498,13 +498,8 @@ impl<'a> LegacyDecorator<'a> {
         };
 
         let (params, body_stmt) = if is_getter {
-            let params = FormalParameters::boxed(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ArenaVec::new_in(ctx),
-                NONE,
-                ctx,
-            );
+            let params =
+                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
             let field_expr = Expression::new_private_field_expression(
                 SPAN,
                 create_object(ctx),
@@ -522,7 +517,7 @@ impl<'a> LegacyDecorator<'a> {
             );
             let param = FormalParameter::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
+                [],
                 value_binding.create_binding_pattern(ctx),
                 NONE,
                 NONE,
@@ -1388,7 +1383,7 @@ impl<'a> LegacyDecorator<'a> {
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
                 let quasis = literal.quasis.clone_in(ctx.allocator());
-                Expression::new_template_literal(SPAN, quasis, ArenaVec::new_in(ctx), ctx)
+                Expression::new_template_literal(SPAN, quasis, [], ctx)
             }
             PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),
             match_expression!(PropertyKey) => {

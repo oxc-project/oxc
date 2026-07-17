@@ -70,12 +70,12 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let kind = FormalParameterKind::ArrowFormalParameters;
-    let params = FormalParameters::boxed(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
-    let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), stmts, ctx);
+    let params = FormalParameters::boxed(SPAN, kind, [], NONE, ctx);
+    let body = FunctionBody::boxed(SPAN, [], stmts, ctx);
     let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
         SPAN, false, false, NONE, params, NONE, body, scope_id, false, false, ctx,
     );
-    Expression::new_call_expression(span, arrow, NONE, ArenaVec::new_in(ctx), false, ctx)
+    Expression::new_call_expression(span, arrow, NONE, [], false, ctx)
 }
 
 /// `object` -> `object.prototype`.
@@ -175,8 +175,7 @@ pub fn create_class_constructor<'a, 'c>(
         let args_binding = ctx.generate_uid("args", scope_id, SymbolFlags::FunctionScopedVariable);
         let rest_element =
             BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-        params_rest =
-            Some(FormalParameterRest::boxed(SPAN, ArenaVec::new_in(ctx), rest_element, NONE, ctx));
+        params_rest = Some(FormalParameterRest::boxed(SPAN, [], rest_element, NONE, ctx));
         ArenaVec::from_iter_in(
             iter::once(Statement::new_expression_statement(
                 SPAN,
@@ -190,13 +189,8 @@ pub fn create_class_constructor<'a, 'c>(
         ArenaVec::from_iter_in(stmts_iter, ctx)
     };
 
-    let params = FormalParameters::boxed(
-        SPAN,
-        FormalParameterKind::FormalParameter,
-        ArenaVec::new_in(ctx),
-        params_rest,
-        ctx,
-    );
+    let params =
+        FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], params_rest, ctx);
 
     create_class_constructor_with_params(stmts, params, scope_id, ctx)
 }
@@ -251,7 +245,7 @@ pub fn create_class_method<'a>(
             NONE,
             params,
             return_type,
-            Some(FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), stmts, ctx)),
+            Some(FunctionBody::boxed(SPAN, [], stmts, ctx)),
             scope_id,
             ctx,
         ),

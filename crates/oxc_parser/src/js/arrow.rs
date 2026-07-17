@@ -321,12 +321,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             });
             let span = self.end_span(span);
             let expr_stmt = Statement::new_expression_statement(span, expr, self);
-            FunctionBody::boxed(
-                span,
-                ArenaVec::new_in(self),
-                ArenaVec::from_value_in(expr_stmt, self),
-                self,
-            )
+            FunctionBody::boxed(span, [], ArenaVec::from_value_in(expr_stmt, self), self)
         } else {
             self.parse_function_body()
         };

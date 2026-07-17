@@ -922,7 +922,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 ctx.generate_uid("prop", scope_id, SymbolFlags::FunctionScopedVariable);
             let param = FormalParameter::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
+                [],
                 param_binding.create_binding_pattern(ctx),
                 NONE,
                 NONE,
@@ -952,7 +952,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 ctx.generate_uid("value", scope_id, SymbolFlags::FunctionScopedVariable);
             let param = FormalParameter::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
+                [],
                 param_binding.create_binding_pattern(ctx),
                 NONE,
                 NONE,
@@ -986,7 +986,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         );
         let statements =
             ArenaVec::from_value_in(Statement::new_expression_statement(SPAN, init, ctx), ctx);
-        let body = FunctionBody::new(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+        let body = FunctionBody::new(SPAN, [], statements, ctx);
         let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN, true, false, NONE, params, NONE, body, scope_id, false, false, ctx,
         );

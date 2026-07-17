@@ -165,7 +165,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // still considered a module
         if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
             let export_decl = Statement::ExportNamedDeclaration(
-                ExportNamedDeclaration::boxed_plain(SPAN, ArenaVec::new_in(ctx), None, ctx),
+                ExportNamedDeclaration::boxed_plain(SPAN, [], None, ctx),
             );
             program.body.push(export_decl);
         }
@@ -614,12 +614,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            *stmt = Statement::new_block_statement_with_scope_id(
-                stmt.span(),
-                ArenaVec::new_in(ctx),
-                scope_id,
-                ctx,
-            );
+            *stmt = Statement::new_block_statement_with_scope_id(stmt.span(), [], scope_id, ctx);
         }
     }
 

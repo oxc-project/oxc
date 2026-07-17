@@ -31,11 +31,7 @@ fn test() {
     let array = ArrayExpression::new(SPAN, elements, ast);
     let mut array2 = array.clone_in(&allocator);
     array2.elements.push(ArrayExpressionElement::ArrayExpression(ArenaBox::new_in(array, ast)));
-    array2.elements.push(ArrayExpressionElement::new_object_expression(
-        SPAN,
-        ArenaVec::new_in(ast),
-        ast,
-    ));
+    array2.elements.push(ArrayExpressionElement::new_object_expression(SPAN, [], ast));
     let joined = array2.array_join(&WithoutGlobalReferenceInformation {}, Some("_"));
     assert_eq!(joined, Some("__42_foo_true_42_,,42,foo,true,42_[object Object]".to_string()));
 

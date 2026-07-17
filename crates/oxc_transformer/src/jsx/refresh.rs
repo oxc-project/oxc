@@ -170,7 +170,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::new_in(ctx), // This is replaced at the end
+            [], // This is replaced at the end
             false,
             ctx,
         );
@@ -655,16 +655,11 @@ impl<'a> ReactRefresh<'a> {
 
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
-            let formal_parameters = FormalParameters::new(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ArenaVec::new_in(ctx),
-                NONE,
-                ctx,
-            );
+            let formal_parameters =
+                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
             let function_body = FunctionBody::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
+                [],
                 ArenaVec::from_value_in(
                     Statement::new_return_statement(
                         SPAN,
@@ -701,7 +696,7 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             self.refresh_sig.to_expression(ctx),
             NONE,
-            ArenaVec::new_in(ctx),
+            [],
             false,
             ctx,
         );
@@ -714,7 +709,7 @@ impl<'a> ReactRefresh<'a> {
                 SPAN,
                 binding.create_read_expression(ctx),
                 NONE,
-                ArenaVec::new_in(ctx),
+                [],
                 false,
                 ctx,
             ),

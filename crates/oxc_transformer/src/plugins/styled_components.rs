@@ -1172,7 +1172,7 @@ mod tests {
                 ),
                 &ast,
             ),
-            ArenaVec::new_in(&ast),
+            [],
             &ast,
         );
 

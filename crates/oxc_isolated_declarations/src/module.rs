@@ -15,7 +15,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(ExportNamedDeclaration::boxed(
             prev_decl.span,
             Some(decl),
-            ArenaVec::new_in(self),
+            [],
             None,
             ImportOrExportKind::Value,
             NONE,

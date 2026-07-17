@@ -509,7 +509,7 @@ fn ox_convert_parameters<'a>(
                 let binding = ox_binding_for_identifier(cx, place.identifier)?;
                 items.push(oxc_ast::ast::FormalParameter::new(
                     SPAN,
-                    oxc_allocator::ArenaVec::new_in(&cx.ast),
+                    [],
                     binding,
                     None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
                     None::<oxc_allocator::Box<oxc::Expression>>,
@@ -525,7 +525,7 @@ fn ox_convert_parameters<'a>(
                 let rest_elem = oxc_ast::ast::BindingRestElement::new(SPAN, binding, &cx.ast);
                 rest = Some(oxc_ast::ast::FormalParameterRest::new(
                     SPAN,
-                    oxc_allocator::ArenaVec::new_in(&cx.ast),
+                    [],
                     rest_elem,
                     None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
                     &cx.ast,
@@ -2565,12 +2565,7 @@ fn ox_codegen_function_expression<'a>(
                         oxc_ast::ast::Statement::new_expression_statement(SPAN, arg, &cx.ast),
                         &cx.ast,
                     );
-                    let body = oxc_ast::ast::FunctionBody::boxed(
-                        SPAN,
-                        oxc_allocator::ArenaVec::new_in(&cx.ast),
-                        stmts,
-                        &cx.ast,
-                    );
+                    let body = oxc_ast::ast::FunctionBody::boxed(SPAN, [], stmts, &cx.ast);
                     ox_build_arrow(cx, fn_result.params, body, fn_result.is_async, true)
                 }
                 None => {
@@ -3173,14 +3168,14 @@ fn ox_create_call_expression<'a>(
     );
     let body = oxc_ast::ast::FunctionBody::boxed(
         SPAN,
-        oxc_allocator::ArenaVec::new_in(ast),
+        [],
         oxc_allocator::ArenaVec::from_value_in(guarded, ast),
         ast,
     );
     let params = oxc_ast::ast::FormalParameters::boxed(
         SPAN,
         oxc_ast::ast::FormalParameterKind::FormalParameter,
-        oxc_allocator::ArenaVec::new_in(ast),
+        [],
         None::<oxc_allocator::Box<oxc_ast::ast::FormalParameterRest>>,
         ast,
     );
@@ -3202,7 +3197,7 @@ fn ox_create_call_expression<'a>(
         SPAN,
         oxc::Expression::FunctionExpression(oxc_allocator::ArenaBox::new_in(iife, ast)),
         None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
-        oxc_allocator::ArenaVec::new_in(ast),
+        [],
         false,
         ast,
     )

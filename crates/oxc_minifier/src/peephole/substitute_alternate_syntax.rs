@@ -1214,22 +1214,19 @@ impl<'a> PeepholeOptimizations {
         };
         match name {
             "Object" if args.is_empty() => {
-                let new_value =
-                    Expression::new_object_expression(*span, ArenaVec::new_in(ctx), ctx);
+                let new_value = Expression::new_object_expression(*span, [], ctx);
                 ctx.replace_expression(expr, new_value);
             }
             "Array" => {
                 // `new Array` -> `[]`
                 if args.is_empty() {
-                    let new_value =
-                        Expression::new_array_expression(*span, ArenaVec::new_in(ctx), ctx);
+                    let new_value = Expression::new_array_expression(*span, [], ctx);
                     ctx.replace_expression(expr, new_value);
                 } else if args.len() == 1 {
                     let Some(arg) = args[0].as_expression_mut() else { return };
                     // `new Array(0)` -> `[]`
                     if arg.is_number_0() {
-                        let new_value =
-                            Expression::new_array_expression(*span, ArenaVec::new_in(ctx), ctx);
+                        let new_value = Expression::new_array_expression(*span, [], ctx);
                         ctx.replace_expression(expr, new_value);
                     }
                     // `new Array(8)` -> `Array(8)`

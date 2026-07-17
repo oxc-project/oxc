@@ -393,8 +393,7 @@ impl<'a> TypeScriptNamespace {
                     binding.create_write_target(ctx)
                 };
 
-                let assign_right =
-                    Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+                let assign_right = Expression::new_object_expression(SPAN, [], ctx);
                 let op = AssignmentOperator::Assign;
                 let assign_expr =
                     Expression::new_assignment_expression(SPAN, op, assign_left, assign_right, ctx);

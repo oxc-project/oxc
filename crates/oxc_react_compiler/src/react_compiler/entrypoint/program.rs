@@ -2317,7 +2317,7 @@ impl<'a> OxcVisitor<'a, '_> {
                 *stmt = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
                     SPAN,
                     Some(decl),
-                    ArenaVec::new_in(ast),
+                    [],
                     None,
                     ImportOrExportKind::Value,
                     None::<ArenaBox<WithClause>>,
@@ -2504,7 +2504,7 @@ fn ox_gating_call<'a>(ast: &AstBuilder<'a>, callee_name: &str) -> Expression<'a>
         SPAN,
         Expression::new_identifier(SPAN, ox_atom(ast, callee_name), ast),
         None::<ArenaBox<TSTypeParameterInstantiation>>,
-        ArenaVec::new_in(ast),
+        [],
         false,
         ast,
     )

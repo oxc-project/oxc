@@ -155,7 +155,7 @@ mod test {
             ";'🤨' // 🤨",
             ArenaVec::from_value_in(Comment::new(8, 15, CommentKind::Line), &ast),
             None,
-            ArenaVec::new_in(&ast),
+            [],
             ArenaVec::from_array_in(
                 [
                     Statement::new_empty_statement(Span::new(0, 1), &ast),

@@ -861,7 +861,7 @@ fn template_literal_escape_when_building_ast() {
     };
     let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
     let quasis = ArenaVec::from_value_in(element, &ast);
-    let template_literal = TemplateLiteral::new(SPAN, quasis, ArenaVec::new_in(&ast), &ast);
+    let template_literal = TemplateLiteral::new(SPAN, quasis, [], &ast);
 
     let expr = Expression::new_template_literal(
         SPAN,
@@ -874,9 +874,9 @@ fn template_literal_escape_when_building_ast() {
         SPAN,
         oxc_span::SourceType::mjs(),
         "",
-        ArenaVec::new_in(&ast),
+        [],
         None,
-        ArenaVec::new_in(&ast),
+        [],
         ArenaVec::from_value_in(stmt, &ast),
         &ast,
     );

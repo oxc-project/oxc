@@ -67,10 +67,7 @@ impl<'a> FormalParameter<'a> {
         pattern: BindingPattern<'a>,
         builder: &B,
     ) -> Self {
-        let decorators = ArenaVec::new_in(builder.builder());
-        FormalParameter::new(
-            span, decorators, pattern, NONE, NONE, false, None, false, false, builder,
-        )
+        FormalParameter::new(span, [], pattern, NONE, NONE, false, None, false, false, builder)
     }
 }
 
@@ -215,11 +212,10 @@ impl<'a> ExportNamedDeclaration<'a> {
         declaration: Declaration<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        let specifiers = ArenaVec::new_in(builder.builder());
         ExportNamedDeclaration::boxed(
             span,
             Some(declaration),
-            specifiers,
+            [],
             None,
             ImportOrExportKind::Value,
             NONE,

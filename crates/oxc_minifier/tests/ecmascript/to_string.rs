@@ -17,7 +17,7 @@ fn test() {
     let global_undefined_string =
         undefined.to_js_string(&GlobalReferenceInformation { is_undefined_shadowed: false });
 
-    let empty_object = Expression::new_object_expression(SPAN, ArenaVec::new_in(ast), ast);
+    let empty_object = Expression::new_object_expression(SPAN, [], ast);
     let object_with_to_string = Expression::new_object_expression(
         SPAN,
         ArenaVec::from_value_in(
