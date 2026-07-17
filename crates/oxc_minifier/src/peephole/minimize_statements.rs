@@ -840,7 +840,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.notice_change();
                 return;
             }
-            1 if !ctx.state.dce && Self::can_switch_case_be_inlined(&switch_stmt.cases[0]) => {
+            1 if !ctx.state.dce && Self::can_switch_case_be_inlined(&switch_stmt.cases[0], ctx) => {
                 ctx.notice_change();
 
                 let mut case = switch_stmt.cases.pop().unwrap();

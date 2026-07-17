@@ -3,9 +3,16 @@ use oxc_ast::ast::{
     BreakStatement, Expression, IfStatement, Statement, SwitchCase, TryStatement, WithStatement,
 };
 use oxc_ast_visit::{Visit, walk};
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
+
+use crate::TraverseCtx;
 
 impl<'a> PeepholeOptimizations {
-    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
+    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        if case.test.may_have_side_effects(ctx) {
+            return false;
+        }
+
         // unlabeled top-level `break` is only valid as the terminal statement of the case body.
         if case
             .consequent
