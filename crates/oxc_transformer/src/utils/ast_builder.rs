@@ -28,8 +28,8 @@ pub fn create_bind_call<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let callee = create_member_callee(callee, static_ident!("bind"), span, ctx);
-    let arguments = ArenaVec::from_value_in(Argument::from(this), ctx);
-    Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+    let this = Argument::from(this);
+    Expression::new_call_expression(span, callee, NONE, [this], false, ctx)
 }
 
 /// `object` -> `object.call(...arguments)`.
@@ -40,8 +40,8 @@ pub fn create_call_call<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let callee = create_member_callee(callee, static_ident!("call"), span, ctx);
-    let arguments = ArenaVec::from_value_in(Argument::from(this), ctx);
-    Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+    let this = Argument::from(this);
+    Expression::new_call_expression(span, callee, NONE, [this], false, ctx)
 }
 
 /// Wrap an `Expression` in an arrow function IIFE (immediately invoked function expression)
@@ -148,10 +148,7 @@ pub fn create_super_call<'a>(
         SPAN,
         Expression::new_super(SPAN, ctx),
         NONE,
-        ArenaVec::from_value_in(
-            Argument::new_spread_element(SPAN, args_binding.create_read_expression(ctx), ctx),
-            ctx,
-        ),
+        [Argument::new_spread_element(SPAN, args_binding.create_read_expression(ctx), ctx)],
         false,
         ctx,
     )

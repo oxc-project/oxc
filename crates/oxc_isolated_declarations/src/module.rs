@@ -106,15 +106,13 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.error(default_export_inferred(expr.span()));
             }
 
-            let declarations = ArenaVec::from_value_in(
-                VariableDeclarator::new(SPAN, kind, id, type_annotation, None, false, self),
-                self,
-            );
+            let declaration =
+                VariableDeclarator::new(SPAN, kind, id, type_annotation, None, false, self);
 
             let variable_statement = Statement::new_variable_declaration(
                 decl_span,
                 kind,
-                declarations,
+                [declaration],
                 self.is_declare(),
                 self,
             );

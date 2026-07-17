@@ -972,14 +972,11 @@ impl<'a> PeepholeOptimizations {
         if let Some(r_id_pat) = r_id_pat {
             let base_arr = Expression::new_array_expression(
                 SPAN,
-                ArenaVec::from_value_in(
-                    ArrayExpressionElement::new_spread_element(
-                        SPAN,
-                        Expression::Identifier(arguments_id.take_in_box(ctx)),
-                        ctx,
-                    ),
+                [ArrayExpressionElement::new_spread_element(
+                    SPAN,
+                    Expression::Identifier(arguments_id.take_in_box(ctx)),
                     ctx,
-                ),
+                )],
                 ctx,
             );
             // wrap with `.slice(offset)`
@@ -996,10 +993,7 @@ impl<'a> PeepholeOptimizations {
                     SPAN,
                     callee,
                     NONE,
-                    ArenaVec::from_value_in(
-                        Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx),
-                        ctx,
-                    ),
+                    [Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx)],
                     false,
                     ctx,
                 )
@@ -1262,11 +1256,11 @@ impl<'a> PeepholeOptimizations {
                     }
                     // `new Array(literal)` -> `[literal]`
                     else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
-                        let elements = ArenaVec::from_value_in(
-                            ArrayExpressionElement::from(arg.take_in(ctx)),
+                        let new_value = Expression::new_array_expression(
+                            *span,
+                            [ArrayExpressionElement::from(arg.take_in(ctx))],
                             ctx,
                         );
-                        let new_value = Expression::new_array_expression(*span, elements, ctx);
                         ctx.replace_expression(expr, new_value);
                     }
                     // `new Array(x)` -> `Array(x)`
@@ -1776,15 +1770,12 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             ),
             NONE,
-            ArenaVec::from_value_in(
-                Argument::new_string_literal(
-                    expr.span(),
-                    Str::from_str_in(delimiter, ctx),
-                    None,
-                    ctx,
-                ),
+            [Argument::new_string_literal(
+                expr.span(),
+                Str::from_str_in(delimiter, ctx),
+                None,
                 ctx,
-            ),
+            )],
             false,
             true,
             ctx,

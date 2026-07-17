@@ -725,7 +725,7 @@ impl<'a> PeepholeOptimizations {
             let mut expr = match arg {
                 Argument::SpreadElement(e) => Expression::new_array_expression(
                     e.span,
-                    ArenaVec::from_value_in(ArrayExpressionElement::SpreadElement(e), ctx),
+                    [ArrayExpressionElement::SpreadElement(e)],
                     ctx,
                 ),
                 match_expression!(Argument) => arg.into_expression(),

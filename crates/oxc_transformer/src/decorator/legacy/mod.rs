@@ -530,7 +530,7 @@ impl<'a> LegacyDecorator<'a> {
             let params = FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                ArenaVec::from_value_in(param, ctx),
+                [param],
                 NONE,
                 ctx,
             );
@@ -949,7 +949,7 @@ impl<'a> LegacyDecorator<'a> {
                         ),
                         ctx,
                     );
-                    let body = ArenaVec::from_value_in(class_alias_with_this_assignment, ctx);
+                    let body = [class_alias_with_this_assignment];
                     let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
                     let element =
                         ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
@@ -1025,7 +1025,7 @@ impl<'a> LegacyDecorator<'a> {
         let var_declaration = Declaration::new_variable_declaration(
             span,
             VariableDeclarationKind::Let,
-            ArenaVec::from_value_in(declarator, ctx),
+            [declarator],
             false,
             ctx,
         );
@@ -1461,8 +1461,7 @@ impl<'a> LegacyDecorator<'a> {
         let kind = ImportOrExportKind::Value;
         let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
         let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
-        let specifiers =
-            ArenaVec::from_value_in(ExportSpecifier::new(SPAN, local, exported, kind, ctx), ctx);
+        let specifiers = [ExportSpecifier::new(SPAN, local, exported, kind, ctx)];
         let export_class_reference = ModuleDeclaration::new_export_named_declaration(
             SPAN, None, specifiers, None, kind, NONE, ctx,
         );

@@ -591,12 +591,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        Statement::new_block_statement_with_scope_id(
-            span,
-            ArenaVec::from_value_in(stmt, ctx),
-            scope_id,
-            ctx,
-        )
+        Statement::new_block_statement_with_scope_id(span, [stmt], scope_id, ctx)
     }
 
     fn replace_for_statement_body_with_empty_block_if_ts(

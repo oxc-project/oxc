@@ -984,9 +984,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             NONE,
             ctx,
         );
-        let statements =
-            ArenaVec::from_value_in(Statement::new_expression_statement(SPAN, init, ctx), ctx);
-        let body = FunctionBody::new(SPAN, [], statements, ctx);
+        let statement = Statement::new_expression_statement(SPAN, init, ctx);
+        let body = FunctionBody::new(SPAN, [], [statement], ctx);
         let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN, true, false, NONE, params, NONE, body, scope_id, false, false, ctx,
         );

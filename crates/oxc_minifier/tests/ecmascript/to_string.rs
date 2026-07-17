@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::{ToJsString, WithoutGlobalReferenceInformation};
 use oxc_span::SPAN;
@@ -20,19 +20,16 @@ fn test() {
     let empty_object = Expression::new_object_expression(SPAN, [], ast);
     let object_with_to_string = Expression::new_object_expression(
         SPAN,
-        ArenaVec::from_value_in(
-            ObjectPropertyKind::new_object_property(
-                SPAN,
-                PropertyKind::Init,
-                PropertyKey::new_static_identifier(SPAN, "toString", ast),
-                Expression::new_string_literal(SPAN, "foo", None, ast),
-                false,
-                false,
-                false,
-                ast,
-            ),
+        [ObjectPropertyKind::new_object_property(
+            SPAN,
+            PropertyKind::Init,
+            PropertyKey::new_static_identifier(SPAN, "toString", ast),
+            Expression::new_string_literal(SPAN, "foo", None, ast),
+            false,
+            false,
+            false,
             ast,
-        ),
+        )],
         ast,
     );
     let empty_object_string = empty_object.to_js_string(&WithoutGlobalReferenceInformation {});

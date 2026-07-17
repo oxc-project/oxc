@@ -181,7 +181,7 @@ impl<'a> JsxSource<'a> {
         let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(decl, ctx),
+            [decl],
             false,
             ctx,
         );

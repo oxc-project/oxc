@@ -2226,7 +2226,7 @@ fn ox_build_gated_const_decl<'a>(
     Statement::VariableDeclaration(VariableDeclaration::boxed(
         SPAN,
         VariableDeclarationKind::Const,
-        ArenaVec::from_value_in(declarator, ast),
+        [declarator],
         false,
         ast,
     ))
@@ -2770,15 +2770,12 @@ fn ox_add_imports_to_program<'a>(
                 SPAN,
                 Expression::new_identifier(SPAN, "require", ast),
                 None::<ArenaBox<TSTypeParameterInstantiation>>,
-                ArenaVec::from_value_in(
-                    Argument::from(Expression::new_string_literal(
-                        SPAN,
-                        ox_atom(ast, module_name),
-                        None,
-                        ast,
-                    )),
+                [Argument::from(Expression::new_string_literal(
+                    SPAN,
+                    ox_atom(ast, module_name),
+                    None,
                     ast,
-                ),
+                ))],
                 false,
                 ast,
             );
@@ -2794,7 +2791,7 @@ fn ox_add_imports_to_program<'a>(
             let decl = VariableDeclaration::boxed(
                 SPAN,
                 VariableDeclarationKind::Const,
-                ArenaVec::from_value_in(declarator, ast),
+                [declarator],
                 false,
                 ast,
             );

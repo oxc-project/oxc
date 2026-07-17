@@ -326,12 +326,11 @@ impl<'a> TypeScriptNamespace {
         ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
-        let declarations = {
+        let decl = {
             let pattern = binding.create_spanned_binding_pattern(binding_span, ctx);
-            let decl = VariableDeclarator::new(span, kind, pattern, NONE, None, false, ctx);
-            ArenaVec::from_value_in(decl, ctx)
+            VariableDeclarator::new(span, kind, pattern, NONE, None, false, ctx)
         };
-        Declaration::new_variable_declaration(span, kind, declarations, false, ctx)
+        Declaration::new_variable_declaration(span, kind, [decl], false, ctx)
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -349,9 +348,8 @@ impl<'a> TypeScriptNamespace {
         let callee = {
             let params = {
                 let pattern = param_binding.create_binding_pattern(ctx);
-                let items =
-                    ArenaVec::from_value_in(FormalParameter::new_plain(SPAN, pattern, ctx), ctx);
-                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, items, NONE, ctx)
+                let item = FormalParameter::new_plain(SPAN, pattern, ctx);
+                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, [item], NONE, ctx)
             };
             let function_expr =
                 Expression::FunctionExpression(Function::boxed_plain_with_scope_id(
@@ -373,7 +371,7 @@ impl<'a> TypeScriptNamespace {
         // (function (_N) { var M; (function (_M) { var x; })(M || (M = _N.M || (_N.M = {})));})(N || (N = {}));
         //                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^
         //                                                   Nested namespace arguments         Normal namespace arguments
-        let arguments = {
+        let argument = {
             // M
             let logical_left = binding.create_read_expression(ctx);
 
@@ -427,17 +425,16 @@ impl<'a> TypeScriptNamespace {
                 logical_right = Expression::new_parenthesized_expression(SPAN, logical_right, ctx);
             }
 
-            let expr = Expression::new_logical_expression(
+            Argument::new_logical_expression(
                 SPAN,
                 logical_left,
                 LogicalOperator::Or,
                 logical_right,
                 ctx,
-            );
-            ArenaVec::from_value_in(Argument::from(expr), ctx)
+            )
         };
 
-        let expr = Expression::new_call_expression(span, callee, NONE, arguments, false, ctx);
+        let expr = Expression::new_call_expression(span, callee, NONE, [argument], false, ctx);
         Statement::new_expression_statement(span, expr, ctx)
     }
 

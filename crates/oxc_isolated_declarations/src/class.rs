@@ -697,7 +697,6 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         let parameter =
             FormalParameter::new(SPAN, [], kind, NONE, NONE, false, None, false, false, self);
-        let items = ArenaVec::from_value_in(parameter, self);
-        FormalParameters::boxed(SPAN, FormalParameterKind::Signature, items, NONE, self)
+        FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [parameter], NONE, self)
     }
 }

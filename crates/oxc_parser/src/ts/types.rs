@@ -1233,14 +1233,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self,
         );
 
-        let outer_properties =
-            ArenaVec::from_value_in(ObjectPropertyKind::ObjectProperty(with_property), self);
+        let outer_property = ObjectPropertyKind::ObjectProperty(with_property);
 
         // Allow optional trailing comma: `{ with: { type: "json" }, }`
         let _ = self.eat(Kind::Comma);
 
         self.expect(Kind::RCurly);
-        ObjectExpression::boxed(self.end_span(span), outer_properties, self)
+        ObjectExpression::boxed(self.end_span(span), [outer_property], self)
     }
 
     /// Parse TypeScript import type attributes object: `{ type: "json" }`

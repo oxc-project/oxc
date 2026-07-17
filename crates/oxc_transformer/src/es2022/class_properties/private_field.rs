@@ -1946,15 +1946,8 @@ impl<'a> ClassProperties<'a> {
             prop_binding.create_read_expression(ctx)
         };
         let callee = create_member_callee(callee, static_ident!("has"), span, ctx);
-        let argument = self.create_check_in_rhs(right, ctx);
-        Expression::new_call_expression(
-            span,
-            callee,
-            NONE,
-            ArenaVec::from_value_in(Argument::from(argument), ctx),
-            false,
-            ctx,
-        )
+        let argument = Argument::from(self.create_check_in_rhs(right, ctx));
+        Expression::new_call_expression(span, callee, NONE, [argument], false, ctx)
     }
 
     /// Duplicate object to be used in get/set pair.

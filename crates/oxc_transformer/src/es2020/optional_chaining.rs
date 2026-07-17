@@ -399,12 +399,11 @@ impl<'a> OptionalChaining<'a> {
         };
 
         // `expr.bind(context)`
-        let arguments = ArenaVec::from_value_in(context, ctx);
         let property = IdentifierName::new(SPAN, "bind", ctx);
         let callee =
             MemberExpression::new_static_member_expression(SPAN, expr, property, false, ctx);
         let callee = Expression::from(callee);
-        Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx)
+        Expression::new_call_expression(SPAN, callee, NONE, [context], false, ctx)
     }
 
     /// Recursively transform chain expression elements

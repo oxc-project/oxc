@@ -298,8 +298,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         // Modify the wrapper function
         func.r#async = false;
         func.generator = false;
-        func.body =
-            Some(FunctionBody::boxed(SPAN, [], ArenaVec::from_value_in(statement, ctx), ctx));
+        func.body = Some(FunctionBody::boxed(SPAN, [], [statement], ctx));
         func.scope_id.set(Some(wrapper_scope_id));
         sync_function_symbol_flags(func, ctx);
     }

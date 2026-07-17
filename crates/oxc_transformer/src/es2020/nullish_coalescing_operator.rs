@@ -28,7 +28,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
-use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith};
+use oxc_allocator::{ArenaBox, ReplaceWith};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -150,17 +150,14 @@ impl<'a> NullishCoalescingOperator {
             let params = FormalParameters::new(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
-                ArenaVec::from_value_in(param, ctx),
+                [param],
                 NONE,
                 ctx,
             );
             let body = FunctionBody::new(
                 SPAN,
                 [],
-                ArenaVec::from_value_in(
-                    Statement::new_expression_statement(SPAN, new_expr, ctx),
-                    ctx,
-                ),
+                [Statement::new_expression_statement(SPAN, new_expr, ctx)],
                 ctx,
             );
             let arrow_function =

@@ -660,14 +660,11 @@ impl<'a> ReactRefresh<'a> {
             let function_body = FunctionBody::new(
                 SPAN,
                 [],
-                ArenaVec::from_value_in(
-                    Statement::new_return_statement(
-                        SPAN,
-                        Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
-                        ctx,
-                    ),
+                [Statement::new_return_statement(
+                    SPAN,
+                    Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
                     ctx,
-                ),
+                )],
                 ctx,
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);

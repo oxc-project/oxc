@@ -459,7 +459,7 @@ impl<'a> StyledComponents<'a> {
             );
             self.add_properties(&mut properties, ctx);
             let object = ObjectExpression::boxed(SPAN, properties, ctx);
-            let arguments = ArenaVec::from_value_in(Argument::ObjectExpression(object), ctx);
+            let arguments = [Argument::ObjectExpression(object)];
             expr.replace_with(|object| {
                 let property = IdentifierName::new(SPAN, "withConfig", ctx);
                 let callee =
@@ -1160,18 +1160,15 @@ mod tests {
 
         let mut lit = TemplateLiteral::new(
             SPAN,
-            ArenaVec::from_value_in(
-                TemplateElement::new(
-                    SPAN,
-                    TemplateElementValue {
-                        raw: Str::from_str_in(input, &ast),
-                        cooked: Some(Str::from_str_in(input, &ast)),
-                    },
-                    true,
-                    &ast,
-                ),
+            [TemplateElement::new(
+                SPAN,
+                TemplateElementValue {
+                    raw: Str::from_str_in(input, &ast),
+                    cooked: Some(Str::from_str_in(input, &ast)),
+                },
+                true,
                 &ast,
-            ),
+            )],
             [],
             &ast,
         );

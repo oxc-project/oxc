@@ -219,8 +219,7 @@ impl<'a> ClassProperties<'a> {
             false,
             ctx,
         );
-        let obj =
-            Expression::new_object_expression(SPAN, ArenaVec::from_value_in(property, ctx), ctx);
+        let obj = Expression::new_object_expression(SPAN, [property], ctx);
 
         // Insert after class
         let class_details = self.current_class();

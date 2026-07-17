@@ -521,9 +521,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         } else {
             let callee =
                 Expression::new_identifier(SPAN, static_ident!("__vite_ssr_exportAll__"), ctx);
-            let arguments = ArenaVec::from_value_in(Argument::from(ident), ctx);
+            let ident = Argument::from(ident);
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
-            let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
+            let call = Expression::new_call_expression(SPAN, callee, NONE, [ident], false, ctx);
             let export = Statement::new_expression_statement(span, call, ctx);
             // names from `export *` cannot be known, so add it right after the import.
             hoist_imports.extend([import, export]);
@@ -711,7 +711,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             ctx,
         );
-        Argument::new_object_expression(SPAN, ArenaVec::from_value_in(imported_names, ctx), ctx)
+        Argument::new_object_expression(SPAN, [imported_names], ctx)
     }
 
     // `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
@@ -731,13 +731,8 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let kind = VariableDeclarationKind::Const;
         let declarator = VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(init), false, ctx);
-        let declaration = Declaration::new_variable_declaration(
-            span,
-            kind,
-            ArenaVec::from_value_in(declarator, ctx),
-            false,
-            ctx,
-        );
+        let declaration =
+            Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
     }
 
@@ -779,7 +774,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let kind = FormalParameterKind::FormalParameter;
         let params = FormalParameters::new(SPAN, kind, [], NONE, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
-        let body = FunctionBody::new(SPAN, [], ArenaVec::from_value_in(statement, ctx), ctx);
+        let body = FunctionBody::new(SPAN, [], [statement], ctx);
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
         Expression::new_function_expression_with_scope_id_and_pure_and_pife(
@@ -865,13 +860,8 @@ impl<'a> ModuleRunnerTransform<'a> {
         let kind = VariableDeclarationKind::Const;
         let declarator =
             VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(right), false, ctx);
-        let declaration = Declaration::new_variable_declaration(
-            span,
-            kind,
-            ArenaVec::from_value_in(declarator, ctx),
-            false,
-            ctx,
-        );
+        let declaration =
+            Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
     }
 }

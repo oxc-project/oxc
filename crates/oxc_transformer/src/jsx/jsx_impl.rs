@@ -571,7 +571,7 @@ impl<'a> JsxImpl<'a> {
             let stmt = Statement::new_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
-                ArenaVec::from_value_in(declarator, ctx),
+                [declarator],
                 false,
                 ctx,
             );

@@ -345,18 +345,15 @@ impl<'a> ClassProperties<'a> {
         let super_func_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    super_binding.create_binding_pattern(ctx),
-                    NONE,
-                    Some(super_func),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                VariableDeclarationKind::Var,
+                super_binding.create_binding_pattern(ctx),
+                NONE,
+                Some(super_func),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         );
@@ -605,7 +602,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
                     ctx,
                 ),
                 NONE,
-                ArenaVec::from_value_in(Argument::from(super_call), ctx),
+                [Argument::from(super_call)],
                 false,
                 ctx,
             )

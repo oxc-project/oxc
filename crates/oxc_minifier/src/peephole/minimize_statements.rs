@@ -551,8 +551,7 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let decls = ArenaVec::from_value_in(decl, ctx);
-                let new_decl = VariableDeclaration::boxed(span, kind, decls, declare, ctx);
+                let new_decl = VariableDeclaration::boxed(span, kind, [decl], declare, ctx);
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }

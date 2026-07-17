@@ -187,12 +187,11 @@ impl<'a> TypeScriptEnum {
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let params = FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
-        let params = ArenaVec::from_value_in(params, ctx);
+        let param = FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
-            params,
+            [param],
             NONE,
             ctx,
         );
@@ -240,7 +239,7 @@ impl<'a> TypeScriptEnum {
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_arg = Argument::new_object_expression(SPAN, [], ctx);
-            ArenaVec::from_value_in(object_arg, ctx)
+            [object_arg]
         } else {
             // }(Foo || {});
             let op = LogicalOperator::Or;
@@ -252,7 +251,7 @@ impl<'a> TypeScriptEnum {
             );
             let right = Expression::new_object_expression(SPAN, [], ctx);
             let argument = Argument::new_logical_expression(span, left, op, right, ctx);
-            ArenaVec::from_value_in(argument, ctx)
+            [argument]
         };
 
         let call_expression = Expression::new_call_expression_with_pure(
@@ -305,7 +304,7 @@ impl<'a> TypeScriptEnum {
                 false,
                 ctx,
             );
-            ArenaVec::from_value_in(decl, ctx)
+            [decl]
         };
         let variable_declaration =
             Declaration::new_variable_declaration(span, kind, decls, false, ctx);

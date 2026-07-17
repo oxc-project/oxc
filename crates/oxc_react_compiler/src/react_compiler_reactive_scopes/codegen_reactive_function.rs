@@ -121,10 +121,7 @@ pub fn codegen_function<'a>(
             SPAN,
             oxc_ast::ast::Expression::new_identifier(SPAN, memo_cache_name, ast),
             None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
-            oxc_allocator::ArenaVec::from_value_in(
-                oxc_ast::ast::Argument::from(ox_number(ast, cache_count as f64)),
-                ast,
-            ),
+            [oxc_ast::ast::Argument::from(ox_number(ast, cache_count as f64))],
             false,
             ast,
         );
@@ -145,7 +142,7 @@ pub fn codegen_function<'a>(
             oxc_ast::ast::Statement::VariableDeclaration(oxc_ast::ast::VariableDeclaration::boxed(
                 SPAN,
                 oxc_ast::ast::VariableDeclarationKind::Const,
-                oxc_allocator::ArenaVec::from_value_in(declarator, ast),
+                [declarator],
                 false,
                 ast,
             ));
@@ -412,15 +409,12 @@ fn ox_symbol_for<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, name: &str) -> oxc:
         SPAN,
         callee,
         None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
-        oxc_allocator::ArenaVec::from_value_in(
-            oxc::Argument::from(oxc_ast::ast::Expression::new_string_literal(
-                SPAN,
-                ox_str(ast, name),
-                None,
-                ast,
-            )),
+        [oxc::Argument::from(oxc_ast::ast::Expression::new_string_literal(
+            SPAN,
+            ox_str(ast, name),
+            None,
             ast,
-        ),
+        ))],
         false,
         ast,
     )
@@ -742,7 +736,7 @@ fn ox_codegen_reactive_scope<'a>(
                 oxc_ast::ast::VariableDeclaration::boxed(
                     SPAN,
                     oxc::VariableDeclarationKind::Let,
-                    oxc_allocator::ArenaVec::from_value_in(declarator, &cx.ast),
+                    [declarator],
                     false,
                     &cx.ast,
                 ),
@@ -859,11 +853,7 @@ fn ox_codegen_reactive_scope<'a>(
             Some(oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, name), &cx.ast)),
             &cx.ast,
         );
-        let consequent = oxc_ast::ast::Statement::new_block_statement(
-            SPAN,
-            oxc_allocator::ArenaVec::from_value_in(return_stmt, &cx.ast),
-            &cx.ast,
-        );
+        let consequent = oxc_ast::ast::Statement::new_block_statement(SPAN, [return_stmt], &cx.ast);
         statements
             .push(oxc_ast::ast::Statement::new_if_statement(SPAN, test, consequent, None, &cx.ast));
     }
@@ -1098,13 +1088,8 @@ fn ox_codegen_for_in<'a>(
         false,
         &cx.ast,
     );
-    let decl = oxc_ast::ast::VariableDeclaration::boxed(
-        SPAN,
-        var_decl_kind,
-        oxc_allocator::ArenaVec::from_value_in(declarator, &cx.ast),
-        false,
-        &cx.ast,
-    );
+    let decl =
+        oxc_ast::ast::VariableDeclaration::boxed(SPAN, var_decl_kind, [declarator], false, &cx.ast);
     let left = oxc::ForStatementLeft::VariableDeclaration(decl);
     Ok(Some(oxc_ast::ast::Statement::new_for_in_statement(SPAN, left, right, body, &cx.ast)))
 }
@@ -1155,13 +1140,8 @@ fn ox_codegen_for_of<'a>(
         false,
         &cx.ast,
     );
-    let decl = oxc_ast::ast::VariableDeclaration::boxed(
-        SPAN,
-        var_decl_kind,
-        oxc_allocator::ArenaVec::from_value_in(declarator, &cx.ast),
-        false,
-        &cx.ast,
-    );
+    let decl =
+        oxc_ast::ast::VariableDeclaration::boxed(SPAN, var_decl_kind, [declarator], false, &cx.ast);
     let left = oxc::ForStatementLeft::VariableDeclaration(decl);
     Ok(Some(oxc_ast::ast::Statement::new_for_of_statement(SPAN, false, left, right, body, &cx.ast)))
 }
@@ -1517,7 +1497,7 @@ fn ox_make_var_decl<'a>(
     oxc::Statement::VariableDeclaration(oxc_ast::ast::VariableDeclaration::boxed(
         SPAN,
         kind,
-        oxc_allocator::ArenaVec::from_value_in(declarator, &cx.ast),
+        [declarator],
         false,
         &cx.ast,
     ))
@@ -2561,11 +2541,9 @@ fn ox_codegen_function_expression<'a>(
             };
             match single_return_arg {
                 Some(arg) => {
-                    let stmts = oxc_allocator::ArenaVec::from_value_in(
-                        oxc_ast::ast::Statement::new_expression_statement(SPAN, arg, &cx.ast),
-                        &cx.ast,
-                    );
-                    let body = oxc_ast::ast::FunctionBody::boxed(SPAN, [], stmts, &cx.ast);
+                    let stmt =
+                        oxc_ast::ast::Statement::new_expression_statement(SPAN, arg, &cx.ast);
+                    let body = oxc_ast::ast::FunctionBody::boxed(SPAN, [], [stmt], &cx.ast);
                     ox_build_arrow(cx, fn_result.params, body, fn_result.is_async, true)
                 }
                 None => {
@@ -2614,11 +2592,13 @@ fn ox_codegen_function_expression<'a>(
             false,
             &cx.ast,
         );
-        let props = oxc_allocator::ArenaVec::from_value_in(
-            oxc::ObjectPropertyKind::ObjectProperty(oxc_allocator::ArenaBox::new_in(prop, &cx.ast)),
+        let object = oxc_ast::ast::Expression::new_object_expression(
+            SPAN,
+            [oxc::ObjectPropertyKind::ObjectProperty(oxc_allocator::ArenaBox::new_in(
+                prop, &cx.ast,
+            ))],
             &cx.ast,
         );
-        let object = oxc_ast::ast::Expression::new_object_expression(SPAN, props, &cx.ast);
         let member = oxc_ast::ast::MemberExpression::new_computed_member_expression(
             SPAN,
             object,
@@ -3087,10 +3067,7 @@ fn ox_dispatcher_guard_stmt<'a>(
         SPAN,
         oxc_ast::ast::Expression::new_identifier(SPAN, guard_name, ast),
         None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
-        oxc_allocator::ArenaVec::from_value_in(
-            oxc_ast::ast::Argument::from(ox_number(ast, kind as u8 as f64)),
-            ast,
-        ),
+        [oxc_ast::ast::Argument::from(ox_number(ast, kind as u8 as f64))],
         false,
         ast,
     );
@@ -3114,10 +3091,7 @@ fn ox_create_hook_guard<'a>(
     let try_block = oxc_ast::ast::BlockStatement::new(SPAN, try_stmts, ast);
     let finalizer = oxc_ast::ast::BlockStatement::new(
         SPAN,
-        oxc_allocator::ArenaVec::from_value_in(
-            ox_dispatcher_guard_stmt(ast, guard_name, after),
-            ast,
-        ),
+        [ox_dispatcher_guard_stmt(ast, guard_name, after)],
         ast,
     );
     oxc_ast::ast::Statement::new_try_statement(
@@ -3166,12 +3140,7 @@ fn ox_create_call_expression<'a>(
         GuardKind::AllowHook,
         GuardKind::DisallowHook,
     );
-    let body = oxc_ast::ast::FunctionBody::boxed(
-        SPAN,
-        [],
-        oxc_allocator::ArenaVec::from_value_in(guarded, ast),
-        ast,
-    );
+    let body = oxc_ast::ast::FunctionBody::boxed(SPAN, [], [guarded], ast);
     let params = oxc_ast::ast::FormalParameters::boxed(
         SPAN,
         oxc_ast::ast::FormalParameterKind::FormalParameter,
