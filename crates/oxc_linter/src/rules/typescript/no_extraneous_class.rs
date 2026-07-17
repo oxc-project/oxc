@@ -158,7 +158,7 @@ impl Rule for NoExtraneousClass {
                     );
                 }
             }
-            [ClassElement::MethodDefinition(constructor)] if constructor.kind.is_constructor() => {
+            [ClassElement::Constructor(constructor)] => {
                 let only_constructor =
                     !constructor.value.params.items.iter().any(FormalParameter::has_modifier);
                 if only_constructor && !self.allow_constructor_only {

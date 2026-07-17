@@ -6,7 +6,7 @@ use quote::{format_ident, quote};
 use crate::{
     AST_VISIT_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
-    schema::{Def, Schema, StructDef, TypeId},
+    schema::{Def, EnumDef, Schema, StructDef, TypeId},
     utils::create_ident,
 };
 
@@ -84,6 +84,19 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         generate_visitor(struct_def, has_custom_visitor, span_type_id, schema)
     });
 
+    let enum_methods = schema.enums().filter_map(|enum_def| {
+        if !enum_def.generates_derive(estree_derive_id) {
+            return None;
+        }
+
+        // Skip types in `oxc_syntax` and `napi/parser` crates. They don't appear in ESTree AST.
+        if matches!(enum_def.file(schema).krate(), "oxc_syntax" | "napi/parser") {
+            return None;
+        }
+
+        generate_enum_visitor(enum_def, span_type_id, schema)
+    });
+
     quote! {
         use oxc_ast::ast::*;
         use oxc_syntax::scope::ScopeFlags;
@@ -97,6 +110,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         ///@@line_break
         impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
             #(#methods)*
+            #(#enum_methods)*
         }
     }
 }
@@ -153,6 +167,68 @@ fn generate_visitor(
     };
 
     Some(visitor)
+}
+
+/// Generate a visitor for an enum with variants containing a direct `Span` payload.
+fn generate_enum_visitor(
+    enum_def: &EnumDef,
+    span_type_id: TypeId,
+    schema: &Schema,
+) -> Option<TokenStream> {
+    let enum_ident = enum_def.ident();
+    let span_variants = enum_def
+        .all_variants(schema)
+        .filter(|variant| {
+            variant.field_type(schema).is_some_and(|field_type| field_type.id() == span_type_id)
+        })
+        .map(|variant| {
+            let ident = variant.ident();
+            quote! {
+                #enum_ident::#ident(span) => {
+                    self.convert_offset(&mut span.start);
+                    self.convert_offset(&mut span.end);
+                }
+            }
+        })
+        .collect::<Vec<_>>();
+    if span_variants.is_empty() {
+        return None;
+    }
+
+    let other_variants = enum_def
+        .all_variants(schema)
+        .filter(|variant| {
+            variant.field_type(schema).is_none_or(|field_type| field_type.id() != span_type_id)
+        })
+        .map(|variant| {
+            let ident = variant.ident();
+            if variant.is_fieldless() {
+                quote!(#enum_ident::#ident)
+            } else {
+                quote!(#enum_ident::#ident(_))
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let visitor_names = enum_def.visit.visitor_names.as_ref()?;
+    let visit_method_ident = visitor_names.visitor_ident();
+    let walk_fn_ident = visitor_names.walk_ident();
+    let ty = enum_def.ty(schema);
+    let fallback = (!other_variants.is_empty()).then(|| {
+        quote! {
+            #(#other_variants)|* => walk_mut::#walk_fn_ident(self, it),
+        }
+    });
+
+    Some(quote! {
+        ///@@line_break
+        fn #visit_method_ident(&mut self, it: &mut #ty) {
+            match it {
+                #(#span_variants)*
+                #fallback
+            }
+        }
+    })
 }
 
 /// Check if struct has a `span: Span` field.

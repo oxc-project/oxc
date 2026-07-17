@@ -325,7 +325,7 @@ fn is_valid_identifier_name(name: &str) -> bool {
 /// shorthand method in an object literal or a class.
 fn is_object_or_class_method(parent_node: &AstNode) -> bool {
     match parent_node.kind() {
-        AstKind::MethodDefinition(_) => true,
+        AstKind::ClassConstructor(_) | AstKind::MethodDefinition(_) => true,
         AstKind::ObjectProperty(property) => {
             property.method || matches!(property.kind, PropertyKind::Get | PropertyKind::Set)
         }

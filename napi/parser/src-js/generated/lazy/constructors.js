@@ -5024,15 +5024,86 @@ function constructClassElement(pos, ast) {
     case 0:
       return constructBoxStaticBlock(pos + 8, ast);
     case 1:
-      return constructBoxMethodDefinition(pos + 8, ast);
+      return constructBoxClassConstructor(pos + 8, ast);
     case 2:
-      return constructBoxPropertyDefinition(pos + 8, ast);
+      return constructBoxMethodDefinition(pos + 8, ast);
     case 3:
-      return constructBoxAccessorProperty(pos + 8, ast);
+      return constructBoxPropertyDefinition(pos + 8, ast);
     case 4:
+      return constructBoxAccessorProperty(pos + 8, ast);
+    case 5:
       return constructBoxTSIndexSignature(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ClassElement`);
+  }
+}
+
+export class ClassConstructor {
+  type = "ClassConstructor";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get key() {
+    const internal = this.#internal;
+    return constructClassConstructorKey(internal.pos + 16, internal.ast);
+  }
+
+  get accessibility() {
+    const internal = this.#internal;
+    return constructOptionTSAccessibility(internal.pos + 12, internal.ast);
+  }
+
+  get value() {
+    const internal = this.#internal;
+    return constructBoxFunction(internal.pos + 32, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ClassConstructor",
+      start: this.start,
+      end: this.end,
+      key: this.key,
+      accessibility: this.accessibility,
+      value: this.value,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugClassConstructor.prototype);
+  }
+}
+
+const DebugClassConstructor = class ClassConstructor {};
+
+function constructClassConstructorKey(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return new Span(pos + 8, ast);
+    case 1:
+      return constructBoxStringLiteral(pos + 8, ast);
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ClassConstructorKey`);
   }
 }
 
@@ -5279,12 +5350,10 @@ function constructPropertyDefinitionType(pos, ast) {
 function constructMethodDefinitionKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return "constructor";
-    case 1:
       return "method";
-    case 2:
+    case 1:
       return "get";
-    case 3:
+    case 2:
       return "set";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for MethodDefinitionKind`);
@@ -13343,6 +13412,10 @@ function constructVecClassElement(pos, ast) {
 
 function constructBoxStaticBlock(pos, ast) {
   return new StaticBlock(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxClassConstructor(pos, ast) {
+  return new ClassConstructor(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxMethodDefinition(pos, ast) {

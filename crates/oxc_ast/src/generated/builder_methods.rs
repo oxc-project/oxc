@@ -14197,6 +14197,29 @@ impl<'a> ClassElement<'a> {
         Self::StaticBlock(StaticBlock::boxed_with_scope_id(span, body, scope_id, builder))
     }
 
+    /// Build a [`ClassElement::Constructor`].
+    ///
+    /// This node contains a [`ClassConstructor`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `key`
+    /// * `accessibility`
+    /// * `value`
+    #[inline]
+    pub fn new_constructor<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        key: ClassConstructorKey<'a>,
+        accessibility: Option<TSAccessibility>,
+        value: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        Self::Constructor(ClassConstructor::boxed(span, key, accessibility, value, builder))
+    }
+
     /// Build a [`ClassElement::MethodDefinition`].
     ///
     /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
@@ -14390,6 +14413,63 @@ impl<'a> ClassElement<'a> {
             r#static,
             builder,
         ))
+    }
+}
+
+impl<'a> ClassConstructor<'a> {
+    /// Build a [`ClassConstructor`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ClassConstructor::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `key`
+    /// * `accessibility`
+    /// * `value`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        key: ClassConstructorKey<'a>,
+        accessibility: Option<TSAccessibility>,
+        value: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        let builder = builder.builder();
+        ClassConstructor {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            key,
+            accessibility,
+            value: value.into_in(builder.allocator()),
+        }
+    }
+
+    /// Build a [`ClassConstructor`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ClassConstructor::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `key`
+    /// * `accessibility`
+    /// * `value`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        key: ClassConstructorKey<'a>,
+        accessibility: Option<TSAccessibility>,
+        value: T1,
+        builder: &B,
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        ArenaBox::new_in(Self::new(span, key, accessibility, value, builder), builder.builder())
     }
 }
 

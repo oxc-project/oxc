@@ -202,6 +202,10 @@ impl<'a> ReplaceWith<'a> for ClassBody<'a> {}
 
 impl<'a> ReplaceWith<'a> for ClassElement<'a> {}
 
+impl<'a> ReplaceWith<'a> for ClassConstructor<'a> {}
+
+impl<'a> ReplaceWith<'a> for ClassConstructorKey<'a> {}
+
 impl<'a> ReplaceWith<'a> for MethodDefinition<'a> {}
 
 impl<'a> ReplaceWith<'a> for PropertyDefinition<'a> {}

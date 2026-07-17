@@ -87,6 +87,9 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::MethodDefinition(method) => {
             ts::check_method_definition(method, ctx);
         }
+        AstKind::ClassConstructor(constructor) => {
+            ts::check_class_constructor(constructor, ctx);
+        }
         AstKind::Super(sup) => js::check_super(sup, ctx),
 
         AstKind::FormalParameters(params) => {

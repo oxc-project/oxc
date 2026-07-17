@@ -104,6 +104,7 @@ pub enum AstNodes<'a> {
     YieldExpression(&'a AstNode<'a, YieldExpression<'a>>),
     Class(&'a AstNode<'a, Class<'a>>),
     ClassBody(&'a AstNode<'a, ClassBody<'a>>),
+    ClassConstructor(&'a AstNode<'a, ClassConstructor<'a>>),
     MethodDefinition(&'a AstNode<'a, MethodDefinition<'a>>),
     PropertyDefinition(&'a AstNode<'a, PropertyDefinition<'a>>),
     PrivateIdentifier(&'a AstNode<'a, PrivateIdentifier<'a>>),
@@ -304,6 +305,7 @@ impl AstNodes<'_> {
             Self::YieldExpression(n) => n.span(),
             Self::Class(n) => n.span(),
             Self::ClassBody(n) => n.span(),
+            Self::ClassConstructor(n) => n.span(),
             Self::MethodDefinition(n) => n.span(),
             Self::PropertyDefinition(n) => n.span(),
             Self::PrivateIdentifier(n) => n.span(),
@@ -504,6 +506,7 @@ impl AstNodes<'_> {
             Self::YieldExpression(n) => n.parent(),
             Self::Class(n) => n.parent(),
             Self::ClassBody(n) => n.parent(),
+            Self::ClassConstructor(n) => n.parent(),
             Self::MethodDefinition(n) => n.parent(),
             Self::PropertyDefinition(n) => n.parent(),
             Self::PrivateIdentifier(n) => n.parent(),
@@ -699,6 +702,7 @@ impl AstNodes<'_> {
             Self::YieldExpression(_) => "YieldExpression",
             Self::Class(_) => "Class",
             Self::ClassBody(_) => "ClassBody",
+            Self::ClassConstructor(_) => "ClassConstructor",
             Self::MethodDefinition(_) => "MethodDefinition",
             Self::PropertyDefinition(_) => "PropertyDefinition",
             Self::PrivateIdentifier(_) => "PrivateIdentifier",
@@ -5164,6 +5168,14 @@ impl<'a> AstNode<'a, ClassElement<'a>> {
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
+            ClassElement::Constructor(s) => {
+                AstNodes::ClassConstructor(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
             ClassElement::MethodDefinition(s) => {
                 AstNodes::MethodDefinition(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
@@ -5190,6 +5202,72 @@ impl<'a> AstNode<'a, ClassElement<'a>> {
             }
             ClassElement::TSIndexSignature(s) => {
                 AstNodes::TSIndexSignature(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+        };
+        self.allocator.alloc(node)
+    }
+}
+
+impl<'a> AstNode<'a, ClassConstructor<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn key(&self) -> &AstNode<'a, ClassConstructorKey<'a>> {
+        let following_span_start = self.inner.value.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.key,
+            allocator: self.allocator,
+            parent: AstNodes::ClassConstructor(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn accessibility(&self) -> Option<TSAccessibility> {
+        self.inner.accessibility
+    }
+
+    #[inline]
+    pub fn value(&self) -> &AstNode<'a, Function<'a>> {
+        let following_span_start = self.following_span_start;
+        self.allocator.alloc(AstNode {
+            inner: self.inner.value.as_ref(),
+            allocator: self.allocator,
+            parent: AstNodes::ClassConstructor(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ClassConstructorKey<'a>> {
+    #[inline]
+    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+        let parent = self.parent;
+        let node = match self.inner {
+            ClassConstructorKey::Identifier(_) => {
+                panic!(
+                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            ClassConstructorKey::StringLiteral(s) => {
+                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,

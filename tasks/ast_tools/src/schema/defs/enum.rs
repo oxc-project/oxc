@@ -12,7 +12,7 @@ use super::{
     extensions::{
         ast_builder::AstBuilderType,
         clone_in::CloneInType,
-        content_eq::ContentEqType,
+        content_eq::{ContentEqEnumVariant, ContentEqType},
         dummy::DummyEnum,
         estree::{ESTreeEnum, ESTreeEnumVariant},
         layout::{GetLayout, Layout},
@@ -210,6 +210,7 @@ pub struct VariantDef {
     pub field_type_id: Option<TypeId>,
     pub discriminant: Discriminant,
     pub visit: VisitFieldOrVariant,
+    pub content_eq: ContentEqEnumVariant,
     pub estree: ESTreeEnumVariant,
 }
 
@@ -221,6 +222,7 @@ impl VariantDef {
             field_type_id,
             discriminant,
             visit: VisitFieldOrVariant::default(),
+            content_eq: ContentEqEnumVariant::default(),
             estree: ESTreeEnumVariant::default(),
         }
     }

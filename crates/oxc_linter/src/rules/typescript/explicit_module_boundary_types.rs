@@ -723,7 +723,7 @@ impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
 
     fn visit_method_definition(&mut self, m: &MethodDefinition<'a>) {
         match m.kind {
-            MethodDefinitionKind::Constructor | MethodDefinitionKind::Set => {
+            MethodDefinitionKind::Set => {
                 // skip return type, but set target_symbol so diagnostics
                 // point to the method name
                 let had_name = self.with_target_property(Some(&m.key));
@@ -743,6 +743,10 @@ impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
                 walk_js::walk_method_definition(self, m);
             }
         }
+    }
+
+    fn visit_class_constructor(&mut self, constructor: &ClassConstructor<'a>) {
+        self.visit_formal_parameters(constructor.value.params.as_ref());
     }
 
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {

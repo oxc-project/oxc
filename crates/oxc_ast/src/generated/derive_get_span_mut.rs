@@ -1005,10 +1005,27 @@ impl GetSpanMut for ClassElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::StaticBlock(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Constructor(it) => GetSpanMut::span_mut(&mut **it),
             Self::MethodDefinition(it) => GetSpanMut::span_mut(&mut **it),
             Self::PropertyDefinition(it) => GetSpanMut::span_mut(&mut **it),
             Self::AccessorProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSIndexSignature(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for ClassConstructor<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ClassConstructorKey<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Identifier(it) => GetSpanMut::span_mut(it),
+            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

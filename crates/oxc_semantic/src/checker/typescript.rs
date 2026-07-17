@@ -56,6 +56,7 @@ fn is_allowed_type_predicate_position(ctx: &SemanticBuilder<'_>) -> bool {
     match ancestors.next() {
         Some(AstKind::Function(_)) => match ancestors.next() {
             Some(AstKind::MethodDefinition(method)) => method.kind.is_method(),
+            Some(AstKind::ClassConstructor(_)) => false,
             Some(AstKind::ObjectProperty(property)) => !property.kind.is_accessor(),
             _ => true,
         },
@@ -171,34 +172,41 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     if !ctx.in_ambient_context() {
         let mut is_in_overload_group = false;
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
-            if let Some(ClassElement::MethodDefinition(a)) = a
-                && !a.r#type.is_abstract()
-                && !a.optional
-                && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-            {
-                let next_is_same = b.is_some_and(|b| {
-                    matches!(b,
-                        ClassElement::MethodDefinition(b)
-                            if b.key.static_name() == a.key.static_name()
-                    )
-                });
-                if next_is_same {
-                    is_in_overload_group = true;
-                } else if a.key.static_name().is_some() || is_in_overload_group {
-                    // Report error for:
-                    // 1. Methods with static names that are not followed by an implementation
-                    // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])
-                    if a.kind.is_constructor() {
-                        ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+            match a {
+                Some(ClassElement::Constructor(a))
+                    if a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression =>
+                {
+                    if b.is_some_and(ClassElement::is_constructor) {
+                        is_in_overload_group = true;
                     } else {
-                        ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                        ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                        is_in_overload_group = false;
                     }
-                    is_in_overload_group = false;
-                } else {
-                    is_in_overload_group = false;
                 }
-            } else {
-                is_in_overload_group = false;
+                Some(ClassElement::MethodDefinition(a))
+                    if !a.r#type.is_abstract()
+                        && !a.optional
+                        && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression =>
+                {
+                    let next_is_same = b.is_some_and(|b| {
+                        matches!(b,
+                            ClassElement::MethodDefinition(b)
+                                if b.key.static_name() == a.key.static_name()
+                        )
+                    });
+                    if next_is_same {
+                        is_in_overload_group = true;
+                    } else if a.key.static_name().is_some() || is_in_overload_group {
+                        // Report error for:
+                        // 1. Methods with static names that are not followed by an implementation
+                        // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])
+                        ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                        is_in_overload_group = false;
+                    } else {
+                        is_in_overload_group = false;
+                    }
+                }
+                _ => is_in_overload_group = false,
             }
         }
     }
@@ -208,18 +216,20 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     let is_abstract = method.r#type.is_abstract();
 
     let is_empty_body = method.value.r#type == FunctionType::TSEmptyBodyFunctionExpression;
-    // Illegal to have `constructor(public foo);`
-    if method.kind.is_constructor() && is_empty_body {
-        for param in &method.value.params.items {
-            if param.has_modifier() {
-                ctx.error(diagnostics::parameter_property_only_in_constructor_impl(param.span));
-            }
-        }
-    }
 
     // Illegal to have `get foo();` or `set foo(a)`
     if method.kind.is_accessor() && is_empty_body && !is_abstract && !ctx.in_ambient_context() {
         ctx.error(diagnostics::accessor_without_body(method.key.span()));
+    }
+}
+
+pub fn check_class_constructor(constructor: &ClassConstructor<'_>, ctx: &SemanticBuilder<'_>) {
+    if constructor.value.r#type == FunctionType::TSEmptyBodyFunctionExpression {
+        for param in &constructor.value.params.items {
+            if param.has_modifier() {
+                ctx.error(diagnostics::parameter_property_only_in_constructor_impl(param.span));
+            }
+        }
     }
 }
 

@@ -65,7 +65,9 @@ fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintConte
     loop {
         let parent_node = ctx.nodes().parent_node(current_node.id());
         match parent_node.kind() {
-            AstKind::MethodDefinition(_) | AstKind::PropertyDefinition(_) => return true,
+            AstKind::ClassConstructor(_)
+            | AstKind::MethodDefinition(_)
+            | AstKind::PropertyDefinition(_) => return true,
             // Keep looking up only if the node is wrapped by `()`
             AstKind::ParenthesizedExpression(_) => {
                 current_node = parent_node;

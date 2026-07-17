@@ -542,6 +542,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.x1_jsx.enter_jsx_opening_element(elem, ctx);
     }
 
+    fn enter_class_constructor(
+        &mut self,
+        node: &mut ClassConstructor<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_class_constructor(node, ctx);
+        }
+    }
+
     fn enter_method_definition(
         &mut self,
         def: &mut MethodDefinition<'a>,

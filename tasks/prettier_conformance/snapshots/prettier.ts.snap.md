@@ -1,4 +1,4 @@
-ts compatibility: 628/666 (94.29%), 19 files skipped
+ts compatibility: 627/666 (94.14%), 19 files skipped
 
 # Failed
 
@@ -10,6 +10,7 @@ ts compatibility: 628/666 (94.29%), 19 files skipped
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
 | typescript/call/callee-comments.ts | 💥 | 75.00% |
 | typescript/cast/18406.ts | 💥 | 84.21% |
+| typescript/class/parameter-properties.ts | 💥 | 96.15% |
 | typescript/comments/mapped-types.ts | 💥 | 85.71% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/comments/type-parameters.ts | 💥 | 81.82% |

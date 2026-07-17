@@ -349,8 +349,9 @@ impl NoUnusedVars {
             // constructor property definitions are allowed because they declare
             // class members
             // e.g. `class Foo { constructor(public a) {} }`
-            AstKind::MethodDefinition(method) if method.kind.is_constructor() => {
-                param.has_modifier()
+            AstKind::ClassConstructor(constructor) => {
+                constructor.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
+                    || param.has_modifier()
             }
             // parameters in abstract methods will never be directly used b/c
             // abstract methods have no bodies. However, since this establishes

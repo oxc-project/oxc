@@ -1165,10 +1165,29 @@ impl ContentEq for ClassElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::StaticBlock(a), Self::StaticBlock(b)) => a.content_eq(b),
+            (Self::Constructor(a), Self::Constructor(b)) => a.content_eq(b),
             (Self::MethodDefinition(a), Self::MethodDefinition(b)) => a.content_eq(b),
             (Self::PropertyDefinition(a), Self::PropertyDefinition(b)) => a.content_eq(b),
             (Self::AccessorProperty(a), Self::AccessorProperty(b)) => a.content_eq(b),
             (Self::TSIndexSignature(a), Self::TSIndexSignature(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for ClassConstructor<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.accessibility, &other.accessibility)
+            && ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for ClassConstructorKey<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Identifier(_), Self::Identifier(_)) => true,
+            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             _ => false,
         }
     }

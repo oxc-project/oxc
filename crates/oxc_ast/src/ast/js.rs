@@ -2164,12 +2164,14 @@ pub struct ClassBody<'a> {
 #[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
 pub enum ClassElement<'a> {
     StaticBlock(Box<'a, StaticBlock<'a>>) = 0,
+    /// Class constructor.
+    Constructor(Box<'a, ClassConstructor<'a>>) = 1,
     /// Class Methods
     ///
-    /// Includes static and non-static methods, constructors, getters, and setters.
-    MethodDefinition(Box<'a, MethodDefinition<'a>>) = 1,
-    PropertyDefinition(Box<'a, PropertyDefinition<'a>>) = 2,
-    AccessorProperty(Box<'a, AccessorProperty<'a>>) = 3,
+    /// Includes static and non-static methods, getters, and setters.
+    MethodDefinition(Box<'a, MethodDefinition<'a>>) = 2,
+    PropertyDefinition(Box<'a, PropertyDefinition<'a>>) = 3,
+    AccessorProperty(Box<'a, AccessorProperty<'a>>) = 4,
     /// Index Signature
     ///
     /// ## Example
@@ -2178,7 +2180,35 @@ pub enum ClassElement<'a> {
     ///   [keys: string]: string
     /// }
     /// ```
-    TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 4,
+    TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 5,
+}
+
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(via = ClassConstructorConverter)]
+pub struct ClassConstructor<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub key: ClassConstructorKey<'a>,
+    #[ts]
+    pub accessibility: Option<TSAccessibility>,
+    #[visit(args(flags = ScopeFlags::Function | ScopeFlags::Constructor))]
+    pub value: Box<'a, Function<'a>>, // FunctionExpression
+}
+
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut)]
+#[builder(skip)]
+#[estree(no_ts_def)]
+pub enum ClassConstructorKey<'a> {
+    #[content_eq(skip)]
+    #[estree(via = ClassConstructorIdentifier)]
+    Identifier(Span) = 0,
+    StringLiteral(Box<'a, StringLiteral<'a>>) = 1,
 }
 
 #[ast(visit)]
@@ -2197,7 +2227,6 @@ pub struct MethodDefinition<'a> {
     #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
         MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-        MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
         MethodDefinitionKind::Method => ScopeFlags::Function,
     }))]
     pub value: Box<'a, Function<'a>>, // FunctionExpression
@@ -2324,15 +2353,17 @@ pub enum PropertyDefinitionType {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[estree(
+    no_ts_def,
+    add_ts_def = "type MethodDefinitionKind = 'constructor' | 'method' | 'get' | 'set'"
+)]
 pub enum MethodDefinitionKind {
-    /// Class constructor
-    Constructor = 0,
     /// Static or instance method
-    Method = 1,
+    Method = 0,
     /// Getter method
-    Get = 2,
+    Get = 1,
     /// Setter method
-    Set = 3,
+    Set = 2,
 }
 
 /// An identifier for a private class member.

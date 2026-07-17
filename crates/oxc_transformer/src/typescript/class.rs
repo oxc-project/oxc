@@ -150,16 +150,11 @@ impl<'a> TypeScript<'a> {
                         }
                     }
                 }
+                ClassElement::Constructor(ctor) => {
+                    constructor = Some(&mut ctor.value);
+                }
                 ClassElement::MethodDefinition(method) => {
-                    if method.kind == MethodDefinitionKind::Constructor {
-                        constructor = Some(&mut method.value);
-                    } else {
-                        Self::convert_computed_key(
-                            &mut method.key,
-                            &mut computed_key_assignments,
-                            ctx,
-                        );
-                    }
+                    Self::convert_computed_key(&mut method.key, &mut computed_key_assignments, ctx);
                 }
                 ClassElement::AccessorProperty(accessor) => {
                     Self::convert_computed_key(
@@ -296,11 +291,10 @@ impl<'a> TypeScript<'a> {
         class: &'b Class<'a>,
     ) -> Option<&'b ArenaVec<'a, FormalParameter<'a>>> {
         class.body.body.iter().find_map(|element| {
-            if let ClassElement::MethodDefinition(method) = element
-                && method.kind.is_constructor()
-                && method.value.body.is_some()
+            if let ClassElement::Constructor(constructor) = element
+                && constructor.value.body.is_some()
             {
-                Some(&method.value.params.items)
+                Some(&constructor.value.params.items)
             } else {
                 None
             }
@@ -404,10 +398,10 @@ impl<'a> TypeScript<'a> {
     /// }
     /// ```
     pub(super) fn transform_class_constructor(
-        constructor: &mut MethodDefinition<'a>,
+        constructor: &mut ClassConstructor<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !constructor.kind.is_constructor() || constructor.value.body.is_none() {
+        if constructor.value.body.is_none() {
             return;
         }
 

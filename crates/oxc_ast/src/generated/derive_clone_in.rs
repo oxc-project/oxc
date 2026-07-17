@@ -2427,6 +2427,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ClassElement<'_> {
             Self::StaticBlock(it) => {
                 ClassElement::StaticBlock(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
             }
+            Self::Constructor(it) => {
+                ClassElement::Constructor(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
             Self::MethodDefinition(it) => ClassElement::MethodDefinition(CloneIn::clone_in_impl(
                 it,
                 with_semantic_ids,
@@ -2441,6 +2444,51 @@ impl<'new_alloc> CloneIn<'new_alloc> for ClassElement<'_> {
                 allocator,
             )),
             Self::TSIndexSignature(it) => ClassElement::TSIndexSignature(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ClassConstructor<'_> {
+    type Cloned = ClassConstructor<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ClassConstructor {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
+            accessibility: CloneIn::clone_in_impl(
+                &self.accessibility,
+                with_semantic_ids,
+                allocator,
+            ),
+            value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ClassConstructorKey<'_> {
+    type Cloned = ClassConstructorKey<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        match self {
+            Self::Identifier(it) => ClassConstructorKey::Identifier(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+            Self::StringLiteral(it) => ClassConstructorKey::StringLiteral(CloneIn::clone_in_impl(
                 it,
                 with_semantic_ids,
                 allocator,

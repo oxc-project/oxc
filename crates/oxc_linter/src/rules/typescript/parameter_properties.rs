@@ -5,9 +5,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTarget, Class, ClassElement, Expression, FormalParameter,
-        MethodDefinition, MethodDefinitionKind, PropertyDefinition, PropertyKey, Statement,
-        TSAccessibility,
+        AssignmentExpression, AssignmentTarget, Class, ClassConstructor, ClassElement, Expression,
+        FormalParameter, PropertyDefinition, PropertyKey, Statement, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -135,10 +134,7 @@ impl Rule for ParameterProperties {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::MethodDefinition(method)
-                if method.kind == MethodDefinitionKind::Constructor
-                    && self.0.prefer == Prefer::ClassProperty =>
-            {
+            AstKind::ClassConstructor(method) if self.0.prefer == Prefer::ClassProperty => {
                 self.check_prefer_class_property(method, ctx);
             }
             AstKind::Class(class) if self.0.prefer == Prefer::ParameterProperty => {
@@ -163,7 +159,7 @@ struct PropertyNodes<'a> {
 impl ParameterProperties {
     fn check_prefer_class_property<'a>(
         &self,
-        method: &MethodDefinition<'a>,
+        method: &ClassConstructor<'a>,
         ctx: &LintContext<'a>,
     ) {
         for parameter in &method.value.params.items {
@@ -201,10 +197,7 @@ impl ParameterProperties {
         }
 
         for element in &class.body.body {
-            let ClassElement::MethodDefinition(method) = element else { continue };
-            if method.kind != MethodDefinitionKind::Constructor {
-                continue;
-            }
+            let ClassElement::Constructor(method) = element else { continue };
 
             for parameter in &method.value.params.items {
                 if parameter.initializer.is_some() {

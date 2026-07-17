@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        MethodDefinitionKind, PropertyDefinitionType, Statement,
+        PropertyDefinitionType, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -95,16 +95,9 @@ impl Rule for PreferClassFields {
         };
 
         // Find constructor
-        let Some(constructor) = class.body.body.iter().find_map(|element| {
-            if let ClassElement::MethodDefinition(method) = element
-                && method.kind == MethodDefinitionKind::Constructor
-                && !method.r#static
-                && !method.computed
-            {
-                Some(method)
-            } else {
-                None
-            }
+        let Some(constructor) = class.body.body.iter().find_map(|element| match element {
+            ClassElement::Constructor(constructor) => Some(constructor.as_ref()),
+            _ => None,
         }) else {
             return;
         };
@@ -202,7 +195,7 @@ impl Rule for PreferClassFields {
                 codegen.print_str(" = ");
                 codegen.print_expression(&assign.right);
                 codegen.print_str(";\n");
-                fix.push(fixer.insert_text_before(&**constructor, codegen.into_source_text()));
+                fix.push(fixer.insert_text_before(constructor, codegen.into_source_text()));
             }
 
             fix.with_message("Replace `this` assignment with class field declaration")

@@ -499,6 +499,7 @@ impl AstKind<'_> {
             Self::TSClassImplements(_) => "TSClassImplements".into(),
             Self::ClassBody(_) => "ClassBody".into(),
             Self::StaticBlock(_) => "StaticBlock".into(),
+            Self::ClassConstructor(_) => "ClassConstructor".into(),
             Self::PropertyDefinition(_) => "PropertyDefinition".into(),
             Self::MethodDefinition(_) => "MethodDefinition".into(),
 

@@ -1439,10 +1439,28 @@ impl ESTree for ClassElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::StaticBlock(it) => it.serialize(serializer),
+            Self::Constructor(it) => it.serialize(serializer),
             Self::MethodDefinition(it) => it.serialize(serializer),
             Self::PropertyDefinition(it) => it.serialize(serializer),
             Self::AccessorProperty(it) => it.serialize(serializer),
             Self::TSIndexSignature(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for ClassConstructor<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::js::ClassConstructorConverter(self).serialize(serializer)
+    }
+}
+
+impl ESTree for ClassConstructorKey<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Identifier(it) => {
+                crate::serialize::js::ClassConstructorIdentifier(it).serialize(serializer)
+            }
+            Self::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -1511,7 +1529,6 @@ impl ESTree for PropertyDefinitionType {
 impl ESTree for MethodDefinitionKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Constructor => JsonSafeString("constructor").serialize(serializer),
             Self::Method => JsonSafeString("method").serialize(serializer),
             Self::Get => JsonSafeString("get").serialize(serializer),
             Self::Set => JsonSafeString("set").serialize(serializer),

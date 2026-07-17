@@ -7831,6 +7831,32 @@ impl<'a> AstBuilder<'a> {
         ClassElement::StaticBlock(self.alloc_static_block_with_scope_id(span, body, scope_id))
     }
 
+    /// Build a [`ClassElement::Constructor`].
+    ///
+    /// This node contains a [`ClassConstructor`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `key`
+    /// * `accessibility`
+    /// * `value`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn class_element_constructor<T1>(
+        self,
+        span: Span,
+        key: ClassConstructorKey<'a>,
+        accessibility: Option<TSAccessibility>,
+        value: T1,
+    ) -> ClassElement<'a>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        ClassElement::Constructor(self.alloc_class_constructor(span, key, accessibility, value))
+    }
+
     /// Build a [`ClassElement::MethodDefinition`].
     ///
     /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
@@ -8028,6 +8054,66 @@ impl<'a> AstBuilder<'a> {
             readonly,
             r#static,
         ))
+    }
+
+    /// Build a [`ClassConstructor`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_class_constructor`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `key`
+    /// * `accessibility`
+    /// * `value`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn class_constructor<T1>(
+        self,
+        span: Span,
+        key: ClassConstructorKey<'a>,
+        accessibility: Option<TSAccessibility>,
+        value: T1,
+    ) -> ClassConstructor<'a>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        ClassConstructor {
+            node_id: Default::default(),
+            span,
+            key,
+            accessibility,
+            value: value.into_in(self.allocator()),
+        }
+    }
+
+    /// Build a [`ClassConstructor`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::class_constructor`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `key`
+    /// * `accessibility`
+    /// * `value`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_class_constructor<T1>(
+        self,
+        span: Span,
+        key: ClassConstructorKey<'a>,
+        accessibility: Option<TSAccessibility>,
+        value: T1,
+    ) -> ArenaBox<'a, ClassConstructor<'a>>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        ArenaBox::new_in(self.class_constructor(span, key, accessibility, value), &self)
     }
 
     /// Build a [`MethodDefinition`].

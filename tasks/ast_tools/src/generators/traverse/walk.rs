@@ -537,22 +537,31 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
 
     // Own variants
     for variant in &enum_def.variants {
-        let Some(field_type) = variant.field_type(schema) else { continue };
+        let variant_ident = variant.ident();
+        let Some(field_type) = variant.field_type(schema) else {
+            match_arms.extend(quote! {
+                #enum_ident::#variant_ident => {}
+            });
+            continue;
+        };
         let inner_type = field_type.innermost_type(schema);
 
         // Check inner type has a visitor
-        let has_visitor = match inner_type {
-            TypeDef::Struct(s) => s.visit.has_visitor(),
-            TypeDef::Enum(e) => e.visit.has_visitor(),
-            _ => false,
-        };
+        let has_visitor = inner_type.name() != "Span"
+            && match inner_type {
+                TypeDef::Struct(s) => s.visit.has_visitor(),
+                TypeDef::Enum(e) => e.visit.has_visitor(),
+                _ => false,
+            };
         if !has_visitor {
+            match_arms.extend(quote! {
+                #enum_ident::#variant_ident(_) => {}
+            });
             continue;
         }
 
         let inner_snake = inner_type.snake_name();
         let walk_fn = format_ident!("walk_{inner_snake}");
-        let variant_ident = variant.ident();
 
         let node_expr = if field_type.is_box() {
             quote!((&mut **node) as *mut _)

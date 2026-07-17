@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     accessor.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
                 }
-                ClassElement::StaticBlock(_) => true,
+                ClassElement::StaticBlock(_) | ClassElement::Constructor(_) => true,
                 ClassElement::TSIndexSignature(_) => {
                     unreachable!("TypeScript syntax should be transformed away")
                 }
@@ -84,7 +84,7 @@ impl<'a> PeepholeOptimizations {
                 };
                 Some(private_id.name.into())
             }
-            ClassElement::StaticBlock(_) => None,
+            ClassElement::StaticBlock(_) | ClassElement::Constructor(_) => None,
             ClassElement::TSIndexSignature(_) => {
                 unreachable!("TypeScript syntax should be transformed away")
             }

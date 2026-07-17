@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{MethodDefinition, MethodDefinitionKind},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -63,18 +60,14 @@ impl Rule for NoConstructorReturn {
     }
 }
 
-fn is_constructor(node: &AstNode<'_>) -> bool {
-    matches!(
-        node.kind(),
-        AstKind::MethodDefinition(MethodDefinition { kind: MethodDefinitionKind::Constructor, .. })
-    )
-}
-
 fn is_definitely_in_constructor(ctx: &LintContext, node_id: NodeId) -> bool {
     for ancestor_id in ctx.nodes().ancestor_ids(node_id) {
         match ctx.nodes().kind(ancestor_id) {
             AstKind::Function(_) => {
-                return is_constructor(ctx.nodes().parent_node(ancestor_id));
+                return matches!(
+                    ctx.nodes().parent_kind(ancestor_id),
+                    AstKind::ClassConstructor(_)
+                );
             }
             AstKind::ArrowFunctionExpression(_) => return false,
             _ => {}

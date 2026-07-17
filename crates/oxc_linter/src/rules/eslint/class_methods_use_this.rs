@@ -200,7 +200,6 @@ impl Rule for ClassMethodsUseThis {
             }
             AstKind::MethodDefinition(method_definition) => {
                 if method_definition.r#static
-                    || method_definition.kind.is_constructor()
                     || (self.ignore_override_methods && method_definition.r#override)
                     || self.check_ignore_classes_with_implements(
                         node,

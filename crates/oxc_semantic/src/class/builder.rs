@@ -121,7 +121,7 @@ impl<'a> ClassTableBuilder<'a> {
     }
 
     pub fn declare_class_method(&mut self, method: &MethodDefinition<'a>) {
-        if method.kind.is_constructor() || method.value.is_typescript_syntax() {
+        if method.value.is_typescript_syntax() {
             return;
         }
         let is_private = method.key.is_private_identifier();
@@ -141,10 +141,6 @@ impl<'a> ClassTableBuilder<'a> {
                         MethodDefinitionKind::Method => ElementKind::Method,
                         MethodDefinitionKind::Get => ElementKind::Method | ElementKind::Getter,
                         MethodDefinitionKind::Set => ElementKind::Method | ElementKind::Setter,
-                        MethodDefinitionKind::Constructor => {
-                            // Skip constructor
-                            unreachable!()
-                        }
                     },
                 ),
             );

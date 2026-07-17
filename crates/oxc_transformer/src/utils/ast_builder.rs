@@ -199,16 +199,25 @@ pub fn create_class_constructor_with_params<'a>(
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
-    create_class_method(
-        ArenaVec::new_in(ctx),
-        PropertyKey::new_static_identifier(SPAN, "constructor", ctx),
-        MethodDefinitionKind::Constructor,
-        params,
+    ClassElement::new_constructor(
+        SPAN,
+        ClassConstructorKey::Identifier(SPAN),
         None,
-        stmts,
-        false,
-        false,
-        scope_id,
+        Function::boxed_with_scope_id(
+            SPAN,
+            FunctionType::FunctionExpression,
+            None,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            Some(FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), stmts, ctx)),
+            scope_id,
+            ctx,
+        ),
         ctx,
     )
 }

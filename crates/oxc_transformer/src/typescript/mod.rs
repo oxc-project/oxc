@@ -189,6 +189,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
+    }
+
+    fn enter_class_constructor(
+        &mut self,
+        def: &mut ClassConstructor<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        def.accessibility = None;
         if self.is_class_properties_plugin_enabled || !self.set_public_class_fields {
             Self::transform_class_constructor(def, ctx);
         }

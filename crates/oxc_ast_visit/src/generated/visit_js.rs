@@ -554,6 +554,16 @@ pub trait VisitJs<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_constructor(&mut self, it: &ClassConstructor<'a>) {
+        walk_class_constructor(self, it);
+    }
+
+    #[inline]
+    fn visit_class_constructor_key(&mut self, it: &ClassConstructorKey<'a>) {
+        walk_class_constructor_key(self, it);
+    }
+
+    #[inline]
     fn visit_method_definition(&mut self, it: &MethodDefinition<'a>) {
         walk_method_definition(self, it);
     }
@@ -2255,10 +2265,36 @@ pub mod walk_js {
         // No `AstKind` for this type
         match it {
             ClassElement::StaticBlock(it) => visitor.visit_static_block(it),
+            ClassElement::Constructor(it) => visitor.visit_class_constructor(it),
             ClassElement::MethodDefinition(it) => visitor.visit_method_definition(it),
             ClassElement::PropertyDefinition(it) => visitor.visit_property_definition(it),
             ClassElement::AccessorProperty(it) => visitor.visit_accessor_property(it),
             _ => {}
+        }
+    }
+
+    #[inline]
+    pub fn walk_class_constructor<'a, V: VisitJs<'a>>(visitor: &mut V, it: &ClassConstructor<'a>) {
+        let kind = AstKind::ClassConstructor(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_class_constructor_key(&it.key);
+        {
+            let flags = ScopeFlags::Function | ScopeFlags::Constructor;
+            visitor.visit_function(&it.value, flags);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_constructor_key<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &ClassConstructorKey<'a>,
+    ) {
+        // No `AstKind` for this type
+        match it {
+            ClassConstructorKey::Identifier(it) => visitor.visit_span(it),
+            ClassConstructorKey::StringLiteral(it) => visitor.visit_string_literal(it),
         }
     }
 
@@ -2273,7 +2309,6 @@ pub mod walk_js {
             let flags = match it.kind {
                 MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
                 MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
                 MethodDefinitionKind::Method => ScopeFlags::Function,
             };
             visitor.visit_function(&it.value, flags);

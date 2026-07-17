@@ -303,9 +303,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if matches!(self.cur_kind(), Kind::Constructor | Kind::Str)
             && !modifiers.contains(ModifierKind::Static)
-            && let Some(name) = self.parse_constructor_name()
+            && let Some(key) = self.parse_constructor_name()
         {
-            return self.parse_constructor_declaration(span, r#type, name, &modifiers, decorators);
+            return self.parse_constructor_declaration(span, key, &modifiers, decorators);
         }
 
         if self.is_index_signature() {
@@ -501,13 +501,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_constructor_declaration(
         &mut self,
         span: u32,
-        r#type: MethodDefinitionType,
-        name: PropertyKey<'a>,
+        key: ClassConstructorKey<'a>,
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
+        for decorator in decorators {
+            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+        }
         if let Some(modifier) = modifiers.get(ModifierKind::Declare) {
             self.error(diagnostics::declare_constructor(modifier.span()));
+        }
+        if let Some(modifier) = modifiers.get(ModifierKind::Abstract) {
+            self.error(diagnostics::illegal_abstract_modifier(modifier.span()));
         }
 
         let value = self.parse_method(
@@ -515,35 +520,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             false,
             FunctionKind::Constructor,
         );
-        let method_definition = MethodDefinition::boxed(
+        self.check_class_constructor(&value, key.span());
+        ClassElement::Constructor(ClassConstructor::boxed(
             self.end_span(span),
-            r#type,
-            decorators,
-            name,
-            value,
-            MethodDefinitionKind::Constructor,
-            false,
-            modifiers.contains(ModifierKind::Static),
-            modifiers.contains(ModifierKind::Override),
-            false,
+            key,
             modifiers.accessibility(),
+            value,
             self,
-        );
-        self.check_method_definition_constructor(&method_definition);
-        ClassElement::MethodDefinition(method_definition)
+        ))
     }
 
-    fn parse_constructor_name(&mut self) -> Option<PropertyKey<'a>> {
+    fn parse_constructor_name(&mut self) -> Option<ClassConstructorKey<'a>> {
         if self.at(Kind::Constructor) {
             let ident = self.parse_identifier_name();
-            return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
+            return Some(ClassConstructorKey::Identifier(ident.span));
         }
         if self.at(Kind::Str)
             && self.cur_string() == "constructor"
             && self.lexer.peek_token().kind() == Kind::LParen
         {
             let string_literal = self.parse_literal_string();
-            return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));
+            return Some(ClassConstructorKey::StringLiteral(self.alloc(string_literal)));
         }
         None
     }
@@ -833,7 +830,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match method.kind {
             MethodDefinitionKind::Get => self.check_getter(&method.value),
             MethodDefinitionKind::Set => self.check_setter(&method.value),
-            _ => {}
+            MethodDefinitionKind::Method => {}
         }
         if method.r#type.is_abstract() && method.value.body.is_some() {
             let (name, span) = method.key.prop_name().unwrap_or_else(|| {
@@ -856,19 +853,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn check_method_definition_constructor(&mut self, method: &MethodDefinition<'a>) {
-        self.check_method_definition(method);
-
-        if let Some(this_param) = &method.value.this_param {
+    fn check_class_constructor(&mut self, function: &Function<'a>, key_span: Span) {
+        if function.r#async {
+            self.error(diagnostics::constructor_async(key_span));
+        }
+        if function.generator {
+            self.error(diagnostics::constructor_generator(key_span));
+        }
+        if self.ctx.has_ambient()
+            && let Some(body) = &function.body
+        {
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
+        }
+        if let Some(this_param) = &function.this_param {
             // class Foo { constructor(this: number) {} }
             self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
         }
-        if let Some(type_sig) = &method.value.type_parameters {
+        if let Some(type_sig) = &function.type_parameters {
             // class Foo { constructor<T>(param: T ) {} }
             self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
         }
-        if method.value.body.is_some()
-            && let Some(return_type) = &method.value.return_type
+        if function.body.is_some()
+            && let Some(return_type) = &function.return_type
         {
             self.error(diagnostics::constructor_return_type(return_type.span));
         }

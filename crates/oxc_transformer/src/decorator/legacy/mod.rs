@@ -234,11 +234,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // `constructor` will handle in `transform_decorators_of_class_and_constructor`.
-        if method.kind.is_constructor() {
-            return;
-        }
-
         if let Some(decorations) = self.get_all_decorators_of_class_method(method, ctx) {
             // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
             let descriptor = Expression::new_null_literal(SPAN, ctx);
@@ -1100,16 +1095,12 @@ impl<'a> LegacyDecorator<'a> {
     ) -> Statement<'a> {
         // Find first constructor method from the class
         let constructor = class.body.body.iter_mut().find_map(|element| match element {
-            ClassElement::MethodDefinition(method) if method.kind.is_constructor() => Some(method),
+            ClassElement::Constructor(constructor) => Some(constructor),
             _ => None,
         });
 
         let decorations = if let Some(constructor) = constructor {
-            // Constructor cannot have decorators, swap decorators of class and constructor to use
-            // `get_all_decorators_of_class_method` to get all decorators of the class and constructor params
-            mem::swap(&mut class.decorators, &mut constructor.decorators);
-            //  constructor.decorators
-            self.get_all_decorators_of_class_method(constructor, ctx)
+            self.get_all_decorators_of_class_constructor(&mut class.decorators, constructor, ctx)
                 .expect("At least one decorator")
         } else {
             debug_assert!(
@@ -1254,17 +1245,10 @@ impl<'a> LegacyDecorator<'a> {
 
         if method_decoration_count == 0 {
             if self.emit_decorator_metadata {
-                if method.kind.is_constructor() {
-                    debug_assert!(
-                        self.metadata.pop_constructor_metadata().is_none(),
-                        "No method decorators, so `pop_constructor_metadata` should be `None`"
-                    );
-                } else {
-                    debug_assert!(
-                        self.metadata.pop_method_metadata().is_none(),
-                        "No method decorators, so `pop_method_metadata` should be `None`"
-                    );
-                }
+                debug_assert!(
+                    self.metadata.pop_method_metadata().is_none(),
+                    "No method decorators, so `pop_method_metadata` should be `None`"
+                );
             }
             return None;
         }
@@ -1287,17 +1271,53 @@ impl<'a> LegacyDecorator<'a> {
 
         if self.emit_decorator_metadata {
             // `decorateMetadata` should always be injected after param decorators
-            if method.kind.is_constructor() {
-                if let Some(metadata) = self.metadata.pop_constructor_metadata() {
-                    decorations.push(ArrayExpressionElement::from(metadata));
-                }
-            } else if let Some(metadata) = self.metadata.pop_method_metadata() {
+            if let Some(metadata) = self.metadata.pop_method_metadata() {
                 decorations.push(ArrayExpressionElement::from(metadata.r#type));
                 decorations.push(ArrayExpressionElement::from(metadata.param_types));
                 if let Some(return_type) = metadata.return_type {
                     decorations.push(ArrayExpressionElement::from(return_type));
                 }
             }
+        }
+
+        Some(Expression::new_array_expression(SPAN, decorations, ctx))
+    }
+
+    fn get_all_decorators_of_class_constructor(
+        &mut self,
+        class_decorators: &mut ArenaVec<'a, Decorator<'a>>,
+        constructor: &mut ClassConstructor<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let params = &mut constructor.value.params;
+        let param_decoration_count =
+            params.items.iter().fold(0, |acc, param| acc + param.decorators.len());
+        let decoration_count = class_decorators.len() + param_decoration_count;
+
+        if decoration_count == 0 {
+            if self.emit_decorator_metadata {
+                debug_assert!(
+                    self.metadata.pop_constructor_metadata().is_none(),
+                    "No constructor decorators, so constructor metadata should be empty"
+                );
+            }
+            return None;
+        }
+
+        let mut decorations = ArenaVec::with_capacity_in(decoration_count, ctx);
+        decorations.extend(
+            class_decorators
+                .take_in(ctx)
+                .into_iter()
+                .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
+        );
+        if param_decoration_count > 0 {
+            self.transform_decorators_of_parameters(&mut decorations, params, ctx);
+        }
+        if self.emit_decorator_metadata
+            && let Some(metadata) = self.metadata.pop_constructor_metadata()
+        {
+            decorations.push(ArrayExpressionElement::from(metadata));
         }
 
         Some(Expression::new_array_expression(SPAN, decorations, ctx))
@@ -1326,8 +1346,8 @@ impl<'a> LegacyDecorator<'a> {
 
         class.body.body.iter().any(|element| {
             matches!(element,
-                ClassElement::MethodDefinition(method) if method.kind.is_constructor() &&
-                    Self::class_method_parameter_is_decorated(&method.value)
+                ClassElement::Constructor(constructor) if
+                    Self::class_method_parameter_is_decorated(&constructor.value)
             )
         })
     }

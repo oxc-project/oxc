@@ -1351,6 +1351,30 @@ impl<'a> Dummy<'a> for ClassElement<'a> {
     }
 }
 
+impl<'a> Dummy<'a> for ClassConstructor<'a> {
+    /// Create a dummy [`ClassConstructor`].
+    ///
+    /// Has cost of making 2 allocations (144 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            key: Dummy::dummy(allocator),
+            accessibility: Dummy::dummy(allocator),
+            value: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ClassConstructorKey<'a> {
+    /// Create a dummy [`ClassConstructorKey`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Identifier(Dummy::dummy(allocator))
+    }
+}
+
 impl<'a> Dummy<'a> for MethodDefinition<'a> {
     /// Create a dummy [`MethodDefinition`].
     ///
@@ -1424,7 +1448,7 @@ impl<'a> Dummy<'a> for MethodDefinitionKind {
     /// Does not allocate any data into arena.
     #[inline(always)]
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Constructor
+        Self::Method
     }
 }
 

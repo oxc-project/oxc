@@ -371,6 +371,9 @@ impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
             ClassElement::StaticBlock(block) => {
                 block.body.iter().any(|stmt| stmt.may_have_side_effects(ctx))
             }
+            ClassElement::Constructor(e) => {
+                e.value.params.items.iter().any(|item| !item.decorators.is_empty())
+            }
             ClassElement::MethodDefinition(e) => {
                 !e.decorators.is_empty()
                     || e.key.may_have_side_effects(ctx)

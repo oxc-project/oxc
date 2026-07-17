@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, Function, MethodDefinitionKind, Statement,
+        FormalParameter, Function, Statement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -62,12 +62,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MethodDefinition(method) = node.kind() else {
+        let AstKind::ClassConstructor(method) = node.kind() else {
             return;
         };
-        if method.kind != MethodDefinitionKind::Constructor {
-            return;
-        }
 
         if !method.value.params.items.iter().any(FormalParameter::has_modifier) {
             return;

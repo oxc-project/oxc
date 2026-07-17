@@ -40,7 +40,7 @@ pdf.mjs:
   sys peak growth: 1610 # 1.61 kB
   arena allocs: 2
   arena reallocs: 0
-  arena size: 4559896 # 4.56 MB
+  arena size: 4553688 # 4.55 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
@@ -73,5 +73,5 @@ kitchen-sink.tsx:
   sys peak growth: 3218 # 3.22 kB
   arena allocs: 6132
   arena reallocs: 280
-  arena size: 6829872 # 6.83 MB
+  arena size: 6823408 # 6.82 MB
 
