@@ -183,22 +183,38 @@ function buildExampleTransform(
   scriptOffset: number,
 ): TransformResult {
   const componentName = filePath.split("/").pop()?.replace(/\.vue$/i, "") ?? "Component";
-  const setupBody = scriptSource.trim();
+  const { imports, setupBody, importOriginalStart, bodyOriginalStart } = splitScriptSetup(
+    scriptSource,
+    scriptOffset,
+  );
+
+  // Imports must stay at module top-level — nesting them inside `setup()` is invalid ESM.
+  const runtimeImport = `import { defineComponent as _defineComponent } from "vue";\n`;
+  const importBlock = runtimeImport + (imports.length > 0 ? `${imports}\n` : "");
   const prefix =
-    `import { defineComponent as _defineComponent } from "vue";\n` +
+    importBlock +
     `export default /*@__PURE__*/_defineComponent({\n` +
     `  __name: ${JSON.stringify(componentName)},\n` +
     `  setup(__props) {\n`;
   const suffix = `\n    return () => null;\n  },\n});\n`;
-  const sourceText = `${prefix}${indent(setupBody, 4)}${suffix}`;
+  const indentedBody = indent(setupBody, 4);
+  const sourceText = `${prefix}${indentedBody}${suffix}`;
 
   const mappings: Mapping[] = [];
+  if (imports.length > 0) {
+    mappings.push({
+      virtualStart: runtimeImport.length,
+      virtualEnd: runtimeImport.length + imports.length,
+      originalStart: importOriginalStart,
+      originalEnd: importOriginalStart + imports.length,
+    });
+  }
   if (setupBody.length > 0) {
     mappings.push({
       virtualStart: prefix.length,
-      virtualEnd: prefix.length + setupBody.length,
-      originalStart: scriptOffset,
-      originalEnd: scriptOffset + setupBody.length,
+      virtualEnd: prefix.length + indentedBody.length,
+      originalStart: bodyOriginalStart,
+      originalEnd: bodyOriginalStart + setupBody.length,
     });
   }
 
@@ -208,6 +224,63 @@ function buildExampleTransform(
     mappings,
   };
 }
+
+/**
+ * Split `<script setup>` source into top-level import statements vs setup body.
+ */
+function splitScriptSetup(
+  scriptSource: string,
+  scriptOffset: number,
+): {
+  imports: string;
+  setupBody: string;
+  importOriginalStart: number;
+  bodyOriginalStart: number;
+} {
+  const lines = scriptSource.split("\n");
+  const importLines: string[] = [];
+  const bodyLines: string[] = [];
+  let seenBody = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Skip leading blanks; keep blanks that sit inside the import block.
+    if (!seenBody && trimmed.length === 0) {
+      if (importLines.length > 0) importLines.push(line);
+      continue;
+    }
+    if (!seenBody && trimmed.startsWith("import ")) {
+      importLines.push(line);
+      continue;
+    }
+    seenBody = true;
+    bodyLines.push(line);
+  }
+
+  const imports = importLines.join("\n").trimEnd();
+  const setupBody = bodyLines.join("\n").trim();
+
+  let importOriginalStart = scriptOffset;
+  let bodyOriginalStart = scriptOffset;
+  const firstImport = importLines.find((l) => l.trim().startsWith("import "));
+  if (firstImport) {
+    const idx = scriptSource.indexOf(firstImport);
+    if (idx >= 0) importOriginalStart = scriptOffset + idx;
+  }
+  const firstBody = bodyLines.find((l) => l.trim().length > 0);
+  if (firstBody) {
+    const idx = scriptSource.indexOf(firstBody);
+    if (idx >= 0) bodyOriginalStart = scriptOffset + idx;
+  }
+
+  return {
+    imports,
+    setupBody,
+    importOriginalStart,
+    bodyOriginalStart,
+  };
+}
+
 
 function indent(text: string, spaces: number): string {
   const pad = " ".repeat(spaces);
