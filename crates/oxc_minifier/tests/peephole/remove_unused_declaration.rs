@@ -856,7 +856,7 @@ fn keep_sloppy_annex_b_alias_member_write_after_cycle_removed() {
 fn keep_script_root_var_in_nested_statement_after_cycle_removed() {
     let options = CompressOptions::smallest();
     let source = "function outer() { function d1() { return x + d2() } function d2() { return d1() } return 1 } outer(); switch (1) { case 1: var x = 42; }";
-    let expected = "function outer() { return 1 } switch (1) { case 1: var x = 42; }";
+    let expected = "function outer() { return 1 } var x = 42;";
     test_options_source_type(source, expected, SourceType::script(), &options);
 
     // CommonJS top-level vars are wrapper-local, so ordinary counts may remove them.
