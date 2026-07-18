@@ -27,7 +27,7 @@ struct NoTopLevelAwaitConfig {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
-pub struct NoTopLevelAwait(Box<NoTopLevelAwaitConfig>);
+pub struct NoTopLevelAwait(NoTopLevelAwaitConfig);
 
 declare_oxc_lint!(
     /// ### What it does
