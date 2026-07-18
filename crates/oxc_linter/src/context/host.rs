@@ -8,10 +8,11 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, ArenaBox};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
-use oxc_span::{SourceType, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
@@ -311,6 +312,40 @@ impl<'a> ContextHost<'a> {
     /// by any rule to report issues.
     #[inline]
     pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
+        if self.source_type().is_jsx() {
+            let nodes = self.semantic().nodes();
+            if let Some((node_id, node)) = nodes
+                .iter_enumerated()
+                .filter(|(_, node)| node.kind().span().contains_inclusive(diagnostic.span))
+                .min_by_key(|(_, node)| {
+                    let span = node.kind().span();
+                    span.end - span.start
+                })
+            {
+                let mut containing_jsx_offset = None;
+                for kind in std::iter::once(node.kind()).chain(nodes.ancestor_kinds(node_id)) {
+                    match kind {
+                        AstKind::JSXExpressionContainer(_) => break,
+                        AstKind::JSXElement(element) => {
+                            if containing_jsx_offset.is_some() {
+                                diagnostic.jsx_parent_offset = containing_jsx_offset;
+                                break;
+                            }
+                            containing_jsx_offset = Some(element.span.start);
+                        }
+                        AstKind::JSXFragment(fragment) => {
+                            if containing_jsx_offset.is_some() {
+                                diagnostic.jsx_parent_offset = containing_jsx_offset;
+                                break;
+                            }
+                            containing_jsx_offset = Some(fragment.span.start);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }

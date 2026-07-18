@@ -218,6 +218,7 @@ pub fn message_to_lsp_diagnostic(
         &message.error.code,
         error_offset,
         section_offset,
+        message.jsx_parent_offset,
         source_text,
     );
 
@@ -409,6 +410,7 @@ fn add_ignore_fixes(
     code: &OxcCode,
     error_offset: u32,
     section_offset: u32,
+    jsx_parent_offset: Option<u32>,
     source_text: &str,
 ) {
     debug_assert!(
@@ -420,10 +422,11 @@ fn add_ignore_fixes(
         return;
     };
     // TODO: doesn't support disabling multiple rules by name for a given line.
-    fixes.push(disable_for_this_line(
+    fixes.push(disable_for_this_line_with_jsx_parent(
         &rule_name_with_plugin,
         error_offset,
         section_offset,
+        jsx_parent_offset,
         source_text,
     ));
     fixes.push(disable_for_this_section(&rule_name_with_plugin, section_offset, source_text));
@@ -435,8 +438,52 @@ fn disable_for_this_line(
     section_offset: u32,
     source_text: &str,
 ) -> FixedContent {
+    disable_for_this_line_with_jsx_parent(
+        rule_name,
+        error_offset,
+        section_offset,
+        None,
+        source_text,
+    )
+}
+
+fn disable_for_this_line_with_jsx_parent(
+    rule_name: &str,
+    error_offset: u32,
+    section_offset: u32,
+    jsx_parent_offset: Option<u32>,
+    source_text: &str,
+) -> FixedContent {
     let bytes = source_text.as_bytes();
     let message = format!("Disable {rule_name} for this line");
+
+    if let Some(jsx_parent_offset) = jsx_parent_offset {
+        let mut line_break_offset = jsx_parent_offset;
+        for byte in bytes[section_offset as usize..jsx_parent_offset as usize].iter().rev() {
+            if *byte == b'\n' || *byte == b'\r' {
+                break;
+            }
+            line_break_offset -= 1;
+        }
+
+        let (content_prefix, insert_offset) =
+            get_section_insert_position(section_offset, line_break_offset, bytes);
+        let whitespace_range = &bytes[insert_offset as usize..jsx_parent_offset as usize];
+        let whitespace_len =
+            whitespace_range.iter().take_while(|c| matches!(c, b' ' | b'\t')).count();
+        let whitespace = String::from_utf8_lossy(&whitespace_range[..whitespace_len]);
+        let position = offset_to_position(insert_offset, source_text);
+
+        return FixedContent {
+            message,
+            code: format!(
+                "{content_prefix}{whitespace}{{/* oxlint-disable-next-line {rule_name} */}}\n"
+            ),
+            range: Range::new(position, position),
+            kind: FixKind::SafeFix,
+            lsp_kind: FixedContentKind::IgnoreLintRuleLine,
+        };
+    }
 
     // Reuse an inline disable-line comment on the same line when present.
     if let Some(existing_comment_end) = get_inline_disable_line_comment_end(error_offset, bytes) {
@@ -834,7 +881,7 @@ mod test {
         let code = OxcCode { scope: Some("jsx-a11y".into()), number: Some("alt-text".into()) };
         let mut fixes = vec![];
 
-        super::add_ignore_fixes(&mut fixes, &code, 0, 0, source);
+        super::add_ignore_fixes(&mut fixes, &code, 0, 0, None, source);
 
         assert_eq!(fixes[0].code, "// oxlint-disable-next-line jsx-a11y/alt-text\n");
         assert_eq!(fixes[1].code, "// oxlint-disable jsx-a11y/alt-text\n");
@@ -958,6 +1005,27 @@ mod test {
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_uses_brace_escaped_comment_before_element() {
+        let source = include_str!("fixtures/jsx-disable-multiline.tsx");
+        let error_offset = source.find("onClick").unwrap() as u32;
+        let jsx_parent_offset = source.find("<div").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_parent(
+            "jsx-a11y/interactive-supports-focus",
+            error_offset,
+            0,
+            Some(jsx_parent_offset),
+            source,
+        );
+
+        insta::assert_snapshot!(
+            fix.code,
+            @"      {/* oxlint-disable-next-line jsx-a11y/interactive-supports-focus */}"
+        );
+        assert_eq!(fix.range.start.line, 4);
         assert_eq!(fix.range.start.character, 0);
     }
 
