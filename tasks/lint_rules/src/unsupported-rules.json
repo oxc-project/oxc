@@ -53,6 +53,7 @@
     "n/prefer-global/timers": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
     "n/prefer-global/url": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
     "n/prefer-global/url-search-params": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/no-unpublished-bin": "No support for this rule in Oxlint, as it requires knowledge of the package.json file and its `bin` field.",
     "import/order": "Not implementing this in Oxlint as its behavior is covered very well by [Oxfmt's import sorting](https://oxc.rs/docs/guide/usage/formatter/sorting.html).",
     "unicorn/template-indent": "Stylistic rule.",
     "unicorn/no-non-function-verb-prefix": "Requires type information. Not currently possible to implement in oxlint.",
