@@ -725,7 +725,7 @@ fn render_config_builder_error(
 mod test {
     use std::fs;
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -1242,6 +1242,36 @@ mod test {
         tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.js"]);
         tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.ts"]);
         tester.test_and_snapshot(&["-c", ".oxlintrc.json", "other.jsx"]);
+    }
+
+    #[test]
+    fn test_rejects_malformed_override_globs() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::create_dir(temp_dir.path().join("src")).unwrap();
+        fs::write(temp_dir.path().join("src/app.js"), "debugger;").unwrap();
+
+        for (pattern, reason) in [
+            ("src/**/*.{js,ts", "unclosed brace expansion"),
+            ("src/[abpp.js", "unclosed character class"),
+        ] {
+            let config = serde_json::json!({
+                "rules": { "no-debugger": "error" },
+                "overrides": [{
+                    "files": [pattern],
+                    "rules": { "no-debugger": "off" }
+                }]
+            });
+            fs::write(temp_dir.path().join(".oxlintrc.json"), serde_json::to_vec(&config).unwrap())
+                .unwrap();
+
+            let (output, result) = Tester::new()
+                .with_cwd(temp_dir.path().to_path_buf())
+                .test_output(&["-c", ".oxlintrc.json", "src/app.js"]);
+
+            assert!(matches!(result, CliRunResult::InvalidOptionConfig));
+            assert!(output.contains(pattern), "{output}");
+            assert!(output.contains(reason), "{output}");
+        }
     }
 
     #[test]
