@@ -82,12 +82,11 @@ const defineGetter = Function.prototype.call.bind(
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
-// Getter for the `value` property on a `Comment` class instance.
-// Copied into a `const` below after being defined in class static block.
+// Getters for `start`, `end`, `value`, and `loc` properties on a `Comment` class instance.
+// Copied into `const`s below after being defined in class static block.
+let getCommentStartTemp: (this: Comment) => number;
+let getCommentEndTemp: (this: Comment) => number;
 let getCommentValueTemp: (this: Comment) => string;
-
-// Getter for the `loc` property on a `Comment` class instance.
-// Copied into a `const` below after being defined in class static block.
 let getCommentLocTemp: (this: Comment) => Location;
 
 // Setter for `#pos` private property on a `Comment` class instance.
@@ -115,10 +114,10 @@ let getCommentPrivateLoc: (comment: Comment) => Location | null;
  */
 class Comment implements Span {
   type: CommentType["type"] = null!; // Overwritten later
-  start: number = 0;
-  end: number = 0;
   range: [number, number] = [0, 0];
 
+  declare start: number; // Defined with `__defineGetter__` in constructor
+  declare end: number; // Defined with `__defineGetter__` in constructor
   declare value: string; // Defined with `__defineGetter__` in constructor
   declare loc: Location; // Defined with `__defineGetter__` in constructor
 
@@ -126,33 +125,73 @@ class Comment implements Span {
   #loc: Location | null = null;
 
   constructor() {
-    // Define `value` and `loc` as own getter properties (enumerable + configurable by default).
-    // This makes `{...comment}` spread `value` and `loc`, and `JSON.stringify(comment)` serialize them.
+    // Define `start`, `end`, `value` and `loc` as own getter properties (enumerable + configurable by default).
+    // This makes `{...comment}` spread them, and `JSON.stringify(comment)` serialize them.
     // Note: `new Comment()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
+    defineGetter(this, "start", getCommentStart);
+    defineGetter(this, "end", getCommentEnd);
     defineGetter(this, "value", getCommentValue);
     defineGetter(this, "loc", getCommentLoc);
   }
 
   // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
   static {
+    getCommentStartTemp = function (this: Comment): number {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in the `commentsInt32` access below.
+      debugAssertIsNonNull(
+        commentsInt32,
+        "`Comment` object's `start` field accessed after file finished linting",
+      );
+
+      return commentsInt32[this.#pos >> 2];
+    };
+
+    getCommentEndTemp = function (this: Comment): number {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in the `commentsInt32` access below.
+      debugAssertIsNonNull(
+        commentsInt32,
+        "`Comment` object's `end` field accessed after file finished linting",
+      );
+
+      return commentsInt32[(this.#pos >> 2) + 1];
+    };
+
     getCommentValueTemp = function (this: Comment): string {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
-      // In release build, it will result in an error in `commentsUint8` or `sourceText` accesses below.
+      // In release build, it will result in an error in `commentsUint8`, `commentsInt32`, or `sourceText`
+      // accesses below.
       debugAssert(
-        commentsUint8 !== null && sourceText !== null,
+        commentsUint8 !== null && commentsInt32 !== null && sourceText !== null,
         "`Comment` object's `value` field accessed after file finished linting",
       );
 
-      const kind = commentsUint8[this.#pos + COMMENT_KIND_OFFSET];
+      const pos = this.#pos;
+
+      const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
 
       // Line comments: `// text` -> slice `start + 2..end`
       // Block comments: `/* text */` -> slice `start + 2..end - 2`
-      return sourceText.slice(this.start + 2, this.end - COMMENT_END_SUBTRACTIONS[kind]);
+      const pos32 = pos >> 2,
+        start = commentsInt32[pos32],
+        end = commentsInt32[pos32 + 1];
+      return sourceText.slice(start + 2, end - COMMENT_END_SUBTRACTIONS[kind]);
     };
 
     getCommentLocTemp = function (this: Comment): Location {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in the `commentsInt32` access below.
+      debugAssertIsNonNull(
+        commentsInt32,
+        "`Comment` object's `loc` field accessed after file finished linting",
+      );
+
       const loc = this.#loc;
       if (loc !== null) return loc;
 
@@ -167,7 +206,10 @@ class Comment implements Span {
       }
       activeCommentsWithLocCount++;
 
-      return (this.#loc = computeLoc(this.start, this.end));
+      const pos32 = this.#pos >> 2,
+        start = commentsInt32[pos32],
+        end = commentsInt32[pos32 + 1];
+      return (this.#loc = computeLoc(start, end));
     };
 
     setCommentPosTemp = function (comment: Comment, pos: number) {
@@ -183,6 +225,8 @@ class Comment implements Span {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
+const getCommentStart = getCommentStartTemp;
+const getCommentEnd = getCommentEndTemp;
 const getCommentValue = getCommentValueTemp;
 const getCommentLoc = getCommentLocTemp;
 const setCommentPos = setCommentPosTemp;
@@ -349,15 +393,15 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
   // Deserialize comment into a cached `Comment` object
   const comment = cachedComments[index];
 
-  // Set `#pos` private property, which is used in `value` getter
+  // Set `#pos` private property, which is used in getters
   setCommentPos(comment, pos);
 
   const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
   comment.type = COMMENT_TYPES[kind];
 
   const pos32 = pos >> 2;
-  comment.range[0] = comment.start = commentsInt32[pos32];
-  comment.range[1] = comment.end = commentsInt32[pos32 + 1];
+  comment.range[0] = commentsInt32[pos32];
+  comment.range[1] = commentsInt32[pos32 + 1];
 
   return comment;
 }

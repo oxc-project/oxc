@@ -13,12 +13,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Identifier",
-  |   "start": 0,
-  |   "end": 1,
   |   "range": [
   |     0,
   |     1
   |   ],
+  |   "start": 0,
+  |   "end": 1,
   |   "value": "a",
   |   "loc": {
   |     "start": {
@@ -346,12 +346,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
-  |   "start": 7,
-  |   "end": 10,
   |   "range": [
   |     7,
   |     10
   |   ],
+  |   "start": 7,
+  |   "end": 10,
   |   "value": "var",
   |   "loc": {
   |     "start": {
@@ -1100,12 +1100,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
-  |   "start": 0,
-  |   "end": 5,
   |   "range": [
   |     0,
   |     5
   |   ],
+  |   "start": 0,
+  |   "end": 5,
   |   "value": "const",
   |   "loc": {
   |     "start": {
@@ -1537,12 +1537,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
-  |   "start": 20,
-  |   "end": 23,
   |   "range": [
   |     20,
   |     23
   |   ],
+  |   "start": 20,
+  |   "end": 23,
   |   "value": "let",
   |   "loc": {
   |     "start": {
@@ -1677,12 +1677,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
-  |   "start": 0,
-  |   "end": 5,
   |   "range": [
   |     0,
   |     5
   |   ],
+  |   "start": 0,
+  |   "end": 5,
   |   "value": "const",
   |   "loc": {
   |     "start": {
@@ -2018,12 +2018,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
-  |   "start": 0,
-  |   "end": 5,
   |   "range": [
   |     0,
   |     5
   |   ],
+  |   "start": 0,
+  |   "end": 5,
   |   "value": "const",
   |   "loc": {
   |     "start": {
@@ -2465,12 +2465,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
-  |   "start": 91,
-  |   "end": 96,
   |   "range": [
   |     91,
   |     96
   |   ],
+  |   "start": 91,
+  |   "end": 96,
   |   "value": "const",
   |   "loc": {
   |     "start": {
@@ -2766,12 +2766,12 @@
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Identifier",
-  |   "start": 0,
-  |   "end": 1,
   |   "range": [
   |     0,
   |     1
   |   ],
+  |   "start": 0,
+  |   "end": 1,
   |   "value": "a",
   |   "loc": {
   |     "start": {
