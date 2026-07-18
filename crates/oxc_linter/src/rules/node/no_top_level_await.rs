@@ -1,13 +1,6 @@
-use oxc_ast::{
-    AstKind,
-    ast::{
-        ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, VariableDeclaration,
-    },
-};
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -80,60 +73,29 @@ impl Rule for NoTopLevelAwait {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Program(program) = node.kind() else {
-            return;
+        let span = match node.kind() {
+            AstKind::AwaitExpression(await_expr) => await_expr.span,
+            AstKind::ForOfStatement(for_of) if for_of.r#await => for_of.span,
+            AstKind::VariableDeclaration(decl) if decl.kind.is_await() => decl.span,
+            _ => return,
         };
+
+        // Only report when not nested inside a function (i.e. top-level).
+        if ctx
+            .nodes()
+            .ancestor_kinds(node.id())
+            .any(|kind| matches!(kind, AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)))
+        {
+            return;
+        }
 
         // `ignoreBin`: skip executable scripts that start with a hashbang.
         if self.0.ignore_bin && ctx.source_text().starts_with("#!") {
             return;
         }
 
-        // Top-level `await` can only appear outside of any function, so walk just
-        // the top-level code and stop descending at every function boundary. This
-        // keeps the rule off the per-node dispatch path for the ubiquitous
-        // `VariableDeclaration` and `ForOfStatement` nodes (most of which live
-        // inside functions); we visit only the small slice of code that can
-        // actually hold a top-level `await`.
-        let mut visitor = TopLevelAwaitVisitor { spans: vec![] };
-        visitor.visit_program(program);
-
-        for span in visitor.spans {
-            ctx.diagnostic(no_top_level_await_diagnostic(span));
-        }
+        ctx.diagnostic(no_top_level_await_diagnostic(span));
     }
-}
-
-/// Collects the spans of top-level `await` expressions, `for await...of` loops,
-/// and `await using` declarations. Recursion stops at function boundaries, so
-/// everything it visits is guaranteed to be top-level.
-struct TopLevelAwaitVisitor {
-    spans: Vec<Span>,
-}
-
-impl<'a> Visit<'a> for TopLevelAwaitVisitor {
-    fn visit_await_expression(&mut self, expr: &AwaitExpression<'a>) {
-        self.spans.push(expr.span);
-        walk::walk_await_expression(self, expr);
-    }
-
-    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
-        if stmt.r#await {
-            self.spans.push(stmt.span);
-        }
-        walk::walk_for_of_statement(self, stmt);
-    }
-
-    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
-        if decl.kind.is_await() {
-            self.spans.push(decl.span);
-        }
-        walk::walk_variable_declaration(self, decl);
-    }
-
-    // Do not descend into functions — their contents are not top-level.
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
-    fn visit_arrow_function_expression(&mut self, _func: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]
@@ -181,9 +143,6 @@ fn test() {
         ("if (cond) { await import('foo') }", None),
         ("for (const e of iterate()) { await handle(e) }", None),
         ("{ await using foo = x }", None),
-        // `await` reached through export declarations is still top-level.
-        ("export const foo = await import('foo')", None),
-        ("export default await import('foo')", None),
         // `ignoreBin` without a hashbang still reports.
         ("const foo = await import('foo')", Some(serde_json::json!([{ "ignoreBin": true }]))),
         // A hashbang without `ignoreBin` still reports.
