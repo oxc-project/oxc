@@ -66,22 +66,6 @@ declare_oxc_lint!(
     ///     const foo = await import('foo');
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### ignoreBin
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// When set to `true`, top-level `await` is allowed in files that begin with
-    /// a hashbang (`#!`), since those are executable scripts rather than
-    /// importable modules.
-    ///
-    /// Example of **correct** code for this rule with `{ "ignoreBin": true }`:
-    /// ```js
-    /// #!/usr/bin/env node
-    /// const foo = await import('foo');
-    /// ```
     NoTopLevelAwait,
     node,
     restriction,
