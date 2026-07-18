@@ -1,4 +1,3 @@
-use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, BitSet};
@@ -12,6 +11,28 @@ use crate::{
     CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_liveness::SymbolLiveness,
     symbol_value::SymbolValues,
 };
+
+/// What the minifier has proved about calls to a locally declared function.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum FunctionSummary {
+    /// No reusable call-site proof is available.
+    #[default]
+    Unknown,
+    /// Calling the function has no side effects, but its result is unknown.
+    SideEffectFree,
+    /// Calling the function has no side effects and returns `undefined`.
+    SideEffectFreeReturnsUndefined,
+}
+
+impl FunctionSummary {
+    pub fn is_side_effect_free(self) -> bool {
+        matches!(self, Self::SideEffectFree | Self::SideEffectFreeReturnsUndefined)
+    }
+
+    pub fn returns_undefined(self) -> bool {
+        self == Self::SideEffectFreeReturnsUndefined
+    }
+}
 
 /// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
 /// two consumption points. Live from `MinifierState::new` so the pre-loop
@@ -70,18 +91,15 @@ pub struct MinifierState<'a> {
     /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
     pub dce: bool,
 
-    /// The return value of function declarations that are pure
-    pub pure_functions: FxHashMap<SymbolId, Option<ConstantValue<'a>>>,
+    /// Reusable call-site proofs for locally declared functions.
+    pub pure_functions: FxHashMap<SymbolId, FunctionSummary>,
 
     pub symbol_values: SymbolValues<'a>,
 
     /// Private member usage for classes
     pub class_symbols_stack: ClassSymbolsStack<'a>,
 
-    /// Program-wide, monotone per-symbol facts. See
-    /// [`SymbolFact`](crate::symbol_facts::SymbolFact) for each bit and its
-    /// consumer, and [`PersistentSymbolFacts`] for the lifecycle contract
-    /// every fact obeys.
+    /// Program-wide, monotone member-write effects.
     pub symbol_facts: PersistentSymbolFacts,
 
     /// One frame per enclosing function body (program root at the bottom).
@@ -147,11 +165,11 @@ impl<'a> MinifierState<'a> {
     /// Whether `Normalize`'s member-write scan should seed `symbol_facts`,
     /// i.e. whether any consumer is live in this configuration. In full
     /// minify the default-mode write-only property drop reads
-    /// `MEMBER_WRITE_HAZARD` and the shared drop predicate reads
-    /// `PROTO_WRITTEN`. In DCE mode the default path is disabled and only the
-    /// `property_write_side_effects: false` opt-in drop runs (reading
-    /// `PROTO_WRITTEN`), so with the knob left on nothing reads the facts and
-    /// seeding is skipped.
+    /// hazardous-member state and the shared drop predicate reads possible
+    /// prototype mutation. In DCE mode the default path is disabled and only
+    /// the `property_write_side_effects: false` opt-in drop reads the prototype
+    /// state, so with the knob left on nothing reads the effects and seeding is
+    /// skipped.
     pub fn seeds_symbol_facts(&self) -> bool {
         !self.dce || !self.options.treeshake.property_write_side_effects
     }

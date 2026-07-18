@@ -2,13 +2,10 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
-use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue},
-    side_effects::MayHaveSideEffects,
-};
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 
-use crate::{TraverseCtx, keep_var::KeepVar};
+use crate::{TraverseCtx, keep_var::KeepVar, state::FunctionSummary};
 
 use super::PeepholeOptimizations;
 
@@ -498,13 +495,18 @@ impl<'a> PeepholeOptimizations {
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
         let binding_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         let binding_scope_flags = ctx.scoping().scope_flags(binding_scope_id);
-        // These bindings can be replaced without producing a resolved write
-        // reference: redeclarations are span-only in semantic, direct eval can
-        // assign through the scope chain, and Script globals alias properties
-        // of the global object. A different function may therefore win at
-        // runtime even when this declaration is pure.
-        if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
-            || binding_scope_flags.contains_direct_eval()
+        // Redeclarations are span-only in semantic and create no references,
+        // so the read-only-reference check below cannot see them. A different
+        // declaration of the same symbol may be impure and win at runtime.
+        if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
+            ctx.state.pure_functions.remove(&symbol_id);
+            return;
+        }
+        // Direct eval and Script global properties can replace the binding
+        // without producing a resolved write reference. Discard any summary
+        // from an earlier pass; removing the last eval may make the binding
+        // safe later, while Script roots are rejected again on every pass.
+        if binding_scope_flags.contains_direct_eval()
             || (ctx.source_type().is_script() && binding_scope_id == ctx.scoping().root_scope_id())
         {
             ctx.state.pure_functions.remove(&symbol_id);
@@ -513,7 +515,11 @@ impl<'a> PeepholeOptimizations {
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
             ctx.state.pure_functions.insert(
                 symbol_id,
-                if body.is_empty() { Some(ConstantValue::Undefined) } else { None },
+                if body.is_empty() {
+                    FunctionSummary::SideEffectFreeReturnsUndefined
+                } else {
+                    FunctionSummary::SideEffectFree
+                },
             );
         }
     }
@@ -523,10 +529,11 @@ impl<'a> PeepholeOptimizations {
         if let Expression::Identifier(ident) = &e.callee {
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
-                && matches!(
-                    ctx.state.pure_functions.get(&symbol_id),
-                    Some(Some(ConstantValue::Undefined))
-                )
+                && ctx
+                    .state
+                    .pure_functions
+                    .get(&symbol_id)
+                    .is_some_and(|summary| summary.returns_undefined())
             {
                 let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
                 if exprs.is_empty() {

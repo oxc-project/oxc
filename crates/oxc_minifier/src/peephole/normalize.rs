@@ -11,7 +11,7 @@ use oxc_syntax::scope::ScopeFlags;
 use super::PeepholeOptimizations;
 use crate::{
     ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    symbol_facts::SymbolFact, symbol_liveness,
+    symbol_facts::MemberWriteEffect, symbol_liveness,
 };
 
 #[derive(Default)]
@@ -599,26 +599,26 @@ impl<'a> Normalize {
     /// `MinifierState::symbol_facts`. `object` is the member expression's object;
     /// walking it to the base identifier determines the chain depth.
     ///
-    /// Sets `MEMBER_WRITE_HAZARD` iff the op reads the property
+    /// Records a member-write hazard iff the op reads the property
     /// (`is_read_modify`), the write is chained (`a.b.c = 1` — dropping the
     /// intermediate `a.b = {}` would throw), or the key may be `"__proto__"` or a
     /// non-literal computed value (`key_is_unsafe` — the write may install
     /// setters).
     ///
-    /// Additionally sets `PROTO_WRITTEN` for the same unsafe keys — a purely
-    /// syntactic fact; the sole-reference exemption is applied at the consumer
-    /// (`is_member_assign_to_unused_binding`), where the reference count is
-    /// current rather than frozen at seed time.
+    /// Unsafe keys record the stronger `MayMutatePrototype` state — a purely
+    /// syntactic effect. The sole-reference exemption is applied at the
+    /// consumer (`is_member_assign_to_unused_binding`), where the reference
+    /// count is current rather than frozen at seed time.
     fn record_member_write_hazard(
         object: &Expression<'a>,
         key_is_unsafe: bool,
         is_read_modify: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // In DCE mode only `PROTO_WRITTEN` has a live consumer (the opt-in
-        // drop); `MEMBER_WRITE_HAZARD`'s default-path reader is full-minify
-        // only. Skip hazard-only work (safe-key read-modify ops, chained
-        // writes, chained deletes) before walking the chain.
+        // In DCE mode only possible prototype mutation has a live consumer
+        // (the opt-in drop); the default hazard reader is full-minify only.
+        // Skip hazard-only work (safe-key read-modify ops, chained writes,
+        // chained deletes) before walking the chain.
         if ctx.state.dce && !key_is_unsafe {
             return;
         }
@@ -644,11 +644,12 @@ impl<'a> Normalize {
         let Some(symbol_id) = ctx.scoping().get_reference(base.reference_id()).symbol_id() else {
             return;
         };
-        let mut facts = SymbolFact::MEMBER_WRITE_HAZARD;
-        if key_is_unsafe {
-            facts |= SymbolFact::PROTO_WRITTEN;
-        }
-        ctx.state.symbol_facts.insert(symbol_id, facts);
+        let effect = if key_is_unsafe {
+            MemberWriteEffect::MayMutatePrototype
+        } else {
+            MemberWriteEffect::Hazard
+        };
+        ctx.state.symbol_facts.record(symbol_id, effect);
     }
 
     fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {

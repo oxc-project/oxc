@@ -1,8 +1,7 @@
 use std::iter;
 
 use crate::{
-    CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor, symbol_facts::SymbolFact,
-    symbol_value::FreshValueKind,
+    CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor, symbol_value::FreshValueKind,
 };
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
@@ -664,7 +663,10 @@ impl<'a> PeepholeOptimizations {
                     && let Some(symbol_id) =
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
-                    ctx.state.pure_functions.contains_key(&symbol_id)
+                    ctx.state
+                        .pure_functions
+                        .get(&symbol_id)
+                        .is_some_and(|summary| summary.is_side_effect_free())
                 } else {
                     false
                 })
@@ -798,7 +800,7 @@ impl<'a> PeepholeOptimizations {
     ///   `=` write to a safe single-level member of a provably-unused fresh
     ///   local is unobservable (terser parity) — unless the symbol carries a
     ///   member-write hazard (compound/update/chained ops, potential
-    ///   `__proto__` setters) — the `MEMBER_WRITE_HAZARD` fact in
+    ///   `__proto__` setters) — the persistent member-write effect in
     ///   `MinifierState::symbol_facts`. See `docs/ASSUMPTIONS.md`.
     fn remove_unused_member_assignment(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         if Self::is_script_root_scope(ctx) {
@@ -850,7 +852,7 @@ impl<'a> PeepholeOptimizations {
         }
         // Program-wide, execution-order-independent hazards: another member op
         // on this symbol reads the property or may install setters.
-        if ctx.state.symbol_facts.has(symbol_id, SymbolFact::MEMBER_WRITE_HAZARD) {
+        if ctx.state.symbol_facts.effect(symbol_id).is_hazardous() {
             return false;
         }
         if !assign_expr.right.may_have_side_effects(ctx) {
@@ -971,13 +973,13 @@ impl<'a> PeepholeOptimizations {
     /// 4. No `__proto__` write may have installed a setter that another
     ///    reference could trigger
     fn is_member_assign_to_unused_binding(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        // A potential `__proto__` write anywhere in the program (`PROTO_WRITTEN`
-        // is seeded by `Normalize`, so traversal order doesn't matter) may have
-        // installed a setter that a sibling property write triggers. Bail while
+        // A potential `__proto__` write anywhere in the program is recorded by
+        // Normalize, so traversal order does not matter. It may have installed
+        // a setter that a sibling property write triggers. Bail while
         // any OTHER reference exists; when the candidate is the symbol's only
         // remaining reference, it either is the proto write itself or the proto
         // write is already gone, so no setter can ever fire.
-        if ctx.state.symbol_facts.has(symbol_id, SymbolFact::PROTO_WRITTEN)
+        if ctx.state.symbol_facts.effect(symbol_id).may_mutate_prototype()
             && ctx.scoping().get_resolved_reference_ids(symbol_id).len() > 1
         {
             return false;

@@ -2262,7 +2262,6 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.140.0"
 dependencies = [
- "bitflags",
  "cow-utils",
  "insta",
  "itoa",

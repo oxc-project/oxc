@@ -35,8 +35,6 @@ oxc_span = { workspace = true }
 oxc_str = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_traverse = { workspace = true }
-
-bitflags = { workspace = true }
 cow-utils = { workspace = true }
 itoa = { workspace = true }
 rustc-hash = { workspace = true }

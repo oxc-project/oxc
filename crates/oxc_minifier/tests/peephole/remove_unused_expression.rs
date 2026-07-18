@@ -901,7 +901,7 @@ fn test_property_write_side_effects() {
         &options,
     );
     // Literal non-string keys can't coerce to `"__proto__"` but are kept
-    // conservatively — see `SymbolFact::PROTO_WRITTEN` docs.
+    // conservatively — see `MemberWriteEffect::MayMutatePrototype`.
     test_options(
         "const a = {}; a[null] = 1; a.a = 1;",
         "const a = {}; a[null] = 1, a.a = 1;",
@@ -921,9 +921,10 @@ fn test_property_write_side_effects() {
 
     // `__proto__` assignment inside a hoisted function — traversal reaches the
     // function body only AFTER `obj.a = 1`, so the old per-pass tracking never saw
-    // it in time and wrongly dropped `obj.a = 1`. `PROTO_WRITTEN` is seeded by
-    // `Normalize` before the fixed-point loop, so it is caught regardless of
-    // order. `f` has an observable side effect (`g()`), so it is not tree-shaken:
+    // it in time and wrongly dropped `obj.a = 1`. `MayMutatePrototype` is
+    // recorded by `Normalize` before the fixed-point loop, so it is caught
+    // regardless of order. `f` has an observable side effect (`g()`), so it is
+    // not tree-shaken:
     // the setter really is installed when `f()` runs, and the sibling `obj.a = 1`
     // that would trigger it must survive.
     test_options(
