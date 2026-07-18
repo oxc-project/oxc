@@ -179,7 +179,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.scoping()
             .get_reference(reference_id)
             .symbol_id()
-            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
+            .and_then(|symbol_id| self.state.symbols.value(symbol_id))
             .filter(|sv| !sv.references.has_writes())
             .and_then(|sv| sv.initialized_constant.as_ref())
     }
@@ -326,7 +326,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             kind,
             boolean_falsy,
         };
-        self.state.symbol_values.init_value(symbol_id, symbol_value);
+        self.state.symbols.init_value(symbol_id, symbol_value);
     }
 
     /// If two expressions are equal.

@@ -13,18 +13,19 @@ impl<'a> PeepholeOptimizations {
 
     /// Count-based unusedness for declaration removal and IIFE folding. The
     /// assignment, member-write, and single-use-substitution consumers instead
-    /// pair `symbol_is_implicitly_observable` with their own count thresholds,
+    /// pair `is_implicitly_observable` with their own count thresholds,
     /// because some runtime semantics can observe a binding independently of
     /// resolved references.
     pub(super) fn symbol_is_unused_by_count(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        !ctx.state.symbol_is_implicitly_observable(symbol_id)
+        !ctx.state.symbols.is_implicitly_observable(symbol_id)
             && ctx.scoping().symbol_is_unused(symbol_id)
     }
 
     /// Function declarations additionally consume graph deadness, allowing
     /// self- and mutually-recursive cycles to be removed.
     fn function_has_no_live_references(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        Self::symbol_is_unused_by_count(symbol_id, ctx) || ctx.state.function_is_dead(symbol_id)
+        Self::symbol_is_unused_by_count(symbol_id, ctx)
+            || ctx.state.symbols.function_is_dead(symbol_id)
     }
 
     /// Return `true` when an exact function-valued initializer contains every
@@ -52,7 +53,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         // Covers exports, Script-root bindings, Annex B aliases, and `using`.
-        if ctx.state.symbol_is_implicitly_observable(symbol_id) {
+        if ctx.state.symbols.is_implicitly_observable(symbol_id) {
             return false;
         }
 

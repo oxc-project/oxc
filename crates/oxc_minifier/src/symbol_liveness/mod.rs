@@ -464,7 +464,7 @@ pub fn register_function(function: &Function<'_>, ctx: &mut TraverseCtx<'_>) {
     }
     let allocator = ctx.allocator();
     let TraverseCtx { state, scoping, .. } = ctx;
-    if let Some(liveness) = &mut state.symbol_liveness {
+    if let Some(liveness) = state.symbols.liveness_mut() {
         liveness.register_function(function, state.source_type, scoping.scoping(), allocator);
     }
 }
@@ -484,15 +484,15 @@ pub fn register_using_declaration(
     let allocator = ctx.allocator();
     let TraverseCtx { state, scoping, .. } = ctx;
     let liveness = state
-        .symbol_liveness
-        .get_or_insert_with(|| SymbolLiveness::new(source_type, scoping.scoping(), allocator));
+        .symbols
+        .ensure_liveness(|| SymbolLiveness::new(source_type, scoping.scoping(), allocator));
     liveness.mark_bound_names(declaration);
 }
 
 /// Normalize hook: record runtime bindings exposed by a named export.
 pub fn register_named_export(declaration: &ExportNamedDeclaration<'_>, ctx: &mut TraverseCtx<'_>) {
     let TraverseCtx { state, scoping, .. } = ctx;
-    let Some(liveness) = &mut state.symbol_liveness else { return };
+    let Some(liveness) = state.symbols.liveness_mut() else { return };
 
     if !declaration.export_kind.is_type()
         && let Some(inner) = &declaration.declaration
@@ -537,7 +537,7 @@ pub fn register_default_export(
         _ => None,
     };
     if let Some(symbol_id) = symbol_id
-        && let Some(liveness) = &mut ctx.state.symbol_liveness
+        && let Some(liveness) = ctx.state.symbols.liveness_mut()
     {
         liveness.mark_implicitly_observable(symbol_id);
     }
@@ -555,7 +555,7 @@ pub fn register_default_export(
 /// cannot resurrect a published dead function, so additions alone need no
 /// recompute. Scope-only rewrites preserve the nearest function owner.
 pub fn dead_references_affect_analysis(ctx: &TraverseCtx<'_>) -> bool {
-    let Some(liveness) = &ctx.state.symbol_liveness else { return false };
+    let Some(liveness) = ctx.state.symbols.liveness() else { return false };
     let Some(graph) = &liveness.recursive_functions else { return false };
     // The analysis is disabled while the root scope contains direct eval, so
     // removed references cannot affect it. The flag may be stale if this pass
@@ -581,8 +581,7 @@ pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: 
     let _ = program;
 
     #[cfg(debug_assertions)]
-    if let Some(dead) = ctx.state.symbol_liveness.as_ref().and_then(SymbolLiveness::dead_functions)
-    {
+    if let Some(dead) = ctx.state.symbols.liveness().and_then(SymbolLiveness::dead_functions) {
         debug_assert_dead_function_declarations_removed(program, ctx.scoping(), dead);
     }
 
@@ -591,7 +590,7 @@ pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: 
     }
 
     let TraverseCtx { state, scoping, .. } = ctx;
-    state.symbol_liveness.as_mut().is_some_and(|liveness| liveness.analyze(scoping.scoping()))
+    state.symbols.liveness_mut().is_some_and(|liveness| liveness.analyze(scoping.scoping()))
 }
 
 /// Debug contract for previously published graph deadness: it is consumed only

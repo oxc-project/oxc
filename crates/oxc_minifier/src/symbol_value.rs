@@ -1,6 +1,5 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
-use oxc_index::IndexVec;
-use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
+use oxc_syntax::reference::ReferenceFlags;
 
 /// The kind of fresh value a binding was initialized with, or `None` when the
 /// value may alias another binding (or is untracked).
@@ -111,43 +110,4 @@ pub struct SymbolValue<'a> {
     /// indistinguishable inside `if (x)` / `x ? …` / `!x`, so such reads fold to
     /// `false` there. See `minimize_expression_in_boolean_context` / #14001.
     pub boolean_falsy: bool,
-}
-
-/// Per-symbol scratch store indexed by `SymbolId`.
-///
-/// Symbol IDs are dense `u32`s, so an indexed `IndexVec` lookup beats a
-/// `FxHashMap` (hash + probe) on every hot path in the peephole pass.
-///
-/// Sized once from `Scoping::symbols_len()`; no minifier pass mints new
-/// symbols, so `init_value` panics on out-of-range — that's the signal to
-/// add a grow path.
-#[derive(Debug)]
-pub struct SymbolValues<'a> {
-    values: IndexVec<SymbolId, Option<SymbolValue<'a>>>,
-}
-
-impl<'a> SymbolValues<'a> {
-    pub(crate) fn new(len: usize) -> Self {
-        let mut values = IndexVec::with_capacity(len);
-        values.resize_with(len, || None);
-        Self { values }
-    }
-
-    /// Reset slots to `None` without releasing the buffer, so the next peephole
-    /// iteration's `init_value` stays on the indexed-write fast path.
-    pub fn reset(&mut self) {
-        for slot in &mut self.values {
-            *slot = None;
-        }
-    }
-
-    #[inline]
-    pub fn init_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolValue<'a>) {
-        self.values[symbol_id] = Some(symbol_value);
-    }
-
-    #[inline]
-    pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolValue<'a>> {
-        self.values.get(symbol_id)?.as_ref()
-    }
 }

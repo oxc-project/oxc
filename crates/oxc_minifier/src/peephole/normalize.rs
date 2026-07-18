@@ -649,7 +649,7 @@ impl<'a> Normalize {
         } else {
             MemberWriteEffect::Hazard
         };
-        ctx.state.record_member_write_effect(symbol_id, effect);
+        ctx.state.symbols.record_member_write_effect(symbol_id, effect);
     }
 
     fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {

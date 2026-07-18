@@ -53,6 +53,7 @@ mod peephole;
 mod state;
 mod symbol_liveness;
 mod symbol_metadata;
+mod symbol_state;
 mod symbol_value;
 mod traverse_context;
 

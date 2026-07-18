@@ -1,18 +1,13 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::Str;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::scope::ScopeId;
 
-use crate::{
-    CompressOptions,
-    symbol_liveness::SymbolLiveness,
-    symbol_metadata::{FunctionSummary, MemberWriteEffect, PersistentSymbolMetadata},
-    symbol_value::SymbolValues,
-};
+use crate::{CompressOptions, symbol_state::SymbolState};
 
 /// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
 /// two consumption points. Live from `MinifierState::new` so the pre-loop
@@ -71,13 +66,14 @@ pub struct MinifierState<'a> {
     /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
     pub dce: bool,
 
-    /// Sparse metadata that remains valid across peephole iterations.
-    persistent_symbols: FxHashMap<SymbolId, PersistentSymbolMetadata>,
+    /// Dense per-pass values, sparse persistent metadata, and optional
+    /// reachability data indexed by semantic symbols.
+    pub(crate) symbols: SymbolState<'a>,
 
-    pub symbol_values: SymbolValues<'a>,
-
-    /// Private member usage for classes
-    pub class_symbols_stack: ClassSymbolsStack<'a>,
+    /// Private-name usage scoped by nested classes. This tracks `#name`
+    /// strings, not semantic `SymbolId`s, so it deliberately stays outside
+    /// `SymbolState`.
+    pub private_member_usage: PrivateMemberUsageStack<'a>,
 
     /// One frame per enclosing function body (program root at the bottom).
     /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
@@ -101,13 +97,6 @@ pub struct MinifierState<'a> {
     /// refresh.
     pub(crate) dirty: PassDirty<'a>,
 
-    /// Implicitly observable bindings plus the optional recursive-function
-    /// graph. Present for modules or when unused removal is enabled; a `using`
-    /// declaration can also create it lazily. Stable metadata is seeded from
-    /// scoping and Normalize; post-flush analysis derives reachability from the
-    /// current semantic reference lists.
-    pub(crate) symbol_liveness: Option<SymbolLiveness<'a>>,
-
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
@@ -121,19 +110,16 @@ impl<'a> MinifierState<'a> {
         scoping: &Scoping,
         allocator: &'a Allocator,
     ) -> Self {
-        let symbol_liveness =
-            SymbolLiveness::new_if_enabled(source_type, &options, scoping, allocator);
+        let symbols = SymbolState::new(source_type, &options, scoping, allocator);
         Self {
             source_type,
             options,
             dce,
-            persistent_symbols: FxHashMap::default(),
-            symbol_values: SymbolValues::new(scoping.symbols_len()),
-            class_symbols_stack: ClassSymbolsStack::new(),
+            symbols,
+            private_member_usage: PrivateMemberUsageStack::new(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
-            symbol_liveness,
             concat_scratch: String::new(),
         }
     }
@@ -150,53 +136,6 @@ impl<'a> MinifierState<'a> {
         !self.dce || !self.options.treeshake.property_write_side_effects
     }
 
-    pub(crate) fn set_function_summary(&mut self, symbol_id: SymbolId, summary: FunctionSummary) {
-        self.persistent_symbols.entry(symbol_id).or_default().set_function_summary(summary);
-    }
-
-    pub(crate) fn clear_function_summary(&mut self, symbol_id: SymbolId) {
-        if let Some(metadata) = self.persistent_symbols.get_mut(&symbol_id) {
-            // Clear in place: removing this shared entry would also erase its
-            // monotone member-write effect.
-            metadata.set_function_summary(FunctionSummary::Unknown);
-        }
-    }
-
-    pub(crate) fn function_summary(&self, symbol_id: SymbolId) -> FunctionSummary {
-        self.persistent_symbols
-            .get(&symbol_id)
-            .map_or(FunctionSummary::Unknown, PersistentSymbolMetadata::function_summary)
-    }
-
-    pub(crate) fn record_member_write_effect(
-        &mut self,
-        symbol_id: SymbolId,
-        effect: MemberWriteEffect,
-    ) {
-        self.persistent_symbols.entry(symbol_id).or_default().record_member_write_effect(effect);
-    }
-
-    pub(crate) fn member_write_effect(&self, symbol_id: SymbolId) -> MemberWriteEffect {
-        self.persistent_symbols
-            .get(&symbol_id)
-            .map_or(MemberWriteEffect::None, PersistentSymbolMetadata::member_write_effect)
-    }
-
-    /// Whether runtime semantics have an implicit observation channel that
-    /// remains even if every resolved reference disappears from the current
-    /// AST.
-    pub(crate) fn symbol_is_implicitly_observable(&self, symbol_id: SymbolId) -> bool {
-        self.symbol_liveness
-            .as_ref()
-            .is_some_and(|liveness| liveness.is_implicitly_observable(symbol_id))
-    }
-
-    /// Whether post-flush graph analysis proved a function declaration
-    /// unreachable from executing code.
-    pub(crate) fn function_is_dead(&self, symbol_id: SymbolId) -> bool {
-        self.symbol_liveness.as_ref().is_some_and(|liveness| liveness.function_is_dead(symbol_id))
-    }
-
     /// Returns whether the AST was mutated since the last call, and resets.
     /// Read and reset are one operation so the signal cannot be cleared
     /// anywhere except at its single consumption point.
@@ -210,43 +149,39 @@ impl<'a> MinifierState<'a> {
     }
 }
 
-/// Stack to track class symbol information
-pub struct ClassSymbolsStack<'a> {
+/// Private member names used in each currently enclosing class.
+pub struct PrivateMemberUsageStack<'a> {
     stack: NonEmptyStack<FxHashSet<Str<'a>>>,
 }
 
-impl<'a> ClassSymbolsStack<'a> {
+impl<'a> PrivateMemberUsageStack<'a> {
     pub fn new() -> Self {
         Self { stack: NonEmptyStack::new(FxHashSet::default()) }
     }
 
-    /// Check if the stack is exhausted
-    pub fn is_exhausted(&self) -> bool {
+    /// Whether all class scopes have been exited.
+    pub fn is_at_root(&self) -> bool {
         self.stack.is_exhausted()
     }
 
-    /// Enter a new class scope
-    pub fn push_class_scope(&mut self) {
+    pub fn enter_class(&mut self) {
         self.stack.push(FxHashSet::default());
     }
 
-    /// Exit the current class scope
-    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Str<'a>>) {
-        let mut used_private_symbols = self.stack.pop();
-        declared_private_symbols.for_each(|name| {
-            used_private_symbols.remove(&name);
+    /// Exit a class and propagate uses of names declared by an outer class.
+    pub fn exit_class(&mut self, declared_private_members: impl Iterator<Item = Str<'a>>) {
+        let mut used_private_members = self.stack.pop();
+        declared_private_members.for_each(|name| {
+            used_private_members.remove(&name);
         });
-        // if the symbol was not declared in this class, that is declared in the class outside the current class
-        self.stack.last_mut().extend(used_private_symbols);
+        self.stack.last_mut().extend(used_private_members);
     }
 
-    /// Add a private member to the current class scope
-    pub fn push_private_member_to_current_class(&mut self, name: Str<'a>) {
+    pub fn record_use(&mut self, name: Str<'a>) {
         self.stack.last_mut().insert(name);
     }
 
-    /// Check if a private member is used in the current class scope
-    pub fn is_private_member_used_in_current_class(&self, name: &Str<'a>) -> bool {
+    pub fn is_used(&self, name: &Str<'a>) -> bool {
         self.stack.last().contains(name)
     }
 }

@@ -231,7 +231,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::Identifier(ident) = expr else { return };
         let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
-        let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+        let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
             return;
         };
         // Skip if there are write references.

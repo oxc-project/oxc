@@ -22,8 +22,7 @@ impl<'a> PeepholeOptimizations {
                         return true;
                     };
                     let name: Str = private_id.name.into();
-                    if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
-                    {
+                    if ctx.state.private_member_usage.is_used(&name) {
                         return true;
                     }
                     prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
@@ -33,15 +32,14 @@ impl<'a> PeepholeOptimizations {
                         return true;
                     };
                     let name: Str = private_id.name.into();
-                    ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
+                    ctx.state.private_member_usage.is_used(&name)
                 }
                 ClassElement::AccessorProperty(accessor) => {
                     let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                         return true;
                     };
                     let name: Str = private_id.name.into();
-                    if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
-                    {
+                    if ctx.state.private_member_usage.is_used(&name) {
                         return true;
                     }
                     accessor.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
@@ -64,7 +62,7 @@ impl<'a> PeepholeOptimizations {
         });
     }
 
-    pub fn get_declared_private_symbols(body: &ClassBody<'a>) -> impl Iterator<Item = Str<'a>> {
+    pub fn declared_private_member_names(body: &ClassBody<'a>) -> impl Iterator<Item = Str<'a>> {
         body.body.iter().filter_map(|element| match element {
             ClassElement::PropertyDefinition(prop) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {

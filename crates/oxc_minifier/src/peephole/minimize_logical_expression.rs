@@ -315,7 +315,7 @@ impl<'a> PeepholeOptimizations {
         if let Expression::Identifier(ident) = object.get_inner_expression()
             && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
         {
-            ctx.state.record_member_write_effect(symbol_id, MemberWriteEffect::Hazard);
+            ctx.state.symbols.record_member_write_effect(symbol_id, MemberWriteEffect::Hazard);
         }
     }
 }

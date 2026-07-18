@@ -195,7 +195,7 @@ impl<'a> PeepholeOptimizations {
     /// `exit_variable_declarator` → `init_symbol_value`); function declarations
     /// and other binding kinds still take the fallback path.
     fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
+        if let Some(sv) = ctx.state.symbols.value(symbol_id) {
             sv.references.has_writes()
         } else {
             ctx.scoping().symbol_is_mutated(symbol_id)
@@ -466,7 +466,7 @@ impl<'a> PeepholeOptimizations {
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.symbol_values.reset();
+        ctx.state.symbols.reset_values();
         // Any module loader (`import`, `export * from`, `export … from`) can, on a
         // cycle, evaluate a foreign module that observes a not-yet-assigned binding
         // our exports close over. So the program root starts its prelude "unsafe"
@@ -495,8 +495,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Only check class_symbols_stack in full optimization mode (not DCE mode)
-        debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
+        // Private member usage is collected only in full optimization mode.
+        debug_assert!(ctx.state.dce || ctx.state.private_member_usage.is_at_root());
     }
 
     fn exit_statements(
@@ -865,7 +865,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        ctx.state.class_symbols_stack.push_class_scope();
+        ctx.state.private_member_usage.enter_class();
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -874,7 +874,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         Self::remove_dead_code_exit_class_body(body, ctx);
         Self::remove_unused_private_members(body, ctx);
-        ctx.state.class_symbols_stack.pop_class_scope(Self::get_declared_private_symbols(body));
+        ctx.state.private_member_usage.exit_class(Self::declared_private_member_names(body));
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -892,7 +892,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name.into());
+        ctx.state.private_member_usage.record_use(node.field.name.into());
     }
 
     fn exit_private_in_expression(
@@ -903,7 +903,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name.into());
+        ctx.state.private_member_usage.record_use(node.left.name.into());
     }
 }
 
