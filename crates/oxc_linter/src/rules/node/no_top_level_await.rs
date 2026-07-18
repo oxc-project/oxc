@@ -39,7 +39,7 @@ declare_oxc_lint!(
     ///
     /// Node.js v20.19 introduced `require(esm)`, but ES modules with top-level
     /// `await` cannot be loaded with `require(esm)`. Avoiding top-level `await`
-    /// keeps a published module loadable from both CommonJS `require()` and ESM
+    /// keeps a module loadable from both CommonJS `require()` and ESM
     /// `import`.
     ///
     /// ### Examples
@@ -64,7 +64,7 @@ declare_oxc_lint!(
     restriction,
     config = NoTopLevelAwaitConfig,
     version = "next",
-    short_description = "Disallow top-level `await` in published modules.",
+    short_description = "Disallow top-level `await` in modules.",
 );
 
 impl Rule for NoTopLevelAwait {
