@@ -103,3 +103,11 @@ export const DESERIALIZED_FLAG_OFFSET = 15;
  * Discriminant value for `CommentKind::Line`.
  */
 export const COMMENT_LINE_KIND = 0;
+
+/**
+ * Synthetic discriminant value for hashbang (`Shebang`) comments.
+ *
+ * Not a real `CommentKind` discriminant - Rust side writes it to the `kind` byte of the hashbang comment
+ * in the buffer, after it has finished with the AST. JS side reads it to identify `Shebang` comments.
+ */
+export const COMMENT_SHEBANG_KIND = 3;

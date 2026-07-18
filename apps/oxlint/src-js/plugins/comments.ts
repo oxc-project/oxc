@@ -9,6 +9,7 @@ import {
   COMMENT_SIZE,
   COMMENT_KIND_OFFSET,
   COMMENT_LINE_KIND,
+  COMMENT_SHEBANG_KIND,
   DATA_POINTER_POS_32,
   DESERIALIZED_FLAG_OFFSET,
 } from "../generated/constants.ts";
@@ -31,13 +32,18 @@ interface CommentType extends Span {
 export type { CommentType as Comment };
 
 // Array of comment `type`s, indexed by `CommentKind` discriminant.
-const COMMENT_TYPES: CommentType["type"][] = ["Block", "Block", "Block"];
+//
+// Slot 3 (`COMMENT_SHEBANG_KIND`) holds `"Shebang"`. Rust side writes that synthetic kind to the hashbang
+// comment's `kind` byte in the buffer (it's not a real `CommentKind`), so we read it here as a `Shebang` comment.
+const COMMENT_TYPES: CommentType["type"][] = ["Block", "Block", "Block", "Block"];
 COMMENT_TYPES[COMMENT_LINE_KIND] = "Line";
+COMMENT_TYPES[COMMENT_SHEBANG_KIND] = "Shebang";
 
 // Array of numbers to subtract from `end` when slicing source text to get `value` of a comment,
 // indexed by `CommentKind` discriminant.
-const COMMENT_END_SUBTRACTIONS: number[] = [2, 2, 2];
+const COMMENT_END_SUBTRACTIONS: number[] = [2, 2, 2, 2];
 COMMENT_END_SUBTRACTIONS[COMMENT_LINE_KIND] = 0;
+COMMENT_END_SUBTRACTIONS[COMMENT_SHEBANG_KIND] = 0;
 
 // Comments for the current file.
 // Created lazily only when needed.
@@ -87,8 +93,9 @@ const defineGetter = Function.prototype.call.bind(
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
-// Getters for `start`, `end`, `range`, `value`, and `loc` properties on a `Comment` class instance.
+// Getters for `type`, `start`, `end`, `range`, `loc`, and `value` properties on a `Comment` class instance.
 // Copied into `const`s below after being defined in class static block.
+let getCommentTypeTemp: (this: Comment) => CommentType["type"];
 let getCommentStartTemp: (this: Comment) => number;
 let getCommentEndTemp: (this: Comment) => number;
 let getCommentRangeTemp: (this: Comment) => Range;
@@ -128,9 +135,8 @@ let getCommentPrivateLoc: (comment: Comment) => Location | null;
  * Reset only clears the `#range` and `#loc` fields.
  */
 class Comment implements Span {
-  type: CommentType["type"] = null!; // Overwritten later
-
   // All defined with `__defineGetter__` in constructor
+  declare type: CommentType["type"];
   declare start: number;
   declare end: number;
   declare range: Range;
@@ -142,10 +148,11 @@ class Comment implements Span {
   #loc: Location | null = null;
 
   constructor() {
-    // Define `start`, `end`, `range`, `loc`, `value` as own getter properties (enumerable + configurable by default).
+    // Define all properties as own getter properties (enumerable + configurable by default).
     // This makes `{...comment}` spread them, and `JSON.stringify(comment)` serialize them.
     // Note: `new Comment()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
+    defineGetter(this, "type", getCommentType);
     defineGetter(this, "start", getCommentStart);
     defineGetter(this, "end", getCommentEnd);
     defineGetter(this, "range", getCommentRange);
@@ -155,6 +162,18 @@ class Comment implements Span {
 
   // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
   static {
+    getCommentTypeTemp = function (this: Comment): CommentType["type"] {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in the `commentsUint8` access below.
+      debugAssertIsNonNull(
+        commentsUint8,
+        "`Comment` object's `type` field accessed after file finished linting",
+      );
+
+      return COMMENT_TYPES[commentsUint8[this.#pos + COMMENT_KIND_OFFSET]];
+    };
+
     getCommentStartTemp = function (this: Comment): number {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
@@ -251,6 +270,7 @@ class Comment implements Span {
 
       // Line comments: `// text` -> slice `start + 2..end`
       // Block comments: `/* text */` -> slice `start + 2..end - 2`
+      // Hashbang: `#! text` -> slice `start + 2..end`
       const pos32 = pos >> 2,
         start = commentsInt32[pos32],
         end = commentsInt32[pos32 + 1];
@@ -275,6 +295,7 @@ class Comment implements Span {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
+const getCommentType = getCommentTypeTemp;
 const getCommentStart = getCommentStartTemp;
 const getCommentEnd = getCommentEndTemp;
 const getCommentRange = getCommentRangeTemp;
@@ -337,8 +358,6 @@ export function deserializeComments(): void {
  *
  * Populates `commentsUint8`, `commentsInt32`, and `commentsLen`, and grows `cachedComments` if needed.
  * Does NOT deserialize comments - they are deserialized lazily via `deserializeCommentIfNeeded`.
- *
- * Exception: If the file has a hashbang, eagerly deserializes the first comment and sets its type to `Shebang`.
  */
 export function initCommentsBuffer(): void {
   debugAssert(
@@ -387,15 +406,6 @@ export function initCommentsBuffer(): void {
     do {
       cachedComments.push(new Comment());
     } while (cachedComments.length < commentsLen);
-  }
-
-  // If file has a hashbang, eagerly deserialize the first comment, and set its type to `Shebang`.
-  // We do this here instead of lazily when comment 0 is deserialized, to remove code
-  // from `deserializeCommentIfNeeded`, which can be called many times.
-  // Rust side adds hashbang comment to start of comments `Vec` as a `Line` comment.
-  // `commentsInt32[0]` is the start of the first comment.
-  if (commentsInt32[0] === 0 && sourceText.startsWith("#!")) {
-    getComment(0).type = "Shebang";
   }
 
   // Check buffer data has valid ranges and ascending order
@@ -448,9 +458,6 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
 
   // Set `#pos` private property, which is used in getters
   setCommentPos(comment, pos);
-
-  const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
-  comment.type = COMMENT_TYPES[kind];
 
   return comment;
 }

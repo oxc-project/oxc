@@ -151,8 +151,9 @@ const defineGetter = Function.prototype.call.bind(
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
-// Getters for `start`, `end`, `range`, `value`, and `loc` properties on a `Token` class instance.
+// Getters for `type`, `start`, `end`, `range`, `loc`, and `value` properties on a `Token` class instance.
 // Copied into `const`s below after being defined in class static block.
+let getTokenTypeTemp: (this: Token) => TokenType["type"];
 let getTokenStartTemp: (this: Token) => number;
 let getTokenEndTemp: (this: Token) => number;
 let getTokenRangeTemp: (this: Token) => Range;
@@ -192,10 +193,10 @@ let getTokenPrivateLoc: (token: Token) => Location | null;
  * Reset only clears the `#range` and `#loc` fields.
  */
 class Token {
-  type: TokenType["type"] = null!; // Overwritten later
   regex: Regex | undefined;
 
   // All defined with `__defineGetter__` in constructor
+  declare type: TokenType["type"];
   declare start: number;
   declare end: number;
   declare range: Range;
@@ -207,10 +208,12 @@ class Token {
   #loc: Location | null = null;
 
   constructor() {
-    // Define `start`, `end`, `range`, `loc`, `value` as own getter properties (enumerable + configurable by default).
+    // Define `type`, `start`, `end`, `range`, `loc`, `value` as own getter properties
+    // (enumerable + configurable by default).
     // This makes `{...token}` spread them, and `JSON.stringify(token)` serialize them.
     // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
+    defineGetter(this, "type", getTokenType);
     defineGetter(this, "start", getTokenStart);
     defineGetter(this, "end", getTokenEnd);
     defineGetter(this, "range", getTokenRange);
@@ -220,6 +223,18 @@ class Token {
 
   // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
   static {
+    getTokenTypeTemp = function (this: Token): TokenType["type"] {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in the `tokensUint8` access below.
+      debugAssertIsNonNull(
+        tokensUint8,
+        "`Token` object's `type` field accessed after file finished linting",
+      );
+
+      return TOKEN_TYPES[tokensUint8[this.#pos + KIND_FIELD_OFFSET]];
+    };
+
     getTokenStartTemp = function (this: Token): number {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
@@ -346,6 +361,7 @@ class Token {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
+const getTokenType = getTokenTypeTemp;
 const getTokenStart = getTokenStartTemp;
 const getTokenEnd = getTokenEndTemp;
 const getTokenRange = getTokenRangeTemp;
@@ -568,8 +584,6 @@ function deserializeTokenIfNeeded(index: number): Token | null {
     regex.pattern = value.slice(1, patternEnd);
     regex.flags = value.slice(patternEnd + 1);
   }
-
-  token.type = TOKEN_TYPES[kind];
 
   return token;
 }

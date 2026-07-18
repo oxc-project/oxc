@@ -37,3 +37,9 @@ pub const CHUNK_FOOTER_SIZE: usize = 48;
 
 /// Minimum alignment requirement for `Arena`'s cursor pointer (`ARENA::MIN_ALIGN`).
 pub const CURSOR_MIN_ALIGN: usize = 1;
+
+/// Synthetic discriminant value for hashbang (`Shebang`) comments (`max CommentKind discriminant + 1`).
+///
+/// Not a real `CommentKind` discriminant. Written to the `kind` byte of the hashbang comment in the buffer
+/// after Rust is finished with the AST, so JS side can identify `Shebang` comments.
+pub const COMMENT_SHEBANG_KIND: u8 = 3;

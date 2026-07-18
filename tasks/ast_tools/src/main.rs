@@ -225,6 +225,9 @@ const AST_VISIT_CRATE_PATH: &str = "crates/oxc_ast_visit";
 /// Path to `oxc_ast_macros` crate
 const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
 
+/// Path to `oxc_linter` crate
+const LINTER_CRATE_PATH: &str = "crates/oxc_linter";
+
 /// Path to `oxc_traverse` crate
 const TRAVERSE_CRATE_PATH: &str = "crates/oxc_traverse";
 

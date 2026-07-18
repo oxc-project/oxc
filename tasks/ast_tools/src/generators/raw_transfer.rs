@@ -20,7 +20,7 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 
 use crate::{
-    ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
+    ALLOCATOR_CRATE_PATH, Generator, LINTER_CRATE_PATH, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
@@ -104,6 +104,10 @@ impl Generator for RawTransferGenerator {
             },
             Output::Rust {
                 path: format!("{OXLINT_APP_PATH}/src/generated/raw_transfer_constants.rs"),
+                tokens: constants_rust.clone(),
+            },
+            Output::Rust {
+                path: format!("{LINTER_CRATE_PATH}/src/generated/raw_transfer_constants.rs"),
                 tokens: constants_rust.clone(),
             },
             Output::Rust {
@@ -1468,6 +1472,8 @@ struct Constants {
     deserialized_flag_offset: u32,
     /// Discriminant value for `CommentKind::Line`
     comment_line_kind: u8,
+    /// Synthetic discriminant value for hashbang (`Shebang`) comments
+    comment_shebang_kind: u8,
     /// Size of `RawTransferMetadata` in bytes
     raw_metadata_size: u32,
     /// Alignment of `RawTransferMetadata`
@@ -1494,6 +1500,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         comment_kind_offset,
         deserialized_flag_offset,
         comment_line_kind,
+        comment_shebang_kind,
         raw_metadata_size,
         raw_metadata_align,
     } = consts;
@@ -1606,6 +1613,14 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
          * Discriminant value for `CommentKind::Line`.
          */
         export const COMMENT_LINE_KIND = {comment_line_kind};
+
+        /**
+         * Synthetic discriminant value for hashbang (`Shebang`) comments.
+         *
+         * Not a real `CommentKind` discriminant - Rust side writes it to the `kind` byte of the hashbang comment
+         * in the buffer, after it has finished with the AST. JS side reads it to identify `Shebang` comments.
+         */
+        export const COMMENT_SHEBANG_KIND = {comment_shebang_kind};
     ");
 
     let block_size = number_lit(BLOCK_SIZE);
@@ -1616,6 +1631,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
     let raw_metadata_align = number_lit(raw_metadata_align);
     let chunk_footer_size = number_lit(CHUNK_FOOTER_SIZE);
     let arena_cursor_min_align = number_lit(ARENA_CURSOR_MIN_ALIGN);
+    let comment_shebang_kind = number_lit(comment_shebang_kind);
 
     let rust_output = quote! {
         //! Constants for raw transfer / fixed-sized allocators.
@@ -1663,6 +1679,13 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         ///@@line_break
         /// Minimum alignment requirement for `Arena`'s cursor pointer (`ARENA::MIN_ALIGN`).
         pub const CURSOR_MIN_ALIGN: usize = #arena_cursor_min_align;
+
+        ///@@line_break
+        /// Synthetic discriminant value for hashbang (`Shebang`) comments (`max CommentKind discriminant + 1`).
+        ///
+        /// Not a real `CommentKind` discriminant. Written to the `kind` byte of the hashbang comment in the buffer
+        /// after Rust is finished with the AST, so JS side can identify `Shebang` comments.
+        pub const COMMENT_SHEBANG_KIND: u8 = #comment_shebang_kind;
     };
 
     (js_output, rust_output)
@@ -1754,6 +1777,12 @@ fn get_constants(schema: &Schema) -> Constants {
     let comment_line_kind =
         comment_kind_enum.variants.iter().find(|v| v.name() == "Line").unwrap().discriminant;
 
+    // Synthetic kind for hashbang (`Shebang`) comments - one more than the max real `CommentKind` discriminant.
+    // Rust side writes this to the `kind` byte of the hashbang comment in the buffer (after it's finished with the
+    // AST), so JS side can identify `Shebang` comments. It is not a valid `CommentKind` discriminant.
+    let comment_shebang_kind =
+        comment_kind_enum.variants.iter().map(|variant| variant.discriminant).max().unwrap() + 1;
+
     Constants {
         buffer_size,
         active_size,
@@ -1772,6 +1801,7 @@ fn get_constants(schema: &Schema) -> Constants {
         comment_kind_offset,
         deserialized_flag_offset,
         comment_line_kind,
+        comment_shebang_kind,
         raw_metadata_size,
         raw_metadata_align,
     }

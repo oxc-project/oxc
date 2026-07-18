@@ -17,7 +17,7 @@ use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig
 use oxc_semantic::SemanticBuilder;
 
 use crate::generated::raw_transfer_constants::{
-    ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, CURSOR_MIN_ALIGN,
+    ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, COMMENT_SHEBANG_KIND, CURSOR_MIN_ALIGN,
 };
 
 /// Layout describing the JS-owned buffer (`BLOCK_SIZE` bytes, aligned on `BLOCK_ALIGN`).
@@ -233,8 +233,9 @@ unsafe fn parse_raw_impl(
                 program.source_text = source_text;
             }
 
-            // If file has a hashbang, add it to comments.
-            // It will be converted to a `Shebang` comment on JS side.
+            // If file has a hashbang, add it to comments as a `Line` comment.
+            // Its `kind` byte in the buffer is overwritten with `COMMENT_SHEBANG_KIND` at the end of this function,
+            // so JS side reads it as a `Shebang` comment.
             if let Some(hashbang) = &program.hashbang {
                 program.comments.insert(
                     0,
@@ -277,6 +278,23 @@ unsafe fn parse_raw_impl(
 
             // Return offset of `Program` within buffer (bottom 32 bits of pointer)
             let program_offset = ptr::from_ref(program) as u32;
+
+            // If file has a hashbang, set the synthetic `Shebang` kind on the hashbang comment's `kind` byte in the
+            // buffer (it was inserted above as a `Line` comment), so JS side reads it as a `Shebang` comment.
+            // `COMMENT_SHEBANG_KIND` is not a valid `CommentKind` discriminant, so end the `&mut Program` borrow
+            // before writing it - no `&Program` / `&Comment` may be live over the invalid discriminant.
+            if program.hashbang.is_some() {
+                let comment_kind_ptr = NonNull::from_mut(&mut program.comments[0].kind);
+
+                #[expect(dropping_references)]
+                drop(program);
+
+                // SAFETY: `comment_kind_ptr` points into the live `Program` in the buffer.
+                // `program`, and every reference derived from it, has been dropped, so writing an invalid `CommentKind`
+                // discriminant does not place an invalid value behind a live reference.
+                // This byte is never read as a `CommentKind` by Rust again - only by JS side, as a raw byte.
+                unsafe { comment_kind_ptr.cast::<u8>().write(COMMENT_SHEBANG_KIND) };
+            }
 
             (program_offset, has_bom, tokens_offset, tokens_len)
         }

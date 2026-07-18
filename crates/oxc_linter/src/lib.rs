@@ -56,6 +56,9 @@ mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
     mod rule_runner_impls;
+    // Note: `raw_transfer_constants` module will not compile on 32-bit systems.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    pub mod raw_transfer_constants;
     pub mod rules_enum;
 }
 
@@ -559,13 +562,16 @@ impl Linter {
 
         // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
         if let Some(js_allocator_pool) = js_allocator_pool {
-            self.clone_into_fixed_size_allocator_and_run_external_rules(
-                external_rules,
-                path,
-                ctx_host,
-                program,
-                js_allocator_pool,
-            );
+            // SAFETY: `program` is not accessed again after this call (it's the last use of `program` here)
+            unsafe {
+                self.clone_into_fixed_size_allocator_and_run_external_rules(
+                    external_rules,
+                    path,
+                    ctx_host,
+                    program,
+                    js_allocator_pool,
+                );
+            }
             return;
         }
 
@@ -580,14 +586,17 @@ impl Linter {
                 .insert(0, Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line));
         }
 
-        self.convert_and_call_external_linter(
-            external_rules,
-            path,
-            ctx_host,
-            program,
-            tokens,
-            allocator,
-        );
+        // SAFETY: `program` is not accessed again after this call (it's the last use of `program` here)
+        unsafe {
+            self.convert_and_call_external_linter(
+                external_rules,
+                path,
+                ctx_host,
+                program,
+                tokens,
+                allocator,
+            );
+        }
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -607,8 +616,16 @@ impl Linter {
     /// This copies the AST and source text from the standard allocator into a fixed-size
     /// allocator before passing to JS plugins. This allows using standard allocators for
     /// parsing/linting while still supporting JS plugin raw transfer.
+    ///
+    /// # SAFETY
+    ///
+    /// Caller must not access `program` again after calling this function.
+    ///
+    /// If `program` has a hashbang, this function overwrites the `kind` byte of the first comment
+    /// (the hashbang comment) in the buffer with `COMMENT_SHEBANG_KIND`, which is not a valid
+    /// `CommentKind` discriminant. Accessing that `Comment`'s `kind` field would be undefined behavior.
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    fn clone_into_fixed_size_allocator_and_run_external_rules(
+    unsafe fn clone_into_fixed_size_allocator_and_run_external_rules(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
@@ -666,14 +683,17 @@ impl Linter {
         // Clone tokens into fixed-size allocator
         let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());
 
-        self.convert_and_call_external_linter(
-            external_rules,
-            path,
-            ctx_host,
-            program,
-            tokens,
-            js_allocator,
-        );
+        // SAFETY: `program` is not accessed again after this call (it's the last use of `program` here)
+        unsafe {
+            self.convert_and_call_external_linter(
+                external_rules,
+                path,
+                ctx_host,
+                program,
+                tokens,
+                js_allocator,
+            );
+        }
 
         // The `AllocatorGuard` (`js_allocator_guard`) is dropped here, returning the allocator to the pool.
         // This ensures that we never have too many allocators in play at once, avoiding OOM.
@@ -683,8 +703,16 @@ impl Linter {
     ///
     /// This is the common code path shared by both `run_external_rules` and
     /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    ///
+    /// # SAFETY
+    ///
+    /// Caller must not access `program` again after calling this function.
+    ///
+    /// If `program` has a hashbang, this function overwrites the `kind` byte of the first comment
+    /// (the hashbang comment) in the buffer with `COMMENT_SHEBANG_KIND`, which is not a valid
+    /// `CommentKind` discriminant. Accessing that `Comment`'s `kind` field would be undefined behavior.
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    fn convert_and_call_external_linter(
+    unsafe fn convert_and_call_external_linter(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
@@ -760,6 +788,26 @@ impl Linter {
         // Write offset of `Program` in metadata at end of buffer
         let is_ts = program.source_type.is_typescript();
         let is_jsx = program.source_type.is_jsx();
+
+        // If file has a hashbang, set the synthetic `Shebang` kind on the hashbang comment's `kind` byte in the
+        // buffer (it was inserted earlier as a `Line` comment), so JS side reads it as a `Shebang` comment.
+        // `COMMENT_SHEBANG_KIND` is not a valid `CommentKind` discriminant, so end the `&mut Program` borrow
+        // before writing it - no `&Program` / `&Comment` may be live over the invalid discriminant.
+        if program.hashbang.is_some() {
+            use crate::generated::raw_transfer_constants::COMMENT_SHEBANG_KIND;
+
+            let comment_kind_ptr = NonNull::from_mut(&mut program.comments[0].kind);
+
+            #[expect(dropping_references)]
+            drop(program);
+
+            // SAFETY: `comment_kind_ptr` points into the live `Program` in the buffer.
+            // `program`, and every reference derived from it, has been dropped, so writing an invalid `CommentKind`
+            // discriminant does not place an invalid value behind a live reference.
+            // This byte is never read as a `CommentKind` by Rust again - only by JS side, as a raw byte.
+            unsafe { comment_kind_ptr.cast::<u8>().write(COMMENT_SHEBANG_KIND) };
+        }
+
         let metadata = RawTransferMetadata::new(
             program_offset,
             is_ts,
