@@ -798,13 +798,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
-        // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
-        let comments = ArenaVec::new_in(self);
         Program::new(
             span,
             self.source_type,
             self.source_text,
-            comments,
+            // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`
+            [],
             hashbang,
             directives,
             statements,

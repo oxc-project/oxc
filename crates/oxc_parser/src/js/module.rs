@@ -451,7 +451,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     let export_named_decl = ExportNamedDeclaration::boxed(
                         self.end_span(span),
                         Some(stmt.into_declaration()),
-                        ArenaVec::new_in(self),
+                        [],
                         None,
                         ImportOrExportKind::Value,
                         NONE,
@@ -481,7 +481,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let export_named_decl = ExportNamedDeclaration::boxed(
                     self.end_span(span),
                     Some(decl),
-                    ArenaVec::new_in(self),
+                    [],
                     None,
                     ImportOrExportKind::Value,
                     NONE,
@@ -651,7 +651,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let export_named_decl = ExportNamedDeclaration::boxed(
             self.end_span(span),
             Some(declaration),
-            ArenaVec::new_in(self),
+            [],
             None,
             export_kind,
             NONE,

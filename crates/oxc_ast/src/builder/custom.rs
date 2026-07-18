@@ -67,10 +67,7 @@ impl<'a> FormalParameter<'a> {
         pattern: BindingPattern<'a>,
         builder: &B,
     ) -> Self {
-        let decorators = ArenaVec::new_in(builder.builder());
-        FormalParameter::new(
-            span, decorators, pattern, NONE, NONE, false, None, false, false, builder,
-        )
+        FormalParameter::new(span, [], pattern, NONE, NONE, false, None, false, false, builder)
     }
 }
 
@@ -183,12 +180,15 @@ impl<'a> ExportNamedDeclaration<'a> {
     /// * `specifiers`
     /// * `source`
     #[inline]
-    pub fn boxed_plain<B: GetAstBuilder<'a>>(
+    pub fn boxed_plain<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        specifiers: T1,
         source: Option<StringLiteral<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    {
         ExportNamedDeclaration::boxed(
             span,
             None,
@@ -212,11 +212,10 @@ impl<'a> ExportNamedDeclaration<'a> {
         declaration: Declaration<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        let specifiers = ArenaVec::new_in(builder.builder());
         ExportNamedDeclaration::boxed(
             span,
             Some(declaration),
-            specifiers,
+            [],
             None,
             ImportOrExportKind::Value,
             NONE,

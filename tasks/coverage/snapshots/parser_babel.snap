@@ -164,14 +164,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
 
-  × TS(1015): A parameter cannot have a question mark and an initializer.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:10:16]
-  9 │         readonly x = 0,
- 10 │         public y?: number = 0) {}
-    ·                ─
- 11 │ }
-    ╰────
-
   × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:7:9]
  6 │         private pi?: number,
@@ -179,6 +171,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:10:16]
+  9 │         readonly x = 0,
+ 10 │         public y?: number = 0) {}
+    ·                ─
+ 11 │ }
+    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 
@@ -13332,6 +13332,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
+ 6 │         private pi?: number,
+ 7 │         public readonly pur,
+   ·         ───────────────────
+ 8 │         // Also works on AssignmentPattern
+   ╰────
+
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:9:9]
   8 │         // Also works on AssignmentPattern
@@ -13357,14 +13365,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·                ─
  11 │ }
     ╰────
-
-  × TS(1016): A required parameter cannot follow an optional parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
- 6 │         private pi?: number,
- 7 │         public readonly pur,
-   ·         ───────────────────
- 8 │         // Also works on AssignmentPattern
-   ╰────
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:12]
@@ -13873,6 +13873,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
+ 5 │   private pi?: number,
+ 6 │   public readonly pur,
+   ·   ───────────────────
+ 7 │   readonly x = 0,
+   ╰────
+
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:7:3]
  6 │   public readonly pur,
@@ -13897,14 +13905,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │   public y?: number = 0
    ·          ─
  9 │ ) {}
-   ╰────
-
-  × TS(1016): A required parameter cannot follow an optional parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
- 5 │   private pi?: number,
- 6 │   public readonly pur,
-   ·   ───────────────────
- 7 │   readonly x = 0,
    ╰────
 
   × TS(1016): A required parameter cannot follow an optional parameter.

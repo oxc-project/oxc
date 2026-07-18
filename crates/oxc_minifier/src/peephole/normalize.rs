@@ -11,7 +11,7 @@ use oxc_syntax::scope::ScopeFlags;
 use super::PeepholeOptimizations;
 use crate::{
     ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    symbol_facts::SymbolFact,
+    symbol_facts::SymbolFact, symbol_liveness,
 };
 
 #[derive(Default)]
@@ -56,6 +56,38 @@ impl<'a> Traverse<'a> for Normalize {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
         }
+    }
+
+    // Normalize is the only traversal that builds stable liveness metadata:
+    // registered function declarations and implicitly observable bindings.
+    // Each post-flush analysis derives ownership and reachability from the
+    // current semantic references.
+    fn enter_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        symbol_liveness::register_function(node, ctx);
+    }
+
+    fn enter_variable_declaration(
+        &mut self,
+        node: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::register_using_declaration(node, ctx);
+    }
+
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::register_named_export(node, ctx);
+    }
+
+    fn enter_export_default_declaration(
+        &mut self,
+        node: &mut ExportDefaultDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::register_default_export(node, ctx);
     }
 
     fn exit_statements(
@@ -309,9 +341,8 @@ impl<'a> Normalize {
             return;
         }
         // `replace_expression` walks the dropped ident into `PassDirty`, so
-        // its resolved reference is pruned by the driver's pre-loop
-        // `flush_pass_dirty`, before pass 1 — otherwise the symbol would
-        // look referenced forever.
+        // its resolved reference is pruned by the pre-loop `end_pass` flush,
+        // before pass 1 — otherwise the symbol would look referenced forever.
         let new_arg =
             Expression::new_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal, ctx);
         ctx.replace_expression(&mut e.argument, new_arg);

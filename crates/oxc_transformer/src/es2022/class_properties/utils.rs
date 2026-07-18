@@ -3,7 +3,6 @@
 
 use std::path::Path;
 
-use oxc_allocator::ArenaVec;
 use oxc_ast::{ast::*, builder::AstBuilder, builder::NONE};
 use oxc_span::SPAN;
 use oxc_traverse::BoundIdentifier;
@@ -26,13 +25,7 @@ pub(super) fn create_variable_declaration<'a>(
         false,
         ctx,
     );
-    Statement::new_variable_declaration(
-        SPAN,
-        kind,
-        ArenaVec::from_value_in(declarator, ctx),
-        false,
-        ctx,
-    )
+    Statement::new_variable_declaration(SPAN, kind, [declarator], false, ctx)
 }
 
 /// Convert an iterator of `Expression`s into an iterator of `Statement::ExpressionStatement`s.

@@ -8,13 +8,16 @@ use oxc_span::SourceType;
 use oxc_str::Str;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
-use crate::{CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_value::SymbolValues};
+use crate::{
+    CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_liveness::SymbolLiveness,
+    symbol_value::SymbolValues,
+};
 
 /// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
 /// two consumption points. Live from `MinifierState::new` so the pre-loop
 /// `Normalize` pass records drops through the same typed helpers as the
-/// peephole loop; consumed and re-initialized by `flush_pass_dirty` in the
-/// `Compressor` driver after `Normalize` and after every peephole pass.
+/// peephole loop; consumed and reset or resized by the end-of-pass sequence
+/// after `Normalize` and after every peephole pass.
 pub struct PassDirty<'a> {
     /// `ReferenceId`s whose AST node has been removed and not re-installed
     /// in any later mutation this pass.
@@ -98,10 +101,17 @@ pub struct MinifierState<'a> {
     mutated: bool,
 
     /// Per-pass dirty accumulator populated by `replace_*` / `drop_*` helpers
-    /// as subtrees are removed. Consumed by `flush_pass_dirty` in the
-    /// `Compressor` driver (pre-loop and after each mutated pass) to drive
-    /// the incremental scoping refresh.
+    /// as subtrees are removed. Consumed by the end-of-pass sequence after
+    /// Normalize and every peephole pass to drive the incremental scoping
+    /// refresh.
     pub(crate) dirty: PassDirty<'a>,
+
+    /// Implicitly observable bindings plus the optional recursive-function
+    /// graph. Present for modules or when unused removal is enabled; a `using`
+    /// declaration can also create it lazily. Stable metadata is seeded from
+    /// scoping and Normalize; post-flush analysis derives reachability from the
+    /// current semantic reference lists.
+    pub(crate) symbol_liveness: Option<SymbolLiveness<'a>>,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
@@ -116,6 +126,8 @@ impl<'a> MinifierState<'a> {
         scoping: &Scoping,
         allocator: &'a Allocator,
     ) -> Self {
+        let symbol_liveness =
+            SymbolLiveness::new_if_enabled(source_type, &options, scoping, allocator);
         Self {
             source_type,
             options,
@@ -127,6 +139,7 @@ impl<'a> MinifierState<'a> {
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
+            symbol_liveness,
             concat_scratch: String::new(),
         }
     }
@@ -141,6 +154,21 @@ impl<'a> MinifierState<'a> {
     /// seeding is skipped.
     pub fn seeds_symbol_facts(&self) -> bool {
         !self.dce || !self.options.treeshake.property_write_side_effects
+    }
+
+    /// Whether runtime semantics have an implicit observation channel that
+    /// remains even if every resolved reference disappears from the current
+    /// AST.
+    pub(crate) fn symbol_is_implicitly_observable(&self, symbol_id: SymbolId) -> bool {
+        self.symbol_liveness
+            .as_ref()
+            .is_some_and(|liveness| liveness.is_implicitly_observable(symbol_id))
+    }
+
+    /// Whether post-flush graph analysis proved a function declaration
+    /// unreachable from executing code.
+    pub(crate) fn function_is_dead(&self, symbol_id: SymbolId) -> bool {
+        self.symbol_liveness.as_ref().is_some_and(|liveness| liveness.function_is_dead(symbol_id))
     }
 
     /// Returns whether the AST was mutated since the last call, and resets.

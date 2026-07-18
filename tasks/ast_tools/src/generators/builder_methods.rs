@@ -324,7 +324,7 @@ fn get_struct_params<'s>(
                     str_generic_count += 1;
                     Some((format_ident!("S{str_generic_count}"), GenericType::Into))
                 }
-                TypeDef::Box(_) => {
+                TypeDef::Box(_) | TypeDef::Vec(_) => {
                     generic_count += 1;
                     Some((format_ident!("T{generic_count}"), GenericType::IntoIn))
                 }

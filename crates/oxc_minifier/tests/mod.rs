@@ -52,6 +52,16 @@ pub(crate) fn test_options(source_text: &str, expected: &str, options: &Compress
     test_options_source_type(source_text, expected, SourceType::mjs(), options);
 }
 
+/// Assert one capped compression run without the usual idempotency check.
+/// A deliberately low `max_iterations` may conservatively retain code that a
+/// second independent run can remove.
+#[track_caller]
+pub(crate) fn test_options_once(source_text: &str, expected: &str, options: &CompressOptions) {
+    let actual = run(source_text, SourceType::mjs(), Some(options.clone()));
+    let expected = run(expected, SourceType::mjs(), None);
+    assert_eq!(actual, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{actual}");
+}
+
 #[track_caller]
 pub(crate) fn test_same_options(source_text: &str, options: &CompressOptions) {
     test_options(source_text, source_text, options);

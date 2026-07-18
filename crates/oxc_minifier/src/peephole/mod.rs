@@ -33,7 +33,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    traverse_context::as_direct_eval_call,
+    symbol_liveness, traverse_context::as_direct_eval_call,
 };
 
 pub use self::normalize::{Normalize, NormalizeOptions};
@@ -397,12 +397,14 @@ impl<'a> PeepholeOptimizations {
     /// references from scoping, refresh direct-eval flags if an `eval(...)`
     /// call was dropped, and re-initialize the accumulator.
     ///
-    /// The `Compressor` driver calls this after `Normalize` (so the
-    /// fixed-point loop starts against already-pruned scoping and
-    /// Normalize's drops cost no extra peephole pass) and after every
-    /// peephole pass.
-    pub(crate) fn flush_pass_dirty(program: &Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    /// [`Self::end_pass`] calls this after `Normalize` (so the fixed-point
+    /// loop starts against already-pruned scoping and Normalize's drops cost
+    /// no extra peephole pass) and after every peephole pass — quiet ones
+    /// included, where every step below is a cheap no-op.
+    fn flush_pass_dirty(program: &Program<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let had_dead = !ctx.state.dirty.dead_refs.is_empty();
+        let liveness_inputs_changed = ctx.state.dirty.eval_dropped
+            || (had_dead && symbol_liveness::dead_references_affect_analysis(ctx));
 
         // (1) Resolved references — direct consumption, no walk.
         //     Dirty data is built by `replace_*` / `drop_*` helpers as
@@ -446,6 +448,20 @@ impl<'a> PeepholeOptimizations {
             ctx.state.dirty.dead_refs = BitSet::new_in(refs_len, ctx.allocator());
         }
         ctx.state.dirty.eval_dropped = false;
+        liveness_inputs_changed
+    }
+
+    /// End-of-pass sequence: flush the dirty accumulator into scoping, then
+    /// derive function reachability from those settled semantic references.
+    /// Keeping the pair together makes the ordering structural. Returns
+    /// whether newly dead functions demand another pass.
+    pub(crate) fn end_pass(
+        program: &Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        force_liveness_analysis: bool,
+    ) -> bool {
+        let liveness_inputs_changed = Self::flush_pass_dirty(program, ctx);
+        symbol_liveness::analyze(program, ctx, force_liveness_analysis || liveness_inputs_changed)
     }
 }
 
@@ -467,8 +483,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // than reallocating (matching the `reset`/`clear` above).
         *ctx.state.body_unsafe_stack.last_mut() =
             (ctx.scoping().root_scope_id(), module_has_loaders);
-        // `PassDirty` is managed by the `Compressor` driver via
-        // `flush_pass_dirty`, not reset per traversal.
+        // `PassDirty` is managed by the end-of-pass sequence, not reset per
+        // traversal.
     }
 
     fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {

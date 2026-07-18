@@ -884,10 +884,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
 
 /// Gets the name and kind of the given function node.
 /// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
-pub fn get_function_name_with_kind<'a>(
-    node: &AstNode<'a>,
-    parent_node: &AstNode<'a>,
-) -> Cow<'a, str> {
+pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode<'a>) -> String {
     let (name, is_async, is_generator) = match node.kind() {
         AstKind::Function(func) => (func.name(), func.r#async, func.generator),
         AstKind::ArrowFunctionExpression(arrow_func) => (None, arrow_func.r#async, false),
@@ -973,7 +970,7 @@ pub fn get_function_name_with_kind<'a>(
         tokens.push(Cow::Owned(format!("`{method_name}`")));
     }
 
-    Cow::Owned(tokens.join(" "))
+    tokens.join(" ")
 }
 
 // get the top iterator

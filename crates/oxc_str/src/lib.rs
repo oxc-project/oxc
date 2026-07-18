@@ -8,7 +8,7 @@ mod str;
 
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
 pub use ident::{ArenaIdentHashMap, Ident, IdentHashMap, IdentHashSet};
-pub use str::Str;
+pub use str::{Str, Str as ArenaStr};
 
 #[doc(hidden)]
 pub mod __internal {

@@ -323,7 +323,7 @@ impl<'a> PeepholeOptimizations {
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
             let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = BlockStatement::boxed(finalizer.span, ArenaVec::new_in(ctx), ctx);
+                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
                 std::mem::swap(finalizer, &mut block);
                 Statement::BlockStatement(block)
             } else {
@@ -339,7 +339,8 @@ impl<'a> PeepholeOptimizations {
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
         let new_expr = if e.test.may_have_side_effects(ctx) {
             // "(a, true) ? b : c" => "a, b"
-            let exprs = ArenaVec::from_array_in(
+            Expression::new_sequence_expression(
+                e.span,
                 [
                     {
                         let mut test = e.test.take_in(ctx);
@@ -349,8 +350,7 @@ impl<'a> PeepholeOptimizations {
                     if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) },
                 ],
                 ctx,
-            );
-            Expression::new_sequence_expression(e.span, exprs, ctx)
+            )
         } else {
             let result_expr = if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) };
             let should_keep_as_sequence_expr = Self::should_keep_indirect_access(&result_expr, ctx);
@@ -358,19 +358,16 @@ impl<'a> PeepholeOptimizations {
             if should_keep_as_sequence_expr {
                 Expression::new_sequence_expression(
                     e.span,
-                    ArenaVec::from_array_in(
-                        [
-                            Expression::new_numeric_literal(
-                                e.span,
-                                0.0,
-                                None,
-                                NumberBase::Decimal,
-                                ctx,
-                            ),
-                            result_expr,
-                        ],
-                        ctx,
-                    ),
+                    [
+                        Expression::new_numeric_literal(
+                            e.span,
+                            0.0,
+                            None,
+                            NumberBase::Decimal,
+                            ctx,
+                        ),
+                        result_expr,
+                    ],
                     ctx,
                 )
             } else {
@@ -592,10 +589,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Expression<'a> {
         Expression::new_sequence_expression(
             span,
-            ArenaVec::from_array_in(
-                [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
-                ctx,
-            ),
+            [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
             ctx,
         )
     }

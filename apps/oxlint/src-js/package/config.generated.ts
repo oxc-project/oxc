@@ -1268,7 +1268,7 @@ export interface DummyRuleMap {
   "prefer-destructuring"?:
     | RuleNoConfig
     | [AllowWarnDeny, PreferDestructuringOption]
-    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringRenamedPropertiesConfig];
+    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringEnforcementConfig];
   "prefer-exponentiation-operator"?: RuleNoConfig;
   "prefer-named-capture-group"?: RuleNoConfig;
   "prefer-numeric-literals"?: RuleNoConfig;
@@ -4148,7 +4148,8 @@ export interface PreferDestructuringAssignmentConfig {
   AssignmentExpression?: PreferDestructuringTargetOption;
   VariableDeclarator?: PreferDestructuringTargetOption;
 }
-export interface PreferDestructuringRenamedPropertiesConfig {
+export interface PreferDestructuringEnforcementConfig {
+  enforceForDeclarationWithTypeAnnotation?: boolean;
   enforceForRenamedProperties?: boolean;
 }
 export interface PreferPromiseRejectErrors {

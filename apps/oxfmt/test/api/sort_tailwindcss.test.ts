@@ -493,6 +493,25 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  // Regression test for https://github.com/oxc-project/oxc/issues/24464
+  it("should not split a class glued to an expression when preserveWhitespace is true", async () => {
+    let input = "const A = <div className={`text-white flex bg-${color}`}>Hello</div>;";
+    let result = await format("test.tsx", input, { sortTailwindcss: { preserveWhitespace: true } });
+
+    // `bg-` touches ${color} and must stay glued to it; other classes are still sorted
+    expect(result.code).toContain("`flex text-white bg-${color}`");
+    expect(result.errors).toStrictEqual([]);
+
+    input =
+      "const A = <div className={`mb-4 flex items-center rounded-full bg-${color}/10`}>Hello</div>;";
+    result = await format("test.tsx", input, { sortTailwindcss: { preserveWhitespace: true } });
+
+    // `bg-` and the `/10` modifier must stay glued to ${color}
+    expect(result.code).toContain("bg-${color}/10`");
+    expect(result.code).not.toContain("bg- ");
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should collapse newlines to single space when preserveWhitespace is false (default)", async () => {
     const input = `<div className={\`flex
 items-center

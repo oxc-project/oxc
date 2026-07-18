@@ -73,6 +73,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut list = ArenaVec::new_in(self);
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
+        let mut has_optional = false;
 
         loop {
             let kind = self.cur_kind();
@@ -143,7 +144,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self,
                 ));
             } else {
-                list.push(self.parse_formal_parameter_with_decorators(func_kind, span, decorators));
+                let param =
+                    self.parse_formal_parameter_with_decorators(func_kind, span, decorators);
+                if param.optional {
+                    has_optional = true;
+                } else if has_optional && param.initializer.is_none() {
+                    self.error(diagnostics::required_parameter_after_optional_parameter(
+                        param.span,
+                    ));
+                }
+                list.push(param);
             }
         }
 

@@ -307,11 +307,6 @@ pub fn jsdoc_type_in_annotation(
 }
 
 #[cold]
-pub fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
-}
-
-#[cold]
 pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     ts_error(
         "1235",
@@ -365,23 +360,6 @@ pub fn function_implementation_missing(span: Span) -> OxcDiagnostic {
         "Function implementation is missing or not immediately following the declaration.",
     )
     .with_label(span)
-}
-
-/// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
-#[cold]
-pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
-    ts_error(
-        "1242",
-        "'abstract' modifier can only appear on a class, method, or property declaration.",
-    )
-    .with_label(span)
-}
-
-/// 'abstract' modifier cannot be used with a private identifier. (18019)
-#[cold]
-pub fn abstract_cannot_be_used_with_private_identifier(span: Span) -> OxcDiagnostic {
-    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
-        .with_label(span)
 }
 
 /// A parameter property is only allowed in a constructor implementation.ts(2369)

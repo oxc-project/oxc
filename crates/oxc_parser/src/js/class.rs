@@ -793,6 +793,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn check_method_definition(&mut self, method: &MethodDefinition<'a>) {
+        if method.r#type.is_abstract() && method.key.is_private_identifier() {
+            self.error(diagnostics::abstract_with_private_identifier(method.key.span()));
+        }
+
         if !method.computed
             && let Some((name, span)) = method.key.prop_name()
         {
@@ -809,6 +813,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 if method.value.generator {
                     self.error(diagnostics::constructor_generator(span));
+                }
+                if method.r#type.is_abstract() {
+                    self.error(diagnostics::illegal_abstract_modifier(span));
                 }
             }
         }

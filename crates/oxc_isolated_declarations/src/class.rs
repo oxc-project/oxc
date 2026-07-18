@@ -132,7 +132,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ClassElement::new_property_definition(
             property.span,
             property.r#type,
-            ArenaVec::new_in(self),
+            [],
             property.key.clone_in(self.allocator()),
             type_annotation,
             value,
@@ -206,7 +206,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ClassElement::new_method_definition(
             definition.span,
             definition.r#type,
-            ArenaVec::new_in(self),
+            [],
             definition.key.clone_in(self.allocator()),
             value,
             definition.kind,
@@ -231,7 +231,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ClassElement::new_property_definition(
             span,
             r#type,
-            ArenaVec::new_in(self),
+            [],
             key,
             NONE,
             None,
@@ -260,7 +260,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(ClassElement::new_property_definition(
             param.span,
             PropertyDefinitionType::PropertyDefinition,
-            ArenaVec::new_in(self),
+            [],
             key,
             type_annotation,
             None,
@@ -297,13 +297,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 )
             }
             MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
-                let params = FormalParameters::boxed(
-                    SPAN,
-                    FormalParameterKind::Signature,
-                    ArenaVec::new_in(self),
-                    NONE,
-                    self,
-                );
+                let params =
+                    FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [], NONE, self);
                 self.transform_class_method_definition(method, params, None)
             }
             MethodDefinitionKind::Set => {
@@ -628,7 +623,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     let new_element = ClassElement::new_accessor_property(
                         property.span,
                         property.r#type,
-                        ArenaVec::new_in(self),
+                        [],
                         property.key.clone_in(self.allocator()),
                         type_annotation,
                         None,
@@ -657,10 +652,22 @@ impl<'a> IsolatedDeclarations<'a> {
             // Prevents other classes with the same public members from being used in place of the current class
             let ident = PropertyKey::new_private_identifier(SPAN, "private", self);
             let r#type = PropertyDefinitionType::PropertyDefinition;
-            let decorators = ArenaVec::new_in(self);
             let element = ClassElement::new_property_definition(
-                SPAN, r#type, decorators, ident, NONE, None, false, false, false, false, false,
-                false, false, None, self,
+                SPAN,
+                r#type,
+                [],
+                ident,
+                NONE,
+                None,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                None,
+                self,
             );
 
             elements.insert(0, element);
@@ -671,7 +678,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Class::boxed(
             decl.span,
             decl.r#type,
-            ArenaVec::new_in(self),
+            [],
             decl.id.clone_in(self.allocator()),
             decl.type_parameters.clone_in(self.allocator()),
             decl.super_class.clone_in(self.allocator()),
@@ -688,19 +695,8 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         kind: BindingPattern<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
-        let parameter = FormalParameter::new(
-            SPAN,
-            ArenaVec::new_in(self),
-            kind,
-            NONE,
-            NONE,
-            false,
-            None,
-            false,
-            false,
-            self,
-        );
-        let items = ArenaVec::from_value_in(parameter, self);
-        FormalParameters::boxed(SPAN, FormalParameterKind::Signature, items, NONE, self)
+        let parameter =
+            FormalParameter::new(SPAN, [], kind, NONE, NONE, false, None, false, false, self);
+        FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [parameter], NONE, self)
     }
 }
