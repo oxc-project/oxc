@@ -359,6 +359,7 @@
     "vue/prefer-separate-static-class": "Not currently possible, as it requires Vue template parsing.",
     "vue/prefer-template": "Not currently possible, as it requires Vue template parsing.",
     "vue/prefer-true-attribute-shorthand": "Not currently possible, as it requires Vue template parsing.",
+    "vue/prefer-v-model": "Not currently possible, as it requires Vue template parsing.",
     "vue/quote-props": "Stylistic rule.",
     "vue/require-component-is": "Not currently possible, as it requires Vue template parsing.",
     "vue/require-explicit-emits": "Not currently possible, as it requires Vue template parsing.",
