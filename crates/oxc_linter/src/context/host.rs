@@ -170,6 +170,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// Whether diagnostics should carry JSX child anchors for LSP code actions.
+    collect_jsx_disable_offsets: bool,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -208,6 +210,7 @@ impl<'a> ContextHost<'a> {
             file_extension,
             config,
             frameworks: options.framework_hints,
+            collect_jsx_disable_offsets: options.collect_jsx_disable_offsets,
         }
         .sniff_for_frameworks()
     }
@@ -312,44 +315,54 @@ impl<'a> ContextHost<'a> {
     /// by any rule to report issues.
     #[inline]
     pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
-        if self.source_type().is_jsx() {
-            let nodes = self.semantic().nodes();
-            if let Some((node_id, node)) = nodes
-                .iter_enumerated()
-                .filter(|(_, node)| node.kind().span().contains_inclusive(diagnostic.span))
-                .min_by_key(|(_, node)| {
-                    let span = node.kind().span();
-                    span.end - span.start
-                })
-            {
-                let mut containing_jsx_offset = None;
-                for kind in std::iter::once(node.kind()).chain(nodes.ancestor_kinds(node_id)) {
-                    match kind {
-                        AstKind::JSXExpressionContainer(_) => break,
-                        AstKind::JSXElement(element) => {
-                            if containing_jsx_offset.is_some() {
-                                diagnostic.jsx_parent_offset = containing_jsx_offset;
-                                break;
-                            }
-                            containing_jsx_offset = Some(element.span.start);
-                        }
-                        AstKind::JSXFragment(fragment) => {
-                            if containing_jsx_offset.is_some() {
-                                diagnostic.jsx_parent_offset = containing_jsx_offset;
-                                break;
-                            }
-                            containing_jsx_offset = Some(fragment.span.start);
-                        }
-                        _ => {}
-                    }
-                }
-            }
+        if self.collect_jsx_disable_offsets && self.source_type().is_jsx() {
+            diagnostic.jsx_child_offset = self.jsx_child_offset(diagnostic.span);
         }
 
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }
         self.diagnostics.borrow_mut().push(diagnostic);
+    }
+
+    fn jsx_child_offset(&self, diagnostic_span: Span) -> Option<u32> {
+        let nodes = self.semantic().nodes();
+        let (node_id, node) = nodes
+            .iter_enumerated()
+            .filter(|(_, node)| node.kind().span().contains_inclusive(diagnostic_span))
+            .min_by_key(|(_, node)| {
+                let span = node.kind().span();
+                span.end - span.start
+            })?;
+
+        let mut child_offset = None;
+        for kind in std::iter::once(node.kind()).chain(nodes.ancestor_kinds(node_id)) {
+            match kind {
+                // JavaScript within an attribute expression can use a normal line comment.
+                AstKind::JSXAttribute(_) => return None,
+                AstKind::JSXText(text) => {
+                    child_offset.get_or_insert(text.span.start);
+                }
+                AstKind::JSXExpressionContainer(container) => {
+                    child_offset.get_or_insert(container.span.start);
+                }
+                AstKind::JSXElement(element) => {
+                    if child_offset.is_some() {
+                        return child_offset;
+                    }
+                    child_offset = Some(element.span.start);
+                }
+                AstKind::JSXFragment(fragment) => {
+                    if child_offset.is_some() {
+                        return child_offset;
+                    }
+                    child_offset = Some(fragment.span.start);
+                }
+                _ => {}
+            }
+        }
+
+        None
     }
 
     // Append a list of diagnostics. Only used in report_unused_directives.
@@ -574,5 +587,92 @@ impl<'a> ContextHost<'a> {
 impl<'a> From<ContextHost<'a>> for Vec<Message> {
     fn from(ctx_host: ContextHost<'a>) -> Self {
         ctx_host.diagnostics.into_inner()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use oxc_allocator::Allocator;
+    use oxc_diagnostics::OxcDiagnostic;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+
+    use super::*;
+
+    fn with_tsx_host(source: &str, collect_offsets: bool, f: impl FnOnce(&ContextHost<'_>)) {
+        let allocator = Allocator::default();
+        let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
+        assert!(parser_ret.diagnostics.is_empty());
+        let program = allocator.alloc(parser_ret.program);
+        let semantic = SemanticBuilder::new_linter().build(program).semantic;
+        let host = ContextHost::new(
+            "test.tsx",
+            vec![ContextSubHost::new(
+                semantic,
+                Arc::new(ModuleRecord::default()),
+                0,
+                ContextSubHostOptions::default(),
+            )],
+            &allocator,
+            LintOptions { collect_jsx_disable_offsets: collect_offsets, ..LintOptions::default() },
+            Arc::default(),
+        );
+        f(&host);
+    }
+
+    #[test]
+    fn jsx_child_offset_finds_same_line_nested_element() {
+        let source = "const node = <div><button onClick={submit} role=\"button\" /></div>;";
+        let start = source.find("<button").unwrap() as u32;
+        let end = source.find("/></div>").unwrap() as u32 + 2;
+
+        with_tsx_host(source, true, |host| {
+            assert_eq!(host.jsx_child_offset(Span::new(start, end)), Some(start));
+        });
+    }
+
+    #[test]
+    fn jsx_child_offset_distinguishes_child_and_attribute_expression_containers() {
+        let child_source = "const node = <div>{foo}</div>;";
+        let child_error = child_source.find("foo").unwrap() as u32;
+        let child_offset = child_source.find("{foo}").unwrap() as u32;
+        with_tsx_host(child_source, true, |host| {
+            assert_eq!(host.jsx_child_offset(Span::sized(child_error, 3)), Some(child_offset));
+        });
+
+        let attribute_source = "const node = <div value={foo} />;";
+        let attribute_error = attribute_source.find("foo").unwrap() as u32;
+        with_tsx_host(attribute_source, true, |host| {
+            assert_eq!(host.jsx_child_offset(Span::sized(attribute_error, 3)), None);
+        });
+    }
+
+    #[test]
+    fn jsx_child_offset_finds_direct_root_jsx_text() {
+        let source = "const node = <div>\n  \"\n</div>;";
+        let error_offset = source.find('"').unwrap() as u32;
+        let text_offset = source.find('\n').unwrap() as u32;
+
+        with_tsx_host(source, true, |host| {
+            assert_eq!(host.jsx_child_offset(Span::sized(error_offset, 1)), Some(text_offset));
+        });
+    }
+
+    #[test]
+    fn jsx_offsets_are_not_collected_for_normal_linter_runs() {
+        let source = "const node = <div>\n  \"\n</div>;";
+        let error_offset = source.find('"').unwrap() as u32;
+
+        with_tsx_host(source, false, |host| {
+            host.push_diagnostic(Message::new(
+                OxcDiagnostic::warn("test").with_label(Span::sized(error_offset, 1)),
+                PossibleFixes::None,
+            ));
+            let diagnostics = host.take_diagnostics();
+            assert_eq!(diagnostics.len(), 1);
+            assert_eq!(diagnostics[0].jsx_child_offset, None);
+        });
     }
 }

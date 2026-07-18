@@ -218,7 +218,7 @@ pub fn message_to_lsp_diagnostic(
         &message.error.code,
         error_offset,
         section_offset,
-        message.jsx_parent_offset,
+        message.jsx_child_offset,
         source_text,
     );
 
@@ -410,7 +410,7 @@ fn add_ignore_fixes(
     code: &OxcCode,
     error_offset: u32,
     section_offset: u32,
-    jsx_parent_offset: Option<u32>,
+    jsx_child_offset: Option<u32>,
     source_text: &str,
 ) {
     debug_assert!(
@@ -422,11 +422,11 @@ fn add_ignore_fixes(
         return;
     };
     // TODO: doesn't support disabling multiple rules by name for a given line.
-    fixes.push(disable_for_this_line_with_jsx_parent(
+    fixes.push(disable_for_this_line_with_jsx_child(
         &rule_name_with_plugin,
         error_offset,
         section_offset,
-        jsx_parent_offset,
+        jsx_child_offset,
         source_text,
     ));
     fixes.push(disable_for_this_section(&rule_name_with_plugin, section_offset, source_text));
@@ -438,37 +438,36 @@ fn disable_for_this_line(
     section_offset: u32,
     source_text: &str,
 ) -> FixedContent {
-    disable_for_this_line_with_jsx_parent(
-        rule_name,
-        error_offset,
-        section_offset,
-        None,
-        source_text,
-    )
+    disable_for_this_line_with_jsx_child(rule_name, error_offset, section_offset, None, source_text)
 }
 
-fn disable_for_this_line_with_jsx_parent(
+fn disable_for_this_line_with_jsx_child(
     rule_name: &str,
     error_offset: u32,
     section_offset: u32,
-    jsx_parent_offset: Option<u32>,
+    jsx_child_offset: Option<u32>,
     source_text: &str,
 ) -> FixedContent {
     let bytes = source_text.as_bytes();
     let message = format!("Disable {rule_name} for this line");
 
-    if let Some(jsx_parent_offset) = jsx_parent_offset {
-        let mut line_break_offset = jsx_parent_offset;
-        for byte in bytes[section_offset as usize..jsx_parent_offset as usize].iter().rev() {
-            if *byte == b'\n' || *byte == b'\r' {
-                break;
-            }
-            line_break_offset -= 1;
-        }
+    if let Some(jsx_child_offset) = jsx_child_offset {
+        let child_line_start = line_start_offset(jsx_child_offset, section_offset, bytes);
+        let error_line_start = line_start_offset(error_offset, section_offset, bytes);
+        let target_offset =
+            if child_line_start == error_line_start { jsx_child_offset } else { error_offset };
+        let target_line_start = line_start_offset(target_offset, section_offset, bytes);
+        let line_prefix = &bytes[target_line_start as usize..target_offset as usize];
 
-        let (content_prefix, insert_offset) =
-            get_section_insert_position(section_offset, line_break_offset, bytes);
-        let whitespace_range = &bytes[insert_offset as usize..jsx_parent_offset as usize];
+        let (content_prefix, insert_offset, trailing_indent) =
+            if line_prefix.iter().all(|byte| matches!(byte, b' ' | b'\t')) {
+                let (content_prefix, insert_offset) =
+                    get_section_insert_position(section_offset, target_line_start, bytes);
+                (content_prefix, insert_offset, String::new())
+            } else {
+                ("", target_offset, " ".repeat((target_offset - target_line_start) as usize))
+            };
+        let whitespace_range = &bytes[insert_offset as usize..target_offset as usize];
         let whitespace_len =
             whitespace_range.iter().take_while(|c| matches!(c, b' ' | b'\t')).count();
         let whitespace = String::from_utf8_lossy(&whitespace_range[..whitespace_len]);
@@ -477,7 +476,7 @@ fn disable_for_this_line_with_jsx_parent(
         return FixedContent {
             message,
             code: format!(
-                "{content_prefix}{whitespace}{{/* oxlint-disable-next-line {rule_name} */}}\n"
+                "{content_prefix}{whitespace}{{/* oxlint-disable-next-line {rule_name} */}}\n{trailing_indent}"
             ),
             range: Range::new(position, position),
             kind: FixKind::SafeFix,
@@ -551,6 +550,17 @@ fn disable_for_this_line_with_jsx_parent(
         kind: FixKind::SafeFix,
         lsp_kind: FixedContentKind::IgnoreLintRuleLine,
     }
+}
+
+fn line_start_offset(offset: u32, section_offset: u32, bytes: &[u8]) -> u32 {
+    let mut line_start = offset;
+    for byte in bytes[section_offset as usize..offset as usize].iter().rev() {
+        if *byte == b'\n' || *byte == b'\r' {
+            break;
+        }
+        line_start -= 1;
+    }
+    line_start.max(section_offset)
 }
 
 fn disable_for_this_section(
@@ -1011,13 +1021,12 @@ mod test {
     #[test]
     fn disable_for_this_line_in_jsx_uses_brace_escaped_comment_before_element() {
         let source = include_str!("fixtures/jsx-disable-multiline.tsx");
-        let error_offset = source.find("onClick").unwrap() as u32;
-        let jsx_parent_offset = source.find("<div").unwrap() as u32;
-        let fix = super::disable_for_this_line_with_jsx_parent(
+        let jsx_child_offset = source.find("<div").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
             "jsx-a11y/interactive-supports-focus",
-            error_offset,
+            jsx_child_offset,
             0,
-            Some(jsx_parent_offset),
+            Some(jsx_child_offset),
             source,
         );
 
@@ -1026,6 +1035,78 @@ mod test {
             @"      {/* oxlint-disable-next-line jsx-a11y/interactive-supports-focus */}"
         );
         assert_eq!(fix.range.start.line, 4);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_inserts_before_same_line_nested_child() {
+        let source = "return (\n  <div><button onClick={submit} role=\"button\" /></div>\n);";
+        let error_offset = source.find("onClick").unwrap() as u32;
+        let jsx_child_offset = source.find("<button").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "jsx-a11y/interactive-supports-focus",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            source,
+        );
+
+        assert_eq!(
+            fix.code,
+            "{/* oxlint-disable-next-line jsx-a11y/interactive-supports-focus */}\n       "
+        );
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 7);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_uses_error_line_for_multiline_descendant() {
+        let source = "const node = (\n  <div>\n    <p>\n      \"\n    </p>\n  </div>\n);";
+        let error_offset = source.find('"').unwrap() as u32;
+        let jsx_child_offset = source.find("<p>").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "react/no-unescaped-entities",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            source,
+        );
+
+        assert_eq!(
+            fix.code,
+            "      {/* oxlint-disable-next-line react/no-unescaped-entities */}\n"
+        );
+        assert_eq!(fix.range.start.line, 3);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_wraps_direct_child_expression() {
+        let source = "const node = (\n  <div>\n    {foo}\n  </div>\n);";
+        let error_offset = source.find("foo").unwrap() as u32;
+        let jsx_child_offset = source.find("{foo}").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            source,
+        );
+
+        assert_eq!(fix.code, "    {/* oxlint-disable-next-line no-undef */}\n");
+        assert_eq!(fix.range.start.line, 2);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_attribute_expression_uses_js_comment() {
+        let source = "const node = (\n  <div value={\n    foo\n  } />\n);";
+        let error_offset = source.find("foo").unwrap() as u32;
+        let fix =
+            super::disable_for_this_line_with_jsx_child("no-undef", error_offset, 0, None, source);
+
+        assert_eq!(fix.code, "    // oxlint-disable-next-line no-undef\n");
+        assert_eq!(fix.range.start.line, 2);
         assert_eq!(fix.range.start.character, 0);
     }
 

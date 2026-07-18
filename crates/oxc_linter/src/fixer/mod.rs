@@ -268,8 +268,8 @@ pub struct Message {
     pub span: Span,
     fixed: bool,
     pub section_offset: u32,
-    /// Start offset of the closest JSX element or fragment containing this diagnostic.
-    pub jsx_parent_offset: Option<u32>,
+    /// Start offset of the JSX child containing this diagnostic.
+    pub jsx_child_offset: Option<u32>,
     /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
     pub rule: Option<MessageRule>,
 }
@@ -290,7 +290,7 @@ impl Message {
             fixes,
             fixed: false,
             section_offset: 0,
-            jsx_parent_offset: None,
+            jsx_child_offset: None,
             rule: None,
         }
     }
@@ -312,8 +312,8 @@ impl Message {
         debug_assert!(offset != 0);
 
         self.span = self.span.move_right(offset);
-        if let Some(jsx_parent_offset) = &mut self.jsx_parent_offset {
-            *jsx_parent_offset = jsx_parent_offset.saturating_add(offset);
+        if let Some(jsx_child_offset) = &mut self.jsx_child_offset {
+            *jsx_child_offset = jsx_child_offset.saturating_add(offset);
         }
 
         for label in &mut self.error.labels {

@@ -13,4 +13,6 @@ pub struct LintOptions {
     pub fix: FixKind,
     pub framework_hints: FrameworkFlags,
     pub report_unused_directive: Option<AllowWarnDeny>,
+    /// Collect JSX child anchors used to build LSP disable-comment code actions.
+    pub collect_jsx_disable_offsets: bool,
 }
