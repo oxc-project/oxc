@@ -631,6 +631,10 @@ mod tests {
 
     use super::*;
 
+    fn byte_offset(source: &str, needle: &str) -> u32 {
+        u32::try_from(source.find(needle).unwrap()).unwrap()
+    }
+
     fn with_tsx_host(source: &str, collect_offsets: bool, f: impl FnOnce(&ContextHost<'_>)) {
         let allocator = Allocator::default();
         let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
@@ -655,8 +659,8 @@ mod tests {
     #[test]
     fn jsx_child_offset_finds_same_line_nested_element() {
         let source = "const node = <div><button onClick={submit} role=\"button\" /></div>;";
-        let start = source.find("<button").unwrap() as u32;
-        let end = source.find("/></div>").unwrap() as u32 + 2;
+        let start = byte_offset(source, "<button");
+        let end = byte_offset(source, "/></div>") + 2;
 
         with_tsx_host(source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::new(start, end)), Some(start));
@@ -666,21 +670,21 @@ mod tests {
     #[test]
     fn jsx_child_offset_distinguishes_child_and_attribute_expression_containers() {
         let child_source = "const node = <div>{foo}</div>;";
-        let child_error = child_source.find("foo").unwrap() as u32;
-        let child_offset = child_source.find("{foo}").unwrap() as u32;
+        let child_error = byte_offset(child_source, "foo");
+        let child_offset = byte_offset(child_source, "{foo}");
         with_tsx_host(child_source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(child_error, 3)), Some(child_offset));
         });
 
         let attribute_source = "const node = <div value={foo} />;";
-        let attribute_error = attribute_source.find("foo").unwrap() as u32;
+        let attribute_error = byte_offset(attribute_source, "foo");
         with_tsx_host(attribute_source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(attribute_error, 3)), None);
         });
 
         let nested_attribute_source = "const node = <Parent>\n  <Child value={foo} />\n</Parent>;";
-        let nested_attribute_error = nested_attribute_source.find("foo").unwrap() as u32;
-        let nested_child_offset = nested_attribute_source.find("<Child").unwrap() as u32;
+        let nested_attribute_error = byte_offset(nested_attribute_source, "foo");
+        let nested_child_offset = byte_offset(nested_attribute_source, "<Child");
         with_tsx_host(nested_attribute_source, true, |host| {
             assert_eq!(
                 host.jsx_child_offset(Span::sized(nested_attribute_error, 3)),
@@ -689,22 +693,21 @@ mod tests {
         });
 
         let multiline_expression_source = "const node = <div>{foo &&\n  bar}</div>;";
-        let multiline_expression_error = multiline_expression_source.find("bar").unwrap() as u32;
+        let multiline_expression_error = byte_offset(multiline_expression_source, "bar");
         with_tsx_host(multiline_expression_source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(multiline_expression_error, 3)), None);
         });
 
         let multiline_attribute_source =
             "const node = <Parent>\n  <Child\n    value={foo}\n  />\n</Parent>;";
-        let multiline_attribute_error = multiline_attribute_source.find("foo").unwrap() as u32;
+        let multiline_attribute_error = byte_offset(multiline_attribute_source, "foo");
         with_tsx_host(multiline_attribute_source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(multiline_attribute_error, 3)), None);
         });
 
         let nested_expression_element_source = "const node = <div>{condition && <Button />}</div>;";
-        let nested_expression_error =
-            nested_expression_element_source.find("<Button").unwrap() as u32;
-        let expression_offset = nested_expression_element_source.find("{condition").unwrap() as u32;
+        let nested_expression_error = byte_offset(nested_expression_element_source, "<Button");
+        let expression_offset = byte_offset(nested_expression_element_source, "{condition");
         with_tsx_host(nested_expression_element_source, true, |host| {
             assert_eq!(
                 host.jsx_child_offset(Span::sized(nested_expression_error, 10)),
@@ -716,8 +719,8 @@ mod tests {
     #[test]
     fn jsx_child_offset_finds_direct_root_jsx_text() {
         let source = "const node = <div>\n  \"\n</div>;";
-        let error_offset = source.find('"').unwrap() as u32;
-        let text_offset = source.find('\n').unwrap() as u32;
+        let error_offset = byte_offset(source, "\"");
+        let text_offset = byte_offset(source, "\n");
 
         with_tsx_host(source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(error_offset, 1)), Some(text_offset));
@@ -727,7 +730,7 @@ mod tests {
     #[test]
     fn jsx_child_offset_finds_root_closing_tag() {
         let source = "const node = <div>\n</div>;";
-        let closing_offset = source.find("</div>").unwrap() as u32;
+        let closing_offset = byte_offset(source, "</div>");
 
         with_tsx_host(source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(closing_offset, 6)), Some(closing_offset));
@@ -737,7 +740,7 @@ mod tests {
     #[test]
     fn jsx_offsets_are_not_collected_for_normal_linter_runs() {
         let source = "const node = <div>\n  \"\n</div>;";
-        let error_offset = source.find('"').unwrap() as u32;
+        let error_offset = byte_offset(source, "\"");
 
         with_tsx_host(source, false, |host| {
             host.push_diagnostic(Message::new(

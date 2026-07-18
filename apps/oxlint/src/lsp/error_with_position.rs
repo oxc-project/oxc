@@ -432,6 +432,7 @@ fn add_ignore_fixes(
     fixes.push(disable_for_this_section(&rule_name_with_plugin, section_offset, source_text));
 }
 
+#[cfg(test)]
 fn disable_for_this_line(
     rule_name: &str,
     error_offset: u32,
