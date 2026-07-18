@@ -17,7 +17,7 @@ import { FLAG_NOT_DESERIALIZED, FLAG_DESERIALIZED } from "./tokens.ts";
 import { EMPTY_UINT8_ARRAY, EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Location, Span } from "./location.ts";
+import type { Location, Range, Span } from "./location.ts";
 
 /**
  * Comment.
@@ -62,6 +62,11 @@ export const cachedComments: Comment[] = [];
 // Reused for next file if next file has fewer comments than the previous file (by truncating to correct length).
 let previousComments: Comment[] = [];
 
+// Comments whose `range` property has been accessed, and therefore needs clearing on reset.
+// Never shrunk - `activeCommentsWithRangeCount` tracks the active count to avoid freeing the backing store.
+const commentsWithRange: Comment[] = [];
+let activeCommentsWithRangeCount = 0;
+
 // Comments whose `loc` property has been accessed, and therefore needs clearing on reset.
 // Never shrunk - `activeCommentsWithLocCount` tracks the active count to avoid freeing the backing store.
 const commentsWithLoc: Comment[] = [];
@@ -82,10 +87,11 @@ const defineGetter = Function.prototype.call.bind(
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
-// Getters for `start`, `end`, `value`, and `loc` properties on a `Comment` class instance.
+// Getters for `start`, `end`, `range`, `value`, and `loc` properties on a `Comment` class instance.
 // Copied into `const`s below after being defined in class static block.
 let getCommentStartTemp: (this: Comment) => number;
 let getCommentEndTemp: (this: Comment) => number;
+let getCommentRangeTemp: (this: Comment) => Range;
 let getCommentValueTemp: (this: Comment) => string;
 let getCommentLocTemp: (this: Comment) => Location;
 
@@ -93,9 +99,17 @@ let getCommentLocTemp: (this: Comment) => Location;
 // Copied into a `const` below after being defined in class static block.
 let setCommentPosTemp: (comment: Comment, pos: number) => void;
 
+// Reset `#range` field on a `Comment` class instance.
+// Copied into a `const` below after being defined in class static block.
+let resetCommentRangeTemp: (comment: Comment) => void;
+
 // Reset `#loc` field on a `Comment` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetCommentLocTemp: (comment: Comment) => void;
+
+// Get `#range` field on a `Comment` class instance.
+// Only used in debug build (tests).
+let getCommentPrivateRange: (comment: Comment) => Range | null;
 
 // Get `#loc` field on a `Comment` class instance.
 // Only used in debug build (tests).
@@ -104,33 +118,36 @@ let getCommentPrivateLoc: (comment: Comment) => Location | null;
 /**
  * Comment class.
  *
- * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
- * using a shared getter function (`getCommentLoc`). This makes `loc` an own enumerable property,
- * so `{...comment}` spreads it and `JSON.stringify(comment)` serializes it.
+ * `range` and `loc` are defined as own accessor properties via `__defineGetter__` in the constructor,
+ * using shared getter functions (`getCommentRange` / `getCommentLoc`). This makes them own enumerable
+ * properties, so `{...comment}` spreads them and `JSON.stringify(comment)` serializes them.
  *
- * The computed `Location` value is cached in the private `#loc` field on first access.
- * All instances share the same getter function, keeping the V8 hidden class transition
- * identical across instances. Reset only clears the `#loc` field.
+ * The computed `range` array and `Location` value are cached in the private `#range` / `#loc` fields
+ * on first access, so accessing either twice returns the same object. All instances share the same
+ * getter functions, keeping the V8 hidden class transition identical across instances.
+ * Reset only clears the `#range` and `#loc` fields.
  */
 class Comment implements Span {
   type: CommentType["type"] = null!; // Overwritten later
-  range: [number, number] = [0, 0];
 
   declare start: number; // Defined with `__defineGetter__` in constructor
   declare end: number; // Defined with `__defineGetter__` in constructor
+  declare range: Range; // Defined with `__defineGetter__` in constructor
   declare value: string; // Defined with `__defineGetter__` in constructor
   declare loc: Location; // Defined with `__defineGetter__` in constructor
 
   #pos: number = 0;
+  #range: Range | null = null;
   #loc: Location | null = null;
 
   constructor() {
-    // Define `start`, `end`, `value` and `loc` as own getter properties (enumerable + configurable by default).
+    // Define `start`, `end`, `range`, `value` and `loc` as own getter properties (enumerable + configurable by default).
     // This makes `{...comment}` spread them, and `JSON.stringify(comment)` serialize them.
     // Note: `new Comment()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
     defineGetter(this, "start", getCommentStart);
     defineGetter(this, "end", getCommentEnd);
+    defineGetter(this, "range", getCommentRange);
     defineGetter(this, "value", getCommentValue);
     defineGetter(this, "loc", getCommentLoc);
   }
@@ -159,6 +176,33 @@ class Comment implements Span {
       );
 
       return commentsInt32[(this.#pos >> 2) + 1];
+    };
+
+    getCommentRangeTemp = function (this: Comment): Range {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in the `commentsInt32` access below.
+      debugAssertIsNonNull(
+        commentsInt32,
+        "`Comment` object's `range` field accessed after file finished linting",
+      );
+
+      const range = this.#range;
+      if (range !== null) return range;
+
+      // Store comment in `commentsWithRange` array. `resetComments` will clear the `#range` property.
+      // Note: The comparison `activeCommentsWithRangeCount < commentsWithRange.length` must be this way around
+      // so that V8 can remove the bounds check on `commentsWithRange[activeCommentsWithRangeCount]`.
+      // `commentsWithRange.length > activeCommentsWithRangeCount` would *not* remove the bounds check in Maglev compiler.
+      if (activeCommentsWithRangeCount < commentsWithRange.length) {
+        commentsWithRange[activeCommentsWithRangeCount] = this;
+      } else {
+        commentsWithRange.push(this);
+      }
+      activeCommentsWithRangeCount++;
+
+      const pos32 = this.#pos >> 2;
+      return (this.#range = [commentsInt32[pos32], commentsInt32[pos32 + 1]]);
     };
 
     getCommentValueTemp = function (this: Comment): string {
@@ -216,10 +260,15 @@ class Comment implements Span {
       comment.#pos = pos;
     };
 
+    resetCommentRangeTemp = (comment: Comment) => {
+      comment.#range = null;
+    };
+
     resetCommentLocTemp = (comment: Comment) => {
       comment.#loc = null;
     };
 
+    if (DEBUG) getCommentPrivateRange = (comment: Comment) => comment.#range;
     if (DEBUG) getCommentPrivateLoc = (comment: Comment) => comment.#loc;
   }
 }
@@ -227,9 +276,11 @@ class Comment implements Span {
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
 const getCommentStart = getCommentStartTemp;
 const getCommentEnd = getCommentEndTemp;
+const getCommentRange = getCommentRangeTemp;
 const getCommentValue = getCommentValueTemp;
 const getCommentLoc = getCommentLocTemp;
 const setCommentPos = setCommentPosTemp;
+const resetCommentRange = resetCommentRangeTemp;
 const resetCommentLoc = resetCommentLocTemp;
 
 /**
@@ -399,10 +450,6 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
   const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
   comment.type = COMMENT_TYPES[kind];
 
-  const pos32 = pos >> 2;
-  comment.range[0] = commentsInt32[pos32];
-  comment.range[1] = commentsInt32[pos32 + 1];
-
   return comment;
 }
 
@@ -483,6 +530,13 @@ export function resetComments(): void {
   // Reset flag for all comments having been deserialized
   allCommentsDeserialized = false;
 
+  // Reset `#range` on comments where `range` has been accessed
+  for (let i = 0; i < activeCommentsWithRangeCount; i++) {
+    resetCommentRange(commentsWithRange[i]);
+  }
+
+  activeCommentsWithRangeCount = 0;
+
   // Reset `#loc` on comments where `loc` has been accessed
   for (let i = 0; i < activeCommentsWithLocCount; i++) {
     resetCommentLoc(commentsWithLoc[i]);
@@ -507,9 +561,12 @@ export function resetComments(): void {
 function debugAssertAllCommentsCleared(): void {
   if (!DEBUG) return;
 
-  // Check all cached comments have `#loc: null`
+  // Check all cached comments have `#range: null` and `#loc: null`
   for (let i = 0; i < cachedComments.length; i++) {
     const comment = cachedComments[i];
+    if (getCommentPrivateRange(comment) !== null) {
+      throw new Error(`Comment ${i} has not had \`#range\` cleared`);
+    }
     if (getCommentPrivateLoc(comment) !== null) {
       throw new Error(`Comment ${i} has not had \`#loc\` cleared`);
     }

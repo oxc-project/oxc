@@ -66,12 +66,12 @@
   x test-comments(test-comments): Comment JSON.stringify:
   | {
   |   "type": "Line",
+  |   "start": 29,
+  |   "end": 46,
   |   "range": [
   |     29,
   |     46
   |   ],
-  |   "start": 29,
-  |   "end": 46,
   |   "value": " Line comment 1",
   |   "loc": {
   |     "start": {
@@ -259,12 +259,12 @@
   x test-comments(test-comments): Comment JSON.stringify:
   | {
   |   "type": "Shebang",
+  |   "start": 0,
+  |   "end": 19,
   |   "range": [
   |     0,
   |     19
   |   ],
-  |   "start": 0,
-  |   "end": 19,
   |   "value": "/usr/bin/env node",
   |   "loc": {
   |     "start": {

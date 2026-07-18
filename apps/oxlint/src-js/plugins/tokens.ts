@@ -13,7 +13,7 @@ import {
 import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Location, Span } from "./location.ts";
+import type { Location, Range, Span } from "./location.ts";
 
 /**
  * AST token type.
@@ -118,6 +118,11 @@ export const cachedTokens: Token[] = [];
 // Reused for next file if next file has less tokens than the previous file (by truncating it to correct length).
 let previousTokens: Token[] = [];
 
+// Tokens whose `range` property has been accessed, and therefore needs clearing on reset.
+// Never shrunk - `activeTokensWithRangeCount` tracks the active count to avoid freeing the backing store.
+const tokensWithRange: Token[] = [];
+let activeTokensWithRangeCount = 0;
+
 // Tokens whose `loc` property has been accessed, and therefore needs clearing on reset.
 // Never shrunk - `activeTokensWithLocCount` tracks the active count to avoid freeing the backing store.
 const tokensWithLoc: Token[] = [];
@@ -146,10 +151,11 @@ const defineGetter = Function.prototype.call.bind(
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
-// Getters for `start`, `end`, `value`, and `loc` properties on a `Token` class instance.
+// Getters for `start`, `end`, `range`, `value`, and `loc` properties on a `Token` class instance.
 // Copied into `const`s below after being defined in class static block.
 let getTokenStartTemp: (this: Token) => number;
 let getTokenEndTemp: (this: Token) => number;
+let getTokenRangeTemp: (this: Token) => Range;
 let getTokenValueTemp: (this: Token) => string;
 let getTokenLocTemp: (this: Token) => Location;
 
@@ -157,45 +163,56 @@ let getTokenLocTemp: (this: Token) => Location;
 // Copied into a `const` below after being defined in class static block.
 let setTokenPosTemp: (token: Token, pos: number) => void;
 
+// Reset `#range` field on a `Token` class instance.
+// Copied into a `const` below after being defined in class static block.
+let resetRangeTemp: (token: Token) => void;
+
 // Reset `#loc` field on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetLocTemp: (token: Token) => void;
+
+// Get `#range` field on a `Token` class instance.
+// Only used in debug build (tests).
+let getTokenPrivateRange: (token: Token) => Range | null;
 
 // Get `#loc` field on a `Token` class instance.
 // Only used in debug build (tests).
 let getTokenPrivateLoc: (token: Token) => Location | null;
 
 /**
- * Token implementation with lazy `loc` caching via private field.
+ * Token implementation with lazy `range` and `loc` caching via private fields.
  *
- * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
- * using a shared getter function (`getTokenLoc`). This makes `loc` an own enumerable property,
- * so `{...token}` spreads it and `JSON.stringify(token)` serializes it.
+ * `range` and `loc` are defined as own accessor properties via `__defineGetter__` in the constructor,
+ * using shared getter functions (`getTokenRange` / `getTokenLoc`). This makes them own enumerable
+ * properties, so `{...token}` spreads them and `JSON.stringify(token)` serializes them.
  *
- * The computed `Location` value is cached in the private `#loc` field on first access.
- * All instances share the same getter function, keeping the V8 hidden class transition
- * identical across instances. Reset only clears the `#loc` field.
+ * The computed `range` array and `Location` value are cached in the private `#range` / `#loc` fields
+ * on first access, so accessing either twice returns the same object. All instances share the same
+ * getter functions, keeping the V8 hidden class transition identical across instances.
+ * Reset only clears the `#range` and `#loc` fields.
  */
 class Token {
   type: TokenType["type"] = null!; // Overwritten later
   regex: Regex | undefined;
-  range: [number, number] = [0, 0];
 
   declare start: number; // Defined with `__defineGetter__` in constructor
   declare end: number; // Defined with `__defineGetter__` in constructor
+  declare range: Range; // Defined with `__defineGetter__` in constructor
   declare value: string; // Defined with `__defineGetter__` in constructor
   declare loc: Location; // Defined with `__defineGetter__` in constructor
 
   #pos: number = 0;
+  #range: Range | null = null;
   #loc: Location | null = null;
 
   constructor() {
-    // Define `start`, `end`, `value` and `loc` as own getter properties (enumerable + configurable by default).
+    // Define `start`, `end`, `range`, `value` and `loc` as own getter properties (enumerable + configurable by default).
     // This makes `{...token}` spread them, and `JSON.stringify(token)` serialize them.
     // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
     defineGetter(this, "start", getTokenStart);
     defineGetter(this, "end", getTokenEnd);
+    defineGetter(this, "range", getTokenRange);
     defineGetter(this, "value", getTokenValue);
     defineGetter(this, "loc", getTokenLoc);
   }
@@ -224,6 +241,33 @@ class Token {
       );
 
       return tokensInt32[(this.#pos >> 2) + 1];
+    };
+
+    getTokenRangeTemp = function (this: Token): Range {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in the `tokensInt32` access below.
+      debugAssertIsNonNull(
+        tokensInt32,
+        "`Token` object's `range` field accessed after file finished linting",
+      );
+
+      const range = this.#range;
+      if (range !== null) return range;
+
+      // Store token in `tokensWithRange` array. `resetTokens` will clear the `#range` property.
+      // Note: The comparison `activeTokensWithRangeCount < tokensWithRange.length` must be this way around
+      // so that V8 can remove the bounds check on `tokensWithRange[activeTokensWithRangeCount]`.
+      // `tokensWithRange.length > activeTokensWithRangeCount` would *not* remove the bounds check in Maglev compiler.
+      if (activeTokensWithRangeCount < tokensWithRange.length) {
+        tokensWithRange[activeTokensWithRangeCount] = this;
+      } else {
+        tokensWithRange.push(this);
+      }
+      activeTokensWithRangeCount++;
+
+      const pos32 = this.#pos >> 2;
+      return (this.#range = [tokensInt32[pos32], tokensInt32[pos32 + 1]]);
     };
 
     getTokenValueTemp = function (this: Token): string {
@@ -287,10 +331,15 @@ class Token {
       token.#pos = pos;
     };
 
+    resetRangeTemp = (token: Token) => {
+      token.#range = null;
+    };
+
     resetLocTemp = (token: Token) => {
       token.#loc = null;
     };
 
+    if (DEBUG) getTokenPrivateRange = (token: Token) => token.#range;
     if (DEBUG) getTokenPrivateLoc = (token: Token) => token.#loc;
   }
 }
@@ -298,9 +347,11 @@ class Token {
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
 const getTokenStart = getTokenStartTemp;
 const getTokenEnd = getTokenEndTemp;
+const getTokenRange = getTokenRangeTemp;
 const getTokenValue = getTokenValueTemp;
 const getTokenLoc = getTokenLocTemp;
 const setTokenPos = setTokenPosTemp;
+const resetRange = resetRangeTemp;
 const resetLoc = resetLocTemp;
 
 // `ESTreeKind` discriminants (set by Rust side)
@@ -478,10 +529,6 @@ function deserializeTokenIfNeeded(index: number): Token | null {
 
   const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
 
-  const pos32 = pos >> 2,
-    start = tokensInt32[pos32],
-    end = tokensInt32[pos32 + 1];
-
   if (kind === REGEXP_KIND) {
     // Reuse cached regex descriptor object if available, otherwise create a new one.
     //
@@ -511,6 +558,9 @@ function deserializeTokenIfNeeded(index: number): Token | null {
     // Store index of this token, so `resetTokens` can set this token's `regex` property back to `undefined`
     tokensWithRegexIndexes[activeTokensWithRegexCount++] = index;
 
+    const pos32 = pos >> 2,
+      start = tokensInt32[pos32],
+      end = tokensInt32[pos32 + 1];
     const value = sourceText.slice(start, end);
     const patternEnd = value.lastIndexOf("/");
     regex.pattern = value.slice(1, patternEnd);
@@ -518,8 +568,6 @@ function deserializeTokenIfNeeded(index: number): Token | null {
   }
 
   token.type = TOKEN_TYPES[kind];
-  token.range[0] = start;
-  token.range[1] = end;
 
   return token;
 }
@@ -614,6 +662,13 @@ export function resetTokens() {
   // Reset flag for all tokens having been deserialized
   allTokensDeserialized = false;
 
+  // Reset `#range` on tokens where `range` has been accessed
+  for (let i = 0; i < activeTokensWithRangeCount; i++) {
+    resetRange(tokensWithRange[i]);
+  }
+
+  activeTokensWithRangeCount = 0;
+
   // Reset `#loc` on tokens where `loc` has been accessed
   for (let i = 0; i < activeTokensWithLocCount; i++) {
     resetLoc(tokensWithLoc[i]);
@@ -653,9 +708,12 @@ export function resetTokens() {
 function debugAssertAllTokensCleared(): void {
   if (!DEBUG) return;
 
-  // Check all cached tokens have `#loc: null`, and `regex: undefined`
+  // Check all cached tokens have `#range: null`, `#loc: null`, and `regex: undefined`
   for (let i = 0; i < cachedTokens.length; i++) {
     const token = cachedTokens[i];
+    if (getTokenPrivateRange(token) !== null) {
+      throw new Error(`Token ${i} has not had \`#range\` cleared`);
+    }
     if (getTokenPrivateLoc(token) !== null) {
       throw new Error(`Token ${i} has not had \`#loc\` cleared`);
     }

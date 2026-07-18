@@ -22,8 +22,10 @@ const rule: Rule = {
       assert(tokenOrComment.range === range);
       assert(tokenOrComment.loc === loc);
 
-      // Cloning comment with spread should include `loc` and it should be the same object
+      // Cloning token/comment with spread should include `range` and `loc`, and they should be the same objects
       const clone = { ...tokenOrComment };
+      assert(Object.hasOwn(clone, "range"));
+      assert(clone.range === range);
       assert(Object.hasOwn(clone, "loc"));
       assert(clone.loc === loc);
 
