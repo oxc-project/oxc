@@ -663,10 +663,7 @@ impl<'a> PeepholeOptimizations {
                     && let Some(symbol_id) =
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
-                    ctx.state
-                        .pure_functions
-                        .get(&symbol_id)
-                        .is_some_and(|summary| summary.is_side_effect_free())
+                    ctx.state.function_summary(symbol_id).is_side_effect_free()
                 } else {
                     false
                 })
@@ -800,8 +797,8 @@ impl<'a> PeepholeOptimizations {
     ///   `=` write to a safe single-level member of a provably-unused fresh
     ///   local is unobservable (terser parity) — unless the symbol carries a
     ///   member-write hazard (compound/update/chained ops, potential
-    ///   `__proto__` setters) — the persistent member-write effect in
-    ///   `MinifierState::symbol_facts`. See `docs/ASSUMPTIONS.md`.
+    ///   `__proto__` setters) — the persistent member-write effect in the
+    ///   symbol metadata. See `docs/ASSUMPTIONS.md`.
     fn remove_unused_member_assignment(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         if Self::is_script_root_scope(ctx) {
             return false;
@@ -852,7 +849,7 @@ impl<'a> PeepholeOptimizations {
         }
         // Program-wide, execution-order-independent hazards: another member op
         // on this symbol reads the property or may install setters.
-        if ctx.state.symbol_facts.effect(symbol_id).is_hazardous() {
+        if ctx.state.member_write_effect(symbol_id).is_hazardous() {
             return false;
         }
         if !assign_expr.right.may_have_side_effects(ctx) {
@@ -979,7 +976,7 @@ impl<'a> PeepholeOptimizations {
         // any OTHER reference exists; when the candidate is the symbol's only
         // remaining reference, it either is the proto write itself or the proto
         // write is already gone, so no setter can ever fire.
-        if ctx.state.symbol_facts.effect(symbol_id).may_mutate_prototype()
+        if ctx.state.member_write_effect(symbol_id).may_mutate_prototype()
             && ctx.scoping().get_resolved_reference_ids(symbol_id).len() > 1
         {
             return false;

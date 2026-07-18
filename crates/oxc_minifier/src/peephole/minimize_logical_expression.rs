@@ -4,7 +4,7 @@ use oxc_compat::ESFeature;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
-use crate::{TraverseCtx, symbol_facts::MemberWriteEffect};
+use crate::{TraverseCtx, symbol_metadata::MemberWriteEffect};
 
 use super::PeepholeOptimizations;
 
@@ -315,7 +315,7 @@ impl<'a> PeepholeOptimizations {
         if let Expression::Identifier(ident) = object.get_inner_expression()
             && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
         {
-            ctx.state.symbol_facts.record(symbol_id, MemberWriteEffect::Hazard);
+            ctx.state.record_member_write_effect(symbol_id, MemberWriteEffect::Hazard);
         }
     }
 }

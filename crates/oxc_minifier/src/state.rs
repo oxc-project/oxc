@@ -8,31 +8,11 @@ use oxc_str::Str;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use crate::{
-    CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_liveness::SymbolLiveness,
+    CompressOptions,
+    symbol_liveness::SymbolLiveness,
+    symbol_metadata::{FunctionSummary, MemberWriteEffect, PersistentSymbolMetadata},
     symbol_value::SymbolValues,
 };
-
-/// What the minifier has proved about calls to a locally declared function.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum FunctionSummary {
-    /// No reusable call-site proof is available.
-    #[default]
-    Unknown,
-    /// Calling the function has no side effects, but its result is unknown.
-    SideEffectFree,
-    /// Calling the function has no side effects and returns `undefined`.
-    SideEffectFreeReturnsUndefined,
-}
-
-impl FunctionSummary {
-    pub fn is_side_effect_free(self) -> bool {
-        matches!(self, Self::SideEffectFree | Self::SideEffectFreeReturnsUndefined)
-    }
-
-    pub fn returns_undefined(self) -> bool {
-        self == Self::SideEffectFreeReturnsUndefined
-    }
-}
 
 /// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
 /// two consumption points. Live from `MinifierState::new` so the pre-loop
@@ -91,16 +71,13 @@ pub struct MinifierState<'a> {
     /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
     pub dce: bool,
 
-    /// Reusable call-site proofs for locally declared functions.
-    pub pure_functions: FxHashMap<SymbolId, FunctionSummary>,
+    /// Sparse metadata that remains valid across peephole iterations.
+    persistent_symbols: FxHashMap<SymbolId, PersistentSymbolMetadata>,
 
     pub symbol_values: SymbolValues<'a>,
 
     /// Private member usage for classes
     pub class_symbols_stack: ClassSymbolsStack<'a>,
-
-    /// Program-wide, monotone member-write effects.
-    pub symbol_facts: PersistentSymbolFacts,
 
     /// One frame per enclosing function body (program root at the bottom).
     /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
@@ -150,10 +127,9 @@ impl<'a> MinifierState<'a> {
             source_type,
             options,
             dce,
-            pure_functions: FxHashMap::default(),
+            persistent_symbols: FxHashMap::default(),
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
-            symbol_facts: PersistentSymbolFacts::default(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
@@ -162,7 +138,7 @@ impl<'a> MinifierState<'a> {
         }
     }
 
-    /// Whether `Normalize`'s member-write scan should seed `symbol_facts`,
+    /// Whether `Normalize`'s member-write scan should seed persistent metadata,
     /// i.e. whether any consumer is live in this configuration. In full
     /// minify the default-mode write-only property drop reads
     /// hazardous-member state and the shared drop predicate reads possible
@@ -170,8 +146,40 @@ impl<'a> MinifierState<'a> {
     /// the `property_write_side_effects: false` opt-in drop reads the prototype
     /// state, so with the knob left on nothing reads the effects and seeding is
     /// skipped.
-    pub fn seeds_symbol_facts(&self) -> bool {
+    pub fn should_track_member_write_effects(&self) -> bool {
         !self.dce || !self.options.treeshake.property_write_side_effects
+    }
+
+    pub(crate) fn set_function_summary(&mut self, symbol_id: SymbolId, summary: FunctionSummary) {
+        self.persistent_symbols.entry(symbol_id).or_default().set_function_summary(summary);
+    }
+
+    pub(crate) fn clear_function_summary(&mut self, symbol_id: SymbolId) {
+        if let Some(metadata) = self.persistent_symbols.get_mut(&symbol_id) {
+            // Clear in place: removing this shared entry would also erase its
+            // monotone member-write effect.
+            metadata.set_function_summary(FunctionSummary::Unknown);
+        }
+    }
+
+    pub(crate) fn function_summary(&self, symbol_id: SymbolId) -> FunctionSummary {
+        self.persistent_symbols
+            .get(&symbol_id)
+            .map_or(FunctionSummary::Unknown, PersistentSymbolMetadata::function_summary)
+    }
+
+    pub(crate) fn record_member_write_effect(
+        &mut self,
+        symbol_id: SymbolId,
+        effect: MemberWriteEffect,
+    ) {
+        self.persistent_symbols.entry(symbol_id).or_default().record_member_write_effect(effect);
+    }
+
+    pub(crate) fn member_write_effect(&self, symbol_id: SymbolId) -> MemberWriteEffect {
+        self.persistent_symbols
+            .get(&symbol_id)
+            .map_or(MemberWriteEffect::None, PersistentSymbolMetadata::member_write_effect)
     }
 
     /// Whether runtime semantics have an implicit observation channel that

@@ -5,7 +5,7 @@ use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 
-use crate::{TraverseCtx, keep_var::KeepVar, state::FunctionSummary};
+use crate::{TraverseCtx, keep_var::KeepVar, symbol_metadata::FunctionSummary};
 
 use super::PeepholeOptimizations;
 
@@ -499,7 +499,7 @@ impl<'a> PeepholeOptimizations {
         // so the read-only-reference check below cannot see them. A different
         // declaration of the same symbol may be impure and win at runtime.
         if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
-            ctx.state.pure_functions.remove(&symbol_id);
+            ctx.state.clear_function_summary(symbol_id);
             return;
         }
         // Direct eval and Script global properties can replace the binding
@@ -509,11 +509,11 @@ impl<'a> PeepholeOptimizations {
         if binding_scope_flags.contains_direct_eval()
             || (ctx.source_type().is_script() && binding_scope_id == ctx.scoping().root_scope_id())
         {
-            ctx.state.pure_functions.remove(&symbol_id);
+            ctx.state.clear_function_summary(symbol_id);
             return;
         }
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
-            ctx.state.pure_functions.insert(
+            ctx.state.set_function_summary(
                 symbol_id,
                 if body.is_empty() {
                     FunctionSummary::SideEffectFreeReturnsUndefined
@@ -529,11 +529,7 @@ impl<'a> PeepholeOptimizations {
         if let Expression::Identifier(ident) = &e.callee {
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
-                && ctx
-                    .state
-                    .pure_functions
-                    .get(&symbol_id)
-                    .is_some_and(|summary| summary.returns_undefined())
+                && ctx.state.function_summary(symbol_id).returns_undefined()
             {
                 let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
                 if exprs.is_empty() {

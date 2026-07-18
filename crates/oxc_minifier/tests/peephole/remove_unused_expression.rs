@@ -1109,6 +1109,17 @@ fn test_drop_write_only_property_assignments_by_default() {
 }
 
 #[test]
+fn test_summary_invalidation_preserves_member_write_hazard() {
+    // Both initializers keep the dense fresh-value kind intact. Clearing the
+    // function summary by removing its shared metadata entry would lose the
+    // `||=` hazard and incorrectly drop `foo.x = 1`.
+    test_smallest(
+        "var foo = function() {}; var foo = function() {}; foo.x = 1; foo.x ||= send();",
+        "var foo = function() {}, foo = function() {}; foo.x = 1, foo.x ||= send();",
+    );
+}
+
+#[test]
 fn test_update_expression_respects_property_read_side_effects() {
     // `obj.prop++` performs an implicit read, so it's side-effectful when
     // `property_read_side_effects` is `All` — even if writes are free.

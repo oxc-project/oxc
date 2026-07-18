@@ -11,7 +11,7 @@ use oxc_syntax::scope::ScopeFlags;
 use super::PeepholeOptimizations;
 use crate::{
     ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    symbol_facts::MemberWriteEffect, symbol_liveness,
+    symbol_liveness, symbol_metadata::MemberWriteEffect,
 };
 
 #[derive(Default)]
@@ -155,10 +155,10 @@ impl<'a> Traverse<'a> for Normalize {
         Self::set_no_side_effects_to_call_expr(e, ctx);
     }
 
-    // The three hooks below seed `MinifierState::symbol_facts` (see its docs)
-    // with a program-wide, execution-order-independent view of member writes
-    // before the fixed-point loop runs. `MinifierState::seeds_symbol_facts`
-    // says when any consumer is live.
+    // The three hooks below seed persistent metadata with a program-wide,
+    // execution-order-independent view of member writes before the fixed-point
+    // loop runs. `MinifierState::should_track_member_write_effects` says when
+    // any consumer is live.
 
     /// Covers `=` / compound / logical assignment lefts, destructuring member
     /// targets (`[o.x] = arr`), and for-in/of lefts (`for (o.x in y)`).
@@ -167,7 +167,7 @@ impl<'a> Traverse<'a> for Normalize {
         node: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !ctx.state.seeds_symbol_facts() {
+        if !ctx.state.should_track_member_write_effects() {
             return;
         }
         let Some(target) = node.as_simple_assignment_target() else { return };
@@ -182,7 +182,7 @@ impl<'a> Traverse<'a> for Normalize {
 
     /// `o.x++` / `--o.x` read the property before writing.
     fn exit_update_expression(&mut self, e: &mut UpdateExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.seeds_symbol_facts() {
+        if !ctx.state.should_track_member_write_effects() {
             return;
         }
         Self::record_simple_target_member_write_hazard(
@@ -196,7 +196,7 @@ impl<'a> Traverse<'a> for Normalize {
     /// single-level delete is harmless — but a CHAINED delete (`delete a.b.c`)
     /// reads the intermediate object `a.b`, hazarding the base `a`.
     fn exit_unary_expression(&mut self, e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.seeds_symbol_facts() {
+        if !ctx.state.should_track_member_write_effects() {
             return;
         }
         if e.operator.is_delete()
@@ -596,7 +596,7 @@ impl<'a> Normalize {
     }
 
     /// Record the base symbol of a hazardous member write in
-    /// `MinifierState::symbol_facts`. `object` is the member expression's object;
+    /// persistent symbol metadata. `object` is the member expression's object;
     /// walking it to the base identifier determines the chain depth.
     ///
     /// Records a member-write hazard iff the op reads the property
@@ -649,7 +649,7 @@ impl<'a> Normalize {
         } else {
             MemberWriteEffect::Hazard
         };
-        ctx.state.symbol_facts.record(symbol_id, effect);
+        ctx.state.record_member_write_effect(symbol_id, effect);
     }
 
     fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {
