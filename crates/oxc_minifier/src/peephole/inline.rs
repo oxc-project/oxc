@@ -235,7 +235,7 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         // Skip if there are write references.
-        if symbol_value.write_references_count > 0 {
+        if symbol_value.references.has_writes() {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
@@ -244,7 +244,7 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.implicit_undefined {
             return;
         }
-        if symbol_value.read_references_count == 1
+        if symbol_value.references.has_single_read()
             || match cv {
                 ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
                 ConstantValue::BigInt(_) => false,

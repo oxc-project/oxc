@@ -18,7 +18,7 @@ use crate::{
     generated::ancestor::Ancestor,
     options::CompressOptions,
     state::MinifierState,
-    symbol_value::{FreshValueKind, SymbolValue},
+    symbol_value::{FreshValueKind, ReferenceCounts, SymbolValue},
 };
 
 use oxc_ast_visit::Visit;
@@ -180,7 +180,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             .get_reference(reference_id)
             .symbol_id()
             .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
-            .filter(|sv| sv.write_references_count == 0)
+            .filter(|sv| !sv.references.has_writes())
             .and_then(|sv| sv.initialized_constant.as_ref())
     }
 
@@ -290,19 +290,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         falsy_init: bool,
         init_absent: bool,
     ) {
-        let mut read_references_count = 0;
-        let mut write_references_count = 0;
-        let mut member_write_target_read_count = 0;
-        for r in self.scoping().get_resolved_references(symbol_id) {
-            if r.is_read() {
-                read_references_count += 1;
-            }
-            if r.is_write() {
-                write_references_count += 1;
-            }
-            if r.flags().is_member_write_target() {
-                member_write_target_read_count += 1;
-            }
+        let mut references = ReferenceCounts::default();
+        for reference in self.scoping().get_resolved_references(symbol_id) {
+            references.record(reference.flags());
         }
 
         let scope_id = self.scoping().symbol_scope_id(symbol_id);
@@ -320,7 +310,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         // doesn't prove write-once).
         let boolean_falsy = falsy_init
             && value_withheld
-            && write_references_count == 0
+            && !references.has_writes()
             && !scope_flags.contains(ScopeFlags::DirectEval)
             && !(self.source_type().is_script() && scope_id == self.scoping().root_scope_id());
 
@@ -332,9 +322,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         let symbol_value = SymbolValue {
             initialized_constant,
             implicit_undefined,
-            read_references_count,
-            write_references_count,
-            member_write_target_read_count,
+            references,
             kind,
             boolean_falsy,
         };

@@ -59,7 +59,7 @@ fn readonly_var_reassigned() {
 fn readonly_var_reassigned_cross_function_read() {
     // The read crosses a function boundary (the gap this path targets), but
     // `foo` is also reassigned. The predicate's read-loop ignores writes, so it
-    // relies on the downstream `write_references_count` guard in
+    // relies on the downstream cached write-reference guard in
     // `inline_identifier_reference` to block inlining — substituting `1` would be
     // wrong once `foo = 2` runs before `f()` is called.
     test_smallest(

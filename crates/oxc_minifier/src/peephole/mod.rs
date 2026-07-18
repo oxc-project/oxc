@@ -187,8 +187,8 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
-    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
+    /// Check if a symbol is mutated, using the O(1) cached reference counts from
+    /// `SymbolValue` when available, falling back to the O(num_refs) scan in
     /// `Scoping::symbol_is_mutated` for symbols without cached values.
     ///
     /// Only variable declarators have cached values (populated during
@@ -196,7 +196,7 @@ impl<'a> PeepholeOptimizations {
     /// and other binding kinds still take the fallback path.
     fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
         if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
-            sv.write_references_count > 0
+            sv.references.has_writes()
         } else {
             ctx.scoping().symbol_is_mutated(symbol_id)
         }

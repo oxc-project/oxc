@@ -1461,8 +1461,8 @@ impl<'a> PeepholeOptimizations {
             // consult the shared metadata explicitly for consistency with the
             // other count-based consumers.
             if ctx.state.symbol_is_implicitly_observable(prev_decl_id.symbol_id())
-                || symbol_value.read_references_count > 1
-                || symbol_value.write_references_count > 0
+                || symbol_value.references.has_multiple_reads()
+                || symbol_value.references.has_writes()
             {
                 return true;
             }

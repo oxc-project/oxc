@@ -782,7 +782,7 @@ impl<'a> PeepholeOptimizations {
         let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
             return false;
         };
-        if symbol_value.read_references_count > 0 {
+        if symbol_value.references.has_reads() {
             return false;
         }
         let new_expr = assign_expr.right.take_in(ctx);
@@ -996,8 +996,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         // Check: all references are member write targets (O(1) via pre-computed count).
-        sv.write_references_count == 0
-            && sv.read_references_count == sv.member_write_target_read_count
+        sv.references.has_only_member_write_target_reads()
     }
 
     fn remove_unused_class_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
