@@ -19,7 +19,6 @@
   |     0,
   |     1
   |   ],
-  |   "value": "a",
   |   "loc": {
   |     "start": {
   |       "line": 1,
@@ -29,7 +28,8 @@
   |       "line": 1,
   |       "column": 1
   |     }
-  |   }
+  |   },
+  |   "value": "a"
   | }
    ,-[files/bom.js:1:4]
  1 | ﻿a = b;
@@ -352,7 +352,6 @@
   |     7,
   |     10
   |   ],
-  |   "value": "var",
   |   "loc": {
   |     "start": {
   |       "line": 2,
@@ -362,7 +361,8 @@
   |       "line": 2,
   |       "column": 3
   |     }
-  |   }
+  |   },
+  |   "value": "var"
   | }
    ,-[files/escaped_idents.js:2:1]
  1 | // abc
@@ -1106,7 +1106,6 @@
   |     0,
   |     5
   |   ],
-  |   "value": "const",
   |   "loc": {
   |     "start": {
   |       "line": 1,
@@ -1116,7 +1115,8 @@
   |       "line": 1,
   |       "column": 5
   |     }
-  |   }
+  |   },
+  |   "value": "const"
   | }
    ,-[files/generic_arrow.ts:1:1]
  1 | const obj = {
@@ -1543,7 +1543,6 @@
   |     20,
   |     23
   |   ],
-  |   "value": "let",
   |   "loc": {
   |     "start": {
   |       "line": 3,
@@ -1553,7 +1552,8 @@
   |       "line": 3,
   |       "column": 3
   |     }
-  |   }
+  |   },
+  |   "value": "let"
   | }
    ,-[files/index.js:3:1]
  2 | 
@@ -1683,7 +1683,6 @@
   |     0,
   |     5
   |   ],
-  |   "value": "const",
   |   "loc": {
   |     "start": {
   |       "line": 1,
@@ -1693,7 +1692,8 @@
   |       "line": 1,
   |       "column": 5
   |     }
-  |   }
+  |   },
+  |   "value": "const"
   | }
    ,-[files/jsx_element.tsx:1:1]
  1 | const Component = () => {
@@ -2024,7 +2024,6 @@
   |     0,
   |     5
   |   ],
-  |   "value": "const",
   |   "loc": {
   |     "start": {
   |       "line": 1,
@@ -2034,7 +2033,8 @@
   |       "line": 1,
   |       "column": 5
   |     }
-  |   }
+  |   },
+  |   "value": "const"
   | }
    ,-[files/keywords.js:1:1]
  1 | const obj = {
@@ -2471,7 +2471,6 @@
   |     91,
   |     96
   |   ],
-  |   "value": "const",
   |   "loc": {
   |     "start": {
   |       "line": 2,
@@ -2481,7 +2480,8 @@
   |       "line": 2,
   |       "column": 5
   |     }
-  |   }
+  |   },
+  |   "value": "const"
   | }
    ,-[files/ts_angle_relex.ts:2:1]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
@@ -2772,7 +2772,6 @@
   |     0,
   |     1
   |   ],
-  |   "value": "a",
   |   "loc": {
   |     "start": {
   |       "line": 1,
@@ -2782,7 +2781,8 @@
   |       "line": 1,
   |       "column": 1
   |     }
-  |   }
+  |   },
+  |   "value": "a"
   | }
    ,-[files/unicode.js:1:1]
  1 | a;

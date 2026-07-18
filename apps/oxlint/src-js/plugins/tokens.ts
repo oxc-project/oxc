@@ -156,8 +156,8 @@ const defineGetter = Function.prototype.call.bind(
 let getTokenStartTemp: (this: Token) => number;
 let getTokenEndTemp: (this: Token) => number;
 let getTokenRangeTemp: (this: Token) => Range;
-let getTokenValueTemp: (this: Token) => string;
 let getTokenLocTemp: (this: Token) => Location;
+let getTokenValueTemp: (this: Token) => string;
 
 // Setter for `#pos` private property on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
@@ -195,26 +195,27 @@ class Token {
   type: TokenType["type"] = null!; // Overwritten later
   regex: Regex | undefined;
 
-  declare start: number; // Defined with `__defineGetter__` in constructor
-  declare end: number; // Defined with `__defineGetter__` in constructor
-  declare range: Range; // Defined with `__defineGetter__` in constructor
-  declare value: string; // Defined with `__defineGetter__` in constructor
-  declare loc: Location; // Defined with `__defineGetter__` in constructor
+  // All defined with `__defineGetter__` in constructor
+  declare start: number;
+  declare end: number;
+  declare range: Range;
+  declare loc: Location;
+  declare value: string;
 
   #pos: number = 0;
   #range: Range | null = null;
   #loc: Location | null = null;
 
   constructor() {
-    // Define `start`, `end`, `range`, `value` and `loc` as own getter properties (enumerable + configurable by default).
+    // Define `start`, `end`, `range`, `loc`, `value` as own getter properties (enumerable + configurable by default).
     // This makes `{...token}` spread them, and `JSON.stringify(token)` serialize them.
     // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
     defineGetter(this, "start", getTokenStart);
     defineGetter(this, "end", getTokenEnd);
     defineGetter(this, "range", getTokenRange);
-    defineGetter(this, "value", getTokenValue);
     defineGetter(this, "loc", getTokenLoc);
+    defineGetter(this, "value", getTokenValue);
   }
 
   // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
@@ -270,34 +271,6 @@ class Token {
       return (this.#range = [tokensInt32[pos32], tokensInt32[pos32 + 1]]);
     };
 
-    getTokenValueTemp = function (this: Token): string {
-      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
-      // Only make this an explicit error in debug build, because it should be very uncommon.
-      // In release build, it will result in an error in `tokensUint8`, `tokensInt32`, or `sourceText`
-      // accesses below.
-      debugAssert(
-        tokensUint8 !== null && tokensInt32 !== null && sourceText !== null,
-        "`Token` object's `value` field accessed after file finished linting",
-      );
-
-      const pos = this.#pos;
-      const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
-
-      // Get `value` as slice of source text `start..end`.
-      // Slice `start + 1..end` for private identifiers, to strip leading `#`.
-      const pos32 = pos >> 2,
-        start = tokensInt32[pos32],
-        end = tokensInt32[pos32 + 1];
-      let value = sourceText.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
-
-      // Unescape if `escaped` flag is set
-      if (kind <= PRIVATE_IDENTIFIER_KIND && tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
-        value = unescapeIdentifier(value);
-      }
-
-      return value;
-    };
-
     getTokenLocTemp = function (this: Token): Location {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
@@ -327,6 +300,34 @@ class Token {
       return (this.#loc = computeLoc(start, end));
     };
 
+    getTokenValueTemp = function (this: Token): string {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in `tokensUint8`, `tokensInt32`, or `sourceText`
+      // accesses below.
+      debugAssert(
+        tokensUint8 !== null && tokensInt32 !== null && sourceText !== null,
+        "`Token` object's `value` field accessed after file finished linting",
+      );
+
+      const pos = this.#pos;
+      const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
+
+      // Get `value` as slice of source text `start..end`.
+      // Slice `start + 1..end` for private identifiers, to strip leading `#`.
+      const pos32 = pos >> 2,
+        start = tokensInt32[pos32],
+        end = tokensInt32[pos32 + 1];
+      let value = sourceText.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
+
+      // Unescape if `escaped` flag is set
+      if (kind <= PRIVATE_IDENTIFIER_KIND && tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+        value = unescapeIdentifier(value);
+      }
+
+      return value;
+    };
+
     setTokenPosTemp = function (token: Token, pos: number) {
       token.#pos = pos;
     };
@@ -348,8 +349,9 @@ class Token {
 const getTokenStart = getTokenStartTemp;
 const getTokenEnd = getTokenEndTemp;
 const getTokenRange = getTokenRangeTemp;
-const getTokenValue = getTokenValueTemp;
 const getTokenLoc = getTokenLocTemp;
+const getTokenValue = getTokenValueTemp;
+
 const setTokenPos = setTokenPosTemp;
 const resetRange = resetRangeTemp;
 const resetLoc = resetLocTemp;

@@ -72,7 +72,6 @@
   |     29,
   |     46
   |   ],
-  |   "value": " Line comment 1",
   |   "loc": {
   |     "start": {
   |       "line": 2,
@@ -82,7 +81,8 @@
   |       "line": 2,
   |       "column": 17
   |     }
-  |   }
+  |   },
+  |   "value": " Line comment 1"
   | }
    ,-[files/comments.js:2:1]
  1 | const topLevelVariable1 = 1;
@@ -265,7 +265,6 @@
   |     0,
   |     19
   |   ],
-  |   "value": "/usr/bin/env node",
   |   "loc": {
   |     "start": {
   |       "line": 1,
@@ -275,7 +274,8 @@
   |       "line": 1,
   |       "column": 19
   |     }
-  |   }
+  |   },
+  |   "value": "/usr/bin/env node"
   | }
    ,-[files/hashbang.js:1:1]
  1 | #!/usr/bin/env node
