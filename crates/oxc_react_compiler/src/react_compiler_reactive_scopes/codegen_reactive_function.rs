@@ -120,7 +120,7 @@ pub fn codegen_function<'a>(
         let use_memo_cache = oxc_ast::ast::Expression::new_call_expression(
             SPAN,
             oxc_ast::ast::Expression::new_identifier(SPAN, memo_cache_name, ast),
-            None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
+            NONE,
             [oxc_ast::ast::Argument::from(ox_number(ast, cache_count as f64))],
             false,
             ast,
@@ -133,7 +133,7 @@ pub fn codegen_function<'a>(
                 ox_str(ast, &cache_name),
                 ast,
             ),
-            None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+            NONE,
             Some(use_memo_cache),
             false,
             ast,
@@ -219,6 +219,7 @@ fn ox_codegen_outlined<'a>(
 use oxc_allocator::GetAllocator;
 use oxc_allocator::IntoIn;
 use oxc_ast::ast as oxc;
+use oxc_ast::builder::NONE;
 use oxc_span::SPAN;
 
 // Temp value tracking. Maps a temporary's declaration to its emitted oxc value
@@ -408,7 +409,7 @@ fn ox_symbol_for<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, name: &str) -> oxc:
     oxc_ast::ast::Expression::new_call_expression(
         SPAN,
         callee,
-        None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+        NONE,
         [oxc::Argument::from(oxc_ast::ast::Expression::new_string_literal(
             SPAN,
             ox_str(ast, name),
@@ -505,8 +506,8 @@ fn ox_convert_parameters<'a>(
                     SPAN,
                     [],
                     binding,
-                    None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
-                    None::<oxc_allocator::Box<oxc::Expression>>,
+                    NONE,
+                    NONE,
                     false,
                     None,
                     false,
@@ -521,7 +522,7 @@ fn ox_convert_parameters<'a>(
                     SPAN,
                     [],
                     rest_elem,
-                    None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+                    NONE,
                     &cx.ast,
                 ));
             }
@@ -727,7 +728,7 @@ fn ox_codegen_reactive_scope<'a>(
                     ox_str(&cx.ast, &name),
                     &cx.ast,
                 ),
-                None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+                NONE,
                 None,
                 false,
                 &cx.ast,
@@ -1034,12 +1035,7 @@ fn ox_codegen_terminal<'a>(
                     let ident = &cx.env.identifiers[binding.identifier];
                     cx.temp.insert(ident.declaration_id, None);
                     let pattern = ox_binding_for_identifier(cx, binding.identifier)?;
-                    Some(oxc_ast::ast::CatchParameter::new(
-                        SPAN,
-                        pattern,
-                        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
-                        &cx.ast,
-                    ))
+                    Some(oxc_ast::ast::CatchParameter::new(SPAN, pattern, NONE, &cx.ast))
                 }
                 None => None,
             };
@@ -1050,7 +1046,7 @@ fn ox_codegen_terminal<'a>(
                 SPAN,
                 try_block,
                 Some(handler),
-                None::<oxc_allocator::Box<oxc::BlockStatement>>,
+                NONE,
                 &cx.ast,
             )))
         }
@@ -1083,7 +1079,7 @@ fn ox_codegen_for_in<'a>(
         SPAN,
         var_decl_kind,
         lval,
-        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+        NONE,
         None,
         false,
         &cx.ast,
@@ -1135,7 +1131,7 @@ fn ox_codegen_for_of<'a>(
         SPAN,
         var_decl_kind,
         lval,
-        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+        NONE,
         None,
         false,
         &cx.ast,
@@ -1485,15 +1481,8 @@ fn ox_make_var_decl<'a>(
     id: oxc::BindingPattern<'a>,
     init: Option<oxc::Expression<'a>>,
 ) -> oxc::Statement<'a> {
-    let declarator = oxc_ast::ast::VariableDeclarator::new(
-        SPAN,
-        kind,
-        id,
-        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
-        init,
-        false,
-        &cx.ast,
-    );
+    let declarator =
+        oxc_ast::ast::VariableDeclarator::new(SPAN, kind, id, NONE, init, false, &cx.ast);
     oxc::Statement::VariableDeclaration(oxc_ast::ast::VariableDeclaration::boxed(
         SPAN,
         kind,
@@ -1799,7 +1788,7 @@ fn ox_codegen_base_instruction_value<'a>(
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_new_expression(
                 SPAN,
                 callee_expr,
-                None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+                NONE,
                 arguments,
                 &cx.ast,
             )))
@@ -1989,11 +1978,7 @@ fn ox_codegen_base_instruction_value<'a>(
             }
             let quasi = ox_template_literal(cx, quasis, exprs);
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_tagged_template_expression(
-                SPAN,
-                tag_expr,
-                None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
-                quasi,
-                &cx.ast,
+                SPAN, tag_expr, NONE, quasi, &cx.ast,
             )))
         }
         InstructionValue::TemplateLiteral { subexprs, quasis, .. } => {
@@ -2562,10 +2547,10 @@ fn ox_codegen_function_expression<'a>(
                 fn_result.generator,
                 fn_result.is_async,
                 false,
-                None::<oxc_allocator::Box<oxc::TSTypeParameterDeclaration>>,
-                None::<oxc_allocator::Box<oxc::TSThisParameter>>,
+                NONE,
+                NONE,
                 fn_result.params,
-                None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+                NONE,
                 Some(fn_result.body),
                 &cx.ast,
             );
@@ -2619,14 +2604,7 @@ fn ox_build_arrow<'a>(
     expression: bool,
 ) -> oxc::Expression<'a> {
     oxc_ast::ast::Expression::new_arrow_function_expression(
-        SPAN,
-        expression,
-        is_async,
-        None::<oxc_allocator::Box<oxc::TSTypeParameterDeclaration>>,
-        params,
-        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
-        body,
-        &cx.ast,
+        SPAN, expression, is_async, NONE, params, NONE, body, &cx.ast,
     )
 }
 
@@ -2703,10 +2681,10 @@ fn ox_codegen_object_expression<'a>(
                             fn_result.generator,
                             fn_result.is_async,
                             false,
-                            None::<oxc_allocator::Box<oxc::TSTypeParameterDeclaration>>,
-                            None::<oxc_allocator::Box<oxc::TSThisParameter>>,
+                            NONE,
+                            NONE,
                             fn_result.params,
-                            None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+                            NONE,
                             Some(fn_result.body),
                             &cx.ast,
                         );
@@ -2788,13 +2766,8 @@ fn ox_codegen_jsx_expression<'a>(
     }
 
     let is_self_closing = children.is_none();
-    let opening = oxc_ast::ast::JSXOpeningElement::new(
-        SPAN,
-        opening_name,
-        None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
-        attributes,
-        &cx.ast,
-    );
+    let opening =
+        oxc_ast::ast::JSXOpeningElement::new(SPAN, opening_name, NONE, attributes, &cx.ast);
     let closing = if is_self_closing {
         None
     } else {
@@ -3060,7 +3033,7 @@ fn ox_dispatcher_guard_stmt<'a>(
     let call = oxc_ast::ast::Expression::new_call_expression(
         SPAN,
         oxc_ast::ast::Expression::new_identifier(SPAN, guard_name, ast),
-        None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+        NONE,
         [oxc_ast::ast::Argument::from(ox_number(ast, kind as u8 as f64))],
         false,
         ast,
@@ -3108,14 +3081,8 @@ fn ox_create_call_expression<'a>(
     callee_id: IdentifierId,
 ) -> oxc::Expression<'a> {
     let ast = &cx.ast;
-    let call_expr = oxc_ast::ast::Expression::new_call_expression(
-        SPAN,
-        callee,
-        None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
-        arguments,
-        false,
-        ast,
-    );
+    let call_expr =
+        oxc_ast::ast::Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ast);
     // The hook-kind lookup only runs with guards enabled, keeping the default
     // codegen path free of per-call shape probing.
     let Some(guard_name) = cx.env.hook_guard_name.as_deref() else {
@@ -3139,7 +3106,7 @@ fn ox_create_call_expression<'a>(
         SPAN,
         oxc_ast::ast::FormalParameterKind::FormalParameter,
         [],
-        None::<oxc_allocator::Box<oxc_ast::ast::FormalParameterRest>>,
+        NONE,
         ast,
     );
     let iife = oxc_ast::ast::Function::new(
@@ -3149,17 +3116,17 @@ fn ox_create_call_expression<'a>(
         false,
         false,
         false,
-        None::<oxc_allocator::Box<oxc::TSTypeParameterDeclaration>>,
-        None::<oxc_allocator::Box<oxc::TSThisParameter>>,
+        NONE,
+        NONE,
         params,
-        None::<oxc_allocator::Box<oxc::TSTypeAnnotation>>,
+        NONE,
         Some(body),
         ast,
     );
     oxc_ast::ast::Expression::new_call_expression(
         SPAN,
         oxc::Expression::FunctionExpression(oxc_allocator::ArenaBox::new_in(iife, ast)),
-        None::<oxc_allocator::Box<oxc::TSTypeParameterInstantiation>>,
+        NONE,
         [],
         false,
         ast,
