@@ -77,7 +77,7 @@ impl<'a> PeepholeOptimizations {
         symbol_id: SymbolId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        if decl.init.is_none() || Self::keep_top_level_var_in_script_mode(ctx) {
+        if decl.init.is_none() || Self::is_script_root_scope(ctx) {
             return false;
         }
         // `body_unsafe` is set by a preceding non-declarative statement, and the

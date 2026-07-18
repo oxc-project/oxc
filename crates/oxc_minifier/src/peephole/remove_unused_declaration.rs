@@ -2,12 +2,65 @@ use super::PeepholeOptimizations;
 use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
+use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
     pub(super) fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
         ctx.state.options.unused != CompressOptionsUnused::Keep
-            && !Self::keep_top_level_var_in_script_mode(ctx)
+            && !Self::is_script_root_scope(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
+    }
+
+    /// Count-based unusedness for declaration removal and IIFE folding. The
+    /// assignment, member-write, and single-use-substitution consumers instead
+    /// pair `symbol_is_implicitly_observable` with their own count thresholds,
+    /// because some runtime semantics can observe a binding independently of
+    /// resolved references.
+    pub(super) fn symbol_is_unused_by_count(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        !ctx.state.symbol_is_implicitly_observable(symbol_id)
+            && ctx.scoping().symbol_is_unused(symbol_id)
+    }
+
+    /// Function declarations additionally consume graph deadness, allowing
+    /// self- and mutually-recursive cycles to be removed.
+    fn function_has_no_live_references(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        Self::symbol_is_unused_by_count(symbol_id, ctx) || ctx.state.function_is_dead(symbol_id)
+    }
+
+    /// Return `true` when an exact function-valued initializer contains every
+    /// reference to its own binding. Creating a function or arrow has no side
+    /// effects, and without a reference from outside that function it can
+    /// never be called.
+    ///
+    /// This check deliberately runs at the declarator removal site instead of
+    /// registering declarators in the recursive-function graph. That keeps
+    /// mutual declarator cycles unsupported, but also means statement
+    /// relocation cannot leave a dead candidate in a non-removable AST slot.
+    /// For example, `const f = () => f()` is removable, while adding `use(f)`
+    /// supplies an outside reference and keeps it.
+    fn self_recursive_function_declarator_is_unused(
+        decl: &VariableDeclarator<'a>,
+        symbol_id: SymbolId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let Some(function_scope_id) = decl.init.as_ref().and_then(|init| match init {
+            Expression::FunctionExpression(function) => function.scope_id.get(),
+            Expression::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
+            _ => None,
+        }) else {
+            return false;
+        };
+
+        // Covers exports, Script-root bindings, Annex B aliases, and `using`.
+        if ctx.state.symbol_is_implicitly_observable(symbol_id) {
+            return false;
+        }
+
+        ctx.scoping().get_resolved_references(symbol_id).all(|reference| {
+            ctx.scoping()
+                .scope_ancestors(reference.scope_id())
+                .any(|scope_id| scope_id == function_scope_id)
+        })
     }
 
     fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
@@ -44,7 +97,10 @@ impl<'a> PeepholeOptimizations {
         match &decl.id {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
-                    return ctx.scoping().symbol_is_unused(symbol_id);
+                    return Self::symbol_is_unused_by_count(symbol_id, ctx)
+                        || Self::self_recursive_function_declarator_is_unused(
+                            decl, symbol_id, ctx,
+                        );
                 }
                 false
             }
@@ -107,12 +163,10 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &f.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
             return;
         }
-        if !ctx.scoping().symbol_is_unused(symbol_id) {
+        if !Self::function_has_no_live_references(symbol_id, ctx) {
             return;
         }
         let new_stmt = Statement::new_empty_statement(f.span, ctx);
@@ -126,12 +180,10 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &c.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
             return;
         }
-        if !ctx.scoping().symbol_is_unused(symbol_id) {
+        if !Self::symbol_is_unused_by_count(symbol_id, ctx) {
             return;
         }
         if let Some(changed) = Self::remove_unused_class(c, ctx).map(|exprs| {
@@ -146,8 +198,8 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Do remove top level vars in script mode.
-    pub fn keep_top_level_var_in_script_mode(ctx: &TraverseCtx<'a>) -> bool {
+    /// Whether bindings in the current scope are visible to later scripts.
+    pub fn is_script_root_scope(ctx: &TraverseCtx<'a>) -> bool {
         ctx.scoping.current_scope_id() == ctx.scoping().root_scope_id()
             && ctx.source_type().is_script()
     }
