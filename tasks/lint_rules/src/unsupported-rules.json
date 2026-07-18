@@ -57,6 +57,9 @@
     "import/order": "Not implementing this in Oxlint as its behavior is covered very well by [Oxfmt's import sorting](https://oxc.rs/docs/guide/usage/formatter/sorting.html).",
     "unicorn/template-indent": "Stylistic rule.",
     "unicorn/no-non-function-verb-prefix": "Requires type information. Not currently possible to implement in oxlint.",
+    "unicorn/prefer-json-parse-buffer": "Deprecated.",
+    "unicorn/prevent-abbreviations": "Deprecated.",
+    "unicorn/better-regex": "Deprecated.",
 
     "jsdoc/type-formatting": "Experimental rule in the original plugin, may reconsider once stable.",
     "jsdoc/convert-to-jsdoc-comments": "Experimental rule in the original plugin, may reconsider once stable.",
