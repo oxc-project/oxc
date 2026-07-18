@@ -95,7 +95,7 @@
 //! `disable_old_builder` Cargo feature is enabled in all Oxc crates which utilize `AstBuilder`.
 //! Where those crates expose the `AstBuilder` they use to user code, the feature is only enabled in tests.
 
-use oxc_allocator::{Allocator, ArenaBox, FromIn, GetAllocator};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, FromIn, GetAllocator};
 use oxc_syntax::node::NodeId;
 
 mod custom;
@@ -185,12 +185,22 @@ impl<'a> GetAstBuilder<'a> for AstBuilder<'a> {
     }
 }
 
-/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Option<Anything<'a>>>`.
-/// Pass `NONE` instead of `None::<Anything<'a>>`.
+/// Type that can be used in any AST builder method call which requires either:
+///
+/// * `IntoIn<'a, Option<Box<'a, T>>`.
+/// * `IntoIn<'a, Option<Vec<'a, T>>`.
+///
+/// Pass `NONE` instead of `None::<Box<'a, T>>`.
 #[expect(clippy::upper_case_acronyms)]
 pub struct NONE;
 
 impl<'a, T> FromIn<'a, NONE> for Option<ArenaBox<'a, T>> {
+    fn from_in(_: NONE, _: &'a Allocator) -> Self {
+        None
+    }
+}
+
+impl<'a, T> FromIn<'a, NONE> for Option<ArenaVec<'a, T>> {
     fn from_in(_: NONE, _: &'a Allocator) -> Self {
         None
     }

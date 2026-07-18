@@ -290,18 +290,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         falsy_init: bool,
         init_absent: bool,
     ) {
-        let mut exported = false;
-        if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
-            for ancestor in self.ancestors() {
-                if ancestor.is_export_named_declaration()
-                    || ancestor.is_export_all_declaration()
-                    || ancestor.is_export_default_declaration()
-                {
-                    exported = true;
-                }
-            }
-        }
-
         let mut read_references_count = 0;
         let mut write_references_count = 0;
         let mut member_write_target_read_count = 0;
@@ -344,7 +332,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         let symbol_value = SymbolValue {
             initialized_constant,
             implicit_undefined,
-            exported,
             read_references_count,
             write_references_count,
             member_write_target_read_count,

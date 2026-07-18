@@ -15,7 +15,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_ast::ast::*;
-use oxc_ast::builder::AstBuilder;
+use oxc_ast::builder::{AstBuilder, NONE};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -2120,10 +2120,10 @@ fn ox_build_function<'a>(
         codegen.generator,
         codegen.is_async,
         false,
-        None::<ArenaBox<TSTypeParameterDeclaration>>,
-        None::<ArenaBox<TSThisParameter>>,
+        NONE,
+        NONE,
         codegen.params.clone_in_with_semantic_ids(ast.allocator()),
-        None::<ArenaBox<TSTypeAnnotation>>,
+        NONE,
         Some(codegen.body.clone_in_with_semantic_ids(ast.allocator())),
         ast,
     )
@@ -2142,9 +2142,9 @@ fn ox_build_compiled_expression<'a>(
                 SPAN,
                 false,
                 codegen.is_async,
-                None::<ArenaBox<TSTypeParameterDeclaration>>,
+                NONE,
                 codegen.params.clone_in_with_semantic_ids(ast.allocator()),
-                None::<ArenaBox<TSTypeAnnotation>>,
+                NONE,
                 codegen.body.clone_in_with_semantic_ids(ast.allocator()),
                 ast,
             ))
@@ -2218,7 +2218,7 @@ fn ox_build_gated_const_decl<'a>(
         SPAN,
         VariableDeclarationKind::Const,
         BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
-        None::<ArenaBox<TSTypeAnnotation>>,
+        NONE,
         Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
         false,
         ast,
@@ -2226,7 +2226,7 @@ fn ox_build_gated_const_decl<'a>(
     Statement::VariableDeclaration(VariableDeclaration::boxed(
         SPAN,
         VariableDeclarationKind::Const,
-        ArenaVec::from_value_in(declarator, ast),
+        [declarator],
         false,
         ast,
     ))
@@ -2317,10 +2317,10 @@ impl<'a> OxcVisitor<'a, '_> {
                 *stmt = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
                     SPAN,
                     Some(decl),
-                    ArenaVec::new_in(ast),
+                    [],
                     None,
                     ImportOrExportKind::Value,
-                    None::<ArenaBox<WithClause>>,
+                    NONE,
                     ast,
                 ));
             } else {
@@ -2382,10 +2382,10 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                         func.generator,
                         func.r#async,
                         false,
-                        None::<ArenaBox<TSTypeParameterDeclaration>>,
-                        None::<ArenaBox<TSThisParameter>>,
+                        NONE,
+                        NONE,
                         func.params.clone_in_with_semantic_ids(ast.allocator()),
-                        None::<ArenaBox<TSTypeAnnotation>>,
+                        NONE,
                         func.body.clone_in_with_semantic_ids(ast.allocator()),
                         ast,
                     );
@@ -2503,8 +2503,8 @@ fn ox_gating_call<'a>(ast: &AstBuilder<'a>, callee_name: &str) -> Expression<'a>
     Expression::new_call_expression(
         SPAN,
         Expression::new_identifier(SPAN, ox_atom(ast, callee_name), ast),
-        None::<ArenaBox<TSTypeParameterInstantiation>>,
-        ArenaVec::new_in(ast),
+        NONE,
+        [],
         false,
         ast,
     )
@@ -2745,7 +2745,7 @@ fn ox_add_imports_to_program<'a>(
                 Some(specifiers),
                 source,
                 None,
-                None::<ArenaBox<WithClause>>,
+                NONE,
                 ImportOrExportKind::Value,
                 ast,
             );
@@ -2760,25 +2760,17 @@ fn ox_add_imports_to_program<'a>(
                     BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, &spec.name), ast);
                 props.push(BindingProperty::new(SPAN, key, value, false, false, ast));
             }
-            let object_pattern = BindingPattern::new_object_pattern(
-                SPAN,
-                props,
-                None::<ArenaBox<BindingRestElement>>,
-                ast,
-            );
+            let object_pattern = BindingPattern::new_object_pattern(SPAN, props, NONE, ast);
             let require_call = Expression::new_call_expression(
                 SPAN,
                 Expression::new_identifier(SPAN, "require", ast),
-                None::<ArenaBox<TSTypeParameterInstantiation>>,
-                ArenaVec::from_value_in(
-                    Argument::from(Expression::new_string_literal(
-                        SPAN,
-                        ox_atom(ast, module_name),
-                        None,
-                        ast,
-                    )),
+                NONE,
+                [Argument::from(Expression::new_string_literal(
+                    SPAN,
+                    ox_atom(ast, module_name),
+                    None,
                     ast,
-                ),
+                ))],
                 false,
                 ast,
             );
@@ -2786,7 +2778,7 @@ fn ox_add_imports_to_program<'a>(
                 SPAN,
                 VariableDeclarationKind::Const,
                 object_pattern,
-                None::<ArenaBox<TSTypeAnnotation>>,
+                NONE,
                 Some(require_call),
                 false,
                 ast,
@@ -2794,7 +2786,7 @@ fn ox_add_imports_to_program<'a>(
             let decl = VariableDeclaration::boxed(
                 SPAN,
                 VariableDeclarationKind::Const,
-                ArenaVec::from_value_in(declarator, ast),
+                [declarator],
                 false,
                 ast,
             );

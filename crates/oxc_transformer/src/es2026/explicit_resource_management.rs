@@ -105,18 +105,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         let using_stmt = Statement::new_variable_declaration(
             SPAN,
             variable_decl_kind,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    variable_decl_kind,
-                    binding_pattern,
-                    NONE,
-                    Some(temp_id.create_read_expression(ctx)),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                variable_decl_kind,
+                binding_pattern,
+                NONE,
+                Some(temp_id.create_read_expression(ctx)),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         );
@@ -433,18 +430,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             inner_block.push(Statement::new_variable_declaration(
                                 span,
                                 VariableDeclarationKind::Var,
-                                ArenaVec::from_value_in(
-                                    VariableDeclarator::new(
-                                        span,
-                                        VariableDeclarationKind::Var,
-                                        var_id.create_spanned_binding_pattern(span, ctx),
-                                        NONE,
-                                        Some(expr),
-                                        false,
-                                        ctx,
-                                    ),
+                                [VariableDeclarator::new(
+                                    span,
+                                    VariableDeclarationKind::Var,
+                                    var_id.create_spanned_binding_pattern(span, ctx),
+                                    NONE,
+                                    Some(expr),
+                                    false,
                                     ctx,
-                                ),
+                                )],
                                 false,
                                 ctx,
                             ));
@@ -452,18 +446,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             program_body.push(Statement::new_export_named_declaration(
                                 SPAN,
                                 None,
-                                ArenaVec::from_value_in(
-                                    ExportSpecifier::new(
-                                        SPAN,
-                                        ModuleExportName::IdentifierReference(
-                                            var_id.create_read_reference(ctx),
-                                        ),
-                                        ModuleExportName::new_identifier_name(SPAN, "default", ctx),
-                                        ImportOrExportKind::Value,
-                                        ctx,
+                                [ExportSpecifier::new(
+                                    SPAN,
+                                    ModuleExportName::IdentifierReference(
+                                        var_id.create_read_reference(ctx),
                                     ),
+                                    ModuleExportName::new_identifier_name(SPAN, "default", ctx),
+                                    ImportOrExportKind::Value,
                                     ctx,
-                                ),
+                                )],
                                 None,
                                 ImportOrExportKind::Value,
                                 NONE,
@@ -735,7 +726,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                                 ctx,
                             ),
                             NONE,
-                            ArenaVec::from_value_in(Argument::from(old_init), ctx),
+                            [Argument::from(old_init)],
                             false,
                             ctx,
                         ));
@@ -759,25 +750,22 @@ impl<'a> ExplicitResourceManagement<'a> {
                         Statement::new_variable_declaration(
                             SPAN,
                             VariableDeclarationKind::Var,
-                            ArenaVec::from_value_in(
-                                VariableDeclarator::new(
+                            [VariableDeclarator::new(
+                                SPAN,
+                                VariableDeclarationKind::Var,
+                                using_ctx.create_binding_pattern(ctx),
+                                NONE,
+                                Some(Expression::new_call_expression(
                                     SPAN,
-                                    VariableDeclarationKind::Var,
-                                    using_ctx.create_binding_pattern(ctx),
+                                    callee,
                                     NONE,
-                                    Some(Expression::new_call_expression(
-                                        SPAN,
-                                        callee,
-                                        NONE,
-                                        ArenaVec::new_in(ctx),
-                                        false,
-                                        ctx,
-                                    )),
+                                    [],
                                     false,
                                     ctx,
-                                ),
+                                )),
+                                false,
                                 ctx,
-                            ),
+                            )],
                             false,
                             ctx,
                         ),
@@ -880,7 +868,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                             ctx,
                         ),
                         NONE,
-                        ArenaVec::from_value_in(Argument::from(old_init), ctx),
+                        [Argument::from(old_init)],
                         false,
                         ctx,
                     ));
@@ -897,25 +885,15 @@ impl<'a> ExplicitResourceManagement<'a> {
         let helper = Declaration::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    using_ctx.create_binding_pattern(ctx),
-                    NONE,
-                    Some(Expression::new_call_expression(
-                        SPAN,
-                        callee,
-                        NONE,
-                        ArenaVec::new_in(ctx),
-                        false,
-                        ctx,
-                    )),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                VariableDeclarationKind::Var,
+                using_ctx.create_binding_pattern(ctx),
+                NONE,
+                Some(Expression::new_call_expression(SPAN, callee, NONE, [], false, ctx)),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         );
@@ -983,12 +961,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         CatchClause::boxed_with_scope_id(
             SPAN,
             Some(catch_parameter),
-            BlockStatement::new_with_scope_id(
-                SPAN,
-                ArenaVec::from_value_in(stmt, ctx),
-                block_scope_id,
-                ctx,
-            ),
+            BlockStatement::new_with_scope_id(SPAN, [stmt], block_scope_id, ctx),
             catch_scope_id,
             ctx,
         )
@@ -1014,7 +987,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                 ctx,
             ),
             NONE,
-            ArenaVec::new_in(ctx),
+            [],
             false,
             ctx,
         );
@@ -1024,7 +997,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         BlockStatement::boxed_with_scope_id(
             SPAN,
-            ArenaVec::from_value_in(Statement::new_expression_statement(SPAN, stmt, ctx), ctx),
+            [Statement::new_expression_statement(SPAN, stmt, ctx)],
             finally_scope_id,
             ctx,
         )
@@ -1043,18 +1016,15 @@ impl<'a> ExplicitResourceManagement<'a> {
         Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    binding.create_spanned_binding_pattern(original_span, ctx),
-                    NONE,
-                    Some(class_expr),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                VariableDeclarationKind::Var,
+                binding.create_spanned_binding_pattern(original_span, ctx),
+                NONE,
+                Some(class_expr),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         )

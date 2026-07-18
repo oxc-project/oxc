@@ -204,6 +204,10 @@ impl<'alloc, T> Vec<'alloc, T> {
     ) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
+        if N == 0 {
+            return Vec::new_in(allocator);
+        }
+
         let allocator = allocator.allocator();
         let boxed = Box::new_in(array, &allocator);
         let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();

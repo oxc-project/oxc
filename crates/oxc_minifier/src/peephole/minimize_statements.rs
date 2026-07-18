@@ -551,8 +551,7 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let decls = ArenaVec::from_value_in(decl, ctx);
-                let new_decl = VariableDeclaration::boxed(span, kind, decls, declare, ctx);
+                let new_decl = VariableDeclaration::boxed(span, kind, [decl], declare, ctx);
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }
@@ -1403,9 +1402,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
             return false;
         }
 
@@ -1447,7 +1444,7 @@ impl<'a> PeepholeOptimizations {
         declarations: &mut ArenaVec<'a, VariableDeclarator<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        if Self::keep_top_level_var_in_script_mode(ctx)
+        if Self::is_script_root_scope(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
             || kind.is_using()
         {
@@ -1517,9 +1514,12 @@ impl<'a> PeepholeOptimizations {
             else {
                 return true;
             };
-            // we should check whether it's exported by `symbol_value.exported`
-            // because the variable might be exported with `export { foo }` rather than `export var foo`
-            if symbol_value.exported
+            // Implicitly observable bindings remain live independently of
+            // their resolved-reference count.
+            // An `export { foo }` specifier also contributes a reference, but
+            // consult the shared metadata explicitly for consistency with the
+            // other count-based consumers.
+            if ctx.state.symbol_is_implicitly_observable(prev_decl_id.symbol_id())
                 || symbol_value.read_references_count > 1
                 || symbol_value.write_references_count > 0
             {

@@ -36,8 +36,8 @@ fn test_void_ident() {
 
 // Leak regression: Normalize runs before the peephole fixed-point loop, but
 // `PassDirty` is live from `MinifierState::new`, so Normalize's typed-helper
-// drops are recorded like any pass's and consumed by the driver's pre-loop
-// `flush_pass_dirty`. A leaked read makes `x` look referenced, blocking
+// drops are recorded like any pass's and consumed by the pre-loop `end_pass`
+// flush. A leaked read makes `x` look referenced, blocking
 // unused-declaration removal.
 #[test]
 fn test_void_ident_does_not_leak_reference() {

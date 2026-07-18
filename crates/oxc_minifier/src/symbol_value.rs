@@ -42,9 +42,6 @@ pub struct SymbolValue<'a> {
     /// resolve the value through `initialized_constant`.
     pub implicit_undefined: bool,
 
-    /// Symbol is exported.
-    pub exported: bool,
-
     pub read_references_count: u32,
     pub write_references_count: u32,
 

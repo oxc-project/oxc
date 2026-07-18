@@ -594,10 +594,7 @@ impl<'a> PeepholeOptimizations {
                     (false, false) => {
                         let new_expr = Expression::new_sequence_expression(
                             binary_expr.span,
-                            ArenaVec::from_array_in(
-                                [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
-                                ctx,
-                            ),
+                            [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
                             ctx,
                         );
                         ctx.replace_expression(e, new_expr);
@@ -725,7 +722,7 @@ impl<'a> PeepholeOptimizations {
             let mut expr = match arg {
                 Argument::SpreadElement(e) => Expression::new_array_expression(
                     e.span,
-                    ArenaVec::from_value_in(ArrayExpressionElement::SpreadElement(e), ctx),
+                    [ArrayExpressionElement::SpreadElement(e)],
                     ctx,
                 ),
                 match_expression!(Argument) => arg.into_expression(),
@@ -764,9 +761,7 @@ impl<'a> PeepholeOptimizations {
         else {
             unreachable!()
         };
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
             return false;
         }
         let reference_id = ident.reference_id();
@@ -777,13 +772,14 @@ impl<'a> PeepholeOptimizations {
         if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
             return false;
         }
+        // Cannot remove writes to implicitly observable bindings, for example
+        // `export let foo; foo = 1;`.
+        if ctx.state.symbol_is_implicitly_observable(symbol_id) {
+            return false;
+        }
         let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
             return false;
         };
-        // Cannot remove assignment to live bindings: `export let foo; foo = 1;`.
-        if symbol_value.exported {
-            return false;
-        }
         if symbol_value.read_references_count > 0 {
             return false;
         }
@@ -805,7 +801,7 @@ impl<'a> PeepholeOptimizations {
     ///   `__proto__` setters) — the `MEMBER_WRITE_HAZARD` fact in
     ///   `MinifierState::symbol_facts`. See `docs/ASSUMPTIONS.md`.
     fn remove_unused_member_assignment(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        if Self::keep_top_level_var_in_script_mode(ctx) {
+        if Self::is_script_root_scope(ctx) {
             return false;
         }
         let Expression::AssignmentExpression(assign_expr) = &*e else { unreachable!() };
@@ -971,7 +967,7 @@ impl<'a> PeepholeOptimizations {
     /// Four conditions must hold:
     /// 1. The target is a single-level member expression (`A.foo`, not `a.b.c`)
     /// 2. ALL references to the symbol are member write targets
-    /// 3. The symbol creates a fresh value (not an alias) and is not exported
+    /// 3. The symbol creates a fresh value and is not otherwise observable
     /// 4. No `__proto__` write may have installed a setter that another
     ///    reference could trigger
     fn is_member_assign_to_unused_binding(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
@@ -987,11 +983,14 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        // Check: symbol creates a fresh value (not an alias) and is not exported.
+        // Check: symbol creates a fresh value and is not implicitly observable.
+        if ctx.state.symbol_is_implicitly_observable(symbol_id) {
+            return false;
+        }
         let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
             return false;
         };
-        if sv.kind == FreshValueKind::None || sv.exported {
+        if sv.kind == FreshValueKind::None {
             return false;
         }
         // Check: all references are member write targets (O(1) via pre-computed count).

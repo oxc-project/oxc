@@ -117,21 +117,37 @@ impl<'a> Compressor<'a> {
         let initial_references_len = ctx.get_mut().scoping().references_len();
         // Consume the drops Normalize recorded (`void x` -> `void 0`,
         // drop_console), so pass 1 already observes the pruned reference
-        // counts and Normalize's drops cost no extra peephole pass.
-        PeepholeOptimizations::flush_pass_dirty(program, ctx.get_mut());
+        // counts and Normalize's drops cost no extra peephole pass. Normalize
+        // also registered function declarations and exports, so post-flush
+        // analysis makes source-level dead cycles (`function f() { f() }`)
+        // visible to pass 1. Ignore the result because pass 1 runs
+        // unconditionally and consumes any newly dead functions.
+        PeepholeOptimizations::end_pass(
+            program,
+            ctx.get_mut(),
+            /* force_liveness_analysis */ true,
+        );
         // Start the loop from a clean signal: Normalize's drops are flushed
         // above, so a Normalize-only mutation must not force a pointless
         // extra iteration.
         ctx.state_mut().take_mutated();
         loop {
             PeepholeOptimizations.run_once(program, ctx);
-            // A pass with no recorded mutation cannot have recorded drops
-            // (every drop helper also records a mutation), so the terminal
-            // iteration skips the flush.
-            if !ctx.state_mut().take_mutated() {
+            let mutated = ctx.state_mut().take_mutated();
+            // Flush every pass. Reachability is recomputed only when a removed
+            // reference belonged to a graph candidate or direct eval was
+            // dropped; only those changes can invalidate the previous verdict.
+            let found_new_dead_functions = PeepholeOptimizations::end_pass(
+                program,
+                ctx.get_mut(),
+                /* force_liveness_analysis */ false,
+            );
+            // Liveness requests another pass only for a newly dead function
+            // (bounded by the candidate set); ordinary AST mutation also keeps
+            // the fixed-point loop running. The iteration cap backstops churn.
+            if !mutated && !found_new_dead_functions {
                 break;
             }
-            PeepholeOptimizations::flush_pass_dirty(program, ctx.get_mut());
             if let Some(max) = max_iterations {
                 if iteration >= max {
                     break;
