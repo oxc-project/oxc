@@ -270,6 +270,8 @@ pub struct Message {
     pub section_offset: u32,
     /// Start offset of the JSX child containing this diagnostic.
     pub jsx_child_offset: Option<u32>,
+    /// Whether `eslint-disable` directives are active for this diagnostic.
+    pub respect_eslint_disable_directives: bool,
     /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
     pub rule: Option<MessageRule>,
 }
@@ -291,6 +293,7 @@ impl Message {
             fixed: false,
             section_offset: 0,
             jsx_child_offset: None,
+            respect_eslint_disable_directives: true,
             rule: None,
         }
     }
