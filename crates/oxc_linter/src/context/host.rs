@@ -327,6 +327,7 @@ impl<'a> ContextHost<'a> {
 
     fn jsx_child_offset(&self, diagnostic_span: Span) -> Option<u32> {
         let nodes = self.semantic().nodes();
+        let source_text = self.semantic().source_text().as_bytes();
         let (node_id, node) = nodes
             .iter_enumerated()
             .filter(|(_, node)| node.kind().span().contains_inclusive(diagnostic_span))
@@ -338,13 +339,26 @@ impl<'a> ContextHost<'a> {
         let mut child_offset = None;
         for kind in std::iter::once(node.kind()).chain(nodes.ancestor_kinds(node_id)) {
             match kind {
-                // JavaScript within an attribute expression can use a normal line comment.
-                AstKind::JSXAttribute(_) => return None,
+                // A same-line attribute diagnostic still needs a JSX comment before its child
+                // element. Discard the expression-container anchor and keep walking to it.
+                AstKind::JSXAttribute(_) => child_offset = None,
                 AstKind::JSXText(text) => {
                     child_offset.get_or_insert(text.span.start);
                 }
                 AstKind::JSXExpressionContainer(container) => {
+                    let container_start = container.span.start as usize;
+                    let diagnostic_start = diagnostic_span.start as usize;
+                    if source_text
+                        .get(container_start..diagnostic_start)
+                        .is_some_and(|prefix| prefix.contains(&b'\n') || prefix.contains(&b'\r'))
+                    {
+                        // Later lines inside `{...}` are JavaScript and need a normal comment.
+                        return None;
+                    }
                     child_offset.get_or_insert(container.span.start);
+                }
+                AstKind::JSXClosingElement(closing) => {
+                    child_offset.get_or_insert(closing.span.start);
                 }
                 AstKind::JSXElement(element) => {
                     if child_offset.is_some() {
@@ -647,6 +661,22 @@ mod tests {
         with_tsx_host(attribute_source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(attribute_error, 3)), None);
         });
+
+        let nested_attribute_source = "const node = <Parent>\n  <Child value={foo} />\n</Parent>;";
+        let nested_attribute_error = nested_attribute_source.find("foo").unwrap() as u32;
+        let nested_child_offset = nested_attribute_source.find("<Child").unwrap() as u32;
+        with_tsx_host(nested_attribute_source, true, |host| {
+            assert_eq!(
+                host.jsx_child_offset(Span::sized(nested_attribute_error, 3)),
+                Some(nested_child_offset)
+            );
+        });
+
+        let multiline_expression_source = "const node = <div>{foo &&\n  bar}</div>;";
+        let multiline_expression_error = multiline_expression_source.find("bar").unwrap() as u32;
+        with_tsx_host(multiline_expression_source, true, |host| {
+            assert_eq!(host.jsx_child_offset(Span::sized(multiline_expression_error, 3)), None);
+        });
     }
 
     #[test]
@@ -657,6 +687,16 @@ mod tests {
 
         with_tsx_host(source, true, |host| {
             assert_eq!(host.jsx_child_offset(Span::sized(error_offset, 1)), Some(text_offset));
+        });
+    }
+
+    #[test]
+    fn jsx_child_offset_finds_root_closing_tag() {
+        let source = "const node = <div>\n</div>;";
+        let closing_offset = source.find("</div>").unwrap() as u32;
+
+        with_tsx_host(source, true, |host| {
+            assert_eq!(host.jsx_child_offset(Span::sized(closing_offset, 6)), Some(closing_offset));
         });
     }
 

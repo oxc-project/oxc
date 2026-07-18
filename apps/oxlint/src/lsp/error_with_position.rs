@@ -1111,6 +1111,53 @@ mod test {
     }
 
     #[test]
+    fn disable_for_this_line_in_jsx_attribute_anchors_before_child() {
+        let source = "const node = (\n  <Parent>\n    <Child value={foo} />\n  </Parent>\n);";
+        let error_offset = source.find("foo").unwrap() as u32;
+        let jsx_child_offset = source.find("<Child").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            source,
+        );
+
+        assert_eq!(fix.code, "    {/* oxlint-disable-next-line no-undef */}\n");
+        assert_eq!(fix.range.start.line, 2);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_multiline_jsx_expression_uses_js_comment() {
+        let source = "const node = <div>{foo &&\n  bar}</div>;";
+        let error_offset = source.find("bar").unwrap() as u32;
+        let fix =
+            super::disable_for_this_line_with_jsx_child("no-undef", error_offset, 0, None, source);
+
+        assert_eq!(fix.code, "  // oxlint-disable-next-line no-undef\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_anchors_before_root_closing_tag() {
+        let source = "const node = (\n  <div>\n  </div>\n);";
+        let error_offset = source.find("</div>").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "react/self-closing-comp",
+            error_offset,
+            0,
+            Some(error_offset),
+            source,
+        );
+
+        assert_eq!(fix.code, "  {/* oxlint-disable-next-line react/self-closing-comp */}\n");
+        assert_eq!(fix.range.start.line, 2);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
     fn disable_for_this_line_with_spaces() {
         let source = "  console.log('hello');";
         let fix = super::disable_for_this_line("no-console", 10, 0, source);
