@@ -1,6 +1,8 @@
+use oxc_span::SourceType;
+
 use crate::{
-    CompressOptions, CompressOptionsUnused, default_options, test, test_options, test_same,
-    test_same_options,
+    CompressOptions, CompressOptionsUnused, default_options, test, test_options,
+    test_options_source_type, test_same, test_same_options, test_same_options_source_type,
 };
 
 #[track_caller]
@@ -286,4 +288,65 @@ fn remove_empty_function() {
 
     test_same_options("function* foo({}) {} foo()", &options);
     test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
+}
+
+#[test]
+fn redeclared_pure_function_is_not_folded_var() {
+    test_same("var foo = (u) => {}; if (g) var foo = (a) => { console.log(a); }; foo('x');");
+}
+
+#[test]
+fn redeclared_pure_function_is_not_folded_function_declaration() {
+    test_same_options_source_type(
+        "function foo(u) {} function foo(a) { console.log(a); } foo('x');",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
+fn direct_eval_rebound_function_is_not_folded() {
+    test(
+        "function foo() {} eval(\"foo = () => side_effect()\"); foo();",
+        "function foo() {} eval(\"foo = () => side_effect()\"), foo();",
+    );
+}
+
+#[test]
+fn nested_direct_eval_rebound_function_is_not_folded() {
+    test(
+        "function foo() {} function g() { eval(\"foo = () => side_effect()\") } g(); foo();",
+        "function foo() {} function g() { eval(\"foo = () => side_effect()\") } g(), foo();",
+    );
+}
+
+#[test]
+fn removed_direct_eval_reenables_pure_function_folding() {
+    test_options_source_type(
+        "function foo() {} if (0) eval(\"foo = () => side_effect()\"); foo();",
+        "",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn script_root_rebound_function_is_not_folded() {
+    test_options_source_type(
+        "function foo() {} globalThis.foo = () => side_effect(); foo();",
+        "function foo() {} globalThis.foo = () => side_effect(), foo();",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
+fn non_redeclared_pure_function_still_folds() {
+    test("const foo = (u) => {}; foo(1)", "const foo = (u) => {};");
+    test_options_source_type(
+        "function foo() {} foo()",
+        "function foo() {}",
+        SourceType::cjs(),
+        &default_options(),
+    );
 }

@@ -496,6 +496,20 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
+        let binding_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        let binding_scope_flags = ctx.scoping().scope_flags(binding_scope_id);
+        // These bindings can be replaced without producing a resolved write
+        // reference: redeclarations are span-only in semantic, direct eval can
+        // assign through the scope chain, and Script globals alias properties
+        // of the global object. A different function may therefore win at
+        // runtime even when this declaration is pure.
+        if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
+            || binding_scope_flags.contains_direct_eval()
+            || (ctx.source_type().is_script() && binding_scope_id == ctx.scoping().root_scope_id())
+        {
+            ctx.state.pure_functions.remove(&symbol_id);
+            return;
+        }
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
             ctx.state.pure_functions.insert(
                 symbol_id,
