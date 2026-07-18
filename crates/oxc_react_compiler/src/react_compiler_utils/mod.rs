@@ -1,8 +1,10 @@
 use indexmap::{IndexMap, IndexSet};
 use rustc_hash::FxBuildHasher;
 
+pub mod bit_set;
 pub mod disjoint_set;
 
+pub use bit_set::BitSet;
 pub use disjoint_set::DisjointSet;
 
 /// `IndexMap` keyed with the fast `FxHasher` (rustc-hash) instead of the default SipHash.

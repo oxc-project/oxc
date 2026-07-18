@@ -13,8 +13,6 @@
 
 use std::mem::replace;
 
-use rustc_hash::FxHashSet;
-
 use oxc_str::Ident;
 
 use crate::react_compiler_hir::environment::Environment;
@@ -22,6 +20,7 @@ use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, NonLocalBinding,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
+use crate::react_compiler_utils::BitSet;
 
 /// Outline anonymous function expressions that have no captured context variables.
 ///
@@ -29,7 +28,7 @@ use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 pub fn outline_functions<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    fbt_operands: &FxHashSet<IdentifierId>,
+    fbt_operands: &BitSet<IdentifierId>,
 ) {
     // Collect per-instruction actions to maintain depth-first name allocation order.
     // Each entry: (instr index, function_id to recurse into, should_outline)
@@ -57,7 +56,7 @@ pub fn outline_functions<'a>(
                     // 3. Not an fbt operand
                     if inner_func.context.is_empty()
                         && inner_func.id.is_none()
-                        && !fbt_operands.contains(&lvalue_id)
+                        && !fbt_operands.contains(lvalue_id)
                     {
                         actions.push(Action::RecurseAndOutline {
                             instr_idx: instr_id.index(),

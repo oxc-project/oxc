@@ -15,9 +15,9 @@
 //!
 //! Ported from TypeScript `src/HIR/MergeOverlappingReactiveScopesHIR.ts`.
 
-use rustc_hash::FxHashMap;
-use rustc_hash::FxHashSet;
 use std::cmp;
+
+use oxc_index::IndexVec;
 
 use crate::react_compiler_hir::Instruction;
 use crate::react_compiler_hir::MutableRangeId;
@@ -27,29 +27,23 @@ use crate::react_compiler_hir::visitors::{each_instruction_lvalue_ids, each_term
 use crate::react_compiler_hir::{
     EvaluationOrder, HirFunction, IdentifierId, InstructionValue, ScopeId, Type,
 };
-use crate::react_compiler_utils::DisjointSet;
+use crate::react_compiler_utils::{BitSet, DisjointSet};
 
 // =============================================================================
 // ScopeInfo
 // =============================================================================
 
-struct ScopeStartEntry {
-    id: EvaluationOrder,
-    scopes: Vec<ScopeId>,
-}
-
-struct ScopeEndEntry {
+/// A set of scopes that all start (or all end) at the same evaluation order.
+struct ScopeEntry {
     id: EvaluationOrder,
     scopes: Vec<ScopeId>,
 }
 
 struct ScopeInfo {
     /// Sorted descending by id (so we can pop from the end for smallest)
-    scope_starts: Vec<ScopeStartEntry>,
+    scope_starts: Vec<ScopeEntry>,
     /// Sorted descending by id (so we can pop from the end for smallest)
-    scope_ends: Vec<ScopeEndEntry>,
-    /// Maps IdentifierId -> ScopeId for all places that have a scope
-    place_scopes: FxHashMap<IdentifierId, ScopeId>,
+    scope_ends: Vec<ScopeEntry>,
 }
 
 // =============================================================================
@@ -93,21 +87,25 @@ fn is_mutable(env: &Environment, id: EvaluationOrder, identifier_id: IdentifierI
 // collectScopeInfo
 // =============================================================================
 
-fn collect_scope_info(func: &HirFunction, env: &Environment) -> ScopeInfo {
-    let mut scope_starts_map: FxHashMap<EvaluationOrder, Vec<ScopeId>> = FxHashMap::default();
-    let mut scope_ends_map: FxHashMap<EvaluationOrder, Vec<ScopeId>> = FxHashMap::default();
-    let mut place_scopes: FxHashMap<IdentifierId, ScopeId> = FxHashMap::default();
+fn collect_scope_info(
+    func: &HirFunction,
+    env: &Environment,
+) -> (ScopeInfo, IndexVec<IdentifierId, Option<ScopeId>>) {
+    let mut scope_start_pairs: Vec<(EvaluationOrder, ScopeId)> = Vec::new();
+    let mut scope_end_pairs: Vec<(EvaluationOrder, ScopeId)> = Vec::new();
+    let mut place_scopes: IndexVec<IdentifierId, Option<ScopeId>> =
+        IndexVec::from_vec(vec![None; env.identifiers.len()]);
 
     let mut collect_place_scope = |identifier_id: IdentifierId, env: &Environment| {
         let scope_id = match env.identifiers[identifier_id].scope {
             Some(s) => s,
             None => return,
         };
-        place_scopes.insert(identifier_id, scope_id);
+        place_scopes[identifier_id] = Some(scope_id);
         let range = &env.scopes[scope_id].range;
         if range.start != range.end {
-            scope_starts_map.entry(range.start).or_default().push(scope_id);
-            scope_ends_map.entry(range.end).or_default().push(scope_id);
+            scope_start_pairs.push((range.start, scope_id));
+            scope_end_pairs.push((range.end, scope_id));
         }
     };
 
@@ -135,31 +133,32 @@ fn collect_scope_info(func: &HirFunction, env: &Environment) -> ScopeInfo {
         }
     }
 
-    // Deduplicate scope IDs in each entry, preserving insertion order.
-    // The TS uses Set<ReactiveScope> which preserves insertion order and deduplicates.
-    // We must NOT sort by ScopeId here — the insertion order determines which scope
-    // becomes the root in the disjoint set union.
-    fn dedup_preserve_order(scopes: &mut Vec<ScopeId>) {
-        let mut seen = FxHashSet::default();
-        scopes.retain(|s| seen.insert(*s));
-    }
-    for scopes in scope_starts_map.values_mut() {
-        dedup_preserve_order(scopes);
-    }
-    for scopes in scope_ends_map.values_mut() {
-        dedup_preserve_order(scopes);
+    // Group pairs into per-evaluation-order entries, sorted descending by id (for
+    // pop-from-end), deduplicating scope IDs within each entry while preserving
+    // insertion order. The TS uses Set<ReactiveScope> which preserves insertion order
+    // and deduplicates. We must NOT sort scopes by ScopeId here — the insertion order
+    // determines which scope becomes the root in the disjoint set union, so the sort
+    // by id must be stable.
+    fn group_pairs(mut pairs: Vec<(EvaluationOrder, ScopeId)>) -> Vec<ScopeEntry> {
+        pairs.sort_by_key(|(id, _)| cmp::Reverse(*id));
+        let mut entries: Vec<ScopeEntry> = Vec::new();
+        for (id, scope) in pairs {
+            match entries.last_mut() {
+                Some(entry) if entry.id == id => {
+                    if !entry.scopes.contains(&scope) {
+                        entry.scopes.push(scope);
+                    }
+                }
+                _ => entries.push(ScopeEntry { id, scopes: vec![scope] }),
+            }
+        }
+        entries
     }
 
-    // Convert to sorted vecs (descending by id for pop-from-end)
-    let mut scope_starts: Vec<ScopeStartEntry> =
-        scope_starts_map.into_iter().map(|(id, scopes)| ScopeStartEntry { id, scopes }).collect();
-    scope_starts.sort_unstable_by_key(|a| std::cmp::Reverse(a.id));
+    let scope_starts = group_pairs(scope_start_pairs);
+    let scope_ends = group_pairs(scope_end_pairs);
 
-    let mut scope_ends: Vec<ScopeEndEntry> =
-        scope_ends_map.into_iter().map(|(id, scopes)| ScopeEndEntry { id, scopes }).collect();
-    scope_ends.sort_unstable_by_key(|a| std::cmp::Reverse(a.id));
-
-    ScopeInfo { scope_starts, scope_ends, place_scopes }
+    (ScopeInfo { scope_starts, scope_ends }, place_scopes)
 }
 
 // =============================================================================
@@ -303,11 +302,9 @@ fn get_overlapping_reactive_scopes(
 ///
 /// Corresponds to TS `mergeOverlappingReactiveScopesHIR(fn: HIRFunction): void`.
 pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut Environment) {
-    // Collect scope info
-    let scope_info = collect_scope_info(func, env);
-
-    // Save place_scopes before moving scope_info
-    let place_scopes = scope_info.place_scopes.clone();
+    // Collect scope info. `place_scopes` is kept aside; `get_overlapping_reactive_scopes`
+    // consumes the rest of `ScopeInfo`.
+    let (scope_info, place_scopes) = collect_scope_info(func, env);
 
     // Find overlapping scopes
     let mut joined_scopes = get_overlapping_reactive_scopes(func, env, scope_info);
@@ -326,11 +323,11 @@ pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut E
     // When scope.range is updated, ALL identifiers referencing that range object
     // automatically see the new values. We use MutableRangeId to identify which
     // identifiers share the same logical range as a root scope.
-    let mut original_root_range_ids: FxHashMap<ScopeId, MutableRangeId> = FxHashMap::default();
+    let mut seen_roots = BitSet::<ScopeId>::new();
+    let mut original_root_range_ids: Vec<(ScopeId, MutableRangeId)> = Vec::new();
     for (_, root_id) in &scope_groups {
-        if !original_root_range_ids.contains_key(root_id) {
-            let range_id = env.scopes[*root_id].range.id;
-            original_root_range_ids.insert(*root_id, range_id);
+        if seen_roots.insert(*root_id) {
+            original_root_range_ids.push((*root_id, env.scopes[*root_id].range.id));
         }
     }
 
@@ -362,10 +359,11 @@ pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut E
     // Note: we intentionally do NOT update mutable_range for repointed identifiers,
     // matching TS behavior where identifier.mutableRange still references the old scope's
     // range object after scope repointing.
-    for (identifier_id, original_scope) in &place_scopes {
+    for (identifier_id, original_scope) in place_scopes.iter_enumerated() {
+        let Some(original_scope) = original_scope else { continue };
         let next_scope = joined_scopes.find(*original_scope);
         if next_scope != *original_scope {
-            env.identifiers[*identifier_id].scope = Some(next_scope);
+            env.identifiers[identifier_id].scope = Some(next_scope);
         }
     }
 }

@@ -47,6 +47,7 @@ use crate::react_compiler_hir::reactive::ReactiveStatement;
 use crate::react_compiler_hir::reactive::ReactiveTerminal;
 use crate::react_compiler_hir::reactive::ReactiveTerminalTargetKind;
 use crate::react_compiler_hir::reactive::ReactiveValue;
+use crate::react_compiler_utils::BitSet;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
@@ -76,7 +77,7 @@ pub fn codegen_function<'a>(
     func: &ReactiveFunction<'a>,
     env: &mut Environment<'a>,
     unique_identifiers: IdentHashSet<'a>,
-    fbt_operands: FxHashSet<IdentifierId>,
+    fbt_operands: BitSet<IdentifierId>,
 ) -> Result<crate::react_compiler::entrypoint::compile_result::CodegenFunction<'a>, OxcDiagnostic> {
     use crate::react_compiler::entrypoint::compile_result::CodegenFunction as OxcCodegenFunction;
     use oxc_span::SPAN;
@@ -185,7 +186,7 @@ pub fn codegen_function<'a>(
 fn ox_codegen_outlined<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     env: &mut Environment<'a>,
-    fbt_operands: FxHashSet<IdentifierId>,
+    fbt_operands: BitSet<IdentifierId>,
 ) -> Result<
     Vec<crate::react_compiler::entrypoint::compile_result::OutlinedFunction<'a>>,
     OxcDiagnostic,
@@ -267,7 +268,7 @@ struct OxcContext<'a, 'env> {
     object_methods: FxHashMap<IdentifierId, (InstructionValue<'a>, Option<Span>)>,
     unique_identifiers: IdentHashSet<'a>,
     #[allow(dead_code)]
-    fbt_operands: FxHashSet<IdentifierId>,
+    fbt_operands: BitSet<IdentifierId>,
     synthesized_names: IdentHashMap<'a, Ident<'a>>,
 }
 
@@ -276,7 +277,7 @@ impl<'a, 'env> OxcContext<'a, 'env> {
         ast: oxc_ast::builder::AstBuilder<'a>,
         env: &'env mut Environment<'a>,
         unique_identifiers: IdentHashSet<'a>,
-        fbt_operands: FxHashSet<IdentifierId>,
+        fbt_operands: BitSet<IdentifierId>,
     ) -> Self {
         OxcContext {
             ast,
@@ -2825,7 +2826,7 @@ fn ox_codegen_jsx_attribute<'a>(
                 oxc_ast::ast::JSXAttributeName::new_identifier(SPAN, ox_str(&cx.ast, name), &cx.ast)
             };
 
-            let is_fbt_operand = cx.fbt_operands.contains(&place.identifier);
+            let is_fbt_operand = cx.fbt_operands.contains(place.identifier);
             let inner_value = ox_codegen_place_to_expression(cx, place)?;
             let attr_value = match inner_value {
                 oxc::Expression::StringLiteral(ref s)
