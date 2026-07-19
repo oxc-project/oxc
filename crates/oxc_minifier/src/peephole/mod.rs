@@ -22,19 +22,15 @@ use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
-use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
+use crate::{Traverse, TraverseCtx};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
-/// Stateless peephole optimizer. The `dce` flag, the `mutated` signal, and
-/// the per-pass `PassChanges` accumulator all live on `MinifierState`.
+/// Stateless peephole optimizer. Configuration and the per-pass
+/// `PassChanges` accumulator live on `MinifierState`.
 pub struct PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn run_once(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
         pair: (&'x A, &'x A),
         check_a: F,
@@ -209,13 +205,12 @@ impl<'a> PeepholeOptimizations {
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.symbols.reset_values();
         // Any module loader (`import`, `export * from`, `export … from`) can, on a
         // cycle, evaluate a foreign module that observes a not-yet-assigned binding
         // our exports close over. So the program root starts its prelude "unsafe"
         // when the body has any loader — bailing every program-scope var inline.
-        // Loaders are hoisted, so scan the whole body (an import may follow a
-        // leading var); the result never changes across passes.
+        // Loaders are hoisted, so scan the whole current body each pass (an
+        // import may follow a leading var, or an earlier pass may remove one).
         let module_has_loaders = program
             .body
             .iter()
@@ -225,7 +220,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // than reallocating (matching the `reset`/`clear` above).
         *ctx.state.body_unsafe_stack.last_mut() =
             (ctx.scoping().root_scope_id(), module_has_loaders);
-        // `PassChanges` is managed by the end-of-pass sequence, not reset per
+        // `PassChanges` is managed by pass completion, not reset per
         // traversal.
     }
 

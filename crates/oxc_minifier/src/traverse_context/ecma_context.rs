@@ -399,13 +399,13 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace an expression slot. Marks the pass as having mutated the AST.
     ///
     /// Prefer this over a direct `*slot = new; ctx.notice_change();` pair —
-    /// the mutation flag is private to `MinifierState`, so the typed helpers
-    /// are the only way to record the mutation (compiler-enforced).
+    /// the typed helper keeps dropped-subtree bookkeeping, the slot update,
+    /// and the pass revisit request together.
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
         self.dropped_subtree_collector().visit_expression(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace a statement slot. Marks the pass as having mutated the AST.
@@ -413,7 +413,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
         self.dropped_subtree_collector().visit_statement(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace an assignment-target-property slot. Marks the pass as having mutated the AST.
@@ -425,7 +425,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     ) {
         self.dropped_subtree_collector().visit_assignment_target_property(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
@@ -433,7 +433,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
         self.dropped_subtree_collector().visit_property_key(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace a `for-in` / `for-of` statement's `left` slot. Same contract
@@ -446,7 +446,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     ) {
         self.dropped_subtree_collector().visit_for_statement_left(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark the pass as having mutated the AST in place (operand swap, in-place
@@ -455,7 +455,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// replacement.
     #[inline]
     pub fn notice_change(&mut self) {
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark an expression subtree as about to be dropped (popped from a collection,
@@ -468,7 +468,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_expression(&mut self, expr: &Expression<'a>) {
         self.dropped_subtree_collector().visit_expression(expr);
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark a statement subtree as about to be dropped. Same contract as
@@ -476,7 +476,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_statement(&mut self, stmt: &Statement<'a>) {
         self.dropped_subtree_collector().visit_statement(stmt);
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark a class element subtree as about to be dropped. Same contract as
@@ -484,7 +484,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_class_element(&mut self, element: &ClassElement<'a>) {
         self.dropped_subtree_collector().visit_class_element(element);
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark a variable declarator as about to be dropped. Walks the whole
@@ -495,7 +495,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
         self.dropped_subtree_collector().visit_variable_declarator(decl);
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark a switch case subtree as about to be dropped. Walks the entire case —
@@ -505,6 +505,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_switch_case(&mut self, switch_case: &SwitchCase<'a>) {
         self.dropped_subtree_collector().visit_switch_case(switch_case);
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 }

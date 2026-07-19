@@ -9,14 +9,22 @@ use oxc_span::SourceType;
 
 #[track_caller]
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
+    run_with_iterations(source_text, source_type, options).0
+}
+
+#[track_caller]
+fn run_with_iterations(
+    source_text: &str,
+    source_type: SourceType,
+    options: Option<CompressOptions>,
+) -> (String, u8) {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = &mut ret.program;
-    if let Some(options) = options {
-        Compressor::new(&allocator).dead_code_elimination(program, options);
-    }
-    Codegen::new().build(program).code
+    let iterations = options
+        .map_or(0, |options| Compressor::new(&allocator).dead_code_elimination(program, options));
+    (Codegen::new().build(program).code, iterations)
 }
 
 #[track_caller]
@@ -30,6 +38,24 @@ fn test(source_text: &str, expected: &str) {
         expected,
         SourceType::default(),
         CompressOptions::dce(),
+    );
+}
+
+#[track_caller]
+fn test_with_iterations(source_text: &str, expected: &str, expected_iterations: u8) {
+    let t = "('production' == 'production')";
+    let f = "('production' == 'development')";
+    let source_text = source_text.cow_replace("true", t);
+    let source_text = source_text.cow_replace("false", f);
+    let iterations = test_with_options_source_type(
+        &source_text,
+        expected,
+        SourceType::default(),
+        CompressOptions::dce(),
+    );
+    assert_eq!(
+        iterations, expected_iterations,
+        "\niteration count for source\n{source_text}\nexpect\n{expected_iterations}\ngot\n{iterations}"
     );
 }
 
@@ -59,8 +85,8 @@ fn test_with_options_source_type(
     expected: &str,
     source_type: SourceType,
     options: CompressOptions,
-) {
-    let result = run(source_text, source_type, Some(options.clone()));
+) -> u8 {
+    let (result, iterations) = run_with_iterations(source_text, source_type, Some(options.clone()));
     let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 
@@ -70,6 +96,7 @@ fn test_with_options_source_type(
         result, second,
         "\nidempotency for source\n{source_text}\ngot\n{result}\nthen\n{second}"
     );
+    iterations
 }
 
 #[test]
@@ -417,6 +444,11 @@ console.log([
 ])
         ",
     );
+}
+
+#[test]
+fn dropped_direct_eval_converges_after_liveness_refresh() {
+    test_with_iterations("if (false) eval('x'); function f() { f() }", "", 2);
 }
 
 #[test]

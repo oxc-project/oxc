@@ -1,9 +1,9 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, CompressOptionsUnused, TreeShakeOptions, test_options, test_options_once,
-    test_options_source_type, test_same_options, test_same_options_source_type, test_same_smallest,
-    test_smallest,
+    CompressOptions, CompressOptionsUnused, TreeShakeOptions, test_options,
+    test_options_once_with_iterations, test_options_source_type, test_options_with_iterations,
+    test_same_options, test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
 // Leak regression: dropping an unused declarator must walk the whole
@@ -653,13 +653,14 @@ fn recursive_function_with_var_redeclaration() {
 
 #[test]
 fn recursive_function_var_redeclaration_converges_on_count_pass() {
-    test_smallest("function f() { f() } var f;", "");
+    let options = CompressOptions::smallest();
+    test_options_with_iterations("function f() { f() } var f;", "", 2, &options);
 
     // The first pass removes the function using published graph deadness.
     // Its body reference is pruned only at the following flush, so a capped
     // run conservatively retains the sibling `var` declaration.
     let options = CompressOptions { max_iterations: Some(0), ..CompressOptions::smallest() };
-    test_options_once("function f() { f() } var f;", "var f;", &options);
+    test_options_once_with_iterations("function f() { f() } var f;", "var f;", 0, &options);
 }
 
 // ---- Export observability ----

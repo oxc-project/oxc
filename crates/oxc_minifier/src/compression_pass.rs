@@ -16,7 +16,16 @@ use oxc_ast::ast::*;
 use oxc_semantic::Scoping;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{TraverseCtx, symbol_liveness, traverse_context::as_direct_eval_call};
+use crate::{
+    ReusableTraverseCtx, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
+    peephole::PeepholeOptimizations, symbol_liveness, traverse_context::as_direct_eval_call,
+};
+
+/// The fixed-point decision produced by one completed peephole pass.
+#[must_use]
+pub struct PassOutcome {
+    pub(crate) needs_another_pass: bool,
+}
 
 /// Refresh `ScopeFlags::DirectEval` from live direct-eval call sites.
 ///
@@ -194,7 +203,7 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
 /// resolved references from scoping, refresh direct-eval flags if an
 /// `eval(...)` call was dropped, and re-initialize the accumulator.
 ///
-/// [`end_pass`] calls this after Normalize (so the fixed-point loop starts
+/// Pass completion calls this after Normalize (so the fixed-point loop starts
 /// against already-pruned scoping and Normalize's drops cost no extra
 /// peephole pass) and after every peephole pass — quiet ones included, where
 /// every step below is a cheap no-op.
@@ -248,17 +257,56 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     liveness_inputs_changed
 }
 
-/// Complete a compression pass by flushing accumulated changes into scoping,
-/// then deriving function reachability from those settled semantic references.
-/// Keeping the pair together makes the ordering structural. Returns whether
-/// newly dead functions demand another pass.
-pub fn end_pass<'a>(
+/// Complete semantic bookkeeping by flushing accumulated changes into
+/// scoping, then deriving function reachability from those settled references.
+/// Keeping the pair together makes the ordering structural.
+fn finish_pass<'a>(
     program: &Program<'a>,
     ctx: &mut TraverseCtx<'a>,
     force_liveness_analysis: bool,
 ) -> bool {
     let liveness_inputs_changed = flush_pass_changes(program, ctx);
     symbol_liveness::analyze(program, ctx, force_liveness_analysis || liveness_inputs_changed)
+}
+
+/// Finish Normalize's semantic journal before the unconditional first
+/// peephole pass. Normalize's shape changes do not drive fixed-point
+/// convergence, so consume the revisit request and ignore newly dead functions:
+/// pass one runs regardless and consumes both forms of progress.
+pub fn finish_normalize_pass<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    let _ = ctx.state.take_revisit_requested();
+    finish_pass(program, ctx, /* force_liveness_analysis */ true);
+    debug_assert_pass_changes_clean(ctx);
+}
+
+/// Run and finish one ordinary peephole pass as a single transaction.
+///
+/// The returned outcome combines AST/fact progress with newly published dead
+/// functions. A revisit request alone does not force liveness recomputation;
+/// reference removal and dropped direct eval continue to gate that analysis.
+pub fn run_peephole_pass<'a>(
+    program: &mut Program<'a>,
+    ctx: &mut ReusableTraverseCtx<'a>,
+) -> PassOutcome {
+    debug_assert_pass_changes_clean(ctx.get_mut());
+    ctx.state_mut().symbols.reset_values();
+    traverse_mut_with_ctx(&mut PeepholeOptimizations, program, ctx);
+
+    let ctx = ctx.get_mut();
+    let revisit_requested = ctx.state.take_revisit_requested();
+    let newly_dead = finish_pass(program, ctx, /* force_liveness_analysis */ false);
+    debug_assert!(
+        !newly_dead || revisit_requested,
+        "ordinary liveness progress must follow a recorded pass change"
+    );
+    debug_assert_pass_changes_clean(ctx);
+
+    PassOutcome { needs_another_pass: revisit_requested || newly_dead }
+}
+
+#[inline]
+fn debug_assert_pass_changes_clean(ctx: &TraverseCtx<'_>) {
+    debug_assert!(ctx.state.pass_changes_are_clean());
 }
 
 /// Walks the live program to find scopes containing direct `eval(...)` calls.

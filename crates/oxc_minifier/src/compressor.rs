@@ -4,7 +4,7 @@ use oxc_semantic::{Scoping, SemanticBuilder};
 
 use crate::{
     CompressOptions, ReusableTraverseCtx, compression_pass,
-    peephole::{Normalize, NormalizeOptions, PeepholeOptimizations},
+    peephole::{Normalize, NormalizeOptions},
     state::MinifierState,
 };
 
@@ -122,26 +122,10 @@ impl<'a> Compressor<'a> {
         // analysis makes source-level dead cycles (`function f() { f() }`)
         // visible to pass 1. Ignore the result because pass 1 runs
         // unconditionally and consumes any newly dead functions.
-        compression_pass::end_pass(program, ctx.get_mut(), /* force_liveness_analysis */ true);
-        // Start the loop from a clean signal: Normalize's drops are flushed
-        // above, so a Normalize-only mutation must not force a pointless
-        // extra iteration.
-        ctx.state_mut().take_mutated();
+        compression_pass::finish_normalize_pass(program, ctx.get_mut());
         loop {
-            PeepholeOptimizations.run_once(program, ctx);
-            let mutated = ctx.state_mut().take_mutated();
-            // Flush every pass. Reachability is recomputed only when a removed
-            // reference belonged to a graph candidate or direct eval was
-            // dropped; only those changes can invalidate the previous verdict.
-            let found_new_dead_functions = compression_pass::end_pass(
-                program,
-                ctx.get_mut(),
-                /* force_liveness_analysis */ false,
-            );
-            // Liveness requests another pass only for a newly dead function
-            // (bounded by the candidate set); ordinary AST mutation also keeps
-            // the fixed-point loop running. The iteration cap backstops churn.
-            if !mutated && !found_new_dead_functions {
+            let outcome = compression_pass::run_peephole_pass(program, ctx);
+            if !outcome.needs_another_pass {
                 break;
             }
             if let Some(max) = max_iterations {

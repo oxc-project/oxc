@@ -574,7 +574,7 @@ pub fn dead_references_affect_analysis(ctx: &TraverseCtx<'_>) -> bool {
 
 /// Assert that the completed pass removed every previously published dead
 /// declaration, then optionally analyze settled semantic references and
-/// publish newly dead functions. Called only by the end-of-pass sequence after
+/// publish newly dead functions. Called only by pass completion after
 /// scoping has been flushed.
 pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: bool) -> bool {
     #[cfg(not(debug_assertions))]

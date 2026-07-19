@@ -9,12 +9,17 @@ use oxc_syntax::scope::ScopeId;
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
-/// Changes accumulated by the `replace_*` / `drop_*` helper calls between two
-/// consumption points. Live from `MinifierState::new` so the pre-loop
-/// `Normalize` pass records drops through the same typed helpers as the
-/// peephole loop; consumed and reset or resized by [`crate::compression_pass`]
-/// after Normalize and after every peephole pass.
+/// Changes accumulated between two pass-completion boundaries. Live from
+/// `MinifierState::new` so the pre-loop `Normalize` pass records drops through
+/// the same typed helpers as the peephole loop; consumed and reset or resized
+/// by [`crate::compression_pass`] after Normalize and every peephole pass.
 pub struct PassChanges<'a> {
+    /// Whether the completed pass changed facts or AST shape in a way that
+    /// requires another peephole traversal. This signal does not itself force
+    /// liveness analysis; removed candidate references and dropped direct eval
+    /// calls continue to gate that work independently.
+    revisit_requested: bool,
+
     /// `ReferenceId`s whose AST node has been removed and not re-installed
     /// in any later mutation this pass.
     ///
@@ -42,6 +47,7 @@ pub struct PassChanges<'a> {
 impl<'a> PassChanges<'a> {
     pub fn new(references_len: usize, allocator: &'a Allocator) -> Self {
         Self {
+            revisit_requested: false,
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
         }
@@ -90,14 +96,8 @@ pub struct MinifierState<'a> {
     /// `init_symbol_value`.
     pub body_unsafe_stack: NonEmptyStack<(ScopeId, bool)>,
 
-    /// Set when a typed helper mutates the AST. Private by design: the only
-    /// writers are the helpers on `MinifierTraverseCtx`; the only reader is
-    /// the fixed-point loop driver via `take_mutated()`.
-    mutated: bool,
-
-    /// Per-pass change accumulator populated by `replace_*` / `drop_*` helpers
-    /// as subtrees are removed. Consumed by `compression_pass` after Normalize
-    /// and every peephole pass to drive the incremental scoping refresh.
+    /// Per-pass change accumulator populated by typed mutation helpers and
+    /// consumed by `compression_pass` after Normalize and every peephole pass.
     pub(crate) pass_changes: PassChanges<'a>,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
@@ -121,7 +121,6 @@ impl<'a> MinifierState<'a> {
             symbols,
             private_member_usage: PrivateMemberUsageStack::new(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
-            mutated: false,
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
         }
@@ -139,16 +138,33 @@ impl<'a> MinifierState<'a> {
         !self.dce || !self.options.treeshake.property_write_side_effects
     }
 
-    /// Returns whether the AST was mutated since the last call, and resets.
-    /// Read and reset are one operation so the signal cannot be cleared
-    /// anywhere except at its single consumption point.
-    pub(crate) fn take_mutated(&mut self) -> bool {
-        std::mem::take(&mut self.mutated)
+    /// Request another peephole traversal after the current pass completes.
+    ///
+    /// This is deliberately separate from [`Self::record_ast_change`] for
+    /// future fact-only callers such as #24060. Such a caller may enable more
+    /// transforms without changing the AST, resolved references, or direct-eval
+    /// scope flags.
+    pub(crate) fn request_revisit(&mut self) {
+        self.pass_changes.revisit_requested = true;
     }
 
-    /// Record that a typed helper mutated the AST.
-    pub(crate) fn record_mutation(&mut self) {
-        self.mutated = true;
+    /// Record an AST change and schedule the traversal needed to consume it.
+    /// Typed mutation helpers use this as their AST-change entry point.
+    pub(crate) fn record_ast_change(&mut self) {
+        self.request_revisit();
+    }
+
+    /// Return whether the completed pass requested another traversal, then
+    /// reset the signal for the next pass.
+    pub(crate) fn take_revisit_requested(&mut self) -> bool {
+        std::mem::take(&mut self.pass_changes.revisit_requested)
+    }
+
+    /// Whether every per-pass change has been consumed.
+    pub(crate) fn pass_changes_are_clean(&self) -> bool {
+        !self.pass_changes.revisit_requested
+            && self.pass_changes.removed_references.is_empty()
+            && !self.pass_changes.direct_eval_dropped
     }
 }
 
