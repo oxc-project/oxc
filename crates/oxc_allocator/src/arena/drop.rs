@@ -157,7 +157,6 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
 
     // PROTOTYPE: Chunk memory comes from the pointer-compression cage. "Deallocation" pushes
     // the chunk to the cage's free-list and advises the OS to reclaim the physical pages.
-    // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
-    // `is_fixed_size` is `false`, so backing allocation was made from the cage.
+    // (`is_fixed_size` is `false`, so the backing allocation was made from the cage.)
     crate::cage::dealloc_chunk(backing_alloc_ptr, layout);
 }

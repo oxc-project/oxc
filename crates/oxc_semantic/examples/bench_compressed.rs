@@ -1,4 +1,4 @@
-#![expect(clippy::print_stdout)]
+#![expect(clippy::print_stdout, clippy::print_stderr)]
 //! PROTOTYPE: Measurement harness for the pointer-compression prototype.
 //!
 //! For each input file: parse + semantic, report arena `used_bytes()` after parse and after
@@ -23,7 +23,7 @@ const ITERATIONS: usize = 10;
 fn median(mut times: Vec<f64>) -> f64 {
     times.sort_by(f64::total_cmp);
     let n = times.len();
-    if n % 2 == 0 { (times[n / 2 - 1] + times[n / 2]) / 2.0 } else { times[n / 2] }
+    if n.is_multiple_of(2) { f64::midpoint(times[n / 2 - 1], times[n / 2]) } else { times[n / 2] }
 }
 
 fn main() {
