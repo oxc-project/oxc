@@ -106,24 +106,31 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
         // `E.X!`, `<T>E.X`, `E.X` (with `preserveParens`) all inline. `annotations.rs`
         // strips these wrappers, but only after this hook returns — by then the outer
         // node has been replaced and `enter_expression` is not re-invoked on it.
-        let inlined = match expr.get_inner_expression_mut() {
-            Expression::StaticMemberExpression(member_expr) => {
+        let inlined = match expr.get_inner_expression_mut().kind_mut() {
+            ExpressionKindMut::StaticMemberExpression(member_expr) => {
                 self.try_inline_enum_member(member_expr, ctx)
             }
-            Expression::ComputedMemberExpression(member_expr) => {
+            ExpressionKindMut::ComputedMemberExpression(member_expr) => {
                 self.try_inline_computed_enum_member(member_expr, ctx)
             }
             // `c_num?.x` / `c_num?.['x']`: inline before es2020 lowers the chain.
             // Otherwise lowering produces `c_num === null || c_num === void 0 ? void 0 : c_num.x`,
             // and only the inner `c_num.x` reference gets deleted by the inline pass — leaving
             // the test-condition references dangling once the enum declaration is removed.
-            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
-                ChainElement::StaticMemberExpression(member_expr) if member_expr.optional => {
-                    self.try_inline_enum_member(member_expr, ctx)
-                }
-                ChainElement::ComputedMemberExpression(member_expr) if member_expr.optional => {
-                    self.try_inline_computed_enum_member(member_expr, ctx)
-                }
+            ExpressionKindMut::ChainExpression(chain_expr) => match &chain_expr.expression {
+                ChainElement::MemberExpression(member) => match member.kind() {
+                    MemberExpressionKind::StaticMemberExpression(member_expr)
+                        if member_expr.optional =>
+                    {
+                        self.try_inline_enum_member(member_expr, ctx)
+                    }
+                    MemberExpressionKind::ComputedMemberExpression(member_expr)
+                        if member_expr.optional =>
+                    {
+                        self.try_inline_computed_enum_member(member_expr, ctx)
+                    }
+                    _ => return,
+                },
                 _ => return,
             },
             _ => return,
@@ -197,10 +204,9 @@ impl<'a> TypeScriptEnum {
         );
 
         let has_potential_side_effect = decl.body.members.iter().any(|member| {
-            matches!(
-                member.initializer,
-                Some(Expression::NewExpression(_) | Expression::CallExpression(_))
-            )
+            member.initializer.as_ref().is_some_and(|init| {
+                matches!(init.tag(), ExpressionTag::NewExpression | ExpressionTag::CallExpression)
+            })
         });
 
         let statements = Self::transform_ts_enum_members(
@@ -401,7 +407,8 @@ impl<'a> TypeScriptEnum {
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
-            let is_str = init.is_string_literal();
+            let is_str =
+                matches!(init.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral);
 
             // Foo["x"] = init
             let member_expr = {
@@ -532,7 +539,7 @@ impl<'a> TypeScriptEnum {
         expr: &StaticMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(ConstantValue, ReferenceId)> {
-        let Expression::Identifier(ident) = &expr.object else { return None };
+        let Some(ident) = expr.object.as_identifier() else { return None };
         self.resolve_enum_member(ident, expr.property.name.as_str(), ctx)
     }
 
@@ -542,8 +549,8 @@ impl<'a> TypeScriptEnum {
         expr: &ComputedMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(ConstantValue, ReferenceId)> {
-        let Expression::Identifier(ident) = &expr.object else { return None };
-        let Expression::StringLiteral(prop) = &expr.expression else { return None };
+        let Some(ident) = expr.object.as_identifier() else { return None };
+        let Some(prop) = expr.expression.as_string_literal() else { return None };
         self.resolve_enum_member(ident, prop.value.as_str(), ctx)
     }
 
@@ -708,8 +715,11 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
-            Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
+        match expr.tag() {
+            ExpressionTag::Identifier
+                if self.should_reference_enum_member(expr.to_identifier()) =>
+            {
+                let ident = expr.to_identifier();
                 let object = Expression::new_identifier(SPAN, self.enum_name, self.ctx);
                 let property = IdentifierName::new(SPAN, ident.name, self.ctx);
                 *expr = MemberExpression::new_static_member_expression(

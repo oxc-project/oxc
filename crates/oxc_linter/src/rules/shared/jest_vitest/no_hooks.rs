@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
@@ -93,7 +93,7 @@ impl NoHooksConfig {
             return;
         }
 
-        if let Expression::Identifier(ident) = &call_expr.callee {
+        if let ExpressionKind::Identifier(ident) = call_expr.callee.kind() {
             let name = CompactStr::from(ident.name.as_str());
             if !self.allow.contains(&name) {
                 ctx.diagnostic(unexpected_hook_diagnostic(call_expr.callee.span()));

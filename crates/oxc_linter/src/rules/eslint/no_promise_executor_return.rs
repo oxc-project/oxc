@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FunctionBody},
+    ast::{Argument, ExpressionKind, FunctionBody},
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -146,8 +146,8 @@ impl Rule for NoPromiseExecutorReturn {
 
         let inner_expr = first_arg.get_inner_expression();
 
-        match inner_expr {
-            Expression::ArrowFunctionExpression(arrow) => {
+        match inner_expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 // Check for implicit return (expression body without braces)
                 if let Some(expr) = arrow.get_expression() {
                     // Arrow function with expression body: `new Promise(r => r(1))`
@@ -161,7 +161,7 @@ impl Rule for NoPromiseExecutorReturn {
                     self.check_function_body(&arrow.body, ctx);
                 }
             }
-            Expression::FunctionExpression(func) => {
+            ExpressionKind::FunctionExpression(func) => {
                 if let Some(body) = &func.body {
                     self.check_function_body(body, ctx);
                 }

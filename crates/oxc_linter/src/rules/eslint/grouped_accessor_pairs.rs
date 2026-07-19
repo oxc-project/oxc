@@ -4,7 +4,7 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        ClassElement, Expression, MethodDefinition, MethodDefinitionKind, ObjectProperty,
+        ClassElement, ExpressionTag, MethodDefinition, MethodDefinitionKind, ObjectProperty,
         ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature,
         TSMethodSignatureKind, TSSignature, TSTypeLiteral,
     },
@@ -411,14 +411,14 @@ fn get_key_name_and_check_literal<'a>(
             false
         } else {
             matches!(
-                prop_key.as_expression().unwrap(),
-                Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::StringLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::TemplateLiteral(_)
+                prop_key.as_expression().unwrap().tag(),
+                ExpressionTag::BooleanLiteral
+                    | ExpressionTag::NullLiteral
+                    | ExpressionTag::StringLiteral
+                    | ExpressionTag::RegExpLiteral
+                    | ExpressionTag::BigIntLiteral
+                    | ExpressionTag::NumericLiteral
+                    | ExpressionTag::TemplateLiteral
             )
         };
     (key_name, is_literal)

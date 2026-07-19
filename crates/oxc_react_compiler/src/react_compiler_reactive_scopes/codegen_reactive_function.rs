@@ -918,7 +918,7 @@ fn ox_codegen_terminal<'a>(
         }
         ReactiveTerminal::Return { value, .. } => {
             let expr = ox_codegen_place_to_expression(cx, value)?;
-            if let oxc::Expression::Identifier(ref ident) = expr
+            if let oxc::ExpressionKind::Identifier(ident) = expr.kind()
                 && ident.name == "undefined"
             {
                 return Ok(Some(oxc_ast::ast::Statement::new_return_statement(
@@ -1204,7 +1204,8 @@ fn ox_codegen_for_init<'a>(
         for stmt in body {
             // Fold `name = init` assignment into the last declarator when possible.
             if let oxc::Statement::ExpressionStatement(ref expr_stmt) = stmt
-                && let oxc::Expression::AssignmentExpression(ref assign) = expr_stmt.expression
+                && let oxc::ExpressionKind::AssignmentExpression(assign) =
+                    expr_stmt.expression.kind()
                 && matches!(assign.operator, oxc::AssignmentOperator::Assign)
                 && let oxc::AssignmentTarget::AssignmentTargetIdentifier(ref left_ident) =
                     assign.left
@@ -1215,8 +1216,8 @@ fn ox_codegen_for_init<'a>(
             {
                 // Move the assignment's right-hand side into the declarator.
                 if let oxc::Statement::ExpressionStatement(expr_stmt) = stmt
-                    && let oxc::Expression::AssignmentExpression(assign) =
-                        expr_stmt.unbox().expression
+                    && let oxc::ExpressionKindOwned::AssignmentExpression(assign) =
+                        expr_stmt.unbox().expression.into_kind()
                 {
                     top.init = Some(assign.unbox().right);
                 }
@@ -1395,8 +1396,8 @@ fn ox_emit_store<'a>(
                     None,
                 ));
             };
-            match rhs {
-                oxc::Expression::FunctionExpression(func_expr) => {
+            match rhs.into_kind() {
+                oxc::ExpressionKindOwned::FunctionExpression(func_expr) => {
                     let func_expr = func_expr.unbox();
                     let decl = oxc_ast::ast::Function::boxed(
                         SPAN,
@@ -1624,26 +1625,18 @@ fn ox_codegen_instruction_value<'a>(
 /// element is itself a `ChainExpression`, it must be unwrapped to avoid emitting
 /// spurious parens (e.g. `(a?.b)(d)` instead of `a?.b(d)`).
 fn ox_unwrap_chain(expr: oxc::Expression<'_>) -> oxc::Expression<'_> {
-    match expr {
-        oxc::Expression::ChainExpression(chain) => {
+    match expr.into_kind() {
+        oxc::ExpressionKindOwned::ChainExpression(chain) => {
             let chain = chain.unbox();
             match chain.expression {
                 oxc::ChainElement::CallExpression(call) => oxc::Expression::CallExpression(call),
-                oxc::ChainElement::ComputedMemberExpression(m) => {
-                    oxc::Expression::ComputedMemberExpression(m)
-                }
-                oxc::ChainElement::StaticMemberExpression(m) => {
-                    oxc::Expression::StaticMemberExpression(m)
-                }
-                oxc::ChainElement::PrivateFieldExpression(m) => {
-                    oxc::Expression::PrivateFieldExpression(m)
-                }
+                oxc::ChainElement::MemberExpression(m) => m.into_expression(),
                 oxc::ChainElement::TSNonNullExpression(e) => {
                     oxc::Expression::TSNonNullExpression(e)
                 }
             }
         }
-        other => other,
+        other => oxc::Expression::from_kind(other),
     }
 }
 
@@ -1654,8 +1647,8 @@ fn ox_make_optional<'a>(
     expr: oxc::Expression<'a>,
     optional: bool,
 ) -> Result<OxValue<'a>, OxcDiagnostic> {
-    let chain_element: oxc::ChainElement<'a> = match expr {
-        oxc::Expression::ChainExpression(chain) => {
+    let chain_element: oxc::ChainElement<'a> = match expr.into_kind() {
+        oxc::ExpressionKindOwned::ChainExpression(chain) => {
             // Already a chain; update the optional flag on the head element.
             let chain = chain.unbox();
             match chain.expression {
@@ -1666,24 +1659,19 @@ fn ox_make_optional<'a>(
                         call, &cx.ast,
                     ))
                 }
-                oxc::ChainElement::ComputedMemberExpression(m) => {
-                    let mut m = m.unbox();
-                    m.optional = optional;
-                    oxc::ChainElement::ComputedMemberExpression(oxc_allocator::ArenaBox::new_in(
-                        m, &cx.ast,
-                    ))
-                }
-                oxc::ChainElement::StaticMemberExpression(m) => {
-                    let mut m = m.unbox();
-                    m.optional = optional;
-                    oxc::ChainElement::StaticMemberExpression(oxc_allocator::ArenaBox::new_in(
-                        m, &cx.ast,
-                    ))
+                oxc::ChainElement::MemberExpression(mut m) => {
+                    if let Some(computed) = m.as_computed_member_expression_mut() {
+                        computed.optional = optional;
+                    } else if let Some(static_member) = m.as_static_member_expression_mut() {
+                        static_member.optional = optional;
+                    }
+                    // `PrivateFieldExpression` keeps its existing flag, as before.
+                    oxc::ChainElement::MemberExpression(m)
                 }
                 other => other,
             }
         }
-        oxc::Expression::CallExpression(call) => {
+        oxc::ExpressionKindOwned::CallExpression(call) => {
             let mut call = call.unbox();
             call.callee = ox_unwrap_chain(call.callee);
             oxc::ChainElement::CallExpression(oxc_ast::ast::CallExpression::boxed(
@@ -1695,7 +1683,7 @@ fn ox_make_optional<'a>(
                 &cx.ast,
             ))
         }
-        oxc::Expression::ComputedMemberExpression(m) => {
+        oxc::ExpressionKindOwned::ComputedMemberExpression(m) => {
             let m = m.unbox();
             oxc::ChainElement::ComputedMemberExpression(
                 oxc_ast::ast::ComputedMemberExpression::boxed(
@@ -1707,7 +1695,7 @@ fn ox_make_optional<'a>(
                 ),
             )
         }
-        oxc::Expression::StaticMemberExpression(m) => {
+        oxc::ExpressionKindOwned::StaticMemberExpression(m) => {
             let m = m.unbox();
             oxc::ChainElement::StaticMemberExpression(oxc_ast::ast::StaticMemberExpression::boxed(
                 SPAN,
@@ -2122,17 +2110,17 @@ fn ox_codegen_argument<'a>(
 
 fn ox_is_member_like(expr: &oxc::Expression) -> bool {
     matches!(
-        expr,
-        oxc::Expression::StaticMemberExpression(_)
-            | oxc::Expression::ComputedMemberExpression(_)
-            | oxc::Expression::PrivateFieldExpression(_)
-            | oxc::Expression::ChainExpression(_)
+        expr.tag(),
+        oxc::ExpressionTag::StaticMemberExpression
+            | oxc::ExpressionTag::ComputedMemberExpression
+            | oxc::ExpressionTag::PrivateFieldExpression
+            | oxc::ExpressionTag::ChainExpression
     )
 }
 
 fn ox_expression_type_name(expr: &oxc::Expression) -> &'static str {
-    match expr {
-        oxc::Expression::Identifier(_) => "Identifier",
+    match expr.kind() {
+        oxc::ExpressionKind::Identifier(_) => "Identifier",
         _ => "unknown",
     }
 }
@@ -2288,8 +2276,8 @@ fn ox_codegen_dependency<'a>(
         // its own `ChainExpression` would force spurious parens such as `(((a.b)?.c).d)?.e`.
         for path_entry in &dep.path {
             let member = ox_property_member(cx, object, &path_entry.property);
-            object = match member {
-                oxc::MemberExpression::StaticMemberExpression(m) => {
+            object = match member.into_kind() {
+                oxc::MemberExpressionKindOwned::StaticMemberExpression(m) => {
                     let m = m.unbox();
                     oxc::Expression::StaticMemberExpression(
                         oxc_ast::ast::StaticMemberExpression::boxed(
@@ -2301,7 +2289,7 @@ fn ox_codegen_dependency<'a>(
                         ),
                     )
                 }
-                oxc::MemberExpression::ComputedMemberExpression(m) => {
+                oxc::MemberExpressionKindOwned::ComputedMemberExpression(m) => {
                     let m = m.unbox();
                     oxc::Expression::ComputedMemberExpression(
                         oxc_ast::ast::ComputedMemberExpression::boxed(
@@ -2313,7 +2301,7 @@ fn ox_codegen_dependency<'a>(
                         ),
                     )
                 }
-                oxc::MemberExpression::PrivateFieldExpression(m) => {
+                oxc::MemberExpressionKindOwned::PrivateFieldExpression(m) => {
                     oxc::Expression::PrivateFieldExpression(m)
                 }
             };
@@ -2321,17 +2309,17 @@ fn ox_codegen_dependency<'a>(
         // Wrap the whole access path in a single chain only when it actually contains
         // an optional access.
         if has_optional {
-            let chain = match object {
-                oxc::Expression::StaticMemberExpression(m) => {
+            let chain = match object.into_kind() {
+                oxc::ExpressionKindOwned::StaticMemberExpression(m) => {
                     oxc::ChainElement::StaticMemberExpression(m)
                 }
-                oxc::Expression::ComputedMemberExpression(m) => {
+                oxc::ExpressionKindOwned::ComputedMemberExpression(m) => {
                     oxc::ChainElement::ComputedMemberExpression(m)
                 }
-                oxc::Expression::PrivateFieldExpression(m) => {
+                oxc::ExpressionKindOwned::PrivateFieldExpression(m) => {
                     oxc::ChainElement::PrivateFieldExpression(m)
                 }
-                other => return Ok(other),
+                other => return Ok(oxc::Expression::from_kind(other)),
             };
             object = oxc_ast::ast::Expression::new_chain_expression(SPAN, chain, &cx.ast);
         }
@@ -2472,19 +2460,19 @@ fn ox_expression_to_simple_assignment_target<'a>(
     cx: &OxcContext<'a, '_>,
     expr: oxc::Expression<'a>,
 ) -> Result<oxc::SimpleAssignmentTarget<'a>, OxcDiagnostic> {
-    match expr {
-        oxc::Expression::Identifier(id) => {
+    match expr.into_kind() {
+        oxc::ExpressionKindOwned::Identifier(id) => {
             let id = id.unbox();
             Ok(oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(
                 oxc_ast::ast::IdentifierReference::boxed(SPAN, id.name, &cx.ast),
             ))
         }
-        oxc::Expression::StaticMemberExpression(m) => {
+        oxc::ExpressionKindOwned::StaticMemberExpression(m) => {
             Ok(oxc::SimpleAssignmentTarget::from(oxc::MemberExpression::StaticMemberExpression(m)))
         }
-        oxc::Expression::ComputedMemberExpression(m) => Ok(oxc::SimpleAssignmentTarget::from(
-            oxc::MemberExpression::ComputedMemberExpression(m),
-        )),
+        oxc::ExpressionKindOwned::ComputedMemberExpression(m) => Ok(
+            oxc::SimpleAssignmentTarget::from(oxc::MemberExpression::ComputedMemberExpression(m)),
+        ),
         _ => Err(invariant_err("Expected a simple assignment target for update expression", None)),
     }
 }
@@ -2639,10 +2627,10 @@ fn ox_codegen_object_expression<'a>(
                         let value = ox_codegen_place_to_expression(cx, &obj_prop.place)?;
                         let shorthand = !key_computed
                             && matches!(
-                                (&key, &value),
+                                (&key, value.as_identifier()),
                                 (
                                     oxc::PropertyKey::StaticIdentifier(k),
-                                    oxc::Expression::Identifier(v),
+                                    Some(v),
                                 ) if k.name == v.name
                             );
                         let p = oxc_ast::ast::ObjectProperty::new(
@@ -2827,8 +2815,8 @@ fn ox_codegen_jsx_attribute<'a>(
 
             let is_fbt_operand = cx.fbt_operands.contains(&place.identifier);
             let inner_value = ox_codegen_place_to_expression(cx, place)?;
-            let attr_value = match inner_value {
-                oxc::Expression::StringLiteral(ref s)
+            let attr_value = match inner_value.kind() {
+                oxc::ExpressionKind::StringLiteral(s)
                     if !ox_string_requires_expr_container(s.value.as_str()) || is_fbt_operand =>
                 {
                     let value = s.value;
@@ -2877,31 +2865,33 @@ fn ox_codegen_jsx_element<'a>(
                 Ok(oxc_ast::ast::JSXChild::new_text(SPAN, ox_str(&cx.ast, &encoded), None, &cx.ast))
             }
         }
-        OxValue::Expression(oxc::Expression::JSXElement(elem)) => {
-            let elem = elem.unbox();
-            Ok(oxc_ast::ast::JSXChild::new_element(
+        OxValue::Expression(expr) => match expr.into_kind() {
+            oxc::ExpressionKindOwned::JSXElement(elem) => {
+                let elem = elem.unbox();
+                Ok(oxc_ast::ast::JSXChild::new_element(
+                    SPAN,
+                    elem.opening_element,
+                    elem.children,
+                    elem.closing_element,
+                    &cx.ast,
+                ))
+            }
+            oxc::ExpressionKindOwned::JSXFragment(frag) => {
+                let frag = frag.unbox();
+                Ok(oxc_ast::ast::JSXChild::new_fragment(
+                    SPAN,
+                    frag.opening_fragment,
+                    frag.children,
+                    frag.closing_fragment,
+                    &cx.ast,
+                ))
+            }
+            other => Ok(oxc_ast::ast::JSXChild::new_expression_container(
                 SPAN,
-                elem.opening_element,
-                elem.children,
-                elem.closing_element,
+                oxc::JSXExpression::from(oxc::Expression::from_kind(other)),
                 &cx.ast,
-            ))
-        }
-        OxValue::Expression(oxc::Expression::JSXFragment(frag)) => {
-            let frag = frag.unbox();
-            Ok(oxc_ast::ast::JSXChild::new_fragment(
-                SPAN,
-                frag.opening_fragment,
-                frag.children,
-                frag.closing_fragment,
-                &cx.ast,
-            ))
-        }
-        OxValue::Expression(expr) => Ok(oxc_ast::ast::JSXChild::new_expression_container(
-            SPAN,
-            oxc::JSXExpression::from(expr),
-            &cx.ast,
-        )),
+            )),
+        },
     }
 }
 
@@ -2915,21 +2905,23 @@ fn ox_codegen_jsx_fbt_child_element<'a>(
             let encoded = ox_encode_jsx_text(text.value.as_str());
             Ok(oxc_ast::ast::JSXChild::new_text(SPAN, ox_str(&cx.ast, &encoded), None, &cx.ast))
         }
-        OxValue::Expression(oxc::Expression::JSXElement(elem)) => {
-            let elem = elem.unbox();
-            Ok(oxc_ast::ast::JSXChild::new_element(
+        OxValue::Expression(expr) => match expr.into_kind() {
+            oxc::ExpressionKindOwned::JSXElement(elem) => {
+                let elem = elem.unbox();
+                Ok(oxc_ast::ast::JSXChild::new_element(
+                    SPAN,
+                    elem.opening_element,
+                    elem.children,
+                    elem.closing_element,
+                    &cx.ast,
+                ))
+            }
+            other => Ok(oxc_ast::ast::JSXChild::new_expression_container(
                 SPAN,
-                elem.opening_element,
-                elem.children,
-                elem.closing_element,
+                oxc::JSXExpression::from(oxc::Expression::from_kind(other)),
                 &cx.ast,
-            ))
-        }
-        OxValue::Expression(expr) => Ok(oxc_ast::ast::JSXChild::new_expression_container(
-            SPAN,
-            oxc::JSXExpression::from(expr),
-            &cx.ast,
-        )),
+            )),
+        },
     }
 }
 
@@ -2939,16 +2931,18 @@ fn ox_expression_to_jsx_tag<'a>(
     cx: &OxcContext<'a, '_>,
     expr: &oxc::Expression<'a>,
 ) -> Result<oxc::JSXElementName<'a>, OxcDiagnostic> {
-    match expr {
-        oxc::Expression::Identifier(ident) => Ok(ox_jsx_element_name_from_ident(cx, &ident.name)),
-        oxc::Expression::StaticMemberExpression(_)
-        | oxc::Expression::ComputedMemberExpression(_) => {
+    match expr.kind() {
+        oxc::ExpressionKind::Identifier(ident) => {
+            Ok(ox_jsx_element_name_from_ident(cx, &ident.name))
+        }
+        oxc::ExpressionKind::StaticMemberExpression(_)
+        | oxc::ExpressionKind::ComputedMemberExpression(_) => {
             let member = ox_convert_member_expression_to_jsx(cx, expr)?;
             Ok(oxc_ast::ast::JSXElementName::new_member_expression(
                 SPAN, member.0, member.1, &cx.ast,
             ))
         }
-        oxc::Expression::StringLiteral(s) => {
+        oxc::ExpressionKind::StringLiteral(s) => {
             let tag_text = s.value.as_str();
             if tag_text.contains(':') {
                 let parts: Vec<&str> = tag_text.splitn(2, ':').collect();
@@ -2985,20 +2979,20 @@ fn ox_convert_member_expression_to_jsx<'a>(
     cx: &OxcContext<'a, '_>,
     expr: &oxc::Expression<'a>,
 ) -> Result<(oxc::JSXMemberExpressionObject<'a>, oxc::JSXIdentifier<'a>), OxcDiagnostic> {
-    let oxc::Expression::StaticMemberExpression(me) = expr else {
+    let oxc::ExpressionKind::StaticMemberExpression(me) = expr.kind() else {
         return Err(invariant_err("Expected JSX member expression property to be a string", None));
     };
     let property =
         oxc_ast::ast::JSXIdentifier::new(SPAN, ox_str(&cx.ast, me.property.name.as_str()), &cx.ast);
-    let object = match &me.object {
-        oxc::Expression::Identifier(ident) => {
+    let object = match me.object.kind() {
+        oxc::ExpressionKind::Identifier(ident) => {
             oxc_ast::ast::JSXMemberExpressionObject::new_identifier_reference(
                 SPAN,
                 ox_str(&cx.ast, &ident.name),
                 &cx.ast,
             )
         }
-        oxc::Expression::StaticMemberExpression(_) => {
+        oxc::ExpressionKind::StaticMemberExpression(_) => {
             let inner = ox_convert_member_expression_to_jsx(cx, &me.object)?;
             oxc_ast::ast::JSXMemberExpressionObject::new_member_expression(
                 SPAN, inner.0, inner.1, &cx.ast,

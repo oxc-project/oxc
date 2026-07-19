@@ -100,12 +100,12 @@ impl<'a> PeepholeOptimizations {
     /// another binding and has no setters/getters that could trigger side effects
     /// on property writes), or `FreshValueKind::None` when it is not fresh.
     fn fresh_value_kind(expr: &Expression<'a>) -> FreshValueKind {
-        match expr {
-            Expression::ArrayExpression(_) => FreshValueKind::Array,
-            Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
+        match expr.kind() {
+            ExpressionKind::ArrayExpression(_) => FreshValueKind::Array,
+            ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => {
                 FreshValueKind::Function
             }
-            Expression::ObjectExpression(obj) => {
+            ExpressionKind::ObjectExpression(obj) => {
                 // Object literals with setter/getter properties are not safe to treat as fresh.
                 // Setters trigger side effects on property writes.
                 // Getter-only properties throw TypeError in strict mode on write.
@@ -125,7 +125,7 @@ impl<'a> PeepholeOptimizations {
                 });
                 if has_side_effects { FreshValueKind::None } else { FreshValueKind::Object }
             }
-            Expression::ClassExpression(class) => {
+            ExpressionKind::ClassExpression(class) => {
                 if Self::class_may_have_property_side_effects(class) {
                     FreshValueKind::None
                 } else {
@@ -184,8 +184,8 @@ impl<'a> PeepholeOptimizations {
 
     /// Check if an expression contains setter or getter definitions (recursively).
     fn expression_has_setter_or_getter(expr: &Expression<'a>) -> bool {
-        match expr {
-            Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| {
+        match expr.kind() {
+            ExpressionKind::ObjectExpression(obj) => obj.properties.iter().any(|prop| {
                 matches!(
                     prop,
                     ObjectPropertyKind::ObjectProperty(p)
@@ -193,7 +193,9 @@ impl<'a> PeepholeOptimizations {
                             || Self::expression_has_setter_or_getter(&p.value)
                 )
             }),
-            Expression::ClassExpression(class) => Self::class_may_have_property_side_effects(class),
+            ExpressionKind::ClassExpression(class) => {
+                Self::class_may_have_property_side_effects(class)
+            }
             _ => false,
         }
     }
@@ -228,7 +230,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::Identifier(ident) = expr else { return };
+        let Some(ident) = expr.as_identifier() else { return };
         let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
         let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {

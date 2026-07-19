@@ -333,7 +333,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     // `#[inline]` for fast exit for expressions which are not `Class`es
     #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if matches!(expr, Expression::ClassExpression(_)) {
+        if expr.is_class_expression() {
             self.transform_class_expression_on_exit(expr, ctx);
         }
     }
@@ -401,37 +401,37 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match expr {
+        match expr.tag() {
             // `object.#prop`
-            Expression::PrivateFieldExpression(_) => {
+            ExpressionTag::PrivateFieldExpression => {
                 self.transform_private_field_expression(expr, ctx);
             }
             // `object.#prop()`
-            Expression::CallExpression(_) => {
+            ExpressionTag::CallExpression => {
                 self.transform_call_expression(expr, ctx);
             }
             // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
-            Expression::AssignmentExpression(_) => {
+            ExpressionTag::AssignmentExpression => {
                 self.transform_assignment_expression(expr, ctx);
             }
             // `object.#prop++`, `--object.#prop`
-            Expression::UpdateExpression(_) => {
+            ExpressionTag::UpdateExpression => {
                 self.transform_update_expression(expr, ctx);
             }
             // `object?.#prop`
-            Expression::ChainExpression(_) => {
+            ExpressionTag::ChainExpression => {
                 self.transform_chain_expression(expr, ctx);
             }
             // `delete object?.#prop.xyz`
-            Expression::UnaryExpression(_) => {
+            ExpressionTag::UnaryExpression => {
                 self.transform_unary_expression(expr, ctx);
             }
             // "object.#prop`xyz`"
-            Expression::TaggedTemplateExpression(_) => {
+            ExpressionTag::TaggedTemplateExpression => {
                 self.transform_tagged_template_expression(expr, ctx);
             }
             // "#prop in object"
-            Expression::PrivateInExpression(_) => {
+            ExpressionTag::PrivateInExpression => {
                 self.transform_private_in_expression(expr, ctx);
             }
             _ => {}

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameters, MemberExpression},
+    ast::{Argument, ExpressionKind, FormalParameters, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -71,9 +71,12 @@ impl Rule for PreferAwaitToCallbacks {
 
                 if let Some(last_arg) = expr.arguments.last() {
                     let args = match last_arg {
-                        Argument::FunctionExpression(expr) => &expr.params,
-                        Argument::ArrowFunctionExpression(expr) => &expr.params,
-                        _ => return,
+                        Argument::Expression(expr) => match expr.kind() {
+                            ExpressionKind::FunctionExpression(expr) => &expr.params,
+                            ExpressionKind::ArrowFunctionExpression(expr) => &expr.params,
+                            _ => return,
+                        },
+                        Argument::SpreadElement(_) => return,
                     };
 
                     let callee_property_name = expr
@@ -89,7 +92,7 @@ impl Rule for PreferAwaitToCallbacks {
                     }
 
                     let is_lodash = expr.callee.as_member_expression().is_some_and( |mem_expr| {
-                        matches!(mem_expr.object(), Expression::Identifier(id) if matches!(id.name.as_str(), "_" | "lodash" | "underscore"))
+                        matches!(mem_expr.object().kind(), ExpressionKind::Identifier(id) if matches!(id.name.as_str(), "_" | "lodash" | "underscore"))
                     });
 
                     let calls_array_method = callee_property_name

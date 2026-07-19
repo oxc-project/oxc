@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, MemberExpression, match_member_expression},
+    ast::{CallExpression, ChainElement, Expression, ExpressionKind, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -85,10 +85,12 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     }
 
     let callee = call_expr.callee.without_parentheses();
-    let callee = match callee {
-        match_member_expression!(Expression) => callee.to_member_expression(),
-        Expression::ChainExpression(chain) => match chain.expression {
-            match_member_expression!(ChainElement) => chain.expression.to_member_expression(),
+    let callee = match callee.kind() {
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => callee.to_member_expression(),
+        ExpressionKind::ChainExpression(chain) => match chain.expression {
+            ChainElement::MemberExpression(_) => chain.expression.to_member_expression(),
             _ => return,
         },
         _ => return,
@@ -102,14 +104,14 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     if args[1].is_spread() {
         return;
     }
-    if let Some(Expression::ArrayExpression(_)) = args[1].as_expression() {
+    if args[1].as_expression().is_some_and(oxc_ast::ast::Expression::is_array_expression) {
         return;
     }
 
     let applied = callee.object().without_parentheses();
 
     if args0.is_null_or_undefined() {
-        if !matches!(applied, Expression::Identifier(_)) {
+        if !applied.is_identifier() {
             return;
         }
     } else if let Some(applied) = as_member_expression_without_chain_expression(applied) {
@@ -138,12 +140,14 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
 fn as_member_expression_without_chain_expression<'a>(
     expr: &'a Expression,
 ) -> Option<&'a MemberExpression<'a>> {
-    match expr {
-        Expression::ChainExpression(chain_expr) => match chain_expr.expression {
-            match_member_expression!(ChainElement) => chain_expr.expression.as_member_expression(),
+    match expr.kind() {
+        ExpressionKind::ChainExpression(chain_expr) => match chain_expr.expression {
+            ChainElement::MemberExpression(_) => chain_expr.expression.as_member_expression(),
             _ => None,
         },
-        match_member_expression!(Expression) => expr.as_member_expression(),
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => expr.as_member_expression(),
         _ => None,
     }
 }

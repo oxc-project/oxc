@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ChainElement, Expression},
+    ast::{ChainElement, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -69,9 +69,9 @@ impl Rule for PreferIncludes {
             return;
         };
 
-        let left_call_expr = match bin_expr.left.without_parentheses() {
-            Expression::CallExpression(call_expr) => call_expr,
-            Expression::ChainExpression(chain_expr) => {
+        let left_call_expr = match bin_expr.left.without_parentheses().kind() {
+            ExpressionKind::CallExpression(call_expr) => call_expr,
+            ExpressionKind::ChainExpression(chain_expr) => {
                 let ChainElement::CallExpression(call_expr) = &chain_expr.expression else {
                     return;
                 };
@@ -109,7 +109,9 @@ impl Rule for PreferIncludes {
                 None
             }
         } else if bin_expr.operator == BinaryOperator::GreaterEqualThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
+            let ExpressionKind::NumericLiteral(num_lit) =
+                bin_expr.right.without_parentheses().kind()
+            else {
                 return;
             };
             if num_lit.raw.as_ref().unwrap() == "0" {
@@ -118,7 +120,9 @@ impl Rule for PreferIncludes {
                 None
             }
         } else if bin_expr.operator == BinaryOperator::LessThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
+            let ExpressionKind::NumericLiteral(num_lit) =
+                bin_expr.right.without_parentheses().kind()
+            else {
                 return;
             };
             if num_lit.raw.as_ref().unwrap() == "0" {
@@ -179,7 +183,7 @@ impl Rule for PreferIncludes {
 }
 
 fn is_negative_one(expr: &Expression) -> bool {
-    let Expression::UnaryExpression(unary_expr) = expr else {
+    let ExpressionKind::UnaryExpression(unary_expr) = expr.kind() else {
         return false;
     };
 
@@ -187,7 +191,8 @@ fn is_negative_one(expr: &Expression) -> bool {
         return false;
     }
 
-    let Expression::NumericLiteral(num_lit) = unary_expr.argument.without_parentheses() else {
+    let ExpressionKind::NumericLiteral(num_lit) = unary_expr.argument.without_parentheses().kind()
+    else {
         return false;
     };
 

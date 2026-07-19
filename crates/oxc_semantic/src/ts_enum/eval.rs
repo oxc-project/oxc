@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
-    BinaryExpression, Expression, IdentifierReference, TSEnumDeclaration, TSEnumMemberName,
-    UnaryExpression,
+    BinaryExpression, Expression, ExpressionKind, IdentifierReference, TSEnumDeclaration,
+    TSEnumMemberName, UnaryExpression,
 };
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_str::CompactStr;
@@ -83,18 +83,18 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
 }
 
 fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<ConstantValue> {
-    match expr {
-        Expression::Identifier(_)
-        | Expression::ComputedMemberExpression(_)
-        | Expression::StaticMemberExpression(_)
-        | Expression::PrivateFieldExpression(_) => evaluate_ref(expr, ctx),
-        Expression::BinaryExpression(expr) => eval_binary_expression(expr, ctx),
-        Expression::UnaryExpression(expr) => eval_unary_expression(expr, ctx),
-        Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-        Expression::StringLiteral(lit) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(_)
+        | ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => evaluate_ref(expr, ctx),
+        ExpressionKind::BinaryExpression(expr) => eval_binary_expression(expr, ctx),
+        ExpressionKind::UnaryExpression(expr) => eval_unary_expression(expr, ctx),
+        ExpressionKind::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
+        ExpressionKind::StringLiteral(lit) => {
             Some(ConstantValue::String(CompactStr::from(lit.value.as_str())))
         }
-        Expression::TemplateLiteral(lit) => {
+        ExpressionKind::TemplateLiteral(lit) => {
             if let Some(quasi) = lit.single_quasi() {
                 Some(ConstantValue::String(CompactStr::from(quasi.as_str())))
             } else {
@@ -112,7 +112,7 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
                 Some(ConstantValue::String(CompactStr::from(value.as_str())))
             }
         }
-        Expression::ParenthesizedExpression(expr) => evaluate_expression(&expr.expression, ctx),
+        ExpressionKind::ParenthesizedExpression(expr) => evaluate_expression(&expr.expression, ctx),
         _ => None,
     }
 }
@@ -131,8 +131,8 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
 /// enum C { Z = A["X"] + 1 } // ComputedMemberExpression
 /// ```
 fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<ConstantValue> {
-    match expr {
-        Expression::Identifier(ident) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => {
             if ident.name == "Infinity" {
                 return Some(ConstantValue::Number(f64::INFINITY));
             }
@@ -162,14 +162,18 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
                 ctx.scoping,
             )
         }
-        Expression::StaticMemberExpression(member_expr) => {
-            let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
+        ExpressionKind::StaticMemberExpression(member_expr) => {
+            let ExpressionKind::Identifier(obj_ident) = member_expr.object.kind() else {
+                return None;
+            };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
             find_in_enum_body_scopes(member_expr.property.name.as_str(), obj_symbol_id, ctx.scoping)
         }
-        Expression::ComputedMemberExpression(member_expr) => {
-            let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
-            let Expression::StringLiteral(prop_lit) = &member_expr.expression else {
+        ExpressionKind::ComputedMemberExpression(member_expr) => {
+            let ExpressionKind::Identifier(obj_ident) = member_expr.object.kind() else {
+                return None;
+            };
+            let ExpressionKind::StringLiteral(prop_lit) = member_expr.expression.kind() else {
                 return None;
             };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;

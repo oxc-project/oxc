@@ -41,8 +41,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
         }
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
-            Expression::BooleanLiteral(inner) => {
+        match self.inner.kind() {
+            ExpressionKind::BooleanLiteral(inner) => {
                 allocator
                     .alloc(AstNode::<BooleanLiteral> {
                         inner,
@@ -52,7 +52,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::NullLiteral(inner) => {
+            ExpressionKind::NullLiteral(inner) => {
                 allocator
                     .alloc(AstNode::<NullLiteral> {
                         inner,
@@ -62,7 +62,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::NumericLiteral(inner) => {
+            ExpressionKind::NumericLiteral(inner) => {
                 allocator
                     .alloc(AstNode::<NumericLiteral> {
                         inner,
@@ -72,7 +72,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::BigIntLiteral(inner) => {
+            ExpressionKind::BigIntLiteral(inner) => {
                 allocator
                     .alloc(AstNode::<BigIntLiteral> {
                         inner,
@@ -82,7 +82,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::RegExpLiteral(inner) => {
+            ExpressionKind::RegExpLiteral(inner) => {
                 allocator
                     .alloc(AstNode::<RegExpLiteral> {
                         inner,
@@ -92,7 +92,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::StringLiteral(inner) => {
+            ExpressionKind::StringLiteral(inner) => {
                 allocator
                     .alloc(AstNode::<StringLiteral> {
                         inner,
@@ -102,7 +102,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::TemplateLiteral(inner) => {
+            ExpressionKind::TemplateLiteral(inner) => {
                 allocator
                     .alloc(AstNode::<TemplateLiteral> {
                         inner,
@@ -112,7 +112,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::Identifier(inner) => {
+            ExpressionKind::Identifier(inner) => {
                 allocator
                     .alloc(AstNode::<IdentifierReference> {
                         inner,
@@ -122,7 +122,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::Super(inner) => {
+            ExpressionKind::Super(inner) => {
                 allocator
                     .alloc(AstNode::<Super> {
                         inner,
@@ -132,7 +132,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ArrayExpression(inner) => {
+            ExpressionKind::ArrayExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ArrayExpression> {
                         inner,
@@ -142,7 +142,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ArrowFunctionExpression(inner) => {
+            ExpressionKind::ArrowFunctionExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ArrowFunctionExpression> {
                         inner,
@@ -152,7 +152,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::AssignmentExpression(inner) => {
+            ExpressionKind::AssignmentExpression(inner) => {
                 allocator
                     .alloc(AstNode::<AssignmentExpression> {
                         inner,
@@ -162,7 +162,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::AwaitExpression(inner) => {
+            ExpressionKind::AwaitExpression(inner) => {
                 allocator
                     .alloc(AstNode::<AwaitExpression> {
                         inner,
@@ -172,7 +172,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::BinaryExpression(inner) => {
+            ExpressionKind::BinaryExpression(inner) => {
                 allocator
                     .alloc(AstNode::<BinaryExpression> {
                         inner,
@@ -182,7 +182,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::CallExpression(inner) => {
+            ExpressionKind::CallExpression(inner) => {
                 allocator
                     .alloc(AstNode::<CallExpression> {
                         inner,
@@ -192,7 +192,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ChainExpression(inner) => {
+            ExpressionKind::ChainExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ChainExpression> {
                         inner,
@@ -202,7 +202,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ClassExpression(inner) => {
+            ExpressionKind::ClassExpression(inner) => {
                 allocator
                     .alloc(AstNode::<Class> {
                         inner,
@@ -212,7 +212,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ConditionalExpression(inner) => {
+            ExpressionKind::ConditionalExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ConditionalExpression> {
                         inner,
@@ -222,7 +222,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::FunctionExpression(inner) => {
+            ExpressionKind::FunctionExpression(inner) => {
                 allocator
                     .alloc(AstNode::<Function> {
                         inner,
@@ -232,7 +232,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ImportExpression(inner) => {
+            ExpressionKind::ImportExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ImportExpression> {
                         inner,
@@ -242,7 +242,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::LogicalExpression(inner) => {
+            ExpressionKind::LogicalExpression(inner) => {
                 allocator
                     .alloc(AstNode::<LogicalExpression> {
                         inner,
@@ -252,7 +252,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::NewExpression(inner) => {
+            ExpressionKind::NewExpression(inner) => {
                 allocator
                     .alloc(AstNode::<NewExpression> {
                         inner,
@@ -262,7 +262,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ObjectExpression(inner) => {
+            ExpressionKind::ObjectExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ObjectExpression> {
                         inner,
@@ -272,7 +272,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ParenthesizedExpression(inner) => {
+            ExpressionKind::ParenthesizedExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ParenthesizedExpression> {
                         inner,
@@ -282,7 +282,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::SequenceExpression(inner) => {
+            ExpressionKind::SequenceExpression(inner) => {
                 allocator
                     .alloc(AstNode::<SequenceExpression> {
                         inner,
@@ -292,7 +292,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::TaggedTemplateExpression(inner) => {
+            ExpressionKind::TaggedTemplateExpression(inner) => {
                 allocator
                     .alloc(AstNode::<TaggedTemplateExpression> {
                         inner,
@@ -302,7 +302,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ThisExpression(inner) => {
+            ExpressionKind::ThisExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ThisExpression> {
                         inner,
@@ -312,7 +312,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::UnaryExpression(inner) => {
+            ExpressionKind::UnaryExpression(inner) => {
                 allocator
                     .alloc(AstNode::<UnaryExpression> {
                         inner,
@@ -322,7 +322,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::UpdateExpression(inner) => {
+            ExpressionKind::UpdateExpression(inner) => {
                 allocator
                     .alloc(AstNode::<UpdateExpression> {
                         inner,
@@ -332,7 +332,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::YieldExpression(inner) => {
+            ExpressionKind::YieldExpression(inner) => {
                 allocator
                     .alloc(AstNode::<YieldExpression> {
                         inner,
@@ -342,7 +342,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::PrivateInExpression(inner) => {
+            ExpressionKind::PrivateInExpression(inner) => {
                 allocator
                     .alloc(AstNode::<PrivateInExpression> {
                         inner,
@@ -352,7 +352,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::ImportMeta(inner) => {
+            ExpressionKind::ImportMeta(inner) => {
                 allocator
                     .alloc(AstNode::<ImportMeta> {
                         inner,
@@ -362,7 +362,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::NewTarget(inner) => {
+            ExpressionKind::NewTarget(inner) => {
                 allocator
                     .alloc(AstNode::<NewTarget> {
                         inner,
@@ -372,7 +372,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::JSXElement(inner) => {
+            ExpressionKind::JSXElement(inner) => {
                 allocator
                     .alloc(AstNode::<JSXElement> {
                         inner,
@@ -382,7 +382,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::JSXFragment(inner) => {
+            ExpressionKind::JSXFragment(inner) => {
                 allocator
                     .alloc(AstNode::<JSXFragment> {
                         inner,
@@ -392,7 +392,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::TSAsExpression(inner) => {
+            ExpressionKind::TSAsExpression(inner) => {
                 allocator
                     .alloc(AstNode::<TSAsExpression> {
                         inner,
@@ -402,7 +402,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::TSSatisfiesExpression(inner) => {
+            ExpressionKind::TSSatisfiesExpression(inner) => {
                 allocator
                     .alloc(AstNode::<TSSatisfiesExpression> {
                         inner,
@@ -412,7 +412,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::TSTypeAssertion(inner) => {
+            ExpressionKind::TSTypeAssertion(inner) => {
                 allocator
                     .alloc(AstNode::<TSTypeAssertion> {
                         inner,
@@ -422,7 +422,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::TSNonNullExpression(inner) => {
+            ExpressionKind::TSNonNullExpression(inner) => {
                 allocator
                     .alloc(AstNode::<TSNonNullExpression> {
                         inner,
@@ -432,7 +432,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::TSInstantiationExpression(inner) => {
+            ExpressionKind::TSInstantiationExpression(inner) => {
                 allocator
                     .alloc(AstNode::<TSInstantiationExpression> {
                         inner,
@@ -442,7 +442,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            Expression::V8IntrinsicExpression(inner) => {
+            ExpressionKind::V8IntrinsicExpression(inner) => {
                 allocator
                     .alloc(AstNode::<V8IntrinsicExpression> {
                         inner,
@@ -452,8 +452,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_member_expression!(Expression) => {
-                let inner = it.to_member_expression();
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
+                let inner = self.inner.to_member_expression();
                 allocator
                     .alloc(AstNode::<'a, MemberExpression> {
                         inner,
@@ -592,8 +594,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayExpressionElement<
                     })
                     .fmt(f);
             }
-            it @ match_expression!(ArrayExpressionElement) => {
-                let inner = it.to_expression();
+            ArrayExpressionElement::Expression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, Expression> {
                         inner,
@@ -709,8 +711,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyKey<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_expression!(PropertyKey) => {
-                let inner = it.to_expression();
+            PropertyKey::Expression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, Expression> {
                         inner,
@@ -782,8 +784,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MemberExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
-            MemberExpression::ComputedMemberExpression(inner) => {
+        match self.inner.kind() {
+            MemberExpressionKind::ComputedMemberExpression(inner) => {
                 allocator
                     .alloc(AstNode::<ComputedMemberExpression> {
                         inner,
@@ -793,7 +795,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MemberExpression<'a>> {
                     })
                     .fmt(f);
             }
-            MemberExpression::StaticMemberExpression(inner) => {
+            MemberExpressionKind::StaticMemberExpression(inner) => {
                 allocator
                     .alloc(AstNode::<StaticMemberExpression> {
                         inner,
@@ -803,7 +805,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MemberExpression<'a>> {
                     })
                     .fmt(f);
             }
-            MemberExpression::PrivateFieldExpression(inner) => {
+            MemberExpressionKind::PrivateFieldExpression(inner) => {
                 allocator
                     .alloc(AstNode::<PrivateFieldExpression> {
                         inner,
@@ -986,8 +988,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Argument<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_expression!(Argument) => {
-                let inner = it.to_expression();
+            Argument::Expression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, Expression> {
                         inner,
@@ -1229,8 +1231,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SimpleAssignmentTarget<
                     })
                     .fmt(f);
             }
-            it @ match_member_expression!(SimpleAssignmentTarget) => {
-                let inner = it.to_member_expression();
+            SimpleAssignmentTarget::MemberExpression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, MemberExpression> {
                         inner,
@@ -1519,8 +1521,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ChainElement<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_member_expression!(ChainElement) => {
-                let inner = it.to_member_expression();
+            ChainElement::MemberExpression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, MemberExpression> {
                         inner,
@@ -2038,8 +2040,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatementInit<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_expression!(ForStatementInit) => {
-                let inner = it.to_expression();
+            ForStatementInit::Expression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, Expression> {
                         inner,
@@ -3021,8 +3023,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDefaultDeclaratio
                     })
                     .fmt(f);
             }
-            it @ match_expression!(ExportDefaultDeclarationKind) => {
-                let inner = it.to_expression();
+            ExportDefaultDeclarationKind::Expression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, Expression> {
                         inner,
@@ -3455,8 +3457,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXExpression<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_expression!(JSXExpression) => {
-                let inner = it.to_expression();
+            JSXExpression::Expression(it) => {
+                let inner = it;
                 allocator
                     .alloc(AstNode::<'a, Expression> {
                         inner,

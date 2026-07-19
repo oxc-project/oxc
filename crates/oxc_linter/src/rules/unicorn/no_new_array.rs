@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -58,7 +58,7 @@ impl Rule for NoNewArray {
             return;
         };
 
-        let Expression::Identifier(ident) = &new_expr.callee else {
+        let ExpressionKind::Identifier(ident) = new_expr.callee.kind() else {
             return;
         };
 

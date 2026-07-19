@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_str::CompactStr;
@@ -185,9 +185,11 @@ impl PreferLowercaseTitleConfig {
             return;
         };
 
-        if let Argument::StringLiteral(string_expr) = arg {
+        if let Some(string_expr) = arg.as_expression().and_then(|e| e.as_string_literal()) {
             self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
-        } else if let Argument::TemplateLiteral(template_expr) = arg {
+        } else if let Some(template_expr) =
+            arg.as_expression().and_then(|e| e.as_template_literal())
+        {
             let Some(template_string) = template_expr.single_quasi() else {
                 return;
             };

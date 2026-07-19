@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, JSXExpression},
+    ast::{ExpressionKind, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -229,11 +229,14 @@ fn static_jsx_string_value<'a>(value: &'a JSXAttributeValue<'a>) -> Option<&'a s
     match value {
         JSXAttributeValue::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-            JSXExpression::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
-            JSXExpression::TemplateLiteral(template_lit) => {
-                template_lit.single_quasi().map(|quasi| quasi.as_str())
-            }
-            _ => None,
+            JSXExpression::Expression(expr) => match expr.kind() {
+                ExpressionKind::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
+                ExpressionKind::TemplateLiteral(template_lit) => {
+                    template_lit.single_quasi().map(|quasi| quasi.as_str())
+                }
+                _ => None,
+            },
+            JSXExpression::EmptyExpression(_) => None,
         },
         _ => None,
     }

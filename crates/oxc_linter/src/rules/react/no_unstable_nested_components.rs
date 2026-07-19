@@ -2,8 +2,8 @@ use fast_glob::glob_match;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrowFunctionExpression, CallExpression, Class, Function, JSXAttributeName,
-        JSXExpression, JSXExpressionContainer,
+        Argument, ArrowFunctionExpression, CallExpression, Class, ExpressionKind, Function,
+        JSXAttributeName, JSXExpression, JSXExpressionContainer,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -397,9 +397,12 @@ fn function_like_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Strin
 fn hoc_first_argument_name(call: &CallExpression<'_>) -> Option<String> {
     let first_arg = call.arguments.first()?;
     match first_arg {
-        Argument::FunctionExpression(func) => func.name().map(|name| name.to_string()),
-        Argument::CallExpression(call) => hoc_first_argument_name(call),
-        _ => None,
+        Argument::Expression(expr) => match expr.kind() {
+            ExpressionKind::FunctionExpression(func) => func.name().map(|name| name.to_string()),
+            ExpressionKind::CallExpression(call) => hoc_first_argument_name(call),
+            _ => None,
+        },
+        Argument::SpreadElement(_) => None,
     }
 }
 
@@ -458,10 +461,11 @@ fn is_inside_create_element_props_object(node: &AstNode<'_>, ctx: &LintContext<'
             if !is_create_element_call(call) {
                 continue;
             }
-            return call
-                .arguments
-                .get(1)
-                .is_some_and(|arg| matches!(arg, Argument::ObjectExpression(arg_obj) if arg_obj.span == obj.span));
+            return call.arguments.get(1).is_some_and(|arg| {
+                arg.as_expression()
+                    .and_then(|e| e.as_object_expression())
+                    .is_some_and(|arg_obj| arg_obj.span == obj.span)
+            });
         }
     }
     false
@@ -527,9 +531,12 @@ fn is_direct_jsx_child_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) ->
 
 fn jsx_expression_matches_node(expression: &JSXExpression<'_>, span: Span) -> bool {
     match expression {
-        JSXExpression::ArrowFunctionExpression(arrow) => arrow.span == span,
-        JSXExpression::FunctionExpression(func) => func.span == span,
-        _ => false,
+        JSXExpression::Expression(expr) => match expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow) => arrow.span == span,
+            ExpressionKind::FunctionExpression(func) => func.span == span,
+            _ => false,
+        },
+        JSXExpression::EmptyExpression(_) => false,
     }
 }
 
@@ -582,10 +589,15 @@ fn is_hoc_component_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bo
 
 fn argument_contains_jsx(arg: &Argument<'_>, ctx: &LintContext<'_>) -> bool {
     match arg {
-        Argument::FunctionExpression(func) => function_contains_jsx(func),
-        Argument::ArrowFunctionExpression(arrow) => function_body_contains_jsx(&arrow.body),
-        Argument::CallExpression(call) => is_hoc_component_call(call, ctx),
-        _ => arg.as_expression().is_some_and(expression_contains_jsx),
+        Argument::Expression(expr) => match expr.kind() {
+            ExpressionKind::FunctionExpression(func) => function_contains_jsx(func),
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
+                function_body_contains_jsx(&arrow.body)
+            }
+            ExpressionKind::CallExpression(call) => is_hoc_component_call(call, ctx),
+            _ => arg.as_expression().is_some_and(expression_contains_jsx),
+        },
+        Argument::SpreadElement(_) => arg.as_expression().is_some_and(expression_contains_jsx),
     }
 }
 

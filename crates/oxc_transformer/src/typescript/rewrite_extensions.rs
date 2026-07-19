@@ -6,8 +6,8 @@
 //! Based on Babel's [plugin-rewrite-ts-imports](https://github.com/babel/babel/blob/3bcfee232506a4cebe410f02042fb0f0adeeb0b1/packages/babel-preset-typescript/src/plugin-rewrite-ts-imports.ts)
 
 use oxc_ast::ast::{
-    ExportAllDeclaration, ExportNamedDeclaration, Expression, ImportDeclaration, ImportExpression,
-    StringLiteral, TemplateLiteral,
+    ExportAllDeclaration, ExportNamedDeclaration, ExpressionKindMut, ImportDeclaration,
+    ImportExpression, StringLiteral, TemplateLiteral,
 };
 use oxc_str::Str;
 use oxc_traverse::Traverse;
@@ -120,11 +120,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptRewriteExtensions {
         node: &mut ImportExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match &mut node.source {
-            Expression::StringLiteral(source) => {
+        match node.source.kind_mut() {
+            ExpressionKindMut::StringLiteral(source) => {
                 self.rewrite_extensions(source, ctx);
             }
-            Expression::TemplateLiteral(template) => {
+            ExpressionKindMut::TemplateLiteral(template) => {
                 self.rewrite_template_literal(template, ctx);
             }
             _ => {}

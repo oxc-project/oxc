@@ -52,7 +52,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::PrivateFieldExpression(field_expr) = expr else { unreachable!() };
+        let Some(field_expr) = expr.as_private_field_expression_mut() else { unreachable!() };
         *expr = self.transform_private_field_expression_impl(field_expr, false, ctx);
     }
 
@@ -213,7 +213,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Option<(SymbolId, ReferenceId)> {
         if is_declaration
             && let Some(class_symbol_id) = class_symbol_id
-            && let Expression::Identifier(ident) = object
+            && let Some(ident) = object.as_identifier()
         {
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
@@ -246,8 +246,8 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::CallExpression(call_expr) = expr else { unreachable!() };
-        if matches!(&call_expr.callee, Expression::PrivateFieldExpression(_)) {
+        let Some(call_expr) = expr.as_call_expression_mut() else { unreachable!() };
+        if call_expr.callee.is_private_field_expression() {
             self.transform_call_expression_impl(call_expr, ctx);
         }
     }
@@ -259,14 +259,17 @@ impl<'a> ClassProperties<'a> {
     ) {
         // Unfortunately no way to make compiler see that this branch is provably unreachable.
         // This function is much too large to inline.
-        let Expression::PrivateFieldExpression(field_expr) = &mut call_expr.callee else {
+        let Some(field_expr) = call_expr.callee.as_private_field_expression_mut() else {
             unreachable!()
         };
 
         if self.private_fields_as_properties {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
             call_expr.callee.replace_with(|callee| {
-                let Expression::PrivateFieldExpression(field_expr) = callee else { unreachable!() };
+                let ExpressionKindOwned::PrivateFieldExpression(field_expr) = callee.into_kind()
+                else {
+                    unreachable!()
+                };
 
                 let prop_binding =
                     self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
@@ -468,8 +471,9 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
-        if matches!(&assign_expr.left, AssignmentTarget::PrivateFieldExpression(_)) {
+        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
+        if matches!(&assign_expr.left, AssignmentTarget::MemberExpression(m) if m.is_private_field_expression())
+        {
             self.transform_assignment_expression_impl(expr, ctx);
         }
     }
@@ -482,10 +486,11 @@ impl<'a> ClassProperties<'a> {
         // Unfortunately no way to make compiler see that these branches are provably unreachable.
         // This function is much too large to inline, because `transform_static_assignment_expression`
         // and `transform_instance_assignment_expression` are inlined into it.
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
-        let AssignmentTarget::PrivateFieldExpression(field_expr) = &mut assign_expr.left else {
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
+        let AssignmentTarget::MemberExpression(member) = &mut assign_expr.left else {
             unreachable!()
         };
+        let field_expr = member.to_private_field_expression_mut();
 
         let ResolvedGetSetPrivateProp {
             get_binding,
@@ -501,11 +506,9 @@ impl<'a> ClassProperties<'a> {
             // `object.#prop = value` -> `_classPrivateFieldLooseBase(object, _prop)[_prop] = value`
             // Same for all other assignment operators e.g. `+=`, `&&=`, `??=`.
             assign_expr.left.replace_with(|left| {
-                let AssignmentTarget::PrivateFieldExpression(field_expr) = left else {
-                    unreachable!()
-                };
+                let AssignmentTarget::MemberExpression(member) = left else { unreachable!() };
 
-                let field_expr = field_expr.unbox();
+                let field_expr = member.into_private_field_expression().unwrap().unbox();
                 let replacement = Self::create_private_field_member_expr_loose(
                     field_expr.object,
                     // At least one of `get_binding` or `set_binding` is always present.
@@ -600,11 +603,12 @@ impl<'a> ClassProperties<'a> {
         is_declaration: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let operator = assign_expr.operator;
-        let AssignmentTarget::PrivateFieldExpression(field_expr) = &mut assign_expr.left else {
+        let AssignmentTarget::MemberExpression(member) = &mut assign_expr.left else {
             unreachable!()
         };
+        let field_expr = member.to_private_field_expression();
 
         // Check if object (`object` in `object.#prop`) is a reference to class name
         // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
@@ -668,7 +672,9 @@ impl<'a> ClassProperties<'a> {
             );
             let old_assignee = mem::replace(&mut assign_expr.left, assignee);
             let field_expr = match old_assignee {
-                AssignmentTarget::PrivateFieldExpression(field_expr) => field_expr.unbox(),
+                AssignmentTarget::MemberExpression(member) => {
+                    member.into_private_field_expression().unwrap().unbox()
+                }
                 _ => unreachable!(),
             };
             let object = field_expr.object.into_inner_expression();
@@ -766,12 +772,13 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         expr.replace_with(|expr| {
-            let Expression::AssignmentExpression(assign_expr) = expr else {
+            let ExpressionKindOwned::AssignmentExpression(assign_expr) = expr.into_kind() else {
                 unreachable!();
             };
             let AssignmentExpression { span, operator, right: value, left, .. } =
                 assign_expr.unbox();
-            let AssignmentTarget::PrivateFieldExpression(field_expr) = left else { unreachable!() };
+            let AssignmentTarget::MemberExpression(member) = left else { unreachable!() };
+            let field_expr = member.into_private_field_expression().unwrap();
             let PrivateFieldExpression { field, object, .. } = field_expr.unbox();
 
             if operator == AssignmentOperator::Assign {
@@ -917,8 +924,9 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(update_expr) = expr else { unreachable!() };
-        if matches!(&update_expr.argument, SimpleAssignmentTarget::PrivateFieldExpression(_)) {
+        let Some(update_expr) = expr.as_update_expression() else { unreachable!() };
+        if matches!(&update_expr.argument, SimpleAssignmentTarget::MemberExpression(m) if m.is_private_field_expression())
+        {
             self.transform_update_expression_impl(expr, ctx);
         }
     }
@@ -931,18 +939,21 @@ impl<'a> ClassProperties<'a> {
     ) {
         // Unfortunately no way to make compiler see that these branches are provably unreachable.
         // This function is much too large to inline.
-        let Expression::UpdateExpression(update_expr) = expr else { unreachable!() };
+        let Some(update_expr) = expr.as_update_expression_mut() else { unreachable!() };
         let field_expr = match &mut update_expr.argument {
-            SimpleAssignmentTarget::PrivateFieldExpression(field_expr) => field_expr.as_mut(),
+            SimpleAssignmentTarget::MemberExpression(member) => {
+                member.to_private_field_expression_mut()
+            }
             _ => unreachable!(),
         };
 
         if self.private_fields_as_properties {
             // `object.#prop++` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]++`
             update_expr.argument.replace_with(|argument| {
-                let SimpleAssignmentTarget::PrivateFieldExpression(field_expr) = argument else {
+                let SimpleAssignmentTarget::MemberExpression(member) = argument else {
                     unreachable!()
                 };
+                let field_expr = member.into_private_field_expression().unwrap();
 
                 let prop_binding =
                     self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
@@ -1041,7 +1052,7 @@ impl<'a> ClassProperties<'a> {
             let assignment = create_assignment(&temp_binding, get_expr, SPAN, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
-            let UpdateExpression { span, prefix, .. } = **update_expr;
+            let UpdateExpression { span, prefix, .. } = *update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
             expr.replace_with(|update_expr| {
@@ -1138,7 +1149,7 @@ impl<'a> ClassProperties<'a> {
             let assignment = create_assignment(&temp_binding, get_call, SPAN, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
-            let UpdateExpression { span, prefix, .. } = **update_expr;
+            let UpdateExpression { span, prefix, .. } = *update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
             expr.replace_with(|update_expr| {
@@ -1213,10 +1224,10 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(Expression<'a>, Expression<'a>)> {
-        let Expression::ChainExpression(chain_expr) = expr else { unreachable!() };
+        let Some(chain_expr) = expr.as_chain_expression_mut() else { unreachable!() };
 
         let element = &mut chain_expr.expression;
-        if matches!(element, ChainElement::PrivateFieldExpression(_)) {
+        if matches!(element, ChainElement::MemberExpression(m) if m.is_private_field_expression()) {
             // The PrivateFieldExpression must be transformed, so we can convert it to a normal expression here.
             let mut chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
             let result = self
@@ -1242,11 +1253,9 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match element {
-            expression @ match_member_expression!(ChainElement) => self
-                .transform_member_expression_of_chain_expression(
-                    expression.to_member_expression_mut(),
-                    ctx,
-                ),
+            ChainElement::MemberExpression(member) => {
+                self.transform_member_expression_of_chain_expression(member, ctx)
+            }
             ChainElement::CallExpression(call) => {
                 self.transform_call_expression_of_chain_expression(call, ctx)
             }
@@ -1262,16 +1271,17 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        match expr {
-            Expression::PrivateFieldExpression(_) => {
+        match expr.tag() {
+            ExpressionTag::PrivateFieldExpression => {
                 self.transform_private_field_expression_of_chain_expression(expr, ctx)
             }
-            match_member_expression!(Expression) => self
+            _ if expr.is_member_expression() => self
                 .transform_member_expression_of_chain_expression(
                     expr.to_member_expression_mut(),
                     ctx,
                 ),
-            Expression::CallExpression(call) => {
+            ExpressionTag::CallExpression => {
+                let call = expr.to_call_expression_mut();
                 self.transform_call_expression_of_chain_expression(call, ctx)
             }
             _ => {
@@ -1304,8 +1314,9 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let object = match expr {
-            Expression::CallExpression(call) => {
+        let object = match expr.tag() {
+            ExpressionTag::CallExpression => {
+                let call = expr.to_call_expression_mut();
                 if call.optional {
                     call.optional = false;
                     if call.callee.is_member_expression() {
@@ -1319,7 +1330,8 @@ impl<'a> ClassProperties<'a> {
                     return self.transform_first_optional_expression(&mut call.callee, ctx);
                 }
             }
-            Expression::StaticMemberExpression(member) => {
+            ExpressionTag::StaticMemberExpression => {
+                let member = expr.to_static_member_expression_mut();
                 if member.optional {
                     member.optional = false;
                     &mut member.object
@@ -1327,7 +1339,8 @@ impl<'a> ClassProperties<'a> {
                     return self.transform_first_optional_expression(&mut member.object, ctx);
                 }
             }
-            Expression::ComputedMemberExpression(member) => {
+            ExpressionTag::ComputedMemberExpression => {
+                let member = expr.to_computed_member_expression_mut();
                 if member.optional {
                     member.optional = false;
                     &mut member.object
@@ -1335,7 +1348,8 @@ impl<'a> ClassProperties<'a> {
                     return self.transform_first_optional_expression(&mut member.object, ctx);
                 }
             }
-            Expression::PrivateFieldExpression(member) => {
+            ExpressionTag::PrivateFieldExpression => {
+                let member = expr.to_private_field_expression_mut();
                 if member.optional {
                     member.optional = false;
                     &mut member.object
@@ -1358,7 +1372,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let Expression::PrivateFieldExpression(field_expr) = expr else { unreachable!() };
+        let Some(field_expr) = expr.as_private_field_expression_mut() else { unreachable!() };
 
         let is_optional = field_expr.optional;
         let object = &mut field_expr.object;
@@ -1409,7 +1423,7 @@ impl<'a> ClassProperties<'a> {
         let is_optional = call_expr.optional;
 
         let callee = call_expr.callee.get_inner_expression_mut();
-        if matches!(callee, Expression::PrivateFieldExpression(_)) {
+        if callee.is_private_field_expression() {
             let result = self.transform_first_optional_expression(callee, ctx);
             // If the `callee` has no optional expression, we need to transform it using `transform_call_expression_impl` directly.
             // `Foo.bar.#m?.();` -> `_assertClassBrand(Foo, _Foo$bar = Foo.bar, _m)._?.call(_Foo$bar);`
@@ -1486,11 +1500,11 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::ChainExpression(chain_expr) = expr.take_in(ctx) else { unreachable!() };
+        let ExpressionKindOwned::ChainExpression(chain_expr) = expr.take_in(ctx).into_kind() else {
+            unreachable!()
+        };
         match chain_expr.unbox().expression {
-            element @ match_member_expression!(ChainElement) => {
-                Expression::from(element.into_member_expression())
-            }
+            ChainElement::MemberExpression(member) => Expression::from(member),
             ChainElement::CallExpression(call) => Expression::CallExpression(call),
             ChainElement::TSNonNullExpression(non_null) => non_null.unbox().expression,
         }
@@ -1506,9 +1520,14 @@ impl<'a> ClassProperties<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         if Self::has_optional_expression(&expr) {
-            let chain_element = match expr {
-                Expression::CallExpression(call) => ChainElement::CallExpression(call),
-                expr @ match_member_expression!(Expression) => {
+            let chain_element = match expr.tag() {
+                ExpressionTag::CallExpression => {
+                    let ExpressionKindOwned::CallExpression(call) = expr.into_kind() else {
+                        unreachable!()
+                    };
+                    ChainElement::CallExpression(call)
+                }
+                _ if expr.is_member_expression() => {
                     ChainElement::from(expr.into_member_expression())
                 }
                 _ => unreachable!(),
@@ -1524,26 +1543,30 @@ impl<'a> ClassProperties<'a> {
     fn has_optional_expression(expr: &Expression<'a>) -> bool {
         let mut expr = expr;
         loop {
-            match expr {
-                Expression::CallExpression(call) => {
+            match expr.tag() {
+                ExpressionTag::CallExpression => {
+                    let call = expr.to_call_expression();
                     if call.optional {
                         return true;
                     }
                     expr = call.callee.get_inner_expression();
                 }
-                Expression::StaticMemberExpression(member) => {
+                ExpressionTag::StaticMemberExpression => {
+                    let member = expr.to_static_member_expression();
                     if member.optional {
                         return true;
                     }
                     expr = &member.object;
                 }
-                Expression::ComputedMemberExpression(member) => {
+                ExpressionTag::ComputedMemberExpression => {
+                    let member = expr.to_computed_member_expression();
                     if member.optional {
                         return true;
                     }
                     expr = &member.object;
                 }
-                Expression::PrivateFieldExpression(member) => {
+                ExpressionTag::PrivateFieldExpression => {
+                    let member = expr.to_private_field_expression();
                     if member.optional {
                         return true;
                     }
@@ -1574,7 +1597,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::CallExpression(call) = expr else { unreachable!() };
+        let Some(call) = expr.as_call_expression_mut() else { unreachable!() };
 
         // `Foo?.bar()?.zoo?.()`
         // ^^^^^^^^^^^ object
@@ -1709,10 +1732,9 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
+        let Some(unary_expr) = expr.as_unary_expression() else { unreachable!() };
 
-        if unary_expr.operator == UnaryOperator::Delete
-            && matches!(unary_expr.argument, Expression::ChainExpression(_))
+        if unary_expr.operator == UnaryOperator::Delete && unary_expr.argument.is_chain_expression()
         {
             self.transform_unary_expression_impl(expr, ctx);
         }
@@ -1723,9 +1745,9 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
+        let Some(unary_expr) = expr.as_unary_expression_mut() else { unreachable!() };
         debug_assert_eq!(unary_expr.operator, UnaryOperator::Delete);
-        debug_assert!(matches!(unary_expr.argument, Expression::ChainExpression(_)));
+        debug_assert!(unary_expr.argument.is_chain_expression());
 
         if let Some((result, chain_expr)) =
             self.transform_chain_expression_impl(&mut unary_expr.argument, ctx)
@@ -1777,8 +1799,10 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::TaggedTemplateExpression(tagged_temp_expr) = expr else { unreachable!() };
-        let Expression::PrivateFieldExpression(field_expr) = &mut tagged_temp_expr.tag else {
+        let Some(tagged_temp_expr) = expr.as_tagged_template_expression_mut() else {
+            unreachable!()
+        };
+        let Some(field_expr) = tagged_temp_expr.tag.as_private_field_expression_mut() else {
             return;
         };
 
@@ -1856,7 +1880,8 @@ impl<'a> ClassProperties<'a> {
     ) {
         // `object.#prop` in assignment pattern.
         // Must be in assignment pattern, as `enter_expression` already transformed `AssignmentExpression`s.
-        if matches!(target, AssignmentTarget::PrivateFieldExpression(_)) {
+        if matches!(target, AssignmentTarget::MemberExpression(m) if m.is_private_field_expression())
+        {
             self.transform_assignment_target_impl(target, ctx);
         }
     }
@@ -1866,9 +1891,8 @@ impl<'a> ClassProperties<'a> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let AssignmentTarget::PrivateFieldExpression(private_field) = target else {
-            unreachable!()
-        };
+        let AssignmentTarget::MemberExpression(member) = target else { unreachable!() };
+        let private_field = member.to_private_field_expression_mut();
         let replacement = self.transform_private_field_expression_impl(private_field, true, ctx);
         *target = AssignmentTarget::from(replacement.into_member_expression());
     }
@@ -1892,7 +1916,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         expr.replace_with(|expr| {
-            let Expression::PrivateInExpression(private_in) = expr else {
+            let ExpressionKindOwned::PrivateInExpression(private_in) = expr.into_kind() else {
                 unreachable!();
             };
             self.transform_private_in_expression_impl(private_in, ctx)

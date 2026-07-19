@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, CallExpression, Expression, MemberExpression, SimpleAssignmentTarget,
+        AssignmentExpression, CallExpression, ExpressionKind, MemberExpression,
+        SimpleAssignmentTarget,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -118,7 +119,7 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
 
         if property_name == "DEFAULT_TIMEOUT_INTERVAL" {
             // `jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000` we can fix it to `jest.setTimeout(5000)`
-            if let Expression::NumericLiteral(number_literal) = &expr.right {
+            if let ExpressionKind::NumericLiteral(number_literal) = expr.right.kind() {
                 ctx.diagnostic_with_fix(
                     no_jasmine_globals_diagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
                     |fixer| {
@@ -164,8 +165,8 @@ fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
 }
 
 fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Option<(Span, &'a str)> {
-    let name = match member_expr.object() {
-        Expression::Identifier(ident) => Some(ident.name.as_str()),
+    let name = match member_expr.object().kind() {
+        ExpressionKind::Identifier(ident) => Some(ident.name.as_str()),
         _ => None,
     };
     let is_jasmine_object = name.is_some_and(|name| name == "jasmine");

@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::Ordering, str::Chars};
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
+    ast::{ExpressionKind, ObjectExpression, ObjectProperty, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -426,7 +426,7 @@ fn build_property_text<'a>(
     sort_order: &SortOrder,
     options: &SortKeysOptions,
 ) -> Cow<'a, str> {
-    let Expression::ObjectExpression(object) = &property.value else {
+    let ExpressionKind::ObjectExpression(object) = property.value.kind() else {
         return Cow::Borrowed(ctx.source_range(span));
     };
     let Some((replace_span, replacement)) = build_object_fix(object, ctx, sort_order, options)

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -95,7 +98,7 @@ fn is_expr_global_builtin<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b str> {
     let expr = expr.without_parentheses();
-    if let Expression::Identifier(ident) = expr {
+    if let ExpressionKind::Identifier(ident) = expr.kind() {
         let name = ident.name.as_str();
         if !ctx.scoping().root_unresolved_references().contains_key(name) {
             return None;
@@ -105,7 +108,7 @@ fn is_expr_global_builtin<'a, 'b>(
     } else {
         let member_expr = expr.as_member_expression()?;
 
-        let Expression::Identifier(ident) = member_expr.object() else {
+        let ExpressionKind::Identifier(ident) = member_expr.object().kind() else {
             return None;
         };
 

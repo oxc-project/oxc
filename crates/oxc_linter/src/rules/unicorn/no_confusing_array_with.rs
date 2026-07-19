@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, UnaryOperator},
+    ast::{Expression, ExpressionKind, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -129,9 +129,9 @@ fn get_confusing_with_index<'a>(
 fn get_static_number_value(expression: &Expression) -> Option<f64> {
     let expression = expression.get_inner_expression();
 
-    match expression {
-        Expression::NumericLiteral(literal) => Some(literal.value),
-        Expression::UnaryExpression(unary)
+    match expression.kind() {
+        ExpressionKind::NumericLiteral(literal) => Some(literal.value),
+        ExpressionKind::UnaryExpression(unary)
             if matches!(
                 unary.operator,
                 UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation

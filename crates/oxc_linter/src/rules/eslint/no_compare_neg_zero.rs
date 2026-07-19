@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -121,15 +124,15 @@ impl NoCompareNegZero {
 }
 
 fn is_neg_zero(expr: &Expression) -> bool {
-    let Expression::UnaryExpression(unary) = expr.get_inner_expression() else {
+    let ExpressionKind::UnaryExpression(unary) = expr.get_inner_expression().kind() else {
         return false;
     };
     if unary.operator != UnaryOperator::UnaryNegation {
         return false;
     }
-    match &unary.argument {
-        Expression::NumericLiteral(number) => number.value == 0.0,
-        Expression::BigIntLiteral(bigint) => bigint.is_zero(),
+    match unary.argument.kind() {
+        ExpressionKind::NumericLiteral(number) => number.value == 0.0,
+        ExpressionKind::BigIntLiteral(bigint) => bigint.is_zero(),
         _ => false,
     }
 }

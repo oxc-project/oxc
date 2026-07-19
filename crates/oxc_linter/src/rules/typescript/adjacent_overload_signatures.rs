@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ClassElement, Declaration, ExportDefaultDeclarationKind, FunctionType, ModuleDeclaration,
-        PropertyKey, Statement, TSSignature, match_expression,
+        ClassElement, Declaration, ExportDefaultDeclarationKind, ExpressionKind, FunctionType,
+        ModuleDeclaration, PropertyKey, Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -98,17 +98,18 @@ enum MethodKind {
 }
 
 fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
-    #[expect(clippy::match_same_arms)]
     match key {
         PropertyKey::StaticIdentifier(_) => MethodKind::Normal,
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
-        PropertyKey::StringLiteral(_) => MethodKind::Normal,
-        PropertyKey::NumericLiteral(_)
-        | PropertyKey::BigIntLiteral(_)
-        | PropertyKey::TemplateLiteral(_)
-        | PropertyKey::RegExpLiteral(_)
-        | PropertyKey::NullLiteral(_) => MethodKind::Quoted,
-        match_expression!(PropertyKey) => MethodKind::Expression,
+        PropertyKey::Expression(expr) => match expr.kind() {
+            ExpressionKind::StringLiteral(_) => MethodKind::Normal,
+            ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::TemplateLiteral(_)
+            | ExpressionKind::RegExpLiteral(_)
+            | ExpressionKind::NullLiteral(_) => MethodKind::Quoted,
+            _ => MethodKind::Expression,
+        },
     }
 }
 

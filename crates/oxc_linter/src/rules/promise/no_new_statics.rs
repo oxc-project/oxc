@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -55,7 +55,7 @@ impl Rule for NoNewStatics {
             return;
         };
 
-        let Expression::Identifier(ident) = &member_expr.object() else {
+        let ExpressionKind::Identifier(ident) = member_expr.object().kind() else {
             return;
         };
 

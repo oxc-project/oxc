@@ -1,7 +1,8 @@
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
-    ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+    Argument, BindingPattern, CatchClause, Expression, ExpressionKind, Function,
+    IdentifierReference, ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement,
+    TryStatement,
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -55,9 +56,9 @@ struct ThrowFinder<'a, 'ctx> {
 
 impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
     fn visit_throw_statement(&mut self, throw_stmt: &ThrowStatement<'a>) {
-        let (callee, args) = match &throw_stmt.argument {
-            Expression::NewExpression(new_expr) => (&new_expr.callee, &new_expr.arguments),
-            Expression::CallExpression(call_expr) => (&call_expr.callee, &call_expr.arguments),
+        let (callee, args) = match throw_stmt.argument.kind() {
+            ExpressionKind::NewExpression(new_expr) => (&new_expr.callee, &new_expr.arguments),
+            ExpressionKind::CallExpression(call_expr) => (&call_expr.callee, &call_expr.arguments),
             _ => return,
         };
 
@@ -65,7 +66,8 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             return;
         }
 
-        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1)
+        if let Some(obj_expr) =
+            args.get(1).and_then(|a| a.as_expression()).and_then(|e| e.as_object_expression())
             && has_cause_property(obj_expr, self.catch_param, self.ctx)
         {
             return;
@@ -93,7 +95,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                             throw_stmt.argument.span().start + start_paren_idx as u32,
                             1,
                         );
-                        if let Expression::Identifier(ident) = callee
+                        if let ExpressionKind::Identifier(ident) = callee.kind()
                             && is_aggregate_error(ident, self.ctx)
                         {
                             // AggregateError takes options as its third argument
@@ -110,7 +112,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     let span = args[0].span();
                     // insert comma
                     let mut fix = fixer.new_fix_with_capacity(3);
-                    if let Expression::Identifier(ident) = callee
+                    if let ExpressionKind::Identifier(ident) = callee.kind()
                         && is_aggregate_error(ident, self.ctx)
                     {
                         // AggregateError takes options as its third argument
@@ -123,7 +125,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     return fix.with_message(ADD_CAUSE_PROPERTY);
                 }
                 2 => {
-                    if let Expression::Identifier(ident) = callee
+                    if let ExpressionKind::Identifier(ident) = callee.kind()
                         && is_aggregate_error(ident, self.ctx)
                     {
                         // AggregateError takes options as its third argument
@@ -137,7 +139,9 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     }
 
                     // if the second argument is an existing object, merge into it
-                    if let Argument::ObjectExpression(obj_expr) = &args[1] {
+                    if let Some(obj_expr) =
+                        args[1].as_expression().and_then(|e| e.as_object_expression())
+                    {
                         let cause_prop = obj_expr.properties.iter().find(|prop| match prop {
                             ObjectPropertyKind::ObjectProperty(prop) => {
                                 let PropertyKey::StaticIdentifier(ident) = &prop.key else {
@@ -195,7 +199,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
 }
 
 fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
-    let Expression::Identifier(ident) = expr else {
+    let ExpressionKind::Identifier(ident) = expr.kind() else {
         return false;
     };
 
@@ -236,7 +240,7 @@ fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &Lin
 
     let catch_symbol_id = binding.symbol_id();
 
-    let Expression::Identifier(ident) = expr else {
+    let ExpressionKind::Identifier(ident) = expr.kind() else {
         return false;
     };
 

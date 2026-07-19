@@ -26,13 +26,13 @@ use crate::{
 fn is_import_expression_or_member_access_on_import_expression(callee: &Expression<'_>) -> bool {
     let mut expr = callee;
     loop {
-        if matches!(expr, Expression::ImportExpression(_)) {
+        if matches!(expr.tag(), ExpressionTag::ImportExpression) {
             return true;
         }
         let Some(member_expr) = expr.as_member_expression() else {
-            expr = match expr {
-                Expression::TaggedTemplateExpression(tagged_template) => &tagged_template.tag,
-                Expression::TSNonNullExpression(non_null) => &non_null.expression,
+            expr = match expr.kind() {
+                ExpressionKind::TaggedTemplateExpression(tagged_template) => &tagged_template.tag,
+                ExpressionKind::TSNonNullExpression(non_null) => &non_null.expression,
                 _ => return false,
             };
             continue;
@@ -204,7 +204,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.expect(Kind::In);
         let right = self.parse_binary_expression_or_higher(Precedence::Compare);
-        if let Expression::PrivateInExpression(private_in_expr) = right {
+        if let ExpressionKind::PrivateInExpression(private_in_expr) = right.kind() {
             return self.fatal_error(diagnostics::private_in_private(private_in_expr.span));
         }
         Expression::new_private_in_expression(self.end_span(lhs_span), left, right, self)
@@ -309,14 +309,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::new_sequence_expression(expr_span, expressions, self)
         };
 
-        match &mut expression {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
+        match expression.kind_mut() {
+            ExpressionKindMut::ArrowFunctionExpression(arrow_expr) => {
                 arrow_expr.pife = true;
                 if has_no_side_effects_comment {
                     arrow_expr.pure = true;
                 }
             }
-            Expression::FunctionExpression(func_expr) => {
+            ExpressionKindMut::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
                 if has_no_side_effects_comment {
                     func_expr.pure = true;
@@ -767,7 +767,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::decorator_optional(lhs.span()));
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
-        if let Expression::TSInstantiationExpression(mut expr) = lhs {
+        if lhs.is_ts_instantiation_expression() {
+            let mut expr = lhs.into_ts_instantiation_expression().unwrap();
             expr.expression.replace_with(|expr| self.map_to_chain_expression(expr.span(), expr));
             Expression::TSInstantiationExpression(expr)
         } else {
@@ -777,18 +778,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn map_to_chain_expression(&self, span: Span, expr: Expression<'a>) -> Expression<'a> {
-        match expr {
-            match_member_expression!(Expression) => {
-                let member_expr = expr.into_member_expression();
-                Expression::new_chain_expression(span, ChainElement::from(member_expr), self)
-            }
-            Expression::CallExpression(e) => {
+        if expr.is_member_expression() {
+            let member_expr = expr.into_member_expression();
+            return Expression::new_chain_expression(span, ChainElement::from(member_expr), self);
+        }
+        match expr.into_kind() {
+            ExpressionKindOwned::CallExpression(e) => {
                 Expression::new_chain_expression(span, ChainElement::CallExpression(e), self)
             }
-            Expression::TSNonNullExpression(e) => {
+            ExpressionKindOwned::TSNonNullExpression(e) => {
                 Expression::new_chain_expression(span, ChainElement::TSNonNullExpression(e), self)
             }
-            expr => expr,
+            other => Expression::from_kind(other),
         }
     }
 
@@ -824,7 +825,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs: &Expression<'a>,
         lhs_span: u32,
     ) {
-        if matches!(lhs, Expression::TSInstantiationExpression(e) if e.span.start == lhs_span) {
+        if matches!(lhs.kind(), ExpressionKind::TSInstantiationExpression(e) if e.span.start == lhs_span)
+        {
             self.error(
                 diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
                     self.end_span(lhs_span),
@@ -925,13 +927,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs: Expression<'a>,
         in_optional_chain: bool,
     ) -> Expression<'a> {
-        let (expr, type_arguments) =
-            if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
-                let expr = instantiation_expr.unbox();
-                (expr.expression, Some(expr.type_arguments))
-            } else {
-                (lhs, None)
-            };
+        let (expr, type_arguments) = if lhs.is_ts_instantiation_expression() {
+            let expr = lhs.into_ts_instantiation_expression().unwrap().unbox();
+            (expr.expression, Some(expr.type_arguments))
+        } else {
+            (lhs, None)
+        };
         self.parse_tagged_template(lhs_span, expr, in_optional_chain, type_arguments)
     }
 
@@ -1017,8 +1018,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
 
         let mut type_arguments = None;
-        if let Expression::TSInstantiationExpression(instantiation_expr) = callee {
-            let instantiation_expr = instantiation_expr.unbox();
+        if callee.is_ts_instantiation_expression() {
+            let instantiation_expr = callee.into_ts_instantiation_expression().unwrap().unbox();
             type_arguments.replace(instantiation_expr.type_arguments);
             callee = instantiation_expr.expression;
         }
@@ -1052,7 +1053,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
-        if matches!(callee, Expression::Super(_)) {
+        if matches!(callee.tag(), ExpressionTag::Super) {
             self.error(diagnostics::new_super(self.end_span(rhs_span)));
         }
 
@@ -1119,8 +1120,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !question_dot && let Expression::TSInstantiationExpression(expr) = lhs {
-                    let expr = expr.unbox();
+                if !question_dot && lhs.is_ts_instantiation_expression() {
+                    let expr = lhs.into_ts_instantiation_expression().unwrap().unbox();
                     type_arguments.replace(expr.type_arguments);
                     lhs = expr.expression;
                 }
@@ -1389,11 +1390,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // check mixed coalesce
                 if op == LogicalOperator::Coalesce {
                     let mut maybe_mixed_coalesce_expr = None;
-                    if let Expression::LogicalExpression(rhs) = &rhs {
+                    if let ExpressionKind::LogicalExpression(rhs) = rhs.kind() {
                         if !rhs_parenthesized {
                             maybe_mixed_coalesce_expr = Some(rhs);
                         }
-                    } else if let Expression::LogicalExpression(lhs) = &lhs
+                    } else if let ExpressionKind::LogicalExpression(lhs) = lhs.kind()
                         && !lhs_parenthesized
                     {
                         maybe_mixed_coalesce_expr = Some(lhs);
@@ -1409,17 +1410,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let span = self.end_span(lhs_span);
                 let op = map_binary_operator(kind);
                 if op == BinaryOperator::Exponential && !lhs_parenthesized {
-                    let diagnostic = match &lhs {
-                        Expression::AwaitExpression(_) => Some(
+                    let diagnostic = match lhs.kind() {
+                        ExpressionKind::AwaitExpression(_) => Some(
                             diagnostics::unary_exponentiation_left_operand("await", lhs.span()),
                         ),
-                        Expression::UnaryExpression(unary) => {
+                        ExpressionKind::UnaryExpression(unary) => {
                             Some(diagnostics::unary_exponentiation_left_operand(
                                 unary.operator.as_str(),
                                 lhs.span(),
                             ))
                         }
-                        Expression::TSTypeAssertion(_) => Some(
+                        ExpressionKind::TSTypeAssertion(_) => Some(
                             diagnostics::type_assertion_exponentiation_left_operand(lhs.span()),
                         ),
                         _ => None,
@@ -1492,7 +1493,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
             if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                && let ExpressionKindMut::ArrowFunctionExpression(func) = arrow_expr.kind_mut()
             {
                 func.pure = true;
             }
@@ -1503,7 +1504,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
         {
             if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                && let ExpressionKindMut::ArrowFunctionExpression(func) = arrow_expr.kind_mut()
             {
                 func.pure = true;
             }
@@ -1518,7 +1519,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // `x => {}`
         if kind == Kind::Arrow
-            && let Expression::Identifier(ident) = &lhs
+            && let ExpressionKind::Identifier(ident) = lhs.kind()
         {
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 span,
@@ -1527,7 +1528,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 allow_return_type_in_arrow_function,
             );
             if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                && let ExpressionKindMut::ArrowFunctionExpression(func) = arrow_expr.kind_mut()
             {
                 func.pure = true;
             }
@@ -1560,38 +1561,42 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
-        match &mut expr.get_inner_expression_mut() {
-            Expression::CallExpression(call_expr) => {
+        match expr.get_inner_expression_mut().kind_mut() {
+            ExpressionKindMut::CallExpression(call_expr) => {
                 call_expr.pure = true;
                 true
             }
-            Expression::NewExpression(new_expr) => {
+            ExpressionKindMut::NewExpression(new_expr) => {
                 new_expr.pure = true;
                 true
             }
-            Expression::BinaryExpression(binary_expr) => {
+            ExpressionKindMut::BinaryExpression(binary_expr) => {
                 Self::set_pure_on_call_or_new_expr(&mut binary_expr.left)
             }
-            Expression::LogicalExpression(logical_expr) => {
+            ExpressionKindMut::LogicalExpression(logical_expr) => {
                 Self::set_pure_on_call_or_new_expr(&mut logical_expr.left)
             }
-            Expression::ConditionalExpression(conditional_expr) => {
+            ExpressionKindMut::ConditionalExpression(conditional_expr) => {
                 Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test)
             }
             // Recurse through member-access chains: `/* #__PURE__ */ foo().a.b.c`
             // applies PURE to the underlying call/new (Rollup/esbuild semantics).
-            expr @ match_member_expression!(Expression) => {
-                Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
+            ExpressionKindMut::ComputedMemberExpression(member_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut member_expr.object)
             }
-            Expression::ChainExpression(chain_expr) => match &mut chain_expr.expression {
+            ExpressionKindMut::StaticMemberExpression(member_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut member_expr.object)
+            }
+            ExpressionKindMut::PrivateFieldExpression(member_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut member_expr.object)
+            }
+            ExpressionKindMut::ChainExpression(chain_expr) => match &mut chain_expr.expression {
                 ChainElement::CallExpression(call_expr) => {
                     call_expr.pure = true;
                     true
                 }
-                element @ match_member_expression!(ChainElement) => {
-                    Self::set_pure_on_call_or_new_expr(
-                        element.to_member_expression_mut().object_mut(),
-                    )
+                ChainElement::MemberExpression(element) => {
+                    Self::set_pure_on_call_or_new_expr(element.object_mut())
                 }
                 ChainElement::TSNonNullExpression(non_null_expr) => {
                     Self::set_pure_on_call_or_new_expr(&mut non_null_expr.expression)
@@ -1602,11 +1607,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) {
-        match expr {
-            Expression::FunctionExpression(func) => {
+        match expr.kind_mut() {
+            ExpressionKindMut::FunctionExpression(func) => {
                 func.pure = true;
             }
-            Expression::ArrowFunctionExpression(func) => {
+            ExpressionKindMut::ArrowFunctionExpression(func) => {
                 func.pure = true;
             }
             _ => {}
@@ -1629,13 +1634,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         //    ArrayAssignmentPattern
         if let Some(span) = left_parenthesized_span {
             //  `({}) = x;`, `([]) = x;`
-            if matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) {
+            if matches!(lhs.tag(), ExpressionTag::ObjectExpression | ExpressionTag::ArrayExpression)
+            {
                 self.error(diagnostics::invalid_assignment(span));
             }
         }
         // A destructuring pattern target is only valid with `=`, not a compound operator.
         if operator != AssignmentOperator::Assign
-            && matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_))
+            && matches!(lhs.tag(), ExpressionTag::ObjectExpression | ExpressionTag::ArrayExpression)
         {
             self.error(diagnostics::assignment_is_not_simple(lhs.span()));
         }

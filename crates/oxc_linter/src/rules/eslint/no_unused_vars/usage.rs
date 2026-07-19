@@ -548,7 +548,7 @@ impl<'a> Symbol<'_, 'a> {
                         // variable is being used to index another variable, this is
                         // always a usage
                         // todo: check self index?
-                        match_member_expression!(AssignmentTarget) => return false,
+                        AssignmentTarget::MemberExpression(_) => return false,
                         _ => {}
                     }
                 }

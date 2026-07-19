@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::{AstKind, ast::MemberExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -62,8 +62,8 @@ impl Rule for PreferStringTrimStartEnd {
             return;
         };
 
-        let (span, name) = match member_expr {
-            MemberExpression::StaticMemberExpression(v) => {
+        let (span, name) = match member_expr.kind() {
+            MemberExpressionKind::StaticMemberExpression(v) => {
                 if !matches!(v.property.name.as_str(), "trimLeft" | "trimRight") {
                     return;
                 }

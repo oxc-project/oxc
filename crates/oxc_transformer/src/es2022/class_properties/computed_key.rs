@@ -129,7 +129,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &TraverseCtx<'a>,
     ) {
         // Exit if computed key is not an assignment (wasn't processed in 1st pass)
-        if !matches!(&prop.key, PropertyKey::AssignmentExpression(_)) {
+        if !matches!(&prop.key, PropertyKey::Expression(e) if e.is_assignment_expression()) {
             // This field is going to be removed, but if the key is a computed key and may have
             // side effects, we need to extract the key and place it before the class to preserve
             // the original behavior.
@@ -146,7 +146,8 @@ impl<'a> ClassProperties<'a> {
         // Debug checks that we're removing what we think we are
         #[cfg(debug_assertions)]
         {
-            let PropertyKey::AssignmentExpression(assign_expr) = &prop.key else { unreachable!() };
+            let PropertyKey::Expression(key) = &prop.key else { unreachable!() };
+            let Some(assign_expr) = key.as_assignment_expression() else { unreachable!() };
             assert!(assign_expr.span.is_empty());
             let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign_expr.left else {
                 unreachable!();

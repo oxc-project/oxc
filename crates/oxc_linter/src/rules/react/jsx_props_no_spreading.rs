@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -129,7 +129,7 @@ impl Rule for JsxPropsNoSpreading {
         }
 
         if self.explicit_spread == IgnoreEnforceOption::Ignore
-            && let Expression::ObjectExpression(obj_expr) = &spread_attr.argument
+            && let ExpressionKind::ObjectExpression(obj_expr) = spread_attr.argument.kind()
             && obj_expr.properties.iter().all(|prop| !prop.is_spread())
         {
             return;

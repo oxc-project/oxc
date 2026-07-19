@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -85,8 +85,9 @@ impl Rule for NoThrowLiteral {
 
         let expr = &stmt.argument;
 
-        match expr.get_inner_expression() {
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+        let inner = expr.get_inner_expression();
+        match inner.kind() {
+            ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => {
                 let span = expr.span();
                 ctx.diagnostic_with_suggestion(no_throw_literal_diagnostic(span, false), |fixer| {
                     fixer.replace(
@@ -95,11 +96,11 @@ impl Rule for NoThrowLiteral {
                     )
                 });
             }
-            Expression::Identifier(id) if SPECIAL_IDENTIFIERS.contains(&id.name.as_str()) => {
+            ExpressionKind::Identifier(id) if SPECIAL_IDENTIFIERS.contains(&id.name.as_str()) => {
                 ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
             }
-            expr if !could_be_error(ctx, expr) => {
-                ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), false));
+            _ if !could_be_error(ctx, inner) => {
+                ctx.diagnostic(no_throw_literal_diagnostic(inner.span(), false));
             }
             _ => {}
         }

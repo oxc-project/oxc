@@ -8,10 +8,7 @@ use crate::{
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{
-        JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName, JSXExpression,
-        JSXFragment,
-    },
+    ast::{JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName, JSXFragment},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -339,7 +336,7 @@ fn has_less_than_two_children(children: &ArenaVec<'_, JSXChild<'_>>) -> bool {
         has_call_expression_child = matches!(
             child,
             JSXChild::ExpressionContainer(expression)
-                if matches!(expression.expression, JSXExpression::CallExpression(_))
+                if expression.expression.as_expression().is_some_and(oxc_ast::ast::Expression::is_call_expression)
         );
     }
 

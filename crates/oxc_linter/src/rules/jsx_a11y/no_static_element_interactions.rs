@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -177,7 +177,7 @@ fn is_null_value(value: &JSXAttributeValue) -> bool {
     matches!(
         value,
         JSXAttributeValue::ExpressionContainer(container)
-            if matches!(container.expression, JSXExpression::NullLiteral(_))
+            if container.expression.as_expression().is_some_and(|e| matches!(e.kind(), ExpressionKind::NullLiteral(_)))
     )
 }
 

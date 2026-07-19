@@ -166,7 +166,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     }
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
-        if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
+        if let Some(ident) = decl.declaration.as_expression().and_then(Expression::as_identifier) {
             self.add_reference(ident.name.into(), KindFlags::All);
         } else {
             walk_export_default_declaration(self, decl);

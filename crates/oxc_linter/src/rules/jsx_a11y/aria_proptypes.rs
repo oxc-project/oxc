@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, JSXExpression},
+    ast::{ExpressionKind, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -151,7 +151,8 @@ fn is_valid_value_for_aria_prop_type(
         AriaPropType::String | AriaPropType::Id => {
             // Template literals with expressions always produce strings at runtime
             if let JSXAttributeValue::ExpressionContainer(container) = value
-                && let JSXExpression::TemplateLiteral(t) = &container.expression
+                && let Some(expr) = container.expression.as_expression()
+                && let ExpressionKind::TemplateLiteral(t) = expr.kind()
                 && t.single_quasi().is_none()
             {
                 return true;
@@ -163,9 +164,10 @@ fn is_valid_value_for_aria_prop_type(
                 return value_string.parse::<f64>().is_ok();
             }
             match value {
-                JSXAttributeValue::ExpressionContainer(container) => {
-                    matches!(container.expression, JSXExpression::NumericLiteral(_))
-                }
+                JSXAttributeValue::ExpressionContainer(container) => container
+                    .expression
+                    .as_expression()
+                    .is_some_and(|e| matches!(e.kind(), ExpressionKind::NumericLiteral(_))),
                 _ => false,
             }
         }
@@ -173,7 +175,8 @@ fn is_valid_value_for_aria_prop_type(
             // Template literals with expressions always produce strings at runtime and are
             // valid for ID list ARIA props (e.g., `${id}-label` or `${id}-label ${id}-help-text`).
             if let JSXAttributeValue::ExpressionContainer(container) = value
-                && let JSXExpression::TemplateLiteral(t) = &container.expression
+                && let Some(expr) = container.expression.as_expression()
+                && let ExpressionKind::TemplateLiteral(t) = expr.kind()
                 && t.single_quasi().is_none()
             {
                 return true;
@@ -217,26 +220,29 @@ fn parse_aria_prop_value_as_string(
             Some(string_lit.value.cow_to_lowercase().into())
         }
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-            JSXExpression::StringLiteral(string_lit) => {
-                Some(string_lit.value.cow_to_lowercase().into())
-            }
-            JSXExpression::TemplateLiteral(template_lit) => {
-                Some(template_lit.single_quasi()?.cow_to_lowercase().into())
-            }
-            JSXExpression::BooleanLiteral(bool_lit) => {
-                if boolean_as_string {
-                    Some(bool_lit.value.to_string().into())
-                } else {
-                    None
+            JSXExpression::Expression(expr) => match expr.kind() {
+                ExpressionKind::StringLiteral(string_lit) => {
+                    Some(string_lit.value.cow_to_lowercase().into())
                 }
-            }
-            JSXExpression::UnaryExpression(unary)
-                if boolean_as_string && unary.operator == UnaryOperator::LogicalNot =>
-            {
-                let value = !unary.argument.to_boolean(&WithoutGlobalReferenceInformation)?;
-                Some(value.to_string().into())
-            }
-            _ => None,
+                ExpressionKind::TemplateLiteral(template_lit) => {
+                    Some(template_lit.single_quasi()?.cow_to_lowercase().into())
+                }
+                ExpressionKind::BooleanLiteral(bool_lit) => {
+                    if boolean_as_string {
+                        Some(bool_lit.value.to_string().into())
+                    } else {
+                        None
+                    }
+                }
+                ExpressionKind::UnaryExpression(unary)
+                    if boolean_as_string && unary.operator == UnaryOperator::LogicalNot =>
+                {
+                    let value = !unary.argument.to_boolean(&WithoutGlobalReferenceInformation)?;
+                    Some(value.to_string().into())
+                }
+                _ => None,
+            },
+            JSXExpression::EmptyExpression(_) => None,
         },
         _ => None,
     }
@@ -246,17 +252,20 @@ fn is_target_literal_value(value: &JSXAttributeValue) -> bool {
     match value {
         JSXAttributeValue::StringLiteral(_) => true,
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-            JSXExpression::StringLiteral(_)
-            | JSXExpression::BooleanLiteral(_)
-            | JSXExpression::NumericLiteral(_)
-            | JSXExpression::BigIntLiteral(_)
-            | JSXExpression::TemplateLiteral(_) => true,
-            JSXExpression::UnaryExpression(unary) => {
-                // Check if unary `!` expression can be statically evaluated (e.g., `!true`, `!"string"`)
-                unary.operator == UnaryOperator::LogicalNot
-                    && unary.argument.to_boolean(&WithoutGlobalReferenceInformation).is_some()
-            }
-            _ => false, // null literal always pass this rule
+            JSXExpression::Expression(expr) => match expr.kind() {
+                ExpressionKind::StringLiteral(_)
+                | ExpressionKind::BooleanLiteral(_)
+                | ExpressionKind::NumericLiteral(_)
+                | ExpressionKind::BigIntLiteral(_)
+                | ExpressionKind::TemplateLiteral(_) => true,
+                ExpressionKind::UnaryExpression(unary) => {
+                    // Check if unary `!` expression can be statically evaluated (e.g., `!true`, `!"string"`)
+                    unary.operator == UnaryOperator::LogicalNot
+                        && unary.argument.to_boolean(&WithoutGlobalReferenceInformation).is_some()
+                }
+                _ => false, // null literal always pass this rule
+            },
+            JSXExpression::EmptyExpression(_) => false,
         },
         _ => false,
     }

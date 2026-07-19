@@ -7,8 +7,8 @@
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
-    ArrayExpression, ArrayExpressionElement, Expression, NumericLiteral, ObjectExpression,
-    ObjectPropertyKind, PropertyKey, StringLiteral, TemplateLiteral,
+    ArrayExpression, ArrayExpressionElement, Expression, ExpressionKind, NumericLiteral,
+    ObjectExpression, ObjectPropertyKind, PropertyKey, StringLiteral, TemplateLiteral,
 };
 use oxc_formatter_core::{
     Buffer, Format, arena_cow_str,
@@ -33,16 +33,16 @@ pub struct FmtJsonStringifyValue<'a, 'b> {
 
 impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonStringifyValue<'a, '_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        match self.expression {
-            Expression::NullLiteral(_) => write!(f, "null"),
-            Expression::BooleanLiteral(lit) => {
+        match self.expression.kind() {
+            ExpressionKind::NullLiteral(_) => write!(f, "null"),
+            ExpressionKind::BooleanLiteral(lit) => {
                 write!(f, if lit.value { "true" } else { "false" });
             }
-            Expression::NumericLiteral(lit) => write_number(lit, f),
-            Expression::StringLiteral(lit) => write_string(lit, f),
-            Expression::ArrayExpression(array) => write_array(array, f),
-            Expression::ObjectExpression(object) => write_object(object, f),
-            Expression::UnaryExpression(unary) => match unary.operator {
+            ExpressionKind::NumericLiteral(lit) => write_number(lit, f),
+            ExpressionKind::StringLiteral(lit) => write_string(lit, f),
+            ExpressionKind::ArrayExpression(array) => write_array(array, f),
+            ExpressionKind::ObjectExpression(object) => write_object(object, f),
+            ExpressionKind::UnaryExpression(unary) => match unary.operator {
                 // `JSON.parse` rejects a leading `+`, so Prettier drops it.
                 UnaryOperator::UnaryPlus => {
                     Self { expression: &unary.argument }.fmt(f);
@@ -55,12 +55,12 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonStringifyValue<'a, '_> {
             },
             // JSON5 `Infinity` / `NaN`, JSON6 `undefined`; anything else is invalid
             // (Prettier rejects other identifiers at parse time, we report at format time).
-            Expression::Identifier(ident)
+            ExpressionKind::Identifier(ident)
                 if matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined") =>
             {
                 write!(f, text(ident.name.as_str()));
             }
-            Expression::TemplateLiteral(template) => write_template(template, f),
+            ExpressionKind::TemplateLiteral(template) => write_template(template, f),
             _ => write!(f, FormatInvalidJson(self.expression.span())),
         }
     }
@@ -147,20 +147,24 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
 ///   (unlike value position's `JSON.stringify()`) has no `null` fallback, so non-finite quotes as `"Infinity"`
 fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
     match key {
-        PropertyKey::StringLiteral(lit) => write_string(lit, f),
         PropertyKey::StaticIdentifier(ident) => {
             write_quoted_str(f, b'"', ident.name.as_str());
         }
-        PropertyKey::NumericLiteral(lit) => {
-            let raw = lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
-            let raw = raw.as_str();
-            if number_string_round_trips(raw) {
-                write_quoted_str(f, b'"', raw);
-            } else {
-                write!(f, text(raw));
+        PropertyKey::Expression(expr) => match expr.kind() {
+            ExpressionKind::StringLiteral(lit) => write_string(lit, f),
+            ExpressionKind::NumericLiteral(lit) => {
+                let raw =
+                    lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
+                let raw = raw.as_str();
+                if number_string_round_trips(raw) {
+                    write_quoted_str(f, b'"', raw);
+                } else {
+                    write!(f, text(raw));
+                }
             }
-        }
-        _ => write!(f, FormatInvalidJson(key.span())),
+            _ => write!(f, FormatInvalidJson(key.span())),
+        },
+        PropertyKey::PrivateIdentifier(_) => write!(f, FormatInvalidJson(key.span())),
     }
 }
 

@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpressionElement, BindingPattern, CallExpression, Expression, ObjectExpression,
-        ObjectPattern, ObjectPropertyKind, PropertyKey, TSSignature, TSType,
+        ArrayExpressionElement, BindingPattern, CallExpression, Expression, ExpressionKind,
+        ObjectExpression, ObjectPattern, ObjectPropertyKind, PropertyKey, TSSignature, TSType,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -95,8 +95,8 @@ impl Rule for RequireDefaultProp {
                     return;
                 }
                 let Some(props_prop) = find_property(obj, "props") else { return };
-                if let Expression::ObjectExpression(props_obj) =
-                    props_prop.value.get_inner_expression()
+                if let ExpressionKind::ObjectExpression(props_obj) =
+                    props_prop.value.get_inner_expression().kind()
                 {
                     check_object_props(props_obj, ctx, &PropsContext::default());
                 }
@@ -131,12 +131,14 @@ fn handle_with_defaults<'a>(
 ) {
     let Some(first) = call.arguments.first().and_then(|a| a.as_expression()) else { return };
     let Some(second) = call.arguments.get(1).and_then(|a| a.as_expression()) else { return };
-    let Expression::CallExpression(define_props) = first.get_inner_expression() else { return };
+    let ExpressionKind::CallExpression(define_props) = first.get_inner_expression().kind() else {
+        return;
+    };
     if !define_props.callee.get_identifier_reference().is_some_and(|i| i.name == "defineProps") {
         return;
     }
-    let with_defaults = match second.get_inner_expression() {
-        Expression::ObjectExpression(obj) => Some(obj.as_ref()),
+    let with_defaults = match second.get_inner_expression().kind() {
+        ExpressionKind::ObjectExpression(obj) => Some(obj),
         _ => None,
     };
     let props_ctx = destructure_context(node, ctx, true, with_defaults);
@@ -149,7 +151,7 @@ fn handle_define_props<'a>(
     pc: &PropsContext<'a>,
 ) {
     if let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) {
-        if let Expression::ObjectExpression(obj) = arg.get_inner_expression() {
+        if let ExpressionKind::ObjectExpression(obj) = arg.get_inner_expression().kind() {
             check_object_props(obj, ctx, pc);
         }
         return;
@@ -273,14 +275,14 @@ fn check_type_signature<'a>(
 /// Mirrors upstream `isWithoutDefaultValue`. The value is already unwrapped of
 /// `as`/parenthesized expressions by the caller.
 fn is_without_default_value(value: &Expression) -> bool {
-    match value {
-        Expression::ObjectExpression(obj) => !prop_is_required(obj) && !prop_has_default(obj),
-        Expression::Identifier(ident) => NATIVE_TYPES.contains(&ident.name.as_str()),
+    match value.kind() {
+        ExpressionKind::ObjectExpression(obj) => !prop_is_required(obj) && !prop_has_default(obj),
+        ExpressionKind::Identifier(ident) => NATIVE_TYPES.contains(&ident.name.as_str()),
         // A call/member expression is assumed to produce the default value.
-        Expression::CallExpression(_)
-        | Expression::StaticMemberExpression(_)
-        | Expression::ComputedMemberExpression(_)
-        | Expression::PrivateFieldExpression(_) => false,
+        ExpressionKind::CallExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => false,
         _ => true,
     }
 }
@@ -289,7 +291,7 @@ fn prop_is_required(obj: &ObjectExpression) -> bool {
     obj.properties.iter().any(|prop| {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
             if prop.key.static_name().as_deref() == Some("required")
-                && matches!(prop.value.get_inner_expression(), Expression::BooleanLiteral(lit) if lit.value))
+                && matches!(prop.value.get_inner_expression().kind(), ExpressionKind::BooleanLiteral(lit) if lit.value))
     })
 }
 
@@ -304,7 +306,7 @@ fn is_boolean_prop(value: &Expression) -> bool {
     if is_value_node_of_boolean_type(value) {
         return true;
     }
-    let Expression::ObjectExpression(obj) = value else { return false };
+    let ExpressionKind::ObjectExpression(obj) = value.kind() else { return false };
     obj.properties.iter().any(|prop| {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
             if matches!(&prop.key, PropertyKey::StaticIdentifier(key) if key.name == "type")
@@ -313,16 +315,16 @@ fn is_boolean_prop(value: &Expression) -> bool {
 }
 
 fn is_value_node_of_boolean_type(value: &Expression) -> bool {
-    match value {
-        Expression::Identifier(ident) => ident.name == "Boolean",
-        Expression::ArrayExpression(arr) => {
+    match value.kind() {
+        ExpressionKind::Identifier(ident) => ident.name == "Boolean",
+        ExpressionKind::ArrayExpression(arr) => {
             let mut elements = arr
                 .elements
                 .iter()
                 .filter(|element| !matches!(element, ArrayExpressionElement::Elision(_)));
             match (elements.next(), elements.next()) {
                 (Some(first), None) => first.as_expression().is_some_and(|element| {
-                    matches!(element.get_inner_expression(), Expression::Identifier(ident) if ident.name == "Boolean")
+                    matches!(element.get_inner_expression().kind(), ExpressionKind::Identifier(ident) if ident.name == "Boolean")
                 }),
                 _ => false,
             }

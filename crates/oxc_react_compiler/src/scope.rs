@@ -521,10 +521,12 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         self.nodes.ancestor_kinds(node_id).filter_map(|kind| match kind {
             AstKind::Function(func) => func.scope_id.get(),
             AstKind::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
-            AstKind::ObjectProperty(prop) if is_object_method_property(prop) => match &prop.value {
-                oxc_ast::ast::Expression::FunctionExpression(func) => func.scope_id.get(),
-                _ => None,
-            },
+            AstKind::ObjectProperty(prop) if is_object_method_property(prop) => {
+                match prop.value.kind() {
+                    oxc_ast::ast::ExpressionKind::FunctionExpression(func) => func.scope_id.get(),
+                    _ => None,
+                }
+            }
             _ => None,
         })
     }

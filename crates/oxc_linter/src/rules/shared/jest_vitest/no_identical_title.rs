@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression},
+    ast::{Argument, CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
@@ -124,12 +124,15 @@ fn filter_and_process_jest_result<'a>(
     let parent_id = get_closest_block(possible_jest_node.node, ctx)?;
 
     match call_expr.arguments.first() {
-        Some(Argument::StringLiteral(string_lit)) => {
-            Some((string_lit.span, &string_lit.value, kind, parent_id))
-        }
-        Some(Argument::TemplateLiteral(template_lit)) => template_lit
-            .single_quasi()
-            .map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id)),
+        Some(Argument::Expression(expr)) => match expr.kind() {
+            ExpressionKind::StringLiteral(string_lit) => {
+                Some((string_lit.span, &string_lit.value, kind, parent_id))
+            }
+            ExpressionKind::TemplateLiteral(template_lit) => template_lit
+                .single_quasi()
+                .map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id)),
+            _ => None,
+        },
         _ => None,
     }
 }

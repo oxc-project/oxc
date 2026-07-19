@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::Ordering};
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, VariableDeclarator},
+    ast::{BindingPattern, ExpressionTag, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -195,13 +195,13 @@ fn is_fixable_declarator(decl: &VariableDeclarator<'_>) -> bool {
     matches!(decl.id, BindingPattern::BindingIdentifier(_))
         && decl.init.as_ref().is_none_or(|init| {
             matches!(
-                init.without_parentheses(),
-                Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::StringLiteral(_)
+                init.without_parentheses().tag(),
+                ExpressionTag::BooleanLiteral
+                    | ExpressionTag::NullLiteral
+                    | ExpressionTag::NumericLiteral
+                    | ExpressionTag::BigIntLiteral
+                    | ExpressionTag::RegExpLiteral
+                    | ExpressionTag::StringLiteral
             )
         })
 }

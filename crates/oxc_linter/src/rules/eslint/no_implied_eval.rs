@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, IdentifierReference, MemberExpression},
+    ast::{
+        Argument, CallExpression, Expression, ExpressionKind, IdentifierReference, MemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -111,7 +113,7 @@ fn classify_direct_callee<'a>(
     callee: &'a Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<EvalLikeTarget> {
-    let Expression::Identifier(ident) = callee.get_inner_expression() else {
+    let ExpressionKind::Identifier(ident) = callee.get_inner_expression().kind() else {
         return None;
     };
     let target = EvalLikeTarget::from_name(ident.name.as_str())?;
@@ -132,9 +134,10 @@ fn classify_member_callee<'a>(
 fn member_expression_through_chain<'a>(
     expr: &'a Expression<'a>,
 ) -> Option<&'a MemberExpression<'a>> {
-    match expr.get_inner_expression() {
-        expr if expr.is_member_expression() => expr.as_member_expression(),
-        Expression::ChainExpression(chain) => chain.expression.member_expression(),
+    let inner = expr.get_inner_expression();
+    match inner.kind() {
+        _ if inner.is_member_expression() => inner.as_member_expression(),
+        ExpressionKind::ChainExpression(chain) => chain.expression.member_expression(),
         _ => None,
     }
 }
@@ -142,17 +145,15 @@ fn member_expression_through_chain<'a>(
 fn global_root_after_same_name_chain<'a>(
     expr: &'a Expression<'a>,
 ) -> Option<&'a IdentifierReference<'a>> {
-    match expr.get_inner_expression() {
-        Expression::Identifier(ident) => {
-            is_global_candidate_name(ident.name.as_str()).then_some(ident)
-        }
-        expr => {
-            let member = member_expression_through_chain(expr)?;
-            let property_name = member.static_property_name()?;
-            let root = global_root_after_same_name_chain(member.object())?;
+    let inner = expr.get_inner_expression();
+    if let ExpressionKind::Identifier(ident) = inner.kind() {
+        is_global_candidate_name(ident.name.as_str()).then_some(ident)
+    } else {
+        let member = member_expression_through_chain(inner)?;
+        let property_name = member.static_property_name()?;
+        let root = global_root_after_same_name_chain(member.object())?;
 
-            (property_name == root.name.as_str()).then_some(root)
-        }
+        (property_name == root.name.as_str()).then_some(root)
     }
 }
 
@@ -172,9 +173,9 @@ fn is_string_like_argument<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) 
 }
 
 fn is_evaluated_string(expr: &Expression<'_>) -> bool {
-    match expr.get_inner_expression() {
-        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => true,
+        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             is_evaluated_string(&binary.left) || is_evaluated_string(&binary.right)
         }
         _ => false,
@@ -184,18 +185,20 @@ fn is_evaluated_string(expr: &Expression<'_>) -> bool {
 const MAX_STATIC_IDENTIFIER_DEPTH: u8 = 16;
 
 fn static_value_is_string<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>, depth: u8) -> bool {
-    match expr.get_inner_expression() {
-        expr if is_evaluated_string(expr) => true,
-        Expression::Identifier(ident) => initialized_symbol_init(ident, ctx).is_some_and(|init| {
-            depth < MAX_STATIC_IDENTIFIER_DEPTH && static_value_is_string(init, ctx, depth + 1)
-        }),
-        Expression::SequenceExpression(sequence) => {
+    match expr.get_inner_expression().kind() {
+        _ if is_evaluated_string(expr.get_inner_expression()) => true,
+        ExpressionKind::Identifier(ident) => {
+            initialized_symbol_init(ident, ctx).is_some_and(|init| {
+                depth < MAX_STATIC_IDENTIFIER_DEPTH && static_value_is_string(init, ctx, depth + 1)
+            })
+        }
+        ExpressionKind::SequenceExpression(sequence) => {
             sequence.expressions.last().is_some_and(|expr| static_value_is_string(expr, ctx, depth))
         }
         // `typeof` always produces a string if evaluation completes.
         // Reporting it is consistent with reporting other string-producing expressions.
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof => true,
-        Expression::CallExpression(call) => is_global_string_producing_call(call, ctx),
+        ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof => true,
+        ExpressionKind::CallExpression(call) => is_global_string_producing_call(call, ctx),
         _ => false,
     }
 }
@@ -214,7 +217,7 @@ fn initialized_symbol_init<'a>(
 
 // `String(x)` always returns a string; `Date()` (without `new`) also returns a string.
 fn is_global_string_producing_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
-    let Expression::Identifier(callee) = call.callee.get_inner_expression() else {
+    let ExpressionKind::Identifier(callee) = call.callee.get_inner_expression().kind() else {
         return false;
     };
 

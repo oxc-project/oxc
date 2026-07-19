@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ForOfStatement, FormalParameters, NewExpression, SpreadElement,
-        YieldExpression,
+        CallExpression, Expression, ExpressionKind, ForOfStatement, FormalParameters,
+        NewExpression, SpreadElement, YieldExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -174,7 +174,7 @@ impl ToArrayCallFix {
 /// Checks if the expression is a call to `.toArray()` on an iterator and computes
 /// data needed to remove the `.toArray()` call.
 fn to_array_call_fix(expr: &Expression) -> Option<ToArrayCallFix> {
-    let Expression::CallExpression(call_expr) = expr else {
+    let ExpressionKind::CallExpression(call_expr) = expr.kind() else {
         return None;
     };
 
@@ -239,7 +239,8 @@ fn check_new_expr(new_expr: &NewExpression, ctx: &LintContext) {
         return;
     };
 
-    let Expression::Identifier(callee_ident) = new_expr.callee.get_inner_expression() else {
+    let ExpressionKind::Identifier(callee_ident) = new_expr.callee.get_inner_expression().kind()
+    else {
         return;
     };
     let description = format!("new {}(…)", callee_ident.name);
@@ -266,8 +267,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
         let Some(argument) = call_expr.arguments.first() else {
             return;
         };
-        let Expression::Identifier(object_ident) =
-            callee_member_expr.object().get_inner_expression()
+        let ExpressionKind::Identifier(object_ident) =
+            callee_member_expr.object().get_inner_expression().kind()
         else {
             return;
         };
@@ -310,8 +311,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
         let Some(argument) = call_expr.arguments.first() else {
             return;
         };
-        let Expression::Identifier(object_ident) =
-            callee_member_expr.object().get_inner_expression()
+        let ExpressionKind::Identifier(object_ident) =
+            callee_member_expr.object().get_inner_expression().kind()
         else {
             return;
         };
@@ -364,11 +365,11 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
             .first()
             .and_then(|argument| argument.as_expression())
             .map(Expression::get_inner_expression)
-            .and_then(|callback| match callback {
-                Expression::ArrowFunctionExpression(callback) => {
+            .and_then(|callback| match callback.kind() {
+                ExpressionKind::ArrowFunctionExpression(callback) => {
                     Some(formal_parameters_len(&callback.params))
                 }
-                Expression::FunctionExpression(callback) => {
+                ExpressionKind::FunctionExpression(callback) => {
                     Some(formal_parameters_len(&callback.params))
                 }
                 _ => None,

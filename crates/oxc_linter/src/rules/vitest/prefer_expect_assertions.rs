@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
-use oxc_ast::ast::{BindingPattern, Expression, FunctionBody};
+use oxc_ast::ast::{BindingPattern, Expression, ExpressionKind, FunctionBody};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -107,9 +107,9 @@ impl PreferExpectAssertionsRuleImpl for PreferExpectAssertions {
 }
 
 fn resolve_expect_parameter_prefix(callback: &Expression<'_>) -> Option<CompactStr> {
-    let params = match callback {
-        Expression::FunctionExpression(func) => &func.params,
-        Expression::ArrowFunctionExpression(func) => &func.params,
+    let params = match callback.kind() {
+        ExpressionKind::FunctionExpression(func) => &func.params,
+        ExpressionKind::ArrowFunctionExpression(func) => &func.params,
         _ => return None,
     };
 

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression},
-};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
@@ -58,7 +55,7 @@ impl Rule for NoWebpackLoaderSyntax {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                if let Expression::Identifier(identifier) = &call_expr.callee {
+                if let ExpressionKind::Identifier(identifier) = call_expr.callee.kind() {
                     if identifier.name != "require" {
                         return;
                     }
@@ -67,7 +64,9 @@ impl Rule for NoWebpackLoaderSyntax {
                         return;
                     }
 
-                    let Argument::StringLiteral(ident) = &call_expr.arguments[0] else {
+                    let Some(ident) =
+                        call_expr.arguments[0].as_expression().and_then(|e| e.as_string_literal())
+                    else {
                         return;
                     };
 

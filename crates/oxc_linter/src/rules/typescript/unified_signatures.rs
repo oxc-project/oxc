@@ -430,7 +430,7 @@ fn get_overload_key(
             format!("private_identifier_{}", identifier.name)
         }
         PropertyKey::StaticIdentifier(identifier) => format!("identifier_{}", identifier.name),
-        _ => key.span().source_text(source_text).to_string(),
+        PropertyKey::Expression(_) => key.span().source_text(source_text).to_string(),
     };
 
     format!("{}{}{}", overload_key_bit(computed), overload_key_bit(r#static), info)

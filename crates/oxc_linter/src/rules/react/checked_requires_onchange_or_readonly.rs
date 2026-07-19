@@ -138,7 +138,11 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 }
 
-                let Some(Argument::StringLiteral(element_name)) = call_expr.arguments.first()
+                let Some(element_name) = call_expr
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .and_then(|e| e.as_string_literal())
                 else {
                     return;
                 };
@@ -147,7 +151,12 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 }
 
-                let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
+                let Some(obj_expr) = call_expr
+                    .arguments
+                    .get(1)
+                    .and_then(Argument::as_expression)
+                    .and_then(|e| e.as_object_expression())
+                else {
                     return;
                 };
 

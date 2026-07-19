@@ -288,8 +288,8 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
         for member in members {
             if let Some(init) = &member.initializer {
-                match init {
-                    Expression::StringLiteral(_) | Expression::TemplateLiteral(_)
+                match init.tag() {
+                    ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral
                         if enum_type != EnumType::Number =>
                     {
                         enum_type = EnumType::String;
@@ -298,7 +298,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                     // All other unary expressions (`!x`, `void x`, `typeof x`, `delete x`) are illegal in enum initializers,
                     // so we can ignore those cases here and just say all `UnaryExpression`s are numeric.
                     // Bigint literals are also illegal in enum initializers, so we don't need to consider them here.
-                    Expression::NumericLiteral(_) | Expression::UnaryExpression(_)
+                    ExpressionTag::NumericLiteral | ExpressionTag::UnaryExpression
                         if enum_type != EnumType::String =>
                     {
                         enum_type = EnumType::Number;
@@ -605,9 +605,9 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             TSLiteral::NumericLiteral(_) => Self::global_number(ctx),
             TSLiteral::BigIntLiteral(_) => Self::global_bigint(ctx),
             TSLiteral::StringLiteral(_) | TSLiteral::TemplateLiteral(_) => Self::global_string(ctx),
-            TSLiteral::UnaryExpression(expr) => match expr.argument {
-                Expression::NumericLiteral(_) => Self::global_number(ctx),
-                Expression::StringLiteral(_) => Self::global_string(ctx),
+            TSLiteral::UnaryExpression(expr) => match expr.argument.tag() {
+                ExpressionTag::NumericLiteral => Self::global_number(ctx),
+                ExpressionTag::StringLiteral => Self::global_string(ctx),
                 // Cannot be a type annotation
                 _ => unreachable!(),
             },
@@ -661,7 +661,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             }
 
             let serialized_constituent = self.serialize_type_node(t, ctx);
-            if matches!(&serialized_constituent, Expression::Identifier(ident) if ident.name == "Object")
+            if matches!(serialized_constituent.kind(), ExpressionKind::Identifier(ident) if ident.name == "Object")
             {
                 // One of the individual is global object, return immediately
                 return serialized_constituent;

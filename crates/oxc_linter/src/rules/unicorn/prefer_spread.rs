@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, match_member_expression},
+    ast::{CallExpression, Expression, ExpressionKind, ExpressionTag},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -81,11 +81,13 @@ fn check_unicorn_prefer_spread<'a>(
             let Some(expr) = call_expr.arguments[0].as_expression() else {
                 return;
             };
-            if matches!(expr.without_parentheses(), Expression::ObjectExpression(_)) {
+            if expr.without_parentheses().is_object_expression() {
                 return;
             }
 
-            let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
+            let ExpressionKind::Identifier(ident) =
+                member_expr.object().without_parentheses().kind()
+            else {
                 return;
             };
 
@@ -112,8 +114,8 @@ fn check_unicorn_prefer_spread<'a>(
             let member_expr_obj = member_expr.object().without_parentheses();
 
             if matches!(
-                member_expr_obj,
-                Expression::ArrayExpression(_) | Expression::ThisExpression(_)
+                member_expr_obj.tag(),
+                ExpressionTag::ArrayExpression | ExpressionTag::ThisExpression
             ) {
                 return;
             }
@@ -129,7 +131,7 @@ fn check_unicorn_prefer_spread<'a>(
                 return;
             }
 
-            if let Expression::Identifier(ident) = member_expr_obj
+            if let ExpressionKind::Identifier(ident) = member_expr_obj.kind()
                 && IGNORED_SLICE_CALLEE.contains(&ident.name.as_str())
             {
                 return;
@@ -139,7 +141,9 @@ fn check_unicorn_prefer_spread<'a>(
                 let Some(first_arg) = first_arg.as_expression() else {
                     return;
                 };
-                if let Expression::NumericLiteral(num_lit) = first_arg.without_parentheses() {
+                if let ExpressionKind::NumericLiteral(num_lit) =
+                    first_arg.without_parentheses().kind()
+                {
                     if num_lit.value != 0.0 {
                         return;
                     }
@@ -156,8 +160,7 @@ fn check_unicorn_prefer_spread<'a>(
                 return;
             }
 
-            if matches!(member_expr.object().without_parentheses(), Expression::ArrayExpression(_))
-            {
+            if member_expr.object().without_parentheses().is_array_expression() {
                 return;
             }
 
@@ -178,7 +181,8 @@ fn check_unicorn_prefer_spread<'a>(
             let Some(expr) = call_expr.arguments[0].as_expression() else {
                 return;
             };
-            let Expression::StringLiteral(string_lit) = expr.without_parentheses() else {
+            let ExpressionKind::StringLiteral(string_lit) = expr.without_parentheses().kind()
+            else {
                 return;
             };
 
@@ -212,8 +216,8 @@ const IGNORED_SLICE_CALLEE: [&str; 5] = ["arrayBuffer", "blob", "buffer", "file"
 /// or `new SharedArrayBuffer(...)`. Spreading these either fails (ArrayBuffer
 /// has no iterator) or changes the type (TypedArray → number[]).
 fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
-    let Expression::NewExpression(new_expr) = expr else { return false };
-    let Expression::Identifier(ident) = &new_expr.callee else { return false };
+    let ExpressionKind::NewExpression(new_expr) = expr.kind() else { return false };
+    let ExpressionKind::Identifier(ident) = new_expr.callee.kind() else { return false };
     matches!(
         ident.name.as_str(),
         "ArrayBuffer"
@@ -235,8 +239,8 @@ fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
 
 fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
     if matches!(
-        expr.without_parentheses(),
-        Expression::TemplateLiteral(_) | Expression::BinaryExpression(_)
+        expr.without_parentheses().tag(),
+        ExpressionTag::TemplateLiteral | ExpressionTag::BinaryExpression
     ) {
         return true;
     }
@@ -244,7 +248,7 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
         return true;
     }
 
-    if let Expression::CallExpression(call_expr) = expr {
+    if let ExpressionKind::CallExpression(call_expr) = expr.kind() {
         if let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() {
             if Some("join") == member_expr.static_property_name() && call_expr.arguments.len() < 2 {
                 return true;
@@ -254,8 +258,9 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
         return false;
     }
 
-    let ident = match expr.without_parentheses() {
-        Expression::Identifier(ident) => {
+    let expr = expr.without_parentheses();
+    let ident = match expr.kind() {
+        ExpressionKind::Identifier(ident) => {
             if let Some(symbol_id) = ast_util::get_symbol_id_of_variable(ident, ctx) {
                 let symbol_table = ctx.scoping();
                 let node = ctx.nodes().get_node(symbol_table.symbol_declaration(symbol_id));
@@ -269,7 +274,9 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
 
             ident.name.as_str()
         }
-        expr @ match_member_expression!(Expression) => {
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => {
             if let Some(v) = expr.to_member_expression().static_property_name() {
                 v
             } else {

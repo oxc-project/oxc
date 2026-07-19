@@ -9,7 +9,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName, JSXExpression,
+        Expression, ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName,
         JSXExpressionContainer,
     },
 };
@@ -446,15 +446,15 @@ impl JsxCurlyBracePresence {
         }
 
         let allowed = if parent_is_attribute { self.props } else { self.children };
-        match inner {
-            Expression::JSXFragment(_)
+        match inner.kind() {
+            ExpressionKind::JSXFragment(_)
                 if !parent_is_attribute
                     && self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id()) =>
             {
                 report_unnecessary_curly(ctx, container, inner.span());
             }
-            Expression::JSXElement(el) => {
+            ExpressionKind::JSXElement(el) => {
                 if parent_is_attribute {
                     if self.prop_element_values.is_never() && el.closing_element.is_none() {
                         report_unnecessary_curly_for_attribute_value(ctx, container, inner.span());
@@ -465,7 +465,7 @@ impl JsxCurlyBracePresence {
                     report_unnecessary_curly(ctx, container, inner.span());
                 }
             }
-            Expression::StringLiteral(string) if allowed.is_never() => {
+            ExpressionKind::StringLiteral(string) if allowed.is_never() => {
                 let raw = ctx.source_range(string.span().shrink_left(1).shrink_right(1));
                 if is_allowed_string_like_in_container(
                     ctx,
@@ -482,7 +482,7 @@ impl JsxCurlyBracePresence {
                     report_unnecessary_curly(ctx, container, string.span);
                 }
             }
-            Expression::TemplateLiteral(template)
+            ExpressionKind::TemplateLiteral(template)
                 if allowed.is_never() && template.is_no_substitution_template() =>
             {
                 let string = template.single_quasi().unwrap();
@@ -583,14 +583,14 @@ fn report_unnecessary_curly<'a>(
     inner_span: Span,
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
-        match &container.expression {
-            JSXExpression::TemplateLiteral(template_lit) => {
+        match container.expression.as_expression().map(Expression::kind) {
+            Some(ExpressionKind::TemplateLiteral(template_lit)) => {
                 let mut fix = fixer.codegen();
                 fix.print_str(template_lit.single_quasi().unwrap().as_str());
 
                 fixer.replace(container.span, fix.into_source_text())
             }
-            JSXExpression::StringLiteral(string_literal) => {
+            Some(ExpressionKind::StringLiteral(string_literal)) => {
                 let mut fix = fixer.codegen();
                 fix.print_str(string_literal.value.as_str());
 
@@ -614,10 +614,12 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
     inner_span: Span,
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
-        let str = match &container.expression {
-            JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi().unwrap(),
-            JSXExpression::StringLiteral(string_lit) => string_lit.value,
-            JSXExpression::JSXElement(el) => {
+        let str = match container.expression.as_expression().map(Expression::kind) {
+            Some(ExpressionKind::TemplateLiteral(template_lit)) => {
+                template_lit.single_quasi().unwrap()
+            }
+            Some(ExpressionKind::StringLiteral(string_lit)) => string_lit.value,
+            Some(ExpressionKind::JSXElement(el)) => {
                 return fixer.replace(container.span, ctx.source_range(el.span).to_owned());
             }
             _ => unreachable!(),
@@ -756,9 +758,9 @@ fn has_adjacent_jsx_expression_containers<'a>(
     let children = match parent {
         AstKind::JSXElement(el) => &el.children,
         AstKind::JSXFragment(fragment) => &fragment.children,
-        AstKind::ExpressionStatement(expr) => match &expr.expression {
-            Expression::JSXElement(el) => &el.children,
-            Expression::JSXFragment(fragment) => &fragment.children,
+        AstKind::ExpressionStatement(expr) => match expr.expression.kind() {
+            ExpressionKind::JSXElement(el) => &el.children,
+            ExpressionKind::JSXFragment(fragment) => &fragment.children,
             _ => {
                 return false;
             }

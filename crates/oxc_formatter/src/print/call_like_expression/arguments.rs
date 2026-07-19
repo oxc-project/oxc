@@ -68,14 +68,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
             || call_expression.is_some_and(|call| {
                 is_commonjs_or_amd_call(self, call, f)
                     || ((self.len() != 2
-                        || matches!(
-                            arguments.first(),
-                            Some(
-                                Argument::StringLiteral(_)
-                                    | Argument::TemplateLiteral(_)
-                                    | Argument::TaggedTemplateExpression(_)
+                        || arguments.first().and_then(Argument::as_expression).is_some_and(|e| {
+                            matches!(
+                                e.tag(),
+                                ExpressionTag::StringLiteral
+                                    | ExpressionTag::TemplateLiteral
+                                    | ExpressionTag::TaggedTemplateExpression
                             )
-                        ))
+                        }))
                         && is_test_call_expression(call))
             })
             || is_multiline_template_only_args(self, f.source_text())
@@ -182,28 +182,21 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 
     let mut has_seen_function_like = false;
     let is_call_expression_with_arrow_or_function = |call: &CallExpression| {
-        call.arguments.iter().any(|arg| {
-            matches!(arg, Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
-        })
+        call.arguments.iter().any(|arg| arg.as_expression().is_some_and(Expression::is_function))
     };
 
     for arg in args {
-        match arg {
-            Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_) => {
-                if has_seen_function_like {
-                    return true;
-                }
-                has_seen_function_like = true;
+        if arg.as_expression().is_some_and(Expression::is_function) {
+            if has_seen_function_like {
+                return true;
             }
-            _ => {
-                if arg
-                    .as_expression()
-                    .and_then(as_call_expression_without_chain_wrappers)
-                    .is_some_and(is_call_expression_with_arrow_or_function)
-                {
-                    return true;
-                }
-            }
+            has_seen_function_like = true;
+        } else if arg
+            .as_expression()
+            .and_then(as_call_expression_without_chain_wrappers)
+            .is_some_and(is_call_expression_with_arrow_or_function)
+        {
+            return true;
         }
     }
 
@@ -316,13 +309,13 @@ fn should_group_first_argument(
     second: &Expression,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    match first {
-        Expression::FunctionExpression(_) => {}
+    match first.kind() {
+        ExpressionKind::FunctionExpression(_) => {}
         // Arrow expressions that are a plain expression or are a chain
         // don't get grouped as the first argument, since they'll either
         // fit entirely on the line or break fully. Only a single arrow
         // with a block body can be grouped to collapse the braces.
-        Expression::ArrowFunctionExpression(arrow) => {
+        ExpressionKind::ArrowFunctionExpression(arrow) => {
             if arrow.expression {
                 return false;
             }
@@ -331,10 +324,10 @@ fn should_group_first_argument(
     }
 
     if matches!(
-        second,
-        Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ConditionalExpression(_)
+        second.tag(),
+        ExpressionTag::ArrowFunctionExpression
+            | ExpressionTag::FunctionExpression
+            | ExpressionTag::ConditionalExpression
     ) {
         return false;
     }
@@ -370,13 +363,13 @@ fn should_group_last_argument_impl(
     // Check if penultimate and last are the same type (both Object or both Array)
     if let Some(penultimate) = penultimate
         && matches!(
-            (penultimate, last),
-            (Expression::ObjectExpression(_), Expression::ObjectExpression(_))
-                | (Expression::ArrayExpression(_), Expression::ArrayExpression(_))
-                | (Expression::TSAsExpression(_), Expression::TSAsExpression(_))
-                | (Expression::TSSatisfiesExpression(_), Expression::TSSatisfiesExpression(_))
-                | (Expression::ArrowFunctionExpression(_), Expression::ArrowFunctionExpression(_))
-                | (Expression::FunctionExpression(_), Expression::FunctionExpression(_))
+            (penultimate.tag(), last.tag()),
+            (ExpressionTag::ObjectExpression, ExpressionTag::ObjectExpression)
+                | (ExpressionTag::ArrayExpression, ExpressionTag::ArrayExpression)
+                | (ExpressionTag::TSAsExpression, ExpressionTag::TSAsExpression)
+                | (ExpressionTag::TSSatisfiesExpression, ExpressionTag::TSSatisfiesExpression)
+                | (ExpressionTag::ArrowFunctionExpression, ExpressionTag::ArrowFunctionExpression)
+                | (ExpressionTag::FunctionExpression, ExpressionTag::FunctionExpression)
         )
     {
         return false;
@@ -407,11 +400,10 @@ fn should_group_last_argument_impl(
         return false;
     }
 
-    match last {
-        Expression::ArrayExpression(array) if penultimate.is_some() => {
+    match last.kind() {
+        ExpressionKind::ArrayExpression(array) if penultimate.is_some() => {
             // Not for `useEffect`
-            if args_len == 2 && matches!(penultimate, Some(Expression::ArrowFunctionExpression(_)))
-            {
+            if args_len == 2 && penultimate.is_some_and(Expression::is_arrow_function_expression) {
                 return false;
             }
 
@@ -512,25 +504,25 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
 /// Checks if `argument` is "short" enough to be groupable. This aims to be
 /// logically similar to Prettier's [`isHopefullyShortCallArgument`](https://github.com/prettier/prettier/blob/093745f0ec429d3db47c1edd823357e0ef24e226/src/language-js/print/call-arguments.js#L279),
 fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
-    match argument {
-        Expression::BinaryExpression(binary) => {
+    match argument.kind() {
+        ExpressionKind::BinaryExpression(binary) => {
             SimpleArgument::from(&binary.left).is_simple_with_depth(1)
                 && SimpleArgument::from(&binary.right).is_simple_with_depth(1)
         }
-        Expression::LogicalExpression(logical) => {
+        ExpressionKind::LogicalExpression(logical) => {
             SimpleArgument::from(&logical.left).is_simple_with_depth(1)
                 && SimpleArgument::from(&logical.right).is_simple_with_depth(1)
         }
-        Expression::TSAsExpression(expr) => {
+        ExpressionKind::TSAsExpression(expr) => {
             is_simple_ts_type(&expr.type_annotation)
                 && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
-        Expression::TSSatisfiesExpression(expr) => {
+        ExpressionKind::TSSatisfiesExpression(expr) => {
             is_simple_ts_type(&expr.type_annotation)
                 && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
-        Expression::RegExpLiteral(_) => true,
-        Expression::CallExpression(call) => match call.arguments.len() {
+        ExpressionKind::RegExpLiteral(_) => true,
+        ExpressionKind::CallExpression(call) => match call.arguments.len() {
             0 => true,
             1 => SimpleArgument::from(argument).is_simple(),
             _ => false,
@@ -541,28 +533,28 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
 
 /// Checks if `argument` benefits from grouping in call arguments.
 fn can_group_expression_argument(argument: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    match argument {
-        Expression::ObjectExpression(object_expression) => {
+    match argument.kind() {
+        ExpressionKind::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
                 || f.comments().has_comment_in_span(object_expression.span)
         }
-        Expression::ArrayExpression(array_expression) => {
+        ExpressionKind::ArrayExpression(array_expression) => {
             !array_expression.elements.is_empty()
                 || f.comments().has_comment_in_span(array_expression.span)
         }
-        Expression::TSTypeAssertion(assertion_expression) => {
+        ExpressionKind::TSTypeAssertion(assertion_expression) => {
             can_group_expression_argument(&assertion_expression.expression, f)
         }
-        Expression::TSAsExpression(as_expression) => {
+        ExpressionKind::TSAsExpression(as_expression) => {
             can_group_expression_argument(&as_expression.expression, f)
         }
-        Expression::TSSatisfiesExpression(satisfies_expression) => {
+        ExpressionKind::TSSatisfiesExpression(satisfies_expression) => {
             can_group_expression_argument(&satisfies_expression.expression, f)
         }
-        Expression::ArrowFunctionExpression(arrow_function) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_function) => {
             can_group_arrow_function_expression_argument(arrow_function, false, f)
         }
-        Expression::FunctionExpression(_) => true,
+        ExpressionKind::FunctionExpression(_) => true,
         _ => false,
     }
 }
@@ -616,12 +608,12 @@ fn can_group_arrow_function_expression_argument(
         return false;
     }
 
-    arrow_function.get_expression().is_none_or(|expr| match expr {
-        Expression::ObjectExpression(_)
-        | Expression::ArrayExpression(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_) => true,
-        Expression::ArrowFunctionExpression(inner_arrow_function) => {
+    arrow_function.get_expression().is_none_or(|expr| match expr.kind() {
+        ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::JSXElement(_)
+        | ExpressionKind::JSXFragment(_) => true,
+        ExpressionKind::ArrowFunctionExpression(inner_arrow_function) => {
             can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
         }
         // In Prettier's Babel AST, a JSDoc type cast like `/** @type {X} */ (expr)` preserves
@@ -638,7 +630,7 @@ fn can_group_arrow_function_expression_argument(
         // Prettier matches a bare `ConditionalExpression` body only,
         // so a wrapped one (`(a ? b : c)!`) does not count.
         // Not derivable from a principle; follow Prettier if it changes.
-        expr if matches!(expr, Expression::ConditionalExpression(_))
+        _ if expr.is_conditional_expression()
             || as_call_expression_without_chain_wrappers(expr).is_some() =>
         {
             !is_arrow_recursion
@@ -1002,30 +994,34 @@ pub fn is_simple_module_import(
     match arguments.parent() {
         AstNodes::ImportExpression(_) => {}
         AstNodes::CallExpression(call) => {
-            match &call.callee {
-                Expression::StaticMemberExpression(member) => match member.property.name.as_str() {
-                    "resolve" => {
-                        match &member.object {
-                            Expression::Identifier(ident) if ident.name.as_str() == "require" => {
-                                // `require.resolve("foo")`
+            match call.callee.kind() {
+                ExpressionKind::StaticMemberExpression(member) => {
+                    match member.property.name.as_str() {
+                        "resolve" => {
+                            match member.object.kind() {
+                                ExpressionKind::Identifier(ident)
+                                    if ident.name.as_str() == "require" =>
+                                {
+                                    // `require.resolve("foo")`
+                                }
+                                ExpressionKind::ImportMeta(_) => {
+                                    // `import.meta.resolve("foo")`
+                                }
+                                _ => return false,
                             }
-                            Expression::ImportMeta(_) => {
-                                // `import.meta.resolve("foo")`
+                        }
+                        "paths" => {
+                            if !matches!(
+                            member.object.kind(), ExpressionKind::StaticMemberExpression(member)
+                            if member.object.as_identifier().is_some_and(|ident| ident.name == "require")
+                                && member.property.name.as_str() == "resolve"
+                            ) {
+                                return false;
                             }
-                            _ => return false,
                         }
+                        _ => return false,
                     }
-                    "paths" => {
-                        if !matches!(
-                        &member.object, Expression::StaticMemberExpression(member)
-                        if matches!(&member.object, Expression::Identifier(ident)
-                            if ident.name == "require") && member.property.name.as_str() == "resolve"
-                        ) {
-                            return false;
-                        }
-                    }
-                    _ => return false,
-                },
+                }
                 _ => {
                     return false;
                 }
@@ -1034,7 +1030,7 @@ pub fn is_simple_module_import(
         _ => return false,
     }
 
-    matches!(arguments.as_ref()[0], Argument::StringLiteral(_))
+    arguments.as_ref()[0].as_expression().is_some_and(Expression::is_string_literal)
         && !comments.has_comment_before(arguments.parent().span().end)
 }
 
@@ -1044,7 +1040,7 @@ fn is_commonjs_or_amd_call(
     call: &AstNode<'_, CallExpression<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    let Expression::Identifier(ident) = &call.callee else {
+    let Some(ident) = call.callee.as_identifier() else {
         return false;
     };
 
@@ -1068,9 +1064,7 @@ fn is_commonjs_or_amd_call(
                 //   require(
                 //     path.join(__dirname, 'relative/path')
                 //   );
-                1 => {
-                    matches!(first_argument, Argument::StringLiteral(_))
-                }
+                1 => first_argument.as_expression().is_some_and(Expression::is_string_literal),
                 _ => true,
             }
         }
@@ -1079,15 +1073,20 @@ fn is_commonjs_or_amd_call(
             if in_statement {
                 match arguments.len() {
                     1 => true,
-                    2 => matches!(arguments.first(), Some(Argument::ArrayExpression(_))),
+                    2 => arguments
+                        .first()
+                        .and_then(Argument::as_expression)
+                        .is_some_and(Expression::is_array_expression),
                     3 => {
                         let mut iter = arguments.iter();
                         let first = iter.next();
                         let second = iter.next();
-                        matches!(
-                            (first, second),
-                            (Some(Argument::StringLiteral(_)), Some(Argument::ArrayExpression(_)))
-                        )
+                        first
+                            .and_then(Argument::as_expression)
+                            .is_some_and(Expression::is_string_literal)
+                            && second
+                                .and_then(Argument::as_expression)
+                                .is_some_and(Expression::is_array_expression)
                     }
                     _ => false,
                 }
@@ -1119,10 +1118,13 @@ fn is_graphql_call_with_single_template_arg<'a>(
     call: Option<&&AstNode<'a, CallExpression<'a>>>,
 ) -> bool {
     arguments.len() == 1
-        && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
-        && call.is_some_and(
-            |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
-        )
+        && arguments
+            .first()
+            .and_then(Argument::as_expression)
+            .is_some_and(Expression::is_template_literal)
+        && call.is_some_and(|c| {
+            c.callee.as_identifier().is_some_and(|id| id.name.as_str() == "graphql")
+        })
 }
 
 /// Returns `true` if the single argument is an HTML embed template that should be hugged.
@@ -1154,14 +1156,19 @@ fn is_react_hook_with_deps_array(
     // }, [dep1, dep2, dep2]);
     // ```
     // First argument must be an identifier (the ref)
-    if arguments.len() == 3 && !matches!(args.next(), Some(Argument::Identifier(_))) {
+    if arguments.len() == 3
+        && !args.next().and_then(Argument::as_expression).is_some_and(Expression::is_identifier)
+    {
         return false;
     }
 
-    match (args.next(), args.next()) {
+    match (
+        args.next().and_then(Argument::as_expression).map(Expression::kind),
+        args.next().and_then(Argument::as_expression).map(Expression::kind),
+    ) {
         (
-            Some(Argument::ArrowFunctionExpression(callback)),
-            Some(Argument::ArrayExpression(deps)),
+            Some(ExpressionKind::ArrowFunctionExpression(callback)),
+            Some(ExpressionKind::ArrayExpression(deps)),
         ) => {
             if callback.params.has_parameter() {
                 return false;
@@ -1214,18 +1221,16 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
         return false;
     }
 
-    let Expression::CallExpression(callee_call) = &parent_call.callee else {
+    let Some(callee_call) = parent_call.callee.as_call_expression() else {
         return false;
     };
 
     // Check if the decorator (callee.callee) is a simple identifier or member expression
     let decorator = &callee_call.callee;
-    let is_valid_decorator = matches!(decorator, Expression::Identifier(_))
-        || matches!(
-            decorator,
-            Expression::StaticMemberExpression(member)
-            if matches!(&member.object, Expression::Identifier(_))
-        );
+    let is_valid_decorator = decorator.is_identifier()
+        || decorator
+            .as_static_member_expression()
+            .is_some_and(|member| member.object.is_identifier());
 
     if !is_valid_decorator {
         return false;
@@ -1242,12 +1247,14 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
         AstNodes::ExportDefaultDeclaration(_) | AstNodes::TSExportAssignment(_) => true,
         AstNodes::AssignmentExpression(assign) => {
             // Check if it's `module.exports = ...`
-            matches!(
-                &assign.left,
-                AssignmentTarget::StaticMemberExpression(member)
-                if matches!(&member.object, Expression::Identifier(ident) if ident.name == "module")
-                    && member.property.name == "exports"
-            )
+            assign
+                .left
+                .as_member_expression()
+                .and_then(MemberExpression::as_static_member_expression)
+                .is_some_and(|member| {
+                    member.object.as_identifier().is_some_and(|ident| ident.name == "module")
+                        && member.property.name == "exports"
+                })
         }
         _ => false,
     }

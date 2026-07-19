@@ -1,7 +1,7 @@
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ExpressionStatement, MemberExpression},
+    ast::{ExpressionKind, ExpressionStatement, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -205,20 +205,20 @@ impl NoLargeSnapshotsConfig {
 
     fn report_in_expr_stmt(&self, expr_stmt: &ExpressionStatement, ctx: &LintContext) {
         let line_count = Self::get_line_count(expr_stmt.span, ctx);
-        let allowed = match &expr_stmt.expression {
-            Expression::AssignmentExpression(assignment_expr) => {
+        let allowed = match expr_stmt.expression.kind() {
+            ExpressionKind::AssignmentExpression(assignment_expr) => {
                 let Some(member_expr) = assignment_expr.left.as_member_expression() else {
                     return;
                 };
                 self.check_allowed_in_snapshots(member_expr, ctx)
             }
-            Expression::BinaryExpression(binary_expr) => {
+            ExpressionKind::BinaryExpression(binary_expr) => {
                 let Some(member_expr) = binary_expr.left.as_member_expression() else {
                     return;
                 };
                 self.check_allowed_in_snapshots(member_expr, ctx)
             }
-            Expression::LogicalExpression(logical_expr) => {
+            ExpressionKind::LogicalExpression(logical_expr) => {
                 let Some(member_expr) = logical_expr.left.as_member_expression() else {
                     return;
                 };

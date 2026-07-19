@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, JSXExpression, JSXOpeningElement},
+    ast::{ExpressionKind, JSXAttributeValue, JSXExpression, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -242,7 +242,7 @@ fn is_nullish_value(value: &JSXAttributeValue) -> bool {
     matches!(
         value,
         JSXAttributeValue::ExpressionContainer(container)
-            if matches!(container.expression, JSXExpression::NullLiteral(_))
+            if container.expression.as_expression().is_some_and(|e| matches!(e.kind(), ExpressionKind::NullLiteral(_)))
                 || container.expression.is_undefined()
     )
 }
@@ -258,8 +258,11 @@ fn role_value<'b>(jsx_el: &'b JSXOpeningElement<'_>) -> Option<&'b str> {
         |value| match value {
             JSXAttributeValue::StringLiteral(role) => Some(role.value.as_str()),
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-                JSXExpression::StringLiteral(role) => Some(role.value.as_str()),
-                _ => None,
+                JSXExpression::Expression(expr) => match expr.kind() {
+                    ExpressionKind::StringLiteral(role) => Some(role.value.as_str()),
+                    _ => None,
+                },
+                JSXExpression::EmptyExpression(_) => None,
             },
             _ => None,
         },

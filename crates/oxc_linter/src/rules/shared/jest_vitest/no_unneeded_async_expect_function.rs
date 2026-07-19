@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement},
+    ast::{Argument, Expression, ExpressionKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
@@ -61,7 +61,9 @@ pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c L
     }
 
     // Get the expect() CallExpression from head.parent
-    let Some(Expression::CallExpression(expect_call_expr)) = parsed_expect_call.head.parent else {
+    let Some(expect_call_expr) =
+        parsed_expect_call.head.parent.and_then(Expression::as_call_expression)
+    else {
         return;
     };
 
@@ -72,28 +74,31 @@ pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c L
 
     // Check if it's an async function expression and get the inner call span
     let (func_span, inner_call_span) = match first_arg {
-        Argument::ArrowFunctionExpression(arrow) => {
-            if !arrow.r#async {
-                return;
+        Argument::Expression(expr) => match expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
+                if !arrow.r#async {
+                    return;
+                }
+                let Some(inner_span) = get_awaited_call_span_from_arrow(arrow) else {
+                    return;
+                };
+                (arrow.span, inner_span)
             }
-            let Some(inner_span) = get_awaited_call_span_from_arrow(arrow) else {
-                return;
-            };
-            (arrow.span, inner_span)
-        }
-        Argument::FunctionExpression(func) => {
-            if !func.r#async {
-                return;
+            ExpressionKind::FunctionExpression(func) => {
+                if !func.r#async {
+                    return;
+                }
+                let Some(body) = &func.body else {
+                    return;
+                };
+                let Some(inner_span) = get_awaited_call_span_from_block(body) else {
+                    return;
+                };
+                (func.span, inner_span)
             }
-            let Some(body) = &func.body else {
-                return;
-            };
-            let Some(inner_span) = get_awaited_call_span_from_block(body) else {
-                return;
-            };
-            (func.span, inner_span)
-        }
-        _ => return,
+            _ => return,
+        },
+        Argument::SpreadElement(_) => return,
     };
 
     ctx.diagnostic_with_fix(no_unneeded_async_expect_function_diagnostic(func_span), |fixer| {
@@ -108,8 +113,8 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
     if arrow.expression {
         if let Some(first) = arrow.body.statements.first()
             && let Statement::ExpressionStatement(expr_stmt) = first
-            && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
-            && let Expression::CallExpression(call) = &await_expr.argument
+            && let ExpressionKind::AwaitExpression(await_expr) = expr_stmt.expression.kind()
+            && let ExpressionKind::CallExpression(call) = await_expr.argument.kind()
         {
             return Some(call.span);
         }
@@ -124,8 +129,8 @@ fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option
     if body.statements.len() == 1
         && let Some(stmt) = body.statements.first()
         && let Statement::ExpressionStatement(expr_stmt) = stmt
-        && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
-        && let Expression::CallExpression(call) = &await_expr.argument
+        && let ExpressionKind::AwaitExpression(await_expr) = expr_stmt.expression.kind()
+        && let ExpressionKind::CallExpression(call) = await_expr.argument.kind()
     {
         return Some(call.span);
     }

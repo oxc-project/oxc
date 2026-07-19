@@ -51,8 +51,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 
         if !is_template_literal_single_arg
             && matches!(
-                callee.as_ref(),
-                Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
+                callee.as_ref().tag(),
+                ExpressionTag::StaticMemberExpression | ExpressionTag::ComputedMemberExpression
             )
             && !is_simple_module_import(self.arguments(), f.comments())
             && !is_test_call_expression(self)
@@ -113,7 +113,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                     f.context_mut().pop_tailwind_context();
                 }
             });
-            if matches!(callee.as_ref(), Expression::CallExpression(_)) {
+            if callee.as_ref().is_call_expression() {
                 write!(f, [group(&format_inner)]);
             } else {
                 write!(f, [format_inner]);

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind, AstType,
-    ast::{Argument, Expression, MethodDefinitionKind},
+    ast::{Argument, ExpressionKind, ExpressionTag, MethodDefinitionKind},
 };
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
@@ -159,7 +159,7 @@ impl NoThisBeforeSuper {
 
             let class = parent_3.kind().as_class()?;
             let super_class = class.super_class.as_ref()?;
-            return Some(!matches!(super_class, Expression::NullLiteral(_)));
+            return Some(!super_class.is_null_literal());
         }
 
         Some(false)
@@ -260,17 +260,24 @@ impl NoThisBeforeSuper {
     }
 
     fn contains_this_or_super(arg: &Argument) -> bool {
-        match arg {
-            Argument::Super(_) | Argument::ThisExpression(_) => true,
-            Argument::CallExpression(call_expr) => {
-                matches!(&call_expr.callee, Expression::Super(_) | Expression::ThisExpression(_))
-                    || matches!(&call_expr.callee,
-                    Expression::StaticMemberExpression(static_member) if
-                    matches!(static_member.object, Expression::Super(_) | Expression::ThisExpression(_)))
+        let Some(expr) = arg.as_expression() else {
+            return false;
+        };
+        match expr.kind() {
+            ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_) => true,
+            ExpressionKind::CallExpression(call_expr) => {
+                matches!(
+                    call_expr.callee.tag(),
+                    ExpressionTag::Super | ExpressionTag::ThisExpression
+                ) || matches!(call_expr.callee.kind(), ExpressionKind::StaticMemberExpression(static_member) if
+                    matches!(static_member.object.tag(), ExpressionTag::Super | ExpressionTag::ThisExpression))
                     || Self::contains_this_or_super_in_args(&call_expr.arguments)
             }
-            Argument::StaticMemberExpression(call_expr) => {
-                matches!(&call_expr.object, Expression::Super(_) | Expression::ThisExpression(_))
+            ExpressionKind::StaticMemberExpression(call_expr) => {
+                matches!(
+                    call_expr.object.tag(),
+                    ExpressionTag::Super | ExpressionTag::ThisExpression
+                )
             }
             _ => false,
         }

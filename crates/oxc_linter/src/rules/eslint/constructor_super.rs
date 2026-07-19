@@ -1,3 +1,4 @@
+use oxc_ast::ast::ExpressionKind;
 use std::collections::VecDeque;
 
 use rustc_hash::FxHashMap;
@@ -329,7 +330,7 @@ impl ConstructorSuper {
     fn classify_super_class(super_class: Option<&Expression>) -> SuperClassType {
         match super_class {
             None => SuperClassType::None,
-            Some(Expression::NullLiteral(_)) => SuperClassType::Null,
+            Some(expr) if expr.is_null_literal() => SuperClassType::Null,
             Some(expr) if Self::is_invalid_super_class(expr) => SuperClassType::Invalid,
             Some(_) => SuperClassType::Valid,
         }
@@ -410,70 +411,72 @@ impl ConstructorSuper {
 
                     match node.kind() {
                         AstKind::CallExpression(call) => {
-                            if matches!(&call.callee, Expression::Super(_)) {
+                            if call.callee.is_super() {
                                 record_super(call.span);
                             }
                         }
-                        AstKind::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
-                            Expression::CallExpression(call) => {
-                                if matches!(&call.callee, Expression::Super(_)) {
-                                    record_super(call.span);
-                                }
-                            }
-                            // Ternary: both branches in same block but only one executes
-                            Expression::ConditionalExpression(cond) => {
-                                let check_super = |expr: &Expression| -> Option<Span> {
-                                    if let Expression::CallExpression(call) = expr
-                                        && matches!(&call.callee, Expression::Super(_))
-                                    {
-                                        Some(call.span)
-                                    } else {
-                                        None
+                        AstKind::ExpressionStatement(expr_stmt) => {
+                            match expr_stmt.expression.kind() {
+                                ExpressionKind::CallExpression(call) => {
+                                    if call.callee.is_super() {
+                                        record_super(call.span);
                                     }
-                                };
-
-                                if let Some(span) = check_super(&cond.consequent)
-                                    .or_else(|| check_super(&cond.alternate))
-                                {
-                                    record_super(span);
                                 }
-                            }
-                            // Special case: `super() || super()` - report the RHS as duplicate.
-                            //
-                            // Technically, `super()` returns the constructed instance (truthy),
-                            // so the RHS of `||` won't execute at runtime. However:
-                            // 1. ESLint reports the RHS as a duplicate for compatibility
-                            // 2. This code pattern is almost certainly a mistake
-                            // 3. The CFG records the reachable LHS, but not the short-circuited RHS
-                            //
-                            // We intentionally match ESLint's behavior here.
-                            Expression::LogicalExpression(logical)
-                                if matches!(logical.operator, LogicalOperator::Or) =>
-                            {
-                                let check_super = |expr: &Expression| -> Option<Span> {
-                                    if let Expression::CallExpression(call) = expr
-                                        && matches!(&call.callee, Expression::Super(_))
+                                // Ternary: both branches in same block but only one executes
+                                ExpressionKind::ConditionalExpression(cond) => {
+                                    let check_super = |expr: &Expression| -> Option<Span> {
+                                        if let ExpressionKind::CallExpression(call) = expr.kind()
+                                            && call.callee.is_super()
+                                        {
+                                            Some(call.span)
+                                        } else {
+                                            None
+                                        }
+                                    };
+
+                                    if let Some(span) = check_super(&cond.consequent)
+                                        .or_else(|| check_super(&cond.alternate))
                                     {
-                                        Some(call.span)
-                                    } else {
-                                        None
+                                        record_super(span);
                                     }
-                                };
-
-                                let left_span = check_super(&logical.left);
-                                let right_span = check_super(&logical.right);
-
-                                // The CFG records the reachable left `super()` call. Add the
-                                // right call so `super() || super()` still matches ESLint's
-                                // duplicate-super behavior.
-                                if left_span.is_some()
-                                    && let Some(span) = right_span
-                                {
-                                    record_super(span);
                                 }
+                                // Special case: `super() || super()` - report the RHS as duplicate.
+                                //
+                                // Technically, `super()` returns the constructed instance (truthy),
+                                // so the RHS of `||` won't execute at runtime. However:
+                                // 1. ESLint reports the RHS as a duplicate for compatibility
+                                // 2. This code pattern is almost certainly a mistake
+                                // 3. The CFG records the reachable LHS, but not the short-circuited RHS
+                                //
+                                // We intentionally match ESLint's behavior here.
+                                ExpressionKind::LogicalExpression(logical)
+                                    if matches!(logical.operator, LogicalOperator::Or) =>
+                                {
+                                    let check_super = |expr: &Expression| -> Option<Span> {
+                                        if let ExpressionKind::CallExpression(call) = expr.kind()
+                                            && call.callee.is_super()
+                                        {
+                                            Some(call.span)
+                                        } else {
+                                            None
+                                        }
+                                    };
+
+                                    let left_span = check_super(&logical.left);
+                                    let right_span = check_super(&logical.right);
+
+                                    // The CFG records the reachable left `super()` call. Add the
+                                    // right call so `super() || super()` still matches ESLint's
+                                    // duplicate-super behavior.
+                                    if left_span.is_some()
+                                        && let Some(span) = right_span
+                                    {
+                                        record_super(span);
+                                    }
+                                }
+                                _ => {}
                             }
-                            _ => {}
-                        },
+                        }
                         _ => {}
                     }
                 }
@@ -672,12 +675,12 @@ impl ConstructorSuper {
     /// identifiers, function calls, or short-circuit expressions that could evaluate
     /// to a valid class).
     fn is_invalid_super_class(expr: &Expression) -> bool {
-        match expr {
-            Expression::ParenthesizedExpression(paren) => {
+        match expr.kind() {
+            ExpressionKind::ParenthesizedExpression(paren) => {
                 Self::is_invalid_super_class(&paren.expression)
             }
 
-            Expression::AssignmentExpression(assign) => match assign.operator {
+            ExpressionKind::AssignmentExpression(assign) => match assign.operator {
                 AssignmentOperator::Assign | AssignmentOperator::LogicalAnd => {
                     Self::is_invalid_super_class(&assign.right)
                 }
@@ -698,27 +701,27 @@ impl ConstructorSuper {
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => false,
             },
 
-            Expression::LogicalExpression(logical) => match logical.operator {
+            ExpressionKind::LogicalExpression(logical) => match logical.operator {
                 LogicalOperator::And => Self::is_invalid_super_class(&logical.right),
                 LogicalOperator::Or | LogicalOperator::Coalesce => false,
             },
 
-            Expression::ConditionalExpression(cond) => {
+            ExpressionKind::ConditionalExpression(cond) => {
                 Self::is_invalid_super_class(&cond.consequent)
                     && Self::is_invalid_super_class(&cond.alternate)
             }
 
             // Sequence: result is last expression
-            Expression::SequenceExpression(seq) => {
+            ExpressionKind::SequenceExpression(seq) => {
                 seq.expressions.last().is_none_or(|e| Self::is_invalid_super_class(e))
             }
 
             // Literals and binary expressions are invalid
-            Expression::NumericLiteral(_)
-            | Expression::StringLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::BinaryExpression(_) => true,
+            ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::StringLiteral(_)
+            | ExpressionKind::BooleanLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::BinaryExpression(_) => true,
 
             _ => false,
         }

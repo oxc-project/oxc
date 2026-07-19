@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, AssignmentTargetMaybeDefault, Expression, ImportDeclarationSpecifier},
+    ast::{
+        AssignmentTarget, AssignmentTargetMaybeDefault, Expression, ExpressionKind,
+        ImportDeclarationSpecifier, MemberExpressionKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -174,7 +177,7 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
         return false;
     };
 
-    if let Expression::Identifier(ident) = member_expr.object() {
+    if let ExpressionKind::Identifier(ident) = member_expr.object().kind() {
         let Some(property_name) = member_expr.static_property_name() else {
             return false;
         };
@@ -205,7 +208,7 @@ fn check_namespace_member_assignment(
         return;
     }
 
-    let Expression::Identifier(obj_ident) = member_expr else { return };
+    let ExpressionKind::Identifier(obj_ident) = member_expr.kind() else { return };
 
     let ref_node = ctx.nodes().get_node(reference.node_id());
     if let AstKind::IdentifierReference(ref_ident) = ref_node.kind()
@@ -228,42 +231,54 @@ fn is_assignment_condition_met(
         AstKind::ForOfStatement(for_of) => for_of.left.span() == parent_node_span,
         AstKind::ArrayAssignmentTarget(array_target) => {
             array_target.elements.iter().any(|el| match el.as_ref() {
-                Some(AssignmentTargetMaybeDefault::StaticMemberExpression(expr)) if is_static => {
-                    expr.span == parent_node_span
-                }
-                Some(AssignmentTargetMaybeDefault::ComputedMemberExpression(expr))
-                    if !is_static =>
-                {
-                    expr.span == parent_node_span
+                Some(AssignmentTargetMaybeDefault::MemberExpression(member)) => {
+                    match member.kind() {
+                        MemberExpressionKind::StaticMemberExpression(expr) if is_static => {
+                            expr.span == parent_node_span
+                        }
+                        MemberExpressionKind::ComputedMemberExpression(expr) if !is_static => {
+                            expr.span == parent_node_span
+                        }
+                        _ => false,
+                    }
                 }
                 _ => false,
             })
         }
         AstKind::AssignmentTargetPropertyProperty(prop_target) => match &prop_target.binding {
-            AssignmentTargetMaybeDefault::StaticMemberExpression(expr) if is_static => {
-                expr.span == parent_node_span
-            }
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(expr) if !is_static => {
-                expr.span == parent_node_span
-            }
+            AssignmentTargetMaybeDefault::MemberExpression(member) => match member.kind() {
+                MemberExpressionKind::StaticMemberExpression(expr) if is_static => {
+                    expr.span == parent_node_span
+                }
+                MemberExpressionKind::ComputedMemberExpression(expr) if !is_static => {
+                    expr.span == parent_node_span
+                }
+                _ => false,
+            },
             _ => false,
         },
         AstKind::AssignmentTargetWithDefault(with_default) => match &with_default.binding {
-            AssignmentTarget::StaticMemberExpression(expr) if is_static => {
-                expr.span == parent_node_span
-            }
-            AssignmentTarget::ComputedMemberExpression(expr) if !is_static => {
-                expr.span == parent_node_span
-            }
+            AssignmentTarget::MemberExpression(member) => match member.kind() {
+                MemberExpressionKind::StaticMemberExpression(expr) if is_static => {
+                    expr.span == parent_node_span
+                }
+                MemberExpressionKind::ComputedMemberExpression(expr) if !is_static => {
+                    expr.span == parent_node_span
+                }
+                _ => false,
+            },
             _ => false,
         },
         AstKind::AssignmentTargetRest(rest_target) => match &rest_target.target {
-            AssignmentTarget::StaticMemberExpression(expr) if is_static => {
-                expr.span == parent_node_span
-            }
-            AssignmentTarget::ComputedMemberExpression(expr) if !is_static => {
-                expr.span == parent_node_span
-            }
+            AssignmentTarget::MemberExpression(member) => match member.kind() {
+                MemberExpressionKind::StaticMemberExpression(expr) if is_static => {
+                    expr.span == parent_node_span
+                }
+                MemberExpressionKind::ComputedMemberExpression(expr) if !is_static => {
+                    expr.span == parent_node_span
+                }
+                _ => false,
+            },
             _ => false,
         },
         _ => false,

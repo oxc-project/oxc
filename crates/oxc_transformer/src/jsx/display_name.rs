@@ -82,17 +82,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                         break ident.name.into();
                     }
-                    AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name.into();
-                    }
-                    // Babel does not handle computed member expressions e.g. `foo["bar"]`,
-                    // so we diverge from Babel here, but that's probably an improvement
-                    AssignmentTarget::ComputedMemberExpression(expr) => {
-                        if let Some(name) = expr.static_property_name() {
-                            break name;
+                    AssignmentTarget::MemberExpression(member) => match member.kind() {
+                        MemberExpressionKind::StaticMemberExpression(expr) => {
+                            break expr.property.name.into();
                         }
-                        return;
-                    }
+                        // Babel does not handle computed member expressions e.g. `foo["bar"]`,
+                        // so we diverge from Babel here, but that's probably an improvement
+                        MemberExpressionKind::ComputedMemberExpression(expr) => {
+                            if let Some(name) = expr.static_property_name() {
+                                break name;
+                            }
+                            return;
+                        }
+                        MemberExpressionKind::PrivateFieldExpression(_) => return,
+                    },
                     _ => return,
                 },
                 // `let foo = React.createClass({})`
@@ -132,11 +135,12 @@ impl<'a> ReactDisplayName {
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,
     ) -> Option<&'b mut ObjectExpression<'a>> {
-        if match &call_expr.callee {
-            callee @ match_member_expression!(Expression) => {
-                !callee.to_member_expression().is_specific_member_access("React", "createClass")
-            }
-            Expression::Identifier(ident) => ident.name != "createReactClass",
+        if match call_expr.callee.kind() {
+            _ if call_expr.callee.is_member_expression() => !call_expr
+                .callee
+                .to_member_expression()
+                .is_specific_member_access("React", "createClass"),
+            ExpressionKind::Identifier(ident) => ident.name != "createReactClass",
             _ => true,
         } {
             return None;
@@ -147,8 +151,8 @@ impl<'a> ReactDisplayName {
         }
         let arg = call_expr.arguments.get_mut(0)?;
         match arg {
-            Argument::ObjectExpression(obj_expr) => Some(obj_expr),
-            _ => None,
+            Argument::Expression(e) => e.as_object_expression_mut(),
+            Argument::SpreadElement(_) => None,
         }
     }
 

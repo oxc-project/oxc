@@ -6,8 +6,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentExpression, AssignmentTarget, BinaryExpression, BinaryOperator,
-        CallExpression, Expression, IfStatement, LogicalExpression, LogicalOperator,
-        SimpleAssignmentTarget, Statement, UnaryOperator,
+        CallExpression, Expression, ExpressionKind, IfStatement, LogicalExpression,
+        LogicalOperator, SimpleAssignmentTarget, Statement, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -214,7 +214,8 @@ fn check_assignment(assignment: &AssignmentExpression, ctx: &LintContext) {
         return;
     }
 
-    let Expression::LogicalExpression(logical) = assignment.right.without_parentheses() else {
+    let ExpressionKind::LogicalExpression(logical) = assignment.right.without_parentheses().kind()
+    else {
         return;
     };
 
@@ -231,7 +232,9 @@ fn check_assignment(assignment: &AssignmentExpression, ctx: &LintContext) {
 }
 
 fn check_logical(logical: &LogicalExpression, ctx: &LintContext) {
-    let Expression::AssignmentExpression(assignment) = logical.right.get_inner_expression() else {
+    let ExpressionKind::AssignmentExpression(assignment) =
+        logical.right.get_inner_expression().kind()
+    else {
         return;
     };
 
@@ -263,8 +266,8 @@ fn check_if_statement(if_statement: &IfStatement, ctx: &LintContext) {
     let Statement::ExpressionStatement(expression_statement) = body else {
         return;
     };
-    let Expression::AssignmentExpression(assignment) =
-        expression_statement.expression.get_inner_expression()
+    let ExpressionKind::AssignmentExpression(assignment) =
+        expression_statement.expression.get_inner_expression().kind()
     else {
         return;
     };
@@ -291,7 +294,7 @@ fn check_if_statement(if_statement: &IfStatement, ctx: &LintContext) {
 fn get_leftmost_operand<'a>(logical: &'a LogicalExpression<'a>) -> &'a Expression<'a> {
     let mut left = &logical.left;
 
-    while let Expression::LogicalExpression(left_logical) = left {
+    while let ExpressionKind::LogicalExpression(left_logical) = left.kind() {
         if left_logical.operator != logical.operator {
             break;
         }
@@ -302,9 +305,10 @@ fn get_leftmost_operand<'a>(logical: &'a LogicalExpression<'a>) -> &'a Expressio
 }
 
 fn is_reference(expression: &Expression) -> bool {
-    match expression.get_inner_expression() {
-        Expression::Identifier(identifier) => identifier.name != "undefined",
-        expression => expression.as_member_expression().is_some(),
+    let inner = expression.get_inner_expression();
+    match inner.kind() {
+        ExpressionKind::Identifier(identifier) => identifier.name != "undefined",
+        _ => inner.is_member_expression(),
     }
 }
 
@@ -328,7 +332,7 @@ fn is_same_simple_assignment_reference(
     let right = right.get_inner_expression();
 
     if let SimpleAssignmentTarget::AssignmentTargetIdentifier(left) = left {
-        return matches!(right, Expression::Identifier(right) if left.name == right.name);
+        return matches!(right.kind(), ExpressionKind::Identifier(right) if left.name == right.name);
     }
 
     if let Some(left_expression) = left.get_expression() {
@@ -350,7 +354,9 @@ fn is_same_expression_reference(left: &Expression, right: &Expression, ctx: &Lin
     let right = right.get_inner_expression();
 
     match (left, right) {
-        (Expression::Identifier(left), Expression::Identifier(right)) => left.name == right.name,
+        (left, right) if left.is_identifier() && right.is_identifier() => {
+            left.to_identifier().name == right.to_identifier().name
+        }
         (left, right) => {
             let Some(left_member) = left.as_member_expression() else {
                 return false;
@@ -370,7 +376,7 @@ struct Existence<'a> {
 
 fn get_existence<'a>(expression: &'a Expression<'a>, ctx: &LintContext) -> Option<Existence<'a>> {
     let expression = expression.get_inner_expression();
-    let (is_negated, base) = if let Expression::UnaryExpression(unary) = expression
+    let (is_negated, base) = if let ExpressionKind::UnaryExpression(unary) = expression.kind()
         && unary.operator.is_not()
     {
         (true, unary.argument.get_inner_expression())
@@ -385,7 +391,7 @@ fn get_existence<'a>(expression: &'a Expression<'a>, ctx: &LintContext) -> Optio
         });
     }
 
-    if let Expression::UnaryExpression(unary) = base
+    if let ExpressionKind::UnaryExpression(unary) = base.kind()
         && unary.operator.is_not()
         && is_reference(&unary.argument)
     {
@@ -395,7 +401,7 @@ fn get_existence<'a>(expression: &'a Expression<'a>, ctx: &LintContext) -> Optio
         });
     }
 
-    if let Expression::CallExpression(call_expression) = base
+    if let ExpressionKind::CallExpression(call_expression) = base.kind()
         && is_boolean_cast(call_expression, ctx)
         && let Some(reference) = call_expression.arguments.first().and_then(Argument::as_expression)
         && is_reference(reference)
@@ -418,18 +424,15 @@ fn get_existence<'a>(expression: &'a Expression<'a>, ctx: &LintContext) -> Optio
 }
 
 fn is_boolean_cast(call_expression: &CallExpression, ctx: &LintContext) -> bool {
-    matches!(
-        call_expression.callee.get_inner_expression(),
-        Expression::Identifier(identifier)
-            if identifier.name == "Boolean" && ctx.is_reference_to_global_variable(identifier)
-    ) && call_expression.arguments.len() == 1
+    matches!(call_expression.callee.get_inner_expression().kind(), ExpressionKind::Identifier(identifier) if identifier.name == "Boolean" && ctx.is_reference_to_global_variable(identifier))
+        && call_expression.arguments.len() == 1
 }
 
 fn is_implicit_nullish_comparison<'a>(
     expression: &'a Expression<'a>,
     ctx: &LintContext,
 ) -> Option<&'a Expression<'a>> {
-    let Expression::BinaryExpression(binary) = expression else {
+    let ExpressionKind::BinaryExpression(binary) = expression.kind() else {
         return None;
     };
     if binary.operator != BinaryOperator::Equality {
@@ -443,17 +446,18 @@ fn is_explicit_nullish_comparison<'a>(
     expression: &'a Expression<'a>,
     ctx: &LintContext,
 ) -> Option<&'a Expression<'a>> {
-    let Expression::LogicalExpression(logical) = expression else {
+    let ExpressionKind::LogicalExpression(logical) = expression.kind() else {
         return None;
     };
     if !logical.operator.is_or() {
         return None;
     }
 
-    let Expression::BinaryExpression(left) = logical.left.get_inner_expression() else {
+    let ExpressionKind::BinaryExpression(left) = logical.left.get_inner_expression().kind() else {
         return None;
     };
-    let Expression::BinaryExpression(right) = logical.right.get_inner_expression() else {
+    let ExpressionKind::BinaryExpression(right) = logical.right.get_inner_expression().kind()
+    else {
         return None;
     };
     if left.operator != BinaryOperator::StrictEquality
@@ -508,11 +512,11 @@ fn is_null_literal(expression: &Expression) -> bool {
 /// Check manually instead of `expr.is_undefined()` for cases like
 /// `const undefined = 0; if (a == undefined) a = b`
 fn is_undefined(expression: &Expression, ctx: &LintContext) -> bool {
-    match expression.get_inner_expression() {
-        Expression::Identifier(identifier) if identifier.name == "undefined" => {
+    match expression.get_inner_expression().kind() {
+        ExpressionKind::Identifier(identifier) if identifier.name == "undefined" => {
             ctx.is_reference_to_global_variable(identifier)
         }
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Void => {
+        ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Void => {
             unary.argument.get_inner_expression().is_number_0()
         }
         _ => false,

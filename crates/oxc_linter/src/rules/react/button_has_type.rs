@@ -7,7 +7,7 @@ use crate::{
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName,
+        Argument, Expression, ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXElementName,
         ObjectPropertyKind,
     },
 };
@@ -113,7 +113,12 @@ impl Rule for ButtonHasType {
                 );
             }
             AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
-                let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
+                let Some(str) = call_expr
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .and_then(Expression::as_string_literal)
+                else {
                     return;
                 };
 
@@ -121,7 +126,12 @@ impl Rule for ButtonHasType {
                     return;
                 }
 
-                if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
+                if let Some(obj_expr) = call_expr
+                    .arguments
+                    .get(1)
+                    .and_then(Argument::as_expression)
+                    .and_then(Expression::as_object_expression)
+                {
                     obj_expr
                         .properties
                         .iter()
@@ -202,14 +212,14 @@ impl ButtonHasType {
     }
 
     fn is_valid_button_type_prop_expression(&self, expr: &Expression) -> bool {
-        match expr.without_parentheses() {
-            Expression::StringLiteral(str) => {
+        match expr.without_parentheses().kind() {
+            ExpressionKind::StringLiteral(str) => {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }
-            Expression::TemplateLiteral(template_literal) => template_literal
+            ExpressionKind::TemplateLiteral(template_literal) => template_literal
                 .single_quasi()
                 .is_some_and(|quasi| self.is_valid_button_type_prop_string_literal(quasi.as_str())),
-            Expression::ConditionalExpression(conditional_expr) => {
+            ExpressionKind::ConditionalExpression(conditional_expr) => {
                 self.is_valid_button_type_prop_expression(&conditional_expr.consequent)
                     && self.is_valid_button_type_prop_expression(&conditional_expr.alternate)
             }

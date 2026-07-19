@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -58,7 +58,7 @@ impl Rule for NoObjectConstructor {
             _ => return,
         };
 
-        let Expression::Identifier(ident) = &callee else {
+        let ExpressionKind::Identifier(ident) = callee.kind() else {
             return;
         };
 

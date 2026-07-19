@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression},
+    ast::{ExportDefaultDeclarationKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -149,49 +149,47 @@ impl Rule for NoAnonymousDefaultExport {
                     "Unexpected default export of anonymous class",
                 ));
             }
-            ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
-                if !self.allow_arrow_function =>
-            {
-                ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                    export_decl.span,
-                    "Assign arrow function to a variable before exporting as module default",
-                ));
-            }
-            ExportDefaultDeclarationKind::ObjectExpression(_) if !self.allow_object => {
-                ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                    export_decl.span,
-                    "Assign object to a variable before exporting as module default",
-                ));
-            }
-            ExportDefaultDeclarationKind::CallExpression(_) if !self.allow_call_expression => {
-                ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                    export_decl.span,
-                    "Assign call result to a variable before exporting as module default",
-                ));
-            }
-            ExportDefaultDeclarationKind::NewExpression(_) if !self.allow_new => {
-                ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                    export_decl.span,
-                    "Assign instance to a variable before exporting as module default",
-                ));
-            }
-            ExportDefaultDeclarationKind::ArrayExpression(_) if !self.allow_array => {
-                ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                    export_decl.span,
-                    "Assign array to a variable before exporting as module default",
-                ));
-            }
-            _ => {
-                if let Some(expr) = export_decl.declaration.as_expression()
-                    && !self.allow_literal
-                    && (expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)))
-                {
+            ExportDefaultDeclarationKind::Expression(expr) => match expr.kind() {
+                ExpressionKind::ArrowFunctionExpression(_) if !self.allow_arrow_function => {
                     ctx.diagnostic(no_anonymous_default_export_diagnostic(
                         export_decl.span,
-                        "Assign literal to a variable before exporting as module default",
+                        "Assign arrow function to a variable before exporting as module default",
                     ));
                 }
-            }
+                ExpressionKind::ObjectExpression(_) if !self.allow_object => {
+                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                        export_decl.span,
+                        "Assign object to a variable before exporting as module default",
+                    ));
+                }
+                ExpressionKind::CallExpression(_) if !self.allow_call_expression => {
+                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                        export_decl.span,
+                        "Assign call result to a variable before exporting as module default",
+                    ));
+                }
+                ExpressionKind::NewExpression(_) if !self.allow_new => {
+                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                        export_decl.span,
+                        "Assign instance to a variable before exporting as module default",
+                    ));
+                }
+                ExpressionKind::ArrayExpression(_) if !self.allow_array => {
+                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                        export_decl.span,
+                        "Assign array to a variable before exporting as module default",
+                    ));
+                }
+                _ => {
+                    if !self.allow_literal && (expr.is_literal() || expr.is_template_literal()) {
+                        ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                            export_decl.span,
+                            "Assign literal to a variable before exporting as module default",
+                        ));
+                    }
+                }
+            },
+            _ => {}
         }
     }
 }

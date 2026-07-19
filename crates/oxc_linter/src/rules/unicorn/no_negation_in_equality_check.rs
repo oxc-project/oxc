@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -59,7 +59,7 @@ declare_oxc_lint!(
 impl Rule for NoNegationInEqualityCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BinaryExpression(binary_expr) = node.kind() {
-            let Expression::UnaryExpression(left_unary_expr) = &binary_expr.left else {
+            let ExpressionKind::UnaryExpression(left_unary_expr) = binary_expr.left.kind() else {
                 return;
             };
 
@@ -67,7 +67,8 @@ impl Rule for NoNegationInEqualityCheck {
                 return;
             }
 
-            if let Expression::UnaryExpression(left_nested_unary_expr) = &left_unary_expr.argument
+            if let ExpressionKind::UnaryExpression(left_nested_unary_expr) =
+                left_unary_expr.argument.kind()
                 && left_nested_unary_expr.operator == UnaryOperator::LogicalNot
             {
                 return;

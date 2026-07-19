@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, VariableDeclarator},
+    ast::{Expression, ExpressionKind, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -205,7 +205,7 @@ fn get_declaration_type(init: Option<&Expression>, allow_call: bool) -> Declarat
     }
 
     if allow_call
-        && let Expression::CallExpression(call) = init
+        && let ExpressionKind::CallExpression(call) = init.kind()
         && call.callee.is_call_expression()
     {
         return get_declaration_type(Some(&call.callee), allow_call);
@@ -223,7 +223,7 @@ fn infer_module_type(init: &Expression) -> ModuleType {
         return infer_module_type(member.object());
     }
 
-    let Expression::CallExpression(call) = init else {
+    let ExpressionKind::CallExpression(call) = init.kind() else {
         return ModuleType::Module;
     };
 
@@ -235,8 +235,8 @@ fn infer_module_type(init: &Expression) -> ModuleType {
         return ModuleType::Computed;
     };
 
-    let Some(value) = arg.as_expression().and_then(|expr| match expr {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+    let Some(value) = arg.as_expression().and_then(|expr| match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => Some(lit.value.as_str()),
         _ => None,
     }) else {
         return ModuleType::Computed;
@@ -289,7 +289,7 @@ fn is_grouped(declarations: &[VariableDeclarator], allow_call: bool) -> bool {
 }
 
 fn is_require_call(expr: &Expression, allow_call: bool) -> bool {
-    let Expression::CallExpression(call) = expr else {
+    let ExpressionKind::CallExpression(call) = expr.kind() else {
         return false;
     };
 

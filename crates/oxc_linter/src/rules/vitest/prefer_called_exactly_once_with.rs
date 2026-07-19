@@ -2,7 +2,10 @@ use itertools::Itertools;
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, MemberExpression, Statement},
+    ast::{
+        CallExpression, Expression, ExpressionKind, ExpressionTag, FunctionBody, MemberExpression,
+        Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -222,7 +225,8 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             };
 
-            let Expression::CallExpression(call_expr) = &statement_expression.expression else {
+            let ExpressionKind::CallExpression(call_expr) = statement_expression.expression.kind()
+            else {
                 continue;
             };
 
@@ -234,8 +238,11 @@ impl PreferCalledExactlyOnceWith {
 
             match parsed_call_expression_statement {
                 TestCallExpression::MockReset => {
-                    let Some(Expression::Identifier(identify)) =
-                        call_expr.callee.as_member_expression().map(MemberExpression::object)
+                    let Some(identify) = call_expr
+                        .callee
+                        .as_member_expression()
+                        .map(MemberExpression::object)
+                        .and_then(|e| e.as_identifier())
                     else {
                         continue;
                     };
@@ -438,14 +445,17 @@ fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Spa
 
 fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
     call_expr.arguments.iter().rev().filter_map(|arg| arg.as_expression()).find(|expr| {
-        matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+        matches!(
+            expr.tag(),
+            ExpressionTag::FunctionExpression | ExpressionTag::ArrowFunctionExpression
+        )
     })
 }
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
-    match callback {
-        Expression::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
-        Expression::ArrowFunctionExpression(func) => Some(&func.body),
+    match callback.kind() {
+        ExpressionKind::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
+        ExpressionKind::ArrowFunctionExpression(func) => Some(&func.body),
         _ => None,
     }
 }

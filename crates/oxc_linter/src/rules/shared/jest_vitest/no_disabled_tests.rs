@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -80,7 +80,7 @@ pub fn run_on_jest_node<'a, 'c>(
         return;
     };
     let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
-        if let Expression::Identifier(ident) = &call_expr.callee
+        if let ExpressionKind::Identifier(ident) = call_expr.callee.kind()
             && ident.name.as_str() == "pending"
             && ctx.is_reference_to_global_variable(ident)
         {

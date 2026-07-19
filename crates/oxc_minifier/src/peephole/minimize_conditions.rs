@@ -30,7 +30,8 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // "(a, b) op c" => "a, b op c"
-        if let Expression::SequenceExpression(mut sequence_expr) = a {
+        if a.is_sequence_expression() {
+            let mut sequence_expr = a.into_sequence_expression().unwrap();
             if let Some(right) = sequence_expr.expressions.pop() {
                 sequence_expr
                     .expressions
@@ -43,7 +44,7 @@ impl<'a> PeepholeOptimizations {
         // "a op (b op c)" => "(a op b) op c"
         // "a op (b op (c op d))" => "((a op b) op c) op d"
         loop {
-            if let Expression::LogicalExpression(logical_expr) = &mut b
+            if let Some(logical_expr) = b.as_logical_expression_mut()
                 && logical_expr.operator == op
             {
                 let right = logical_expr.left.take_in(ctx);
@@ -68,7 +69,7 @@ impl<'a> PeepholeOptimizations {
     // `x >> +y !== 0` -> `x >> +y`
     //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
     pub fn minimize_binary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::BinaryExpression(e) = expr else { return };
+        let Some(e) = expr.as_binary_expression_mut() else { return };
         if !e.operator.is_equality() {
             return;
         }
@@ -125,7 +126,7 @@ impl<'a> PeepholeOptimizations {
     /// In `IsLooselyEqual`, `true` and `false` are converted to `1` and `0` first.
     /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islooselyequal>
     pub fn minimize_loose_boolean(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::BinaryExpression(e) = e else { return };
+        let Some(e) = e.as_binary_expression_mut() else { return };
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return;
         }
@@ -156,9 +157,9 @@ impl<'a> PeepholeOptimizations {
     pub fn extract_id_or_assign_to_id<'b>(
         expr: &'b Expression<'a>,
     ) -> Option<&'b IdentifierReference<'a>> {
-        match expr {
-            Expression::Identifier(id) => Some(id),
-            Expression::AssignmentExpression(assign_expr) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(id) => Some(id),
+            ExpressionKind::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator == AssignmentOperator::Assign
                     && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
                 {
@@ -183,19 +184,16 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let Expression::LogicalExpression(logical_expr) = &mut expr.right else { return };
+        let Some(logical_expr) = expr.right.as_logical_expression_mut() else { return };
         // NOTE: if the right hand side is an anonymous function, applying this compression will
         // set the `name` property of that function.
         // Since codes relying on the fact that function's name is undefined should be rare,
         // we do this compression even if `keep_names` is enabled.
 
-        let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::Identifier(read_id_ref),
-        ) = (&expr.left, &logical_expr.left)
-        else {
+        let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = &expr.left else {
             return;
         };
+        let Some(read_id_ref) = logical_expr.left.as_identifier() else { return };
         // It should also early return when the reference might refer to a reference value created by a with statement
         // when the minifier supports with statements
         if write_id_ref.name != read_id_ref.name || ctx.is_global_reference(write_id_ref) {
@@ -219,7 +217,7 @@ impl<'a> PeepholeOptimizations {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
             return;
         }
-        let Expression::BinaryExpression(binary_expr) = &mut expr.right else { return };
+        let Some(binary_expr) = expr.right.as_binary_expression_mut() else { return };
         let Some(new_op) = binary_expr.operator.to_assignment_operator() else { return };
         if !Self::has_no_side_effect_for_evaluation_same_target(&expr.left, &binary_expr.left, ctx)
         {
@@ -239,11 +237,11 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(e) = expr else { return };
+        let Some(e) = expr.as_assignment_expression_mut() else { return };
         if !matches!(e.operator, AssignmentOperator::Subtraction) {
             return;
         }
-        let operator = if let Expression::NumericLiteral(num) = &e.right {
+        let operator = if let Some(num) = e.right.as_numeric_literal() {
             if num.value == 1.0 {
                 UpdateOperator::Decrement
             } else if num.value == -1.0 {

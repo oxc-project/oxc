@@ -2,11 +2,10 @@ use std::borrow::Cow;
 
 use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
-use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey,
+        ExpressionKind, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey,
         TSLiteral, TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
     },
 };
@@ -67,7 +66,8 @@ impl Rule for NoInvalidFetchOptions {
                     return;
                 }
 
-                if let Argument::ObjectExpression(expr) = &call_expr.arguments[1]
+                if let Some(expr) =
+                    call_expr.arguments[1].as_expression().and_then(|e| e.as_object_expression())
                     && let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx)
                 {
                     ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
@@ -78,7 +78,8 @@ impl Rule for NoInvalidFetchOptions {
                     return;
                 }
 
-                if let Argument::ObjectExpression(expr) = &new_expr.arguments[1]
+                if let Some(expr) =
+                    new_expr.arguments[1].as_expression().and_then(|e| e.as_object_expression())
                     && let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx)
                 {
                     ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
@@ -93,7 +94,7 @@ impl Rule for NoInvalidFetchOptions {
 const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
 
 fn is_invalid_fetch_options<'a>(
-    obj_expr: &'a ArenaBox<'_, ObjectExpression<'_>>,
+    obj_expr: &'a ObjectExpression<'_>,
     ctx: &'a LintContext<'_>,
 ) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"
@@ -121,10 +122,10 @@ fn is_invalid_fetch_options<'a>(
                 body_span = key_ident.span;
             }
         } else if key_ident_name == "method" {
-            match &obj_prop.value {
-                Expression::StaticMemberExpression(s) => {
+            match obj_prop.value.kind() {
+                ExpressionKind::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();
-                    let Expression::Identifier(ident_ref) = &s.object else {
+                    let ExpressionKind::Identifier(ident_ref) = s.object.kind() else {
                         method_name = UNKNOWN_METHOD_NAME;
                         continue;
                     };
@@ -141,13 +142,10 @@ fn is_invalid_fetch_options<'a>(
                             AstKind::TSEnumDeclaration(enum_decl) => {
                                 let member_string_lit: Option<CompactStr> =
                                     enum_decl.body.members.iter().find_map(|m| {
-                                        if let Some(Expression::StringLiteral(str_lit)) =
-                                            &m.initializer
-                                        {
-                                            Some(str_lit.value.to_compact_str())
-                                        } else {
-                                            None
-                                        }
+                                        m.initializer
+                                            .as_ref()
+                                            .and_then(|e| e.as_string_literal())
+                                            .map(|str_lit| str_lit.value.to_compact_str())
                                     });
                                 member_string_lit
                             }
@@ -161,13 +159,13 @@ fn is_invalid_fetch_options<'a>(
                         method_name = UNKNOWN_METHOD_NAME;
                     }
                 }
-                Expression::StringLiteral(value_ident) => {
+                ExpressionKind::StringLiteral(value_ident) => {
                     method_name = value_ident.value.cow_to_ascii_uppercase();
                 }
-                Expression::TemplateLiteral(template_lit) => {
+                ExpressionKind::TemplateLiteral(template_lit) => {
                     method_name = extract_method_name_from_template_literal(template_lit);
                 }
-                Expression::Identifier(value_ident) => {
+                ExpressionKind::Identifier(value_ident) => {
                     let symbols = ctx.scoping();
                     let reference_id = value_ident.reference_id();
 
@@ -179,18 +177,20 @@ fn is_invalid_fetch_options<'a>(
                     let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
 
                     match decl.kind() {
-                        AstKind::VariableDeclarator(declarator) => match &declarator.init {
-                            Some(Expression::StringLiteral(str_lit)) => {
-                                method_name = str_lit.value.cow_to_ascii_uppercase();
+                        AstKind::VariableDeclarator(declarator) => {
+                            match declarator.init.as_ref().map(|e| e.kind()) {
+                                Some(ExpressionKind::StringLiteral(str_lit)) => {
+                                    method_name = str_lit.value.cow_to_ascii_uppercase();
+                                }
+                                Some(ExpressionKind::TemplateLiteral(template_lit)) => {
+                                    method_name =
+                                        extract_method_name_from_template_literal(template_lit);
+                                }
+                                _ => {
+                                    method_name = UNKNOWN_METHOD_NAME;
+                                }
                             }
-                            Some(Expression::TemplateLiteral(template_lit)) => {
-                                method_name =
-                                    extract_method_name_from_template_literal(template_lit);
-                            }
-                            _ => {
-                                method_name = UNKNOWN_METHOD_NAME;
-                            }
-                        },
+                        }
                         AstKind::FormalParameter(FormalParameter {
                             type_annotation: Some(annotation),
                             ..

@@ -3,7 +3,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference},
+    ast::{Expression, ExpressionTag, IdentifierReference},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -318,22 +318,22 @@ impl<'a, 'ctx> ConditionSymbolsCollector<'a, 'ctx> {
 impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
     fn visit_expression(&mut self, expression: &Expression<'a>) {
         let is_group_expression = matches!(
-            expression,
-            Expression::BinaryExpression(_) | Expression::ConditionalExpression(_)
+            expression.tag(),
+            ExpressionTag::BinaryExpression | ExpressionTag::ConditionalExpression
         );
         if is_group_expression {
             self.group_stack.push(expression.span());
         }
 
         if matches!(
-            expression,
-            Expression::CallExpression(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_)
-                | Expression::NewExpression(_)
-                | Expression::TaggedTemplateExpression(_)
-                | Expression::YieldExpression(_)
+            expression.tag(),
+            ExpressionTag::CallExpression
+                | ExpressionTag::StaticMemberExpression
+                | ExpressionTag::ComputedMemberExpression
+                | ExpressionTag::PrivateFieldExpression
+                | ExpressionTag::NewExpression
+                | ExpressionTag::TaggedTemplateExpression
+                | ExpressionTag::YieldExpression
         ) {
             if let Some(group_span) = self.group_stack.first().copied() {
                 self.dynamic_groups.insert(group_span);
@@ -345,10 +345,10 @@ impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
         }
 
         if matches!(
-            expression,
-            Expression::FunctionExpression(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::ClassExpression(_)
+            expression.tag(),
+            ExpressionTag::FunctionExpression
+                | ExpressionTag::ArrowFunctionExpression
+                | ExpressionTag::ClassExpression
         ) {
             if is_group_expression {
                 self.group_stack.pop();

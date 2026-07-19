@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -58,15 +58,9 @@ impl Rule for NoNestedTernary {
             return;
         };
 
-        if matches!(&cond_expr.test.get_inner_expression(), Expression::ConditionalExpression(_))
-            || matches!(
-                &cond_expr.consequent.get_inner_expression(),
-                Expression::ConditionalExpression(_)
-            )
-            || matches!(
-                &cond_expr.alternate.get_inner_expression(),
-                Expression::ConditionalExpression(_)
-            )
+        if cond_expr.test.get_inner_expression().is_conditional_expression()
+            || cond_expr.consequent.get_inner_expression().is_conditional_expression()
+            || cond_expr.alternate.get_inner_expression().is_conditional_expression()
         {
             return;
         }

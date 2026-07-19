@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
-    ClassElement, MethodDefinition, ObjectProperty, ObjectPropertyKind, PropertyDefinition,
-    PropertyKey,
+    ClassElement, ExpressionKind, MethodDefinition, ObjectProperty, ObjectPropertyKind,
+    PropertyDefinition, PropertyKey,
 };
 use oxc_span::Span;
 
@@ -31,9 +31,12 @@ impl PropName for PropertyKey<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
-            PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
-            PropertyKey::StringLiteral(lit) => Some((&lit.value, lit.span)),
-            _ => None,
+            PropertyKey::Expression(expr) => match expr.kind() {
+                ExpressionKind::Identifier(ident) => Some((&ident.name, ident.span)),
+                ExpressionKind::StringLiteral(lit) => Some((&lit.value, lit.span)),
+                _ => None,
+            },
+            PropertyKey::PrivateIdentifier(_) => None,
         }
     }
 }

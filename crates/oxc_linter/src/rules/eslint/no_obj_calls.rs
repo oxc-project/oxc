@@ -1,7 +1,6 @@
-use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, MemberExpression, match_member_expression},
+    ast::{Expression, ExpressionKind, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -77,7 +76,7 @@ fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
 }
 
 fn resolve_global_binding<'a, 'b: 'a>(
-    ident: &'a ArenaBox<'a, IdentifierReference<'a>>,
+    ident: &'a IdentifierReference<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
     let symbols = ctx.scoping();
@@ -95,8 +94,12 @@ fn resolve_global_binding<'a, 'b: 'a>(
             }
             match &parent_decl.init {
                 // handles "let a = JSON; let b = a; a();"
-                Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
-                    resolve_global_binding(parent_ident, ctx)
+                Some(parent_expr)
+                    if parent_expr
+                        .as_identifier()
+                        .is_some_and(|parent_ident| parent_ident.name != ident.name) =>
+                {
+                    resolve_global_binding(parent_expr.to_identifier(), ctx)
                 }
                 // handles "let a = globalThis.JSON; let b = a; a();"
                 Some(parent_expr) if parent_expr.is_member_expression() => {
@@ -120,8 +123,8 @@ impl Rule for NoObjCalls {
 }
 
 fn check_callee<'a>(callee: &'a Expression, span: Span, ctx: &LintContext<'a>) {
-    match callee {
-        Expression::Identifier(ident) => {
+    match callee.kind() {
+        ExpressionKind::Identifier(ident) => {
             // handle new Math(), Math(), etc
             if let Some(top_level_reference) = resolve_global_binding(ident, ctx)
                 && is_global_obj(top_level_reference)
@@ -130,7 +133,9 @@ fn check_callee<'a>(callee: &'a Expression, span: Span, ctx: &LintContext<'a>) {
             }
         }
 
-        match_member_expression!(Expression) => {
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => {
             // handle new globalThis.Math(), globalThis.Math(), etc
             if let Some(global_member) = global_this_member(callee.to_member_expression())
                 && is_global_obj(global_member)

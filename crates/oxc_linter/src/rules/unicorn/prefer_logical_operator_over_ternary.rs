@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -73,7 +76,8 @@ impl Rule for PreferLogicalOperatorOverTernary {
         }
 
         // `!bar ? foo : bar` -> `bar || foo`
-        if let Expression::UnaryExpression(unary_expression) = &conditional_expression.test
+        if let ExpressionKind::UnaryExpression(unary_expression) =
+            conditional_expression.test.kind()
             && unary_expression.operator == UnaryOperator::LogicalNot
             && is_same_node(&unary_expression.argument, &conditional_expression.alternate, ctx)
         {
@@ -104,7 +108,7 @@ fn preferred_test_expr<'a>(
     test: &'a Expression<'a>,
     consequent: &'a Expression<'a>,
 ) -> &'a Expression<'a> {
-    if matches!(test, Expression::ParenthesizedExpression(_)) {
+    if test.is_parenthesized_expression() {
         return consequent.get_inner_expression();
     }
 
@@ -116,7 +120,7 @@ fn preferred_alternate_expr<'a>(
     alternate: &'a Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> &'a Expression<'a> {
-    let Expression::UnaryExpression(outer_unary) = test else {
+    let ExpressionKind::UnaryExpression(outer_unary) = test.kind() else {
         return alternate;
     };
     if outer_unary.operator != UnaryOperator::LogicalNot {
@@ -125,7 +129,7 @@ fn preferred_alternate_expr<'a>(
     if !is_same_node(&outer_unary.argument, alternate, ctx) {
         return alternate;
     }
-    let Expression::UnaryExpression(inner_unary) = &outer_unary.argument else {
+    let ExpressionKind::UnaryExpression(inner_unary) = outer_unary.argument.kind() else {
         return alternate;
     };
     if inner_unary.operator != UnaryOperator::LogicalNot {
@@ -136,12 +140,12 @@ fn preferred_alternate_expr<'a>(
 }
 
 fn wrap_nullish_coalesce_operand(expr: &Expression, text: &str) -> String {
-    if matches!(expr, Expression::ParenthesizedExpression(_)) {
+    if expr.is_parenthesized_expression() {
         return text.to_string();
     }
 
-    match expr.without_parentheses() {
-        Expression::LogicalExpression(logical_expr) if logical_expr.operator.is_coalesce() => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::LogicalExpression(logical_expr) if logical_expr.operator.is_coalesce() => {
             format!("({text})")
         }
         _ => text.to_string(),
@@ -153,27 +157,27 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
         return true;
     }
 
-    match (left, right) {
+    match (left.kind(), right.kind()) {
         (
-            Expression::AwaitExpression(left_await_expr),
-            Expression::AwaitExpression(right_await_expr),
+            ExpressionKind::AwaitExpression(left_await_expr),
+            ExpressionKind::AwaitExpression(right_await_expr),
         ) => return is_same_node(&left_await_expr.argument, &right_await_expr.argument, ctx),
         (
-            Expression::LogicalExpression(left_await_expr),
-            Expression::LogicalExpression(right_await_expr),
+            ExpressionKind::LogicalExpression(left_await_expr),
+            ExpressionKind::LogicalExpression(right_await_expr),
         ) => {
             return is_same_node(&left_await_expr.left, &right_await_expr.left, ctx)
                 && is_same_node(&left_await_expr.right, &right_await_expr.right, ctx);
         }
         (
-            Expression::UnaryExpression(left_await_expr),
-            Expression::UnaryExpression(right_await_expr),
+            ExpressionKind::UnaryExpression(left_await_expr),
+            ExpressionKind::UnaryExpression(right_await_expr),
         ) => return is_same_node(&left_await_expr.argument, &right_await_expr.argument, ctx),
-        (Expression::UpdateExpression(_), Expression::UpdateExpression(_)) => return false,
-        (Expression::ParenthesizedExpression(left_paren_expr), _) => {
+        (ExpressionKind::UpdateExpression(_), ExpressionKind::UpdateExpression(_)) => return false,
+        (ExpressionKind::ParenthesizedExpression(left_paren_expr), _) => {
             return is_same_node(&left_paren_expr.expression, right, ctx);
         }
-        (_, Expression::ParenthesizedExpression(right_paren_expr)) => {
+        (_, ExpressionKind::ParenthesizedExpression(right_paren_expr)) => {
             return is_same_node(left, &right_paren_expr.expression, ctx);
         }
         _ => {}

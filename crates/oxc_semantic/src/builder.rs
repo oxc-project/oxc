@@ -2246,12 +2246,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.current_reference_flags -= ReferenceFlags::Write;
         }
 
-        match it {
-            MemberExpression::ComputedMemberExpression(it) => {
+        match it.kind() {
+            MemberExpressionKind::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it);
             }
-            MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
-            MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
+            MemberExpressionKind::StaticMemberExpression(it) => {
+                self.visit_static_member_expression(it);
+            }
+            MemberExpressionKind::PrivateFieldExpression(it) => {
+                self.visit_private_field_expression(it);
+            }
         }
 
         // Clear any unconsumed flags to prevent leaking to sibling AST nodes.
@@ -2297,8 +2301,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             SimpleAssignmentTarget::TSTypeAssertion(it) => {
                 self.visit_ts_type_assertion(it);
             }
-            match_member_expression!(SimpleAssignmentTarget) => {
-                self.visit_member_expression(it.to_member_expression());
+            SimpleAssignmentTarget::MemberExpression(it) => {
+                self.visit_member_expression(it);
             }
         }
     }
@@ -2327,14 +2331,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
                 self.visit_ts_interface_declaration(it);
             }
-            ExportDefaultDeclarationKind::Identifier(it) => {
-                // `export default ident`
-                //                 ^^^^^ -> can reference both type/value symbols
-                self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
-                self.visit_identifier_reference(it);
-            }
-            match_expression!(ExportDefaultDeclarationKind) => {
-                self.visit_expression(it.to_expression());
+            ExportDefaultDeclarationKind::Expression(it) => {
+                if let Some(ident) = it.as_identifier() {
+                    // `export default ident`
+                    //                 ^^^^^ -> can reference both type/value symbols
+                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+                    self.visit_identifier_reference(ident);
+                } else {
+                    self.visit_expression(it);
+                }
             }
         }
     }

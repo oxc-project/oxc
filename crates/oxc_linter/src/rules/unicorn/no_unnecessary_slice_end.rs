@@ -2,8 +2,10 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression, StaticMemberExpression},
-    match_member_expression,
+    ast::{
+        Argument, Expression, ExpressionKind, MemberExpression, MemberExpressionKind,
+        StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -66,12 +68,12 @@ impl Rule for NoUnnecessarySliceEnd {
         {
             return;
         }
-        let Some(MemberExpression::StaticMemberExpression(member_expr)) =
-            call_expr.callee.as_member_expression()
+        let Some(member_expr) =
+            call_expr.callee.as_member_expression().and_then(|m| m.as_static_member_expression())
         else {
             return;
         };
-        if matches!(member_expr.object, Expression::CallExpression(_))
+        if member_expr.object.is_call_expression()
             || call_expr.arguments.iter().any(|arg| matches!(arg, Argument::SpreadElement(_)))
         {
             return;
@@ -82,8 +84,8 @@ impl Rule for NoUnnecessarySliceEnd {
         let Some(arg_expr) = second_arg.as_expression().map(Expression::without_parentheses) else {
             return;
         };
-        match arg_expr {
-            Expression::Identifier(ident) if ident.name.as_str() == "Infinity" => {
+        match arg_expr.kind() {
+            ExpressionKind::Identifier(ident) if ident.name.as_str() == "Infinity" => {
                 ctx.diagnostic_with_fix(
                     no_unnecessary_slice_end_diagnostic(second_arg.span(), "Infinity"),
                     |fixer| {
@@ -91,7 +93,7 @@ impl Rule for NoUnnecessarySliceEnd {
                     },
                 );
             }
-            Expression::ChainExpression(chain_expr) => {
+            ExpressionKind::ChainExpression(chain_expr) => {
                 if let Some(expr) = chain_expr.expression.as_member_expression()
                     && let Some(msg) =
                         check_expression_and_get_diagnostic(member_expr, expr, true, ctx)
@@ -107,7 +109,9 @@ impl Rule for NoUnnecessarySliceEnd {
                     );
                 }
             }
-            match_member_expression!(Expression) => {
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
                 let expr = arg_expr.to_member_expression();
                 if let Some(msg) =
                     check_expression_and_get_diagnostic(member_expr, expr, false, ctx)
@@ -134,7 +138,7 @@ fn check_expression_and_get_diagnostic<'a>(
     is_chain_expr: bool,
     ctx: &'a LintContext,
 ) -> Option<Cow<'a, str>> {
-    let MemberExpression::StaticMemberExpression(right) = right else {
+    let MemberExpressionKind::StaticMemberExpression(right) = right.kind() else {
         return None;
     };
     let property = right.property.name.as_str();
@@ -142,7 +146,7 @@ fn check_expression_and_get_diagnostic<'a>(
         return Some("Number.POSITIVE_INFINITY".into());
     }
     if property == "length" && is_same_expression(&left.object, &right.object, ctx) {
-        if matches!(left.object, Expression::Identifier(_)) {
+        if left.object.is_identifier() {
             return Some(ctx.source_range(right.span()).into());
         }
         let operator = if is_chain_expr { "?." } else { "." };

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, BinaryOperator, Expression},
+    ast::{BinaryExpression, BinaryOperator, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -65,7 +65,7 @@ impl Rule for PreferMathMinMax {
             return;
         };
 
-        let Expression::BinaryExpression(test_expr) = &conditional_expr.test else {
+        let ExpressionKind::BinaryExpression(test_expr) = conditional_expr.test.kind() else {
             return;
         };
 
@@ -97,12 +97,17 @@ fn is_min_max(
     ctx: &LintContext,
 ) -> TypeOptions {
     let is_matched = matches!(
-        (condition.left.get_inner_expression(), condition.right.get_inner_expression()),
-        (Expression::NumericLiteral(_) | Expression::UnaryExpression(_), Expression::Identifier(_))
-            | (
-                Expression::Identifier(_),
-                Expression::NumericLiteral(_) | Expression::UnaryExpression(_)
-            )
+        (
+            condition.left.get_inner_expression().kind(),
+            condition.right.get_inner_expression().kind()
+        ),
+        (
+            ExpressionKind::NumericLiteral(_) | ExpressionKind::UnaryExpression(_),
+            ExpressionKind::Identifier(_)
+        ) | (
+            ExpressionKind::Identifier(_),
+            ExpressionKind::NumericLiteral(_) | ExpressionKind::UnaryExpression(_)
+        )
     );
 
     if !condition.operator.is_compare() || !is_matched {

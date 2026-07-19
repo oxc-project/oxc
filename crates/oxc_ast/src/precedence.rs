@@ -3,27 +3,28 @@ use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::ast::{
     AssignmentExpression, AwaitExpression, BinaryExpression, CallExpression, ChainExpression,
-    ComputedMemberExpression, ConditionalExpression, Expression, ImportExpression,
+    ComputedMemberExpression, ConditionalExpression, Expression, ExpressionKind, ImportExpression,
     LogicalExpression, MemberExpression, NewExpression, PrivateFieldExpression, SequenceExpression,
     StaticMemberExpression, TSTypeAssertion, UnaryExpression, UpdateExpression, YieldExpression,
-    match_member_expression,
 };
 
 impl GetPrecedence for Expression<'_> {
     fn precedence(&self) -> Precedence {
-        match self {
-            Self::SequenceExpression(expr) => expr.precedence(),
-            Self::AssignmentExpression(expr) => expr.precedence(),
-            Self::YieldExpression(expr) => expr.precedence(),
-            Self::ConditionalExpression(expr) => expr.precedence(),
-            Self::LogicalExpression(expr) => expr.precedence(),
-            Self::BinaryExpression(expr) => expr.precedence(),
-            Self::UnaryExpression(expr) => expr.precedence(),
-            Self::UpdateExpression(expr) => expr.precedence(),
-            Self::AwaitExpression(expr) => expr.precedence(),
-            Self::NewExpression(expr) => expr.precedence(),
-            Self::CallExpression(expr) => expr.precedence(),
-            match_member_expression!(Self) => self.to_member_expression().precedence(),
+        match self.kind() {
+            ExpressionKind::SequenceExpression(expr) => expr.precedence(),
+            ExpressionKind::AssignmentExpression(expr) => expr.precedence(),
+            ExpressionKind::YieldExpression(expr) => expr.precedence(),
+            ExpressionKind::ConditionalExpression(expr) => expr.precedence(),
+            ExpressionKind::LogicalExpression(expr) => expr.precedence(),
+            ExpressionKind::BinaryExpression(expr) => expr.precedence(),
+            ExpressionKind::UnaryExpression(expr) => expr.precedence(),
+            ExpressionKind::UpdateExpression(expr) => expr.precedence(),
+            ExpressionKind::AwaitExpression(expr) => expr.precedence(),
+            ExpressionKind::NewExpression(expr) => expr.precedence(),
+            ExpressionKind::CallExpression(expr) => expr.precedence(),
+            ExpressionKind::ComputedMemberExpression(expr) => expr.precedence(),
+            ExpressionKind::StaticMemberExpression(expr) => expr.precedence(),
+            ExpressionKind::PrivateFieldExpression(expr) => expr.precedence(),
             _ => panic!("All cases should be covered"),
         }
     }

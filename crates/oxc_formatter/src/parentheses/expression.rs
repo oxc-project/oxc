@@ -362,8 +362,8 @@ impl NeedsParentheses<'_> for AstNode<'_, CallExpression<'_>> {
                 // when the leftmost expression is not a class expression or a function expression
                 callee_span != leftmost.span()
                     && matches!(
-                        leftmost.as_ref(),
-                        Expression::ClassExpression(_) | Expression::FunctionExpression(_)
+                        leftmost.as_ref().tag(),
+                        ExpressionTag::ClassExpression | ExpressionTag::FunctionExpression
                     )
             }
             _ => self.is_new_callee(),
@@ -941,28 +941,28 @@ impl NeedsParentheses<'_> for AstNode<'_, TSNonNullExpression<'_>> {
 /// The grammar is `extends LeftHandSideExpression`.
 /// So most variants below are REQUIRED, without parens the output is a syntax error (e.g. `extends a + b`).
 fn class_extends_needs_parens_through_non_null(expression: &Expression<'_>) -> bool {
-    match expression {
-        Expression::TSNonNullExpression(non_null) => {
+    match expression.kind() {
+        ExpressionKind::TSNonNullExpression(non_null) => {
             class_extends_needs_parens_through_non_null(&non_null.expression)
         }
-        Expression::ClassExpression(class) => !class.decorators.is_empty(),
-        Expression::ArrowFunctionExpression(_)
-        | Expression::AssignmentExpression(_)
-        | Expression::AwaitExpression(_)
-        | Expression::BinaryExpression(_)
-        | Expression::ConditionalExpression(_)
-        | Expression::LogicalExpression(_)
-        | Expression::SequenceExpression(_)
-        | Expression::UnaryExpression(_)
-        | Expression::UpdateExpression(_)
-        | Expression::YieldExpression(_)
+        ExpressionKind::ClassExpression(class) => !class.decorators.is_empty(),
+        ExpressionKind::ArrowFunctionExpression(_)
+        | ExpressionKind::AssignmentExpression(_)
+        | ExpressionKind::AwaitExpression(_)
+        | ExpressionKind::BinaryExpression(_)
+        | ExpressionKind::ConditionalExpression(_)
+        | ExpressionKind::LogicalExpression(_)
+        | ExpressionKind::SequenceExpression(_)
+        | ExpressionKind::UnaryExpression(_)
+        | ExpressionKind::UpdateExpression(_)
+        | ExpressionKind::YieldExpression(_)
         // NOTE: These three are readability style only, since they are LeftHandSideExpressions and parse bare:
         // - `ObjectExpression` (`extends {} {}`, confusable with the class body)
         // - `NewExpression` (`extends new A() {}`, confusable with a constructor call)
         // - `TaggedTemplateExpression` (`extends tag`x` {}`, confusable with a template literal)
-        | Expression::ObjectExpression(_)
-        | Expression::NewExpression(_)
-        | Expression::TaggedTemplateExpression(_) => true,
+        | ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::NewExpression(_)
+        | ExpressionKind::TaggedTemplateExpression(_) => true,
         _ => false,
     }
 }
@@ -1040,15 +1040,17 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
 }
 
 fn member_chain_callee_needs_parens(e: &Expression) -> bool {
-    std::iter::successors(Some(e), |e| match e {
-        Expression::ComputedMemberExpression(e) => Some(&e.object),
-        Expression::StaticMemberExpression(e) => Some(&e.object),
-        Expression::PrivateFieldExpression(e) => Some(&e.object),
-        Expression::TaggedTemplateExpression(e) => Some(&e.tag),
-        Expression::TSNonNullExpression(e) => Some(&e.expression),
+    std::iter::successors(Some(e), |e| match e.kind() {
+        ExpressionKind::ComputedMemberExpression(e) => Some(&e.object),
+        ExpressionKind::StaticMemberExpression(e) => Some(&e.object),
+        ExpressionKind::PrivateFieldExpression(e) => Some(&e.object),
+        ExpressionKind::TaggedTemplateExpression(e) => Some(&e.tag),
+        ExpressionKind::TSNonNullExpression(e) => Some(&e.expression),
         _ => None,
     })
-    .any(|object| matches!(object, Expression::CallExpression(_) | Expression::ImportExpression(_)))
+    .any(|object| {
+        matches!(object.tag(), ExpressionTag::CallExpression | ExpressionTag::ImportExpression)
+    })
 }
 
 #[derive(Clone, Copy)]
@@ -1130,9 +1132,9 @@ fn is_first_in_statement(
                     if mode == FirstInStatementMode::ExpressionStatementOrArrow {
                         if is_not_first_iteration
                             && matches!(
-                                stmt.expression,
-                                Expression::SequenceExpression(_)
-                                    | Expression::AssignmentExpression(_)
+                                stmt.expression.tag(),
+                                ExpressionTag::SequenceExpression
+                                    | ExpressionTag::AssignmentExpression
                             )
                         {
                             // The original node doesn't need parens,
@@ -1239,8 +1241,8 @@ fn ts_as_or_satisfies_needs_parens(
         AstNodes::ExportDefaultDeclaration(_) => {
             let leftmost = ExpressionLeftSide::leftmost(inner);
             matches!(
-                leftmost.as_ref(),
-                Expression::FunctionExpression(_) | Expression::ClassExpression(_)
+                leftmost.as_ref().tag(),
+                ExpressionTag::FunctionExpression | ExpressionTag::ClassExpression
             ) && !matches!(leftmost.parent(), AstNodes::TaggedTemplateExpression(_))
                 && !leftmost.is_call_like_callee()
         }

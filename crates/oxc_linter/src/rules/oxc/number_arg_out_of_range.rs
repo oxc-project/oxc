@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -64,7 +64,12 @@ impl Rule for NumberArgOutOfRange {
             return;
         };
 
-        if let Some(Argument::NumericLiteral(literal)) = expr.arguments.first() {
+        if let Some(literal) = expr
+            .arguments
+            .first()
+            .and_then(|arg| arg.as_expression())
+            .and_then(|e| e.as_numeric_literal())
+        {
             let value = literal.value;
             match member.static_property_name() {
                 Some(name @ "toString") if !(2.0_f64..=36.0_f64).contains(&value) => {

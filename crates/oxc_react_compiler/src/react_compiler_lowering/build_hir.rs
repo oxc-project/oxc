@@ -907,8 +907,8 @@ fn lower_member_expression_impl<'a>(
     member: &oxc::MemberExpression<'a>,
     lowered_object: Option<Place>,
 ) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
-    match member {
-        oxc::MemberExpression::StaticMemberExpression(m) => {
+    match member.kind() {
+        oxc::MemberExpressionKind::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let object = match lowered_object {
                 Some(obj) => obj,
@@ -926,14 +926,14 @@ fn lower_member_expression_impl<'a>(
                 value,
             })
         }
-        oxc::MemberExpression::ComputedMemberExpression(m) => {
+        oxc::MemberExpressionKind::ComputedMemberExpression(m) => {
             let span = Some(m.span);
             let object = match lowered_object {
                 Some(obj) => obj,
                 None => lower_expression_to_temporary(builder, &m.object)?,
             };
             // A numeric computed index is treated as a PropertyLoad (matches TS).
-            if let oxc::Expression::NumericLiteral(lit) = &m.expression {
+            if let oxc::ExpressionKind::NumericLiteral(lit) = m.expression.kind() {
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
                 let value = InstructionValue::PropertyLoad {
                     object: object.clone(),
@@ -958,7 +958,7 @@ fn lower_member_expression_impl<'a>(
                 value,
             })
         }
-        oxc::MemberExpression::PrivateFieldExpression(m) => {
+        oxc::MemberExpressionKind::PrivateFieldExpression(m) => {
             let span = Some(m.span);
             let object = match lowered_object {
                 Some(obj) => obj,
@@ -1088,8 +1088,11 @@ fn lower_member_expression_from_simple_target<'a>(
     builder: &mut HirBuilder<'a, '_>,
     target: &oxc::SimpleAssignmentTarget<'a>,
 ) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
-    match target {
-        oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
+    let oxc::SimpleAssignmentTarget::MemberExpression(member) = target else {
+        unreachable!("lower_member_expression_from_simple_target called on a non-member target")
+    };
+    match member.kind() {
+        oxc::MemberExpressionKind::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
             let prop_literal = PropertyLiteral::String(m.property.name);
@@ -1104,10 +1107,10 @@ fn lower_member_expression_from_simple_target<'a>(
                 value,
             })
         }
-        oxc::SimpleAssignmentTarget::ComputedMemberExpression(m) => {
+        oxc::MemberExpressionKind::ComputedMemberExpression(m) => {
             let span = Some(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
-            if let oxc::Expression::NumericLiteral(lit) = &m.expression {
+            if let oxc::ExpressionKind::NumericLiteral(lit) = m.expression.kind() {
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
                 let value = InstructionValue::PropertyLoad {
                     object: object.clone(),
@@ -1132,7 +1135,7 @@ fn lower_member_expression_from_simple_target<'a>(
                 value,
             })
         }
-        oxc::SimpleAssignmentTarget::PrivateFieldExpression(m) => {
+        oxc::MemberExpressionKind::PrivateFieldExpression(m) => {
             let span = Some(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
             builder.record_error(
@@ -1145,9 +1148,6 @@ fn lower_member_expression_from_simple_target<'a>(
                 property: MemberProperty::Literal(PropertyLiteral::String(Ident::empty())),
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
             })
-        }
-        _ => {
-            unreachable!("lower_member_expression_from_simple_target called on a non-member target")
         }
     }
 }
@@ -1737,8 +1737,11 @@ fn lower_member_assignment_target<'a>(
         )?;
         return Ok(None);
     }
-    match target {
-        oxc::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+    let oxc::SimpleAssignmentTarget::MemberExpression(member) = target else {
+        unreachable!("lower_member_assignment_target called on a non-member target")
+    };
+    match member.kind() {
+        oxc::MemberExpressionKind::StaticMemberExpression(member) => {
             let object = lower_expression_to_temporary(builder, &member.object)?;
             let temp = lower_value_to_temporary(
                 builder,
@@ -1751,11 +1754,11 @@ fn lower_member_assignment_target<'a>(
             )?;
             Ok(Some(temp))
         }
-        oxc::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+        oxc::MemberExpressionKind::ComputedMemberExpression(member) => {
             let object = lower_expression_to_temporary(builder, &member.object)?;
             // A numeric computed index is treated as a PropertyStore (matches the
             // original `member.computed && NumericLiteral` branch).
-            if let oxc::Expression::NumericLiteral(num) = &member.expression {
+            if let oxc::ExpressionKind::NumericLiteral(num) = member.expression.kind() {
                 let temp = lower_value_to_temporary(
                     builder,
                     InstructionValue::PropertyStore {
@@ -1779,7 +1782,7 @@ fn lower_member_assignment_target<'a>(
             )?;
             Ok(Some(temp))
         }
-        oxc::SimpleAssignmentTarget::PrivateFieldExpression(member) => {
+        oxc::MemberExpressionKind::PrivateFieldExpression(member) => {
             // Babel modeled `a.#b = v` as a non-computed MemberExpression with a
             // PrivateName property; the original `lower_assignment` member arm hit
             // the generic property `_` branch and bailed with this Todo.
@@ -1794,7 +1797,6 @@ fn lower_member_assignment_target<'a>(
             )?;
             Ok(Some(temp))
         }
-        _ => unreachable!("lower_member_assignment_target called on a non-member target"),
     }
 }
 
@@ -1887,9 +1889,7 @@ fn lower_assignment_target<'a>(
                 }
             }
         }
-        oxc::AssignmentTarget::StaticMemberExpression(_)
-        | oxc::AssignmentTarget::ComputedMemberExpression(_)
-        | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+        oxc::AssignmentTarget::MemberExpression(_) => {
             let simple = target.as_simple_assignment_target().unwrap();
             lower_member_assignment_target(builder, span, kind, simple, value)
         }
@@ -2287,9 +2287,7 @@ fn lower_assignment_target<'a>(
                                             "ObjectPattern"
                                         }
                                         oxc::AssignmentTarget::ArrayAssignmentTarget(_) => "ArrayPattern",
-                                        oxc::AssignmentTarget::StaticMemberExpression(_)
-                                        | oxc::AssignmentTarget::ComputedMemberExpression(_)
-                                        | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+                                        oxc::AssignmentTarget::MemberExpression(_) => {
                                             "MemberExpression"
                                         }
                                         _ => "unknown",
@@ -2572,15 +2570,15 @@ fn lower_assignment_target_default<'a>(
 /// receiver spine is optional. This is the predicate Babel used to decide whether
 /// a node became `Optional{Member,Call}Expression` (vs a plain member/call).
 fn expr_contains_optional(expr: &oxc::Expression) -> bool {
-    match expr {
-        oxc::Expression::CallExpression(c) => c.optional || expr_contains_optional(&c.callee),
-        oxc::Expression::StaticMemberExpression(m) => {
+    match expr.kind() {
+        oxc::ExpressionKind::CallExpression(c) => c.optional || expr_contains_optional(&c.callee),
+        oxc::ExpressionKind::StaticMemberExpression(m) => {
             m.optional || expr_contains_optional(&m.object)
         }
-        oxc::Expression::ComputedMemberExpression(m) => {
+        oxc::ExpressionKind::ComputedMemberExpression(m) => {
             m.optional || expr_contains_optional(&m.object)
         }
-        oxc::Expression::PrivateFieldExpression(p) => {
+        oxc::ExpressionKind::PrivateFieldExpression(p) => {
             p.optional || expr_contains_optional(&p.object)
         }
         _ => false,
@@ -2608,11 +2606,8 @@ fn lower_chain_expression<'a>(
             // expression (span-transparent); preserve that, keeping chain awareness.
             lower_chain_subexpr(builder, &ts.expression)
         }
-        // The `@inherit MemberExpression` variants of `ChainElement`.
-        oxc::ChainElement::StaticMemberExpression(_)
-        | oxc::ChainElement::ComputedMemberExpression(_)
-        | oxc::ChainElement::PrivateFieldExpression(_) => {
-            let member = chain.expression.as_member_expression().unwrap();
+        // The `@inherit MemberExpression` variant of `ChainElement`.
+        oxc::ChainElement::MemberExpression(member) => {
             let place = lower_optional_member_expression_impl(builder, member, None)?.1;
             Ok(InstructionValue::LoadLocal { span: place.span, place })
         }
@@ -2631,20 +2626,22 @@ fn lower_chain_subexpr<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &oxc::Expression<'a>,
 ) -> Result<InstructionValue<'a>, OxcDiagnostic> {
-    match expr {
-        oxc::Expression::StaticMemberExpression(_)
-        | oxc::Expression::ComputedMemberExpression(_)
-        | oxc::Expression::PrivateFieldExpression(_)
+    match expr.kind() {
+        oxc::ExpressionKind::StaticMemberExpression(_)
+        | oxc::ExpressionKind::ComputedMemberExpression(_)
+        | oxc::ExpressionKind::PrivateFieldExpression(_)
             if expr_contains_optional(expr) =>
         {
             let member = expr.as_member_expression().unwrap();
             let place = lower_optional_member_expression_impl(builder, member, None)?.1;
             Ok(InstructionValue::LoadLocal { span: place.span, place })
         }
-        oxc::Expression::CallExpression(call) if expr_contains_optional(expr) => {
+        oxc::ExpressionKind::CallExpression(call) if expr_contains_optional(expr) => {
             lower_optional_call_expression_impl(builder, call, None)
         }
-        oxc::Expression::TSNonNullExpression(ts) => lower_chain_subexpr(builder, &ts.expression),
+        oxc::ExpressionKind::TSNonNullExpression(ts) => {
+            lower_chain_subexpr(builder, &ts.expression)
+        }
         _ => lower_expression(builder, expr),
     }
 }
@@ -2695,10 +2692,10 @@ fn lower_optional_member_expression_impl<'a>(
     let object_expr = member.object();
     let mut object: Option<Place> = None;
     let test_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
-        match object_expr {
-            oxc::Expression::StaticMemberExpression(_)
-            | oxc::Expression::ComputedMemberExpression(_)
-            | oxc::Expression::PrivateFieldExpression(_)
+        match object_expr.kind() {
+            oxc::ExpressionKind::StaticMemberExpression(_)
+            | oxc::ExpressionKind::ComputedMemberExpression(_)
+            | oxc::ExpressionKind::PrivateFieldExpression(_)
                 if expr_contains_optional(object_expr) =>
             {
                 let object_member = object_expr.as_member_expression().unwrap();
@@ -2706,14 +2703,16 @@ fn lower_optional_member_expression_impl<'a>(
                     lower_optional_member_expression_impl(builder, object_member, Some(alternate))?;
                 object = Some(value);
             }
-            oxc::Expression::CallExpression(opt_call) if expr_contains_optional(object_expr) => {
+            oxc::ExpressionKind::CallExpression(opt_call)
+                if expr_contains_optional(object_expr) =>
+            {
                 let value =
                     lower_optional_call_expression_impl(builder, opt_call, Some(alternate))?;
                 let value_place = lower_value_to_temporary(builder, value)?;
                 object = Some(value_place);
             }
-            other => {
-                object = Some(lower_expression_to_temporary(builder, other)?);
+            _ => {
+                object = Some(lower_expression_to_temporary(builder, object_expr)?);
             }
         }
         let test_place = object.as_ref().unwrap().clone();
@@ -2810,16 +2809,18 @@ fn lower_optional_call_expression_impl<'a>(
     let mut callee_info: Option<CalleeInfo> = None;
 
     let test_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
-        match &call.callee {
-            oxc::Expression::CallExpression(opt_call) if expr_contains_optional(&call.callee) => {
+        match call.callee.kind() {
+            oxc::ExpressionKind::CallExpression(opt_call)
+                if expr_contains_optional(&call.callee) =>
+            {
                 let value =
                     lower_optional_call_expression_impl(builder, opt_call, Some(alternate))?;
                 let value_place = lower_value_to_temporary(builder, value)?;
                 callee_info = Some(CalleeInfo::CallExpression { callee: value_place });
             }
-            oxc::Expression::StaticMemberExpression(_)
-            | oxc::Expression::ComputedMemberExpression(_)
-            | oxc::Expression::PrivateFieldExpression(_)
+            oxc::ExpressionKind::StaticMemberExpression(_)
+            | oxc::ExpressionKind::ComputedMemberExpression(_)
+            | oxc::ExpressionKind::PrivateFieldExpression(_)
                 if expr_contains_optional(&call.callee) =>
             {
                 let callee_member = call.callee.as_member_expression().unwrap();
@@ -2827,9 +2828,9 @@ fn lower_optional_call_expression_impl<'a>(
                     lower_optional_member_expression_impl(builder, callee_member, Some(alternate))?;
                 callee_info = Some(CalleeInfo::MethodCall { receiver: obj, property: value });
             }
-            oxc::Expression::StaticMemberExpression(_)
-            | oxc::Expression::ComputedMemberExpression(_)
-            | oxc::Expression::PrivateFieldExpression(_) => {
+            oxc::ExpressionKind::StaticMemberExpression(_)
+            | oxc::ExpressionKind::ComputedMemberExpression(_)
+            | oxc::ExpressionKind::PrivateFieldExpression(_) => {
                 let callee_member = call.callee.as_member_expression().unwrap();
                 let lowered = lower_member_expression(builder, callee_member)?;
                 let property_place = lower_value_to_temporary(builder, lowered.value)?;
@@ -2838,8 +2839,8 @@ fn lower_optional_call_expression_impl<'a>(
                     property: property_place,
                 });
             }
-            other => {
-                let callee_place = lower_expression_to_temporary(builder, other)?;
+            _ => {
+                let callee_place = lower_expression_to_temporary(builder, &call.callee)?;
                 callee_info = Some(CalleeInfo::CallExpression { callee: callee_place });
             }
         }
@@ -3369,8 +3370,8 @@ fn lower_expression<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &oxc::Expression<'a>,
 ) -> Result<InstructionValue<'a>, OxcDiagnostic> {
-    match expr {
-        oxc::Expression::Identifier(ident) => {
+    match expr.kind() {
+        oxc::ExpressionKind::Identifier(ident) => {
             let span = Some(ident.span);
             let symbol = builder.scope().resolve_reference(ident);
             let place = lower_identifier(builder, ident.name, ident.span, symbol)?;
@@ -3380,22 +3381,22 @@ fn lower_expression<'a>(
                 Ok(InstructionValue::LoadLocal { place, span })
             }
         }
-        oxc::Expression::NullLiteral(lit) => {
+        oxc::ExpressionKind::NullLiteral(lit) => {
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Null, span: Some(lit.span) })
         }
-        oxc::Expression::BooleanLiteral(lit) => Ok(InstructionValue::Primitive {
+        oxc::ExpressionKind::BooleanLiteral(lit) => Ok(InstructionValue::Primitive {
             value: PrimitiveValue::Boolean(lit.value),
             span: Some(lit.span),
         }),
-        oxc::Expression::NumericLiteral(lit) => Ok(InstructionValue::Primitive {
+        oxc::ExpressionKind::NumericLiteral(lit) => Ok(InstructionValue::Primitive {
             value: PrimitiveValue::Number(FloatValue::new(lit.value)),
             span: Some(lit.span),
         }),
-        oxc::Expression::StringLiteral(lit) => Ok(InstructionValue::Primitive {
+        oxc::ExpressionKind::StringLiteral(lit) => Ok(InstructionValue::Primitive {
             value: PrimitiveValue::String(lit.value),
             span: Some(lit.span),
         }),
-        oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
+        oxc::ExpressionKind::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
             pattern: regexp.regex.pattern.text,
             flags: Str::from_str_in(
                 &regexp.regex.flags.to_string(),
@@ -3403,13 +3404,13 @@ fn lower_expression<'a>(
             ),
             span: Some(regexp.span),
         }),
-        oxc::Expression::BinaryExpression(bin) => {
+        oxc::ExpressionKind::BinaryExpression(bin) => {
             let span = Some(bin.span);
             let left = lower_expression_to_temporary(builder, &bin.left)?;
             let right = lower_expression_to_temporary(builder, &bin.right)?;
             Ok(InstructionValue::BinaryExpression { operator: bin.operator, left, right, span })
         }
-        oxc::Expression::UnaryExpression(unary) => {
+        oxc::ExpressionKind::UnaryExpression(unary) => {
             let span = Some(unary.span);
             match unary.operator {
                 oxc::UnaryOperator::Delete => {
@@ -3461,7 +3462,7 @@ fn lower_expression<'a>(
                 }
             }
         }
-        oxc::Expression::LogicalExpression(logical) => {
+        oxc::ExpressionKind::LogicalExpression(logical) => {
             let span = Some(logical.span);
             let continuation_block = builder.reserve(builder.current_block_kind());
             let continuation_id = continuation_block.id;
@@ -3543,13 +3544,13 @@ fn lower_expression<'a>(
 
             Ok(InstructionValue::LoadLocal { place: place.clone(), span: place.span })
         }
-        oxc::Expression::StaticMemberExpression(_)
-        | oxc::Expression::ComputedMemberExpression(_)
-        | oxc::Expression::PrivateFieldExpression(_) => {
+        oxc::ExpressionKind::StaticMemberExpression(_)
+        | oxc::ExpressionKind::ComputedMemberExpression(_)
+        | oxc::ExpressionKind::PrivateFieldExpression(_) => {
             let lowered = lower_member_expression(builder, expr.as_member_expression().unwrap())?;
             Ok(lowered.value)
         }
-        oxc::Expression::CallExpression(call) => {
+        oxc::ExpressionKind::CallExpression(call) => {
             let span = Some(call.span);
             if let Some(member) = call.callee.as_member_expression() {
                 let lowered = lower_member_expression(builder, member)?;
@@ -3562,7 +3563,7 @@ fn lower_expression<'a>(
                 Ok(InstructionValue::CallExpression { callee, args, span })
             }
         }
-        oxc::Expression::ConditionalExpression(cond) => {
+        oxc::ExpressionKind::ConditionalExpression(cond) => {
             let span = Some(cond.span);
             let continuation_block = builder.reserve(builder.current_block_kind());
             let continuation_id = continuation_block.id;
@@ -3636,7 +3637,7 @@ fn lower_expression<'a>(
 
             Ok(InstructionValue::LoadLocal { place: place.clone(), span: place.span })
         }
-        oxc::Expression::SequenceExpression(seq) => {
+        oxc::ExpressionKind::SequenceExpression(seq) => {
             let span = Some(seq.span);
 
             if seq.expressions.is_empty() {
@@ -3686,13 +3687,13 @@ fn lower_expression<'a>(
             );
             Ok(InstructionValue::LoadLocal { place, span })
         }
-        oxc::Expression::NewExpression(new_expr) => {
+        oxc::ExpressionKind::NewExpression(new_expr) => {
             let span = Some(new_expr.span);
             let callee = lower_expression_to_temporary(builder, &new_expr.callee)?;
             let args = lower_arguments(builder, &new_expr.arguments)?;
             Ok(InstructionValue::NewExpression { callee, args, span })
         }
-        oxc::Expression::TemplateLiteral(tmpl) => {
+        oxc::ExpressionKind::TemplateLiteral(tmpl) => {
             let span = Some(tmpl.span);
             let subexprs: Vec<Place> = tmpl
                 .expressions
@@ -3703,7 +3704,7 @@ fn lower_expression<'a>(
                 tmpl.quasis.iter().map(template_quasi_from_oxc).collect();
             Ok(InstructionValue::TemplateLiteral { subexprs, quasis, span })
         }
-        oxc::Expression::TaggedTemplateExpression(tagged) => {
+        oxc::ExpressionKind::TaggedTemplateExpression(tagged) => {
             let span = Some(tagged.span);
             // Upstream React Compiler bails on any interpolation here; the oxc port
             // instead lowers the tag plus every quasi and every `${...}`
@@ -3736,12 +3737,12 @@ fn lower_expression<'a>(
                 tagged.quasi.quasis.iter().map(template_quasi_from_oxc).collect();
             Ok(InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, span })
         }
-        oxc::Expression::AwaitExpression(await_expr) => {
+        oxc::ExpressionKind::AwaitExpression(await_expr) => {
             let span = Some(await_expr.span);
             let value = lower_expression_to_temporary(builder, &await_expr.argument)?;
             Ok(InstructionValue::Await { value, span })
         }
-        oxc::Expression::YieldExpression(yld) => {
+        oxc::ExpressionKind::YieldExpression(yld) => {
             let span = Some(yld.span);
             builder.record_error(
                 ErrorCategory::Todo
@@ -3750,12 +3751,12 @@ fn lower_expression<'a>(
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
-        oxc::Expression::ImportMeta(import_meta) => Ok(InstructionValue::MetaProperty {
+        oxc::ExpressionKind::ImportMeta(import_meta) => Ok(InstructionValue::MetaProperty {
             meta: static_ident!("import"),
             property: static_ident!("meta"),
             span: Some(import_meta.span),
         }),
-        oxc::Expression::NewTarget(new_target) => {
+        oxc::ExpressionKind::NewTarget(new_target) => {
             let span = Some(new_target.span);
             builder.record_error(
                 ErrorCategory::Todo
@@ -3766,7 +3767,7 @@ fn lower_expression<'a>(
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
-        oxc::Expression::ClassExpression(cls) => {
+        oxc::ExpressionKind::ClassExpression(cls) => {
             let span = Some(cls.span);
             builder.record_error(
                 ErrorCategory::Todo
@@ -3775,7 +3776,7 @@ fn lower_expression<'a>(
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
-        oxc::Expression::Super(sup) => {
+        oxc::ExpressionKind::Super(sup) => {
             let span = Some(sup.span);
             builder.record_error(
                 ErrorCategory::Todo
@@ -3784,7 +3785,7 @@ fn lower_expression<'a>(
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
-        oxc::Expression::ThisExpression(this) => {
+        oxc::ExpressionKind::ThisExpression(this) => {
             let span = Some(this.span);
             builder.record_error(
                 ErrorCategory::Todo
@@ -3793,7 +3794,7 @@ fn lower_expression<'a>(
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
-        oxc::Expression::ImportExpression(imp) => {
+        oxc::ExpressionKind::ImportExpression(imp) => {
             // oxc's `import(source, options?)` maps to Babel's
             // `CallExpression { callee: Import, arguments: [source] + options? }`.
             // The `Import` keyword callee bails (records an error), then the source
@@ -3813,7 +3814,7 @@ fn lower_expression<'a>(
             }
             Ok(InstructionValue::CallExpression { callee, args, span })
         }
-        oxc::Expression::PrivateInExpression(priv_in) => {
+        oxc::ExpressionKind::PrivateInExpression(priv_in) => {
             // `#f in obj` maps to Babel's `BinaryExpression { op: In, left: PrivateName, right }`.
             // The PrivateName left operand bails (records an error), then the right
             // operand is lowered.
@@ -3827,12 +3828,10 @@ fn lower_expression<'a>(
                 span,
             })
         }
-        oxc::Expression::UpdateExpression(update) => {
+        oxc::ExpressionKind::UpdateExpression(update) => {
             let span = Some(update.span);
             match &update.argument {
-                oxc::SimpleAssignmentTarget::StaticMemberExpression(_)
-                | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
-                | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+                oxc::SimpleAssignmentTarget::MemberExpression(_) => {
                     let binary_op = match update.operator {
                         oxc::UpdateOperator::Increment => BinaryOperator::Addition,
                         oxc::UpdateOperator::Decrement => BinaryOperator::Subtraction,
@@ -3981,21 +3980,21 @@ fn lower_expression<'a>(
         // `x as T` / `x satisfies T` / `<T>x` lower the inner expression to a
         // temporary and emit a `TypeCastExpression` carrying the type metadata,
         // mirroring the original Babel logic.
-        oxc::Expression::TSAsExpression(ts) => lower_type_cast_expression(
+        oxc::ExpressionKind::TSAsExpression(ts) => lower_type_cast_expression(
             builder,
             ts.span,
             &ts.expression,
             &ts.type_annotation,
             TypeCast::As,
         ),
-        oxc::Expression::TSSatisfiesExpression(ts) => lower_type_cast_expression(
+        oxc::ExpressionKind::TSSatisfiesExpression(ts) => lower_type_cast_expression(
             builder,
             ts.span,
             &ts.expression,
             &ts.type_annotation,
             TypeCast::Satisfies,
         ),
-        oxc::Expression::TSTypeAssertion(ts) => lower_type_cast_expression(
+        oxc::ExpressionKind::TSTypeAssertion(ts) => lower_type_cast_expression(
             builder,
             ts.span,
             &ts.expression,
@@ -4004,21 +4003,23 @@ fn lower_expression<'a>(
         ),
         // `x!` and `x<T>` unwrap to their inner expression (the original also just
         // unwraps these).
-        oxc::Expression::TSNonNullExpression(ts) => lower_expression(builder, &ts.expression),
-        oxc::Expression::TSInstantiationExpression(ts) => lower_expression(builder, &ts.expression),
+        oxc::ExpressionKind::TSNonNullExpression(ts) => lower_expression(builder, &ts.expression),
+        oxc::ExpressionKind::TSInstantiationExpression(ts) => {
+            lower_expression(builder, &ts.expression)
+        }
         // oxc parses with `preserve_parens: true`, so `(expr)` is a real
         // `ParenthesizedExpression` node. The original Babel AST never carried
         // paren nodes (convert_ast stripped them), so unwrap to the inner
         // expression to reproduce the original HIR.
-        oxc::Expression::ParenthesizedExpression(paren) => {
+        oxc::ExpressionKind::ParenthesizedExpression(paren) => {
             lower_expression(builder, &paren.expression)
         }
-        oxc::Expression::V8IntrinsicExpression(_) => {
+        oxc::ExpressionKind::V8IntrinsicExpression(_) => {
             unreachable!(
                 "V8IntrinsicExpression: oxc does not emit this without ParseOptions::allow_v8_intrinsics"
             )
         }
-        oxc::Expression::ObjectExpression(obj) => {
+        oxc::ExpressionKind::ObjectExpression(obj) => {
             let span = Some(obj.span);
             let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
             for prop in &obj.properties {
@@ -4056,7 +4057,7 @@ fn lower_expression<'a>(
             }
             Ok(InstructionValue::ObjectExpression { properties, span })
         }
-        oxc::Expression::ArrayExpression(arr) => {
+        oxc::ExpressionKind::ArrayExpression(arr) => {
             let span = Some(arr.span);
             let mut elements: Vec<ArrayElement> = Vec::new();
             for element in &arr.elements {
@@ -4077,22 +4078,24 @@ fn lower_expression<'a>(
             }
             Ok(InstructionValue::ArrayExpression { elements, span })
         }
-        oxc::Expression::JSXElement(jsx_element) => lower_jsx_element_expr(builder, jsx_element),
-        oxc::Expression::JSXFragment(jsx_fragment) => {
+        oxc::ExpressionKind::JSXElement(jsx_element) => {
+            lower_jsx_element_expr(builder, jsx_element)
+        }
+        oxc::ExpressionKind::JSXFragment(jsx_fragment) => {
             lower_jsx_fragment_expr(builder, jsx_fragment)
         }
-        oxc::Expression::ChainExpression(chain) => lower_chain_expression(builder, chain),
-        oxc::Expression::ArrowFunctionExpression(arrow) => lower_function_to_value(
+        oxc::ExpressionKind::ChainExpression(chain) => lower_chain_expression(builder, chain),
+        oxc::ExpressionKind::ArrowFunctionExpression(arrow) => lower_function_to_value(
             builder,
             FunctionNode::Arrow(arrow),
             FunctionExpressionType::ArrowFunctionExpression,
         ),
-        oxc::Expression::FunctionExpression(func) => lower_function_to_value(
+        oxc::ExpressionKind::FunctionExpression(func) => lower_function_to_value(
             builder,
             FunctionNode::Function(func),
             FunctionExpressionType::FunctionExpression,
         ),
-        oxc::Expression::AssignmentExpression(assign) => {
+        oxc::ExpressionKind::AssignmentExpression(assign) => {
             lower_assignment_expression(builder, assign)
         }
         _ => {
@@ -4185,14 +4188,11 @@ fn lower_assignment_expression<'a>(
                     }
                 }
             }
-            oxc::AssignmentTarget::StaticMemberExpression(_)
-            | oxc::AssignmentTarget::ComputedMemberExpression(_)
-            | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
-                let simple = assign.left.as_simple_assignment_target().unwrap();
+            oxc::AssignmentTarget::MemberExpression(target_member) => {
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
-                let left_span = Some(simple.span());
-                let temp = match simple {
-                    oxc::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+                let left_span = Some(target_member.span());
+                let temp = match target_member.kind() {
+                    oxc::MemberExpressionKind::StaticMemberExpression(member) => {
                         let object = lower_expression_to_temporary(builder, &member.object)?;
                         lower_value_to_temporary(
                             builder,
@@ -4204,9 +4204,9 @@ fn lower_assignment_expression<'a>(
                             },
                         )?
                     }
-                    oxc::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+                    oxc::MemberExpressionKind::ComputedMemberExpression(member) => {
                         let object = lower_expression_to_temporary(builder, &member.object)?;
-                        if let oxc::Expression::NumericLiteral(num) = &member.expression {
+                        if let oxc::ExpressionKind::NumericLiteral(num) = member.expression.kind() {
                             lower_value_to_temporary(
                                 builder,
                                 InstructionValue::PropertyStore {
@@ -4229,7 +4229,7 @@ fn lower_assignment_expression<'a>(
                             )?
                         }
                     }
-                    oxc::SimpleAssignmentTarget::PrivateFieldExpression(member) => {
+                    oxc::MemberExpressionKind::PrivateFieldExpression(member) => {
                         // Babel modeled `a.#b = x` as a non-computed MemberExpression
                         // whose property is a PrivateName; the original fell to the
                         // generic property arm, lowering the PrivateName (which bails
@@ -4246,7 +4246,6 @@ fn lower_assignment_expression<'a>(
                             },
                         )?
                     }
-                    _ => unreachable!(),
                 };
                 Ok(InstructionValue::LoadLocal { place: temp.clone(), span: temp.span })
             }
@@ -4367,9 +4366,7 @@ fn lower_assignment_expression<'a>(
                     }
                 }
             }
-            oxc::AssignmentTarget::StaticMemberExpression(_)
-            | oxc::AssignmentTarget::ComputedMemberExpression(_)
-            | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+            oxc::AssignmentTarget::MemberExpression(_) => {
                 let simple = assign.left.as_simple_assignment_target().unwrap();
                 let member_span = Some(simple.span());
                 let lowered = lower_member_expression_from_simple_target(builder, simple)?;
@@ -4941,8 +4938,8 @@ fn collect_fbt_sub_tags_from_expr(
     plural_spans: &mut Vec<Option<Span>>,
     pronoun_spans: &mut Vec<Option<Span>>,
 ) {
-    match expr {
-        oxc::Expression::JSXElement(el) => {
+    match expr.kind() {
+        oxc::ExpressionKind::JSXElement(el) => {
             collect_fbt_sub_tags_from_element(
                 builder,
                 el,
@@ -4952,7 +4949,7 @@ fn collect_fbt_sub_tags_from_expr(
                 pronoun_spans,
             );
         }
-        oxc::Expression::JSXFragment(frag) => {
+        oxc::ExpressionKind::JSXFragment(frag) => {
             collect_fbt_sub_tags(
                 builder,
                 &frag.children,
@@ -4962,7 +4959,7 @@ fn collect_fbt_sub_tags_from_expr(
                 pronoun_spans,
             );
         }
-        oxc::Expression::ConditionalExpression(cond) => {
+        oxc::ExpressionKind::ConditionalExpression(cond) => {
             collect_fbt_sub_tags_from_expr(
                 builder,
                 &cond.consequent,
@@ -4980,7 +4977,7 @@ fn collect_fbt_sub_tags_from_expr(
                 pronoun_spans,
             );
         }
-        oxc::Expression::LogicalExpression(log) => {
+        oxc::ExpressionKind::LogicalExpression(log) => {
             collect_fbt_sub_tags_from_expr(
                 builder,
                 &log.left,
@@ -4998,7 +4995,7 @@ fn collect_fbt_sub_tags_from_expr(
                 pronoun_spans,
             );
         }
-        oxc::Expression::ParenthesizedExpression(paren) => {
+        oxc::ExpressionKind::ParenthesizedExpression(paren) => {
             collect_fbt_sub_tags_from_expr(
                 builder,
                 &paren.expression,
@@ -5008,7 +5005,7 @@ fn collect_fbt_sub_tags_from_expr(
                 pronoun_spans,
             );
         }
-        oxc::Expression::ArrowFunctionExpression(arrow) => {
+        oxc::ExpressionKind::ArrowFunctionExpression(arrow) => {
             if arrow.expression {
                 if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
                 {
@@ -5032,7 +5029,7 @@ fn collect_fbt_sub_tags_from_expr(
                 );
             }
         }
-        oxc::Expression::CallExpression(call) => {
+        oxc::ExpressionKind::CallExpression(call) => {
             for arg in &call.arguments {
                 if let Some(arg_expr) = arg.as_expression() {
                     collect_fbt_sub_tags_from_expr(
@@ -5220,50 +5217,50 @@ fn decode_jsx_entities(s: &str) -> Cow<'_, str> {
 /// (e.g. `StaticMemberExpression`/`ComputedMemberExpression`/`PrivateFieldExpression`
 /// → "MemberExpression"; `ChainExpression` → "OptionalMemberExpression").
 fn expression_type_name(expr: &oxc::Expression) -> &'static str {
-    match expr {
-        oxc::Expression::Identifier(_) => "Identifier",
-        oxc::Expression::StringLiteral(_) => "StringLiteral",
-        oxc::Expression::NumericLiteral(_) => "NumericLiteral",
-        oxc::Expression::BooleanLiteral(_) => "BooleanLiteral",
-        oxc::Expression::NullLiteral(_) => "NullLiteral",
-        oxc::Expression::BigIntLiteral(_) => "BigIntLiteral",
-        oxc::Expression::RegExpLiteral(_) => "RegExpLiteral",
-        oxc::Expression::CallExpression(_) => "CallExpression",
-        oxc::Expression::StaticMemberExpression(_)
-        | oxc::Expression::ComputedMemberExpression(_)
-        | oxc::Expression::PrivateFieldExpression(_) => "MemberExpression",
-        oxc::Expression::ChainExpression(_) => "OptionalMemberExpression",
-        oxc::Expression::BinaryExpression(_) => "BinaryExpression",
-        oxc::Expression::PrivateInExpression(_) => "BinaryExpression",
-        oxc::Expression::LogicalExpression(_) => "LogicalExpression",
-        oxc::Expression::UnaryExpression(_) => "UnaryExpression",
-        oxc::Expression::UpdateExpression(_) => "UpdateExpression",
-        oxc::Expression::ConditionalExpression(_) => "ConditionalExpression",
-        oxc::Expression::AssignmentExpression(_) => "AssignmentExpression",
-        oxc::Expression::SequenceExpression(_) => "SequenceExpression",
-        oxc::Expression::ArrowFunctionExpression(_) => "ArrowFunctionExpression",
-        oxc::Expression::FunctionExpression(_) => "FunctionExpression",
-        oxc::Expression::ObjectExpression(_) => "ObjectExpression",
-        oxc::Expression::ArrayExpression(_) => "ArrayExpression",
-        oxc::Expression::NewExpression(_) => "NewExpression",
-        oxc::Expression::TemplateLiteral(_) => "TemplateLiteral",
-        oxc::Expression::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
-        oxc::Expression::AwaitExpression(_) => "AwaitExpression",
-        oxc::Expression::YieldExpression(_) => "YieldExpression",
-        oxc::Expression::ImportMeta(_) | oxc::Expression::NewTarget(_) => "MetaProperty",
-        oxc::Expression::ClassExpression(_) => "ClassExpression",
-        oxc::Expression::Super(_) => "Super",
-        oxc::Expression::ImportExpression(_) => "Import",
-        oxc::Expression::ThisExpression(_) => "ThisExpression",
-        oxc::Expression::ParenthesizedExpression(_) => "ParenthesizedExpression",
-        oxc::Expression::JSXElement(_) => "JSXElement",
-        oxc::Expression::JSXFragment(_) => "JSXFragment",
-        oxc::Expression::TSAsExpression(_) => "TSAsExpression",
-        oxc::Expression::TSSatisfiesExpression(_) => "TSSatisfiesExpression",
-        oxc::Expression::TSNonNullExpression(_) => "TSNonNullExpression",
-        oxc::Expression::TSTypeAssertion(_) => "TSTypeAssertion",
-        oxc::Expression::TSInstantiationExpression(_) => "TSInstantiationExpression",
-        oxc::Expression::V8IntrinsicExpression(_) => "V8IntrinsicExpression",
+    match expr.kind() {
+        oxc::ExpressionKind::Identifier(_) => "Identifier",
+        oxc::ExpressionKind::StringLiteral(_) => "StringLiteral",
+        oxc::ExpressionKind::NumericLiteral(_) => "NumericLiteral",
+        oxc::ExpressionKind::BooleanLiteral(_) => "BooleanLiteral",
+        oxc::ExpressionKind::NullLiteral(_) => "NullLiteral",
+        oxc::ExpressionKind::BigIntLiteral(_) => "BigIntLiteral",
+        oxc::ExpressionKind::RegExpLiteral(_) => "RegExpLiteral",
+        oxc::ExpressionKind::CallExpression(_) => "CallExpression",
+        oxc::ExpressionKind::StaticMemberExpression(_)
+        | oxc::ExpressionKind::ComputedMemberExpression(_)
+        | oxc::ExpressionKind::PrivateFieldExpression(_) => "MemberExpression",
+        oxc::ExpressionKind::ChainExpression(_) => "OptionalMemberExpression",
+        oxc::ExpressionKind::BinaryExpression(_) => "BinaryExpression",
+        oxc::ExpressionKind::PrivateInExpression(_) => "BinaryExpression",
+        oxc::ExpressionKind::LogicalExpression(_) => "LogicalExpression",
+        oxc::ExpressionKind::UnaryExpression(_) => "UnaryExpression",
+        oxc::ExpressionKind::UpdateExpression(_) => "UpdateExpression",
+        oxc::ExpressionKind::ConditionalExpression(_) => "ConditionalExpression",
+        oxc::ExpressionKind::AssignmentExpression(_) => "AssignmentExpression",
+        oxc::ExpressionKind::SequenceExpression(_) => "SequenceExpression",
+        oxc::ExpressionKind::ArrowFunctionExpression(_) => "ArrowFunctionExpression",
+        oxc::ExpressionKind::FunctionExpression(_) => "FunctionExpression",
+        oxc::ExpressionKind::ObjectExpression(_) => "ObjectExpression",
+        oxc::ExpressionKind::ArrayExpression(_) => "ArrayExpression",
+        oxc::ExpressionKind::NewExpression(_) => "NewExpression",
+        oxc::ExpressionKind::TemplateLiteral(_) => "TemplateLiteral",
+        oxc::ExpressionKind::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
+        oxc::ExpressionKind::AwaitExpression(_) => "AwaitExpression",
+        oxc::ExpressionKind::YieldExpression(_) => "YieldExpression",
+        oxc::ExpressionKind::ImportMeta(_) | oxc::ExpressionKind::NewTarget(_) => "MetaProperty",
+        oxc::ExpressionKind::ClassExpression(_) => "ClassExpression",
+        oxc::ExpressionKind::Super(_) => "Super",
+        oxc::ExpressionKind::ImportExpression(_) => "Import",
+        oxc::ExpressionKind::ThisExpression(_) => "ThisExpression",
+        oxc::ExpressionKind::ParenthesizedExpression(_) => "ParenthesizedExpression",
+        oxc::ExpressionKind::JSXElement(_) => "JSXElement",
+        oxc::ExpressionKind::JSXFragment(_) => "JSXFragment",
+        oxc::ExpressionKind::TSAsExpression(_) => "TSAsExpression",
+        oxc::ExpressionKind::TSSatisfiesExpression(_) => "TSSatisfiesExpression",
+        oxc::ExpressionKind::TSNonNullExpression(_) => "TSNonNullExpression",
+        oxc::ExpressionKind::TSTypeAssertion(_) => "TSTypeAssertion",
+        oxc::ExpressionKind::TSInstantiationExpression(_) => "TSInstantiationExpression",
+        oxc::ExpressionKind::V8IntrinsicExpression(_) => "V8IntrinsicExpression",
     }
 }
 
@@ -5299,8 +5296,8 @@ fn lower_object_method<'a>(
     let key = lower_object_property_key(builder, &method.key, method.computed)?
         .unwrap_or(ObjectPropertyKey::String { name: Ident::empty() });
 
-    let func = match &method.value {
-        oxc::Expression::FunctionExpression(func) => func,
+    let func = match method.value.kind() {
+        oxc::ExpressionKind::FunctionExpression(func) => func,
         _ => unreachable!("object method value is always a FunctionExpression in oxc"),
     };
     let body = func.body.as_ref().expect("object method always has a body");
@@ -5328,19 +5325,33 @@ fn lower_object_property_key<'a>(
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
-        oxc::PropertyKey::StringLiteral(lit) => {
-            Ok(Some(ObjectPropertyKey::String { name: Ident::from(lit.value.as_str()) }))
-        }
+        oxc::PropertyKey::Expression(key_expr) => match key_expr.kind() {
+            oxc::ExpressionKind::StringLiteral(lit) => {
+                Ok(Some(ObjectPropertyKey::String { name: Ident::from(lit.value.as_str()) }))
+            }
+            oxc::ExpressionKind::Identifier(ident) if !computed => {
+                Ok(Some(ObjectPropertyKey::Identifier { name: ident.name }))
+            }
+            oxc::ExpressionKind::NumericLiteral(lit) if !computed => {
+                Ok(Some(ObjectPropertyKey::Identifier {
+                    name: format_ident!(builder.environment().allocator, "{}", lit.value),
+                }))
+            }
+            _ if computed => {
+                let place = lower_expression_to_temporary(builder, key_expr)?;
+                Ok(Some(ObjectPropertyKey::Computed { name: place }))
+            }
+            _ => {
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("Unsupported key type in ObjectExpression")
+                        .with_labels(None::<Span>),
+                )?;
+                Ok(None)
+            }
+        },
         oxc::PropertyKey::StaticIdentifier(ident) if !computed => {
             Ok(Some(ObjectPropertyKey::Identifier { name: ident.name }))
-        }
-        oxc::PropertyKey::Identifier(ident) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name }))
-        }
-        oxc::PropertyKey::NumericLiteral(lit) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier {
-                name: format_ident!(builder.environment().allocator, "{}", lit.value),
-            }))
         }
         _ if computed => {
             let place = lower_expression_to_temporary(builder, key.to_expression())?;
@@ -5349,7 +5360,6 @@ fn lower_object_property_key<'a>(
         _ => {
             let span = match key {
                 oxc::PropertyKey::StaticIdentifier(i) => Some(i.span),
-                oxc::PropertyKey::Identifier(i) => Some(i.span),
                 _ => None,
             };
             builder.record_error(
@@ -5390,8 +5400,8 @@ fn is_reorderable_expression(
     expr: &oxc::Expression,
     allow_local_identifiers: bool,
 ) -> bool {
-    match expr {
-        oxc::Expression::Identifier(ident) => {
+    match expr.kind() {
+        oxc::ExpressionKind::Identifier(ident) => {
             match builder.scope().resolve_reference(ident) {
                 None => {
                     // global, safe to reorder
@@ -5407,13 +5417,13 @@ fn is_reorderable_expression(
                 }
             }
         }
-        oxc::Expression::RegExpLiteral(_)
-        | oxc::Expression::StringLiteral(_)
-        | oxc::Expression::NumericLiteral(_)
-        | oxc::Expression::NullLiteral(_)
-        | oxc::Expression::BooleanLiteral(_)
-        | oxc::Expression::BigIntLiteral(_) => true,
-        oxc::Expression::UnaryExpression(unary) => {
+        oxc::ExpressionKind::RegExpLiteral(_)
+        | oxc::ExpressionKind::StringLiteral(_)
+        | oxc::ExpressionKind::NumericLiteral(_)
+        | oxc::ExpressionKind::NullLiteral(_)
+        | oxc::ExpressionKind::BooleanLiteral(_)
+        | oxc::ExpressionKind::BigIntLiteral(_) => true,
+        oxc::ExpressionKind::UnaryExpression(unary) => {
             matches!(
                 unary.operator,
                 oxc::UnaryOperator::LogicalNot
@@ -5421,48 +5431,54 @@ fn is_reorderable_expression(
                     | oxc::UnaryOperator::UnaryNegation
             ) && is_reorderable_expression(builder, &unary.argument, allow_local_identifiers)
         }
-        oxc::Expression::LogicalExpression(logical) => {
+        oxc::ExpressionKind::LogicalExpression(logical) => {
             is_reorderable_expression(builder, &logical.left, allow_local_identifiers)
                 && is_reorderable_expression(builder, &logical.right, allow_local_identifiers)
         }
-        oxc::Expression::ConditionalExpression(cond) => {
+        oxc::ExpressionKind::ConditionalExpression(cond) => {
             is_reorderable_expression(builder, &cond.test, allow_local_identifiers)
                 && is_reorderable_expression(builder, &cond.consequent, allow_local_identifiers)
                 && is_reorderable_expression(builder, &cond.alternate, allow_local_identifiers)
         }
-        oxc::Expression::ArrayExpression(arr) => arr.elements.iter().all(|element| match element {
-            oxc::ArrayExpressionElement::Elision(_) => false, // holes are not reorderable
-            // A spread is a Babel `Expression::SpreadElement`, which the original
-            // hit via the catch-all `_ => false` (no SpreadElement arm), so any
-            // array containing a spread is not reorderable.
-            oxc::ArrayExpressionElement::SpreadElement(_) => false,
-            _ => {
-                is_reorderable_expression(builder, element.to_expression(), allow_local_identifiers)
-            }
-        }),
-        oxc::Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
-            oxc::ObjectPropertyKind::ObjectProperty(p) => {
-                !p.computed
-                    && !p.method
-                    && matches!(p.kind, oxc::PropertyKind::Init)
-                    && is_reorderable_expression(builder, &p.value, allow_local_identifiers)
-            }
-            _ => false,
-        }),
-        oxc::Expression::StaticMemberExpression(_)
-        | oxc::Expression::ComputedMemberExpression(_)
-        | oxc::Expression::PrivateFieldExpression(_) => {
+        oxc::ExpressionKind::ArrayExpression(arr) => {
+            arr.elements.iter().all(|element| match element {
+                oxc::ArrayExpressionElement::Elision(_) => false, // holes are not reorderable
+                // A spread is a Babel `Expression::SpreadElement`, which the original
+                // hit via the catch-all `_ => false` (no SpreadElement arm), so any
+                // array containing a spread is not reorderable.
+                oxc::ArrayExpressionElement::SpreadElement(_) => false,
+                _ => is_reorderable_expression(
+                    builder,
+                    element.to_expression(),
+                    allow_local_identifiers,
+                ),
+            })
+        }
+        oxc::ExpressionKind::ObjectExpression(obj) => {
+            obj.properties.iter().all(|prop| match prop {
+                oxc::ObjectPropertyKind::ObjectProperty(p) => {
+                    !p.computed
+                        && !p.method
+                        && matches!(p.kind, oxc::PropertyKind::Init)
+                        && is_reorderable_expression(builder, &p.value, allow_local_identifiers)
+                }
+                _ => false,
+            })
+        }
+        oxc::ExpressionKind::StaticMemberExpression(_)
+        | oxc::ExpressionKind::ComputedMemberExpression(_)
+        | oxc::ExpressionKind::PrivateFieldExpression(_) => {
             // Allow member expressions where the innermost object is a global or module-local
             let mut inner = expr;
             loop {
-                inner = match inner {
-                    oxc::Expression::StaticMemberExpression(m) => &m.object,
-                    oxc::Expression::ComputedMemberExpression(m) => &m.object,
-                    oxc::Expression::PrivateFieldExpression(m) => &m.object,
+                inner = match inner.kind() {
+                    oxc::ExpressionKind::StaticMemberExpression(m) => &m.object,
+                    oxc::ExpressionKind::ComputedMemberExpression(m) => &m.object,
+                    oxc::ExpressionKind::PrivateFieldExpression(m) => &m.object,
                     _ => break,
                 };
             }
-            if let oxc::Expression::Identifier(ident) = inner {
+            if let oxc::ExpressionKind::Identifier(ident) = inner.kind() {
                 match builder.scope().resolve_reference(ident) {
                     None => true, // global
                     Some(symbol_id) => {
@@ -5474,7 +5490,7 @@ fn is_reorderable_expression(
                 false
             }
         }
-        oxc::Expression::ArrowFunctionExpression(arrow) => {
+        oxc::ExpressionKind::ArrowFunctionExpression(arrow) => {
             if arrow.expression {
                 match arrow.body.statements.first() {
                     Some(oxc::Statement::ExpressionStatement(es)) => {
@@ -5486,7 +5502,7 @@ fn is_reorderable_expression(
                 arrow.body.statements.is_empty()
             }
         }
-        oxc::Expression::CallExpression(call) => {
+        oxc::ExpressionKind::CallExpression(call) => {
             is_reorderable_expression(builder, &call.callee, allow_local_identifiers)
                 && call.arguments.iter().all(|arg| match arg {
                     // A spread argument is a Babel `Expression::SpreadElement`,
@@ -5499,7 +5515,7 @@ fn is_reorderable_expression(
                     ),
                 })
         }
-        oxc::Expression::NewExpression(new_expr) => {
+        oxc::ExpressionKind::NewExpression(new_expr) => {
             is_reorderable_expression(builder, &new_expr.callee, allow_local_identifiers)
                 && new_expr.arguments.iter().all(|arg| match arg {
                     // A spread argument is a Babel `Expression::SpreadElement`,
@@ -5513,22 +5529,22 @@ fn is_reorderable_expression(
                 })
         }
         // TypeScript type wrappers: recurse into the inner expression.
-        oxc::Expression::TSAsExpression(ts) => {
+        oxc::ExpressionKind::TSAsExpression(ts) => {
             is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
         }
-        oxc::Expression::TSSatisfiesExpression(ts) => {
+        oxc::ExpressionKind::TSSatisfiesExpression(ts) => {
             is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
         }
-        oxc::Expression::TSNonNullExpression(ts) => {
+        oxc::ExpressionKind::TSNonNullExpression(ts) => {
             is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
         }
-        oxc::Expression::TSInstantiationExpression(ts) => {
+        oxc::ExpressionKind::TSInstantiationExpression(ts) => {
             is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
         }
-        oxc::Expression::TSTypeAssertion(ts) => {
+        oxc::ExpressionKind::TSTypeAssertion(ts) => {
             is_reorderable_expression(builder, &ts.expression, allow_local_identifiers)
         }
-        oxc::Expression::ParenthesizedExpression(p) => {
+        oxc::ExpressionKind::ParenthesizedExpression(p) => {
             is_reorderable_expression(builder, &p.expression, allow_local_identifiers)
         }
         _ => false,

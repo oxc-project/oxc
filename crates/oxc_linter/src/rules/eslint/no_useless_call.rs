@@ -1,7 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, MemberExpression},
-    match_member_expression,
+    ast::{CallExpression, ChainElement, Expression, ExpressionKind, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -123,14 +122,14 @@ impl CallOrApply {
                         .arguments
                         .get(1)
                         .and_then(|arg| arg.as_expression())
-                        .is_some_and(|expr| matches!(expr, Expression::ArrayExpression(_)))
+                        .is_some_and(oxc_ast::ast::Expression::is_array_expression)
             }
         }
     }
 }
 
 fn classify_callee<'a>(callee: &'a Expression<'a>) -> Option<ClassifiedCallee<'a>> {
-    if let Expression::StaticMemberExpression(member_expr) = callee {
+    if let ExpressionKind::StaticMemberExpression(member_expr) = callee.kind() {
         let kind = CallOrApply::from_name(member_expr.property.name.as_str())?;
         return Some(ClassifiedCallee { kind, applied: member_expr.object.without_parentheses() });
     }
@@ -146,7 +145,7 @@ fn classify_callee<'a>(callee: &'a Expression<'a>) -> Option<ClassifiedCallee<'a
 
 fn validate_this_argument(this_arg: &Expression, applied: &Expression) -> bool {
     if this_arg.is_null_or_undefined() {
-        return matches!(applied, Expression::Identifier(_));
+        return applied.is_identifier();
     }
 
     let Some(applied_member) = as_member_expression_without_chain_expression(applied) else {
@@ -171,15 +170,17 @@ fn validate_member_expression(this_arg: &Expression, applied_member: &MemberExpr
 fn as_member_expression_without_chain_expression<'a>(
     expr: &'a Expression,
 ) -> Option<&'a MemberExpression<'a>> {
-    match expr {
-        Expression::ChainExpression(chain_expr) => {
-            if let match_member_expression!(ChainElement) = chain_expr.expression {
+    match expr.kind() {
+        ExpressionKind::ChainExpression(chain_expr) => {
+            if let ChainElement::MemberExpression(_) = chain_expr.expression {
                 chain_expr.expression.as_member_expression()
             } else {
                 None
             }
         }
-        match_member_expression!(Expression) => expr.as_member_expression(),
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => expr.as_member_expression(),
         _ => None,
     }
 }

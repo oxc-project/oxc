@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey,
+        CallExpression, Expression, ExpressionKind, ObjectExpression, ObjectPropertyKind,
+        PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -71,11 +71,11 @@ impl Rule for NoDeprecatedDestroyedLifecycle {
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else { return };
 
-        match &export_default_decl.declaration {
-            ExportDefaultDeclarationKind::ObjectExpression(obj_expr) => {
+        match export_default_decl.declaration.as_expression().map(Expression::kind) {
+            Some(ExpressionKind::ObjectExpression(obj_expr)) => {
                 check_object_properties(obj_expr, ctx);
             }
-            ExportDefaultDeclarationKind::CallExpression(call_expr) => {
+            Some(ExpressionKind::CallExpression(call_expr)) => {
                 check_define_component(call_expr, ctx);
             }
             _ => {}
@@ -97,7 +97,8 @@ fn check_define_component<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let Some(Expression::ObjectExpression(obj_expr)) = first_arg.as_expression() else {
+    let Some(obj_expr) = first_arg.as_expression().and_then(Expression::as_object_expression)
+    else {
         return;
     };
 
@@ -190,13 +191,16 @@ fn get_property_key_info(
         PropertyKey::StaticIdentifier(ident) => {
             Some((ident.name.to_string(), ident.span, prop.shorthand, KeyType::Identifier))
         }
-        PropertyKey::StringLiteral(lit) => {
-            Some((lit.value.to_string(), lit.span, false, KeyType::StringLiteral))
-        }
-        PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
-            tpl.single_quasi().map(|s| (s.to_string(), tpl.span, false, KeyType::TemplateLiteral))
-        }
-        _ => None,
+        PropertyKey::Expression(expr) => match expr.kind() {
+            ExpressionKind::StringLiteral(lit) => {
+                Some((lit.value.to_string(), lit.span, false, KeyType::StringLiteral))
+            }
+            ExpressionKind::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => tpl
+                .single_quasi()
+                .map(|s| (s.to_string(), tpl.span, false, KeyType::TemplateLiteral)),
+            _ => None,
+        },
+        PropertyKey::PrivateIdentifier(_) => None,
     }
 }
 

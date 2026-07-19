@@ -1,8 +1,9 @@
 use std::cmp::max;
 
-use oxc_allocator::ArenaBox;
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKind};
+use oxc_ast::ast::{
+    Expression, ExpressionKind, ExpressionTag, ObjectExpression, ObjectPropertyKind, PropertyKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -91,14 +92,16 @@ impl Rule for PreferObjectSpread {
 
         let unresolved_references = ctx.scoping().root_unresolved_references();
 
-        match callee.object().get_inner_expression() {
-            Expression::Identifier(ident) => {
+        match callee.object().get_inner_expression().kind() {
+            ExpressionKind::Identifier(ident) => {
                 if ident.name != "Object" || !unresolved_references.contains_key(&ident.name) {
                     return;
                 }
             }
-            Expression::StaticMemberExpression(member_expr) => {
-                if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
+            ExpressionKind::StaticMemberExpression(member_expr) => {
+                if let ExpressionKind::Identifier(ident) =
+                    member_expr.object.get_inner_expression().kind()
+                {
                     if ident.name != "globalThis"
                         || !unresolved_references.contains_key(&ident.name)
                     {
@@ -118,8 +121,10 @@ impl Rule for PreferObjectSpread {
         let arguments_len = call_expr.arguments.len();
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
-            let Some(Expression::ObjectExpression(obj_expr)) =
-                arg.as_expression().map(Expression::get_inner_expression)
+            let Some(obj_expr) = arg
+                .as_expression()
+                .map(Expression::get_inner_expression)
+                .and_then(|e| e.as_object_expression())
             else {
                 if idx == 0 {
                     return;
@@ -173,7 +178,7 @@ impl Rule for PreferObjectSpread {
                         return fixer.noop();
                     };
 
-                    if let Expression::ObjectExpression(obj_expr) = expression {
+                    if let ExpressionKind::ObjectExpression(obj_expr) = expression.kind() {
                         let delete_span_of_left = get_delete_span_of_left(obj_expr, ctx);
 
                         let delete_span_of_right = Span::new(
@@ -198,10 +203,10 @@ impl Rule for PreferObjectSpread {
                     } else {
                         let span = expression.span();
                         let replacement = if matches!(
-                            expression,
-                            Expression::ArrowFunctionExpression(_)
-                                | Expression::AssignmentExpression(_)
-                                | Expression::ConditionalExpression(_)
+                            expression.tag(),
+                            ExpressionTag::ArrowFunctionExpression
+                                | ExpressionTag::AssignmentExpression
+                                | ExpressionTag::ConditionalExpression
                         ) {
                             format!("...({})", ctx.source_range(span))
                         } else {
@@ -325,10 +330,7 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
     None
 }
 
-fn get_delete_span_of_left(
-    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
-    ctx: &LintContext,
-) -> Span {
+fn get_delete_span_of_left(obj_expr: &ObjectExpression<'_>, ctx: &LintContext) -> Span {
     let mut span_end = obj_expr.span.start;
     for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
         if i != 0 && !c.is_whitespace() {
@@ -342,10 +344,7 @@ fn get_delete_span_of_left(
     Span::new(obj_expr.span.start, span_end)
 }
 
-fn get_delete_span_start_of_right(
-    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
-    ctx: &LintContext,
-) -> u32 {
+fn get_delete_span_start_of_right(obj_expr: &ObjectExpression<'_>, ctx: &LintContext) -> u32 {
     let obj_expr_last_char_span = Span::new(obj_expr.span.end - 1, obj_expr.span.end);
     let Some(prev_token_span) = get_char_span_before(obj_expr_last_char_span, ctx) else {
         return obj_expr_last_char_span.start;

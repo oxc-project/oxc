@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, match_member_expression},
+    ast::{CallExpression, ExpressionKind, MemberExpression, MemberExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -52,18 +52,21 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
         return;
     };
 
-    match static_expr.object() {
-        expr @ match_member_expression!(Expression) => {
-            let mem_expr = expr.to_member_expression();
-            if let MemberExpression::PrivateFieldExpression(_) = mem_expr {
+    let object = static_expr.object();
+    match object.kind() {
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => {
+            let mem_expr = object.to_member_expression();
+            if let MemberExpressionKind::PrivateFieldExpression(_) = mem_expr.kind() {
                 return;
             }
-            let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
+            let ExpressionKind::CallExpression(expr_call_expr) = mem_expr.object().kind() else {
                 return;
             };
             check_and_fix(call_expr, expr_call_expr, &parsed_expect_call, Some(mem_expr), ctx);
         }
-        Expression::CallExpression(expr_call_expr) => {
+        ExpressionKind::CallExpression(expr_call_expr) => {
             check_and_fix(call_expr, expr_call_expr, &parsed_expect_call, None, ctx);
         }
         _ => (),

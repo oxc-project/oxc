@@ -123,7 +123,7 @@ impl Display for JSXElementName<'_> {
 impl JSXExpression<'_> {
     /// Determines whether the given expr is a `undefined` literal.
     pub fn is_undefined(&self) -> bool {
-        matches!(self, Self::Identifier(ident) if ident.name == "undefined")
+        self.as_expression().is_some_and(Expression::is_undefined)
     }
 }
 

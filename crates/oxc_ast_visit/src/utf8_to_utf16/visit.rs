@@ -26,9 +26,9 @@ impl Utf8ToUtf16Converter<'_> {
 
         // If shorthand, span of `key` and `value` are the same
         match (prop.shorthand, &mut prop.key, &mut prop.value) {
-            (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
+            (true, PropertyKey::StaticIdentifier(key), value) if value.is_identifier() => {
                 self.visit_identifier_name(key);
-                value.span = key.span;
+                value.to_identifier_mut().span = key.span;
             }
             (_, key, value) => {
                 self.visit_property_key(key);

@@ -223,15 +223,15 @@ fn is_component_name(name: &str) -> bool {
 /// Check if an expression is a hook call (identifier with hook name, or
 /// member expression `PascalCase.useHook`).
 fn expr_is_hook(expr: &Expression) -> bool {
-    match expr {
-        Expression::Identifier(id) => is_hook_name(&id.name),
-        Expression::StaticMemberExpression(member) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(id) => is_hook_name(&id.name),
+        ExpressionKind::StaticMemberExpression(member) => {
             // Property must be a hook name
             if !is_hook_name(&member.property.name) {
                 return false;
             }
             // Object must be a PascalCase identifier
-            if let Expression::Identifier(obj) = &member.object {
+            if let ExpressionKind::Identifier(obj) = member.object.kind() {
                 obj.name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
             } else {
                 false
@@ -246,11 +246,17 @@ fn expr_is_hook(expr: &Expression) -> bool {
 /// `CallExpression` inside a `ChainExpression` was a regular call (before the
 /// first `?.`, hook-checkable) or an optional call (not a hook).
 fn expr_contains_optional(expr: &Expression) -> bool {
-    match expr {
-        Expression::CallExpression(c) => c.optional || expr_contains_optional(&c.callee),
-        Expression::StaticMemberExpression(m) => m.optional || expr_contains_optional(&m.object),
-        Expression::ComputedMemberExpression(m) => m.optional || expr_contains_optional(&m.object),
-        Expression::PrivateFieldExpression(p) => p.optional || expr_contains_optional(&p.object),
+    match expr.kind() {
+        ExpressionKind::CallExpression(c) => c.optional || expr_contains_optional(&c.callee),
+        ExpressionKind::StaticMemberExpression(m) => {
+            m.optional || expr_contains_optional(&m.object)
+        }
+        ExpressionKind::ComputedMemberExpression(m) => {
+            m.optional || expr_contains_optional(&m.object)
+        }
+        ExpressionKind::PrivateFieldExpression(p) => {
+            p.optional || expr_contains_optional(&p.object)
+        }
         _ => false,
     }
 }
@@ -280,13 +286,13 @@ fn get_function_name_from_id<'ast>(id: Option<&BindingIdentifier<'ast>>) -> Opti
 /// is not a React component). This matches the TS `isNonNode` function.
 fn is_non_node(expr: &Expression) -> bool {
     matches!(
-        expr,
-        Expression::ObjectExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::ClassExpression(_)
-            | Expression::NewExpression(_)
+        expr.tag(),
+        ExpressionTag::ObjectExpression
+            | ExpressionTag::ArrowFunctionExpression
+            | ExpressionTag::FunctionExpression
+            | ExpressionTag::BigIntLiteral
+            | ExpressionTag::ClassExpression
+            | ExpressionTag::NewExpression
     )
 }
 
@@ -510,17 +516,20 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
 fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
     /// Whether an argument expression is a nested function (skipped by the walk).
     fn is_nested_fn(arg: &Expression) -> bool {
-        matches!(arg, Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_))
+        matches!(
+            arg.tag(),
+            ExpressionTag::ArrowFunctionExpression | ExpressionTag::FunctionExpression
+        )
     }
 
-    match expr {
+    match expr.kind() {
         // JSX creates
-        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+        ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => true,
 
         // Hook calls. Only a "regular" (non-optional) call's callee is hook-checked;
         // optional calls (Babel `OptionalCallExpression`) never count as hooks, but
         // their callee/args are still searched.
-        Expression::CallExpression(call) => {
+        ExpressionKind::CallExpression(call) => {
             if is_regular_call(call) && expr_is_hook(&call.callee) {
                 return true;
             }
@@ -548,68 +557,70 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
         // Optional chaining (`a?.b`, `a?.()`): Babel modeled these as
         // Optional{Member,Call}Expression. Recurse into the inner element, where
         // per-call hook checks honor the optional flag via `is_regular_call`.
-        Expression::ChainExpression(chain) => {
+        ExpressionKind::ChainExpression(chain) => {
             calls_hooks_or_creates_jsx_in_chain_element(&chain.expression)
         }
 
         // Binary/logical
-        Expression::BinaryExpression(bin) => {
+        ExpressionKind::BinaryExpression(bin) => {
             calls_hooks_or_creates_jsx_in_expr(&bin.left)
                 || calls_hooks_or_creates_jsx_in_expr(&bin.right)
         }
-        Expression::LogicalExpression(log) => {
+        ExpressionKind::LogicalExpression(log) => {
             calls_hooks_or_creates_jsx_in_expr(&log.left)
                 || calls_hooks_or_creates_jsx_in_expr(&log.right)
         }
-        Expression::ConditionalExpression(cond) => {
+        ExpressionKind::ConditionalExpression(cond) => {
             calls_hooks_or_creates_jsx_in_expr(&cond.test)
                 || calls_hooks_or_creates_jsx_in_expr(&cond.consequent)
                 || calls_hooks_or_creates_jsx_in_expr(&cond.alternate)
         }
-        Expression::AssignmentExpression(assign) => {
+        ExpressionKind::AssignmentExpression(assign) => {
             calls_hooks_or_creates_jsx_in_expr(&assign.right)
         }
-        Expression::SequenceExpression(seq) => {
+        ExpressionKind::SequenceExpression(seq) => {
             seq.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
         }
-        Expression::UnaryExpression(unary) => calls_hooks_or_creates_jsx_in_expr(&unary.argument),
-        Expression::UpdateExpression(update) => match &update.argument {
+        ExpressionKind::UnaryExpression(unary) => {
+            calls_hooks_or_creates_jsx_in_expr(&unary.argument)
+        }
+        ExpressionKind::UpdateExpression(update) => match &update.argument {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
             target => {
                 target.as_member_expression().is_some_and(calls_hooks_or_creates_jsx_in_member)
             }
         },
-        Expression::StaticMemberExpression(member) => {
+        ExpressionKind::StaticMemberExpression(member) => {
             calls_hooks_or_creates_jsx_in_expr(&member.object)
         }
-        Expression::ComputedMemberExpression(member) => {
+        ExpressionKind::ComputedMemberExpression(member) => {
             calls_hooks_or_creates_jsx_in_expr(&member.object)
                 || calls_hooks_or_creates_jsx_in_expr(&member.expression)
         }
-        Expression::PrivateFieldExpression(member) => {
+        ExpressionKind::PrivateFieldExpression(member) => {
             calls_hooks_or_creates_jsx_in_expr(&member.object)
         }
-        Expression::AwaitExpression(await_expr) => {
+        ExpressionKind::AwaitExpression(await_expr) => {
             calls_hooks_or_creates_jsx_in_expr(&await_expr.argument)
         }
-        Expression::YieldExpression(yield_expr) => {
+        ExpressionKind::YieldExpression(yield_expr) => {
             yield_expr.argument.as_ref().is_some_and(|arg| calls_hooks_or_creates_jsx_in_expr(arg))
         }
-        Expression::TaggedTemplateExpression(tagged) => {
+        ExpressionKind::TaggedTemplateExpression(tagged) => {
             calls_hooks_or_creates_jsx_in_expr(&tagged.tag)
                 || tagged.quasi.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
         }
-        Expression::TemplateLiteral(tl) => {
+        ExpressionKind::TemplateLiteral(tl) => {
             tl.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
         }
-        Expression::ArrayExpression(arr) => arr.elements.iter().any(|e| match e {
+        ExpressionKind::ArrayExpression(arr) => arr.elements.iter().any(|e| match e {
             ArrayExpressionElement::SpreadElement(s) => {
                 calls_hooks_or_creates_jsx_in_expr(&s.argument)
             }
             ArrayExpressionElement::Elision(_) => false,
             other => other.as_expression().is_some_and(calls_hooks_or_creates_jsx_in_expr),
         }),
-        Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
+        ExpressionKind::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
             ObjectPropertyKind::SpreadProperty(s) => {
                 calls_hooks_or_creates_jsx_in_expr(&s.argument)
             }
@@ -618,7 +629,7 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
             // properties traverse their value (nested functions are skipped).
             ObjectPropertyKind::ObjectProperty(p) => {
                 if p.method || matches!(p.kind, PropertyKind::Get | PropertyKind::Set) {
-                    if let Expression::FunctionExpression(func) = &p.value
+                    if let ExpressionKind::FunctionExpression(func) = p.value.kind()
                         && let Some(body) = &func.body
                     {
                         return calls_hooks_or_creates_jsx_in_stmts(&body.statements);
@@ -629,17 +640,21 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
                 }
             }
         }),
-        Expression::ParenthesizedExpression(paren) => {
+        ExpressionKind::ParenthesizedExpression(paren) => {
             calls_hooks_or_creates_jsx_in_expr(&paren.expression)
         }
-        Expression::TSAsExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSSatisfiesExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSNonNullExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSTypeAssertion(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
-        Expression::TSInstantiationExpression(ts) => {
+        ExpressionKind::TSAsExpression(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
+        ExpressionKind::TSSatisfiesExpression(ts) => {
             calls_hooks_or_creates_jsx_in_expr(&ts.expression)
         }
-        Expression::NewExpression(new) => {
+        ExpressionKind::TSNonNullExpression(ts) => {
+            calls_hooks_or_creates_jsx_in_expr(&ts.expression)
+        }
+        ExpressionKind::TSTypeAssertion(ts) => calls_hooks_or_creates_jsx_in_expr(&ts.expression),
+        ExpressionKind::TSInstantiationExpression(ts) => {
+            calls_hooks_or_creates_jsx_in_expr(&ts.expression)
+        }
+        ExpressionKind::NewExpression(new) => {
             if calls_hooks_or_creates_jsx_in_expr(&new.callee) {
                 return true;
             }
@@ -679,8 +694,8 @@ fn calls_hooks_or_creates_jsx_in_chain_element(element: &ChainElement) -> bool {
             call.arguments.iter().any(|arg| {
                 if let Some(arg) = arg.as_expression() {
                     !matches!(
-                        arg,
-                        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+                        arg.tag(),
+                        ExpressionTag::ArrowFunctionExpression | ExpressionTag::FunctionExpression
                     ) && calls_hooks_or_creates_jsx_in_expr(arg)
                 } else if let Argument::SpreadElement(s) = arg {
                     calls_hooks_or_creates_jsx_in_expr(&s.argument)
@@ -689,27 +704,22 @@ fn calls_hooks_or_creates_jsx_in_chain_element(element: &ChainElement) -> bool {
                 }
             })
         }
-        ChainElement::StaticMemberExpression(m) => calls_hooks_or_creates_jsx_in_expr(&m.object),
-        ChainElement::ComputedMemberExpression(m) => {
-            calls_hooks_or_creates_jsx_in_expr(&m.object)
-                || calls_hooks_or_creates_jsx_in_expr(&m.expression)
-        }
-        ChainElement::PrivateFieldExpression(m) => calls_hooks_or_creates_jsx_in_expr(&m.object),
+        ChainElement::MemberExpression(m) => calls_hooks_or_creates_jsx_in_member(m),
         ChainElement::TSNonNullExpression(t) => calls_hooks_or_creates_jsx_in_expr(&t.expression),
     }
 }
 
 /// Search a member expression (object side) for hook calls / JSX.
 fn calls_hooks_or_creates_jsx_in_member(member: &MemberExpression) -> bool {
-    match member {
-        MemberExpression::StaticMemberExpression(m) => {
+    match member.kind() {
+        MemberExpressionKind::StaticMemberExpression(m) => {
             calls_hooks_or_creates_jsx_in_expr(&m.object)
         }
-        MemberExpression::ComputedMemberExpression(m) => {
+        MemberExpressionKind::ComputedMemberExpression(m) => {
             calls_hooks_or_creates_jsx_in_expr(&m.object)
                 || calls_hooks_or_creates_jsx_in_expr(&m.expression)
         }
-        MemberExpression::PrivateFieldExpression(m) => {
+        MemberExpressionKind::PrivateFieldExpression(m) => {
             calls_hooks_or_creates_jsx_in_expr(&m.object)
         }
     }
@@ -963,16 +973,16 @@ fn get_component_or_hook_like(
 /// Extract the callee name from a CallExpression if it's a React API call
 /// (forwardRef, memo, React.forwardRef, React.memo).
 fn get_callee_name_if_react_api<'ast>(callee: &Expression<'ast>) -> Option<&'ast str> {
-    match callee {
-        Expression::Identifier(id) => {
+    match callee.kind() {
+        ExpressionKind::Identifier(id) => {
             if id.name == "forwardRef" || id.name == "memo" {
                 Some(id.name.as_str())
             } else {
                 None
             }
         }
-        Expression::StaticMemberExpression(member) => {
-            if let Expression::Identifier(obj) = &member.object
+        ExpressionKind::StaticMemberExpression(member) => {
+            if let ExpressionKind::Identifier(obj) = member.object.kind()
                 && obj.name == "React"
                 && (member.property.name == "forwardRef" || member.property.name == "memo")
             {
@@ -1500,10 +1510,10 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             // expression, arrow, or call expression (for forwardRef/memo wrappers).
             if let Some(init) = &declarator.init {
                 if matches!(
-                    init,
-                    Expression::FunctionExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::CallExpression(_)
+                    init.tag(),
+                    ExpressionTag::FunctionExpression
+                        | ExpressionTag::ArrowFunctionExpression
+                        | ExpressionTag::CallExpression
                 ) {
                     self.current_declarator_name = get_declarator_name(declarator);
                 }
@@ -1624,18 +1634,18 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
     }
 
     fn walk_expression(&mut self, expr: &'b Expression<'ast>) {
-        match expr {
-            Expression::FunctionExpression(node) => {
+        match expr.kind() {
+            ExpressionKind::FunctionExpression(node) => {
                 // The declarator name flows into the function expression and is
                 // consumed here (so siblings don't inherit it).
                 let name = self.current_declarator_name.take();
                 self.walk_function(node, name);
             }
-            Expression::ArrowFunctionExpression(node) => {
+            ExpressionKind::ArrowFunctionExpression(node) => {
                 let name = self.current_declarator_name.take();
                 self.walk_arrow(node, name);
             }
-            Expression::CallExpression(node) => {
+            ExpressionKind::CallExpression(node) => {
                 let callee_name = get_callee_name_if_react_api(&node.callee);
                 // The declarator name only flows through forwardRef/memo calls; for
                 // any other call, clear it so nested functions don't inherit it.
@@ -1652,44 +1662,44 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                     self.current_declarator_name = None;
                 }
             }
-            Expression::ChainExpression(node) => self.walk_chain_element(&node.expression),
-            Expression::StaticMemberExpression(node) => self.walk_expression(&node.object),
-            Expression::ComputedMemberExpression(node) => {
+            ExpressionKind::ChainExpression(node) => self.walk_chain_element(&node.expression),
+            ExpressionKind::StaticMemberExpression(node) => self.walk_expression(&node.object),
+            ExpressionKind::ComputedMemberExpression(node) => {
                 self.walk_expression(&node.object);
                 self.walk_expression(&node.expression);
             }
-            Expression::PrivateFieldExpression(node) => self.walk_expression(&node.object),
-            Expression::BinaryExpression(node) => {
+            ExpressionKind::PrivateFieldExpression(node) => self.walk_expression(&node.object),
+            ExpressionKind::BinaryExpression(node) => {
                 self.walk_expression(&node.left);
                 self.walk_expression(&node.right);
             }
-            Expression::LogicalExpression(node) => {
+            ExpressionKind::LogicalExpression(node) => {
                 self.walk_expression(&node.left);
                 self.walk_expression(&node.right);
             }
-            Expression::UnaryExpression(node) => self.walk_expression(&node.argument),
-            Expression::UpdateExpression(node) => {
+            ExpressionKind::UnaryExpression(node) => self.walk_expression(&node.argument),
+            ExpressionKind::UpdateExpression(node) => {
                 if let Some(member) = node.argument.as_member_expression() {
                     self.walk_member_expression(member);
                 }
             }
-            Expression::ConditionalExpression(node) => {
+            ExpressionKind::ConditionalExpression(node) => {
                 self.walk_expression(&node.test);
                 self.walk_expression(&node.consequent);
                 self.walk_expression(&node.alternate);
             }
-            Expression::AssignmentExpression(node) => self.walk_expression(&node.right),
-            Expression::SequenceExpression(node) => {
+            ExpressionKind::AssignmentExpression(node) => self.walk_expression(&node.right),
+            ExpressionKind::SequenceExpression(node) => {
                 for e in &node.expressions {
                     self.walk_expression(e);
                 }
             }
-            Expression::ObjectExpression(node) => {
+            ExpressionKind::ObjectExpression(node) => {
                 for prop in &node.properties {
                     self.walk_object_property(prop);
                 }
             }
-            Expression::ArrayExpression(node) => {
+            ExpressionKind::ArrayExpression(node) => {
                 for el in &node.elements {
                     match el {
                         ArrayExpressionElement::SpreadElement(s) => {
@@ -1704,37 +1714,39 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                     }
                 }
             }
-            Expression::NewExpression(node) => {
+            ExpressionKind::NewExpression(node) => {
                 self.walk_expression(&node.callee);
                 for arg in &node.arguments {
                     self.walk_argument(arg);
                 }
             }
-            Expression::TemplateLiteral(node) => {
+            ExpressionKind::TemplateLiteral(node) => {
                 for e in &node.expressions {
                     self.walk_expression(e);
                 }
             }
-            Expression::TaggedTemplateExpression(node) => {
+            ExpressionKind::TaggedTemplateExpression(node) => {
                 self.walk_expression(&node.tag);
                 for e in &node.quasi.expressions {
                     self.walk_expression(e);
                 }
             }
-            Expression::AwaitExpression(node) => self.walk_expression(&node.argument),
-            Expression::YieldExpression(node) => {
+            ExpressionKind::AwaitExpression(node) => self.walk_expression(&node.argument),
+            ExpressionKind::YieldExpression(node) => {
                 if let Some(arg) = &node.argument {
                     self.walk_expression(arg);
                 }
             }
-            Expression::ParenthesizedExpression(node) => self.walk_expression(&node.expression),
-            Expression::JSXElement(node) => self.walk_jsx_element(node),
-            Expression::JSXFragment(node) => self.walk_jsx_children(&node.children),
-            Expression::TSAsExpression(node) => self.walk_expression(&node.expression),
-            Expression::TSSatisfiesExpression(node) => self.walk_expression(&node.expression),
-            Expression::TSNonNullExpression(node) => self.walk_expression(&node.expression),
-            Expression::TSTypeAssertion(node) => self.walk_expression(&node.expression),
-            Expression::TSInstantiationExpression(node) => self.walk_expression(&node.expression),
+            ExpressionKind::ParenthesizedExpression(node) => self.walk_expression(&node.expression),
+            ExpressionKind::JSXElement(node) => self.walk_jsx_element(node),
+            ExpressionKind::JSXFragment(node) => self.walk_jsx_children(&node.children),
+            ExpressionKind::TSAsExpression(node) => self.walk_expression(&node.expression),
+            ExpressionKind::TSSatisfiesExpression(node) => self.walk_expression(&node.expression),
+            ExpressionKind::TSNonNullExpression(node) => self.walk_expression(&node.expression),
+            ExpressionKind::TSTypeAssertion(node) => self.walk_expression(&node.expression),
+            ExpressionKind::TSInstantiationExpression(node) => {
+                self.walk_expression(&node.expression)
+            }
             // ClassExpression bodies and leaf expressions are not descended.
             _ => {}
         }
@@ -1749,13 +1761,13 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
     }
 
     fn walk_member_expression(&mut self, member: &'b MemberExpression<'ast>) {
-        match member {
-            MemberExpression::StaticMemberExpression(m) => self.walk_expression(&m.object),
-            MemberExpression::ComputedMemberExpression(m) => {
+        match member.kind() {
+            MemberExpressionKind::StaticMemberExpression(m) => self.walk_expression(&m.object),
+            MemberExpressionKind::ComputedMemberExpression(m) => {
                 self.walk_expression(&m.object);
                 self.walk_expression(&m.expression);
             }
-            MemberExpression::PrivateFieldExpression(m) => self.walk_expression(&m.object),
+            MemberExpressionKind::PrivateFieldExpression(m) => self.walk_expression(&m.object),
         }
     }
 
@@ -1767,12 +1779,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                     self.walk_argument(arg);
                 }
             }
-            ChainElement::StaticMemberExpression(m) => self.walk_expression(&m.object),
-            ChainElement::ComputedMemberExpression(m) => {
-                self.walk_expression(&m.object);
-                self.walk_expression(&m.expression);
-            }
-            ChainElement::PrivateFieldExpression(m) => self.walk_expression(&m.object),
+            ChainElement::MemberExpression(m) => self.walk_member_expression(m),
             ChainElement::TSNonNullExpression(t) => self.walk_expression(&t.expression),
         }
     }
@@ -1789,7 +1796,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                 // method itself; the body is the value FunctionExpression's body.
                 let is_method = p.method || matches!(p.kind, PropertyKind::Get | PropertyKind::Set);
                 if is_method {
-                    if let Expression::FunctionExpression(func) = &p.value {
+                    if let ExpressionKind::FunctionExpression(func) = p.value.kind() {
                         let pushed = self.try_push_scope(func.scope_id.get());
                         if let Some(body) = &func.body {
                             self.walk_function_body_block(body);
@@ -2477,9 +2484,9 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
             if *done {
                 return;
             }
-            let matched = match expr {
-                Expression::FunctionExpression(f) => f.scope_id.get() == Some(*scope_id),
-                Expression::ArrowFunctionExpression(f) => f.scope_id.get() == Some(*scope_id),
+            let matched = match expr.kind() {
+                ExpressionKind::FunctionExpression(f) => f.scope_id.get() == Some(*scope_id),
+                ExpressionKind::ArrowFunctionExpression(f) => f.scope_id.get() == Some(*scope_id),
                 _ => false,
             };
             if matched {

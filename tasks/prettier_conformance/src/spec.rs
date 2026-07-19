@@ -2,8 +2,7 @@ use std::{fs, path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind,
-    VariableDeclarator,
+    Argument, CallExpression, Expression, ExpressionKind, ObjectPropertyKind, VariableDeclarator,
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
@@ -83,9 +82,9 @@ impl VisitMut<'_> for SpecParser {
         }
 
         debug_assert!(self.parsers.is_empty(), "`parsers` is already defined");
-        if let Some(Expression::ArrayExpression(arr_expr)) = &decl.init {
+        if let Some(arr_expr) = decl.init.as_ref().and_then(Expression::as_array_expression) {
             for el in &arr_expr.elements {
-                if let ArrayExpressionElement::StringLiteral(literal) = el {
+                if let Some(literal) = el.as_expression().and_then(Expression::as_string_literal) {
                     self.parsers.push(literal.value.to_string());
                 }
             }
@@ -110,15 +109,17 @@ impl VisitMut<'_> for SpecParser {
             };
 
             // If inlined array
-            if let Expression::ArrayExpression(arr_expr) = argument_expr {
+            if let Some(arr_expr) = argument_expr.as_array_expression() {
                 for el in &arr_expr.elements {
-                    if let ArrayExpressionElement::StringLiteral(literal) = el {
+                    if let Some(literal) =
+                        el.as_expression().and_then(Expression::as_string_literal)
+                    {
                         parsers.push(literal.value.to_string());
                     }
                 }
             }
             // If variable
-            if let Expression::Identifier(_) = argument_expr {
+            if argument_expr.is_identifier() {
                 debug_assert!(
                     !self.parsers.is_empty(),
                     "`parsers` is not collected, check variable name"
@@ -178,13 +179,18 @@ impl VisitMut<'_> for SpecParser {
         };
 
         // Get options
-        if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
+        if let Some(obj_expr) = expr
+            .arguments
+            .get(2)
+            .and_then(Argument::as_expression)
+            .and_then(Expression::as_object_expression)
+        {
             obj_expr.properties.iter().for_each(|item| {
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
                     && let Some(name) = obj_prop.key.static_name()
                 {
-                    match &obj_prop.value {
-                        Expression::BooleanLiteral(literal) => {
+                    match obj_prop.value.kind() {
+                        ExpressionKind::BooleanLiteral(literal) => {
                             if name == "semi" {
                                 js_options.semicolons = if literal.value {
                                     Semicolons::Always
@@ -235,7 +241,7 @@ impl VisitMut<'_> for SpecParser {
                             }
                         }
                         #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
-                        Expression::NumericLiteral(literal) => match name.as_ref() {
+                        ExpressionKind::NumericLiteral(literal) => match name.as_ref() {
                             "printWidth" => {
                                 let width = LineWidth::try_from(literal.value as u16).unwrap();
                                 js_options.line_width = width;
@@ -252,7 +258,7 @@ impl VisitMut<'_> for SpecParser {
                             }
                             _ => {}
                         },
-                        Expression::StringLiteral(literal) => {
+                        ExpressionKind::StringLiteral(literal) => {
                             let s = literal.value.as_str();
                             match name.as_ref() {
                                 "trailingComma" => {

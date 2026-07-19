@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Argument, ExpressionKind, ExpressionTag, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -53,10 +53,13 @@ declare_oxc_lint!(
 );
 
 fn is_apply_signature(first_arg: &Argument, second_arg: &Argument) -> bool {
-    match first_arg {
-        Argument::ThisExpression(_) | Argument::NullLiteral(_) => {
-            matches!(second_arg, Argument::ArrayExpression(_))
-                || matches!(second_arg, Argument::Identifier(ident) if ident.name == "arguments")
+    match first_arg.as_expression().map(|e| e.kind()) {
+        Some(ExpressionKind::ThisExpression(_) | ExpressionKind::NullLiteral(_)) => {
+            second_arg.as_expression().is_some_and(oxc_ast::ast::Expression::is_array_expression)
+                || second_arg
+                    .as_expression()
+                    .and_then(|e| e.as_identifier())
+                    .is_some_and(|ident| ident.name == "arguments")
         }
         _ => false,
     }
@@ -78,8 +81,8 @@ impl Rule for PreferReflectApply {
 
         if call_expr.optional
             || matches!(
-                member_expr.object(),
-                Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+                member_expr.object().tag(),
+                ExpressionTag::ArrayExpression | ExpressionTag::ObjectExpression
             )
             || member_expr.object().is_literal()
         {
@@ -116,7 +119,8 @@ impl Rule for PreferReflectApply {
                 };
 
                 if is_static_property_name_equal(member_expr_obj_obj, "prototype") {
-                    let Expression::Identifier(iden) = member_expr_obj_obj.object() else {
+                    let ExpressionKind::Identifier(iden) = member_expr_obj_obj.object().kind()
+                    else {
                         return;
                     };
                     if iden.name == "Function"

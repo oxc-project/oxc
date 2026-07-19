@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -111,62 +111,67 @@ impl PreferDescribeFunctionTitle {
             return;
         };
 
-        match title_arg {
-            Argument::StaticMemberExpression(title_expression) => {
-                let Expression::Identifier(identifier) = &title_expression.object else {
-                    return;
-                };
+        if let Argument::Expression(title_expr) = title_arg {
+            match title_expr.kind() {
+                ExpressionKind::StaticMemberExpression(title_expression) => {
+                    let ExpressionKind::Identifier(identifier) = title_expression.object.kind()
+                    else {
+                        return;
+                    };
 
-                if title_expression.property.name != "name"
-                    || !is_imported_name(identifier.name.as_ref())
-                {
-                    return;
+                    if title_expression.property.name != "name"
+                        || !is_imported_name(identifier.name.as_ref())
+                    {
+                        return;
+                    }
+
+                    if !is_value_imported_name(identifier.name.as_ref()) {
+                        ctx.diagnostic(prefer_describe_function_title_diagnostic(
+                            title_expression.span,
+                        ));
+                        return;
+                    }
+
+                    ctx.diagnostic_with_fix(
+                        prefer_describe_function_title_diagnostic(title_expression.span),
+                        |fixer| {
+                            let variable = identifier.name.to_string();
+
+                            fixer.replace(title_expression.span, variable)
+                        },
+                    );
                 }
+                ExpressionKind::StringLiteral(string_title) => {
+                    if !is_imported_name(string_title.value.as_ref()) {
+                        return;
+                    }
 
-                if !is_value_imported_name(identifier.name.as_ref()) {
-                    ctx.diagnostic(prefer_describe_function_title_diagnostic(
-                        title_expression.span,
-                    ));
-                    return;
+                    if ctx.settings().vitest.typecheck {
+                        // TODO https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/src/rules/prefer-describe-function-title.ts#L85C9-L92C10
+                        return;
+                    }
+
+                    if !is_value_imported_name(string_title.value.as_ref()) {
+                        ctx.diagnostic(prefer_describe_function_title_diagnostic(
+                            string_title.span,
+                        ));
+                        return;
+                    }
+
+                    ctx.diagnostic_with_fix(
+                        prefer_describe_function_title_diagnostic(string_title.span),
+                        |fixer| {
+                            let span_without_quotes =
+                                Span::new(string_title.span.start + 1, string_title.span.end - 1);
+
+                            let variable = ctx.source_range(span_without_quotes).to_string();
+
+                            fixer.replace(string_title.span, variable)
+                        },
+                    );
                 }
-
-                ctx.diagnostic_with_fix(
-                    prefer_describe_function_title_diagnostic(title_expression.span),
-                    |fixer| {
-                        let variable = identifier.name.to_string();
-
-                        fixer.replace(title_expression.span, variable)
-                    },
-                );
+                _ => {}
             }
-            Argument::StringLiteral(string_title) => {
-                if !is_imported_name(string_title.value.as_ref()) {
-                    return;
-                }
-
-                if ctx.settings().vitest.typecheck {
-                    // TODO https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/src/rules/prefer-describe-function-title.ts#L85C9-L92C10
-                    return;
-                }
-
-                if !is_value_imported_name(string_title.value.as_ref()) {
-                    ctx.diagnostic(prefer_describe_function_title_diagnostic(string_title.span));
-                    return;
-                }
-
-                ctx.diagnostic_with_fix(
-                    prefer_describe_function_title_diagnostic(string_title.span),
-                    |fixer| {
-                        let span_without_quotes =
-                            Span::new(string_title.span.start + 1, string_title.span.end - 1);
-
-                        let variable = ctx.source_range(span_without_quotes).to_string();
-
-                        fixer.replace(string_title.span, variable)
-                    },
-                );
-            }
-            _ => {}
         }
     }
 }

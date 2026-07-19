@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrayExpressionElement, Expression},
+    ast::{ArrayExpressionElement, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -91,8 +91,8 @@ impl Rule for NoArrayReverse {
         if static_property_name != "reverse" {
             return;
         }
-        let is_spread = match member_expr.object() {
-            Expression::ArrayExpression(array) => {
+        let is_spread = match member_expr.object().kind() {
+            ExpressionKind::ArrayExpression(array) => {
                 array.elements.len() == 1
                     && matches!(array.elements[0], ArrayExpressionElement::SpreadElement(_))
             }

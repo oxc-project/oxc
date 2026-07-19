@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, VariableDeclarationKind},
+    ast::{BindingPattern, ExpressionTag, VariableDeclarationKind},
 };
 use oxc_cfg::{
     BasicBlockId, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph,
@@ -150,10 +150,12 @@ impl Rule for NoUselessAssignment {
             {
                 continue;
             }
-            if matches!(
-                &var_decl.init,
-                Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-            ) {
+            if var_decl.init.as_ref().is_some_and(|init| {
+                matches!(
+                    init.tag(),
+                    ExpressionTag::FunctionExpression | ExpressionTag::ArrowFunctionExpression
+                )
+            }) {
                 continue;
             }
 

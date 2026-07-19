@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTarget, Class, ClassElement, Expression, FormalParameter,
-        MethodDefinition, MethodDefinitionKind, PropertyDefinition, PropertyKey, Statement,
-        TSAccessibility,
+        AssignmentExpression, AssignmentTarget, Class, ClassElement, ExpressionKind,
+        FormalParameter, MethodDefinition, MethodDefinitionKind, PropertyDefinition, PropertyKey,
+        Statement, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -279,16 +279,21 @@ fn constructor_assignment<'a>(
     let Statement::ExpressionStatement(expression_statement) = statement else {
         return None;
     };
-    let Expression::AssignmentExpression(assignment) = &expression_statement.expression else {
+    let ExpressionKind::AssignmentExpression(assignment) = expression_statement.expression.kind()
+    else {
         return None;
     };
-    let AssignmentTarget::StaticMemberExpression(member_expression) = &assignment.left else {
+    let AssignmentTarget::MemberExpression(member) = &assignment.left else {
         return None;
     };
-    if !matches!(member_expression.object.get_inner_expression(), Expression::ThisExpression(_)) {
+    let Some(member_expression) = member.as_static_member_expression() else {
+        return None;
+    };
+    if !member_expression.object.get_inner_expression().is_this_expression() {
         return None;
     }
-    let Expression::Identifier(identifier) = assignment.right.get_inner_expression() else {
+    let ExpressionKind::Identifier(identifier) = assignment.right.get_inner_expression().kind()
+    else {
         return None;
     };
     if member_expression.property.name != identifier.name {

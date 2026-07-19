@@ -114,7 +114,12 @@ impl PreferImportInMock {
             return;
         }
 
-        let Some(Argument::StringLiteral(import_value)) = call_expr.arguments.first() else {
+        let Some(import_value) = call_expr
+            .arguments
+            .first()
+            .and_then(Argument::as_expression)
+            .and_then(|e| e.as_string_literal())
+        else {
             return;
         };
 

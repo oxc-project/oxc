@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -68,9 +71,9 @@ impl Rule for ThrowNewError {
             return;
         }
 
-        let name = match call_expr.callee.without_parentheses() {
-            Expression::Identifier(v) => v.name,
-            Expression::StaticMemberExpression(v) => v.property.name,
+        let name = match call_expr.callee.without_parentheses().kind() {
+            ExpressionKind::Identifier(v) => v.name,
+            ExpressionKind::StaticMemberExpression(v) => v.property.name,
             _ => return,
         };
 
@@ -88,7 +91,7 @@ impl Rule for ThrowNewError {
 }
 
 fn is_data_tagged_error(callee: &Expression<'_>) -> bool {
-    let Expression::StaticMemberExpression(member) = callee else {
+    let ExpressionKind::StaticMemberExpression(member) = callee.kind() else {
         return false;
     };
 

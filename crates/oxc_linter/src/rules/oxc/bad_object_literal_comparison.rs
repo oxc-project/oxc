@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -97,7 +100,7 @@ impl Rule for BadObjectLiteralComparison {
 }
 
 fn is_empty_object_expression(maybe_empty_obj_expr: &Expression) -> bool {
-    if let Expression::ObjectExpression(object_expression) = maybe_empty_obj_expr {
+    if let ExpressionKind::ObjectExpression(object_expression) = maybe_empty_obj_expr.kind() {
         object_expression.properties.is_empty()
     } else {
         false
@@ -105,7 +108,7 @@ fn is_empty_object_expression(maybe_empty_obj_expr: &Expression) -> bool {
 }
 
 fn is_empty_array_expression(maybe_empty_array_expr: &Expression) -> bool {
-    if let Expression::ArrayExpression(array_expression) = maybe_empty_array_expr {
+    if let ExpressionKind::ArrayExpression(array_expression) = maybe_empty_array_expr.kind() {
         array_expression.elements.is_empty()
     } else {
         false

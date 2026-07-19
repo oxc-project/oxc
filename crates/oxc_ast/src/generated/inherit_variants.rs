@@ -1,6 +1,12 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/inherit_variants.rs`.
 
+// PROTOTYPE: This file has been rewritten by hand for the tagged-pointer `Expression` /
+// `MemberExpression` design. Enums which inherit `Expression`'s variants now have a single
+// `Expression(Expression<'a>)` variant, and enums which inherit `MemberExpression`'s variants
+// have a single `MemberExpression(MemberExpression<'a>)` variant.
+// Do NOT re-run `just ast` - it would overwrite this file.
+
 // Some `TryFrom` impls have a single non-shared variant left for the catch-all arm
 #![expect(clippy::match_wildcard_for_single_variants)]
 
@@ -8,230 +14,44 @@ use std::ptr::NonNull;
 
 use crate::ast::*;
 
-impl<'a> Expression<'a> {
-    /// Return if an [`Expression`] is a [`MemberExpression`].
-    #[inline]
-    pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert an [`Expression`] to a [`MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
-    }
-
-    /// Convert an [`&Expression`] to a [`&MemberExpression`].
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert an [`&mut Expression`] to a [`&mut MemberExpression`].
-    ///
-    /// [`&mut Expression`]: Expression
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert an [`&Expression`] to a [`&MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
-        self.as_member_expression().unwrap()
-    }
-
-    /// Convert an [`&mut Expression`] to a [`&mut MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut Expression`]: Expression
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
-        self.as_member_expression_mut().unwrap()
-    }
-}
-
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to an [`&Expression`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&Expression`]: Expression
-    #[inline]
-    pub fn as_expression(&self) -> &Expression<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<Expression<'a>> for MemberExpression<'a> {
-    type Error = ();
-
-    /// Convert an [`Expression`] to a [`MemberExpression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: Expression<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            Expression::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            Expression::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            Expression::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<MemberExpression<'a>> for Expression<'a> {
-    /// Convert a [`MemberExpression`] to an [`Expression`].
-    #[inline]
-    fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                Expression::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => Expression::StaticMemberExpression(o),
-            MemberExpression::PrivateFieldExpression(o) => Expression::PrivateFieldExpression(o),
-        }
-    }
-}
-
 impl<'a> ArrayExpressionElement<'a> {
-    /// Return if an [`ArrayExpressionElement`] is an [`Expression`].
+    /// Return if a [`ArrayExpressionElement`] is a [`Expression`].
     #[inline]
     pub fn is_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumericLiteral(_)
-                | Self::BigIntLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_)
-                | Self::TemplateLiteral(_)
-                | Self::Identifier(_)
-                | Self::Super(_)
-                | Self::ArrayExpression(_)
-                | Self::ArrowFunctionExpression(_)
-                | Self::AssignmentExpression(_)
-                | Self::AwaitExpression(_)
-                | Self::BinaryExpression(_)
-                | Self::CallExpression(_)
-                | Self::ChainExpression(_)
-                | Self::ClassExpression(_)
-                | Self::ConditionalExpression(_)
-                | Self::FunctionExpression(_)
-                | Self::ImportExpression(_)
-                | Self::LogicalExpression(_)
-                | Self::NewExpression(_)
-                | Self::ObjectExpression(_)
-                | Self::ParenthesizedExpression(_)
-                | Self::SequenceExpression(_)
-                | Self::TaggedTemplateExpression(_)
-                | Self::ThisExpression(_)
-                | Self::UnaryExpression(_)
-                | Self::UpdateExpression(_)
-                | Self::YieldExpression(_)
-                | Self::PrivateInExpression(_)
-                | Self::ImportMeta(_)
-                | Self::NewTarget(_)
-                | Self::JSXElement(_)
-                | Self::JSXFragment(_)
-                | Self::TSAsExpression(_)
-                | Self::TSSatisfiesExpression(_)
-                | Self::TSTypeAssertion(_)
-                | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
-                | Self::V8IntrinsicExpression(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        matches!(self, Self::Expression(_))
     }
 
-    /// Convert an [`ArrayExpressionElement`] to an [`Expression`].
+    /// Convert a [`ArrayExpressionElement`] into a [`Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_expression(self) -> Expression<'a> {
-        Expression::try_from(self).unwrap()
+        match self {
+            Self::Expression(it) => it,
+            _ => panic!("Cannot convert to Expression"),
+        }
     }
 
-    /// Convert an [`&ArrayExpressionElement`] to an [`&Expression`].
+    /// Convert a [`&ArrayExpressionElement`] to a [`&Expression`].
     ///
     /// [`&ArrayExpressionElement`]: ArrayExpressionElement
     /// [`&Expression`]: Expression
     #[inline]
     pub fn as_expression(&self) -> Option<&Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
-        } else {
-            None
-        }
+        if let Self::Expression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&mut ArrayExpressionElement`] to an [`&mut Expression`].
+    /// Convert a [`&mut ArrayExpressionElement`] to a [`&mut Expression`].
     ///
     /// [`&mut ArrayExpressionElement`]: ArrayExpressionElement
     /// [`&mut Expression`]: Expression
     #[inline]
     pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
-        } else {
-            None
-        }
+        if let Self::Expression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&ArrayExpressionElement`] to an [`&Expression`].
+    /// Convert a [`&ArrayExpressionElement`] to a [`&Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -243,7 +63,7 @@ impl<'a> ArrayExpressionElement<'a> {
         self.as_expression().unwrap()
     }
 
-    /// Convert an [`&mut ArrayExpressionElement`] to an [`&mut Expression`].
+    /// Convert a [`&mut ArrayExpressionElement`] to a [`&mut Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -253,236 +73,68 @@ impl<'a> ArrayExpressionElement<'a> {
     #[inline]
     pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
         self.as_expression_mut().unwrap()
-    }
-}
-
-impl<'a> Expression<'a> {
-    /// Convert an [`&Expression`] to an [`&ArrayExpressionElement`].
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&ArrayExpressionElement`]: ArrayExpressionElement
-    #[inline]
-    pub fn as_array_expression_element(&self) -> &ArrayExpressionElement<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ArrayExpressionElement>().as_ref() }
     }
 }
 
 impl<'a> TryFrom<ArrayExpressionElement<'a>> for Expression<'a> {
     type Error = ();
 
-    /// Convert an [`ArrayExpressionElement`] to an [`Expression`].
+    /// Convert a [`ArrayExpressionElement`] to a [`Expression`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: ArrayExpressionElement<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            ArrayExpressionElement::BooleanLiteral(o) => Ok(Expression::BooleanLiteral(o)),
-            ArrayExpressionElement::NullLiteral(o) => Ok(Expression::NullLiteral(o)),
-            ArrayExpressionElement::NumericLiteral(o) => Ok(Expression::NumericLiteral(o)),
-            ArrayExpressionElement::BigIntLiteral(o) => Ok(Expression::BigIntLiteral(o)),
-            ArrayExpressionElement::RegExpLiteral(o) => Ok(Expression::RegExpLiteral(o)),
-            ArrayExpressionElement::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
-            ArrayExpressionElement::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
-            ArrayExpressionElement::Identifier(o) => Ok(Expression::Identifier(o)),
-            ArrayExpressionElement::Super(o) => Ok(Expression::Super(o)),
-            ArrayExpressionElement::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
-            ArrayExpressionElement::ArrowFunctionExpression(o) => {
-                Ok(Expression::ArrowFunctionExpression(o))
-            }
-            ArrayExpressionElement::AssignmentExpression(o) => {
-                Ok(Expression::AssignmentExpression(o))
-            }
-            ArrayExpressionElement::AwaitExpression(o) => Ok(Expression::AwaitExpression(o)),
-            ArrayExpressionElement::BinaryExpression(o) => Ok(Expression::BinaryExpression(o)),
-            ArrayExpressionElement::CallExpression(o) => Ok(Expression::CallExpression(o)),
-            ArrayExpressionElement::ChainExpression(o) => Ok(Expression::ChainExpression(o)),
-            ArrayExpressionElement::ClassExpression(o) => Ok(Expression::ClassExpression(o)),
-            ArrayExpressionElement::ConditionalExpression(o) => {
-                Ok(Expression::ConditionalExpression(o))
-            }
-            ArrayExpressionElement::FunctionExpression(o) => Ok(Expression::FunctionExpression(o)),
-            ArrayExpressionElement::ImportExpression(o) => Ok(Expression::ImportExpression(o)),
-            ArrayExpressionElement::LogicalExpression(o) => Ok(Expression::LogicalExpression(o)),
-            ArrayExpressionElement::NewExpression(o) => Ok(Expression::NewExpression(o)),
-            ArrayExpressionElement::ObjectExpression(o) => Ok(Expression::ObjectExpression(o)),
-            ArrayExpressionElement::ParenthesizedExpression(o) => {
-                Ok(Expression::ParenthesizedExpression(o))
-            }
-            ArrayExpressionElement::SequenceExpression(o) => Ok(Expression::SequenceExpression(o)),
-            ArrayExpressionElement::TaggedTemplateExpression(o) => {
-                Ok(Expression::TaggedTemplateExpression(o))
-            }
-            ArrayExpressionElement::ThisExpression(o) => Ok(Expression::ThisExpression(o)),
-            ArrayExpressionElement::UnaryExpression(o) => Ok(Expression::UnaryExpression(o)),
-            ArrayExpressionElement::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
-            ArrayExpressionElement::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
-            ArrayExpressionElement::PrivateInExpression(o) => {
-                Ok(Expression::PrivateInExpression(o))
-            }
-            ArrayExpressionElement::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
-            ArrayExpressionElement::NewTarget(o) => Ok(Expression::NewTarget(o)),
-            ArrayExpressionElement::JSXElement(o) => Ok(Expression::JSXElement(o)),
-            ArrayExpressionElement::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
-            ArrayExpressionElement::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
-            ArrayExpressionElement::TSSatisfiesExpression(o) => {
-                Ok(Expression::TSSatisfiesExpression(o))
-            }
-            ArrayExpressionElement::TSTypeAssertion(o) => Ok(Expression::TSTypeAssertion(o)),
-            ArrayExpressionElement::TSNonNullExpression(o) => {
-                Ok(Expression::TSNonNullExpression(o))
-            }
-            ArrayExpressionElement::TSInstantiationExpression(o) => {
-                Ok(Expression::TSInstantiationExpression(o))
-            }
-            ArrayExpressionElement::V8IntrinsicExpression(o) => {
-                Ok(Expression::V8IntrinsicExpression(o))
-            }
-            ArrayExpressionElement::ComputedMemberExpression(o) => {
-                Ok(Expression::ComputedMemberExpression(o))
-            }
-            ArrayExpressionElement::StaticMemberExpression(o) => {
-                Ok(Expression::StaticMemberExpression(o))
-            }
-            ArrayExpressionElement::PrivateFieldExpression(o) => {
-                Ok(Expression::PrivateFieldExpression(o))
-            }
+            ArrayExpressionElement::Expression(it) => Ok(it),
             _ => Err(()),
         }
     }
 }
 
 impl<'a> From<Expression<'a>> for ArrayExpressionElement<'a> {
-    /// Convert an [`Expression`] to an [`ArrayExpressionElement`].
+    /// Convert a [`Expression`] to a [`ArrayExpressionElement`].
     #[inline]
     fn from(value: Expression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            Expression::BooleanLiteral(o) => ArrayExpressionElement::BooleanLiteral(o),
-            Expression::NullLiteral(o) => ArrayExpressionElement::NullLiteral(o),
-            Expression::NumericLiteral(o) => ArrayExpressionElement::NumericLiteral(o),
-            Expression::BigIntLiteral(o) => ArrayExpressionElement::BigIntLiteral(o),
-            Expression::RegExpLiteral(o) => ArrayExpressionElement::RegExpLiteral(o),
-            Expression::StringLiteral(o) => ArrayExpressionElement::StringLiteral(o),
-            Expression::TemplateLiteral(o) => ArrayExpressionElement::TemplateLiteral(o),
-            Expression::Identifier(o) => ArrayExpressionElement::Identifier(o),
-            Expression::Super(o) => ArrayExpressionElement::Super(o),
-            Expression::ArrayExpression(o) => ArrayExpressionElement::ArrayExpression(o),
-            Expression::ArrowFunctionExpression(o) => {
-                ArrayExpressionElement::ArrowFunctionExpression(o)
-            }
-            Expression::AssignmentExpression(o) => ArrayExpressionElement::AssignmentExpression(o),
-            Expression::AwaitExpression(o) => ArrayExpressionElement::AwaitExpression(o),
-            Expression::BinaryExpression(o) => ArrayExpressionElement::BinaryExpression(o),
-            Expression::CallExpression(o) => ArrayExpressionElement::CallExpression(o),
-            Expression::ChainExpression(o) => ArrayExpressionElement::ChainExpression(o),
-            Expression::ClassExpression(o) => ArrayExpressionElement::ClassExpression(o),
-            Expression::ConditionalExpression(o) => {
-                ArrayExpressionElement::ConditionalExpression(o)
-            }
-            Expression::FunctionExpression(o) => ArrayExpressionElement::FunctionExpression(o),
-            Expression::ImportExpression(o) => ArrayExpressionElement::ImportExpression(o),
-            Expression::LogicalExpression(o) => ArrayExpressionElement::LogicalExpression(o),
-            Expression::NewExpression(o) => ArrayExpressionElement::NewExpression(o),
-            Expression::ObjectExpression(o) => ArrayExpressionElement::ObjectExpression(o),
-            Expression::ParenthesizedExpression(o) => {
-                ArrayExpressionElement::ParenthesizedExpression(o)
-            }
-            Expression::SequenceExpression(o) => ArrayExpressionElement::SequenceExpression(o),
-            Expression::TaggedTemplateExpression(o) => {
-                ArrayExpressionElement::TaggedTemplateExpression(o)
-            }
-            Expression::ThisExpression(o) => ArrayExpressionElement::ThisExpression(o),
-            Expression::UnaryExpression(o) => ArrayExpressionElement::UnaryExpression(o),
-            Expression::UpdateExpression(o) => ArrayExpressionElement::UpdateExpression(o),
-            Expression::YieldExpression(o) => ArrayExpressionElement::YieldExpression(o),
-            Expression::PrivateInExpression(o) => ArrayExpressionElement::PrivateInExpression(o),
-            Expression::ImportMeta(o) => ArrayExpressionElement::ImportMeta(o),
-            Expression::NewTarget(o) => ArrayExpressionElement::NewTarget(o),
-            Expression::JSXElement(o) => ArrayExpressionElement::JSXElement(o),
-            Expression::JSXFragment(o) => ArrayExpressionElement::JSXFragment(o),
-            Expression::TSAsExpression(o) => ArrayExpressionElement::TSAsExpression(o),
-            Expression::TSSatisfiesExpression(o) => {
-                ArrayExpressionElement::TSSatisfiesExpression(o)
-            }
-            Expression::TSTypeAssertion(o) => ArrayExpressionElement::TSTypeAssertion(o),
-            Expression::TSNonNullExpression(o) => ArrayExpressionElement::TSNonNullExpression(o),
-            Expression::TSInstantiationExpression(o) => {
-                ArrayExpressionElement::TSInstantiationExpression(o)
-            }
-            Expression::V8IntrinsicExpression(o) => {
-                ArrayExpressionElement::V8IntrinsicExpression(o)
-            }
-            Expression::ComputedMemberExpression(o) => {
-                ArrayExpressionElement::ComputedMemberExpression(o)
-            }
-            Expression::StaticMemberExpression(o) => {
-                ArrayExpressionElement::StaticMemberExpression(o)
-            }
-            Expression::PrivateFieldExpression(o) => {
-                ArrayExpressionElement::PrivateFieldExpression(o)
-            }
-        }
+        ArrayExpressionElement::Expression(value)
     }
 }
 
 impl<'a> ArrayExpressionElement<'a> {
-    /// Return if an [`ArrayExpressionElement`] is a [`MemberExpression`].
+    /// Return if a [`ArrayExpressionElement`] is a [`MemberExpression`].
     #[inline]
     pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        self.as_expression().is_some_and(Expression::is_member_expression)
     }
 
-    /// Convert an [`ArrayExpressionElement`] to a [`MemberExpression`].
+    /// Convert a [`ArrayExpressionElement`] into a [`MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
+        self.into_expression().into_member_expression()
     }
 
-    /// Convert an [`&ArrayExpressionElement`] to a [`&MemberExpression`].
+    /// Convert a [`&ArrayExpressionElement`] to a [`&MemberExpression`].
     ///
     /// [`&ArrayExpressionElement`]: ArrayExpressionElement
     /// [`&MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
+        self.as_expression().and_then(Expression::as_member_expression)
     }
 
-    /// Convert an [`&mut ArrayExpressionElement`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut ArrayExpressionElement`] to a [`&mut MemberExpression`].
     ///
     /// [`&mut ArrayExpressionElement`]: ArrayExpressionElement
     /// [`&mut MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
+        self.as_expression_mut().and_then(Expression::as_member_expression_mut)
     }
 
-    /// Convert an [`&ArrayExpressionElement`] to a [`&MemberExpression`].
+    /// Convert a [`&ArrayExpressionElement`] to a [`&MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -494,7 +146,7 @@ impl<'a> ArrayExpressionElement<'a> {
         self.as_member_expression().unwrap()
     }
 
-    /// Convert an [`&mut ArrayExpressionElement`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut ArrayExpressionElement`] to a [`&mut MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -507,158 +159,68 @@ impl<'a> ArrayExpressionElement<'a> {
     }
 }
 
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to an [`&ArrayExpressionElement`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&ArrayExpressionElement`]: ArrayExpressionElement
-    #[inline]
-    pub fn as_array_expression_element(&self) -> &ArrayExpressionElement<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ArrayExpressionElement>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<ArrayExpressionElement<'a>> for MemberExpression<'a> {
     type Error = ();
 
-    /// Convert an [`ArrayExpressionElement`] to a [`MemberExpression`].
+    /// Convert a [`ArrayExpressionElement`] to a [`MemberExpression`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: ArrayExpressionElement<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            ArrayExpressionElement::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            ArrayExpressionElement::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            ArrayExpressionElement::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
+            ArrayExpressionElement::Expression(it) => MemberExpression::try_from(it),
             _ => Err(()),
         }
     }
 }
 
 impl<'a> From<MemberExpression<'a>> for ArrayExpressionElement<'a> {
-    /// Convert a [`MemberExpression`] to an [`ArrayExpressionElement`].
+    /// Convert a [`MemberExpression`] to a [`ArrayExpressionElement`].
     #[inline]
     fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                ArrayExpressionElement::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => {
-                ArrayExpressionElement::StaticMemberExpression(o)
-            }
-            MemberExpression::PrivateFieldExpression(o) => {
-                ArrayExpressionElement::PrivateFieldExpression(o)
-            }
-        }
+        ArrayExpressionElement::Expression(Expression::from(value))
     }
 }
 
 impl<'a> PropertyKey<'a> {
-    /// Return if a [`PropertyKey`] is an [`Expression`].
+    /// Return if a [`PropertyKey`] is a [`Expression`].
     #[inline]
     pub fn is_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumericLiteral(_)
-                | Self::BigIntLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_)
-                | Self::TemplateLiteral(_)
-                | Self::Identifier(_)
-                | Self::Super(_)
-                | Self::ArrayExpression(_)
-                | Self::ArrowFunctionExpression(_)
-                | Self::AssignmentExpression(_)
-                | Self::AwaitExpression(_)
-                | Self::BinaryExpression(_)
-                | Self::CallExpression(_)
-                | Self::ChainExpression(_)
-                | Self::ClassExpression(_)
-                | Self::ConditionalExpression(_)
-                | Self::FunctionExpression(_)
-                | Self::ImportExpression(_)
-                | Self::LogicalExpression(_)
-                | Self::NewExpression(_)
-                | Self::ObjectExpression(_)
-                | Self::ParenthesizedExpression(_)
-                | Self::SequenceExpression(_)
-                | Self::TaggedTemplateExpression(_)
-                | Self::ThisExpression(_)
-                | Self::UnaryExpression(_)
-                | Self::UpdateExpression(_)
-                | Self::YieldExpression(_)
-                | Self::PrivateInExpression(_)
-                | Self::ImportMeta(_)
-                | Self::NewTarget(_)
-                | Self::JSXElement(_)
-                | Self::JSXFragment(_)
-                | Self::TSAsExpression(_)
-                | Self::TSSatisfiesExpression(_)
-                | Self::TSTypeAssertion(_)
-                | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
-                | Self::V8IntrinsicExpression(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        matches!(self, Self::Expression(_))
     }
 
-    /// Convert a [`PropertyKey`] to an [`Expression`].
+    /// Convert a [`PropertyKey`] into a [`Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_expression(self) -> Expression<'a> {
-        Expression::try_from(self).unwrap()
+        match self {
+            Self::Expression(it) => it,
+            _ => panic!("Cannot convert to Expression"),
+        }
     }
 
-    /// Convert a [`&PropertyKey`] to an [`&Expression`].
+    /// Convert a [`&PropertyKey`] to a [`&Expression`].
     ///
     /// [`&PropertyKey`]: PropertyKey
     /// [`&Expression`]: Expression
     #[inline]
     pub fn as_expression(&self) -> Option<&Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
-        } else {
-            None
-        }
+        if let Self::Expression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert a [`&mut PropertyKey`] to an [`&mut Expression`].
+    /// Convert a [`&mut PropertyKey`] to a [`&mut Expression`].
     ///
     /// [`&mut PropertyKey`]: PropertyKey
     /// [`&mut Expression`]: Expression
     #[inline]
     pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
-        } else {
-            None
-        }
+        if let Self::Expression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert a [`&PropertyKey`] to an [`&Expression`].
+    /// Convert a [`&PropertyKey`] to a [`&Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -670,7 +232,7 @@ impl<'a> PropertyKey<'a> {
         self.as_expression().unwrap()
     }
 
-    /// Convert a [`&mut PropertyKey`] to an [`&mut Expression`].
+    /// Convert a [`&mut PropertyKey`] to a [`&mut Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -683,134 +245,27 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
-impl<'a> Expression<'a> {
-    /// Convert an [`&Expression`] to a [`&PropertyKey`].
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&PropertyKey`]: PropertyKey
-    #[inline]
-    pub fn as_property_key(&self) -> &PropertyKey<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<PropertyKey>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<PropertyKey<'a>> for Expression<'a> {
     type Error = ();
 
-    /// Convert a [`PropertyKey`] to an [`Expression`].
+    /// Convert a [`PropertyKey`] to a [`Expression`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: PropertyKey<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            PropertyKey::BooleanLiteral(o) => Ok(Expression::BooleanLiteral(o)),
-            PropertyKey::NullLiteral(o) => Ok(Expression::NullLiteral(o)),
-            PropertyKey::NumericLiteral(o) => Ok(Expression::NumericLiteral(o)),
-            PropertyKey::BigIntLiteral(o) => Ok(Expression::BigIntLiteral(o)),
-            PropertyKey::RegExpLiteral(o) => Ok(Expression::RegExpLiteral(o)),
-            PropertyKey::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
-            PropertyKey::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
-            PropertyKey::Identifier(o) => Ok(Expression::Identifier(o)),
-            PropertyKey::Super(o) => Ok(Expression::Super(o)),
-            PropertyKey::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
-            PropertyKey::ArrowFunctionExpression(o) => Ok(Expression::ArrowFunctionExpression(o)),
-            PropertyKey::AssignmentExpression(o) => Ok(Expression::AssignmentExpression(o)),
-            PropertyKey::AwaitExpression(o) => Ok(Expression::AwaitExpression(o)),
-            PropertyKey::BinaryExpression(o) => Ok(Expression::BinaryExpression(o)),
-            PropertyKey::CallExpression(o) => Ok(Expression::CallExpression(o)),
-            PropertyKey::ChainExpression(o) => Ok(Expression::ChainExpression(o)),
-            PropertyKey::ClassExpression(o) => Ok(Expression::ClassExpression(o)),
-            PropertyKey::ConditionalExpression(o) => Ok(Expression::ConditionalExpression(o)),
-            PropertyKey::FunctionExpression(o) => Ok(Expression::FunctionExpression(o)),
-            PropertyKey::ImportExpression(o) => Ok(Expression::ImportExpression(o)),
-            PropertyKey::LogicalExpression(o) => Ok(Expression::LogicalExpression(o)),
-            PropertyKey::NewExpression(o) => Ok(Expression::NewExpression(o)),
-            PropertyKey::ObjectExpression(o) => Ok(Expression::ObjectExpression(o)),
-            PropertyKey::ParenthesizedExpression(o) => Ok(Expression::ParenthesizedExpression(o)),
-            PropertyKey::SequenceExpression(o) => Ok(Expression::SequenceExpression(o)),
-            PropertyKey::TaggedTemplateExpression(o) => Ok(Expression::TaggedTemplateExpression(o)),
-            PropertyKey::ThisExpression(o) => Ok(Expression::ThisExpression(o)),
-            PropertyKey::UnaryExpression(o) => Ok(Expression::UnaryExpression(o)),
-            PropertyKey::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
-            PropertyKey::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
-            PropertyKey::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
-            PropertyKey::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
-            PropertyKey::NewTarget(o) => Ok(Expression::NewTarget(o)),
-            PropertyKey::JSXElement(o) => Ok(Expression::JSXElement(o)),
-            PropertyKey::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
-            PropertyKey::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
-            PropertyKey::TSSatisfiesExpression(o) => Ok(Expression::TSSatisfiesExpression(o)),
-            PropertyKey::TSTypeAssertion(o) => Ok(Expression::TSTypeAssertion(o)),
-            PropertyKey::TSNonNullExpression(o) => Ok(Expression::TSNonNullExpression(o)),
-            PropertyKey::TSInstantiationExpression(o) => {
-                Ok(Expression::TSInstantiationExpression(o))
-            }
-            PropertyKey::V8IntrinsicExpression(o) => Ok(Expression::V8IntrinsicExpression(o)),
-            PropertyKey::ComputedMemberExpression(o) => Ok(Expression::ComputedMemberExpression(o)),
-            PropertyKey::StaticMemberExpression(o) => Ok(Expression::StaticMemberExpression(o)),
-            PropertyKey::PrivateFieldExpression(o) => Ok(Expression::PrivateFieldExpression(o)),
+            PropertyKey::Expression(it) => Ok(it),
             _ => Err(()),
         }
     }
 }
 
 impl<'a> From<Expression<'a>> for PropertyKey<'a> {
-    /// Convert an [`Expression`] to a [`PropertyKey`].
+    /// Convert a [`Expression`] to a [`PropertyKey`].
     #[inline]
     fn from(value: Expression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            Expression::BooleanLiteral(o) => PropertyKey::BooleanLiteral(o),
-            Expression::NullLiteral(o) => PropertyKey::NullLiteral(o),
-            Expression::NumericLiteral(o) => PropertyKey::NumericLiteral(o),
-            Expression::BigIntLiteral(o) => PropertyKey::BigIntLiteral(o),
-            Expression::RegExpLiteral(o) => PropertyKey::RegExpLiteral(o),
-            Expression::StringLiteral(o) => PropertyKey::StringLiteral(o),
-            Expression::TemplateLiteral(o) => PropertyKey::TemplateLiteral(o),
-            Expression::Identifier(o) => PropertyKey::Identifier(o),
-            Expression::Super(o) => PropertyKey::Super(o),
-            Expression::ArrayExpression(o) => PropertyKey::ArrayExpression(o),
-            Expression::ArrowFunctionExpression(o) => PropertyKey::ArrowFunctionExpression(o),
-            Expression::AssignmentExpression(o) => PropertyKey::AssignmentExpression(o),
-            Expression::AwaitExpression(o) => PropertyKey::AwaitExpression(o),
-            Expression::BinaryExpression(o) => PropertyKey::BinaryExpression(o),
-            Expression::CallExpression(o) => PropertyKey::CallExpression(o),
-            Expression::ChainExpression(o) => PropertyKey::ChainExpression(o),
-            Expression::ClassExpression(o) => PropertyKey::ClassExpression(o),
-            Expression::ConditionalExpression(o) => PropertyKey::ConditionalExpression(o),
-            Expression::FunctionExpression(o) => PropertyKey::FunctionExpression(o),
-            Expression::ImportExpression(o) => PropertyKey::ImportExpression(o),
-            Expression::LogicalExpression(o) => PropertyKey::LogicalExpression(o),
-            Expression::NewExpression(o) => PropertyKey::NewExpression(o),
-            Expression::ObjectExpression(o) => PropertyKey::ObjectExpression(o),
-            Expression::ParenthesizedExpression(o) => PropertyKey::ParenthesizedExpression(o),
-            Expression::SequenceExpression(o) => PropertyKey::SequenceExpression(o),
-            Expression::TaggedTemplateExpression(o) => PropertyKey::TaggedTemplateExpression(o),
-            Expression::ThisExpression(o) => PropertyKey::ThisExpression(o),
-            Expression::UnaryExpression(o) => PropertyKey::UnaryExpression(o),
-            Expression::UpdateExpression(o) => PropertyKey::UpdateExpression(o),
-            Expression::YieldExpression(o) => PropertyKey::YieldExpression(o),
-            Expression::PrivateInExpression(o) => PropertyKey::PrivateInExpression(o),
-            Expression::ImportMeta(o) => PropertyKey::ImportMeta(o),
-            Expression::NewTarget(o) => PropertyKey::NewTarget(o),
-            Expression::JSXElement(o) => PropertyKey::JSXElement(o),
-            Expression::JSXFragment(o) => PropertyKey::JSXFragment(o),
-            Expression::TSAsExpression(o) => PropertyKey::TSAsExpression(o),
-            Expression::TSSatisfiesExpression(o) => PropertyKey::TSSatisfiesExpression(o),
-            Expression::TSTypeAssertion(o) => PropertyKey::TSTypeAssertion(o),
-            Expression::TSNonNullExpression(o) => PropertyKey::TSNonNullExpression(o),
-            Expression::TSInstantiationExpression(o) => PropertyKey::TSInstantiationExpression(o),
-            Expression::V8IntrinsicExpression(o) => PropertyKey::V8IntrinsicExpression(o),
-            Expression::ComputedMemberExpression(o) => PropertyKey::ComputedMemberExpression(o),
-            Expression::StaticMemberExpression(o) => PropertyKey::StaticMemberExpression(o),
-            Expression::PrivateFieldExpression(o) => PropertyKey::PrivateFieldExpression(o),
-        }
+        PropertyKey::Expression(value)
     }
 }
 
@@ -818,21 +273,16 @@ impl<'a> PropertyKey<'a> {
     /// Return if a [`PropertyKey`] is a [`MemberExpression`].
     #[inline]
     pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        self.as_expression().is_some_and(Expression::is_member_expression)
     }
 
-    /// Convert a [`PropertyKey`] to a [`MemberExpression`].
+    /// Convert a [`PropertyKey`] into a [`MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
+        self.into_expression().into_member_expression()
     }
 
     /// Convert a [`&PropertyKey`] to a [`&MemberExpression`].
@@ -841,13 +291,7 @@ impl<'a> PropertyKey<'a> {
     /// [`&MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
+        self.as_expression().and_then(Expression::as_member_expression)
     }
 
     /// Convert a [`&mut PropertyKey`] to a [`&mut MemberExpression`].
@@ -856,13 +300,7 @@ impl<'a> PropertyKey<'a> {
     /// [`&mut MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
+        self.as_expression_mut().and_then(Expression::as_member_expression_mut)
     }
 
     /// Convert a [`&PropertyKey`] to a [`&MemberExpression`].
@@ -887,19 +325,6 @@ impl<'a> PropertyKey<'a> {
     #[inline]
     pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
         self.as_member_expression_mut().unwrap()
-    }
-}
-
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to a [`&PropertyKey`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&PropertyKey`]: PropertyKey
-    #[inline]
-    pub fn as_property_key(&self) -> &PropertyKey<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<PropertyKey>().as_ref() }
     }
 }
 
@@ -912,18 +337,8 @@ impl<'a> TryFrom<PropertyKey<'a>> for MemberExpression<'a> {
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: PropertyKey<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            PropertyKey::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            PropertyKey::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            PropertyKey::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
+            PropertyKey::Expression(it) => MemberExpression::try_from(it),
             _ => Err(()),
         }
     }
@@ -933,111 +348,48 @@ impl<'a> From<MemberExpression<'a>> for PropertyKey<'a> {
     /// Convert a [`MemberExpression`] to a [`PropertyKey`].
     #[inline]
     fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                PropertyKey::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => PropertyKey::StaticMemberExpression(o),
-            MemberExpression::PrivateFieldExpression(o) => PropertyKey::PrivateFieldExpression(o),
-        }
+        PropertyKey::Expression(Expression::from(value))
     }
 }
 
 impl<'a> Argument<'a> {
-    /// Return if an [`Argument`] is an [`Expression`].
+    /// Return if a [`Argument`] is a [`Expression`].
     #[inline]
     pub fn is_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumericLiteral(_)
-                | Self::BigIntLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_)
-                | Self::TemplateLiteral(_)
-                | Self::Identifier(_)
-                | Self::Super(_)
-                | Self::ArrayExpression(_)
-                | Self::ArrowFunctionExpression(_)
-                | Self::AssignmentExpression(_)
-                | Self::AwaitExpression(_)
-                | Self::BinaryExpression(_)
-                | Self::CallExpression(_)
-                | Self::ChainExpression(_)
-                | Self::ClassExpression(_)
-                | Self::ConditionalExpression(_)
-                | Self::FunctionExpression(_)
-                | Self::ImportExpression(_)
-                | Self::LogicalExpression(_)
-                | Self::NewExpression(_)
-                | Self::ObjectExpression(_)
-                | Self::ParenthesizedExpression(_)
-                | Self::SequenceExpression(_)
-                | Self::TaggedTemplateExpression(_)
-                | Self::ThisExpression(_)
-                | Self::UnaryExpression(_)
-                | Self::UpdateExpression(_)
-                | Self::YieldExpression(_)
-                | Self::PrivateInExpression(_)
-                | Self::ImportMeta(_)
-                | Self::NewTarget(_)
-                | Self::JSXElement(_)
-                | Self::JSXFragment(_)
-                | Self::TSAsExpression(_)
-                | Self::TSSatisfiesExpression(_)
-                | Self::TSTypeAssertion(_)
-                | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
-                | Self::V8IntrinsicExpression(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        matches!(self, Self::Expression(_))
     }
 
-    /// Convert an [`Argument`] to an [`Expression`].
+    /// Convert a [`Argument`] into a [`Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_expression(self) -> Expression<'a> {
-        Expression::try_from(self).unwrap()
+        match self {
+            Self::Expression(it) => it,
+            _ => panic!("Cannot convert to Expression"),
+        }
     }
 
-    /// Convert an [`&Argument`] to an [`&Expression`].
+    /// Convert a [`&Argument`] to a [`&Expression`].
     ///
     /// [`&Argument`]: Argument
     /// [`&Expression`]: Expression
     #[inline]
     pub fn as_expression(&self) -> Option<&Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
-        } else {
-            None
-        }
+        if let Self::Expression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&mut Argument`] to an [`&mut Expression`].
+    /// Convert a [`&mut Argument`] to a [`&mut Expression`].
     ///
     /// [`&mut Argument`]: Argument
     /// [`&mut Expression`]: Expression
     #[inline]
     pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
-        } else {
-            None
-        }
+        if let Self::Expression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&Argument`] to an [`&Expression`].
+    /// Convert a [`&Argument`] to a [`&Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1049,7 +401,7 @@ impl<'a> Argument<'a> {
         self.as_expression().unwrap()
     }
 
-    /// Convert an [`&mut Argument`] to an [`&mut Expression`].
+    /// Convert a [`&mut Argument`] to a [`&mut Expression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1062,187 +414,65 @@ impl<'a> Argument<'a> {
     }
 }
 
-impl<'a> Expression<'a> {
-    /// Convert an [`&Expression`] to an [`&Argument`].
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&Argument`]: Argument
-    #[inline]
-    pub fn as_argument(&self) -> &Argument<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<Argument>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<Argument<'a>> for Expression<'a> {
     type Error = ();
 
-    /// Convert an [`Argument`] to an [`Expression`].
+    /// Convert a [`Argument`] to a [`Expression`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: Argument<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            Argument::BooleanLiteral(o) => Ok(Expression::BooleanLiteral(o)),
-            Argument::NullLiteral(o) => Ok(Expression::NullLiteral(o)),
-            Argument::NumericLiteral(o) => Ok(Expression::NumericLiteral(o)),
-            Argument::BigIntLiteral(o) => Ok(Expression::BigIntLiteral(o)),
-            Argument::RegExpLiteral(o) => Ok(Expression::RegExpLiteral(o)),
-            Argument::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
-            Argument::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
-            Argument::Identifier(o) => Ok(Expression::Identifier(o)),
-            Argument::Super(o) => Ok(Expression::Super(o)),
-            Argument::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
-            Argument::ArrowFunctionExpression(o) => Ok(Expression::ArrowFunctionExpression(o)),
-            Argument::AssignmentExpression(o) => Ok(Expression::AssignmentExpression(o)),
-            Argument::AwaitExpression(o) => Ok(Expression::AwaitExpression(o)),
-            Argument::BinaryExpression(o) => Ok(Expression::BinaryExpression(o)),
-            Argument::CallExpression(o) => Ok(Expression::CallExpression(o)),
-            Argument::ChainExpression(o) => Ok(Expression::ChainExpression(o)),
-            Argument::ClassExpression(o) => Ok(Expression::ClassExpression(o)),
-            Argument::ConditionalExpression(o) => Ok(Expression::ConditionalExpression(o)),
-            Argument::FunctionExpression(o) => Ok(Expression::FunctionExpression(o)),
-            Argument::ImportExpression(o) => Ok(Expression::ImportExpression(o)),
-            Argument::LogicalExpression(o) => Ok(Expression::LogicalExpression(o)),
-            Argument::NewExpression(o) => Ok(Expression::NewExpression(o)),
-            Argument::ObjectExpression(o) => Ok(Expression::ObjectExpression(o)),
-            Argument::ParenthesizedExpression(o) => Ok(Expression::ParenthesizedExpression(o)),
-            Argument::SequenceExpression(o) => Ok(Expression::SequenceExpression(o)),
-            Argument::TaggedTemplateExpression(o) => Ok(Expression::TaggedTemplateExpression(o)),
-            Argument::ThisExpression(o) => Ok(Expression::ThisExpression(o)),
-            Argument::UnaryExpression(o) => Ok(Expression::UnaryExpression(o)),
-            Argument::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
-            Argument::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
-            Argument::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
-            Argument::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
-            Argument::NewTarget(o) => Ok(Expression::NewTarget(o)),
-            Argument::JSXElement(o) => Ok(Expression::JSXElement(o)),
-            Argument::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
-            Argument::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
-            Argument::TSSatisfiesExpression(o) => Ok(Expression::TSSatisfiesExpression(o)),
-            Argument::TSTypeAssertion(o) => Ok(Expression::TSTypeAssertion(o)),
-            Argument::TSNonNullExpression(o) => Ok(Expression::TSNonNullExpression(o)),
-            Argument::TSInstantiationExpression(o) => Ok(Expression::TSInstantiationExpression(o)),
-            Argument::V8IntrinsicExpression(o) => Ok(Expression::V8IntrinsicExpression(o)),
-            Argument::ComputedMemberExpression(o) => Ok(Expression::ComputedMemberExpression(o)),
-            Argument::StaticMemberExpression(o) => Ok(Expression::StaticMemberExpression(o)),
-            Argument::PrivateFieldExpression(o) => Ok(Expression::PrivateFieldExpression(o)),
+            Argument::Expression(it) => Ok(it),
             _ => Err(()),
         }
     }
 }
 
 impl<'a> From<Expression<'a>> for Argument<'a> {
-    /// Convert an [`Expression`] to an [`Argument`].
+    /// Convert a [`Expression`] to a [`Argument`].
     #[inline]
     fn from(value: Expression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            Expression::BooleanLiteral(o) => Argument::BooleanLiteral(o),
-            Expression::NullLiteral(o) => Argument::NullLiteral(o),
-            Expression::NumericLiteral(o) => Argument::NumericLiteral(o),
-            Expression::BigIntLiteral(o) => Argument::BigIntLiteral(o),
-            Expression::RegExpLiteral(o) => Argument::RegExpLiteral(o),
-            Expression::StringLiteral(o) => Argument::StringLiteral(o),
-            Expression::TemplateLiteral(o) => Argument::TemplateLiteral(o),
-            Expression::Identifier(o) => Argument::Identifier(o),
-            Expression::Super(o) => Argument::Super(o),
-            Expression::ArrayExpression(o) => Argument::ArrayExpression(o),
-            Expression::ArrowFunctionExpression(o) => Argument::ArrowFunctionExpression(o),
-            Expression::AssignmentExpression(o) => Argument::AssignmentExpression(o),
-            Expression::AwaitExpression(o) => Argument::AwaitExpression(o),
-            Expression::BinaryExpression(o) => Argument::BinaryExpression(o),
-            Expression::CallExpression(o) => Argument::CallExpression(o),
-            Expression::ChainExpression(o) => Argument::ChainExpression(o),
-            Expression::ClassExpression(o) => Argument::ClassExpression(o),
-            Expression::ConditionalExpression(o) => Argument::ConditionalExpression(o),
-            Expression::FunctionExpression(o) => Argument::FunctionExpression(o),
-            Expression::ImportExpression(o) => Argument::ImportExpression(o),
-            Expression::LogicalExpression(o) => Argument::LogicalExpression(o),
-            Expression::NewExpression(o) => Argument::NewExpression(o),
-            Expression::ObjectExpression(o) => Argument::ObjectExpression(o),
-            Expression::ParenthesizedExpression(o) => Argument::ParenthesizedExpression(o),
-            Expression::SequenceExpression(o) => Argument::SequenceExpression(o),
-            Expression::TaggedTemplateExpression(o) => Argument::TaggedTemplateExpression(o),
-            Expression::ThisExpression(o) => Argument::ThisExpression(o),
-            Expression::UnaryExpression(o) => Argument::UnaryExpression(o),
-            Expression::UpdateExpression(o) => Argument::UpdateExpression(o),
-            Expression::YieldExpression(o) => Argument::YieldExpression(o),
-            Expression::PrivateInExpression(o) => Argument::PrivateInExpression(o),
-            Expression::ImportMeta(o) => Argument::ImportMeta(o),
-            Expression::NewTarget(o) => Argument::NewTarget(o),
-            Expression::JSXElement(o) => Argument::JSXElement(o),
-            Expression::JSXFragment(o) => Argument::JSXFragment(o),
-            Expression::TSAsExpression(o) => Argument::TSAsExpression(o),
-            Expression::TSSatisfiesExpression(o) => Argument::TSSatisfiesExpression(o),
-            Expression::TSTypeAssertion(o) => Argument::TSTypeAssertion(o),
-            Expression::TSNonNullExpression(o) => Argument::TSNonNullExpression(o),
-            Expression::TSInstantiationExpression(o) => Argument::TSInstantiationExpression(o),
-            Expression::V8IntrinsicExpression(o) => Argument::V8IntrinsicExpression(o),
-            Expression::ComputedMemberExpression(o) => Argument::ComputedMemberExpression(o),
-            Expression::StaticMemberExpression(o) => Argument::StaticMemberExpression(o),
-            Expression::PrivateFieldExpression(o) => Argument::PrivateFieldExpression(o),
-        }
+        Argument::Expression(value)
     }
 }
 
 impl<'a> Argument<'a> {
-    /// Return if an [`Argument`] is a [`MemberExpression`].
+    /// Return if a [`Argument`] is a [`MemberExpression`].
     #[inline]
     pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        self.as_expression().is_some_and(Expression::is_member_expression)
     }
 
-    /// Convert an [`Argument`] to a [`MemberExpression`].
+    /// Convert a [`Argument`] into a [`MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
+        self.into_expression().into_member_expression()
     }
 
-    /// Convert an [`&Argument`] to a [`&MemberExpression`].
+    /// Convert a [`&Argument`] to a [`&MemberExpression`].
     ///
     /// [`&Argument`]: Argument
     /// [`&MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
+        self.as_expression().and_then(Expression::as_member_expression)
     }
 
-    /// Convert an [`&mut Argument`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut Argument`] to a [`&mut MemberExpression`].
     ///
     /// [`&mut Argument`]: Argument
     /// [`&mut MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
+        self.as_expression_mut().and_then(Expression::as_member_expression_mut)
     }
 
-    /// Convert an [`&Argument`] to a [`&MemberExpression`].
+    /// Convert a [`&Argument`] to a [`&MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1254,7 +484,7 @@ impl<'a> Argument<'a> {
         self.as_member_expression().unwrap()
     }
 
-    /// Convert an [`&mut Argument`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut Argument`] to a [`&mut MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1267,57 +497,711 @@ impl<'a> Argument<'a> {
     }
 }
 
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to an [`&Argument`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&Argument`]: Argument
-    #[inline]
-    pub fn as_argument(&self) -> &Argument<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<Argument>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<Argument<'a>> for MemberExpression<'a> {
     type Error = ();
 
-    /// Convert an [`Argument`] to a [`MemberExpression`].
+    /// Convert a [`Argument`] to a [`MemberExpression`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: Argument<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            Argument::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            Argument::StaticMemberExpression(o) => Ok(MemberExpression::StaticMemberExpression(o)),
-            Argument::PrivateFieldExpression(o) => Ok(MemberExpression::PrivateFieldExpression(o)),
+            Argument::Expression(it) => MemberExpression::try_from(it),
             _ => Err(()),
         }
     }
 }
 
 impl<'a> From<MemberExpression<'a>> for Argument<'a> {
-    /// Convert a [`MemberExpression`] to an [`Argument`].
+    /// Convert a [`MemberExpression`] to a [`Argument`].
     #[inline]
     fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
+        Argument::Expression(Expression::from(value))
+    }
+}
+
+impl<'a> ForStatementInit<'a> {
+    /// Return if a [`ForStatementInit`] is a [`Expression`].
+    #[inline]
+    pub fn is_expression(&self) -> bool {
+        matches!(self, Self::Expression(_))
+    }
+
+    /// Convert a [`ForStatementInit`] into a [`Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_expression(self) -> Expression<'a> {
+        match self {
+            Self::Expression(it) => it,
+            _ => panic!("Cannot convert to Expression"),
+        }
+    }
+
+    /// Convert a [`&ForStatementInit`] to a [`&Expression`].
+    ///
+    /// [`&ForStatementInit`]: ForStatementInit
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn as_expression(&self) -> Option<&Expression<'a>> {
+        if let Self::Expression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&mut ForStatementInit`] to a [`&mut Expression`].
+    ///
+    /// [`&mut ForStatementInit`]: ForStatementInit
+    /// [`&mut Expression`]: Expression
+    #[inline]
+    pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        if let Self::Expression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&ForStatementInit`] to a [`&Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&ForStatementInit`]: ForStatementInit
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn to_expression(&self) -> &Expression<'a> {
+        self.as_expression().unwrap()
+    }
+
+    /// Convert a [`&mut ForStatementInit`] to a [`&mut Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut ForStatementInit`]: ForStatementInit
+    /// [`&mut Expression`]: Expression
+    #[inline]
+    pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
+        self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<ForStatementInit<'a>> for Expression<'a> {
+    type Error = ();
+
+    /// Convert a [`ForStatementInit`] to a [`Expression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: ForStatementInit<'a>) -> Result<Self, Self::Error> {
         match value {
-            MemberExpression::ComputedMemberExpression(o) => Argument::ComputedMemberExpression(o),
-            MemberExpression::StaticMemberExpression(o) => Argument::StaticMemberExpression(o),
-            MemberExpression::PrivateFieldExpression(o) => Argument::PrivateFieldExpression(o),
+            ForStatementInit::Expression(it) => Ok(it),
+            _ => Err(()),
         }
     }
 }
 
+impl<'a> From<Expression<'a>> for ForStatementInit<'a> {
+    /// Convert a [`Expression`] to a [`ForStatementInit`].
+    #[inline]
+    fn from(value: Expression<'a>) -> Self {
+        ForStatementInit::Expression(value)
+    }
+}
+
+impl<'a> ForStatementInit<'a> {
+    /// Return if a [`ForStatementInit`] is a [`MemberExpression`].
+    #[inline]
+    pub fn is_member_expression(&self) -> bool {
+        self.as_expression().is_some_and(Expression::is_member_expression)
+    }
+
+    /// Convert a [`ForStatementInit`] into a [`MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_member_expression(self) -> MemberExpression<'a> {
+        self.into_expression().into_member_expression()
+    }
+
+    /// Convert a [`&ForStatementInit`] to a [`&MemberExpression`].
+    ///
+    /// [`&ForStatementInit`]: ForStatementInit
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        self.as_expression().and_then(Expression::as_member_expression)
+    }
+
+    /// Convert a [`&mut ForStatementInit`] to a [`&mut MemberExpression`].
+    ///
+    /// [`&mut ForStatementInit`]: ForStatementInit
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
+        self.as_expression_mut().and_then(Expression::as_member_expression_mut)
+    }
+
+    /// Convert a [`&ForStatementInit`] to a [`&MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&ForStatementInit`]: ForStatementInit
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
+        self.as_member_expression().unwrap()
+    }
+
+    /// Convert a [`&mut ForStatementInit`] to a [`&mut MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut ForStatementInit`]: ForStatementInit
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
+        self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<ForStatementInit<'a>> for MemberExpression<'a> {
+    type Error = ();
+
+    /// Convert a [`ForStatementInit`] to a [`MemberExpression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: ForStatementInit<'a>) -> Result<Self, Self::Error> {
+        match value {
+            ForStatementInit::Expression(it) => MemberExpression::try_from(it),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<MemberExpression<'a>> for ForStatementInit<'a> {
+    /// Convert a [`MemberExpression`] to a [`ForStatementInit`].
+    #[inline]
+    fn from(value: MemberExpression<'a>) -> Self {
+        ForStatementInit::Expression(Expression::from(value))
+    }
+}
+
+impl<'a> ExportDefaultDeclarationKind<'a> {
+    /// Return if a [`ExportDefaultDeclarationKind`] is a [`Expression`].
+    #[inline]
+    pub fn is_expression(&self) -> bool {
+        matches!(self, Self::Expression(_))
+    }
+
+    /// Convert a [`ExportDefaultDeclarationKind`] into a [`Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_expression(self) -> Expression<'a> {
+        match self {
+            Self::Expression(it) => it,
+            _ => panic!("Cannot convert to Expression"),
+        }
+    }
+
+    /// Convert a [`&ExportDefaultDeclarationKind`] to a [`&Expression`].
+    ///
+    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn as_expression(&self) -> Option<&Expression<'a>> {
+        if let Self::Expression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&mut ExportDefaultDeclarationKind`] to a [`&mut Expression`].
+    ///
+    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&mut Expression`]: Expression
+    #[inline]
+    pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        if let Self::Expression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&ExportDefaultDeclarationKind`] to a [`&Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn to_expression(&self) -> &Expression<'a> {
+        self.as_expression().unwrap()
+    }
+
+    /// Convert a [`&mut ExportDefaultDeclarationKind`] to a [`&mut Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&mut Expression`]: Expression
+    #[inline]
+    pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
+        self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for Expression<'a> {
+    type Error = ();
+
+    /// Convert a [`ExportDefaultDeclarationKind`] to a [`Expression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: ExportDefaultDeclarationKind<'a>) -> Result<Self, Self::Error> {
+        match value {
+            ExportDefaultDeclarationKind::Expression(it) => Ok(it),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<Expression<'a>> for ExportDefaultDeclarationKind<'a> {
+    /// Convert a [`Expression`] to a [`ExportDefaultDeclarationKind`].
+    #[inline]
+    fn from(value: Expression<'a>) -> Self {
+        ExportDefaultDeclarationKind::Expression(value)
+    }
+}
+
+impl<'a> ExportDefaultDeclarationKind<'a> {
+    /// Return if a [`ExportDefaultDeclarationKind`] is a [`MemberExpression`].
+    #[inline]
+    pub fn is_member_expression(&self) -> bool {
+        self.as_expression().is_some_and(Expression::is_member_expression)
+    }
+
+    /// Convert a [`ExportDefaultDeclarationKind`] into a [`MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_member_expression(self) -> MemberExpression<'a> {
+        self.into_expression().into_member_expression()
+    }
+
+    /// Convert a [`&ExportDefaultDeclarationKind`] to a [`&MemberExpression`].
+    ///
+    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        self.as_expression().and_then(Expression::as_member_expression)
+    }
+
+    /// Convert a [`&mut ExportDefaultDeclarationKind`] to a [`&mut MemberExpression`].
+    ///
+    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
+        self.as_expression_mut().and_then(Expression::as_member_expression_mut)
+    }
+
+    /// Convert a [`&ExportDefaultDeclarationKind`] to a [`&MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
+        self.as_member_expression().unwrap()
+    }
+
+    /// Convert a [`&mut ExportDefaultDeclarationKind`] to a [`&mut MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
+        self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for MemberExpression<'a> {
+    type Error = ();
+
+    /// Convert a [`ExportDefaultDeclarationKind`] to a [`MemberExpression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: ExportDefaultDeclarationKind<'a>) -> Result<Self, Self::Error> {
+        match value {
+            ExportDefaultDeclarationKind::Expression(it) => MemberExpression::try_from(it),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<MemberExpression<'a>> for ExportDefaultDeclarationKind<'a> {
+    /// Convert a [`MemberExpression`] to a [`ExportDefaultDeclarationKind`].
+    #[inline]
+    fn from(value: MemberExpression<'a>) -> Self {
+        ExportDefaultDeclarationKind::Expression(Expression::from(value))
+    }
+}
+
+impl<'a> JSXExpression<'a> {
+    /// Return if a [`JSXExpression`] is a [`Expression`].
+    #[inline]
+    pub fn is_expression(&self) -> bool {
+        matches!(self, Self::Expression(_))
+    }
+
+    /// Convert a [`JSXExpression`] into a [`Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_expression(self) -> Expression<'a> {
+        match self {
+            Self::Expression(it) => it,
+            _ => panic!("Cannot convert to Expression"),
+        }
+    }
+
+    /// Convert a [`&JSXExpression`] to a [`&Expression`].
+    ///
+    /// [`&JSXExpression`]: JSXExpression
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn as_expression(&self) -> Option<&Expression<'a>> {
+        if let Self::Expression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&mut JSXExpression`] to a [`&mut Expression`].
+    ///
+    /// [`&mut JSXExpression`]: JSXExpression
+    /// [`&mut Expression`]: Expression
+    #[inline]
+    pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        if let Self::Expression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&JSXExpression`] to a [`&Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&JSXExpression`]: JSXExpression
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn to_expression(&self) -> &Expression<'a> {
+        self.as_expression().unwrap()
+    }
+
+    /// Convert a [`&mut JSXExpression`] to a [`&mut Expression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut JSXExpression`]: JSXExpression
+    /// [`&mut Expression`]: Expression
+    #[inline]
+    pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
+        self.as_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<JSXExpression<'a>> for Expression<'a> {
+    type Error = ();
+
+    /// Convert a [`JSXExpression`] to a [`Expression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: JSXExpression<'a>) -> Result<Self, Self::Error> {
+        match value {
+            JSXExpression::Expression(it) => Ok(it),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<Expression<'a>> for JSXExpression<'a> {
+    /// Convert a [`Expression`] to a [`JSXExpression`].
+    #[inline]
+    fn from(value: Expression<'a>) -> Self {
+        JSXExpression::Expression(value)
+    }
+}
+
+impl<'a> JSXExpression<'a> {
+    /// Return if a [`JSXExpression`] is a [`MemberExpression`].
+    #[inline]
+    pub fn is_member_expression(&self) -> bool {
+        self.as_expression().is_some_and(Expression::is_member_expression)
+    }
+
+    /// Convert a [`JSXExpression`] into a [`MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_member_expression(self) -> MemberExpression<'a> {
+        self.into_expression().into_member_expression()
+    }
+
+    /// Convert a [`&JSXExpression`] to a [`&MemberExpression`].
+    ///
+    /// [`&JSXExpression`]: JSXExpression
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        self.as_expression().and_then(Expression::as_member_expression)
+    }
+
+    /// Convert a [`&mut JSXExpression`] to a [`&mut MemberExpression`].
+    ///
+    /// [`&mut JSXExpression`]: JSXExpression
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
+        self.as_expression_mut().and_then(Expression::as_member_expression_mut)
+    }
+
+    /// Convert a [`&JSXExpression`] to a [`&MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&JSXExpression`]: JSXExpression
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
+        self.as_member_expression().unwrap()
+    }
+
+    /// Convert a [`&mut JSXExpression`] to a [`&mut MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut JSXExpression`]: JSXExpression
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
+        self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<JSXExpression<'a>> for MemberExpression<'a> {
+    type Error = ();
+
+    /// Convert a [`JSXExpression`] to a [`MemberExpression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: JSXExpression<'a>) -> Result<Self, Self::Error> {
+        match value {
+            JSXExpression::Expression(it) => MemberExpression::try_from(it),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<MemberExpression<'a>> for JSXExpression<'a> {
+    /// Convert a [`MemberExpression`] to a [`JSXExpression`].
+    #[inline]
+    fn from(value: MemberExpression<'a>) -> Self {
+        JSXExpression::Expression(Expression::from(value))
+    }
+}
+
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Return if a [`SimpleAssignmentTarget`] is a [`MemberExpression`].
+    #[inline]
+    pub fn is_member_expression(&self) -> bool {
+        matches!(self, Self::MemberExpression(_))
+    }
+
+    /// Convert a [`SimpleAssignmentTarget`] into a [`MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_member_expression(self) -> MemberExpression<'a> {
+        match self {
+            Self::MemberExpression(it) => it,
+            _ => panic!("Cannot convert to MemberExpression"),
+        }
+    }
+
+    /// Convert a [`&SimpleAssignmentTarget`] to a [`&MemberExpression`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&mut SimpleAssignmentTarget`] to a [`&mut MemberExpression`].
+    ///
+    /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&SimpleAssignmentTarget`] to a [`&MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
+        self.as_member_expression().unwrap()
+    }
+
+    /// Convert a [`&mut SimpleAssignmentTarget`] to a [`&mut MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
+        self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<SimpleAssignmentTarget<'a>> for MemberExpression<'a> {
+    type Error = ();
+
+    /// Convert a [`SimpleAssignmentTarget`] to a [`MemberExpression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: SimpleAssignmentTarget<'a>) -> Result<Self, Self::Error> {
+        match value {
+            SimpleAssignmentTarget::MemberExpression(it) => Ok(it),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<MemberExpression<'a>> for SimpleAssignmentTarget<'a> {
+    /// Convert a [`MemberExpression`] to a [`SimpleAssignmentTarget`].
+    #[inline]
+    fn from(value: MemberExpression<'a>) -> Self {
+        SimpleAssignmentTarget::MemberExpression(value)
+    }
+}
+
+impl<'a> ChainElement<'a> {
+    /// Return if a [`ChainElement`] is a [`MemberExpression`].
+    #[inline]
+    pub fn is_member_expression(&self) -> bool {
+        matches!(self, Self::MemberExpression(_))
+    }
+
+    /// Convert a [`ChainElement`] into a [`MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_member_expression(self) -> MemberExpression<'a> {
+        match self {
+            Self::MemberExpression(it) => it,
+            _ => panic!("Cannot convert to MemberExpression"),
+        }
+    }
+
+    /// Convert a [`&ChainElement`] to a [`&MemberExpression`].
+    ///
+    /// [`&ChainElement`]: ChainElement
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&mut ChainElement`] to a [`&mut MemberExpression`].
+    ///
+    /// [`&mut ChainElement`]: ChainElement
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
+    }
+
+    /// Convert a [`&ChainElement`] to a [`&MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&ChainElement`]: ChainElement
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
+        self.as_member_expression().unwrap()
+    }
+
+    /// Convert a [`&mut ChainElement`] to a [`&mut MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut ChainElement`]: ChainElement
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
+        self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<ChainElement<'a>> for MemberExpression<'a> {
+    type Error = ();
+
+    /// Convert a [`ChainElement`] to a [`MemberExpression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: ChainElement<'a>) -> Result<Self, Self::Error> {
+        match value {
+            ChainElement::MemberExpression(it) => Ok(it),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<MemberExpression<'a>> for ChainElement<'a> {
+    /// Convert a [`MemberExpression`] to a [`ChainElement`].
+    #[inline]
+    fn from(value: MemberExpression<'a>) -> Self {
+        ChainElement::MemberExpression(value)
+    }
+}
+
 impl<'a> AssignmentTarget<'a> {
-    /// Return if an [`AssignmentTarget`] is a [`SimpleAssignmentTarget`].
+    /// Return if a [`AssignmentTarget`] is a [`SimpleAssignmentTarget`].
     #[inline]
     pub fn is_simple_assignment_target(&self) -> bool {
         matches!(
@@ -1327,13 +1211,11 @@ impl<'a> AssignmentTarget<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
+                | Self::MemberExpression(_)
         )
     }
 
-    /// Convert an [`AssignmentTarget`] to a [`SimpleAssignmentTarget`].
+    /// Convert a [`AssignmentTarget`] to a [`SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1342,7 +1224,7 @@ impl<'a> AssignmentTarget<'a> {
         SimpleAssignmentTarget::try_from(self).unwrap()
     }
 
-    /// Convert an [`&AssignmentTarget`] to a [`&SimpleAssignmentTarget`].
+    /// Convert an [`&AssignmentTarget`] to an [`&SimpleAssignmentTarget`].
     ///
     /// [`&AssignmentTarget`]: AssignmentTarget
     /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
@@ -1357,7 +1239,7 @@ impl<'a> AssignmentTarget<'a> {
         }
     }
 
-    /// Convert an [`&mut AssignmentTarget`] to a [`&mut SimpleAssignmentTarget`].
+    /// Convert an [`&mut AssignmentTarget`] to an [`&mut SimpleAssignmentTarget`].
     ///
     /// [`&mut AssignmentTarget`]: AssignmentTarget
     /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
@@ -1372,7 +1254,7 @@ impl<'a> AssignmentTarget<'a> {
         }
     }
 
-    /// Convert an [`&AssignmentTarget`] to a [`&SimpleAssignmentTarget`].
+    /// Convert an [`&AssignmentTarget`] to an [`&SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1384,7 +1266,7 @@ impl<'a> AssignmentTarget<'a> {
         self.as_simple_assignment_target().unwrap()
     }
 
-    /// Convert an [`&mut AssignmentTarget`] to a [`&mut SimpleAssignmentTarget`].
+    /// Convert an [`&mut AssignmentTarget`] to an [`&mut SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1397,23 +1279,10 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
-impl<'a> SimpleAssignmentTarget<'a> {
-    /// Convert a [`&SimpleAssignmentTarget`] to an [`&AssignmentTarget`].
-    ///
-    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    /// [`&AssignmentTarget`]: AssignmentTarget
-    #[inline]
-    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<AssignmentTarget<'a>> for SimpleAssignmentTarget<'a> {
     type Error = ();
 
-    /// Convert an [`AssignmentTarget`] to a [`SimpleAssignmentTarget`].
+    /// Convert a [`AssignmentTarget`] to a [`SimpleAssignmentTarget`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
@@ -1433,14 +1302,8 @@ impl<'a> TryFrom<AssignmentTarget<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(o))
             }
             AssignmentTarget::TSTypeAssertion(o) => Ok(SimpleAssignmentTarget::TSTypeAssertion(o)),
-            AssignmentTarget::ComputedMemberExpression(o) => {
-                Ok(SimpleAssignmentTarget::ComputedMemberExpression(o))
-            }
-            AssignmentTarget::StaticMemberExpression(o) => {
-                Ok(SimpleAssignmentTarget::StaticMemberExpression(o))
-            }
-            AssignmentTarget::PrivateFieldExpression(o) => {
-                Ok(SimpleAssignmentTarget::PrivateFieldExpression(o))
+            AssignmentTarget::MemberExpression(o) => {
+                Ok(SimpleAssignmentTarget::MemberExpression(o))
             }
             _ => Err(()),
         }
@@ -1448,7 +1311,7 @@ impl<'a> TryFrom<AssignmentTarget<'a>> for SimpleAssignmentTarget<'a> {
 }
 
 impl<'a> From<SimpleAssignmentTarget<'a>> for AssignmentTarget<'a> {
-    /// Convert a [`SimpleAssignmentTarget`] to an [`AssignmentTarget`].
+    /// Convert a [`SimpleAssignmentTarget`] to a [`AssignmentTarget`].
     #[inline]
     fn from(value: SimpleAssignmentTarget<'a>) -> Self {
         // Compiler should implement this as zero-cost transmute as discriminants
@@ -1465,71 +1328,62 @@ impl<'a> From<SimpleAssignmentTarget<'a>> for AssignmentTarget<'a> {
                 AssignmentTarget::TSNonNullExpression(o)
             }
             SimpleAssignmentTarget::TSTypeAssertion(o) => AssignmentTarget::TSTypeAssertion(o),
-            SimpleAssignmentTarget::ComputedMemberExpression(o) => {
-                AssignmentTarget::ComputedMemberExpression(o)
-            }
-            SimpleAssignmentTarget::StaticMemberExpression(o) => {
-                AssignmentTarget::StaticMemberExpression(o)
-            }
-            SimpleAssignmentTarget::PrivateFieldExpression(o) => {
-                AssignmentTarget::PrivateFieldExpression(o)
-            }
+            SimpleAssignmentTarget::MemberExpression(o) => AssignmentTarget::MemberExpression(o),
         }
     }
 }
 
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Convert a [`&SimpleAssignmentTarget`] to a [`&AssignmentTarget`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
+    }
+}
+
 impl<'a> AssignmentTarget<'a> {
-    /// Return if an [`AssignmentTarget`] is a [`MemberExpression`].
+    /// Return if a [`AssignmentTarget`] is a [`MemberExpression`].
     #[inline]
     pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        matches!(self, Self::MemberExpression(_))
     }
 
-    /// Convert an [`AssignmentTarget`] to a [`MemberExpression`].
+    /// Convert a [`AssignmentTarget`] into a [`MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
+        match self {
+            Self::MemberExpression(it) => it,
+            _ => panic!("Cannot convert to MemberExpression"),
+        }
     }
 
-    /// Convert an [`&AssignmentTarget`] to a [`&MemberExpression`].
+    /// Convert a [`&AssignmentTarget`] to a [`&MemberExpression`].
     ///
     /// [`&AssignmentTarget`]: AssignmentTarget
     /// [`&MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&mut AssignmentTarget`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut AssignmentTarget`] to a [`&mut MemberExpression`].
     ///
     /// [`&mut AssignmentTarget`]: AssignmentTarget
     /// [`&mut MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&AssignmentTarget`] to a [`&MemberExpression`].
+    /// Convert a [`&AssignmentTarget`] to a [`&MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1541,7 +1395,7 @@ impl<'a> AssignmentTarget<'a> {
         self.as_member_expression().unwrap()
     }
 
-    /// Convert an [`&mut AssignmentTarget`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut AssignmentTarget`] to a [`&mut MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1554,73 +1408,38 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to an [`&AssignmentTarget`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&AssignmentTarget`]: AssignmentTarget
-    #[inline]
-    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<AssignmentTarget<'a>> for MemberExpression<'a> {
     type Error = ();
 
-    /// Convert an [`AssignmentTarget`] to a [`MemberExpression`].
+    /// Convert a [`AssignmentTarget`] to a [`MemberExpression`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: AssignmentTarget<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            AssignmentTarget::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            AssignmentTarget::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            AssignmentTarget::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
+            AssignmentTarget::MemberExpression(it) => Ok(it),
             _ => Err(()),
         }
     }
 }
 
 impl<'a> From<MemberExpression<'a>> for AssignmentTarget<'a> {
-    /// Convert a [`MemberExpression`] to an [`AssignmentTarget`].
+    /// Convert a [`MemberExpression`] to a [`AssignmentTarget`].
     #[inline]
     fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                AssignmentTarget::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => {
-                AssignmentTarget::StaticMemberExpression(o)
-            }
-            MemberExpression::PrivateFieldExpression(o) => {
-                AssignmentTarget::PrivateFieldExpression(o)
-            }
-        }
+        AssignmentTarget::MemberExpression(value)
     }
 }
 
 impl<'a> AssignmentTarget<'a> {
-    /// Return if an [`AssignmentTarget`] is an [`AssignmentTargetPattern`].
+    /// Return if a [`AssignmentTarget`] is a [`AssignmentTargetPattern`].
     #[inline]
     pub fn is_assignment_target_pattern(&self) -> bool {
         matches!(self, Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_))
     }
 
-    /// Convert an [`AssignmentTarget`] to an [`AssignmentTargetPattern`].
+    /// Convert a [`AssignmentTarget`] to a [`AssignmentTargetPattern`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1684,23 +1503,10 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
-impl<'a> AssignmentTargetPattern<'a> {
-    /// Convert an [`&AssignmentTargetPattern`] to an [`&AssignmentTarget`].
-    ///
-    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
-    /// [`&AssignmentTarget`]: AssignmentTarget
-    #[inline]
-    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<AssignmentTarget<'a>> for AssignmentTargetPattern<'a> {
     type Error = ();
 
-    /// Convert an [`AssignmentTarget`] to an [`AssignmentTargetPattern`].
+    /// Convert a [`AssignmentTarget`] to a [`AssignmentTargetPattern`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
@@ -1721,7 +1527,7 @@ impl<'a> TryFrom<AssignmentTarget<'a>> for AssignmentTargetPattern<'a> {
 }
 
 impl<'a> From<AssignmentTargetPattern<'a>> for AssignmentTarget<'a> {
-    /// Convert an [`AssignmentTargetPattern`] to an [`AssignmentTarget`].
+    /// Convert a [`AssignmentTargetPattern`] to a [`AssignmentTarget`].
     #[inline]
     fn from(value: AssignmentTargetPattern<'a>) -> Self {
         // Compiler should implement this as zero-cost transmute as discriminants
@@ -1737,143 +1543,21 @@ impl<'a> From<AssignmentTargetPattern<'a>> for AssignmentTarget<'a> {
     }
 }
 
-impl<'a> SimpleAssignmentTarget<'a> {
-    /// Return if a [`SimpleAssignmentTarget`] is a [`MemberExpression`].
+impl<'a> AssignmentTargetPattern<'a> {
+    /// Convert a [`&AssignmentTargetPattern`] to a [`&AssignmentTarget`].
+    ///
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    /// [`&AssignmentTarget`]: AssignmentTarget
     #[inline]
-    pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert a [`SimpleAssignmentTarget`] to a [`MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
-    }
-
-    /// Convert a [`&SimpleAssignmentTarget`] to a [`&MemberExpression`].
-    ///
-    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&mut SimpleAssignmentTarget`] to a [`&mut MemberExpression`].
-    ///
-    /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&SimpleAssignmentTarget`] to a [`&MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
-        self.as_member_expression().unwrap()
-    }
-
-    /// Convert a [`&mut SimpleAssignmentTarget`] to a [`&mut MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
-        self.as_member_expression_mut().unwrap()
-    }
-}
-
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to a [`&SimpleAssignmentTarget`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    #[inline]
-    pub fn as_simple_assignment_target(&self) -> &SimpleAssignmentTarget<'a> {
+    pub fn as_assignment_target(&self) -> &AssignmentTarget<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<SimpleAssignmentTarget>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<SimpleAssignmentTarget<'a>> for MemberExpression<'a> {
-    type Error = ();
-
-    /// Convert a [`SimpleAssignmentTarget`] to a [`MemberExpression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: SimpleAssignmentTarget<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            SimpleAssignmentTarget::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            SimpleAssignmentTarget::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            SimpleAssignmentTarget::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<MemberExpression<'a>> for SimpleAssignmentTarget<'a> {
-    /// Convert a [`MemberExpression`] to a [`SimpleAssignmentTarget`].
-    #[inline]
-    fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                SimpleAssignmentTarget::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => {
-                SimpleAssignmentTarget::StaticMemberExpression(o)
-            }
-            MemberExpression::PrivateFieldExpression(o) => {
-                SimpleAssignmentTarget::PrivateFieldExpression(o)
-            }
-        }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() }
     }
 }
 
 impl<'a> AssignmentTargetMaybeDefault<'a> {
-    /// Return if an [`AssignmentTargetMaybeDefault`] is an [`AssignmentTarget`].
+    /// Return if a [`AssignmentTargetMaybeDefault`] is a [`AssignmentTarget`].
     #[inline]
     pub fn is_assignment_target(&self) -> bool {
         matches!(
@@ -1883,15 +1567,13 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
+                | Self::MemberExpression(_)
                 | Self::ArrayAssignmentTarget(_)
                 | Self::ObjectAssignmentTarget(_)
         )
     }
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to an [`AssignmentTarget`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] to a [`AssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -1955,23 +1637,10 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> AssignmentTarget<'a> {
-    /// Convert an [`&AssignmentTarget`] to an [`&AssignmentTargetMaybeDefault`].
-    ///
-    /// [`&AssignmentTarget`]: AssignmentTarget
-    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
-    #[inline]
-    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for AssignmentTarget<'a> {
     type Error = ();
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to an [`AssignmentTarget`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] to a [`AssignmentTarget`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
@@ -1995,14 +1664,8 @@ impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for AssignmentTarget<'a> {
             AssignmentTargetMaybeDefault::TSTypeAssertion(o) => {
                 Ok(AssignmentTarget::TSTypeAssertion(o))
             }
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(o) => {
-                Ok(AssignmentTarget::ComputedMemberExpression(o))
-            }
-            AssignmentTargetMaybeDefault::StaticMemberExpression(o) => {
-                Ok(AssignmentTarget::StaticMemberExpression(o))
-            }
-            AssignmentTargetMaybeDefault::PrivateFieldExpression(o) => {
-                Ok(AssignmentTarget::PrivateFieldExpression(o))
+            AssignmentTargetMaybeDefault::MemberExpression(o) => {
+                Ok(AssignmentTarget::MemberExpression(o))
             }
             AssignmentTargetMaybeDefault::ArrayAssignmentTarget(o) => {
                 Ok(AssignmentTarget::ArrayAssignmentTarget(o))
@@ -2016,7 +1679,7 @@ impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for AssignmentTarget<'a> {
 }
 
 impl<'a> From<AssignmentTarget<'a>> for AssignmentTargetMaybeDefault<'a> {
-    /// Convert an [`AssignmentTarget`] to an [`AssignmentTargetMaybeDefault`].
+    /// Convert a [`AssignmentTarget`] to a [`AssignmentTargetMaybeDefault`].
     #[inline]
     fn from(value: AssignmentTarget<'a>) -> Self {
         // Compiler should implement this as zero-cost transmute as discriminants
@@ -2035,14 +1698,8 @@ impl<'a> From<AssignmentTarget<'a>> for AssignmentTargetMaybeDefault<'a> {
             AssignmentTarget::TSTypeAssertion(o) => {
                 AssignmentTargetMaybeDefault::TSTypeAssertion(o)
             }
-            AssignmentTarget::ComputedMemberExpression(o) => {
-                AssignmentTargetMaybeDefault::ComputedMemberExpression(o)
-            }
-            AssignmentTarget::StaticMemberExpression(o) => {
-                AssignmentTargetMaybeDefault::StaticMemberExpression(o)
-            }
-            AssignmentTarget::PrivateFieldExpression(o) => {
-                AssignmentTargetMaybeDefault::PrivateFieldExpression(o)
+            AssignmentTarget::MemberExpression(o) => {
+                AssignmentTargetMaybeDefault::MemberExpression(o)
             }
             AssignmentTarget::ArrayAssignmentTarget(o) => {
                 AssignmentTargetMaybeDefault::ArrayAssignmentTarget(o)
@@ -2054,8 +1711,21 @@ impl<'a> From<AssignmentTarget<'a>> for AssignmentTargetMaybeDefault<'a> {
     }
 }
 
+impl<'a> AssignmentTarget<'a> {
+    /// Convert a [`&AssignmentTarget`] to a [`&AssignmentTargetMaybeDefault`].
+    ///
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
+    #[inline]
+    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
+    }
+}
+
 impl<'a> AssignmentTargetMaybeDefault<'a> {
-    /// Return if an [`AssignmentTargetMaybeDefault`] is a [`SimpleAssignmentTarget`].
+    /// Return if a [`AssignmentTargetMaybeDefault`] is a [`SimpleAssignmentTarget`].
     #[inline]
     pub fn is_simple_assignment_target(&self) -> bool {
         matches!(
@@ -2065,13 +1735,11 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
+                | Self::MemberExpression(_)
         )
     }
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to a [`SimpleAssignmentTarget`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] to a [`SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -2080,7 +1748,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         SimpleAssignmentTarget::try_from(self).unwrap()
     }
 
-    /// Convert an [`&AssignmentTargetMaybeDefault`] to a [`&SimpleAssignmentTarget`].
+    /// Convert an [`&AssignmentTargetMaybeDefault`] to an [`&SimpleAssignmentTarget`].
     ///
     /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
     /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
@@ -2095,7 +1763,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         }
     }
 
-    /// Convert an [`&mut AssignmentTargetMaybeDefault`] to a [`&mut SimpleAssignmentTarget`].
+    /// Convert an [`&mut AssignmentTargetMaybeDefault`] to an [`&mut SimpleAssignmentTarget`].
     ///
     /// [`&mut AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
     /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
@@ -2110,7 +1778,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         }
     }
 
-    /// Convert an [`&AssignmentTargetMaybeDefault`] to a [`&SimpleAssignmentTarget`].
+    /// Convert an [`&AssignmentTargetMaybeDefault`] to an [`&SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -2122,7 +1790,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         self.as_simple_assignment_target().unwrap()
     }
 
-    /// Convert an [`&mut AssignmentTargetMaybeDefault`] to a [`&mut SimpleAssignmentTarget`].
+    /// Convert an [`&mut AssignmentTargetMaybeDefault`] to an [`&mut SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -2135,23 +1803,10 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> SimpleAssignmentTarget<'a> {
-    /// Convert a [`&SimpleAssignmentTarget`] to an [`&AssignmentTargetMaybeDefault`].
-    ///
-    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
-    #[inline]
-    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for SimpleAssignmentTarget<'a> {
     type Error = ();
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to a [`SimpleAssignmentTarget`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] to a [`SimpleAssignmentTarget`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
@@ -2175,14 +1830,8 @@ impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for SimpleAssignmentTarget<'a
             AssignmentTargetMaybeDefault::TSTypeAssertion(o) => {
                 Ok(SimpleAssignmentTarget::TSTypeAssertion(o))
             }
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(o) => {
-                Ok(SimpleAssignmentTarget::ComputedMemberExpression(o))
-            }
-            AssignmentTargetMaybeDefault::StaticMemberExpression(o) => {
-                Ok(SimpleAssignmentTarget::StaticMemberExpression(o))
-            }
-            AssignmentTargetMaybeDefault::PrivateFieldExpression(o) => {
-                Ok(SimpleAssignmentTarget::PrivateFieldExpression(o))
+            AssignmentTargetMaybeDefault::MemberExpression(o) => {
+                Ok(SimpleAssignmentTarget::MemberExpression(o))
             }
             _ => Err(()),
         }
@@ -2190,7 +1839,7 @@ impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for SimpleAssignmentTarget<'a
 }
 
 impl<'a> From<SimpleAssignmentTarget<'a>> for AssignmentTargetMaybeDefault<'a> {
-    /// Convert a [`SimpleAssignmentTarget`] to an [`AssignmentTargetMaybeDefault`].
+    /// Convert a [`SimpleAssignmentTarget`] to a [`AssignmentTargetMaybeDefault`].
     #[inline]
     fn from(value: SimpleAssignmentTarget<'a>) -> Self {
         // Compiler should implement this as zero-cost transmute as discriminants
@@ -2211,71 +1860,64 @@ impl<'a> From<SimpleAssignmentTarget<'a>> for AssignmentTargetMaybeDefault<'a> {
             SimpleAssignmentTarget::TSTypeAssertion(o) => {
                 AssignmentTargetMaybeDefault::TSTypeAssertion(o)
             }
-            SimpleAssignmentTarget::ComputedMemberExpression(o) => {
-                AssignmentTargetMaybeDefault::ComputedMemberExpression(o)
-            }
-            SimpleAssignmentTarget::StaticMemberExpression(o) => {
-                AssignmentTargetMaybeDefault::StaticMemberExpression(o)
-            }
-            SimpleAssignmentTarget::PrivateFieldExpression(o) => {
-                AssignmentTargetMaybeDefault::PrivateFieldExpression(o)
+            SimpleAssignmentTarget::MemberExpression(o) => {
+                AssignmentTargetMaybeDefault::MemberExpression(o)
             }
         }
     }
 }
 
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Convert a [`&SimpleAssignmentTarget`] to a [`&AssignmentTargetMaybeDefault`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
+    #[inline]
+    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
+    }
+}
+
 impl<'a> AssignmentTargetMaybeDefault<'a> {
-    /// Return if an [`AssignmentTargetMaybeDefault`] is a [`MemberExpression`].
+    /// Return if a [`AssignmentTargetMaybeDefault`] is a [`MemberExpression`].
     #[inline]
     pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        matches!(self, Self::MemberExpression(_))
     }
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to a [`MemberExpression`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] into a [`MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
+        match self {
+            Self::MemberExpression(it) => it,
+            _ => panic!("Cannot convert to MemberExpression"),
+        }
     }
 
-    /// Convert an [`&AssignmentTargetMaybeDefault`] to a [`&MemberExpression`].
+    /// Convert a [`&AssignmentTargetMaybeDefault`] to a [`&MemberExpression`].
     ///
     /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
     /// [`&MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&mut AssignmentTargetMaybeDefault`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut AssignmentTargetMaybeDefault`] to a [`&mut MemberExpression`].
     ///
     /// [`&mut AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
     /// [`&mut MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
     }
 
-    /// Convert an [`&AssignmentTargetMaybeDefault`] to a [`&MemberExpression`].
+    /// Convert a [`&AssignmentTargetMaybeDefault`] to a [`&MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -2287,7 +1929,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         self.as_member_expression().unwrap()
     }
 
-    /// Convert an [`&mut AssignmentTargetMaybeDefault`] to a [`&mut MemberExpression`].
+    /// Convert a [`&mut AssignmentTargetMaybeDefault`] to a [`&mut MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -2300,73 +1942,38 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to an [`&AssignmentTargetMaybeDefault`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
-    #[inline]
-    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for MemberExpression<'a> {
     type Error = ();
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to a [`MemberExpression`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] to a [`MemberExpression`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: AssignmentTargetMaybeDefault<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            AssignmentTargetMaybeDefault::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            AssignmentTargetMaybeDefault::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
+            AssignmentTargetMaybeDefault::MemberExpression(it) => Ok(it),
             _ => Err(()),
         }
     }
 }
 
 impl<'a> From<MemberExpression<'a>> for AssignmentTargetMaybeDefault<'a> {
-    /// Convert a [`MemberExpression`] to an [`AssignmentTargetMaybeDefault`].
+    /// Convert a [`MemberExpression`] to a [`AssignmentTargetMaybeDefault`].
     #[inline]
     fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                AssignmentTargetMaybeDefault::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => {
-                AssignmentTargetMaybeDefault::StaticMemberExpression(o)
-            }
-            MemberExpression::PrivateFieldExpression(o) => {
-                AssignmentTargetMaybeDefault::PrivateFieldExpression(o)
-            }
-        }
+        AssignmentTargetMaybeDefault::MemberExpression(value)
     }
 }
 
 impl<'a> AssignmentTargetMaybeDefault<'a> {
-    /// Return if an [`AssignmentTargetMaybeDefault`] is an [`AssignmentTargetPattern`].
+    /// Return if a [`AssignmentTargetMaybeDefault`] is a [`AssignmentTargetPattern`].
     #[inline]
     pub fn is_assignment_target_pattern(&self) -> bool {
         matches!(self, Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_))
     }
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to an [`AssignmentTargetPattern`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] to a [`AssignmentTargetPattern`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -2430,23 +2037,10 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> AssignmentTargetPattern<'a> {
-    /// Convert an [`&AssignmentTargetPattern`] to an [`&AssignmentTargetMaybeDefault`].
-    ///
-    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
-    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
-    #[inline]
-    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for AssignmentTargetPattern<'a> {
     type Error = ();
 
-    /// Convert an [`AssignmentTargetMaybeDefault`] to an [`AssignmentTargetPattern`].
+    /// Convert a [`AssignmentTargetMaybeDefault`] to a [`AssignmentTargetPattern`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
@@ -2467,7 +2061,7 @@ impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for AssignmentTargetPattern<'
 }
 
 impl<'a> From<AssignmentTargetPattern<'a>> for AssignmentTargetMaybeDefault<'a> {
-    /// Convert an [`AssignmentTargetPattern`] to an [`AssignmentTargetMaybeDefault`].
+    /// Convert a [`AssignmentTargetPattern`] to a [`AssignmentTargetMaybeDefault`].
     #[inline]
     fn from(value: AssignmentTargetPattern<'a>) -> Self {
         // Compiler should implement this as zero-cost transmute as discriminants
@@ -2483,134 +2077,16 @@ impl<'a> From<AssignmentTargetPattern<'a>> for AssignmentTargetMaybeDefault<'a> 
     }
 }
 
-impl<'a> ChainElement<'a> {
-    /// Return if a [`ChainElement`] is a [`MemberExpression`].
+impl<'a> AssignmentTargetPattern<'a> {
+    /// Convert a [`&AssignmentTargetPattern`] to a [`&AssignmentTargetMaybeDefault`].
+    ///
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    /// [`&AssignmentTargetMaybeDefault`]: AssignmentTargetMaybeDefault
     #[inline]
-    pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert a [`ChainElement`] to a [`MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
-    }
-
-    /// Convert a [`&ChainElement`] to a [`&MemberExpression`].
-    ///
-    /// [`&ChainElement`]: ChainElement
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&mut ChainElement`] to a [`&mut MemberExpression`].
-    ///
-    /// [`&mut ChainElement`]: ChainElement
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&ChainElement`] to a [`&MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&ChainElement`]: ChainElement
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
-        self.as_member_expression().unwrap()
-    }
-
-    /// Convert a [`&mut ChainElement`] to a [`&mut MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut ChainElement`]: ChainElement
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
-        self.as_member_expression_mut().unwrap()
-    }
-}
-
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to a [`&ChainElement`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&ChainElement`]: ChainElement
-    #[inline]
-    pub fn as_chain_element(&self) -> &ChainElement<'a> {
+    pub fn as_assignment_target_maybe_default(&self) -> &AssignmentTargetMaybeDefault<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ChainElement>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<ChainElement<'a>> for MemberExpression<'a> {
-    type Error = ();
-
-    /// Convert a [`ChainElement`] to a [`MemberExpression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: ChainElement<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            ChainElement::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            ChainElement::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            ChainElement::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<MemberExpression<'a>> for ChainElement<'a> {
-    /// Convert a [`MemberExpression`] to a [`ChainElement`].
-    #[inline]
-    fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                ChainElement::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => ChainElement::StaticMemberExpression(o),
-            MemberExpression::PrivateFieldExpression(o) => ChainElement::PrivateFieldExpression(o),
-        }
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeDefault>().as_ref() }
     }
 }
 
@@ -2899,409 +2375,8 @@ impl<'a> From<ModuleDeclaration<'a>> for Statement<'a> {
     }
 }
 
-impl<'a> ForStatementInit<'a> {
-    /// Return if a [`ForStatementInit`] is an [`Expression`].
-    #[inline]
-    pub fn is_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumericLiteral(_)
-                | Self::BigIntLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_)
-                | Self::TemplateLiteral(_)
-                | Self::Identifier(_)
-                | Self::Super(_)
-                | Self::ArrayExpression(_)
-                | Self::ArrowFunctionExpression(_)
-                | Self::AssignmentExpression(_)
-                | Self::AwaitExpression(_)
-                | Self::BinaryExpression(_)
-                | Self::CallExpression(_)
-                | Self::ChainExpression(_)
-                | Self::ClassExpression(_)
-                | Self::ConditionalExpression(_)
-                | Self::FunctionExpression(_)
-                | Self::ImportExpression(_)
-                | Self::LogicalExpression(_)
-                | Self::NewExpression(_)
-                | Self::ObjectExpression(_)
-                | Self::ParenthesizedExpression(_)
-                | Self::SequenceExpression(_)
-                | Self::TaggedTemplateExpression(_)
-                | Self::ThisExpression(_)
-                | Self::UnaryExpression(_)
-                | Self::UpdateExpression(_)
-                | Self::YieldExpression(_)
-                | Self::PrivateInExpression(_)
-                | Self::ImportMeta(_)
-                | Self::NewTarget(_)
-                | Self::JSXElement(_)
-                | Self::JSXFragment(_)
-                | Self::TSAsExpression(_)
-                | Self::TSSatisfiesExpression(_)
-                | Self::TSTypeAssertion(_)
-                | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
-                | Self::V8IntrinsicExpression(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert a [`ForStatementInit`] to an [`Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_expression(self) -> Expression<'a> {
-        Expression::try_from(self).unwrap()
-    }
-
-    /// Convert a [`&ForStatementInit`] to an [`&Expression`].
-    ///
-    /// [`&ForStatementInit`]: ForStatementInit
-    /// [`&Expression`]: Expression
-    #[inline]
-    pub fn as_expression(&self) -> Option<&Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&mut ForStatementInit`] to an [`&mut Expression`].
-    ///
-    /// [`&mut ForStatementInit`]: ForStatementInit
-    /// [`&mut Expression`]: Expression
-    #[inline]
-    pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&ForStatementInit`] to an [`&Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&ForStatementInit`]: ForStatementInit
-    /// [`&Expression`]: Expression
-    #[inline]
-    pub fn to_expression(&self) -> &Expression<'a> {
-        self.as_expression().unwrap()
-    }
-
-    /// Convert a [`&mut ForStatementInit`] to an [`&mut Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut ForStatementInit`]: ForStatementInit
-    /// [`&mut Expression`]: Expression
-    #[inline]
-    pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
-        self.as_expression_mut().unwrap()
-    }
-}
-
-impl<'a> Expression<'a> {
-    /// Convert an [`&Expression`] to a [`&ForStatementInit`].
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&ForStatementInit`]: ForStatementInit
-    #[inline]
-    pub fn as_for_statement_init(&self) -> &ForStatementInit<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ForStatementInit>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<ForStatementInit<'a>> for Expression<'a> {
-    type Error = ();
-
-    /// Convert a [`ForStatementInit`] to an [`Expression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: ForStatementInit<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            ForStatementInit::BooleanLiteral(o) => Ok(Expression::BooleanLiteral(o)),
-            ForStatementInit::NullLiteral(o) => Ok(Expression::NullLiteral(o)),
-            ForStatementInit::NumericLiteral(o) => Ok(Expression::NumericLiteral(o)),
-            ForStatementInit::BigIntLiteral(o) => Ok(Expression::BigIntLiteral(o)),
-            ForStatementInit::RegExpLiteral(o) => Ok(Expression::RegExpLiteral(o)),
-            ForStatementInit::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
-            ForStatementInit::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
-            ForStatementInit::Identifier(o) => Ok(Expression::Identifier(o)),
-            ForStatementInit::Super(o) => Ok(Expression::Super(o)),
-            ForStatementInit::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
-            ForStatementInit::ArrowFunctionExpression(o) => {
-                Ok(Expression::ArrowFunctionExpression(o))
-            }
-            ForStatementInit::AssignmentExpression(o) => Ok(Expression::AssignmentExpression(o)),
-            ForStatementInit::AwaitExpression(o) => Ok(Expression::AwaitExpression(o)),
-            ForStatementInit::BinaryExpression(o) => Ok(Expression::BinaryExpression(o)),
-            ForStatementInit::CallExpression(o) => Ok(Expression::CallExpression(o)),
-            ForStatementInit::ChainExpression(o) => Ok(Expression::ChainExpression(o)),
-            ForStatementInit::ClassExpression(o) => Ok(Expression::ClassExpression(o)),
-            ForStatementInit::ConditionalExpression(o) => Ok(Expression::ConditionalExpression(o)),
-            ForStatementInit::FunctionExpression(o) => Ok(Expression::FunctionExpression(o)),
-            ForStatementInit::ImportExpression(o) => Ok(Expression::ImportExpression(o)),
-            ForStatementInit::LogicalExpression(o) => Ok(Expression::LogicalExpression(o)),
-            ForStatementInit::NewExpression(o) => Ok(Expression::NewExpression(o)),
-            ForStatementInit::ObjectExpression(o) => Ok(Expression::ObjectExpression(o)),
-            ForStatementInit::ParenthesizedExpression(o) => {
-                Ok(Expression::ParenthesizedExpression(o))
-            }
-            ForStatementInit::SequenceExpression(o) => Ok(Expression::SequenceExpression(o)),
-            ForStatementInit::TaggedTemplateExpression(o) => {
-                Ok(Expression::TaggedTemplateExpression(o))
-            }
-            ForStatementInit::ThisExpression(o) => Ok(Expression::ThisExpression(o)),
-            ForStatementInit::UnaryExpression(o) => Ok(Expression::UnaryExpression(o)),
-            ForStatementInit::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
-            ForStatementInit::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
-            ForStatementInit::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
-            ForStatementInit::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
-            ForStatementInit::NewTarget(o) => Ok(Expression::NewTarget(o)),
-            ForStatementInit::JSXElement(o) => Ok(Expression::JSXElement(o)),
-            ForStatementInit::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
-            ForStatementInit::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
-            ForStatementInit::TSSatisfiesExpression(o) => Ok(Expression::TSSatisfiesExpression(o)),
-            ForStatementInit::TSTypeAssertion(o) => Ok(Expression::TSTypeAssertion(o)),
-            ForStatementInit::TSNonNullExpression(o) => Ok(Expression::TSNonNullExpression(o)),
-            ForStatementInit::TSInstantiationExpression(o) => {
-                Ok(Expression::TSInstantiationExpression(o))
-            }
-            ForStatementInit::V8IntrinsicExpression(o) => Ok(Expression::V8IntrinsicExpression(o)),
-            ForStatementInit::ComputedMemberExpression(o) => {
-                Ok(Expression::ComputedMemberExpression(o))
-            }
-            ForStatementInit::StaticMemberExpression(o) => {
-                Ok(Expression::StaticMemberExpression(o))
-            }
-            ForStatementInit::PrivateFieldExpression(o) => {
-                Ok(Expression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<Expression<'a>> for ForStatementInit<'a> {
-    /// Convert an [`Expression`] to a [`ForStatementInit`].
-    #[inline]
-    fn from(value: Expression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            Expression::BooleanLiteral(o) => ForStatementInit::BooleanLiteral(o),
-            Expression::NullLiteral(o) => ForStatementInit::NullLiteral(o),
-            Expression::NumericLiteral(o) => ForStatementInit::NumericLiteral(o),
-            Expression::BigIntLiteral(o) => ForStatementInit::BigIntLiteral(o),
-            Expression::RegExpLiteral(o) => ForStatementInit::RegExpLiteral(o),
-            Expression::StringLiteral(o) => ForStatementInit::StringLiteral(o),
-            Expression::TemplateLiteral(o) => ForStatementInit::TemplateLiteral(o),
-            Expression::Identifier(o) => ForStatementInit::Identifier(o),
-            Expression::Super(o) => ForStatementInit::Super(o),
-            Expression::ArrayExpression(o) => ForStatementInit::ArrayExpression(o),
-            Expression::ArrowFunctionExpression(o) => ForStatementInit::ArrowFunctionExpression(o),
-            Expression::AssignmentExpression(o) => ForStatementInit::AssignmentExpression(o),
-            Expression::AwaitExpression(o) => ForStatementInit::AwaitExpression(o),
-            Expression::BinaryExpression(o) => ForStatementInit::BinaryExpression(o),
-            Expression::CallExpression(o) => ForStatementInit::CallExpression(o),
-            Expression::ChainExpression(o) => ForStatementInit::ChainExpression(o),
-            Expression::ClassExpression(o) => ForStatementInit::ClassExpression(o),
-            Expression::ConditionalExpression(o) => ForStatementInit::ConditionalExpression(o),
-            Expression::FunctionExpression(o) => ForStatementInit::FunctionExpression(o),
-            Expression::ImportExpression(o) => ForStatementInit::ImportExpression(o),
-            Expression::LogicalExpression(o) => ForStatementInit::LogicalExpression(o),
-            Expression::NewExpression(o) => ForStatementInit::NewExpression(o),
-            Expression::ObjectExpression(o) => ForStatementInit::ObjectExpression(o),
-            Expression::ParenthesizedExpression(o) => ForStatementInit::ParenthesizedExpression(o),
-            Expression::SequenceExpression(o) => ForStatementInit::SequenceExpression(o),
-            Expression::TaggedTemplateExpression(o) => {
-                ForStatementInit::TaggedTemplateExpression(o)
-            }
-            Expression::ThisExpression(o) => ForStatementInit::ThisExpression(o),
-            Expression::UnaryExpression(o) => ForStatementInit::UnaryExpression(o),
-            Expression::UpdateExpression(o) => ForStatementInit::UpdateExpression(o),
-            Expression::YieldExpression(o) => ForStatementInit::YieldExpression(o),
-            Expression::PrivateInExpression(o) => ForStatementInit::PrivateInExpression(o),
-            Expression::ImportMeta(o) => ForStatementInit::ImportMeta(o),
-            Expression::NewTarget(o) => ForStatementInit::NewTarget(o),
-            Expression::JSXElement(o) => ForStatementInit::JSXElement(o),
-            Expression::JSXFragment(o) => ForStatementInit::JSXFragment(o),
-            Expression::TSAsExpression(o) => ForStatementInit::TSAsExpression(o),
-            Expression::TSSatisfiesExpression(o) => ForStatementInit::TSSatisfiesExpression(o),
-            Expression::TSTypeAssertion(o) => ForStatementInit::TSTypeAssertion(o),
-            Expression::TSNonNullExpression(o) => ForStatementInit::TSNonNullExpression(o),
-            Expression::TSInstantiationExpression(o) => {
-                ForStatementInit::TSInstantiationExpression(o)
-            }
-            Expression::V8IntrinsicExpression(o) => ForStatementInit::V8IntrinsicExpression(o),
-            Expression::ComputedMemberExpression(o) => {
-                ForStatementInit::ComputedMemberExpression(o)
-            }
-            Expression::StaticMemberExpression(o) => ForStatementInit::StaticMemberExpression(o),
-            Expression::PrivateFieldExpression(o) => ForStatementInit::PrivateFieldExpression(o),
-        }
-    }
-}
-
-impl<'a> ForStatementInit<'a> {
-    /// Return if a [`ForStatementInit`] is a [`MemberExpression`].
-    #[inline]
-    pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert a [`ForStatementInit`] to a [`MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
-    }
-
-    /// Convert a [`&ForStatementInit`] to a [`&MemberExpression`].
-    ///
-    /// [`&ForStatementInit`]: ForStatementInit
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&mut ForStatementInit`] to a [`&mut MemberExpression`].
-    ///
-    /// [`&mut ForStatementInit`]: ForStatementInit
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&ForStatementInit`] to a [`&MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&ForStatementInit`]: ForStatementInit
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
-        self.as_member_expression().unwrap()
-    }
-
-    /// Convert a [`&mut ForStatementInit`] to a [`&mut MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut ForStatementInit`]: ForStatementInit
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
-        self.as_member_expression_mut().unwrap()
-    }
-}
-
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to a [`&ForStatementInit`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&ForStatementInit`]: ForStatementInit
-    #[inline]
-    pub fn as_for_statement_init(&self) -> &ForStatementInit<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ForStatementInit>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<ForStatementInit<'a>> for MemberExpression<'a> {
-    type Error = ();
-
-    /// Convert a [`ForStatementInit`] to a [`MemberExpression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: ForStatementInit<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            ForStatementInit::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            ForStatementInit::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            ForStatementInit::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<MemberExpression<'a>> for ForStatementInit<'a> {
-    /// Convert a [`MemberExpression`] to a [`ForStatementInit`].
-    #[inline]
-    fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                ForStatementInit::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => {
-                ForStatementInit::StaticMemberExpression(o)
-            }
-            MemberExpression::PrivateFieldExpression(o) => {
-                ForStatementInit::PrivateFieldExpression(o)
-            }
-        }
-    }
-}
-
 impl<'a> ForStatementLeft<'a> {
-    /// Return if a [`ForStatementLeft`] is an [`AssignmentTarget`].
+    /// Return if a [`ForStatementLeft`] is a [`AssignmentTarget`].
     #[inline]
     pub fn is_assignment_target(&self) -> bool {
         matches!(
@@ -3311,15 +2386,13 @@ impl<'a> ForStatementLeft<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
+                | Self::MemberExpression(_)
                 | Self::ArrayAssignmentTarget(_)
                 | Self::ObjectAssignmentTarget(_)
         )
     }
 
-    /// Convert a [`ForStatementLeft`] to an [`AssignmentTarget`].
+    /// Convert a [`ForStatementLeft`] to a [`AssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3328,7 +2401,7 @@ impl<'a> ForStatementLeft<'a> {
         AssignmentTarget::try_from(self).unwrap()
     }
 
-    /// Convert a [`&ForStatementLeft`] to an [`&AssignmentTarget`].
+    /// Convert an [`&ForStatementLeft`] to an [`&AssignmentTarget`].
     ///
     /// [`&ForStatementLeft`]: ForStatementLeft
     /// [`&AssignmentTarget`]: AssignmentTarget
@@ -3343,7 +2416,7 @@ impl<'a> ForStatementLeft<'a> {
         }
     }
 
-    /// Convert a [`&mut ForStatementLeft`] to an [`&mut AssignmentTarget`].
+    /// Convert an [`&mut ForStatementLeft`] to an [`&mut AssignmentTarget`].
     ///
     /// [`&mut ForStatementLeft`]: ForStatementLeft
     /// [`&mut AssignmentTarget`]: AssignmentTarget
@@ -3358,7 +2431,7 @@ impl<'a> ForStatementLeft<'a> {
         }
     }
 
-    /// Convert a [`&ForStatementLeft`] to an [`&AssignmentTarget`].
+    /// Convert an [`&ForStatementLeft`] to an [`&AssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3370,7 +2443,7 @@ impl<'a> ForStatementLeft<'a> {
         self.as_assignment_target().unwrap()
     }
 
-    /// Convert a [`&mut ForStatementLeft`] to an [`&mut AssignmentTarget`].
+    /// Convert an [`&mut ForStatementLeft`] to an [`&mut AssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3383,23 +2456,10 @@ impl<'a> ForStatementLeft<'a> {
     }
 }
 
-impl<'a> AssignmentTarget<'a> {
-    /// Convert an [`&AssignmentTarget`] to a [`&ForStatementLeft`].
-    ///
-    /// [`&AssignmentTarget`]: AssignmentTarget
-    /// [`&ForStatementLeft`]: ForStatementLeft
-    #[inline]
-    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<ForStatementLeft<'a>> for AssignmentTarget<'a> {
     type Error = ();
 
-    /// Convert a [`ForStatementLeft`] to an [`AssignmentTarget`].
+    /// Convert a [`ForStatementLeft`] to a [`AssignmentTarget`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
@@ -3419,15 +2479,7 @@ impl<'a> TryFrom<ForStatementLeft<'a>> for AssignmentTarget<'a> {
                 Ok(AssignmentTarget::TSNonNullExpression(o))
             }
             ForStatementLeft::TSTypeAssertion(o) => Ok(AssignmentTarget::TSTypeAssertion(o)),
-            ForStatementLeft::ComputedMemberExpression(o) => {
-                Ok(AssignmentTarget::ComputedMemberExpression(o))
-            }
-            ForStatementLeft::StaticMemberExpression(o) => {
-                Ok(AssignmentTarget::StaticMemberExpression(o))
-            }
-            ForStatementLeft::PrivateFieldExpression(o) => {
-                Ok(AssignmentTarget::PrivateFieldExpression(o))
-            }
+            ForStatementLeft::MemberExpression(o) => Ok(AssignmentTarget::MemberExpression(o)),
             ForStatementLeft::ArrayAssignmentTarget(o) => {
                 Ok(AssignmentTarget::ArrayAssignmentTarget(o))
             }
@@ -3440,7 +2492,7 @@ impl<'a> TryFrom<ForStatementLeft<'a>> for AssignmentTarget<'a> {
 }
 
 impl<'a> From<AssignmentTarget<'a>> for ForStatementLeft<'a> {
-    /// Convert an [`AssignmentTarget`] to a [`ForStatementLeft`].
+    /// Convert a [`AssignmentTarget`] to a [`ForStatementLeft`].
     #[inline]
     fn from(value: AssignmentTarget<'a>) -> Self {
         // Compiler should implement this as zero-cost transmute as discriminants
@@ -3455,15 +2507,7 @@ impl<'a> From<AssignmentTarget<'a>> for ForStatementLeft<'a> {
             }
             AssignmentTarget::TSNonNullExpression(o) => ForStatementLeft::TSNonNullExpression(o),
             AssignmentTarget::TSTypeAssertion(o) => ForStatementLeft::TSTypeAssertion(o),
-            AssignmentTarget::ComputedMemberExpression(o) => {
-                ForStatementLeft::ComputedMemberExpression(o)
-            }
-            AssignmentTarget::StaticMemberExpression(o) => {
-                ForStatementLeft::StaticMemberExpression(o)
-            }
-            AssignmentTarget::PrivateFieldExpression(o) => {
-                ForStatementLeft::PrivateFieldExpression(o)
-            }
+            AssignmentTarget::MemberExpression(o) => ForStatementLeft::MemberExpression(o),
             AssignmentTarget::ArrayAssignmentTarget(o) => {
                 ForStatementLeft::ArrayAssignmentTarget(o)
             }
@@ -3471,6 +2515,19 @@ impl<'a> From<AssignmentTarget<'a>> for ForStatementLeft<'a> {
                 ForStatementLeft::ObjectAssignmentTarget(o)
             }
         }
+    }
+}
+
+impl<'a> AssignmentTarget<'a> {
+    /// Convert a [`&AssignmentTarget`] to a [`&ForStatementLeft`].
+    ///
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    /// [`&ForStatementLeft`]: ForStatementLeft
+    #[inline]
+    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -3485,9 +2542,7 @@ impl<'a> ForStatementLeft<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
+                | Self::MemberExpression(_)
         )
     }
 
@@ -3500,7 +2555,7 @@ impl<'a> ForStatementLeft<'a> {
         SimpleAssignmentTarget::try_from(self).unwrap()
     }
 
-    /// Convert a [`&ForStatementLeft`] to a [`&SimpleAssignmentTarget`].
+    /// Convert an [`&ForStatementLeft`] to an [`&SimpleAssignmentTarget`].
     ///
     /// [`&ForStatementLeft`]: ForStatementLeft
     /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
@@ -3515,7 +2570,7 @@ impl<'a> ForStatementLeft<'a> {
         }
     }
 
-    /// Convert a [`&mut ForStatementLeft`] to a [`&mut SimpleAssignmentTarget`].
+    /// Convert an [`&mut ForStatementLeft`] to an [`&mut SimpleAssignmentTarget`].
     ///
     /// [`&mut ForStatementLeft`]: ForStatementLeft
     /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
@@ -3530,7 +2585,7 @@ impl<'a> ForStatementLeft<'a> {
         }
     }
 
-    /// Convert a [`&ForStatementLeft`] to a [`&SimpleAssignmentTarget`].
+    /// Convert an [`&ForStatementLeft`] to an [`&SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3542,7 +2597,7 @@ impl<'a> ForStatementLeft<'a> {
         self.as_simple_assignment_target().unwrap()
     }
 
-    /// Convert a [`&mut ForStatementLeft`] to a [`&mut SimpleAssignmentTarget`].
+    /// Convert an [`&mut ForStatementLeft`] to an [`&mut SimpleAssignmentTarget`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3552,19 +2607,6 @@ impl<'a> ForStatementLeft<'a> {
     #[inline]
     pub fn to_simple_assignment_target_mut(&mut self) -> &mut SimpleAssignmentTarget<'a> {
         self.as_simple_assignment_target_mut().unwrap()
-    }
-}
-
-impl<'a> SimpleAssignmentTarget<'a> {
-    /// Convert a [`&SimpleAssignmentTarget`] to a [`&ForStatementLeft`].
-    ///
-    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
-    /// [`&ForStatementLeft`]: ForStatementLeft
-    #[inline]
-    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -3591,14 +2633,8 @@ impl<'a> TryFrom<ForStatementLeft<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(o))
             }
             ForStatementLeft::TSTypeAssertion(o) => Ok(SimpleAssignmentTarget::TSTypeAssertion(o)),
-            ForStatementLeft::ComputedMemberExpression(o) => {
-                Ok(SimpleAssignmentTarget::ComputedMemberExpression(o))
-            }
-            ForStatementLeft::StaticMemberExpression(o) => {
-                Ok(SimpleAssignmentTarget::StaticMemberExpression(o))
-            }
-            ForStatementLeft::PrivateFieldExpression(o) => {
-                Ok(SimpleAssignmentTarget::PrivateFieldExpression(o))
+            ForStatementLeft::MemberExpression(o) => {
+                Ok(SimpleAssignmentTarget::MemberExpression(o))
             }
             _ => Err(()),
         }
@@ -3623,16 +2659,21 @@ impl<'a> From<SimpleAssignmentTarget<'a>> for ForStatementLeft<'a> {
                 ForStatementLeft::TSNonNullExpression(o)
             }
             SimpleAssignmentTarget::TSTypeAssertion(o) => ForStatementLeft::TSTypeAssertion(o),
-            SimpleAssignmentTarget::ComputedMemberExpression(o) => {
-                ForStatementLeft::ComputedMemberExpression(o)
-            }
-            SimpleAssignmentTarget::StaticMemberExpression(o) => {
-                ForStatementLeft::StaticMemberExpression(o)
-            }
-            SimpleAssignmentTarget::PrivateFieldExpression(o) => {
-                ForStatementLeft::PrivateFieldExpression(o)
-            }
+            SimpleAssignmentTarget::MemberExpression(o) => ForStatementLeft::MemberExpression(o),
         }
+    }
+}
+
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Convert a [`&SimpleAssignmentTarget`] to a [`&ForStatementLeft`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&ForStatementLeft`]: ForStatementLeft
+    #[inline]
+    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -3640,21 +2681,19 @@ impl<'a> ForStatementLeft<'a> {
     /// Return if a [`ForStatementLeft`] is a [`MemberExpression`].
     #[inline]
     pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
+        matches!(self, Self::MemberExpression(_))
     }
 
-    /// Convert a [`ForStatementLeft`] to a [`MemberExpression`].
+    /// Convert a [`ForStatementLeft`] into a [`MemberExpression`].
     ///
     /// # Panics
     /// Panics if not convertible.
     #[inline]
     pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
+        match self {
+            Self::MemberExpression(it) => it,
+            _ => panic!("Cannot convert to MemberExpression"),
+        }
     }
 
     /// Convert a [`&ForStatementLeft`] to a [`&MemberExpression`].
@@ -3663,13 +2702,7 @@ impl<'a> ForStatementLeft<'a> {
     /// [`&MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
     }
 
     /// Convert a [`&mut ForStatementLeft`] to a [`&mut MemberExpression`].
@@ -3678,13 +2711,7 @@ impl<'a> ForStatementLeft<'a> {
     /// [`&mut MemberExpression`]: MemberExpression
     #[inline]
     pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
+        if let Self::MemberExpression(it) = self { Some(it) } else { None }
     }
 
     /// Convert a [`&ForStatementLeft`] to a [`&MemberExpression`].
@@ -3712,19 +2739,6 @@ impl<'a> ForStatementLeft<'a> {
     }
 }
 
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to a [`&ForStatementLeft`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&ForStatementLeft`]: ForStatementLeft
-    #[inline]
-    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<ForStatementLeft<'a>> for MemberExpression<'a> {
     type Error = ();
 
@@ -3734,18 +2748,8 @@ impl<'a> TryFrom<ForStatementLeft<'a>> for MemberExpression<'a> {
     /// Returns `Err` if not convertible.
     #[inline]
     fn try_from(value: ForStatementLeft<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
         match value {
-            ForStatementLeft::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            ForStatementLeft::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            ForStatementLeft::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
+            ForStatementLeft::MemberExpression(it) => Ok(it),
             _ => Err(()),
         }
     }
@@ -3755,30 +2759,18 @@ impl<'a> From<MemberExpression<'a>> for ForStatementLeft<'a> {
     /// Convert a [`MemberExpression`] to a [`ForStatementLeft`].
     #[inline]
     fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                ForStatementLeft::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => {
-                ForStatementLeft::StaticMemberExpression(o)
-            }
-            MemberExpression::PrivateFieldExpression(o) => {
-                ForStatementLeft::PrivateFieldExpression(o)
-            }
-        }
+        ForStatementLeft::MemberExpression(value)
     }
 }
 
 impl<'a> ForStatementLeft<'a> {
-    /// Return if a [`ForStatementLeft`] is an [`AssignmentTargetPattern`].
+    /// Return if a [`ForStatementLeft`] is a [`AssignmentTargetPattern`].
     #[inline]
     pub fn is_assignment_target_pattern(&self) -> bool {
         matches!(self, Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_))
     }
 
-    /// Convert a [`ForStatementLeft`] to an [`AssignmentTargetPattern`].
+    /// Convert a [`ForStatementLeft`] to a [`AssignmentTargetPattern`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3787,7 +2779,7 @@ impl<'a> ForStatementLeft<'a> {
         AssignmentTargetPattern::try_from(self).unwrap()
     }
 
-    /// Convert a [`&ForStatementLeft`] to an [`&AssignmentTargetPattern`].
+    /// Convert an [`&ForStatementLeft`] to an [`&AssignmentTargetPattern`].
     ///
     /// [`&ForStatementLeft`]: ForStatementLeft
     /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
@@ -3802,7 +2794,7 @@ impl<'a> ForStatementLeft<'a> {
         }
     }
 
-    /// Convert a [`&mut ForStatementLeft`] to an [`&mut AssignmentTargetPattern`].
+    /// Convert an [`&mut ForStatementLeft`] to an [`&mut AssignmentTargetPattern`].
     ///
     /// [`&mut ForStatementLeft`]: ForStatementLeft
     /// [`&mut AssignmentTargetPattern`]: AssignmentTargetPattern
@@ -3817,7 +2809,7 @@ impl<'a> ForStatementLeft<'a> {
         }
     }
 
-    /// Convert a [`&ForStatementLeft`] to an [`&AssignmentTargetPattern`].
+    /// Convert an [`&ForStatementLeft`] to an [`&AssignmentTargetPattern`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3829,7 +2821,7 @@ impl<'a> ForStatementLeft<'a> {
         self.as_assignment_target_pattern().unwrap()
     }
 
-    /// Convert a [`&mut ForStatementLeft`] to an [`&mut AssignmentTargetPattern`].
+    /// Convert an [`&mut ForStatementLeft`] to an [`&mut AssignmentTargetPattern`].
     ///
     /// # Panics
     /// Panics if not convertible.
@@ -3842,23 +2834,10 @@ impl<'a> ForStatementLeft<'a> {
     }
 }
 
-impl<'a> AssignmentTargetPattern<'a> {
-    /// Convert an [`&AssignmentTargetPattern`] to a [`&ForStatementLeft`].
-    ///
-    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
-    /// [`&ForStatementLeft`]: ForStatementLeft
-    #[inline]
-    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
-    }
-}
-
 impl<'a> TryFrom<ForStatementLeft<'a>> for AssignmentTargetPattern<'a> {
     type Error = ();
 
-    /// Convert a [`ForStatementLeft`] to an [`AssignmentTargetPattern`].
+    /// Convert a [`ForStatementLeft`] to a [`AssignmentTargetPattern`].
     ///
     /// # Errors
     /// Returns `Err` if not convertible.
@@ -3879,7 +2858,7 @@ impl<'a> TryFrom<ForStatementLeft<'a>> for AssignmentTargetPattern<'a> {
 }
 
 impl<'a> From<AssignmentTargetPattern<'a>> for ForStatementLeft<'a> {
-    /// Convert an [`AssignmentTargetPattern`] to a [`ForStatementLeft`].
+    /// Convert a [`AssignmentTargetPattern`] to a [`ForStatementLeft`].
     #[inline]
     fn from(value: AssignmentTargetPattern<'a>) -> Self {
         // Compiler should implement this as zero-cost transmute as discriminants
@@ -3895,837 +2874,16 @@ impl<'a> From<AssignmentTargetPattern<'a>> for ForStatementLeft<'a> {
     }
 }
 
-impl<'a> ExportDefaultDeclarationKind<'a> {
-    /// Return if an [`ExportDefaultDeclarationKind`] is an [`Expression`].
+impl<'a> AssignmentTargetPattern<'a> {
+    /// Convert a [`&AssignmentTargetPattern`] to a [`&ForStatementLeft`].
+    ///
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    /// [`&ForStatementLeft`]: ForStatementLeft
     #[inline]
-    pub fn is_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumericLiteral(_)
-                | Self::BigIntLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_)
-                | Self::TemplateLiteral(_)
-                | Self::Identifier(_)
-                | Self::Super(_)
-                | Self::ArrayExpression(_)
-                | Self::ArrowFunctionExpression(_)
-                | Self::AssignmentExpression(_)
-                | Self::AwaitExpression(_)
-                | Self::BinaryExpression(_)
-                | Self::CallExpression(_)
-                | Self::ChainExpression(_)
-                | Self::ClassExpression(_)
-                | Self::ConditionalExpression(_)
-                | Self::FunctionExpression(_)
-                | Self::ImportExpression(_)
-                | Self::LogicalExpression(_)
-                | Self::NewExpression(_)
-                | Self::ObjectExpression(_)
-                | Self::ParenthesizedExpression(_)
-                | Self::SequenceExpression(_)
-                | Self::TaggedTemplateExpression(_)
-                | Self::ThisExpression(_)
-                | Self::UnaryExpression(_)
-                | Self::UpdateExpression(_)
-                | Self::YieldExpression(_)
-                | Self::PrivateInExpression(_)
-                | Self::ImportMeta(_)
-                | Self::NewTarget(_)
-                | Self::JSXElement(_)
-                | Self::JSXFragment(_)
-                | Self::TSAsExpression(_)
-                | Self::TSSatisfiesExpression(_)
-                | Self::TSTypeAssertion(_)
-                | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
-                | Self::V8IntrinsicExpression(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert an [`ExportDefaultDeclarationKind`] to an [`Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_expression(self) -> Expression<'a> {
-        Expression::try_from(self).unwrap()
-    }
-
-    /// Convert an [`&ExportDefaultDeclarationKind`] to an [`&Expression`].
-    ///
-    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&Expression`]: Expression
-    #[inline]
-    pub fn as_expression(&self) -> Option<&Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert an [`&mut ExportDefaultDeclarationKind`] to an [`&mut Expression`].
-    ///
-    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&mut Expression`]: Expression
-    #[inline]
-    pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert an [`&ExportDefaultDeclarationKind`] to an [`&Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&Expression`]: Expression
-    #[inline]
-    pub fn to_expression(&self) -> &Expression<'a> {
-        self.as_expression().unwrap()
-    }
-
-    /// Convert an [`&mut ExportDefaultDeclarationKind`] to an [`&mut Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&mut Expression`]: Expression
-    #[inline]
-    pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
-        self.as_expression_mut().unwrap()
-    }
-}
-
-impl<'a> Expression<'a> {
-    /// Convert an [`&Expression`] to an [`&ExportDefaultDeclarationKind`].
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    #[inline]
-    pub fn as_export_default_declaration_kind(&self) -> &ExportDefaultDeclarationKind<'a> {
+    pub fn as_for_statement_left(&self) -> &ForStatementLeft<'a> {
         // SAFETY: Transmute is safe because discriminants + types are identical between
         // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ExportDefaultDeclarationKind>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for Expression<'a> {
-    type Error = ();
-
-    /// Convert an [`ExportDefaultDeclarationKind`] to an [`Expression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: ExportDefaultDeclarationKind<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            ExportDefaultDeclarationKind::BooleanLiteral(o) => Ok(Expression::BooleanLiteral(o)),
-            ExportDefaultDeclarationKind::NullLiteral(o) => Ok(Expression::NullLiteral(o)),
-            ExportDefaultDeclarationKind::NumericLiteral(o) => Ok(Expression::NumericLiteral(o)),
-            ExportDefaultDeclarationKind::BigIntLiteral(o) => Ok(Expression::BigIntLiteral(o)),
-            ExportDefaultDeclarationKind::RegExpLiteral(o) => Ok(Expression::RegExpLiteral(o)),
-            ExportDefaultDeclarationKind::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
-            ExportDefaultDeclarationKind::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
-            ExportDefaultDeclarationKind::Identifier(o) => Ok(Expression::Identifier(o)),
-            ExportDefaultDeclarationKind::Super(o) => Ok(Expression::Super(o)),
-            ExportDefaultDeclarationKind::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
-            ExportDefaultDeclarationKind::ArrowFunctionExpression(o) => {
-                Ok(Expression::ArrowFunctionExpression(o))
-            }
-            ExportDefaultDeclarationKind::AssignmentExpression(o) => {
-                Ok(Expression::AssignmentExpression(o))
-            }
-            ExportDefaultDeclarationKind::AwaitExpression(o) => Ok(Expression::AwaitExpression(o)),
-            ExportDefaultDeclarationKind::BinaryExpression(o) => {
-                Ok(Expression::BinaryExpression(o))
-            }
-            ExportDefaultDeclarationKind::CallExpression(o) => Ok(Expression::CallExpression(o)),
-            ExportDefaultDeclarationKind::ChainExpression(o) => Ok(Expression::ChainExpression(o)),
-            ExportDefaultDeclarationKind::ClassExpression(o) => Ok(Expression::ClassExpression(o)),
-            ExportDefaultDeclarationKind::ConditionalExpression(o) => {
-                Ok(Expression::ConditionalExpression(o))
-            }
-            ExportDefaultDeclarationKind::FunctionExpression(o) => {
-                Ok(Expression::FunctionExpression(o))
-            }
-            ExportDefaultDeclarationKind::ImportExpression(o) => {
-                Ok(Expression::ImportExpression(o))
-            }
-            ExportDefaultDeclarationKind::LogicalExpression(o) => {
-                Ok(Expression::LogicalExpression(o))
-            }
-            ExportDefaultDeclarationKind::NewExpression(o) => Ok(Expression::NewExpression(o)),
-            ExportDefaultDeclarationKind::ObjectExpression(o) => {
-                Ok(Expression::ObjectExpression(o))
-            }
-            ExportDefaultDeclarationKind::ParenthesizedExpression(o) => {
-                Ok(Expression::ParenthesizedExpression(o))
-            }
-            ExportDefaultDeclarationKind::SequenceExpression(o) => {
-                Ok(Expression::SequenceExpression(o))
-            }
-            ExportDefaultDeclarationKind::TaggedTemplateExpression(o) => {
-                Ok(Expression::TaggedTemplateExpression(o))
-            }
-            ExportDefaultDeclarationKind::ThisExpression(o) => Ok(Expression::ThisExpression(o)),
-            ExportDefaultDeclarationKind::UnaryExpression(o) => Ok(Expression::UnaryExpression(o)),
-            ExportDefaultDeclarationKind::UpdateExpression(o) => {
-                Ok(Expression::UpdateExpression(o))
-            }
-            ExportDefaultDeclarationKind::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
-            ExportDefaultDeclarationKind::PrivateInExpression(o) => {
-                Ok(Expression::PrivateInExpression(o))
-            }
-            ExportDefaultDeclarationKind::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
-            ExportDefaultDeclarationKind::NewTarget(o) => Ok(Expression::NewTarget(o)),
-            ExportDefaultDeclarationKind::JSXElement(o) => Ok(Expression::JSXElement(o)),
-            ExportDefaultDeclarationKind::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
-            ExportDefaultDeclarationKind::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
-            ExportDefaultDeclarationKind::TSSatisfiesExpression(o) => {
-                Ok(Expression::TSSatisfiesExpression(o))
-            }
-            ExportDefaultDeclarationKind::TSTypeAssertion(o) => Ok(Expression::TSTypeAssertion(o)),
-            ExportDefaultDeclarationKind::TSNonNullExpression(o) => {
-                Ok(Expression::TSNonNullExpression(o))
-            }
-            ExportDefaultDeclarationKind::TSInstantiationExpression(o) => {
-                Ok(Expression::TSInstantiationExpression(o))
-            }
-            ExportDefaultDeclarationKind::V8IntrinsicExpression(o) => {
-                Ok(Expression::V8IntrinsicExpression(o))
-            }
-            ExportDefaultDeclarationKind::ComputedMemberExpression(o) => {
-                Ok(Expression::ComputedMemberExpression(o))
-            }
-            ExportDefaultDeclarationKind::StaticMemberExpression(o) => {
-                Ok(Expression::StaticMemberExpression(o))
-            }
-            ExportDefaultDeclarationKind::PrivateFieldExpression(o) => {
-                Ok(Expression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<Expression<'a>> for ExportDefaultDeclarationKind<'a> {
-    /// Convert an [`Expression`] to an [`ExportDefaultDeclarationKind`].
-    #[inline]
-    fn from(value: Expression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            Expression::BooleanLiteral(o) => ExportDefaultDeclarationKind::BooleanLiteral(o),
-            Expression::NullLiteral(o) => ExportDefaultDeclarationKind::NullLiteral(o),
-            Expression::NumericLiteral(o) => ExportDefaultDeclarationKind::NumericLiteral(o),
-            Expression::BigIntLiteral(o) => ExportDefaultDeclarationKind::BigIntLiteral(o),
-            Expression::RegExpLiteral(o) => ExportDefaultDeclarationKind::RegExpLiteral(o),
-            Expression::StringLiteral(o) => ExportDefaultDeclarationKind::StringLiteral(o),
-            Expression::TemplateLiteral(o) => ExportDefaultDeclarationKind::TemplateLiteral(o),
-            Expression::Identifier(o) => ExportDefaultDeclarationKind::Identifier(o),
-            Expression::Super(o) => ExportDefaultDeclarationKind::Super(o),
-            Expression::ArrayExpression(o) => ExportDefaultDeclarationKind::ArrayExpression(o),
-            Expression::ArrowFunctionExpression(o) => {
-                ExportDefaultDeclarationKind::ArrowFunctionExpression(o)
-            }
-            Expression::AssignmentExpression(o) => {
-                ExportDefaultDeclarationKind::AssignmentExpression(o)
-            }
-            Expression::AwaitExpression(o) => ExportDefaultDeclarationKind::AwaitExpression(o),
-            Expression::BinaryExpression(o) => ExportDefaultDeclarationKind::BinaryExpression(o),
-            Expression::CallExpression(o) => ExportDefaultDeclarationKind::CallExpression(o),
-            Expression::ChainExpression(o) => ExportDefaultDeclarationKind::ChainExpression(o),
-            Expression::ClassExpression(o) => ExportDefaultDeclarationKind::ClassExpression(o),
-            Expression::ConditionalExpression(o) => {
-                ExportDefaultDeclarationKind::ConditionalExpression(o)
-            }
-            Expression::FunctionExpression(o) => {
-                ExportDefaultDeclarationKind::FunctionExpression(o)
-            }
-            Expression::ImportExpression(o) => ExportDefaultDeclarationKind::ImportExpression(o),
-            Expression::LogicalExpression(o) => ExportDefaultDeclarationKind::LogicalExpression(o),
-            Expression::NewExpression(o) => ExportDefaultDeclarationKind::NewExpression(o),
-            Expression::ObjectExpression(o) => ExportDefaultDeclarationKind::ObjectExpression(o),
-            Expression::ParenthesizedExpression(o) => {
-                ExportDefaultDeclarationKind::ParenthesizedExpression(o)
-            }
-            Expression::SequenceExpression(o) => {
-                ExportDefaultDeclarationKind::SequenceExpression(o)
-            }
-            Expression::TaggedTemplateExpression(o) => {
-                ExportDefaultDeclarationKind::TaggedTemplateExpression(o)
-            }
-            Expression::ThisExpression(o) => ExportDefaultDeclarationKind::ThisExpression(o),
-            Expression::UnaryExpression(o) => ExportDefaultDeclarationKind::UnaryExpression(o),
-            Expression::UpdateExpression(o) => ExportDefaultDeclarationKind::UpdateExpression(o),
-            Expression::YieldExpression(o) => ExportDefaultDeclarationKind::YieldExpression(o),
-            Expression::PrivateInExpression(o) => {
-                ExportDefaultDeclarationKind::PrivateInExpression(o)
-            }
-            Expression::ImportMeta(o) => ExportDefaultDeclarationKind::ImportMeta(o),
-            Expression::NewTarget(o) => ExportDefaultDeclarationKind::NewTarget(o),
-            Expression::JSXElement(o) => ExportDefaultDeclarationKind::JSXElement(o),
-            Expression::JSXFragment(o) => ExportDefaultDeclarationKind::JSXFragment(o),
-            Expression::TSAsExpression(o) => ExportDefaultDeclarationKind::TSAsExpression(o),
-            Expression::TSSatisfiesExpression(o) => {
-                ExportDefaultDeclarationKind::TSSatisfiesExpression(o)
-            }
-            Expression::TSTypeAssertion(o) => ExportDefaultDeclarationKind::TSTypeAssertion(o),
-            Expression::TSNonNullExpression(o) => {
-                ExportDefaultDeclarationKind::TSNonNullExpression(o)
-            }
-            Expression::TSInstantiationExpression(o) => {
-                ExportDefaultDeclarationKind::TSInstantiationExpression(o)
-            }
-            Expression::V8IntrinsicExpression(o) => {
-                ExportDefaultDeclarationKind::V8IntrinsicExpression(o)
-            }
-            Expression::ComputedMemberExpression(o) => {
-                ExportDefaultDeclarationKind::ComputedMemberExpression(o)
-            }
-            Expression::StaticMemberExpression(o) => {
-                ExportDefaultDeclarationKind::StaticMemberExpression(o)
-            }
-            Expression::PrivateFieldExpression(o) => {
-                ExportDefaultDeclarationKind::PrivateFieldExpression(o)
-            }
-        }
-    }
-}
-
-impl<'a> ExportDefaultDeclarationKind<'a> {
-    /// Return if an [`ExportDefaultDeclarationKind`] is a [`MemberExpression`].
-    #[inline]
-    pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert an [`ExportDefaultDeclarationKind`] to a [`MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
-    }
-
-    /// Convert an [`&ExportDefaultDeclarationKind`] to a [`&MemberExpression`].
-    ///
-    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert an [`&mut ExportDefaultDeclarationKind`] to a [`&mut MemberExpression`].
-    ///
-    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert an [`&ExportDefaultDeclarationKind`] to a [`&MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
-        self.as_member_expression().unwrap()
-    }
-
-    /// Convert an [`&mut ExportDefaultDeclarationKind`] to a [`&mut MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
-        self.as_member_expression_mut().unwrap()
-    }
-}
-
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to an [`&ExportDefaultDeclarationKind`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&ExportDefaultDeclarationKind`]: ExportDefaultDeclarationKind
-    #[inline]
-    pub fn as_export_default_declaration_kind(&self) -> &ExportDefaultDeclarationKind<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<ExportDefaultDeclarationKind>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for MemberExpression<'a> {
-    type Error = ();
-
-    /// Convert an [`ExportDefaultDeclarationKind`] to a [`MemberExpression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: ExportDefaultDeclarationKind<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            ExportDefaultDeclarationKind::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            ExportDefaultDeclarationKind::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            ExportDefaultDeclarationKind::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<MemberExpression<'a>> for ExportDefaultDeclarationKind<'a> {
-    /// Convert a [`MemberExpression`] to an [`ExportDefaultDeclarationKind`].
-    #[inline]
-    fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                ExportDefaultDeclarationKind::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => {
-                ExportDefaultDeclarationKind::StaticMemberExpression(o)
-            }
-            MemberExpression::PrivateFieldExpression(o) => {
-                ExportDefaultDeclarationKind::PrivateFieldExpression(o)
-            }
-        }
-    }
-}
-
-impl<'a> JSXExpression<'a> {
-    /// Return if a [`JSXExpression`] is an [`Expression`].
-    #[inline]
-    pub fn is_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumericLiteral(_)
-                | Self::BigIntLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_)
-                | Self::TemplateLiteral(_)
-                | Self::Identifier(_)
-                | Self::Super(_)
-                | Self::ArrayExpression(_)
-                | Self::ArrowFunctionExpression(_)
-                | Self::AssignmentExpression(_)
-                | Self::AwaitExpression(_)
-                | Self::BinaryExpression(_)
-                | Self::CallExpression(_)
-                | Self::ChainExpression(_)
-                | Self::ClassExpression(_)
-                | Self::ConditionalExpression(_)
-                | Self::FunctionExpression(_)
-                | Self::ImportExpression(_)
-                | Self::LogicalExpression(_)
-                | Self::NewExpression(_)
-                | Self::ObjectExpression(_)
-                | Self::ParenthesizedExpression(_)
-                | Self::SequenceExpression(_)
-                | Self::TaggedTemplateExpression(_)
-                | Self::ThisExpression(_)
-                | Self::UnaryExpression(_)
-                | Self::UpdateExpression(_)
-                | Self::YieldExpression(_)
-                | Self::PrivateInExpression(_)
-                | Self::ImportMeta(_)
-                | Self::NewTarget(_)
-                | Self::JSXElement(_)
-                | Self::JSXFragment(_)
-                | Self::TSAsExpression(_)
-                | Self::TSSatisfiesExpression(_)
-                | Self::TSTypeAssertion(_)
-                | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
-                | Self::V8IntrinsicExpression(_)
-                | Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert a [`JSXExpression`] to an [`Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_expression(self) -> Expression<'a> {
-        Expression::try_from(self).unwrap()
-    }
-
-    /// Convert a [`&JSXExpression`] to an [`&Expression`].
-    ///
-    /// [`&JSXExpression`]: JSXExpression
-    /// [`&Expression`]: Expression
-    #[inline]
-    pub fn as_expression(&self) -> Option<&Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<Expression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&mut JSXExpression`] to an [`&mut Expression`].
-    ///
-    /// [`&mut JSXExpression`]: JSXExpression
-    /// [`&mut Expression`]: Expression
-    #[inline]
-    pub fn as_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.is_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<Expression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&JSXExpression`] to an [`&Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&JSXExpression`]: JSXExpression
-    /// [`&Expression`]: Expression
-    #[inline]
-    pub fn to_expression(&self) -> &Expression<'a> {
-        self.as_expression().unwrap()
-    }
-
-    /// Convert a [`&mut JSXExpression`] to an [`&mut Expression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut JSXExpression`]: JSXExpression
-    /// [`&mut Expression`]: Expression
-    #[inline]
-    pub fn to_expression_mut(&mut self) -> &mut Expression<'a> {
-        self.as_expression_mut().unwrap()
-    }
-}
-
-impl<'a> Expression<'a> {
-    /// Convert an [`&Expression`] to a [`&JSXExpression`].
-    ///
-    /// [`&Expression`]: Expression
-    /// [`&JSXExpression`]: JSXExpression
-    #[inline]
-    pub fn as_jsx_expression(&self) -> &JSXExpression<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<JSXExpression>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<JSXExpression<'a>> for Expression<'a> {
-    type Error = ();
-
-    /// Convert a [`JSXExpression`] to an [`Expression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: JSXExpression<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            JSXExpression::BooleanLiteral(o) => Ok(Expression::BooleanLiteral(o)),
-            JSXExpression::NullLiteral(o) => Ok(Expression::NullLiteral(o)),
-            JSXExpression::NumericLiteral(o) => Ok(Expression::NumericLiteral(o)),
-            JSXExpression::BigIntLiteral(o) => Ok(Expression::BigIntLiteral(o)),
-            JSXExpression::RegExpLiteral(o) => Ok(Expression::RegExpLiteral(o)),
-            JSXExpression::StringLiteral(o) => Ok(Expression::StringLiteral(o)),
-            JSXExpression::TemplateLiteral(o) => Ok(Expression::TemplateLiteral(o)),
-            JSXExpression::Identifier(o) => Ok(Expression::Identifier(o)),
-            JSXExpression::Super(o) => Ok(Expression::Super(o)),
-            JSXExpression::ArrayExpression(o) => Ok(Expression::ArrayExpression(o)),
-            JSXExpression::ArrowFunctionExpression(o) => Ok(Expression::ArrowFunctionExpression(o)),
-            JSXExpression::AssignmentExpression(o) => Ok(Expression::AssignmentExpression(o)),
-            JSXExpression::AwaitExpression(o) => Ok(Expression::AwaitExpression(o)),
-            JSXExpression::BinaryExpression(o) => Ok(Expression::BinaryExpression(o)),
-            JSXExpression::CallExpression(o) => Ok(Expression::CallExpression(o)),
-            JSXExpression::ChainExpression(o) => Ok(Expression::ChainExpression(o)),
-            JSXExpression::ClassExpression(o) => Ok(Expression::ClassExpression(o)),
-            JSXExpression::ConditionalExpression(o) => Ok(Expression::ConditionalExpression(o)),
-            JSXExpression::FunctionExpression(o) => Ok(Expression::FunctionExpression(o)),
-            JSXExpression::ImportExpression(o) => Ok(Expression::ImportExpression(o)),
-            JSXExpression::LogicalExpression(o) => Ok(Expression::LogicalExpression(o)),
-            JSXExpression::NewExpression(o) => Ok(Expression::NewExpression(o)),
-            JSXExpression::ObjectExpression(o) => Ok(Expression::ObjectExpression(o)),
-            JSXExpression::ParenthesizedExpression(o) => Ok(Expression::ParenthesizedExpression(o)),
-            JSXExpression::SequenceExpression(o) => Ok(Expression::SequenceExpression(o)),
-            JSXExpression::TaggedTemplateExpression(o) => {
-                Ok(Expression::TaggedTemplateExpression(o))
-            }
-            JSXExpression::ThisExpression(o) => Ok(Expression::ThisExpression(o)),
-            JSXExpression::UnaryExpression(o) => Ok(Expression::UnaryExpression(o)),
-            JSXExpression::UpdateExpression(o) => Ok(Expression::UpdateExpression(o)),
-            JSXExpression::YieldExpression(o) => Ok(Expression::YieldExpression(o)),
-            JSXExpression::PrivateInExpression(o) => Ok(Expression::PrivateInExpression(o)),
-            JSXExpression::ImportMeta(o) => Ok(Expression::ImportMeta(o)),
-            JSXExpression::NewTarget(o) => Ok(Expression::NewTarget(o)),
-            JSXExpression::JSXElement(o) => Ok(Expression::JSXElement(o)),
-            JSXExpression::JSXFragment(o) => Ok(Expression::JSXFragment(o)),
-            JSXExpression::TSAsExpression(o) => Ok(Expression::TSAsExpression(o)),
-            JSXExpression::TSSatisfiesExpression(o) => Ok(Expression::TSSatisfiesExpression(o)),
-            JSXExpression::TSTypeAssertion(o) => Ok(Expression::TSTypeAssertion(o)),
-            JSXExpression::TSNonNullExpression(o) => Ok(Expression::TSNonNullExpression(o)),
-            JSXExpression::TSInstantiationExpression(o) => {
-                Ok(Expression::TSInstantiationExpression(o))
-            }
-            JSXExpression::V8IntrinsicExpression(o) => Ok(Expression::V8IntrinsicExpression(o)),
-            JSXExpression::ComputedMemberExpression(o) => {
-                Ok(Expression::ComputedMemberExpression(o))
-            }
-            JSXExpression::StaticMemberExpression(o) => Ok(Expression::StaticMemberExpression(o)),
-            JSXExpression::PrivateFieldExpression(o) => Ok(Expression::PrivateFieldExpression(o)),
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<Expression<'a>> for JSXExpression<'a> {
-    /// Convert an [`Expression`] to a [`JSXExpression`].
-    #[inline]
-    fn from(value: Expression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            Expression::BooleanLiteral(o) => JSXExpression::BooleanLiteral(o),
-            Expression::NullLiteral(o) => JSXExpression::NullLiteral(o),
-            Expression::NumericLiteral(o) => JSXExpression::NumericLiteral(o),
-            Expression::BigIntLiteral(o) => JSXExpression::BigIntLiteral(o),
-            Expression::RegExpLiteral(o) => JSXExpression::RegExpLiteral(o),
-            Expression::StringLiteral(o) => JSXExpression::StringLiteral(o),
-            Expression::TemplateLiteral(o) => JSXExpression::TemplateLiteral(o),
-            Expression::Identifier(o) => JSXExpression::Identifier(o),
-            Expression::Super(o) => JSXExpression::Super(o),
-            Expression::ArrayExpression(o) => JSXExpression::ArrayExpression(o),
-            Expression::ArrowFunctionExpression(o) => JSXExpression::ArrowFunctionExpression(o),
-            Expression::AssignmentExpression(o) => JSXExpression::AssignmentExpression(o),
-            Expression::AwaitExpression(o) => JSXExpression::AwaitExpression(o),
-            Expression::BinaryExpression(o) => JSXExpression::BinaryExpression(o),
-            Expression::CallExpression(o) => JSXExpression::CallExpression(o),
-            Expression::ChainExpression(o) => JSXExpression::ChainExpression(o),
-            Expression::ClassExpression(o) => JSXExpression::ClassExpression(o),
-            Expression::ConditionalExpression(o) => JSXExpression::ConditionalExpression(o),
-            Expression::FunctionExpression(o) => JSXExpression::FunctionExpression(o),
-            Expression::ImportExpression(o) => JSXExpression::ImportExpression(o),
-            Expression::LogicalExpression(o) => JSXExpression::LogicalExpression(o),
-            Expression::NewExpression(o) => JSXExpression::NewExpression(o),
-            Expression::ObjectExpression(o) => JSXExpression::ObjectExpression(o),
-            Expression::ParenthesizedExpression(o) => JSXExpression::ParenthesizedExpression(o),
-            Expression::SequenceExpression(o) => JSXExpression::SequenceExpression(o),
-            Expression::TaggedTemplateExpression(o) => JSXExpression::TaggedTemplateExpression(o),
-            Expression::ThisExpression(o) => JSXExpression::ThisExpression(o),
-            Expression::UnaryExpression(o) => JSXExpression::UnaryExpression(o),
-            Expression::UpdateExpression(o) => JSXExpression::UpdateExpression(o),
-            Expression::YieldExpression(o) => JSXExpression::YieldExpression(o),
-            Expression::PrivateInExpression(o) => JSXExpression::PrivateInExpression(o),
-            Expression::ImportMeta(o) => JSXExpression::ImportMeta(o),
-            Expression::NewTarget(o) => JSXExpression::NewTarget(o),
-            Expression::JSXElement(o) => JSXExpression::JSXElement(o),
-            Expression::JSXFragment(o) => JSXExpression::JSXFragment(o),
-            Expression::TSAsExpression(o) => JSXExpression::TSAsExpression(o),
-            Expression::TSSatisfiesExpression(o) => JSXExpression::TSSatisfiesExpression(o),
-            Expression::TSTypeAssertion(o) => JSXExpression::TSTypeAssertion(o),
-            Expression::TSNonNullExpression(o) => JSXExpression::TSNonNullExpression(o),
-            Expression::TSInstantiationExpression(o) => JSXExpression::TSInstantiationExpression(o),
-            Expression::V8IntrinsicExpression(o) => JSXExpression::V8IntrinsicExpression(o),
-            Expression::ComputedMemberExpression(o) => JSXExpression::ComputedMemberExpression(o),
-            Expression::StaticMemberExpression(o) => JSXExpression::StaticMemberExpression(o),
-            Expression::PrivateFieldExpression(o) => JSXExpression::PrivateFieldExpression(o),
-        }
-    }
-}
-
-impl<'a> JSXExpression<'a> {
-    /// Return if a [`JSXExpression`] is a [`MemberExpression`].
-    #[inline]
-    pub fn is_member_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::ComputedMemberExpression(_)
-                | Self::StaticMemberExpression(_)
-                | Self::PrivateFieldExpression(_)
-        )
-    }
-
-    /// Convert a [`JSXExpression`] to a [`MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    #[inline]
-    pub fn into_member_expression(self) -> MemberExpression<'a> {
-        MemberExpression::try_from(self).unwrap()
-    }
-
-    /// Convert a [`&JSXExpression`] to a [`&MemberExpression`].
-    ///
-    /// [`&JSXExpression`]: JSXExpression
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&mut JSXExpression`] to a [`&mut MemberExpression`].
-    ///
-    /// [`&mut JSXExpression`]: JSXExpression
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
-        if self.is_member_expression() {
-            // SAFETY: Transmute is safe because discriminants + types are identical between
-            // `parent` and `child` for the shared variants
-            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
-        } else {
-            None
-        }
-    }
-
-    /// Convert a [`&JSXExpression`] to a [`&MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&JSXExpression`]: JSXExpression
-    /// [`&MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
-        self.as_member_expression().unwrap()
-    }
-
-    /// Convert a [`&mut JSXExpression`] to a [`&mut MemberExpression`].
-    ///
-    /// # Panics
-    /// Panics if not convertible.
-    ///
-    /// [`&mut JSXExpression`]: JSXExpression
-    /// [`&mut MemberExpression`]: MemberExpression
-    #[inline]
-    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
-        self.as_member_expression_mut().unwrap()
-    }
-}
-
-impl<'a> MemberExpression<'a> {
-    /// Convert a [`&MemberExpression`] to a [`&JSXExpression`].
-    ///
-    /// [`&MemberExpression`]: MemberExpression
-    /// [`&JSXExpression`]: JSXExpression
-    #[inline]
-    pub fn as_jsx_expression(&self) -> &JSXExpression<'a> {
-        // SAFETY: Transmute is safe because discriminants + types are identical between
-        // `parent` and `child` for the shared variants
-        unsafe { NonNull::from_ref(self).cast::<JSXExpression>().as_ref() }
-    }
-}
-
-impl<'a> TryFrom<JSXExpression<'a>> for MemberExpression<'a> {
-    type Error = ();
-
-    /// Convert a [`JSXExpression`] to a [`MemberExpression`].
-    ///
-    /// # Errors
-    /// Returns `Err` if not convertible.
-    #[inline]
-    fn try_from(value: JSXExpression<'a>) -> Result<Self, Self::Error> {
-        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
-        // as discriminants for `parent` and `child` are aligned
-        match value {
-            JSXExpression::ComputedMemberExpression(o) => {
-                Ok(MemberExpression::ComputedMemberExpression(o))
-            }
-            JSXExpression::StaticMemberExpression(o) => {
-                Ok(MemberExpression::StaticMemberExpression(o))
-            }
-            JSXExpression::PrivateFieldExpression(o) => {
-                Ok(MemberExpression::PrivateFieldExpression(o))
-            }
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> From<MemberExpression<'a>> for JSXExpression<'a> {
-    /// Convert a [`MemberExpression`] to a [`JSXExpression`].
-    #[inline]
-    fn from(value: MemberExpression<'a>) -> Self {
-        // Compiler should implement this as zero-cost transmute as discriminants
-        // for `child` and `parent` are aligned
-        match value {
-            MemberExpression::ComputedMemberExpression(o) => {
-                JSXExpression::ComputedMemberExpression(o)
-            }
-            MemberExpression::StaticMemberExpression(o) => JSXExpression::StaticMemberExpression(o),
-            MemberExpression::PrivateFieldExpression(o) => JSXExpression::PrivateFieldExpression(o),
-        }
+        unsafe { NonNull::from_ref(self).cast::<ForStatementLeft>().as_ref() }
     }
 }
 
@@ -5075,71 +3233,6 @@ impl<'a> From<TSTypeName<'a>> for TSTypeQueryExprName<'a> {
     }
 }
 
-/// Macro for matching [`Expression`]'s variants.
-///
-/// Includes variants inherited from [`MemberExpression`].
-#[macro_export]
-macro_rules! match_expression {
-    ($ty:ident) => {
-        $ty::BooleanLiteral(_)
-            | $ty::NullLiteral(_)
-            | $ty::NumericLiteral(_)
-            | $ty::BigIntLiteral(_)
-            | $ty::RegExpLiteral(_)
-            | $ty::StringLiteral(_)
-            | $ty::TemplateLiteral(_)
-            | $ty::Identifier(_)
-            | $ty::Super(_)
-            | $ty::ArrayExpression(_)
-            | $ty::ArrowFunctionExpression(_)
-            | $ty::AssignmentExpression(_)
-            | $ty::AwaitExpression(_)
-            | $ty::BinaryExpression(_)
-            | $ty::CallExpression(_)
-            | $ty::ChainExpression(_)
-            | $ty::ClassExpression(_)
-            | $ty::ConditionalExpression(_)
-            | $ty::FunctionExpression(_)
-            | $ty::ImportExpression(_)
-            | $ty::LogicalExpression(_)
-            | $ty::NewExpression(_)
-            | $ty::ObjectExpression(_)
-            | $ty::ParenthesizedExpression(_)
-            | $ty::SequenceExpression(_)
-            | $ty::TaggedTemplateExpression(_)
-            | $ty::ThisExpression(_)
-            | $ty::UnaryExpression(_)
-            | $ty::UpdateExpression(_)
-            | $ty::YieldExpression(_)
-            | $ty::PrivateInExpression(_)
-            | $ty::ImportMeta(_)
-            | $ty::NewTarget(_)
-            | $ty::JSXElement(_)
-            | $ty::JSXFragment(_)
-            | $ty::TSAsExpression(_)
-            | $ty::TSSatisfiesExpression(_)
-            | $ty::TSTypeAssertion(_)
-            | $ty::TSNonNullExpression(_)
-            | $ty::TSInstantiationExpression(_)
-            | $ty::V8IntrinsicExpression(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-    };
-}
-pub use match_expression;
-
-/// Macro for matching [`MemberExpression`]'s variants.
-#[macro_export]
-macro_rules! match_member_expression {
-    ($ty:ident) => {
-        $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-    };
-}
-pub use match_member_expression;
-
 /// Macro for matching [`AssignmentTarget`]'s variants.
 ///
 /// Includes variants inherited from [`SimpleAssignmentTarget`], [`MemberExpression`], [`AssignmentTargetPattern`].
@@ -5151,9 +3244,7 @@ macro_rules! match_assignment_target {
             | $ty::TSSatisfiesExpression(_)
             | $ty::TSNonNullExpression(_)
             | $ty::TSTypeAssertion(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
+            | $ty::MemberExpression(_)
             | $ty::ArrayAssignmentTarget(_)
             | $ty::ObjectAssignmentTarget(_)
     };
@@ -5171,9 +3262,7 @@ macro_rules! match_simple_assignment_target {
             | $ty::TSSatisfiesExpression(_)
             | $ty::TSNonNullExpression(_)
             | $ty::TSTypeAssertion(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
+            | $ty::MemberExpression(_)
     };
 }
 pub use match_simple_assignment_target;

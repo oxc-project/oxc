@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -80,7 +80,7 @@ impl Rule for BadCharAtComparison {
             &binary_expr.left
         };
 
-        if let Expression::StringLiteral(string_lit) = comparison_with
+        if let ExpressionKind::StringLiteral(string_lit) = comparison_with.kind()
             && !is_string_valid(string_lit.value.as_str())
         {
             ctx.diagnostic(bad_char_at_comparison_diagnostic(

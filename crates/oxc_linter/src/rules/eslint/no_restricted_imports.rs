@@ -13,8 +13,8 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, ImportExpression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration,
-        TSModuleReference,
+        ExpressionKind, ImportExpression, ImportOrExportKind, StringLiteral,
+        TSImportEqualsDeclaration, TSModuleReference,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -1266,7 +1266,7 @@ impl NoRestrictedImports {
         import_expression: &ImportExpression,
     ) {
         // Only string-literal sources are checkable; `import(bar)`, `import('a' + b)` are ignored.
-        let Expression::StringLiteral(source) = &import_expression.source else {
+        let ExpressionKind::StringLiteral(source) = import_expression.source.kind() else {
             return;
         };
 

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Class, Expression},
+    ast::{Class, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -142,7 +142,7 @@ fn get_should_component_update(class: &Class<'_>) -> Option<Span> {
 fn is_react_pure_component<'a>(class: &'a Class<'a>) -> bool {
     if let Some(super_class) = &class.super_class {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
+            && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
         {
             return ident.name == "React"
                 && member_expr.static_property_name().is_some_and(|name| name == "PureComponent");

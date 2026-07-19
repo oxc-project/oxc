@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -50,7 +50,7 @@ impl Rule for NoDeprecatedVueConfigKeycodes {
         }
 
         let middle_expr = outer.object.get_inner_expression();
-        let middle = if let Expression::ChainExpression(chain) = middle_expr {
+        let middle = if let ExpressionKind::ChainExpression(chain) = middle_expr.kind() {
             chain.expression.as_member_expression()
         } else {
             middle_expr.as_member_expression()
@@ -61,7 +61,8 @@ impl Rule for NoDeprecatedVueConfigKeycodes {
             return;
         }
 
-        let Expression::Identifier(ident) = middle.object().get_inner_expression() else {
+        let ExpressionKind::Identifier(ident) = middle.object().get_inner_expression().kind()
+        else {
             return;
         };
         if ident.name != "Vue" {

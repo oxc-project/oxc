@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, ClassBody, ClassElement, Expression, MethodDefinitionKind,
+        Argument, CallExpression, ClassBody, ClassElement, ExpressionKind, MethodDefinitionKind,
         ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSMethodSignatureKind,
         TSSignature, TSTypeLiteral,
     },
@@ -315,7 +315,8 @@ impl AccessorPairs {
                 // Object.defineProperty(obj, 'prop', descriptor)
                 // Reflect.defineProperty(obj, 'prop', descriptor)
                 if call.arguments.len() >= 3
-                    && let Some(Argument::ObjectExpression(descriptor)) = call.arguments.get(2)
+                    && let Some(Argument::Expression(arg)) = call.arguments.get(2)
+                    && let Some(descriptor) = arg.as_object_expression()
                 {
                     self.check_property_descriptor(descriptor, ctx);
                 }
@@ -323,10 +324,12 @@ impl AccessorPairs {
             DefinePropertyCallee::DefineProperties | DefinePropertyCallee::Create => {
                 // Object.defineProperties(obj, props)
                 // Object.create(proto, props)
-                if let Some(Argument::ObjectExpression(props)) = call.arguments.get(1) {
+                if let Some(Argument::Expression(arg)) = call.arguments.get(1)
+                    && let Some(props) = arg.as_object_expression()
+                {
                     for prop in &props.properties {
                         if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                            && let Expression::ObjectExpression(descriptor) = &prop.value
+                            && let ExpressionKind::ObjectExpression(descriptor) = prop.value.kind()
                         {
                             self.check_property_descriptor(descriptor, ctx);
                         }
@@ -344,17 +347,22 @@ impl AccessorPairs {
         let callee = call.callee.without_parentheses();
 
         // Handle optional chaining: Object?.defineProperty
-        let member = match callee {
-            Expression::StaticMemberExpression(m) => m,
-            Expression::ChainExpression(chain) => match &chain.expression {
-                oxc_ast::ast::ChainElement::StaticMemberExpression(m) => m,
-                _ => return None,
-            },
+        let member = match callee.kind() {
+            ExpressionKind::StaticMemberExpression(m) => m,
+            ExpressionKind::ChainExpression(chain) => {
+                let Some(m) = chain.expression.as_member_expression() else {
+                    return None;
+                };
+                let Some(m) = m.as_static_member_expression() else {
+                    return None;
+                };
+                m
+            }
             _ => return None,
         };
 
-        let object_name = match member.object.without_parentheses() {
-            Expression::Identifier(id) => id.name,
+        let object_name = match member.object.without_parentheses().kind() {
+            ExpressionKind::Identifier(id) => id.name,
             _ => return None,
         };
 

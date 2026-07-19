@@ -70,15 +70,13 @@ impl<'a> IsolatedDeclarations<'a> {
             if let Some(init_expr) = &decl.init {
                 // if kind is const and it doesn't need to infer type from expression
                 if decl.kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
-                    if let Expression::TemplateLiteral(lit) = init_expr {
+                    if let Some(lit) = init_expr.as_template_literal() {
                         init =
                             self.transform_template_to_string(lit).map(Expression::StringLiteral);
                     } else {
                         init = Some(init_expr.clone_in(self.allocator()));
                     }
-                } else if !decl.kind.is_const()
-                    || !matches!(init_expr, Expression::TemplateLiteral(_))
-                {
+                } else if !decl.kind.is_const() || !init_expr.is_template_literal() {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);
                 }
@@ -244,11 +242,15 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         let is_not_allowed = match key {
-            PropertyKey::StaticIdentifier(_) | PropertyKey::Identifier(_) => false,
-            PropertyKey::StaticMemberExpression(expr) => {
-                !expr.get_first_object().is_identifier_reference()
-            }
-            key => !Self::is_literal_key(key),
+            PropertyKey::StaticIdentifier(_) => false,
+            PropertyKey::Expression(expr) => match expr.kind() {
+                ExpressionKind::Identifier(_) => false,
+                ExpressionKind::StaticMemberExpression(expr) => {
+                    !expr.get_first_object().is_identifier_reference()
+                }
+                _ => !Self::is_literal_key(key),
+            },
+            PropertyKey::PrivateIdentifier(_) => !Self::is_literal_key(key),
         };
 
         if is_not_allowed {

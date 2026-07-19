@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameters, match_member_expression},
+    ast::{CallExpression, Expression, ExpressionKind, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -99,11 +99,15 @@ impl Rule for NoArrayForEach {
 
             let object = member_expr.object();
 
-            match object {
-                Expression::Identifier(ident) if IGNORED_OBJECTS.contains(&ident.name.as_str()) => {
+            match object.kind() {
+                ExpressionKind::Identifier(ident)
+                    if IGNORED_OBJECTS.contains(&ident.name.as_str()) =>
+                {
                     return;
                 }
-                match_member_expression!(Expression) => {
+                ExpressionKind::ComputedMemberExpression(_)
+                | ExpressionKind::StaticMemberExpression(_)
+                | ExpressionKind::PrivateFieldExpression(_) => {
                     if let Some(name) = object.to_member_expression().static_property_name()
                         && IGNORED_OBJECTS.contains(&name)
                     {
@@ -137,11 +141,11 @@ fn callback_arguments(call_expr: &CallExpression) -> CallbackArguments {
         .first()
         .and_then(|argument| argument.as_expression())
         .map(Expression::get_inner_expression)
-        .map_or(CallbackArguments::ElementOnly, |callback| match callback {
-            Expression::ArrowFunctionExpression(callback) => {
+        .map_or(CallbackArguments::ElementOnly, |callback| match callback.kind() {
+            ExpressionKind::ArrowFunctionExpression(callback) => {
                 formal_parameters_callback_arguments(&callback.params)
             }
-            Expression::FunctionExpression(callback) => {
+            ExpressionKind::FunctionExpression(callback) => {
                 formal_parameters_callback_arguments(&callback.params)
             }
             _ => CallbackArguments::ElementOnly,

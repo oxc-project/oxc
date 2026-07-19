@@ -10,7 +10,7 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, FunctionBody, Statement},
+    ast::{CallExpression, Expression, ExpressionKind, ExpressionTag, FunctionBody, Statement},
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -320,7 +320,7 @@ pub trait PreferExpectAssertionsRuleImpl {
             return false;
         };
 
-        let Expression::CallExpression(first_call) = &first_expr_stmt.expression else {
+        let ExpressionKind::CallExpression(first_call) = first_expr_stmt.expression.kind() else {
             return false;
         };
 
@@ -523,7 +523,7 @@ pub fn validate_assertions_args(call: &CallExpression<'_>, prefix: &str, ctx: &L
         }
         1 => {
             let arg = &call.arguments[0];
-            if !matches!(arg, Argument::NumericLiteral(_)) {
+            if !arg.as_expression().is_some_and(oxc_ast::ast::Expression::is_numeric_literal) {
                 ctx.diagnostic(assertions_requires_number_argument(arg.span()));
             }
         }
@@ -542,13 +542,13 @@ pub fn validate_assertions_args(call: &CallExpression<'_>, prefix: &str, ctx: &L
 }
 
 pub fn is_describe_call(call_expr: &CallExpression<'_>) -> bool {
-    let callee_name = match &call_expr.callee {
-        Expression::Identifier(ident) => ident.name.as_str(),
-        Expression::StaticMemberExpression(member) => {
+    let callee_name = match call_expr.callee.kind() {
+        ExpressionKind::Identifier(ident) => ident.name.as_str(),
+        ExpressionKind::StaticMemberExpression(member) => {
             member.object.get_identifier_reference().map_or("", |id| id.name.as_str())
         }
-        Expression::TaggedTemplateExpression(tagged) => match &tagged.tag {
-            Expression::StaticMemberExpression(member) => {
+        ExpressionKind::TaggedTemplateExpression(tagged) => match tagged.tag.kind() {
+            ExpressionKind::StaticMemberExpression(member) => {
                 member.object.get_identifier_reference().map_or("", |id| id.name.as_str())
             }
             _ => "",
@@ -563,22 +563,25 @@ pub fn is_describe_call(call_expr: &CallExpression<'_>) -> bool {
 
 fn find_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
     call_expr.arguments.iter().rev().filter_map(|arg| arg.as_expression()).find(|expr| {
-        matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+        matches!(
+            expr.tag(),
+            ExpressionTag::FunctionExpression | ExpressionTag::ArrowFunctionExpression
+        )
     })
 }
 
 fn callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
-    match callback {
-        Expression::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
-        Expression::ArrowFunctionExpression(func) => Some(&func.body),
+    match callback.kind() {
+        ExpressionKind::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
+        ExpressionKind::ArrowFunctionExpression(func) => Some(&func.body),
         _ => None,
     }
 }
 
 fn is_async_callback(callback: &Expression<'_>) -> bool {
-    match callback {
-        Expression::FunctionExpression(func) => func.r#async,
-        Expression::ArrowFunctionExpression(func) => func.r#async,
+    match callback.kind() {
+        ExpressionKind::FunctionExpression(func) => func.r#async,
+        ExpressionKind::ArrowFunctionExpression(func) => func.r#async,
         _ => false,
     }
 }

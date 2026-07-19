@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, IdentifierReference, ImportExpression, NewExpression,
-        Statement, TaggedTemplateExpression, VariableDeclarationKind,
+        Argument, CallExpression, Expression, ExpressionKind, IdentifierReference,
+        ImportExpression, NewExpression, Statement, TaggedTemplateExpression,
+        VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{Visit, VisitJs};
@@ -103,7 +104,7 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    if let Expression::UpdateExpression(_) = return_expression {
+    if let ExpressionKind::UpdateExpression(_) = return_expression.kind() {
         return;
     }
 
@@ -160,8 +161,8 @@ fn is_mutable(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
 }
 
 fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
-    match argument_expression {
-        Expression::ArrowFunctionExpression(arrow_func) => {
+    match argument_expression.kind() {
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             if arrow_func.r#async
                 || arrow_func.body.statements.len() > 1
                 || arrow_func.params.has_parameter()
@@ -183,7 +184,7 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
                 _ => None,
             }
         }
-        Expression::FunctionExpression(function) => {
+        ExpressionKind::FunctionExpression(function) => {
             if function.r#async || function.params.has_parameter() {
                 return None;
             }

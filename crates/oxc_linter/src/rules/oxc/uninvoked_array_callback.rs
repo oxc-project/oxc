@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, MemberExpressionKind, ast::Argument};
+use oxc_ast::{AstKind, MemberExpressionKind, ast::ExpressionTag};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -58,7 +58,12 @@ impl Rule for UninvokedArrayCallback {
         if new_expr.arguments.len() != 1 {
             return;
         }
-        if !matches!(new_expr.arguments.first(), Some(Argument::NumericLiteral(_))) {
+        if !new_expr
+            .arguments
+            .first()
+            .and_then(|arg| arg.as_expression())
+            .is_some_and(oxc_ast::ast::Expression::is_numeric_literal)
+        {
             return;
         }
 
@@ -71,10 +76,12 @@ impl Rule for UninvokedArrayCallback {
         else {
             return;
         };
-        if !matches!(
-            call_expr.arguments.first(),
-            Some(Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
-        ) {
+        if !call_expr.arguments.first().and_then(|arg| arg.as_expression()).is_some_and(|e| {
+            matches!(
+                e.tag(),
+                ExpressionTag::FunctionExpression | ExpressionTag::ArrowFunctionExpression
+            )
+        }) {
             return;
         }
 

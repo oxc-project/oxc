@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, IdentifierReference, RegExpFlags, TemplateLiteral},
+    ast::{
+        Argument, Expression, ExpressionKind, IdentifierReference, RegExpFlags, TemplateLiteral,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -253,33 +255,35 @@ fn resolve_flags<'a>(
 
     let next_depth = depth + 1;
     let expr = expr.get_inner_expression();
-    if follow_identifier && let Expression::Identifier(ident) = expr {
+    if follow_identifier && let ExpressionKind::Identifier(ident) = expr.kind() {
         return resolve_flags(resolve_const_initializer(ident, ctx)?, ctx, true, next_depth);
     }
 
-    match expr {
-        Expression::StringLiteral(lit) => Some(parse_flags(lit.value.as_str())),
-        Expression::TemplateLiteral(template) => resolve_template_flags(template, ctx, next_depth),
-        Expression::BooleanLiteral(lit) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => Some(parse_flags(lit.value.as_str())),
+        ExpressionKind::TemplateLiteral(template) => {
+            resolve_template_flags(template, ctx, next_depth)
+        }
+        ExpressionKind::BooleanLiteral(lit) => {
             Some(if lit.value { RegExpFlags::U } else { RegExpFlags::empty() })
         }
-        Expression::NullLiteral(_) => Some(RegExpFlags::U),
-        Expression::NumericLiteral(_) => Some(RegExpFlags::empty()),
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+        ExpressionKind::NullLiteral(_) => Some(RegExpFlags::U),
+        ExpressionKind::NumericLiteral(_) => Some(RegExpFlags::empty()),
+        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             let left = resolve_flags(&binary.left, ctx, true, next_depth)?;
             let right = resolve_flags(&binary.right, ctx, true, next_depth)?;
             Some(left | right)
         }
-        Expression::ComputedMemberExpression(member) => {
+        ExpressionKind::ComputedMemberExpression(member) => {
             let object = resolve_static_string(&member.object, ctx)?;
             let index = resolve_static_index(&member.expression)?;
             let ch = object.chars().nth(index)?;
             Some(RegExpFlags::try_from(ch).unwrap_or_else(|_| RegExpFlags::empty()))
         }
-        Expression::SequenceExpression(sequence) => {
+        ExpressionKind::SequenceExpression(sequence) => {
             resolve_flags(sequence.expressions.last()?, ctx, true, next_depth)
         }
-        Expression::AssignmentExpression(assignment)
+        ExpressionKind::AssignmentExpression(assignment)
             if assignment.operator == AssignmentOperator::Assign =>
         {
             resolve_flags(&assignment.right, ctx, true, next_depth)
@@ -305,13 +309,15 @@ fn resolve_template_flags<'a>(
 }
 
 fn resolve_static_string<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
-    match expr.get_inner_expression() {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
-        Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
-        Expression::Identifier(ident) => {
-            match resolve_const_initializer(ident, ctx)?.get_inner_expression() {
-                Expression::StringLiteral(lit) => Some(lit.value.as_str()),
-                Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::StringLiteral(lit) => Some(lit.value.as_str()),
+        ExpressionKind::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
+        ExpressionKind::Identifier(ident) => {
+            match resolve_const_initializer(ident, ctx)?.get_inner_expression().kind() {
+                ExpressionKind::StringLiteral(lit) => Some(lit.value.as_str()),
+                ExpressionKind::TemplateLiteral(template) => {
+                    Some(template.single_quasi()?.as_str())
+                }
                 _ => None,
             }
         }
@@ -334,8 +340,8 @@ fn resolve_const_initializer<'a>(
 }
 
 fn resolve_static_index(expr: &Expression) -> Option<usize> {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(lit)
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(lit)
             if lit.value.is_finite() && lit.value >= 0.0 && lit.value.fract() == 0.0 =>
         {
             #[expect(

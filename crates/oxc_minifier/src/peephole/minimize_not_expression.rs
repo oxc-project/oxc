@@ -21,15 +21,15 @@ impl<'a> PeepholeOptimizations {
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
     pub fn minimize_unary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::UnaryExpression(e) = expr else { return };
+        let Some(e) = expr.as_unary_expression_mut() else { return };
         if !e.operator.is_not() {
             return;
         }
         Self::minimize_expression_in_boolean_context(&mut e.argument, ctx);
-        match &mut e.argument {
+        match e.argument.kind_mut() {
             // `!!true` -> `true`
             // `!!false` -> `false`
-            Expression::UnaryExpression(e)
+            ExpressionKindMut::UnaryExpression(e)
                 if e.operator.is_not() && e.argument.value_type(ctx).is_boolean() =>
             {
                 let new_expr = e.argument.take_in(ctx);
@@ -39,7 +39,9 @@ impl<'a> PeepholeOptimizations {
             // `!(a != b)` => `a == b`
             // `!(a === b)` => `a !== b`
             // `!(a !== b)` => `a === b`
-            Expression::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
+            ExpressionKindMut::BinaryExpression(binary_expr)
+                if binary_expr.operator.is_equality() =>
+            {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
                 let new_expr = e.argument.take_in(ctx);
                 ctx.replace_expression(expr, new_expr);
@@ -52,7 +54,7 @@ impl<'a> PeepholeOptimizations {
             // The fold is exact and involutive: a later `minimize_not` restores
             // the original chain at no cost, so shapes that consume the `!` for
             // free (branch swaps, `!!` collapses) are unaffected.
-            Expression::LogicalExpression(logical_expr)
+            ExpressionKindMut::LogicalExpression(logical_expr)
                 if Self::de_morgan_paren_delta(logical_expr).is_some_and(|delta| delta <= 0) =>
             {
                 Self::de_morgan_invert_logical(logical_expr);
@@ -60,7 +62,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(expr, new_expr);
             }
             // "!(a, b)" => "a, !b"
-            Expression::SequenceExpression(sequence_expr) => {
+            ExpressionKindMut::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
                     let new_last =
                         Self::minimize_not(last_expr.span(), last_expr.take_in(ctx), ctx);
@@ -82,9 +84,9 @@ impl<'a> PeepholeOptimizations {
         }
         let mut delta = 0;
         for side in [&e.left, &e.right] {
-            match side {
-                Expression::BinaryExpression(b) if b.operator.is_equality() => {}
-                Expression::LogicalExpression(child) => {
+            match side.kind() {
+                ExpressionKind::BinaryExpression(b) if b.operator.is_equality() => {}
+                ExpressionKind::LogicalExpression(child) => {
                     delta += Self::de_morgan_paren_delta(child)?;
                     // `&&` under `||` prints bare but its inversion (`||` under
                     // `&&`) needs parens; the reverse drops parens.
@@ -113,11 +115,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn de_morgan_invert(expr: &mut Expression<'a>) {
-        match expr {
-            Expression::BinaryExpression(e) => {
+        match expr.kind_mut() {
+            ExpressionKindMut::BinaryExpression(e) => {
                 e.operator = e.operator.equality_inverse_operator().unwrap();
             }
-            Expression::LogicalExpression(e) => Self::de_morgan_invert_logical(e),
+            ExpressionKindMut::LogicalExpression(e) => Self::de_morgan_invert_logical(e),
             _ => unreachable!(),
         }
     }

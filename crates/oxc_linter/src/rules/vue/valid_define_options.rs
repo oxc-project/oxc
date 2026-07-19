@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, ObjectPropertyKind},
+    ast::{
+        CallExpression, Expression, ExpressionKind, ExpressionTag, IdentifierReference,
+        ObjectPropertyKind,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
@@ -126,7 +129,7 @@ impl<'a> DefineOptionsChecker<'a, '_> {
             return;
         };
 
-        if let Expression::ObjectExpression(obj) = first_arg_expr {
+        if let ExpressionKind::ObjectExpression(obj) = first_arg_expr.kind() {
             for prop in &obj.properties {
                 let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
                     continue;
@@ -214,13 +217,13 @@ fn is_non_local_reference(
 
 fn is_literal_expression(expr: &Expression) -> bool {
     matches!(
-        expr,
-        Expression::StringLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::NullLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::RegExpLiteral(_)
+        expr.tag(),
+        ExpressionTag::StringLiteral
+            | ExpressionTag::NumericLiteral
+            | ExpressionTag::BooleanLiteral
+            | ExpressionTag::NullLiteral
+            | ExpressionTag::BigIntLiteral
+            | ExpressionTag::RegExpLiteral
     )
 }
 

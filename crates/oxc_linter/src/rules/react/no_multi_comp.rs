@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentExpression, AssignmentTarget, CallExpression, Class,
-        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectProperty, PropertyKey, Statement, VariableDeclarator,
+        ExportDefaultDeclaration, Expression, ExpressionKind, Function, ObjectProperty,
+        PropertyKey, Statement, VariableDeclarator,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -202,7 +202,8 @@ impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
 
     fn visit_export_default_declaration(&mut self, export_decl: &ExportDefaultDeclaration<'a>) {
         // export default React.forwardRef(...)
-        if let ExportDefaultDeclarationKind::CallExpression(call) = &export_decl.declaration
+        if let Some(call) =
+            export_decl.declaration.as_expression().and_then(|e| e.as_call_expression())
             && is_hoc_component(call, self.ctx)
         {
             self.record_component("UnnamedComponent".into(), export_decl.span, true);
@@ -220,7 +221,7 @@ impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
         // detected again when visiting the function expression.
         if let PropertyKey::StaticIdentifier(id) = &prop.key
             && is_react_component_name(&id.name)
-            && let Expression::FunctionExpression(func) = &prop.value
+            && let ExpressionKind::FunctionExpression(func) = prop.value.kind()
             && function_contains_jsx(func)
         {
             self.record_component(id.name.to_string(), prop.span, true);
@@ -236,11 +237,13 @@ impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
         // exports.Foo = function() { return <div/> }
         // We increment depth after recording to prevent the inner function from being
         // detected again when visiting the function expression.
-        if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
+        if let AssignmentTarget::MemberExpression(member) = &assign.left
+            && let Some(member) = member.as_static_member_expression()
+        {
             let prop_name = member.property.name.as_str();
             if is_react_component_name(prop_name) {
                 let is_component = expression_contains_jsx(&assign.right)
-                    || matches!(&assign.right, Expression::FunctionExpression(func) if returns_component(func));
+                    || matches!(assign.right.kind(), ExpressionKind::FunctionExpression(func) if returns_component(func));
 
                 if is_component {
                     self.record_component(prop_name.to_string(), assign.span, true);
@@ -274,7 +277,7 @@ fn detect_variable_component(
     }
 
     // Sequence expression: const Foo = (0, () => <div/>) or const Foo = (0, () => null)
-    if let Expression::SequenceExpression(seq) = init
+    if let ExpressionKind::SequenceExpression(seq) = init.kind()
         && let Some(last) = seq.expressions.last()
         && (expression_contains_jsx(last) || is_function_returning_null(last))
     {
@@ -282,7 +285,7 @@ fn detect_variable_component(
     }
 
     // HOC: const Foo = memo(() => <div/>)
-    if let Expression::CallExpression(call) = init
+    if let ExpressionKind::CallExpression(call) = init.kind()
         && is_hoc_component(call, ctx)
     {
         return Some(DetectedComponent { name, span: decl.span, is_stateless: true });
@@ -295,13 +298,16 @@ fn detect_variable_component(
 fn is_hoc_component(call: &CallExpression, ctx: &LintContext) -> bool {
     get_hoc_callee_name(call, ctx).is_some_and(|name| is_hoc_call(&name, ctx))
         && call.arguments.first().is_some_and(|arg| match arg {
-            Argument::FunctionExpression(func) => {
-                !is_passthrough_function(func) && function_contains_jsx(func)
-            }
-            Argument::ArrowFunctionExpression(arrow) => {
-                !is_passthrough_arrow(arrow) && function_body_contains_jsx(&arrow.body)
-            }
-            _ => false,
+            Argument::Expression(expr) => match expr.kind() {
+                ExpressionKind::FunctionExpression(func) => {
+                    !is_passthrough_function(func) && function_contains_jsx(func)
+                }
+                ExpressionKind::ArrowFunctionExpression(arrow) => {
+                    !is_passthrough_arrow(arrow) && function_body_contains_jsx(&arrow.body)
+                }
+                _ => false,
+            },
+            Argument::SpreadElement(_) => false,
         })
 }
 
@@ -314,7 +320,7 @@ fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<Strin
 
     // Check for aliased imports: const myMemo = React.memo
     // Note: This does not handle destructured aliased imports like `const {memo: myMemo} = React`
-    let Expression::Identifier(ident) = &call.callee else {
+    let ExpressionKind::Identifier(ident) = call.callee.kind() else {
         return None;
     };
 
@@ -325,10 +331,10 @@ fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<Strin
     let AstKind::VariableDeclarator(var_decl) = decl_node.kind() else {
         return None;
     };
-    let Expression::StaticMemberExpression(member) = var_decl.init.as_ref()? else {
+    let ExpressionKind::StaticMemberExpression(member) = var_decl.init.as_ref()?.kind() else {
         return None;
     };
-    let Expression::Identifier(obj) = &member.object else {
+    let ExpressionKind::Identifier(obj) = member.object.kind() else {
         return None;
     };
 
@@ -357,7 +363,7 @@ fn is_single_return_passthrough(statements: &[Statement]) -> bool {
 /// Check if an expression is a simple JSX element that just renders another component
 /// This is for cases like: React.forwardRef((props, ref) => <MyComp {...props} ref={ref} />)
 fn is_simple_jsx_passthrough(expr: &Expression) -> bool {
-    let Expression::JSXElement(jsx) = expr else {
+    let ExpressionKind::JSXElement(jsx) = expr.kind() else {
         return false;
     };
     let oxc_ast::ast::JSXElementName::IdentifierReference(id) = &jsx.opening_element.name else {
@@ -384,8 +390,8 @@ fn returns_component(func: &Function) -> bool {
 
 /// Check if an expression is a function that returns null (valid React component pattern)
 fn is_function_returning_null(expr: &Expression) -> bool {
-    match expr {
-        Expression::ArrowFunctionExpression(arrow) => {
+    match expr.kind() {
+        ExpressionKind::ArrowFunctionExpression(arrow) => {
             // `() => null`
             if let Some(expr) = arrow.get_expression() {
                 return expr.is_null();
@@ -395,7 +401,7 @@ fn is_function_returning_null(expr: &Expression) -> bool {
                 matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
             })
         }
-        Expression::FunctionExpression(func) => func.body.as_ref().is_some_and(|body| {
+        ExpressionKind::FunctionExpression(func) => func.body.as_ref().is_some_and(|body| {
             body.statements.iter().any(|stmt| {
                 matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
             })
@@ -408,7 +414,7 @@ fn is_function_returning_null(expr: &Expression) -> bool {
 fn is_es6_component_class(class: &Class) -> bool {
     class.super_class.as_ref().is_some_and(|super_class| {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
+            && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
             && ident.name == "React"
         {
             return member_expr
@@ -424,7 +430,7 @@ fn is_es6_component_class(class: &Class) -> bool {
 /// Check if a call expression is createReactClass
 fn is_es5_component_call(call: &CallExpression) -> bool {
     if let Some(member_expr) = call.callee.as_member_expression()
-        && let Expression::Identifier(ident) = member_expr.object()
+        && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
         && ident.name == "React"
     {
         return member_expr.static_property_name() == Some("createReactClass");

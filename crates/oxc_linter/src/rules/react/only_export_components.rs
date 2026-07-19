@@ -1,3 +1,4 @@
+use oxc_ast::ast::ExpressionKind;
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -220,10 +221,10 @@ impl OnlyExportComponents {
         if let Some(raw_init) = init {
             let js_init = Self::skip_ts_expression(raw_init);
 
-            match js_init {
-                Expression::ArrowFunctionExpression(_) => true,
-                Expression::CallExpression(call_expr) => {
-                    if let Expression::Identifier(callee) = &call_expr.callee {
+            match js_init.kind() {
+                ExpressionKind::ArrowFunctionExpression(_) => true,
+                ExpressionKind::CallExpression(call_expr) => {
+                    if let ExpressionKind::Identifier(callee) = call_expr.callee.kind() {
                         self.is_react_hoc(&callee.name)
                     } else {
                         false
@@ -237,9 +238,9 @@ impl OnlyExportComponents {
     }
 
     fn skip_ts_expression<'a>(exp: &'a Expression<'a>) -> &'a Expression<'a> {
-        match exp {
-            Expression::TSAsExpression(ts_expr) => &ts_expr.expression,
-            Expression::TSSatisfiesExpression(ts_expr) => &ts_expr.expression,
+        match exp.kind() {
+            ExpressionKind::TSAsExpression(ts_expr) => &ts_expr.expression,
+            ExpressionKind::TSSatisfiesExpression(ts_expr) => &ts_expr.expression,
             _ => exp,
         }
     }
@@ -384,29 +385,31 @@ impl OnlyExportComponents {
                     analysis.anonymous_span = Some(class.span);
                 }
             }
-            ExportDefaultDeclarationKind::CallExpression(call_expr)
-                if self.is_hoc_call_expression(call_expr) =>
-            {
-                analysis.has_react_export = true;
-            }
-            ExportDefaultDeclarationKind::Identifier(ident) => {
-                let export_type =
-                    self.classify_export(ident.name.as_str(), ident.span, false, None);
-                analysis.add_export(export_type);
-            }
-            ExportDefaultDeclarationKind::TSAsExpression(ts_as_expr) => {
-                return self
-                    .analyze_export_default_expression(&ts_as_expr.expression, export_default);
-            }
-            ExportDefaultDeclarationKind::TSSatisfiesExpression(ts_satisfies_expr) => {
-                return self.analyze_export_default_expression(
-                    &ts_satisfies_expr.expression,
-                    export_default,
-                );
-            }
-            _ => {
-                analysis.anonymous_span = Some(export_default.span);
-            }
+            ExportDefaultDeclarationKind::Expression(expr) => match expr.kind() {
+                ExpressionKind::CallExpression(call_expr)
+                    if self.is_hoc_call_expression(call_expr) =>
+                {
+                    analysis.has_react_export = true;
+                }
+                ExpressionKind::Identifier(ident) => {
+                    let export_type =
+                        self.classify_export(ident.name.as_str(), ident.span, false, None);
+                    analysis.add_export(export_type);
+                }
+                ExpressionKind::TSAsExpression(ts_as_expr) => {
+                    return self
+                        .analyze_export_default_expression(&ts_as_expr.expression, export_default);
+                }
+                ExpressionKind::TSSatisfiesExpression(ts_satisfies_expr) => {
+                    return self.analyze_export_default_expression(
+                        &ts_satisfies_expr.expression,
+                        export_default,
+                    );
+                }
+                _ => {
+                    analysis.anonymous_span = Some(export_default.span);
+                }
+            },
         }
 
         analysis
@@ -419,11 +422,11 @@ impl OnlyExportComponents {
     ) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
 
-        match expr {
-            Expression::CallExpression(call_expr) if self.is_hoc_call_expression(call_expr) => {
+        match expr.kind() {
+            ExpressionKind::CallExpression(call_expr) if self.is_hoc_call_expression(call_expr) => {
                 analysis.has_react_export = true;
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 let export_type =
                     self.classify_export(ident.name.as_str(), ident.span, false, None);
                 analysis.add_export(export_type);
@@ -526,7 +529,8 @@ impl OnlyExportComponents {
         init: Option<&Expression>,
     ) -> ExportType {
         if let Some(init_expr) = init
-            && let Expression::CallExpression(call_expr) = Self::skip_ts_expression(init_expr)
+            && let ExpressionKind::CallExpression(call_expr) =
+                Self::skip_ts_expression(init_expr).kind()
             && self.is_callee_hoc(&call_expr.callee)
             && !call_expr.arguments.is_empty()
             && is_react_component_name(name)
@@ -535,8 +539,8 @@ impl OnlyExportComponents {
         }
 
         if let Some(init_expr) = init
-            && let Expression::ConditionalExpression(cond_expr) =
-                Self::skip_ts_expression(init_expr)
+            && let ExpressionKind::ConditionalExpression(cond_expr) =
+                Self::skip_ts_expression(init_expr).kind()
             && is_react_component_name(name)
             && self.is_react_component_initializer(&cond_expr.consequent)
             && self.is_react_component_initializer(&cond_expr.alternate)
@@ -567,10 +571,12 @@ impl OnlyExportComponents {
         }
 
         if let Some(init_expr) = init {
-            if let Expression::CallExpression(call_expr) = Self::skip_ts_expression(init_expr) {
-                let is_create_context = match &call_expr.callee {
-                    Expression::Identifier(ident) => ident.name == "createContext",
-                    Expression::StaticMemberExpression(member) => {
+            if let ExpressionKind::CallExpression(call_expr) =
+                Self::skip_ts_expression(init_expr).kind()
+            {
+                let is_create_context = match call_expr.callee.kind() {
+                    ExpressionKind::Identifier(ident) => ident.name == "createContext",
+                    ExpressionKind::StaticMemberExpression(member) => {
                         member.property.name == "createContext"
                     }
                     _ => false,
@@ -597,21 +603,21 @@ impl OnlyExportComponents {
     }
 
     fn get_expression_type(expr: &Expression<'_>) -> &'static str {
-        match expr {
-            Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::StringLiteral(_) => "Literal",
-            Expression::UnaryExpression(_) => "UnaryExpression",
-            Expression::TemplateLiteral(_) => "TemplateLiteral",
-            Expression::BinaryExpression(_) => "BinaryExpression",
-            Expression::ArrayExpression(_) => "ArrayExpression",
-            Expression::AwaitExpression(_) => "AwaitExpression",
-            Expression::ChainExpression(_) => "ChainExpression",
-            Expression::ConditionalExpression(_) => "ConditionalExpression",
-            Expression::LogicalExpression(_) => "LogicalExpression",
-            Expression::ObjectExpression(_) => "ObjectExpression",
-            Expression::ThisExpression(_) => "ThisExpression",
-            Expression::UpdateExpression(_) => "UpdateExpression",
+        match expr.kind() {
+            ExpressionKind::BooleanLiteral(_)
+            | ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::StringLiteral(_) => "Literal",
+            ExpressionKind::UnaryExpression(_) => "UnaryExpression",
+            ExpressionKind::TemplateLiteral(_) => "TemplateLiteral",
+            ExpressionKind::BinaryExpression(_) => "BinaryExpression",
+            ExpressionKind::ArrayExpression(_) => "ArrayExpression",
+            ExpressionKind::AwaitExpression(_) => "AwaitExpression",
+            ExpressionKind::ChainExpression(_) => "ChainExpression",
+            ExpressionKind::ConditionalExpression(_) => "ConditionalExpression",
+            ExpressionKind::LogicalExpression(_) => "LogicalExpression",
+            ExpressionKind::ObjectExpression(_) => "ObjectExpression",
+            ExpressionKind::ThisExpression(_) => "ThisExpression",
+            ExpressionKind::UpdateExpression(_) => "UpdateExpression",
             _ => "",
         }
     }
@@ -619,7 +625,7 @@ impl OnlyExportComponents {
     fn extends_react_component(class: &Class) -> bool {
         class.super_class.as_ref().is_some_and(|super_class| {
             if let Some(member_expr) = super_class.as_member_expression()
-                && let Expression::Identifier(ident) = member_expr.object()
+                && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
                 && ident.name == "React"
             {
                 return member_expr
@@ -634,11 +640,11 @@ impl OnlyExportComponents {
     }
 
     fn is_react_component_initializer(&self, expr: &Expression) -> bool {
-        match Self::skip_ts_expression(expr) {
-            Expression::ArrowFunctionExpression(_) => true,
-            Expression::FunctionExpression(func) => func.id.is_some(),
-            Expression::Identifier(ident) => is_react_component_name(&ident.name),
-            Expression::CallExpression(call_expr) => {
+        match Self::skip_ts_expression(expr).kind() {
+            ExpressionKind::ArrowFunctionExpression(_) => true,
+            ExpressionKind::FunctionExpression(func) => func.id.is_some(),
+            ExpressionKind::Identifier(ident) => is_react_component_name(&ident.name),
+            ExpressionKind::CallExpression(call_expr) => {
                 self.is_callee_hoc(&call_expr.callee) && !call_expr.arguments.is_empty()
             }
             _ => false,
@@ -646,17 +652,17 @@ impl OnlyExportComponents {
     }
 
     fn is_callee_hoc(&self, callee: &Expression) -> bool {
-        match callee {
-            Expression::CallExpression(inner_call) => {
-                matches!(&inner_call.callee, Expression::Identifier(ident) if ident.name == "connect")
+        match callee.kind() {
+            ExpressionKind::CallExpression(inner_call) => {
+                matches!(inner_call.callee.kind(), ExpressionKind::Identifier(ident) if ident.name == "connect")
                     || self.is_callee_hoc(&inner_call.callee)
             }
-            Expression::StaticMemberExpression(member) => {
+            ExpressionKind::StaticMemberExpression(member) => {
                 self.is_react_hoc(&member.property.name)
-                    || matches!(&member.object, Expression::Identifier(ident) if self.is_react_hoc(&ident.name))
-                    || matches!(&member.object, Expression::CallExpression(call_expr) if self.is_callee_hoc(&call_expr.callee))
+                    || matches!(member.object.kind(), ExpressionKind::Identifier(ident) if self.is_react_hoc(&ident.name))
+                    || matches!(member.object.kind(), ExpressionKind::CallExpression(call_expr) if self.is_callee_hoc(&call_expr.callee))
             }
-            Expression::Identifier(ident) => self.is_react_hoc(&ident.name),
+            ExpressionKind::Identifier(ident) => self.is_react_hoc(&ident.name),
             _ => false,
         }
     }
@@ -672,10 +678,12 @@ impl OnlyExportComponents {
 
         call_expr.arguments.first().and_then(|arg| arg.as_expression()).is_some_and(|expr| {
             let expr_without_ts = Self::skip_ts_expression(expr);
-            match expr_without_ts {
-                Expression::Identifier(_) => true,
-                Expression::FunctionExpression(func) => func.id.is_some(),
-                Expression::CallExpression(inner_call) => self.is_hoc_call_expression(inner_call),
+            match expr_without_ts.kind() {
+                ExpressionKind::Identifier(_) => true,
+                ExpressionKind::FunctionExpression(func) => func.id.is_some(),
+                ExpressionKind::CallExpression(inner_call) => {
+                    self.is_hoc_call_expression(inner_call)
+                }
                 _ => false,
             }
         })

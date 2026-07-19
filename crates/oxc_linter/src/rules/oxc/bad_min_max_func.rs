@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -98,7 +98,7 @@ impl BadMinMaxFunc {
         let CallExpression { callee, arguments, .. } = node;
 
         let member_expr = callee.get_member_expr()?;
-        let Expression::Identifier(ident) = member_expr.object() else {
+        let ExpressionKind::Identifier(ident) = member_expr.object().kind() else {
             return None;
         };
         if ident.name != "Math" {
@@ -106,7 +106,7 @@ impl BadMinMaxFunc {
         }
 
         let number_args = arguments.iter().filter_map(|arg| {
-            if let Argument::NumericLiteral(literal) = arg { Some(literal.value) } else { None }
+            arg.as_expression().and_then(|e| e.as_numeric_literal()).map(|literal| literal.value)
         });
 
         let min_max = match member_expr.static_property_name() {
@@ -117,9 +117,10 @@ impl BadMinMaxFunc {
 
         let mut inner = vec![];
 
-        for expr in arguments.iter().filter_map(|arg| {
-            if let Argument::CallExpression(expr) = arg { Some(&**expr) } else { None }
-        }) {
+        for expr in arguments
+            .iter()
+            .filter_map(|arg| arg.as_expression().and_then(|e| e.as_call_expression()))
+        {
             inner.push(expr);
         }
 

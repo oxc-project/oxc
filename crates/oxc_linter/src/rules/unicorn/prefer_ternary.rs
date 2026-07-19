@@ -5,7 +5,10 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, IfStatement, MemberExpression, Statement},
+    ast::{
+        AssignmentTarget, Expression, ExpressionKind, IfStatement, MemberExpression,
+        MemberExpressionKind, Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -77,7 +80,7 @@ impl Rule for PreferTernary {
             return;
         };
 
-        if matches!(if_statement.test.get_inner_expression(), Expression::ConditionalExpression(_))
+        if if_statement.test.get_inner_expression().is_conditional_expression()
             || is_else_if_branch(node, if_statement, ctx)
         {
             return;
@@ -202,32 +205,56 @@ fn is_mergeable<'a>(
             )
         }
         (
-            MergeNode::Body(BodyNode::Expression(Expression::YieldExpression(consequent))),
-            MergeNode::Body(BodyNode::Expression(Expression::YieldExpression(alternate))),
-        ) if consequent.delegate == alternate.delegate
-            && !is_ternary_option_expression(consequent.argument.as_ref())
-            && !is_ternary_option_expression(alternate.argument.as_ref()) =>
-        {
-            is_mergeable(
-                consequent.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
-                alternate.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
-                MergeOptions { strict: false, ..options },
-                ctx,
-            )
-        }
-        (
-            MergeNode::Body(BodyNode::Expression(Expression::AwaitExpression(consequent))),
-            MergeNode::Body(BodyNode::Expression(Expression::AwaitExpression(alternate))),
-        ) if !is_ternary_expression(&consequent.argument)
-            && !is_ternary_expression(&alternate.argument) =>
-        {
-            is_mergeable(
-                MergeNode::Expression(&consequent.argument),
-                MergeNode::Expression(&alternate.argument),
-                MergeOptions { strict: false, ..options },
-                ctx,
-            )
-        }
+            MergeNode::Body(BodyNode::Expression(consequent)),
+            MergeNode::Body(BodyNode::Expression(alternate)),
+        ) => match (consequent.kind(), alternate.kind()) {
+            (
+                ExpressionKind::YieldExpression(consequent),
+                ExpressionKind::YieldExpression(alternate),
+            ) if consequent.delegate == alternate.delegate
+                && !is_ternary_option_expression(consequent.argument.as_ref())
+                && !is_ternary_option_expression(alternate.argument.as_ref()) =>
+            {
+                is_mergeable(
+                    consequent
+                        .argument
+                        .as_ref()
+                        .map_or(MergeNode::Undefined, MergeNode::Expression),
+                    alternate.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
+                    MergeOptions { strict: false, ..options },
+                    ctx,
+                )
+            }
+            (
+                ExpressionKind::AwaitExpression(consequent),
+                ExpressionKind::AwaitExpression(alternate),
+            ) if !is_ternary_expression(&consequent.argument)
+                && !is_ternary_expression(&alternate.argument) =>
+            {
+                is_mergeable(
+                    MergeNode::Expression(&consequent.argument),
+                    MergeNode::Expression(&alternate.argument),
+                    MergeOptions { strict: false, ..options },
+                    ctx,
+                )
+            }
+            (
+                ExpressionKind::AssignmentExpression(consequent),
+                ExpressionKind::AssignmentExpression(alternate),
+            ) if consequent.operator == alternate.operator
+                && !is_ternary_expression(&consequent.right)
+                && !is_ternary_expression(&alternate.right)
+                && is_same_assignment_target(&consequent.left, &alternate.left, ctx) =>
+            {
+                is_mergeable(
+                    MergeNode::Expression(&consequent.right),
+                    MergeNode::Expression(&alternate.right),
+                    MergeOptions { strict: false, ..options },
+                    ctx,
+                )
+            }
+            _ => !options.strict,
+        },
         (
             MergeNode::Body(BodyNode::Statement(Statement::ThrowStatement(consequent))),
             MergeNode::Body(BodyNode::Statement(Statement::ThrowStatement(alternate))),
@@ -236,21 +263,6 @@ fn is_mergeable<'a>(
             && !is_ternary_expression(&alternate.argument) =>
         {
             true
-        }
-        (
-            MergeNode::Body(BodyNode::Expression(Expression::AssignmentExpression(consequent))),
-            MergeNode::Body(BodyNode::Expression(Expression::AssignmentExpression(alternate))),
-        ) if consequent.operator == alternate.operator
-            && !is_ternary_expression(&consequent.right)
-            && !is_ternary_expression(&alternate.right)
-            && is_same_assignment_target(&consequent.left, &alternate.left, ctx) =>
-        {
-            is_mergeable(
-                MergeNode::Expression(&consequent.right),
-                MergeNode::Expression(&alternate.right),
-                MergeOptions { strict: false, ..options },
-                ctx,
-            )
         }
         _ => !options.strict,
     }
@@ -263,10 +275,7 @@ fn same_merge_kind(consequent: MergeNode<'_>, alternate: MergeNode<'_>) -> bool 
         | (
             MergeNode::Body(BodyNode::Expression(consequent)),
             MergeNode::Body(BodyNode::Expression(alternate)),
-        ) => {
-            discriminant(consequent.get_inner_expression())
-                == discriminant(alternate.get_inner_expression())
-        }
+        ) => consequent.get_inner_expression().tag() == alternate.get_inner_expression().tag(),
         (
             MergeNode::Body(BodyNode::Statement(consequent)),
             MergeNode::Body(BodyNode::Statement(alternate)),
@@ -280,7 +289,7 @@ fn is_ternary_option_expression(expression: Option<&Expression<'_>>) -> bool {
 }
 
 fn is_ternary_expression(expression: &Expression<'_>) -> bool {
-    matches!(expression.get_inner_expression(), Expression::ConditionalExpression(_))
+    expression.get_inner_expression().is_conditional_expression()
 }
 
 fn is_same_assignment_target(
@@ -324,7 +333,7 @@ fn member_static_property_name(member: &MemberExpression<'_>) -> Option<String> 
         return Some(name.to_string());
     }
 
-    let MemberExpression::ComputedMemberExpression(computed) = member else {
+    let MemberExpressionKind::ComputedMemberExpression(computed) = member.kind() else {
         return None;
     };
 

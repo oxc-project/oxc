@@ -61,7 +61,10 @@ pub fn run_once(ctx: &LintContext) {
             return;
         };
 
-        let Some(Argument::StringLiteral(string_literal)) = call_expr.arguments.first() else {
+        let Some(Argument::Expression(expr)) = call_expr.arguments.first() else {
+            return;
+        };
+        let Some(string_literal) = expr.as_string_literal() else {
             return;
         };
 

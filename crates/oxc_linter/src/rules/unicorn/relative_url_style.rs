@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, NewExpression},
+    ast::{ExpressionKind, NewExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -101,8 +101,8 @@ impl Rule for RelativeUrlStyle {
             return;
         };
 
-        match first_arg {
-            Argument::StringLiteral(str_lit) => {
+        match first_arg.as_expression().map(|e| e.kind()) {
+            Some(ExpressionKind::StringLiteral(str_lit)) => {
                 let url = str_lit.value.as_str();
 
                 match self.0 {
@@ -136,7 +136,7 @@ impl Rule for RelativeUrlStyle {
                     }
                 }
             }
-            Argument::TemplateLiteral(template_lit) => {
+            Some(ExpressionKind::TemplateLiteral(template_lit)) => {
                 if !matches!(self.0, RelativeUrlStyleConfig::Never) {
                     return;
                 }
@@ -164,7 +164,12 @@ fn can_add_dot_slash(url: &str, new_expr: &NewExpression) -> bool {
         return false;
     }
 
-    if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1) {
+    if let Some(base_lit) = new_expr
+        .arguments
+        .get(1)
+        .and_then(|a| a.as_expression())
+        .and_then(|e| e.as_string_literal())
+    {
         let base = base_lit.value.as_str();
         if is_safe_to_add_dot_slash(url, &[base]) {
             return true;
@@ -179,7 +184,12 @@ fn can_remove_dot_slash(url: &str, new_expr: &NewExpression) -> bool {
         return false;
     }
 
-    if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1) {
+    if let Some(base_lit) = new_expr
+        .arguments
+        .get(1)
+        .and_then(|a| a.as_expression())
+        .and_then(|e| e.as_string_literal())
+    {
         let base = base_lit.value.as_str();
         if is_safe_to_remove_dot_slash(url, &[base]) {
             return true;

@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -57,7 +57,7 @@ impl Rule for NoNewNativeNonconstructor {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };
-        let Expression::Identifier(ident) = &expr.callee else {
+        let ExpressionKind::Identifier(ident) = expr.callee.kind() else {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")

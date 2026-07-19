@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Expression, FunctionBody};
+use oxc_ast::ast::{Expression, ExpressionKind, FunctionBody};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -109,9 +109,9 @@ fn is_expect_shadowed_in(callback: &Expression<'_>, ctx: &LintContext<'_>) -> bo
 }
 
 fn callback_scope_id(callback: &Expression<'_>) -> Option<ScopeId> {
-    match callback {
-        Expression::FunctionExpression(func) => func.scope_id.get(),
-        Expression::ArrowFunctionExpression(func) => func.scope_id.get(),
+    match callback.kind() {
+        ExpressionKind::FunctionExpression(func) => func.scope_id.get(),
+        ExpressionKind::ArrowFunctionExpression(func) => func.scope_id.get(),
         _ => None,
     }
 }

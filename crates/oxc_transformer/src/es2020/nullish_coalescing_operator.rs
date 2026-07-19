@@ -49,7 +49,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
-        if matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
+        if matches!(expr.kind(), ExpressionKind::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
         {
             Self::transform_logical_expression(expr, ctx);
         }
@@ -60,7 +60,9 @@ impl<'a> NullishCoalescingOperator {
     #[cold] // Most `Expression`s are not `??` `LogicalExpression`s
     fn transform_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         expr.replace_with(|expr| {
-            let Expression::LogicalExpression(logical_expr) = expr else { unreachable!() };
+            let ExpressionKindOwned::LogicalExpression(logical_expr) = expr.into_kind() else {
+                unreachable!()
+            };
             Self::transform_logical_expression_impl(logical_expr, ctx)
         });
     }
@@ -72,8 +74,8 @@ impl<'a> NullishCoalescingOperator {
         let logical_expr = logical_expr.unbox();
 
         // Skip creating extra reference when `left` is static
-        match &logical_expr.left {
-            Expression::ThisExpression(this) => {
+        match logical_expr.left.kind() {
+            ExpressionKind::ThisExpression(this) => {
                 let this_span = this.span;
                 return Self::create_conditional_expression(
                     logical_expr.left,
@@ -84,7 +86,7 @@ impl<'a> NullishCoalescingOperator {
                     ctx,
                 );
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // Check binding is not mutated.

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AwaitExpression, Expression},
+    ast::{AwaitExpression, Expression, ExpressionKind, ExpressionTag},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -70,33 +70,36 @@ impl Rule for NoUnnecessaryAwait {
 }
 
 fn not_promise(expr: &Expression) -> bool {
-    match expr {
-        Expression::ArrayExpression(_)
-        | Expression::ArrowFunctionExpression(_)
-        | Expression::AwaitExpression(_)
-        | Expression::BinaryExpression(_)
-        | Expression::ClassExpression(_)
-        | Expression::FunctionExpression(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::UnaryExpression(_)
-        | Expression::UpdateExpression(_) => true,
-        Expression::SequenceExpression(expr) => not_promise(expr.expressions.last().unwrap()),
-        Expression::ParenthesizedExpression(expr) => not_promise(&expr.expression),
+    match expr.kind() {
+        ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::ArrowFunctionExpression(_)
+        | ExpressionKind::AwaitExpression(_)
+        | ExpressionKind::BinaryExpression(_)
+        | ExpressionKind::ClassExpression(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::JSXElement(_)
+        | ExpressionKind::JSXFragment(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::BigIntLiteral(_)
+        | ExpressionKind::RegExpLiteral(_)
+        | ExpressionKind::StringLiteral(_)
+        | ExpressionKind::TemplateLiteral(_)
+        | ExpressionKind::UnaryExpression(_)
+        | ExpressionKind::UpdateExpression(_) => true,
+        ExpressionKind::SequenceExpression(expr) => not_promise(expr.expressions.last().unwrap()),
+        ExpressionKind::ParenthesizedExpression(expr) => not_promise(&expr.expression),
         _ => false,
     }
 }
 
 fn is_fixable(expr: &AwaitExpression, nodes: &AstNodes<'_>) -> bool {
     // Removing `await` may change them to a declaration, if there is no `id` will cause SyntaxError
-    if matches!(expr.argument, Expression::FunctionExpression(_) | Expression::ClassExpression(_)) {
+    if matches!(
+        expr.argument.tag(),
+        ExpressionTag::FunctionExpression | ExpressionTag::ClassExpression
+    ) {
         return false;
     }
 
@@ -105,11 +108,14 @@ fn is_fixable(expr: &AwaitExpression, nodes: &AstNodes<'_>) -> bool {
     // `+await +1` -> `++1`, `+await ++a` -> `+++a`, `-await --a` -> `---a`.
     // Skip the fix in those cases (the diagnostic is still reported).
     let parent = nodes.parent_node(expr.node_id());
-    match (parent.kind(), &expr.argument) {
-        (AstKind::UnaryExpression(parent_unary), Expression::UnaryExpression(inner_unary)) => {
+    match (parent.kind(), expr.argument.kind()) {
+        (AstKind::UnaryExpression(parent_unary), ExpressionKind::UnaryExpression(inner_unary)) => {
             parent_unary.operator != inner_unary.operator
         }
-        (AstKind::UnaryExpression(parent_unary), Expression::UpdateExpression(inner_update)) => {
+        (
+            AstKind::UnaryExpression(parent_unary),
+            ExpressionKind::UpdateExpression(inner_update),
+        ) => {
             !(inner_update.prefix
                 && matches!(
                     (parent_unary.operator, inner_update.operator),

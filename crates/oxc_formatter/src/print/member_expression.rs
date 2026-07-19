@@ -113,7 +113,7 @@ fn layout<'a>(
         _ => false,
     };
 
-    if !is_nested && matches!(object, Expression::Identifier(_)) {
+    if !is_nested && object.is_identifier() {
         return StaticMemberLayout::NoBreak;
     }
 

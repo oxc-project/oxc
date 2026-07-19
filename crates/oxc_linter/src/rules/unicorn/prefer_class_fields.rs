@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        MethodDefinitionKind, PropertyDefinitionType, Statement,
+        AssignmentExpression, AssignmentOperator, ClassElement, ExpressionKind, ExpressionTag,
+        MemberExpression, MemberExpressionKind, MethodDefinitionKind, PropertyDefinitionType,
+        Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -122,7 +123,7 @@ impl Rule for PreferClassFields {
         };
 
         // Check if it's a simple assignment to this.property = literal
-        let Expression::AssignmentExpression(assign) = &expr_stmt.expression else {
+        let ExpressionKind::AssignmentExpression(assign) = expr_stmt.expression.kind() else {
             return;
         };
 
@@ -220,7 +221,7 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
     };
 
     // Check if it's this.property
-    if !matches!(member.object(), Expression::ThisExpression(_)) {
+    if !member.object().is_this_expression() {
         return false;
     }
 
@@ -230,21 +231,21 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
 
     // Check if the value is a literal
     matches!(
-        &assign.right,
-        Expression::StringLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::NullLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::RegExpLiteral(_)
+        assign.right.tag(),
+        ExpressionTag::StringLiteral
+            | ExpressionTag::NumericLiteral
+            | ExpressionTag::BooleanLiteral
+            | ExpressionTag::NullLiteral
+            | ExpressionTag::BigIntLiteral
+            | ExpressionTag::RegExpLiteral
     )
 }
 
 fn get_property_name<'a>(member: &MemberExpression<'a>) -> Option<&'a str> {
-    match member {
-        MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
-        MemberExpression::PrivateFieldExpression(expr) => Some(expr.field.name.as_str()),
-        MemberExpression::ComputedMemberExpression(_) => None,
+    match member.kind() {
+        MemberExpressionKind::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
+        MemberExpressionKind::PrivateFieldExpression(expr) => Some(expr.field.name.as_str()),
+        MemberExpressionKind::ComputedMemberExpression(_) => None,
     }
 }
 

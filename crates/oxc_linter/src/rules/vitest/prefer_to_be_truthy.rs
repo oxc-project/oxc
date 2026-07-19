@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -37,16 +37,17 @@ pub fn prefer_to_be_simply_bool<'a>(
         return;
     };
 
-    if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression()
+    if let ExpressionKind::BooleanLiteral(arg) = arg_expr.get_inner_expression().kind()
         && arg.value == value
     {
         let span = Span::new(matcher.span.start, call_expr.span.end);
 
-        let is_cmp_mem_expr = match matcher.parent {
-            Some(Expression::ComputedMemberExpression(_)) => true,
-            Some(Expression::StaticMemberExpression(_) | Expression::PrivateFieldExpression(_)) => {
-                false
-            }
+        let is_cmp_mem_expr = match matcher.parent.map(|e| e.kind()) {
+            Some(ExpressionKind::ComputedMemberExpression(_)) => true,
+            Some(
+                ExpressionKind::StaticMemberExpression(_)
+                | ExpressionKind::PrivateFieldExpression(_),
+            ) => false,
             _ => return,
         };
 

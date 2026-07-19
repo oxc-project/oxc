@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, BindingPattern, Expression, JSXAttribute, JSXAttributeValue},
+    ast::{
+        BindingIdentifier, BindingPattern, Expression, ExpressionKind, JSXAttribute,
+        JSXAttributeValue,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
@@ -139,7 +142,7 @@ pub fn run_react_perf_rule<'a>(
     // check for new objects/arrays/etc declared within the render function,
     // which is effectively the same as passing a new object/array/etc
     // directly as a prop.
-    let Expression::Identifier(ident) = expr else {
+    let ExpressionKind::Identifier(ident) = expr.kind() else {
         return;
     };
     let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
@@ -165,7 +168,7 @@ pub fn should_run_react_perf(ctx: &ContextHost) -> bool {
 }
 
 pub fn is_constructor_matching_name(callee: &Expression<'_>, name: &str) -> bool {
-    let Expression::Identifier(ident) = callee else {
+    let ExpressionKind::Identifier(ident) = callee.kind() else {
         return false;
     };
     ident.name == name

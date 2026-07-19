@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -71,11 +74,11 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         return;
     }
 
-    let span = match &call_expr.callee {
-        Expression::TaggedTemplateExpression(tagged_template_expr) => {
+    let span = match call_expr.callee.kind() {
+        ExpressionKind::TaggedTemplateExpression(tagged_template_expr) => {
             tagged_template_expr.tag.span()
         }
-        Expression::CallExpression(child_call_expr) => child_call_expr.callee.span(),
+        ExpressionKind::CallExpression(child_call_expr) => child_call_expr.callee.span(),
         _ => call_expr.callee.span(),
     };
 
@@ -128,15 +131,17 @@ fn get_member_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Vec<String> {
 }
 
 fn get_call_chain(expr: &Expression, member_names: &mut Vec<String>) -> Option<String> {
-    match expr {
-        Expression::Identifier(ident) => Some(ident.name.to_string()),
-        Expression::StaticMemberExpression(member_expr) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => Some(ident.name.to_string()),
+        ExpressionKind::StaticMemberExpression(member_expr) => {
             let name = get_call_chain(&member_expr.object, member_names)?;
             member_names.push(member_expr.property.name.to_string());
             Some(name)
         }
-        Expression::CallExpression(call_expr) => get_call_chain(&call_expr.callee, member_names),
-        Expression::TaggedTemplateExpression(tagged_template_expr) => {
+        ExpressionKind::CallExpression(call_expr) => {
+            get_call_chain(&call_expr.callee, member_names)
+        }
+        ExpressionKind::TaggedTemplateExpression(tagged_template_expr) => {
             get_call_chain(&tagged_template_expr.tag, member_names)
         }
         _ => None,

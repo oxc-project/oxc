@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Argument, ExpressionKind, MemberExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -54,7 +54,7 @@ impl Rule for PreferStringSlice {
             return;
         };
 
-        if let MemberExpression::StaticMemberExpression(v) = member_expr {
+        if let MemberExpressionKind::StaticMemberExpression(v) = member_expr.kind() {
             if !matches!(v.property.name.as_str(), "substr" | "substring") {
                 return;
             }
@@ -103,7 +103,9 @@ fn get_non_negative_integer_argument(argument: &Argument<'_>) -> Option<f64> {
         return None;
     }
 
-    let Expression::NumericLiteral(number) = argument.to_expression().get_inner_expression() else {
+    let ExpressionKind::NumericLiteral(number) =
+        argument.to_expression().get_inner_expression().kind()
+    else {
         return None;
     };
 

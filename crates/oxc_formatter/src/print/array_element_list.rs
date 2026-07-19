@@ -135,14 +135,14 @@ pub fn can_concisely_print_array_list(
     let mut comments_iter = comments.comments_before_iter(array_expression_span.end);
 
     for item in list {
-        match item {
-            ArrayExpressionElement::NumericLiteral(_) => {}
-            ArrayExpressionElement::UnaryExpression(unary_expr) => {
+        match item.as_expression().map(Expression::kind) {
+            Some(ExpressionKind::NumericLiteral(_)) => {}
+            Some(ExpressionKind::UnaryExpression(unary_expr)) => {
                 let signed = unary_expr.operator.is_arithmetic();
                 let argument = &unary_expr.argument;
 
                 if !signed
-                    || !matches!(argument, Expression::NumericLiteral(_))
+                    || !argument.is_numeric_literal()
                     || has_comment_inside_unary(&mut comments_iter, unary_expr.span)
                 {
                     return false;

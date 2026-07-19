@@ -14,7 +14,6 @@ use oxc_allocator::{
 use oxc_ast::{
     ast::*,
     builder::{AstBuilder, NONE},
-    match_expression,
 };
 use oxc_ast_visit::{
     VisitJs,
@@ -212,10 +211,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if matches!(
-            expr,
-            Expression::FunctionExpression(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::CallExpression(_)
+            expr.tag(),
+            ExpressionTag::FunctionExpression
+                | ExpressionTag::ArrowFunctionExpression
+                | ExpressionTag::CallExpression
         ) {
             self.exit_expression_impl(expr, ctx);
         }
@@ -272,9 +271,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             return;
         }
 
-        let hook_name: Str = match &call_expr.callee {
-            Expression::Identifier(ident) => ident.name.into(),
-            Expression::StaticMemberExpression(member) => member.property.name.into(),
+        let hook_name: Str = match call_expr.callee.kind() {
+            ExpressionKind::Identifier(ident) => ident.name.into(),
+            ExpressionKind::StaticMemberExpression(member) => member.property.name.into(),
             _ => return,
         };
 
@@ -288,16 +287,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                 Option<Ident>,
                 Option<Ident>,
                 bool,
-            ) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name), None, false),
-                Expression::StaticMemberExpression(member) => match &member.object {
+            ) = match call_expr.callee.kind() {
+                ExpressionKind::Identifier(ident) => (Some(ident.name), None, false),
+                ExpressionKind::StaticMemberExpression(member) => match member.object.kind() {
                     // `FancyHook.useHook()`
-                    Expression::Identifier(object) => (Some(object.name), None, true),
+                    ExpressionKind::Identifier(object) => (Some(object.name), None, true),
                     // `FancyHook.property.useHook()`.
                     // Like the upstream Babel plugin (facebook/react#35318), only one
                     // extra member level is supported; deeper nesting is not collected.
-                    Expression::StaticMemberExpression(inner_member) => {
-                        if let Expression::Identifier(object) = &inner_member.object {
+                    ExpressionKind::StaticMemberExpression(inner_member) => {
+                        if let Some(object) = inner_member.object.as_identifier() {
                             (Some(object.name), Some(inner_member.property.name), true)
                         } else {
                             (None, None, false)
@@ -400,13 +399,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 impl<'a> ReactRefresh<'a> {
     #[inline(never)]
     fn exit_expression_impl(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let signature = match expr {
-            Expression::FunctionExpression(func) => self.create_signature_call_expression(
+        let signature = match expr.kind_mut() {
+            ExpressionKindMut::FunctionExpression(func) => self.create_signature_call_expression(
                 func.scope_id(),
                 func.body.as_mut().unwrap(),
                 ctx,
             ),
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKindMut::ArrowFunctionExpression(arrow) => {
                 let call_fn =
                     self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
 
@@ -417,7 +416,7 @@ impl<'a> ReactRefresh<'a> {
                 call_fn
             }
             // hoc1(hoc2(...))
-            Expression::CallExpression(_) => self.last_signature.take(),
+            ExpressionKindMut::CallExpression(_) => self.last_signature.take(),
             _ => unreachable!(),
         };
 
@@ -426,7 +425,7 @@ impl<'a> ReactRefresh<'a> {
         };
         let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
 
-        if !matches!(expr, Expression::CallExpression(_)) {
+        if !expr.is_call_expression() {
             // Try to get binding from parent VariableDeclarator
             if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent()
                 && let Some(ident) = declarator.id().get_binding_identifier()
@@ -486,30 +485,27 @@ impl<'a> ReactRefresh<'a> {
         is_variable_declarator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        match expr {
-            Expression::Identifier(ident) => {
+        match expr.kind_mut() {
+            ExpressionKindMut::Identifier(ident) => {
                 // For case like:
                 // export const Something = hoc(Foo)
                 // we don't want to wrap Foo inside the call.
                 // Instead we assume it's registered at definition.
                 return is_componentish_name(&ident.name);
             }
-            Expression::FunctionExpression(_) => {}
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKindMut::FunctionExpression(_) => {}
+            ExpressionKindMut::ArrowFunctionExpression(arrow) => {
                 // Don't transform `() => () => {}`
-                if arrow
-                    .get_expression()
-                    .is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_)))
-                {
+                if arrow.get_expression().is_some_and(Expression::is_arrow_function_expression) {
                     return false;
                 }
             }
-            Expression::CallExpression(call_expr) => {
+            ExpressionKindMut::CallExpression(call_expr) => {
                 let allowed_callee = matches!(
-                    call_expr.callee,
-                    Expression::Identifier(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::StaticMemberExpression(_)
+                    call_expr.callee.tag(),
+                    ExpressionTag::Identifier
+                        | ExpressionTag::ComputedMemberExpression
+                        | ExpressionTag::StaticMemberExpression
                 );
 
                 if allowed_callee {
@@ -746,9 +742,8 @@ impl<'a> ReactRefresh<'a> {
             }
             Statement::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
-                    declaration @ match_expression!(ExportDefaultDeclarationKind) => {
-                        let expression = declaration.to_expression_mut();
-                        if !matches!(expression, Expression::CallExpression(_)) {
+                    ExportDefaultDeclarationKind::Expression(expression) => {
+                        if !expression.is_call_expression() {
                             // For now, we only support possible HOC calls here.
                             // Named function declarations are handled in FunctionDeclaration.
                             // Anonymous direct exports like export default function() {}
@@ -822,17 +817,17 @@ impl<'a> ReactRefresh<'a> {
             return None;
         }
 
-        match init {
+        match init.kind() {
             // Likely component definitions.
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 // () => () => {}
-                if arrow.get_expression().is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))) {
+                if arrow.get_expression().is_some_and(Expression::is_arrow_function_expression) {
                     return None;
                 }
             }
-            Expression::FunctionExpression(_)
+            ExpressionKind::FunctionExpression(_)
             // Maybe something like styled.div`...`
-            | Expression::TaggedTemplateExpression(_) => {
+            | ExpressionKind::TaggedTemplateExpression(_) => {
                 // Special case when a variable would get an inferred name:
                 // let Foo = () => {}
                 // let Foo = function() {}
@@ -842,12 +837,12 @@ impl<'a> ReactRefresh<'a> {
                 // (eg: with @babel/plugin-transform-react-display-name or
                 // babel-plugin-styled-components)
             }
-            Expression::CallExpression(call_expr) => {
-                let is_import_expression = match call_expr.callee.get_inner_expression() {
-                    Expression::ImportExpression(_) => {
+            ExpressionKind::CallExpression(call_expr) => {
+                let is_import_expression = match call_expr.callee.get_inner_expression().kind() {
+                    ExpressionKind::ImportExpression(_) => {
                         true
                     }
-                    Expression::Identifier(ident) => {
+                    ExpressionKind::Identifier(ident) => {
                         ident.name.starts_with("require")
                     },
                     _ => false
@@ -996,16 +991,17 @@ impl<'a> VisitJs<'a> for UsedInJSXBindingsCollector<'a, '_> {
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         walk_call_expression(self, it);
 
-        let is_jsx_call = match &it.callee {
-            Expression::Identifier(ident) => Self::is_jsx_like_call(&ident.name),
-            Expression::StaticMemberExpression(member) => {
+        let is_jsx_call = match it.callee.kind() {
+            ExpressionKind::Identifier(ident) => Self::is_jsx_like_call(&ident.name),
+            ExpressionKind::StaticMemberExpression(member) => {
                 Self::is_jsx_like_call(&member.property.name)
             }
             _ => false,
         };
 
         if is_jsx_call
-            && let Some(Argument::Identifier(ident)) = it.arguments.first()
+            && let Some(Argument::Expression(arg_expr)) = it.arguments.first()
+            && let Some(ident) = arg_expr.as_identifier()
             && let Some(symbol_id) =
                 self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
         {

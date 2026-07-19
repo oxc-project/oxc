@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{ChainElement, Expression, Statement};
+use oxc_ast::ast::{ChainElement, Expression, ExpressionKind, Statement};
 use oxc_ecmascript::side_effects::is_pure_function;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -25,11 +25,11 @@ fn test(source: &str, pure_functions: &[&str], expected: bool) {
 }
 
 fn get_callee<'a>(expr: &'a Expression<'a>, source: &str) -> &'a Expression<'a> {
-    match expr {
-        Expression::CallExpression(call) => &call.callee,
-        Expression::NewExpression(new_expr) => &new_expr.callee,
-        Expression::TaggedTemplateExpression(tagged) => &tagged.tag,
-        Expression::ChainExpression(chain) => match &chain.expression {
+    match expr.kind() {
+        ExpressionKind::CallExpression(call) => &call.callee,
+        ExpressionKind::NewExpression(new_expr) => &new_expr.callee,
+        ExpressionKind::TaggedTemplateExpression(tagged) => &tagged.tag,
+        ExpressionKind::ChainExpression(chain) => match &chain.expression {
             ChainElement::CallExpression(call) => &call.callee,
             _ => panic!("should have a call expression inside chain: {source}"),
         },

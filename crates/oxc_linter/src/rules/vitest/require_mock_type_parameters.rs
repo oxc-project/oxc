@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression},
+    ast::{CallExpression, ChainElement, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -213,11 +213,11 @@ fn find_member_call_type_arguments_in_expression(
     expr: &Expression<'_>,
     member: &KnownMemberExpressionProperty<'_>,
 ) -> Option<bool> {
-    match expr.get_inner_expression() {
-        Expression::CallExpression(inner_call) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::CallExpression(inner_call) => {
             find_member_call_type_arguments(inner_call, member)
         }
-        Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+        ExpressionKind::ChainExpression(chain_expr) => match &chain_expr.expression {
             ChainElement::CallExpression(inner_call) => {
                 find_member_call_type_arguments(inner_call, member)
             }
@@ -225,7 +225,7 @@ fn find_member_call_type_arguments_in_expression(
                 find_member_call_type_arguments_in_expression(member_expression.object(), member)
             }),
         },
-        expr => expr.get_member_expr().and_then(|member_expression| {
+        _ => expr.get_inner_expression().get_member_expr().and_then(|member_expression| {
             find_member_call_type_arguments_in_expression(member_expression.object(), member)
         }),
     }

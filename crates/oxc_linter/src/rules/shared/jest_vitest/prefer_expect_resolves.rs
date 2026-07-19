@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -81,13 +78,15 @@ pub fn run_on_jest_node<'a, 'c>(
     else {
         return;
     };
-    let Some(Expression::CallExpression(call_expr)) = jest_expect_fn_call.head.parent else {
+    let Some(call_expr) = jest_expect_fn_call.head.parent.and_then(Expression::as_call_expression)
+    else {
         return;
     };
     let Some(argument) = call_expr.arguments.first() else {
         return;
     };
-    let Argument::AwaitExpression(await_expr) = argument else {
+    let Some(await_expr) = argument.as_expression().and_then(Expression::as_await_expression)
+    else {
         return;
     };
     ctx.diagnostic_with_fix(expect_resolves(await_expr.span), |fixer| {

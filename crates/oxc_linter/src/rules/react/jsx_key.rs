@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, IdentifierReference,
+        ArrayExpression, CallExpression, Expression, ExpressionKind, IdentifierReference,
         JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXExpression,
         JSXFragment, Statement,
     },
@@ -200,7 +200,8 @@ fn is_children_from_react<'a>(ident: &IdentifierReference<'a>, ctx: &LintContext
             // Check if this is a VariableDeclarator with ObjectPattern
             if let AstKind::VariableDeclarator(var_decl) = decl_node.kind() {
                 // Check if init is an identifier imported from React
-                if let Some(Expression::Identifier(init_ident)) = var_decl.init.as_ref() {
+                if let Some(init_ident) = var_decl.init.as_ref().and_then(Expression::as_identifier)
+                {
                     // Check if the init identifier is imported from 'react' module
                     return import_matcher(ctx, init_ident.name.as_str(), REACT_MODULE);
                 }
@@ -217,7 +218,7 @@ pub fn is_children<'a, 'b>(call: &'b CallExpression<'a>, ctx: &'b LintContext<'a
 
     let Some(member) = call.callee.as_member_expression() else { return false };
 
-    if let Expression::Identifier(ident) = member.object() {
+    if let ExpressionKind::Identifier(ident) = member.object().kind() {
         return is_children_from_react(ident, ctx);
     }
 
@@ -406,19 +407,21 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
                     }
                     JSXAttributeValue::ExpressionContainer(container) => {
                         // JSXExpression inherits from Expression, so we match the Expression variants directly
-                        match &container.expression {
-                            JSXExpression::StringLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                        if let JSXExpression::Expression(expr) = &container.expression {
+                            match expr.kind() {
+                                ExpressionKind::StringLiteral(lit) => {
+                                    return Some((lit.value.to_string(), attr.span));
+                                }
+                                ExpressionKind::NumericLiteral(lit) => {
+                                    return Some((lit.value.to_string(), attr.span));
+                                }
+                                ExpressionKind::TemplateLiteral(lit)
+                                    if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
+                                {
+                                    return Some((lit.quasis[0].value.raw.to_string(), attr.span));
+                                }
+                                _ => {}
                             }
-                            JSXExpression::NumericLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
-                            }
-                            JSXExpression::TemplateLiteral(lit)
-                                if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
-                            {
-                                return Some((lit.quasis[0].value.raw.to_string(), attr.span));
-                            }
-                            _ => {}
                         }
                     }
                     _ => {}
@@ -434,7 +437,7 @@ fn check_duplicate_keys_in_array<'a>(array_expr: &ArrayExpression<'a>, ctx: &Lin
 
     for element in &array_expr.elements {
         // ArrayExpressionElement also inherits from Expression
-        if let ArrayExpressionElement::JSXElement(jsx_elem) = element
+        if let Some(jsx_elem) = element.as_expression().and_then(|e| e.as_jsx_element())
             && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem)
             && !seen_keys.insert(key_value.clone())
         {

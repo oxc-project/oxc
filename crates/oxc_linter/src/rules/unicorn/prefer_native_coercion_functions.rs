@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement, TSType},
+    ast::{Expression, ExpressionKind, FormalParameters, FunctionBody, Statement, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -168,7 +168,7 @@ fn is_matching_native_coercion_function_call<'a>(
     expr: &'a Expression,
     first_arg_name: &'a str,
 ) -> Option<&'a str> {
-    let Expression::CallExpression(call_expr) = expr else {
+    let ExpressionKind::CallExpression(call_expr) = expr.kind() else {
         return None;
     };
 
@@ -176,7 +176,7 @@ fn is_matching_native_coercion_function_call<'a>(
         return None;
     }
 
-    let Expression::Identifier(callee_ident) = &call_expr.callee else {
+    let ExpressionKind::Identifier(callee_ident) = call_expr.callee.kind() else {
         return None;
     };
 
@@ -186,7 +186,8 @@ fn is_matching_native_coercion_function_call<'a>(
         return None;
     }
 
-    let Argument::Identifier(arg_ident) = &call_expr.arguments[0] else {
+    let Some(arg_ident) = call_expr.arguments[0].as_expression().and_then(|e| e.as_identifier())
+    else {
         return None;
     };
 

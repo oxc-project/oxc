@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -137,7 +137,7 @@ impl NoUntypedMockFactory {
             return;
         };
 
-        if let Expression::StringLiteral(string_literal) = expr {
+        if let ExpressionKind::StringLiteral(string_literal) = expr.kind() {
             ctx.diagnostic_with_fix(
                 add_type_parameter_to_module_mock_diagnostic(
                     string_literal.value.as_str(),
@@ -152,7 +152,7 @@ impl NoUntypedMockFactory {
                     fixer.insert_text_after(&call_expr.callee, code)
                 },
             );
-        } else if let Expression::Identifier(ident) = expr {
+        } else if let ExpressionKind::Identifier(ident) = expr.kind() {
             ctx.diagnostic(add_type_parameter_to_module_mock_diagnostic(
                 ident.name.as_str(),
                 property_span,
@@ -165,9 +165,9 @@ impl NoUntypedMockFactory {
             return false;
         };
 
-        match expr {
-            Expression::FunctionExpression(func_expr) => func_expr.return_type.is_some(),
-            Expression::ArrowFunctionExpression(arrow_func_expr) => {
+        match expr.kind() {
+            ExpressionKind::FunctionExpression(func_expr) => func_expr.return_type.is_some(),
+            ExpressionKind::ArrowFunctionExpression(arrow_func_expr) => {
                 arrow_func_expr.return_type.is_some()
             }
             _ => false,

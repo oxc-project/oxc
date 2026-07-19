@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, ExpressionTag},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
@@ -268,7 +268,9 @@ impl SnapshotHintMode {
                 continue;
             };
 
-            if !first_arg.as_expression().is_some_and(Expression::is_string_literal) {
+            if !first_arg.as_expression().is_some_and(|e| {
+                matches!(e.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
+            }) {
                 ctx.diagnostic(snapshot_hint_must_be_string_diagnostic(expect_call_expr.span));
             }
         }

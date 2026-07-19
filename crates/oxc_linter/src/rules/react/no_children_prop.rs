@@ -72,7 +72,11 @@ impl Rule for NoChildrenProp {
             }
             AstKind::CallExpression(call_expr) => {
                 if is_create_element_call(call_expr)
-                    && let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1)
+                    && let Some(obj_expr) = call_expr
+                        .arguments
+                        .get(1)
+                        .and_then(Argument::as_expression)
+                        .and_then(|e| e.as_object_expression())
                     && let Some(span) = obj_expr.properties.iter().find_map(|prop| {
                         if let ObjectPropertyKind::ObjectProperty(prop) = prop
                             && prop.key.is_specific_static_name("children")

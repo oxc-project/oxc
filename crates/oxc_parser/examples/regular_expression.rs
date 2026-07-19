@@ -55,15 +55,22 @@ impl<'a> VisitJs<'a> for RegularExpressionVisitor {
         if new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "RegExp") {
             println!("🍀 {}", new_expr.span.source_text(&self.source_text));
 
-            let pattern_span = match new_expr.arguments.first() {
-                Some(Argument::StringLiteral(sl)) => sl.span,
-                _ => return,
+            let Some(sl) = new_expr
+                .arguments
+                .first()
+                .and_then(Argument::as_expression)
+                .and_then(Expression::as_string_literal)
+            else {
+                return;
             };
+            let pattern_span = sl.span;
 
-            let flags_span = match new_expr.arguments.get(1) {
-                Some(Argument::StringLiteral(sl)) => Some(sl.span),
-                _ => None,
-            };
+            let flags_span = new_expr
+                .arguments
+                .get(1)
+                .and_then(Argument::as_expression)
+                .and_then(Expression::as_string_literal)
+                .map(|sl| sl.span);
 
             let allocator = Allocator::default();
             let parsed = RegExpParser::new(

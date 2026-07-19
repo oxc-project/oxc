@@ -70,21 +70,19 @@ fn should_break(array: &ArrayExpression<'_>) -> bool {
         let mut elements = array.elements.iter().peekable();
 
         while let Some(element) = elements.next() {
-            match element {
-                ArrayExpressionElement::ArrayExpression(array) => {
-                    let next_is_array_or_end = matches!(
-                        elements.peek(),
-                        None | Some(ArrayExpressionElement::ArrayExpression(_))
-                    );
+            match element.as_expression().map(Expression::kind) {
+                Some(ExpressionKind::ArrayExpression(array)) => {
+                    let next_is_array_or_end = elements.peek().is_none_or(|next| {
+                        next.as_expression().is_some_and(Expression::is_array_expression)
+                    });
                     if array.elements.len() < 2 || !next_is_array_or_end {
                         return false;
                     }
                 }
-                ArrayExpressionElement::ObjectExpression(object) => {
-                    let next_is_object_or_empty = matches!(
-                        elements.peek(),
-                        None | Some(ArrayExpressionElement::ObjectExpression(_))
-                    );
+                Some(ExpressionKind::ObjectExpression(object)) => {
+                    let next_is_object_or_empty = elements.peek().is_none_or(|next| {
+                        next.as_expression().is_some_and(Expression::is_object_expression)
+                    });
 
                     if object.properties.len() < 2 || !next_is_object_or_empty {
                         return false;

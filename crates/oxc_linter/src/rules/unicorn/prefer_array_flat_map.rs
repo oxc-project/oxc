@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,7 +73,8 @@ impl Rule for PreferArrayFlatMap {
             return;
         }
 
-        let Expression::CallExpression(call_expr) = &member_expr.object().without_parentheses()
+        let ExpressionKind::CallExpression(call_expr) =
+            member_expr.object().without_parentheses().kind()
         else {
             return;
         };
@@ -98,7 +99,11 @@ impl Rule for PreferArrayFlatMap {
             // https://tc39.es/ecma262/#sec-tointegerorinfinity
             // https://tc39.es/ecma262/#eqn-truncate
             #[expect(clippy::float_cmp)]
-            if !matches!(first_arg, Argument::NumericLiteral(lit) if lit.value.floor() == 1.0) {
+            if !first_arg
+                .as_expression()
+                .and_then(|e| e.as_numeric_literal())
+                .is_some_and(|lit| lit.value.floor() == 1.0)
+            {
                 return;
             }
         }
@@ -125,9 +130,9 @@ fn is_ignored_call_expression(call_expr: &CallExpression) -> bool {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return false;
     };
-    match member_expr.object().get_inner_expression() {
-        Expression::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
-        Expression::StaticMemberExpression(mem) => {
+    match member_expr.object().get_inner_expression().kind() {
+        ExpressionKind::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
+        ExpressionKind::StaticMemberExpression(mem) => {
             IGNORE_OBJECTS.contains(&mem.property.name.as_str())
         }
         _ => false,

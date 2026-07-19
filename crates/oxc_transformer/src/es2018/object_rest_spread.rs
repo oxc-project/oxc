@@ -104,11 +104,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a> {
     // `([{ x, ..y }] = foo)`.
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::ObjectExpression(_) => {
+        match expr.tag() {
+            ExpressionTag::ObjectExpression => {
                 Self::transform_object_expression(self.options, expr, ctx);
             }
-            Expression::AssignmentExpression(_) => {
+            ExpressionTag::AssignmentExpression => {
                 self.transform_assignment_expression(expr, ctx);
             }
             _ => {}
@@ -192,7 +192,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         // Allow `{...x} = {}` and `[{...x}] = []`.
         if !Self::has_nested_target_rest(&assign_expr.left) {
             return;
@@ -377,7 +377,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else {
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else {
             return;
         };
         let mut decls = vec![];
@@ -499,7 +499,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
+        let Some(obj_expr) = expr.as_object_expression_mut() else { unreachable!() };
 
         if obj_expr.properties.iter().all(|prop| !prop.is_spread()) {
             return;
@@ -1036,13 +1036,18 @@ impl<'a> ObjectRestSpread<'a> {
             }
             // `let { 'a', ... rest }`
             // `let { ['a'], ... rest }`
-            PropertyKey::StringLiteral(lit) => {
+            PropertyKey::Expression(e) if e.is_string_literal() => {
+                let lit = e.to_string_literal();
                 let name = lit.value;
                 let expr = Expression::new_string_literal(lit.span, name, None, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { [`a`], ... rest }`
-            PropertyKey::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
+            PropertyKey::Expression(e)
+                if e.as_template_literal()
+                    .is_some_and(TemplateLiteral::is_no_substitution_template) =>
+            {
+                let lit = e.to_template_literal();
                 let quasis = ArenaVec::from_value_in(lit.quasis[0].clone(), ctx);
                 let expr = Expression::new_template_literal(lit.span, quasis, [], ctx);
                 Some(ArrayExpressionElement::from(expr))
@@ -1051,8 +1056,7 @@ impl<'a> ObjectRestSpread<'a> {
                 /* syntax error */
                 None
             }
-            key => {
-                let expr = key.as_expression_mut()?;
+            PropertyKey::Expression(expr) => {
                 // `let { [1], ... rest }`
                 if expr.is_literal() {
                     let span = expr.span();
@@ -1062,7 +1066,7 @@ impl<'a> ObjectRestSpread<'a> {
                     return Some(ArrayExpressionElement::from(expr));
                 }
                 *all_primitives = false;
-                if let Expression::Identifier(ident) = expr {
+                if let Some(ident) = expr.as_identifier() {
                     let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
                     if let Some(binding) = binding.to_bound_identifier() {
                         let expr = binding.create_read_expression(ctx);
@@ -1233,14 +1237,15 @@ impl<'a> ReferenceBuilder<'a> {
         let expr = expr.take_in(ctx);
         let binding;
         let maybe_bound_identifier;
-        match &expr {
-            Expression::Identifier(ident) if !force_create_binding => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) if !force_create_binding => {
                 binding = None;
                 maybe_bound_identifier =
                     MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
             }
-            expr => {
-                let bound_identifier = ctx.generate_uid_based_on_node(expr, scope_id, symbol_flags);
+            _ => {
+                let bound_identifier =
+                    ctx.generate_uid_based_on_node(&expr, scope_id, symbol_flags);
                 binding = Some(bound_identifier.create_binding_pattern(ctx));
                 maybe_bound_identifier = bound_identifier.to_maybe_bound_identifier();
             }

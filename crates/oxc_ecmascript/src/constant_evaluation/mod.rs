@@ -155,22 +155,22 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             return result;
         }
 
-        match self {
-            Expression::BinaryExpression(e) => e.evaluate_value_to(ctx, target_ty),
-            Expression::LogicalExpression(e) => e.evaluate_value_to(ctx, target_ty),
-            Expression::UnaryExpression(e) => e.evaluate_value_to(ctx, target_ty),
-            Expression::Identifier(ident) => ident.evaluate_value_to(ctx, target_ty),
-            Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-            Expression::NullLiteral(_) => Some(ConstantValue::Null),
-            Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
-            Expression::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
-            Expression::StringLiteral(lit) => {
+        match self.kind() {
+            ExpressionKind::BinaryExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            ExpressionKind::LogicalExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            ExpressionKind::UnaryExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            ExpressionKind::Identifier(ident) => ident.evaluate_value_to(ctx, target_ty),
+            ExpressionKind::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
+            ExpressionKind::NullLiteral(_) => Some(ConstantValue::Null),
+            ExpressionKind::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
+            ExpressionKind::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
+            ExpressionKind::StringLiteral(lit) => {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
-            Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
-            Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
-            Expression::CallExpression(e) => e.evaluate_value_to(ctx, target_ty),
-            Expression::SequenceExpression(e) => {
+            ExpressionKind::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            ExpressionKind::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            ExpressionKind::CallExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            ExpressionKind::SequenceExpression(e) => {
                 // For sequence expression, the value is the value of the RHS.
                 e.expressions.last().and_then(|e| e.evaluate_value_to(ctx, target_ty))
             }
@@ -343,7 +343,7 @@ fn binary_operation_evaluate_value_to<'a>(
             Some(ConstantValue::Number(f64::from(left_int ^ right_int)))
         }
         BinaryOperator::Instanceof => {
-            if let Expression::Identifier(right_ident) = right {
+            if let ExpressionKind::Identifier(right_ident) = right.kind() {
                 let name = right_ident.name.as_str();
                 if matches!(name, "Object" | "Number" | "Boolean" | "String")
                     && ctx.is_global_reference(right_ident)
@@ -357,13 +357,13 @@ fn binary_operation_evaluate_value_to<'a>(
                             return Some(ConstantValue::Boolean(false));
                         }
                         if matches!(
-                            left,
-                            Expression::ArrayExpression(_)
-                                | Expression::RegExpLiteral(_)
-                                | Expression::FunctionExpression(_)
-                                | Expression::ArrowFunctionExpression(_)
-                                | Expression::ClassExpression(_)
-                        ) | matches!(left, Expression::ObjectExpression(obj_expr) if obj_expr.properties.is_empty())
+                            left.tag(),
+                            ExpressionTag::ArrayExpression
+                                | ExpressionTag::RegExpLiteral
+                                | ExpressionTag::FunctionExpression
+                                | ExpressionTag::ArrowFunctionExpression
+                                | ExpressionTag::ClassExpression
+                        ) | matches!(left.kind(), ExpressionKind::ObjectExpression(obj_expr) if obj_expr.properties.is_empty())
                         {
                             return Some(ConstantValue::Boolean(true));
                         }
@@ -451,13 +451,12 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
                     ValueType::Boolean => "boolean",
                     ValueType::Undefined => "undefined",
                     ValueType::Null => "object",
-                    _ => match &self.argument {
-                        Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                            "object"
-                        }
-                        Expression::ClassExpression(_)
-                        | Expression::FunctionExpression(_)
-                        | Expression::ArrowFunctionExpression(_) => "function",
+                    _ => match self.argument.kind() {
+                        ExpressionKind::ObjectExpression(_)
+                        | ExpressionKind::ArrayExpression(_) => "object",
+                        ExpressionKind::ClassExpression(_)
+                        | ExpressionKind::FunctionExpression(_)
+                        | ExpressionKind::ArrowFunctionExpression(_) => "function",
                         _ => return None,
                     },
                 };
@@ -522,8 +521,8 @@ impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
         ctx: &impl ConstantEvaluationCtx<'a>,
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
-        match &self.expression {
-            Expression::StringLiteral(s) if s.value == "length" => {
+        match self.expression.kind() {
+            ExpressionKind::StringLiteral(s) if s.value == "length" => {
                 evaluate_value_length(&self.object, ctx)
             }
             _ => None,
@@ -537,7 +536,7 @@ fn evaluate_value_length<'a>(
 ) -> Option<ConstantValue<'a>> {
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
         Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
-    } else if let Expression::ArrayExpression(arr) = object {
+    } else if let ExpressionKind::ArrayExpression(arr) = object.kind() {
         if arr.elements.iter().any(|e| matches!(e, ArrayExpressionElement::SpreadElement(_))) {
             None
         } else {

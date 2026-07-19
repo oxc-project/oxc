@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -136,7 +136,8 @@ impl Rule for JsxBooleanValue {
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if let Some(expr) = container.expression.as_expression()
-                        && let Expression::BooleanLiteral(expr) = expr.without_parentheses()
+                        && let ExpressionKind::BooleanLiteral(expr) =
+                            expr.without_parentheses().kind()
                     {
                         if expr.value && Self::is_never(mode, options, ident.name.as_str()) {
                             let span = Span::new(ident.span.end, jsx_attr.span.end);

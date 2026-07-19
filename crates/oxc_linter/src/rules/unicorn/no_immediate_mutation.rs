@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, CallExpression,
-        Expression, NewExpression, ObjectPropertyKind, Statement, VariableDeclaration,
-        VariableDeclarator,
+        Expression, ExpressionKind, MemberExpressionKind, NewExpression, ObjectPropertyKind,
+        Statement, VariableDeclaration, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -146,11 +146,11 @@ impl Rule for NoImmediateMutation {
 fn check_mutation<'a>(expr: &Expression<'a>, prev_stmt: &'a Statement<'a>, ctx: &LintContext<'a>) {
     let expr = expr.get_inner_expression();
 
-    match expr {
-        Expression::CallExpression(call) => {
+    match expr.kind() {
+        ExpressionKind::CallExpression(call) => {
             check_call_mutation(call, prev_stmt, ctx);
         }
-        Expression::AssignmentExpression(assign) => {
+        ExpressionKind::AssignmentExpression(assign) => {
             check_property_assignment(assign, prev_stmt, ctx);
         }
         _ => {}
@@ -172,7 +172,7 @@ fn check_call_mutation<'a>(
     if is_object_assign_call(call, ctx) {
         if let Some(first_arg) = call.arguments.first()
             && let Some(arg_expr) = first_arg.as_expression()
-            && let Expression::Identifier(id) = arg_expr.get_inner_expression()
+            && let ExpressionKind::Identifier(id) = arg_expr.get_inner_expression().kind()
             && let Some((var_name, init_type)) = get_prev_declaration(prev_stmt, ctx)
             && var_name == id.name.as_str()
             && init_type == InitType::Object
@@ -198,7 +198,7 @@ fn check_call_mutation<'a>(
     };
 
     let obj = member.object().get_inner_expression();
-    let Expression::Identifier(id) = obj else {
+    let ExpressionKind::Identifier(id) = obj.kind() else {
         return;
     };
 
@@ -260,17 +260,22 @@ fn check_property_assignment<'a>(
 
     // Get the member expression from the assignment target
     let member = match &assign.left {
-        AssignmentTarget::StaticMemberExpression(m) => Some(m.object.get_inner_expression()),
-        AssignmentTarget::ComputedMemberExpression(m) => {
-            // Check if the computed property references the object itself
-            let obj = m.object.get_inner_expression();
-            if let Expression::Identifier(id) = obj
-                && expression_references_variable(&m.expression, &id.name)
-            {
-                return;
+        AssignmentTarget::MemberExpression(m) => match m.kind() {
+            MemberExpressionKind::StaticMemberExpression(m) => {
+                Some(m.object.get_inner_expression())
             }
-            Some(obj)
-        }
+            MemberExpressionKind::ComputedMemberExpression(m) => {
+                // Check if the computed property references the object itself
+                let obj = m.object.get_inner_expression();
+                if let ExpressionKind::Identifier(id) = obj.kind()
+                    && expression_references_variable(&m.expression, &id.name)
+                {
+                    return;
+                }
+                Some(obj)
+            }
+            MemberExpressionKind::PrivateFieldExpression(_) => None,
+        },
         _ => None,
     };
 
@@ -278,7 +283,7 @@ fn check_property_assignment<'a>(
         return;
     };
 
-    let Expression::Identifier(id) = obj else {
+    let ExpressionKind::Identifier(id) = obj.kind() else {
         return;
     };
 
@@ -312,7 +317,7 @@ fn get_prev_declaration<'a>(
         Statement::VariableDeclaration(decl) => get_declaration_info(decl, ctx),
         Statement::ExpressionStatement(expr_stmt) => {
             // Check for assignment expression: foo = [1, 2]
-            if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
+            if let ExpressionKind::AssignmentExpression(assign) = expr_stmt.expression.kind() {
                 get_assignment_info(assign, ctx)
             } else {
                 None
@@ -349,10 +354,10 @@ fn get_init_type<'a>(
 
 /// Get the init type from an expression
 fn get_expression_init_type<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> Option<InitType> {
-    match expr {
-        Expression::ArrayExpression(_) => Some(InitType::Array),
-        Expression::ObjectExpression(_) => Some(InitType::Object),
-        Expression::NewExpression(new_expr) => get_new_expression_type(new_expr, ctx),
+    match expr.kind() {
+        ExpressionKind::ArrayExpression(_) => Some(InitType::Array),
+        ExpressionKind::ObjectExpression(_) => Some(InitType::Object),
+        ExpressionKind::NewExpression(new_expr) => get_new_expression_type(new_expr, ctx),
         _ => None,
     }
 }
@@ -363,7 +368,7 @@ fn get_new_expression_type<'a>(
     ctx: &LintContext<'a>,
 ) -> Option<InitType> {
     let callee = new_expr.callee.get_inner_expression();
-    let Expression::Identifier(id) = callee else {
+    let ExpressionKind::Identifier(id) = callee.kind() else {
         return None;
     };
 
@@ -395,7 +400,7 @@ fn get_assignment_info<'a>(
     };
 
     // Check for chained assignment (a = b = [...])
-    if let Expression::AssignmentExpression(_) = assign.right.get_inner_expression() {
+    if let ExpressionKind::AssignmentExpression(_) = assign.right.get_inner_expression().kind() {
         return None;
     }
 
@@ -423,7 +428,7 @@ fn is_object_assign_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bo
     }
 
     let obj = member.object().get_inner_expression();
-    if let Expression::Identifier(id) = obj {
+    if let ExpressionKind::Identifier(id) = obj.kind() {
         id.name == "Object" && id.is_global_reference(ctx.scoping())
     } else {
         false
@@ -474,16 +479,16 @@ fn args_reference_variable(call: &CallExpression<'_>, var_name: &str) -> bool {
 
 /// Check if an expression references a variable (shallow check for common patterns)
 fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool {
-    match expr.get_inner_expression() {
-        Expression::Identifier(id) => id.name == var_name,
-        Expression::StaticMemberExpression(m) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::Identifier(id) => id.name == var_name,
+        ExpressionKind::StaticMemberExpression(m) => {
             expression_references_variable(&m.object, var_name)
         }
-        Expression::ComputedMemberExpression(m) => {
+        ExpressionKind::ComputedMemberExpression(m) => {
             expression_references_variable(&m.object, var_name)
                 || expression_references_variable(&m.expression, var_name)
         }
-        Expression::CallExpression(c) => {
+        ExpressionKind::CallExpression(c) => {
             if expression_references_variable(&c.callee, var_name) {
                 return true;
             }
@@ -491,14 +496,16 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
                 arg.as_expression().is_some_and(|e| expression_references_variable(e, var_name))
             })
         }
-        Expression::ArrayExpression(arr) => arr.elements.iter().any(|el| match el {
+        ExpressionKind::ArrayExpression(arr) => arr.elements.iter().any(|el| match el {
             ArrayExpressionElement::SpreadElement(s) => {
                 expression_references_variable(&s.argument, var_name)
             }
             ArrayExpressionElement::Elision(_) => false,
-            _ => el.as_expression().is_some_and(|e| expression_references_variable(e, var_name)),
+            ArrayExpressionElement::Expression(_) => {
+                el.as_expression().is_some_and(|e| expression_references_variable(e, var_name))
+            }
         }),
-        Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
+        ExpressionKind::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
             ObjectPropertyKind::ObjectProperty(p) => {
                 expression_references_variable(&p.value, var_name)
                     || (p.computed
@@ -510,7 +517,7 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
                 expression_references_variable(&s.argument, var_name)
             }
         }),
-        Expression::ArrowFunctionExpression(arrow) => {
+        ExpressionKind::ArrowFunctionExpression(arrow) => {
             // Check if any parameter shadows the variable name
             let is_shadowed = arrow.params.items.iter().any(|param| {
                 param.pattern.get_identifier_name().is_some_and(|name| name == var_name)
@@ -531,22 +538,25 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
                 }
             })
         }
-        Expression::AssignmentExpression(assign) => {
+        ExpressionKind::AssignmentExpression(assign) => {
             // Check both sides of the assignment
             let left_refs = match &assign.left {
-                AssignmentTarget::StaticMemberExpression(m) => {
-                    expression_references_variable(&m.object, var_name)
-                }
-                AssignmentTarget::ComputedMemberExpression(m) => {
-                    expression_references_variable(&m.object, var_name)
-                        || expression_references_variable(&m.expression, var_name)
-                }
+                AssignmentTarget::MemberExpression(m) => match m.kind() {
+                    MemberExpressionKind::StaticMemberExpression(m) => {
+                        expression_references_variable(&m.object, var_name)
+                    }
+                    MemberExpressionKind::ComputedMemberExpression(m) => {
+                        expression_references_variable(&m.object, var_name)
+                            || expression_references_variable(&m.expression, var_name)
+                    }
+                    MemberExpressionKind::PrivateFieldExpression(_) => false,
+                },
                 AssignmentTarget::AssignmentTargetIdentifier(id) => id.name == var_name,
                 _ => false,
             };
             left_refs || expression_references_variable(&assign.right, var_name)
         }
-        Expression::FunctionExpression(func) => {
+        ExpressionKind::FunctionExpression(func) => {
             // Check if any parameter shadows the variable name
             let is_shadowed = func.params.items.iter().any(|param| {
                 param.pattern.get_identifier_name().is_some_and(|name| name == var_name)
@@ -572,35 +582,35 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
             }
         }
         // Conditional expression (ternary): cond ? array[0] : x
-        Expression::ConditionalExpression(cond) => {
+        ExpressionKind::ConditionalExpression(cond) => {
             expression_references_variable(&cond.test, var_name)
                 || expression_references_variable(&cond.consequent, var_name)
                 || expression_references_variable(&cond.alternate, var_name)
         }
         // Logical expressions: a && b, a || b, a ?? b
-        Expression::LogicalExpression(logic) => {
+        ExpressionKind::LogicalExpression(logic) => {
             expression_references_variable(&logic.left, var_name)
                 || expression_references_variable(&logic.right, var_name)
         }
         // Binary expressions: a + b, a - b, etc.
-        Expression::BinaryExpression(binary) => {
+        ExpressionKind::BinaryExpression(binary) => {
             expression_references_variable(&binary.left, var_name)
                 || expression_references_variable(&binary.right, var_name)
         }
         // Unary expressions: !a, -a, typeof a, etc.
-        Expression::UnaryExpression(unary) => {
+        ExpressionKind::UnaryExpression(unary) => {
             expression_references_variable(&unary.argument, var_name)
         }
         // Sequence expressions: (a, b, c)
-        Expression::SequenceExpression(seq) => {
+        ExpressionKind::SequenceExpression(seq) => {
             seq.expressions.iter().any(|e| expression_references_variable(e, var_name))
         }
         // Template literals: `${array.length}`
-        Expression::TemplateLiteral(template) => {
+        ExpressionKind::TemplateLiteral(template) => {
             template.expressions.iter().any(|e| expression_references_variable(e, var_name))
         }
         // Tagged template: tag`${array.length}`
-        Expression::TaggedTemplateExpression(tagged) => {
+        ExpressionKind::TaggedTemplateExpression(tagged) => {
             expression_references_variable(&tagged.tag, var_name)
                 || tagged
                     .quasi
@@ -609,23 +619,23 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
                     .any(|e| expression_references_variable(e, var_name))
         }
         // New expression: new Foo(array)
-        Expression::NewExpression(new_expr) => {
+        ExpressionKind::NewExpression(new_expr) => {
             expression_references_variable(&new_expr.callee, var_name)
                 || new_expr.arguments.iter().any(|arg| {
                     arg.as_expression().is_some_and(|e| expression_references_variable(e, var_name))
                 })
         }
         // Await expression: await array
-        Expression::AwaitExpression(await_expr) => {
+        ExpressionKind::AwaitExpression(await_expr) => {
             expression_references_variable(&await_expr.argument, var_name)
         }
         // Yield expression: yield array
-        Expression::YieldExpression(yield_expr) => yield_expr
+        ExpressionKind::YieldExpression(yield_expr) => yield_expr
             .argument
             .as_ref()
             .is_some_and(|e| expression_references_variable(e, var_name)),
         // Update expression: array++, ++array
-        Expression::UpdateExpression(update) => {
+        ExpressionKind::UpdateExpression(update) => {
             if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(id) =
                 &update.argument
             {

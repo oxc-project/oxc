@@ -381,8 +381,8 @@ impl<'a> LegacyDecorator<'a> {
 
                 // Use raw identifier name when possible to avoid collisions from
                 // `get_var_name_from_node` stripping leading underscores.
-                let key_name: Cow<'_, str> = match &reference {
-                    Expression::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
+                let key_name: Cow<'_, str> = match reference.kind() {
+                    ExpressionKind::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
                     _ => Cow::Owned(get_var_name_from_node(&reference)),
                 };
                 let getter_key = PropertyKey::from(assignment);
@@ -1374,43 +1374,43 @@ impl<'a> LegacyDecorator<'a> {
             PropertyKey::PrivateIdentifier(_) => {
                 Expression::new_string_literal(SPAN, "", None, ctx)
             }
-            // Copiable literals
-            PropertyKey::NumericLiteral(literal) => {
-                Expression::NumericLiteral(literal.clone_in(ctx.allocator()))
-            }
-            PropertyKey::StringLiteral(literal) => {
-                Expression::StringLiteral(literal.clone_in(ctx.allocator()))
-            }
-            PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-                let quasis = literal.quasis.clone_in(ctx.allocator());
-                Expression::new_template_literal(SPAN, quasis, [], ctx)
-            }
-            PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),
-            match_expression!(PropertyKey) => {
-                // ```ts
-                // Input:
-                // class Test {
-                //  static [a()] = 0;
-                // }
+            PropertyKey::Expression(key) => match key.tag() {
+                // Copiable literals
+                ExpressionTag::NumericLiteral | ExpressionTag::StringLiteral => {
+                    key.clone_in(ctx.allocator())
+                }
+                ExpressionTag::TemplateLiteral
+                    if key.to_template_literal().expressions.is_empty() =>
+                {
+                    let literal = key.to_template_literal();
+                    let quasis = literal.quasis.clone_in(ctx.allocator());
+                    Expression::new_template_literal(SPAN, quasis, ArenaVec::new_in(ctx), ctx)
+                }
+                ExpressionTag::NullLiteral => Expression::new_null_literal(SPAN, ctx),
+                _ => {
+                    // ```ts
+                    // Input:
+                    // class Test {
+                    //  static [a()] = 0;
+                    // }
 
-                // Output:
-                // ```js
-                // let _a;
-                // class Test {
-                //   static [_a = a()] = 0;
-                // ```
+                    // Output:
+                    // ```js
+                    // let _a;
+                    // class Test {
+                    //   static [_a = a()] = 0;
+                    // ```
 
-                let key = key.to_expression_mut();
-
-                // Create a unique binding for the computed property key, and insert it outside of the class
-                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
-                let operator = AssignmentOperator::Assign;
-                let left = binding.create_write_target(ctx);
-                key.replace_with(|right| {
-                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx)
-                });
-                binding.create_read_expression(ctx)
-            }
+                    // Create a unique binding for the computed property key, and insert it outside of the class
+                    let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
+                    let operator = AssignmentOperator::Assign;
+                    let left = binding.create_write_target(ctx);
+                    key.replace_with(|right| {
+                        Expression::new_assignment_expression(SPAN, operator, left, right, ctx)
+                    });
+                    binding.create_read_expression(ctx)
+                }
+            },
         }
     }
 

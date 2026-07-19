@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionTag},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -53,13 +56,13 @@ declare_oxc_lint!(
 /// (literals, null, undefined, arrays, arrow functions, classes, functions, objects, template literals).
 fn is_non_dom_node(expr: &Expression) -> bool {
     matches!(
-        expr,
-        Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ObjectExpression(_)
-            | Expression::TemplateLiteral(_)
+        expr.tag(),
+        ExpressionTag::ArrayExpression
+            | ExpressionTag::ArrowFunctionExpression
+            | ExpressionTag::ClassExpression
+            | ExpressionTag::FunctionExpression
+            | ExpressionTag::ObjectExpression
+            | ExpressionTag::TemplateLiteral
     ) || expr.is_literal()
         || expr.is_null_or_undefined()
 }

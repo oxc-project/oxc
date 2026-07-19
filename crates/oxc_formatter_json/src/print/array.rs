@@ -1,4 +1,4 @@
-use oxc_ast::ast::{ArrayExpression, ArrayExpressionElement, Expression};
+use oxc_ast::ast::{ArrayExpression, ArrayExpressionElement, ExpressionKind};
 use oxc_formatter_core::{
     Buffer, Format, FormatContext,
     builders::{
@@ -168,9 +168,10 @@ fn should_force_expand(elements: &[ArrayExpressionElement<'_>]) -> bool {
     }
     let mut prev_is_array: Option<bool> = None;
     for el in elements {
-        let (is_array, inner_len) = match el.as_expression() {
-            Some(Expression::ArrayExpression(a)) => (true, a.elements.len()),
-            Some(Expression::ObjectExpression(o)) => (false, o.properties.len()),
+        let Some(expr) = el.as_expression() else { return false };
+        let (is_array, inner_len) = match expr.kind() {
+            ExpressionKind::ArrayExpression(a) => (true, a.elements.len()),
+            ExpressionKind::ObjectExpression(o) => (false, o.properties.len()),
             _ => return false,
         };
         if inner_len < 2 {
@@ -214,10 +215,10 @@ fn can_concisely_print(elements: &[ArrayExpressionElement<'_>]) -> bool {
     }
     elements.iter().all(|el| {
         let Some(expr) = el.as_expression() else { return false };
-        match expr {
-            Expression::NumericLiteral(_) => true,
-            Expression::UnaryExpression(u) if u.operator.is_arithmetic() => {
-                matches!(u.argument, Expression::NumericLiteral(_))
+        match expr.kind() {
+            ExpressionKind::NumericLiteral(_) => true,
+            ExpressionKind::UnaryExpression(u) if u.operator.is_arithmetic() => {
+                u.argument.is_numeric_literal()
             }
             _ => false,
         }

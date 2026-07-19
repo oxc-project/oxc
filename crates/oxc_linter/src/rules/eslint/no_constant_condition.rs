@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Expression, Function, YieldExpression},
+    ast::{ArrowFunctionExpression, Expression, ExpressionKind, Function, YieldExpression},
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -193,8 +193,8 @@ impl NoConstantCondition {
     ) {
         match self.check_loops {
             CheckLoops::None => return,
-            CheckLoops::AllExceptWhileTrue if is_while => match test {
-                Expression::BooleanLiteral(bool) if bool.value => return,
+            CheckLoops::AllExceptWhileTrue if is_while => match test.kind() {
+                ExpressionKind::BooleanLiteral(bool) if bool.value => return,
                 _ => {}
             },
             _ => {}

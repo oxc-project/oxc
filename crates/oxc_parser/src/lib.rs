@@ -920,7 +920,7 @@ impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::ast::{CommentKind, Expression, Statement};
+    use oxc_ast::ast::{CommentKind, ExpressionKind, ExpressionTag, Statement};
     use oxc_span::GetSpan;
 
     use super::*;
@@ -942,7 +942,7 @@ mod test {
         let source_type = SourceType::default();
         let source = "a";
         let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
-        assert!(matches!(expr, Expression::Identifier(_)));
+        assert!(matches!(expr.tag(), ExpressionTag::Identifier));
     }
 
     #[test]
@@ -1003,7 +1003,7 @@ mod test {
             assert!(ret.diagnostics.is_empty());
 
             if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
-                if let Expression::V8IntrinsicExpression(expr) = &expr_stmt.expression {
+                if let ExpressionKind::V8IntrinsicExpression(expr) = expr_stmt.expression.kind() {
                     assert_eq!(expr.span().source_text(source), source);
                 } else {
                     panic!("Expected V8IntrinsicExpression");

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression},
+    ast::{BindingPattern, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -58,7 +58,7 @@ impl Rule for NoObjectAsDefaultParameter {
 
         let init = init.get_inner_expression();
 
-        let Expression::ObjectExpression(object_expr) = init else {
+        let ExpressionKind::ObjectExpression(object_expr) = init.kind() else {
             return;
         };
 

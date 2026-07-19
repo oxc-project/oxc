@@ -156,8 +156,7 @@ fn test_assign_target_with_global_variables(
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    let Expression::AssignmentExpression(assign_expr) = &stmt.expression.without_parentheses()
-    else {
+    let Some(assign_expr) = stmt.expression.without_parentheses().as_assignment_expression() else {
         panic!("should have a assignment expression: {source_text}");
     };
 

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, CallExpression, Expression, ObjectExpression, ObjectPropertyKind,
+        ArrayExpression, CallExpression, ExpressionKind, ObjectExpression, ObjectPropertyKind,
         TSSignature,
     },
 };
@@ -114,9 +114,9 @@ impl Rule for NoReservedProps {
                 if !is_vue_component_options_object(parent, ctx) {
                     return;
                 }
-                match prop.value.get_inner_expression() {
-                    Expression::ArrayExpression(arr) => self.check_array_props(arr, ctx),
-                    Expression::ObjectExpression(obj) => self.check_object_props(obj, ctx),
+                match prop.value.get_inner_expression().kind() {
+                    ExpressionKind::ArrayExpression(arr) => self.check_array_props(arr, ctx),
+                    ExpressionKind::ObjectExpression(obj) => self.check_object_props(obj, ctx),
                     _ => {}
                 }
             }
@@ -145,9 +145,9 @@ impl NoReservedProps {
     fn check_array_props<'a>(&self, arr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
-            let (name, span): (&str, Span) = match expr.get_inner_expression() {
-                Expression::StringLiteral(lit) => (lit.value.as_str(), lit.span),
-                Expression::TemplateLiteral(tpl) => match tpl.single_quasi() {
+            let (name, span): (&str, Span) = match expr.get_inner_expression().kind() {
+                ExpressionKind::StringLiteral(lit) => (lit.value.as_str(), lit.span),
+                ExpressionKind::TemplateLiteral(tpl) => match tpl.single_quasi() {
                     Some(quasi) => (quasi.as_str(), tpl.span),
                     None => continue,
                 },
@@ -177,9 +177,9 @@ impl NoReservedProps {
 
         // Runtime declaration: `defineProps([...])` / `defineProps({...})`.
         if let Some(arg) = call.arguments.first().and_then(|arg| arg.as_expression()) {
-            match arg.get_inner_expression() {
-                Expression::ArrayExpression(arr) => self.check_array_props(arr, ctx),
-                Expression::ObjectExpression(obj) => self.check_object_props(obj, ctx),
+            match arg.get_inner_expression().kind() {
+                ExpressionKind::ArrayExpression(arr) => self.check_array_props(arr, ctx),
+                ExpressionKind::ObjectExpression(obj) => self.check_object_props(obj, ctx),
                 _ => {}
             }
             return;

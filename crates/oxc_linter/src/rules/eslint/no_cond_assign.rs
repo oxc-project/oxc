@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentExpression, Expression},
+    ast::{AssignmentExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -142,7 +142,7 @@ impl NoCondAssign {
         if self.0 == NoCondAssignConfig::Always {
             expr = expr.get_inner_expression();
         }
-        if let Expression::AssignmentExpression(expr) = expr {
+        if let ExpressionKind::AssignmentExpression(expr) = expr.kind() {
             Self::emit_diagnostic(ctx, expr);
         }
     }

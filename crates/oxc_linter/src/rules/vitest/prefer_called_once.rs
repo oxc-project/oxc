@@ -88,8 +88,11 @@ impl PreferCalledOnce {
             return;
         }
 
-        let Some(Argument::NumericLiteral(called_times_value)) =
-            parsed_expect.matcher_arguments.and_then(|arguments| arguments.first())
+        let Some(called_times_value) = parsed_expect
+            .matcher_arguments
+            .and_then(|arguments| arguments.first())
+            .and_then(Argument::as_expression)
+            .and_then(|e| e.as_numeric_literal())
         else {
             return;
         };

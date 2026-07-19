@@ -1,10 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, Class, ClassElement, Expression, MethodDefinitionKind,
-        PropertyDefinition, Statement,
+        Class, ClassElement, Expression, ExpressionKind, MethodDefinitionKind, PropertyDefinition,
+        Statement,
     },
-    match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -249,7 +248,7 @@ fn check_class<'a>(class: &Class<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>)
         let Statement::ExpressionStatement(expr_stmt) = name_stmt else {
             return;
         };
-        let Expression::AssignmentExpression(assign) = &expr_stmt.expression else {
+        let ExpressionKind::AssignmentExpression(assign) = expr_stmt.expression.kind() else {
             return;
         };
 
@@ -279,11 +278,13 @@ fn get_export_assignment_info<'a>(
         return None;
     };
 
-    let AssignmentTarget::StaticMemberExpression(member) = &assign.left else {
+    let Some(member) =
+        assign.left.as_member_expression().and_then(|m| m.as_static_member_expression())
+    else {
         return None;
     };
 
-    let Expression::Identifier(obj_ident) = &member.object else {
+    let ExpressionKind::Identifier(obj_ident) = member.object.kind() else {
         return None;
     };
 
@@ -340,9 +341,14 @@ fn has_valid_super_class(class: &Class) -> bool {
     let Some(super_class) = &class.super_class else {
         return false;
     };
-    let name = match super_class.get_inner_expression() {
-        Expression::Identifier(ident) => Some(ident.name.as_str()),
-        e @ match_member_expression!(Expression) => e.to_member_expression().static_property_name(),
+    let inner = super_class.get_inner_expression();
+    let name = match inner.kind() {
+        ExpressionKind::Identifier(ident) => Some(ident.name.as_str()),
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => {
+            inner.to_member_expression().static_property_name()
+        }
         _ => None,
     };
     name.is_some_and(is_valid_super_class_name)
@@ -358,17 +364,20 @@ fn upper_first(s: &str) -> String {
 
 fn is_super_call(stmt: &Statement) -> bool {
     let Statement::ExpressionStatement(expr_stmt) = stmt else { return false };
-    let Expression::CallExpression(call) = &expr_stmt.expression else { return false };
-    matches!(&call.callee, Expression::Super(_))
+    let ExpressionKind::CallExpression(call) = expr_stmt.expression.kind() else { return false };
+    call.callee.is_super()
 }
 
 fn is_this_assignment(stmt: &Statement, prop_name: &str) -> bool {
     let Statement::ExpressionStatement(expr_stmt) = stmt else { return false };
-    let Expression::AssignmentExpression(assign) = &expr_stmt.expression else { return false };
+    let ExpressionKind::AssignmentExpression(assign) = expr_stmt.expression.kind() else {
+        return false;
+    };
 
-    if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
-        matches!(&member.object, Expression::ThisExpression(_))
-            && member.property.name.as_str() == prop_name
+    if let Some(member) =
+        assign.left.as_member_expression().and_then(|m| m.as_static_member_expression())
+    {
+        member.object.is_this_expression() && member.property.name.as_str() == prop_name
     } else {
         false
     }
@@ -376,7 +385,7 @@ fn is_this_assignment(stmt: &Statement, prop_name: &str) -> bool {
 
 fn is_valid_name_property(name_property: Option<&PropertyDefinition>, class_name: &str) -> bool {
     if let Some(prop) = name_property
-        && let Some(Expression::StringLiteral(lit)) = &prop.value
+        && let Some(lit) = prop.value.as_ref().and_then(|e| e.as_string_literal())
     {
         return lit.value.as_str() == class_name;
     }
@@ -385,7 +394,7 @@ fn is_valid_name_property(name_property: Option<&PropertyDefinition>, class_name
 }
 
 fn is_expected_string_literal(expr: &Expression, expected: &str) -> bool {
-    matches!(expr, Expression::StringLiteral(lit) if lit.value.as_str() == expected)
+    matches!(expr.kind(), ExpressionKind::StringLiteral(lit) if lit.value.as_str() == expected)
 }
 
 #[test]

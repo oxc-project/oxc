@@ -1,7 +1,7 @@
-use oxc_allocator::{GetAddress, UnstableAddress};
+use oxc_allocator::UnstableAddress;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression},
+    ast::{ExpressionKind, MemberExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -70,8 +70,8 @@ impl Rule for PreferRegexpTest {
             return;
         }
 
-        let (span, name) = match member_expr {
-            MemberExpression::StaticMemberExpression(v) => {
+        let (span, name) = match member_expr.kind() {
+            MemberExpressionKind::StaticMemberExpression(v) => {
                 if !matches!(v.property.name.as_str(), "match" | "exec") {
                     return;
                 }
@@ -88,27 +88,28 @@ impl Rule for PreferRegexpTest {
             AstKind::ForStatement(for_stmt) => {
                 let Some(test) = &for_stmt.test else { return };
 
-                let Expression::CallExpression(call_expr2) = test else {
+                let ExpressionKind::CallExpression(call_expr2) = test.kind() else {
                     return;
                 };
 
                 // Check if the `test` of the for statement is the same node as the call expression.
-                if call_expr2.address() != call_expr.unstable_address() {
+                if call_expr2.unstable_address() != call_expr.unstable_address() {
                     return;
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                let Expression::CallExpression(call_expr2) = &conditional_expr.test else {
+                let ExpressionKind::CallExpression(call_expr2) = conditional_expr.test.kind()
+                else {
                     return;
                 };
 
                 // Check if the `test` of the conditional expression is the same node as the call expression.
-                if call_expr2.address() != call_expr.unstable_address() {
+                if call_expr2.unstable_address() != call_expr.unstable_address() {
                     return;
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                let Expression::Identifier(ident) = &call_expr.callee else {
+                let ExpressionKind::Identifier(ident) = call_expr.callee.kind() else {
                     return;
                 };
 
@@ -125,23 +126,19 @@ impl Rule for PreferRegexpTest {
 
         match name.as_str() {
             "match" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
+                if member_expr.object().is_literal() && !member_expr.object().is_reg_exp_literal() {
                     return;
                 }
 
                 if let Some(expr) = call_expr.arguments[0].as_expression()
                     && expr.is_literal()
-                    && !matches!(expr, Expression::RegExpLiteral(_))
+                    && !expr.is_reg_exp_literal()
                 {
                     return;
                 }
             }
             "exec" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
+                if member_expr.object().is_literal() && !member_expr.object().is_reg_exp_literal() {
                     return;
                 }
             }

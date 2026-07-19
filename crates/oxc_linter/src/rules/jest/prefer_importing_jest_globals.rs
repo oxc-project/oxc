@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPattern, Expression},
+    ast::{Argument, BindingPattern, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -329,9 +329,9 @@ fn try_merge_cjs_require<'a>(
 }
 
 fn is_string_arg_matching(arg: &Argument, value: &str) -> bool {
-    arg.as_expression().is_some_and(|expr| match expr {
-        Expression::StringLiteral(lit) => lit.value == value,
-        Expression::TemplateLiteral(tpl) => {
+    arg.as_expression().is_some_and(|expr| match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => lit.value == value,
+        ExpressionKind::TemplateLiteral(tpl) => {
             tpl.quasis.len() == 1
                 && tpl.expressions.is_empty()
                 && tpl.quasis.first().is_some_and(|q| q.value.raw == value)

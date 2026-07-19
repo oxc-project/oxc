@@ -85,119 +85,119 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_expression(&mut *node, ctx);
-    match &mut *node {
-        Expression::BooleanLiteral(node) => {
-            walk_boolean_literal(traverser, (&mut **node) as *mut _, ctx)
+    match (*node).kind_mut() {
+        ExpressionKindMut::BooleanLiteral(node) => {
+            walk_boolean_literal(traverser, node as *mut _, ctx)
         }
-        Expression::NullLiteral(node) => walk_null_literal(traverser, (&mut **node) as *mut _, ctx),
-        Expression::NumericLiteral(node) => {
-            walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::NullLiteral(node) => walk_null_literal(traverser, node as *mut _, ctx),
+        ExpressionKindMut::NumericLiteral(node) => {
+            walk_numeric_literal(traverser, node as *mut _, ctx)
         }
-        Expression::BigIntLiteral(node) => {
-            walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::BigIntLiteral(node) => {
+            walk_big_int_literal(traverser, node as *mut _, ctx)
         }
-        Expression::RegExpLiteral(node) => {
-            walk_reg_exp_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::RegExpLiteral(node) => {
+            walk_reg_exp_literal(traverser, node as *mut _, ctx)
         }
-        Expression::StringLiteral(node) => {
-            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::StringLiteral(node) => {
+            walk_string_literal(traverser, node as *mut _, ctx)
         }
-        Expression::TemplateLiteral(node) => {
-            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TemplateLiteral(node) => {
+            walk_template_literal(traverser, node as *mut _, ctx)
         }
-        Expression::Identifier(node) => {
-            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::Identifier(node) => {
+            walk_identifier_reference(traverser, node as *mut _, ctx)
         }
-        Expression::Super(node) => walk_super(traverser, (&mut **node) as *mut _, ctx),
-        Expression::ArrayExpression(node) => {
-            walk_array_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::Super(node) => walk_super(traverser, node as *mut _, ctx),
+        ExpressionKindMut::ArrayExpression(node) => {
+            walk_array_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ArrowFunctionExpression(node) => {
-            walk_arrow_function_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ArrowFunctionExpression(node) => {
+            walk_arrow_function_expression(traverser, node as *mut _, ctx)
         }
-        Expression::AssignmentExpression(node) => {
-            walk_assignment_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::AssignmentExpression(node) => {
+            walk_assignment_expression(traverser, node as *mut _, ctx)
         }
-        Expression::AwaitExpression(node) => {
-            walk_await_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::AwaitExpression(node) => {
+            walk_await_expression(traverser, node as *mut _, ctx)
         }
-        Expression::BinaryExpression(node) => {
-            walk_binary_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::BinaryExpression(node) => {
+            walk_binary_expression(traverser, node as *mut _, ctx)
         }
-        Expression::CallExpression(node) => {
-            walk_call_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::CallExpression(node) => {
+            walk_call_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ChainExpression(node) => {
-            walk_chain_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ChainExpression(node) => {
+            walk_chain_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ClassExpression(node) => walk_class(traverser, (&mut **node) as *mut _, ctx),
-        Expression::ConditionalExpression(node) => {
-            walk_conditional_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ClassExpression(node) => walk_class(traverser, node as *mut _, ctx),
+        ExpressionKindMut::ConditionalExpression(node) => {
+            walk_conditional_expression(traverser, node as *mut _, ctx)
         }
-        Expression::FunctionExpression(node) => {
-            walk_function(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::FunctionExpression(node) => {
+            walk_function(traverser, node as *mut _, ctx)
         }
-        Expression::ImportExpression(node) => {
-            walk_import_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ImportExpression(node) => {
+            walk_import_expression(traverser, node as *mut _, ctx)
         }
-        Expression::LogicalExpression(node) => {
-            walk_logical_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::LogicalExpression(node) => {
+            walk_logical_expression(traverser, node as *mut _, ctx)
         }
-        Expression::NewExpression(node) => {
-            walk_new_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::NewExpression(node) => {
+            walk_new_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ObjectExpression(node) => {
-            walk_object_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ObjectExpression(node) => {
+            walk_object_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ParenthesizedExpression(node) => {
-            walk_parenthesized_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ParenthesizedExpression(node) => {
+            walk_parenthesized_expression(traverser, node as *mut _, ctx)
         }
-        Expression::SequenceExpression(node) => {
-            walk_sequence_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::SequenceExpression(node) => {
+            walk_sequence_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TaggedTemplateExpression(node) => {
-            walk_tagged_template_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TaggedTemplateExpression(node) => {
+            walk_tagged_template_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ThisExpression(node) => {
-            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ThisExpression(node) => {
+            walk_this_expression(traverser, node as *mut _, ctx)
         }
-        Expression::UnaryExpression(node) => {
-            walk_unary_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::UnaryExpression(node) => {
+            walk_unary_expression(traverser, node as *mut _, ctx)
         }
-        Expression::UpdateExpression(node) => {
-            walk_update_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::UpdateExpression(node) => {
+            walk_update_expression(traverser, node as *mut _, ctx)
         }
-        Expression::YieldExpression(node) => {
-            walk_yield_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::YieldExpression(node) => {
+            walk_yield_expression(traverser, node as *mut _, ctx)
         }
-        Expression::PrivateInExpression(node) => {
-            walk_private_in_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::PrivateInExpression(node) => {
+            walk_private_in_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ImportMeta(node) => walk_import_meta(traverser, (&mut **node) as *mut _, ctx),
-        Expression::NewTarget(node) => walk_new_target(traverser, (&mut **node) as *mut _, ctx),
-        Expression::JSXElement(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
-        Expression::JSXFragment(node) => walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx),
-        Expression::TSAsExpression(node) => {
-            walk_ts_as_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ImportMeta(node) => walk_import_meta(traverser, node as *mut _, ctx),
+        ExpressionKindMut::NewTarget(node) => walk_new_target(traverser, node as *mut _, ctx),
+        ExpressionKindMut::JSXElement(node) => walk_jsx_element(traverser, node as *mut _, ctx),
+        ExpressionKindMut::JSXFragment(node) => walk_jsx_fragment(traverser, node as *mut _, ctx),
+        ExpressionKindMut::TSAsExpression(node) => {
+            walk_ts_as_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TSSatisfiesExpression(node) => {
-            walk_ts_satisfies_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSSatisfiesExpression(node) => {
+            walk_ts_satisfies_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TSTypeAssertion(node) => {
-            walk_ts_type_assertion(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSTypeAssertion(node) => {
+            walk_ts_type_assertion(traverser, node as *mut _, ctx)
         }
-        Expression::TSNonNullExpression(node) => {
-            walk_ts_non_null_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSNonNullExpression(node) => {
+            walk_ts_non_null_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TSInstantiationExpression(node) => {
-            walk_ts_instantiation_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSInstantiationExpression(node) => {
+            walk_ts_instantiation_expression(traverser, node as *mut _, ctx)
         }
-        Expression::V8IntrinsicExpression(node) => {
-            walk_v8_intrinsic_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::V8IntrinsicExpression(node) => {
+            walk_v8_intrinsic_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ComputedMemberExpression(_)
-        | Expression::StaticMemberExpression(_)
-        | Expression::PrivateFieldExpression(_) => {
+        ExpressionKindMut::ComputedMemberExpression(_)
+        | ExpressionKindMut::StaticMemberExpression(_)
+        | ExpressionKindMut::PrivateFieldExpression(_) => {
             walk_member_expression(traverser, node as *mut _, ctx)
         }
     }
@@ -280,52 +280,7 @@ unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         ArrayExpressionElement::Elision(node) => {
             walk_elision(traverser, (&mut **node) as *mut _, ctx)
         }
-        ArrayExpressionElement::BooleanLiteral(_)
-        | ArrayExpressionElement::NullLiteral(_)
-        | ArrayExpressionElement::NumericLiteral(_)
-        | ArrayExpressionElement::BigIntLiteral(_)
-        | ArrayExpressionElement::RegExpLiteral(_)
-        | ArrayExpressionElement::StringLiteral(_)
-        | ArrayExpressionElement::TemplateLiteral(_)
-        | ArrayExpressionElement::Identifier(_)
-        | ArrayExpressionElement::Super(_)
-        | ArrayExpressionElement::ArrayExpression(_)
-        | ArrayExpressionElement::ArrowFunctionExpression(_)
-        | ArrayExpressionElement::AssignmentExpression(_)
-        | ArrayExpressionElement::AwaitExpression(_)
-        | ArrayExpressionElement::BinaryExpression(_)
-        | ArrayExpressionElement::CallExpression(_)
-        | ArrayExpressionElement::ChainExpression(_)
-        | ArrayExpressionElement::ClassExpression(_)
-        | ArrayExpressionElement::ConditionalExpression(_)
-        | ArrayExpressionElement::FunctionExpression(_)
-        | ArrayExpressionElement::ImportExpression(_)
-        | ArrayExpressionElement::LogicalExpression(_)
-        | ArrayExpressionElement::NewExpression(_)
-        | ArrayExpressionElement::ObjectExpression(_)
-        | ArrayExpressionElement::ParenthesizedExpression(_)
-        | ArrayExpressionElement::SequenceExpression(_)
-        | ArrayExpressionElement::TaggedTemplateExpression(_)
-        | ArrayExpressionElement::ThisExpression(_)
-        | ArrayExpressionElement::UnaryExpression(_)
-        | ArrayExpressionElement::UpdateExpression(_)
-        | ArrayExpressionElement::YieldExpression(_)
-        | ArrayExpressionElement::PrivateInExpression(_)
-        | ArrayExpressionElement::ImportMeta(_)
-        | ArrayExpressionElement::NewTarget(_)
-        | ArrayExpressionElement::JSXElement(_)
-        | ArrayExpressionElement::JSXFragment(_)
-        | ArrayExpressionElement::TSAsExpression(_)
-        | ArrayExpressionElement::TSSatisfiesExpression(_)
-        | ArrayExpressionElement::TSTypeAssertion(_)
-        | ArrayExpressionElement::TSNonNullExpression(_)
-        | ArrayExpressionElement::TSInstantiationExpression(_)
-        | ArrayExpressionElement::V8IntrinsicExpression(_)
-        | ArrayExpressionElement::ComputedMemberExpression(_)
-        | ArrayExpressionElement::StaticMemberExpression(_)
-        | ArrayExpressionElement::PrivateFieldExpression(_) => {
-            walk_expression(traverser, node as *mut _, ctx)
-        }
+        ArrayExpressionElement::Expression(node) => walk_expression(traverser, node as *mut _, ctx),
     }
     traverser.exit_array_expression_element(&mut *node, ctx);
 }
@@ -411,50 +366,7 @@ unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         PropertyKey::PrivateIdentifier(node) => {
             walk_private_identifier(traverser, (&mut **node) as *mut _, ctx)
         }
-        PropertyKey::BooleanLiteral(_)
-        | PropertyKey::NullLiteral(_)
-        | PropertyKey::NumericLiteral(_)
-        | PropertyKey::BigIntLiteral(_)
-        | PropertyKey::RegExpLiteral(_)
-        | PropertyKey::StringLiteral(_)
-        | PropertyKey::TemplateLiteral(_)
-        | PropertyKey::Identifier(_)
-        | PropertyKey::Super(_)
-        | PropertyKey::ArrayExpression(_)
-        | PropertyKey::ArrowFunctionExpression(_)
-        | PropertyKey::AssignmentExpression(_)
-        | PropertyKey::AwaitExpression(_)
-        | PropertyKey::BinaryExpression(_)
-        | PropertyKey::CallExpression(_)
-        | PropertyKey::ChainExpression(_)
-        | PropertyKey::ClassExpression(_)
-        | PropertyKey::ConditionalExpression(_)
-        | PropertyKey::FunctionExpression(_)
-        | PropertyKey::ImportExpression(_)
-        | PropertyKey::LogicalExpression(_)
-        | PropertyKey::NewExpression(_)
-        | PropertyKey::ObjectExpression(_)
-        | PropertyKey::ParenthesizedExpression(_)
-        | PropertyKey::SequenceExpression(_)
-        | PropertyKey::TaggedTemplateExpression(_)
-        | PropertyKey::ThisExpression(_)
-        | PropertyKey::UnaryExpression(_)
-        | PropertyKey::UpdateExpression(_)
-        | PropertyKey::YieldExpression(_)
-        | PropertyKey::PrivateInExpression(_)
-        | PropertyKey::ImportMeta(_)
-        | PropertyKey::NewTarget(_)
-        | PropertyKey::JSXElement(_)
-        | PropertyKey::JSXFragment(_)
-        | PropertyKey::TSAsExpression(_)
-        | PropertyKey::TSSatisfiesExpression(_)
-        | PropertyKey::TSTypeAssertion(_)
-        | PropertyKey::TSNonNullExpression(_)
-        | PropertyKey::TSInstantiationExpression(_)
-        | PropertyKey::V8IntrinsicExpression(_)
-        | PropertyKey::ComputedMemberExpression(_)
-        | PropertyKey::StaticMemberExpression(_)
-        | PropertyKey::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
+        PropertyKey::Expression(node) => walk_expression(traverser, node as *mut _, ctx),
     }
     traverser.exit_property_key(&mut *node, ctx);
 }
@@ -530,15 +442,15 @@ unsafe fn walk_member_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_member_expression(&mut *node, ctx);
-    match &mut *node {
-        MemberExpression::ComputedMemberExpression(node) => {
-            walk_computed_member_expression(traverser, (&mut **node) as *mut _, ctx)
+    match (*node).kind_mut() {
+        MemberExpressionKindMut::ComputedMemberExpression(node) => {
+            walk_computed_member_expression(traverser, node as *mut _, ctx)
         }
-        MemberExpression::StaticMemberExpression(node) => {
-            walk_static_member_expression(traverser, (&mut **node) as *mut _, ctx)
+        MemberExpressionKindMut::StaticMemberExpression(node) => {
+            walk_static_member_expression(traverser, node as *mut _, ctx)
         }
-        MemberExpression::PrivateFieldExpression(node) => {
-            walk_private_field_expression(traverser, (&mut **node) as *mut _, ctx)
+        MemberExpressionKindMut::PrivateFieldExpression(node) => {
+            walk_private_field_expression(traverser, node as *mut _, ctx)
         }
     }
     traverser.exit_member_expression(&mut *node, ctx);
@@ -728,50 +640,7 @@ unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
         Argument::SpreadElement(node) => {
             walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
         }
-        Argument::BooleanLiteral(_)
-        | Argument::NullLiteral(_)
-        | Argument::NumericLiteral(_)
-        | Argument::BigIntLiteral(_)
-        | Argument::RegExpLiteral(_)
-        | Argument::StringLiteral(_)
-        | Argument::TemplateLiteral(_)
-        | Argument::Identifier(_)
-        | Argument::Super(_)
-        | Argument::ArrayExpression(_)
-        | Argument::ArrowFunctionExpression(_)
-        | Argument::AssignmentExpression(_)
-        | Argument::AwaitExpression(_)
-        | Argument::BinaryExpression(_)
-        | Argument::CallExpression(_)
-        | Argument::ChainExpression(_)
-        | Argument::ClassExpression(_)
-        | Argument::ConditionalExpression(_)
-        | Argument::FunctionExpression(_)
-        | Argument::ImportExpression(_)
-        | Argument::LogicalExpression(_)
-        | Argument::NewExpression(_)
-        | Argument::ObjectExpression(_)
-        | Argument::ParenthesizedExpression(_)
-        | Argument::SequenceExpression(_)
-        | Argument::TaggedTemplateExpression(_)
-        | Argument::ThisExpression(_)
-        | Argument::UnaryExpression(_)
-        | Argument::UpdateExpression(_)
-        | Argument::YieldExpression(_)
-        | Argument::PrivateInExpression(_)
-        | Argument::ImportMeta(_)
-        | Argument::NewTarget(_)
-        | Argument::JSXElement(_)
-        | Argument::JSXFragment(_)
-        | Argument::TSAsExpression(_)
-        | Argument::TSSatisfiesExpression(_)
-        | Argument::TSTypeAssertion(_)
-        | Argument::TSNonNullExpression(_)
-        | Argument::TSInstantiationExpression(_)
-        | Argument::V8IntrinsicExpression(_)
-        | Argument::ComputedMemberExpression(_)
-        | Argument::StaticMemberExpression(_)
-        | Argument::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
+        Argument::Expression(node) => walk_expression(traverser, node as *mut _, ctx),
     }
     traverser.exit_argument(&mut *node, ctx);
 }
@@ -953,9 +822,7 @@ unsafe fn walk_assignment_target<'a, Tr: Traverse<'a>>(
         | AssignmentTarget::TSSatisfiesExpression(_)
         | AssignmentTarget::TSNonNullExpression(_)
         | AssignmentTarget::TSTypeAssertion(_)
-        | AssignmentTarget::ComputedMemberExpression(_)
-        | AssignmentTarget::StaticMemberExpression(_)
-        | AssignmentTarget::PrivateFieldExpression(_) => {
+        | AssignmentTarget::MemberExpression(_) => {
             walk_simple_assignment_target(traverser, node as *mut _, ctx)
         }
         AssignmentTarget::ArrayAssignmentTarget(_)
@@ -988,9 +855,7 @@ unsafe fn walk_simple_assignment_target<'a, Tr: Traverse<'a>>(
         SimpleAssignmentTarget::TSTypeAssertion(node) => {
             walk_ts_type_assertion(traverser, (&mut **node) as *mut _, ctx)
         }
-        SimpleAssignmentTarget::ComputedMemberExpression(_)
-        | SimpleAssignmentTarget::StaticMemberExpression(_)
-        | SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+        SimpleAssignmentTarget::MemberExpression(node) => {
             walk_member_expression(traverser, node as *mut _, ctx)
         }
     }
@@ -1101,9 +966,7 @@ unsafe fn walk_assignment_target_maybe_default<'a, Tr: Traverse<'a>>(
         | AssignmentTargetMaybeDefault::TSTypeAssertion(_)
         | AssignmentTargetMaybeDefault::ArrayAssignmentTarget(_)
         | AssignmentTargetMaybeDefault::ObjectAssignmentTarget(_)
-        | AssignmentTargetMaybeDefault::ComputedMemberExpression(_)
-        | AssignmentTargetMaybeDefault::StaticMemberExpression(_)
-        | AssignmentTargetMaybeDefault::PrivateFieldExpression(_) => {
+        | AssignmentTargetMaybeDefault::MemberExpression(_) => {
             walk_assignment_target(traverser, node as *mut _, ctx)
         }
     }
@@ -1281,9 +1144,7 @@ unsafe fn walk_chain_element<'a, Tr: Traverse<'a>>(
         ChainElement::TSNonNullExpression(node) => {
             walk_ts_non_null_expression(traverser, (&mut **node) as *mut _, ctx)
         }
-        ChainElement::ComputedMemberExpression(_)
-        | ChainElement::StaticMemberExpression(_)
-        | ChainElement::PrivateFieldExpression(_) => {
+        ChainElement::MemberExpression(node) => {
             walk_member_expression(traverser, node as *mut _, ctx)
         }
     }
@@ -1689,52 +1550,7 @@ unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         ForStatementInit::VariableDeclaration(node) => {
             walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        ForStatementInit::BooleanLiteral(_)
-        | ForStatementInit::NullLiteral(_)
-        | ForStatementInit::NumericLiteral(_)
-        | ForStatementInit::BigIntLiteral(_)
-        | ForStatementInit::RegExpLiteral(_)
-        | ForStatementInit::StringLiteral(_)
-        | ForStatementInit::TemplateLiteral(_)
-        | ForStatementInit::Identifier(_)
-        | ForStatementInit::Super(_)
-        | ForStatementInit::ArrayExpression(_)
-        | ForStatementInit::ArrowFunctionExpression(_)
-        | ForStatementInit::AssignmentExpression(_)
-        | ForStatementInit::AwaitExpression(_)
-        | ForStatementInit::BinaryExpression(_)
-        | ForStatementInit::CallExpression(_)
-        | ForStatementInit::ChainExpression(_)
-        | ForStatementInit::ClassExpression(_)
-        | ForStatementInit::ConditionalExpression(_)
-        | ForStatementInit::FunctionExpression(_)
-        | ForStatementInit::ImportExpression(_)
-        | ForStatementInit::LogicalExpression(_)
-        | ForStatementInit::NewExpression(_)
-        | ForStatementInit::ObjectExpression(_)
-        | ForStatementInit::ParenthesizedExpression(_)
-        | ForStatementInit::SequenceExpression(_)
-        | ForStatementInit::TaggedTemplateExpression(_)
-        | ForStatementInit::ThisExpression(_)
-        | ForStatementInit::UnaryExpression(_)
-        | ForStatementInit::UpdateExpression(_)
-        | ForStatementInit::YieldExpression(_)
-        | ForStatementInit::PrivateInExpression(_)
-        | ForStatementInit::ImportMeta(_)
-        | ForStatementInit::NewTarget(_)
-        | ForStatementInit::JSXElement(_)
-        | ForStatementInit::JSXFragment(_)
-        | ForStatementInit::TSAsExpression(_)
-        | ForStatementInit::TSSatisfiesExpression(_)
-        | ForStatementInit::TSTypeAssertion(_)
-        | ForStatementInit::TSNonNullExpression(_)
-        | ForStatementInit::TSInstantiationExpression(_)
-        | ForStatementInit::V8IntrinsicExpression(_)
-        | ForStatementInit::ComputedMemberExpression(_)
-        | ForStatementInit::StaticMemberExpression(_)
-        | ForStatementInit::PrivateFieldExpression(_) => {
-            walk_expression(traverser, node as *mut _, ctx)
-        }
+        ForStatementInit::Expression(node) => walk_expression(traverser, node as *mut _, ctx),
     }
     traverser.exit_for_statement_init(&mut *node, ctx);
 }
@@ -1793,9 +1609,7 @@ unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
         | ForStatementLeft::TSTypeAssertion(_)
         | ForStatementLeft::ArrayAssignmentTarget(_)
         | ForStatementLeft::ObjectAssignmentTarget(_)
-        | ForStatementLeft::ComputedMemberExpression(_)
-        | ForStatementLeft::StaticMemberExpression(_)
-        | ForStatementLeft::PrivateFieldExpression(_) => {
+        | ForStatementLeft::MemberExpression(_) => {
             walk_assignment_target(traverser, node as *mut _, ctx)
         }
     }
@@ -3115,50 +2929,7 @@ unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(node) => {
             walk_ts_interface_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        ExportDefaultDeclarationKind::BooleanLiteral(_)
-        | ExportDefaultDeclarationKind::NullLiteral(_)
-        | ExportDefaultDeclarationKind::NumericLiteral(_)
-        | ExportDefaultDeclarationKind::BigIntLiteral(_)
-        | ExportDefaultDeclarationKind::RegExpLiteral(_)
-        | ExportDefaultDeclarationKind::StringLiteral(_)
-        | ExportDefaultDeclarationKind::TemplateLiteral(_)
-        | ExportDefaultDeclarationKind::Identifier(_)
-        | ExportDefaultDeclarationKind::Super(_)
-        | ExportDefaultDeclarationKind::ArrayExpression(_)
-        | ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
-        | ExportDefaultDeclarationKind::AssignmentExpression(_)
-        | ExportDefaultDeclarationKind::AwaitExpression(_)
-        | ExportDefaultDeclarationKind::BinaryExpression(_)
-        | ExportDefaultDeclarationKind::CallExpression(_)
-        | ExportDefaultDeclarationKind::ChainExpression(_)
-        | ExportDefaultDeclarationKind::ClassExpression(_)
-        | ExportDefaultDeclarationKind::ConditionalExpression(_)
-        | ExportDefaultDeclarationKind::FunctionExpression(_)
-        | ExportDefaultDeclarationKind::ImportExpression(_)
-        | ExportDefaultDeclarationKind::LogicalExpression(_)
-        | ExportDefaultDeclarationKind::NewExpression(_)
-        | ExportDefaultDeclarationKind::ObjectExpression(_)
-        | ExportDefaultDeclarationKind::ParenthesizedExpression(_)
-        | ExportDefaultDeclarationKind::SequenceExpression(_)
-        | ExportDefaultDeclarationKind::TaggedTemplateExpression(_)
-        | ExportDefaultDeclarationKind::ThisExpression(_)
-        | ExportDefaultDeclarationKind::UnaryExpression(_)
-        | ExportDefaultDeclarationKind::UpdateExpression(_)
-        | ExportDefaultDeclarationKind::YieldExpression(_)
-        | ExportDefaultDeclarationKind::PrivateInExpression(_)
-        | ExportDefaultDeclarationKind::ImportMeta(_)
-        | ExportDefaultDeclarationKind::NewTarget(_)
-        | ExportDefaultDeclarationKind::JSXElement(_)
-        | ExportDefaultDeclarationKind::JSXFragment(_)
-        | ExportDefaultDeclarationKind::TSAsExpression(_)
-        | ExportDefaultDeclarationKind::TSSatisfiesExpression(_)
-        | ExportDefaultDeclarationKind::TSTypeAssertion(_)
-        | ExportDefaultDeclarationKind::TSNonNullExpression(_)
-        | ExportDefaultDeclarationKind::TSInstantiationExpression(_)
-        | ExportDefaultDeclarationKind::V8IntrinsicExpression(_)
-        | ExportDefaultDeclarationKind::ComputedMemberExpression(_)
-        | ExportDefaultDeclarationKind::StaticMemberExpression(_)
-        | ExportDefaultDeclarationKind::PrivateFieldExpression(_) => {
+        ExportDefaultDeclarationKind::Expression(node) => {
             walk_expression(traverser, node as *mut _, ctx)
         }
     }
@@ -3518,52 +3289,7 @@ unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
         JSXExpression::EmptyExpression(node) => {
             walk_jsx_empty_expression(traverser, (&mut **node) as *mut _, ctx)
         }
-        JSXExpression::BooleanLiteral(_)
-        | JSXExpression::NullLiteral(_)
-        | JSXExpression::NumericLiteral(_)
-        | JSXExpression::BigIntLiteral(_)
-        | JSXExpression::RegExpLiteral(_)
-        | JSXExpression::StringLiteral(_)
-        | JSXExpression::TemplateLiteral(_)
-        | JSXExpression::Identifier(_)
-        | JSXExpression::Super(_)
-        | JSXExpression::ArrayExpression(_)
-        | JSXExpression::ArrowFunctionExpression(_)
-        | JSXExpression::AssignmentExpression(_)
-        | JSXExpression::AwaitExpression(_)
-        | JSXExpression::BinaryExpression(_)
-        | JSXExpression::CallExpression(_)
-        | JSXExpression::ChainExpression(_)
-        | JSXExpression::ClassExpression(_)
-        | JSXExpression::ConditionalExpression(_)
-        | JSXExpression::FunctionExpression(_)
-        | JSXExpression::ImportExpression(_)
-        | JSXExpression::LogicalExpression(_)
-        | JSXExpression::NewExpression(_)
-        | JSXExpression::ObjectExpression(_)
-        | JSXExpression::ParenthesizedExpression(_)
-        | JSXExpression::SequenceExpression(_)
-        | JSXExpression::TaggedTemplateExpression(_)
-        | JSXExpression::ThisExpression(_)
-        | JSXExpression::UnaryExpression(_)
-        | JSXExpression::UpdateExpression(_)
-        | JSXExpression::YieldExpression(_)
-        | JSXExpression::PrivateInExpression(_)
-        | JSXExpression::ImportMeta(_)
-        | JSXExpression::NewTarget(_)
-        | JSXExpression::JSXElement(_)
-        | JSXExpression::JSXFragment(_)
-        | JSXExpression::TSAsExpression(_)
-        | JSXExpression::TSSatisfiesExpression(_)
-        | JSXExpression::TSTypeAssertion(_)
-        | JSXExpression::TSNonNullExpression(_)
-        | JSXExpression::TSInstantiationExpression(_)
-        | JSXExpression::V8IntrinsicExpression(_)
-        | JSXExpression::ComputedMemberExpression(_)
-        | JSXExpression::StaticMemberExpression(_)
-        | JSXExpression::PrivateFieldExpression(_) => {
-            walk_expression(traverser, node as *mut _, ctx)
-        }
+        JSXExpression::Expression(node) => walk_expression(traverser, node as *mut _, ctx),
     }
     traverser.exit_jsx_expression(&mut *node, ctx);
 }

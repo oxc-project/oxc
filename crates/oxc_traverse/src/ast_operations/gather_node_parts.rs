@@ -162,7 +162,7 @@ impl<'a> GatherNodeParts<'a> for ExportDefaultDeclarationKind<'a> {
             ExportDefaultDeclarationKind::FunctionDeclaration(decl) => decl.gather(f),
             ExportDefaultDeclarationKind::ClassDeclaration(decl) => decl.gather(f),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {}
-            match_expression!(ExportDefaultDeclarationKind) => self.to_expression().gather(f),
+            ExportDefaultDeclarationKind::Expression(expr) => expr.gather(f),
         }
     }
 }
@@ -269,32 +269,34 @@ impl<'a> GatherNodeParts<'a> for AssignmentPattern<'a> {
 
 impl<'a> GatherNodeParts<'a> for Expression<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        match self {
-            match_member_expression!(Self) => self.to_member_expression().gather(f),
-            Self::Identifier(ident) => ident.gather(f),
-            Self::CallExpression(expr) => expr.gather(f),
-            Self::NewExpression(expr) => expr.gather(f),
-            Self::ObjectExpression(expr) => expr.gather(f),
-            Self::ThisExpression(expr) => expr.gather(f),
-            Self::Super(expr) => expr.gather(f),
-            Self::ImportExpression(expr) => expr.gather(f),
-            Self::YieldExpression(expr) => expr.gather(f),
-            Self::AwaitExpression(expr) => expr.gather(f),
-            Self::AssignmentExpression(expr) => expr.gather(f),
-            Self::FunctionExpression(expr) => expr.gather(f),
-            Self::ClassExpression(expr) => expr.gather(f),
-            Self::ParenthesizedExpression(expr) => expr.gather(f),
-            Self::UnaryExpression(expr) => expr.gather(f),
-            Self::UpdateExpression(expr) => expr.gather(f),
-            Self::ChainExpression(expr) => expr.gather(f),
-            Self::ImportMeta(expr) => expr.gather(f),
-            Self::NewTarget(expr) => expr.gather(f),
-            Self::JSXElement(expr) => expr.gather(f),
-            Self::JSXFragment(expr) => expr.gather(f),
-            Self::StringLiteral(expr) => expr.gather(f),
-            Self::NumericLiteral(expr) => expr.gather(f),
-            Self::BooleanLiteral(expr) => expr.gather(f),
-            Self::BigIntLiteral(expr) => expr.gather(f),
+        match self.kind() {
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => self.to_member_expression().gather(f),
+            ExpressionKind::Identifier(ident) => ident.gather(f),
+            ExpressionKind::CallExpression(expr) => expr.gather(f),
+            ExpressionKind::NewExpression(expr) => expr.gather(f),
+            ExpressionKind::ObjectExpression(expr) => expr.gather(f),
+            ExpressionKind::ThisExpression(expr) => expr.gather(f),
+            ExpressionKind::Super(expr) => expr.gather(f),
+            ExpressionKind::ImportExpression(expr) => expr.gather(f),
+            ExpressionKind::YieldExpression(expr) => expr.gather(f),
+            ExpressionKind::AwaitExpression(expr) => expr.gather(f),
+            ExpressionKind::AssignmentExpression(expr) => expr.gather(f),
+            ExpressionKind::FunctionExpression(expr) => expr.gather(f),
+            ExpressionKind::ClassExpression(expr) => expr.gather(f),
+            ExpressionKind::ParenthesizedExpression(expr) => expr.gather(f),
+            ExpressionKind::UnaryExpression(expr) => expr.gather(f),
+            ExpressionKind::UpdateExpression(expr) => expr.gather(f),
+            ExpressionKind::ChainExpression(expr) => expr.gather(f),
+            ExpressionKind::ImportMeta(expr) => expr.gather(f),
+            ExpressionKind::NewTarget(expr) => expr.gather(f),
+            ExpressionKind::JSXElement(expr) => expr.gather(f),
+            ExpressionKind::JSXFragment(expr) => expr.gather(f),
+            ExpressionKind::StringLiteral(expr) => expr.gather(f),
+            ExpressionKind::NumericLiteral(expr) => expr.gather(f),
+            ExpressionKind::BooleanLiteral(expr) => expr.gather(f),
+            ExpressionKind::BigIntLiteral(expr) => expr.gather(f),
             _ => (),
         }
     }
@@ -311,21 +313,21 @@ impl<'a> GatherNodeParts<'a> for ChainElement<'a> {
         match self {
             ChainElement::CallExpression(expr) => expr.gather(f),
             ChainElement::TSNonNullExpression(expr) => expr.expression.gather(f),
-            expr @ match_member_expression!(Self) => expr.to_member_expression().gather(f),
+            ChainElement::MemberExpression(expr) => expr.gather(f),
         }
     }
 }
 
 impl<'a> GatherNodeParts<'a> for MemberExpression<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        match self {
-            MemberExpression::ComputedMemberExpression(expr) => {
+        match self.kind() {
+            MemberExpressionKind::ComputedMemberExpression(expr) => {
                 expr.gather(f);
             }
-            MemberExpression::StaticMemberExpression(expr) => {
+            MemberExpressionKind::StaticMemberExpression(expr) => {
                 expr.gather(f);
             }
-            MemberExpression::PrivateFieldExpression(expr) => {
+            MemberExpressionKind::PrivateFieldExpression(expr) => {
                 expr.gather(f);
             }
         }
@@ -461,7 +463,7 @@ impl<'a> GatherNodeParts<'a> for SimpleAssignmentTarget<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gather(f),
-            match_member_expression!(Self) => self.to_member_expression().gather(f),
+            Self::MemberExpression(expr) => expr.gather(f),
             _ => {}
         }
     }
@@ -528,7 +530,7 @@ impl<'a> GatherNodeParts<'a> for PropertyKey<'a> {
         match self {
             PropertyKey::StaticIdentifier(ident) => ident.gather(f),
             PropertyKey::PrivateIdentifier(ident) => ident.gather(f),
-            match_expression!(Self) => self.to_expression().gather(f),
+            PropertyKey::Expression(expr) => expr.gather(f),
         }
     }
 }

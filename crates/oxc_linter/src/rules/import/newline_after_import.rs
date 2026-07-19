@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrowFunctionExpression, BlockStatement, CallExpression, Declaration, Decorator,
+        ArrowFunctionExpression, BlockStatement, CallExpression, Declaration, Decorator,
         ExportDefaultDeclarationKind, Function, ObjectExpression, Statement,
     },
 };
@@ -348,7 +348,9 @@ fn is_static_require_call(call_expr: &CallExpression, ctx: &LintContext<'_>) -> 
         return false;
     }
 
-    matches!(call_expr.arguments.first(), Some(Argument::StringLiteral(_)))
+    call_expr.arguments.first().is_some_and(|arg| {
+        arg.as_expression().is_some_and(oxc_ast::ast::Expression::is_string_literal)
+    })
 }
 
 fn is_top_level_static_require_call(

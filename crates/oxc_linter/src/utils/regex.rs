@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, RegExpFlags},
+    ast::{Argument, Expression, ExpressionKind, RegExpFlags},
 };
 use oxc_regular_expression::{ConstructorParser, LiteralParser, Options, ast::Pattern};
 use oxc_semantic::IsGlobalReference;
@@ -65,9 +65,9 @@ pub fn get_regex_flags_span(arg: Option<&Argument>) -> RegexFlagsParseResult {
         return RegexFlagsParseResult::NoValidArgument;
     };
 
-    match arg {
-        Expression::StringLiteral(flags) => RegexFlagsParseResult::Valid(Some(flags.span)),
-        Expression::TemplateLiteral(flags) => {
+    match arg.kind() {
+        ExpressionKind::StringLiteral(flags) => RegexFlagsParseResult::Valid(Some(flags.span)),
+        ExpressionKind::TemplateLiteral(flags) => {
             if flags.is_no_substitution_template() {
                 RegexFlagsParseResult::Valid(Some(flags.span))
             } else {
@@ -82,12 +82,12 @@ pub fn get_regex_pattern_span(arg: Option<&Argument>) -> Option<Span> {
     // note: improvements required for strings used via identifier references
     // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
     let arg = arg?.as_expression()?.get_inner_expression();
-    match arg {
-        Expression::RegExpLiteral(reg) => {
+    match arg.kind() {
+        ExpressionKind::RegExpLiteral(reg) => {
             reg.regex.pattern.pattern.as_ref().map(|pattern| pattern.span)
         }
-        Expression::StringLiteral(pattern) => Some(pattern.span),
-        Expression::TemplateLiteral(pattern) if pattern.is_no_substitution_template() => {
+        ExpressionKind::StringLiteral(pattern) => Some(pattern.span),
+        ExpressionKind::TemplateLiteral(pattern) if pattern.is_no_substitution_template() => {
             Some(pattern.span)
         }
         _ => None,
@@ -115,7 +115,8 @@ pub fn run_on_arguments<M>(
 
     // the argument is a regex literal
     let mut is_regex_literal = false;
-    if let Some(Argument::RegExpLiteral(reg)) = arg1 {
+    if let Some(reg) = arg1.and_then(|arg| arg.as_expression()).and_then(|e| e.as_reg_exp_literal())
+    {
         let Some(pat) = &reg.regex.pattern.pattern else {
             return;
         };
@@ -159,7 +160,7 @@ pub fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>
         return true;
     }
     if let Some(member) = callee.get_member_expr()
-        && let Expression::Identifier(obj) = &member.object().get_inner_expression()
+        && let ExpressionKind::Identifier(obj) = member.object().get_inner_expression().kind()
         && member.static_property_name() == Some("RegExp")
         && (obj.is_global_reference_name(static_ident!("globalThis"), ctx.semantic().scoping())
             || obj.is_global_reference_name(static_ident!("window"), ctx.semantic().scoping())

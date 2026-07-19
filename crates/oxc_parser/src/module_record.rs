@@ -283,7 +283,9 @@ impl<'a> ModuleRecordBuilder<'a> {
         default_keyword_span: Span,
     ) {
         let local_name = match &decl.declaration {
-            ExportDefaultDeclarationKind::Identifier(ident) => {
+            ExportDefaultDeclarationKind::Expression(expr)
+                if let Some(ident) = expr.as_identifier() =>
+            {
                 ExportLocalName::Default(NameSpan::new(ident.name.into(), ident.span))
             }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
@@ -299,7 +301,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(t) => {
                 ExportLocalName::Name(NameSpan::new(t.id.name.into(), t.id.span))
             }
-            _ => ExportLocalName::Null,
+            ExportDefaultDeclarationKind::Expression(_) => ExportLocalName::Null,
         };
         let export_entry = ExportEntry {
             statement_span: decl.span,

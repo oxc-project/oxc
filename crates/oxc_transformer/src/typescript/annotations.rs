@@ -85,7 +85,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                     !decl.is_typescript_syntax()
                         && !matches!(
                             &decl.declaration,
-                            ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
+                            ExportDefaultDeclarationKind::Expression(e)
+                                if e.as_identifier().is_some_and(|ident| Self::is_refers_to_type(ident, ctx))
                         )
                 }
                 Statement::ImportDeclaration(decl) => {
@@ -195,10 +196,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
     fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let ChainElement::TSNonNullExpression(e) = element {
-            *element = match e.expression.get_inner_expression_mut().take_in(ctx) {
-                Expression::CallExpression(call_expr) => ChainElement::CallExpression(call_expr),
-                expr @ match_member_expression!(Expression) => {
-                    ChainElement::from(expr.into_member_expression())
+            let inner = e.expression.get_inner_expression_mut().take_in(ctx);
+            *element = match inner.tag() {
+                ExpressionTag::CallExpression => {
+                    let ExpressionKindOwned::CallExpression(call_expr) = inner.into_kind() else {
+                        unreachable!()
+                    };
+                    ChainElement::CallExpression(call_expr)
+                }
+                _ if inner.is_member_expression() => {
+                    ChainElement::from(inner.into_member_expression())
                 }
                 _ => {
                     /* syntax error */
@@ -263,17 +270,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(expr) = target.get_expression_mut() {
-            match expr.get_inner_expression_mut() {
+            let inner_expr = expr.get_inner_expression_mut();
+            match inner_expr.tag() {
                 // `foo!++` to `foo++`
-                inner_expr @ Expression::Identifier(_) => {
+                ExpressionTag::Identifier => {
                     let inner_expr = inner_expr.take_in(ctx);
-                    let Expression::Identifier(ident) = inner_expr else {
+                    let ExpressionKindOwned::Identifier(ident) = inner_expr.into_kind() else {
                         unreachable!();
                     };
                     *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
                 }
                 // `foo.bar!++` to `foo.bar++`
-                inner_expr @ match_member_expression!(Expression) => {
+                _ if inner_expr.is_member_expression() => {
                     let inner_expr = inner_expr.take_in(ctx);
                     let member_expr = inner_expr.into_member_expression();
                     *target = SimpleAssignmentTarget::from(member_expr);

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPattern, Expression, IdentifierReference},
+    ast::{Argument, BindingPattern, Expression, ExpressionKind, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -109,11 +109,11 @@ fn is_reference_expression<'a>(
         return false;
     };
 
-    match fill_value {
-        Expression::ObjectExpression(_)
-        | Expression::ArrayExpression(_)
-        | Expression::ClassExpression(_) => true,
-        Expression::NewExpression(new_expr) => {
+    match fill_value.kind() {
+        ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::ClassExpression(_) => true,
+        ExpressionKind::NewExpression(new_expr) => {
             !is_regexp_callee(new_expr.callee.get_inner_expression(), ctx)
         }
         _ => false,
@@ -124,7 +124,7 @@ fn get_const_variable_initializer<'a>(
     fill_value: &'a Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<&'a Expression<'a>> {
-    let Expression::Identifier(ident) = fill_value.get_inner_expression() else {
+    let ExpressionKind::Identifier(ident) = fill_value.get_inner_expression().kind() else {
         return None;
     };
 

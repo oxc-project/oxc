@@ -143,7 +143,9 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 // going to get broken anyways.
                 let arrow_expression = arrow.get_expression();
 
-                if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
+                if let Some(sequence) =
+                    arrow_expression.and_then(Expression::as_sequence_expression)
+                {
                     return if let Some(format_sequence) =
                         format_sequence_with_leading_comment(sequence.span(), &format_body, f)
                     {
@@ -165,13 +167,13 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 write!(f, formatted_signature);
 
                 let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
-                        Expression::ArrowFunctionExpression(_)
-                        | Expression::ArrayExpression(_)
-                        | Expression::ObjectExpression(_) => {
+                    arrow_expression.is_none_or(|expression| match expression.tag() {
+                        ExpressionTag::ArrowFunctionExpression
+                        | ExpressionTag::ArrayExpression
+                        | ExpressionTag::ObjectExpression => {
                             !has_own_line_comment_before_body(arrow, f)
                         }
-                        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+                        ExpressionTag::JSXElement | ExpressionTag::JSXFragment => true,
                         _ => {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
                                 || is_huggable_html_embed(expression, f)
@@ -365,9 +367,9 @@ pub fn is_multiline_template_starting_on_same_line(
     expression: &Expression,
     source_text: SourceText,
 ) -> bool {
-    let (start, template) = match expression {
-        Expression::TemplateLiteral(template) => (template.span.start, template.as_ref()),
-        Expression::TaggedTemplateExpression(tagged) => (tagged.span.start, &tagged.quasi),
+    let (start, template) = match expression.kind() {
+        ExpressionKind::TemplateLiteral(template) => (template.span.start, template),
+        ExpressionKind::TaggedTemplateExpression(tagged) => (tagged.span.start, &tagged.quasi),
         _ => return false,
     };
 
@@ -394,9 +396,9 @@ pub fn is_multiline_template_starting_on_same_line(
 /// Prettier achieves this via `label({ embed: true, hug })` + `shouldExpandLastArg`.
 /// We replicate it by detecting the same conditions on the expression.
 pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    let template = match expression {
-        Expression::TaggedTemplateExpression(tagged) => {
-            if !matches!(&tagged.tag, Expression::Identifier(id) if id.name.as_str() == "html") {
+    let template = match expression.kind() {
+        ExpressionKind::TaggedTemplateExpression(tagged) => {
+            if tagged.tag.as_identifier().is_none_or(|id| id.name.as_str() != "html") {
                 return false;
             }
             // Exclude cases where a line comment between tag and quasi forces a line break
@@ -408,7 +410,7 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '
             }
             &tagged.quasi
         }
-        Expression::TemplateLiteral(template) => {
+        ExpressionKind::TemplateLiteral(template) => {
             // Check for `/* HTML */` leading comment
             let comments = f.comments().comments_before(template.span.start);
             if !comments.last().is_some_and(|comment| {
@@ -416,7 +418,7 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '
             }) {
                 return false;
             }
-            template.as_ref()
+            template
         }
         _ => return false,
     };
@@ -501,12 +503,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         // in its entirety.
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
-                expression,
-                Expression::ObjectExpression(_)
-                    | Expression::ArrayExpression(_)
-                    | Expression::SequenceExpression(_)
-                    | Expression::JSXElement(_)
-                    | Expression::JSXFragment(_)
+                expression.tag(),
+                ExpressionTag::ObjectExpression
+                    | ExpressionTag::ArrayExpression
+                    | ExpressionTag::SequenceExpression
+                    | ExpressionTag::JSXElement
+                    | ExpressionTag::JSXFragment
             )
         });
 
@@ -515,7 +517,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         // Sequence expressions are excluded:
         // their body formatting already places the leading comment (see `format_sequence_with_leading_comment`).
         let tail_body_has_leading_own_line_comment =
-            !matches!(tail.get_expression(), Some(Expression::SequenceExpression(_)))
+            !tail.get_expression().is_some_and(Expression::is_sequence_expression)
                 && has_own_line_comment_before_body(tail, f);
         let body_on_separate_line = body_on_separate_line || tail_body_has_leading_own_line_comment;
 
@@ -644,7 +646,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
-            if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
+            if let Some(sequence) =
+                tail.get_expression().and_then(Expression::as_sequence_expression)
+            {
                 if let Some(format_sequence) =
                     format_sequence_with_leading_comment(sequence.span(), &format_tail_body, f)
                 {
@@ -770,12 +774,12 @@ fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
+    if stmt.expression.is_conditional_expression() {
         !matches!(
-            ExpressionLeftSide::leftmost(stmt.expression()).as_ref(),
-            Expression::ObjectExpression(_)
-                | Expression::FunctionExpression(_)
-                | Expression::ClassExpression(_)
+            ExpressionLeftSide::leftmost(stmt.expression()).as_ref().tag(),
+            ExpressionTag::ObjectExpression
+                | ExpressionTag::FunctionExpression
+                | ExpressionTag::ClassExpression
         )
     } else {
         false

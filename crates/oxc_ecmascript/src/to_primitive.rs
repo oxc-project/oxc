@@ -60,13 +60,13 @@ impl<'a> ToPrimitive<'a> for Expression<'a> {
             ValueType::String => ToPrimitiveResult::String,
             ValueType::Boolean => ToPrimitiveResult::Boolean,
             ValueType::Object | ValueType::Undetermined => {
-                match self {
-                    Expression::RegExpLiteral(_) | Expression::ArrayExpression(_) => {
+                match self.kind() {
+                    ExpressionKind::RegExpLiteral(_) | ExpressionKind::ArrayExpression(_) => {
                         ToPrimitiveResult::String
                     }
                     // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
                     // ToPrimitive for an object returns `"[object Object]"`
-                    Expression::ObjectExpression(obj) => {
+                    ExpressionKind::ObjectExpression(obj) => {
                         if maybe_object_with_to_primitive_related_properties_overridden(obj) {
                             ToPrimitiveResult::Undetermined
                         } else {
@@ -89,21 +89,23 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
                 matches!(id.name.as_str(), "toString" | "valueOf")
             }
             PropertyKey::PrivateIdentifier(_) => false,
-            PropertyKey::StringLiteral(str) => {
-                matches!(str.value.as_str(), "toString" | "valueOf")
-            }
-            PropertyKey::TemplateLiteral(temp) => temp
-                .single_quasi()
-                .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf")),
-            _ => true,
+            PropertyKey::Expression(expr) => match expr.kind() {
+                ExpressionKind::StringLiteral(str) => {
+                    matches!(str.value.as_str(), "toString" | "valueOf")
+                }
+                ExpressionKind::TemplateLiteral(temp) => temp
+                    .single_quasi()
+                    .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf")),
+                _ => true,
+            },
         },
-        ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
-            Expression::ObjectExpression(obj) => {
+        ObjectPropertyKind::SpreadProperty(e) => match e.argument.kind() {
+            ExpressionKind::ObjectExpression(obj) => {
                 maybe_object_with_to_primitive_related_properties_overridden(obj)
             }
-            Expression::ArrayExpression(_)
-            | Expression::StringLiteral(_)
-            | Expression::TemplateLiteral(_) => false,
+            ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::StringLiteral(_)
+            | ExpressionKind::TemplateLiteral(_) => false,
             _ => true,
         },
     })

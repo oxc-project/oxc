@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, Function, FunctionType, IdentifierReference, NewTarget, Super, ThisExpression,
-    },
+    ast::{Function, FunctionType, IdentifierReference, NewTarget, Super, ThisExpression},
 };
 use oxc_ast_visit::Visit;
 use oxc_codegen::{Context, Gen};
@@ -210,7 +208,9 @@ fn get_callback_info<'a>(
                     if !bound {
                         bound = true;
                         if call.arguments.len() == 1
-                            && matches!(&call.arguments[0], Argument::ThisExpression(_))
+                            && call.arguments[0]
+                                .as_expression()
+                                .is_some_and(oxc_ast::ast::Expression::is_this_expression)
                         {
                             info.is_lexical_this = true;
                             info.bind_this_call_span = Some(call.span);

@@ -1128,11 +1128,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let expression = self.parse_literal_expression();
         let span = self.end_span(span);
-        let literal = match expression {
-            Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
-            Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
-            Expression::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
-            Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
+        let literal = match expression.into_kind() {
+            ExpressionKindOwned::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
+            ExpressionKindOwned::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
+            ExpressionKindOwned::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
+            ExpressionKindOwned::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
             _ => return self.unexpected(),
         };
         TSType::new_ts_literal_type(span, literal, self)

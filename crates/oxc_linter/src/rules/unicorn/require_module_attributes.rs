@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectProperty, PropertyKind, WithClause},
+    ast::{ExpressionKind, ObjectProperty, PropertyKind, WithClause},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -72,7 +72,9 @@ impl Rule for RequireModuleAttributes {
             AstKind::ImportExpression(import_expr) => {
                 let Some(options) = &import_expr.options else { return };
 
-                let Expression::ObjectExpression(obj_expr) = options.get_inner_expression() else {
+                let ExpressionKind::ObjectExpression(obj_expr) =
+                    options.get_inner_expression().kind()
+                else {
                     return;
                 };
 

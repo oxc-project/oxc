@@ -174,7 +174,7 @@ mod test {
         assert_eq!(program.span, Span::new(0, 11));
         assert_eq!(program.body[1].span(), Span::new(1, 5));
         let Statement::ExpressionStatement(expr_stmt) = &program.body[1] else { unreachable!() };
-        let Expression::StringLiteral(s) = &expr_stmt.expression else { unreachable!() };
+        let Some(s) = expr_stmt.expression.as_string_literal() else { unreachable!() };
         assert_eq!(s.span, Span::new(1, 5));
         assert_eq!(program.comments[0].span, Span::new(6, 11));
 

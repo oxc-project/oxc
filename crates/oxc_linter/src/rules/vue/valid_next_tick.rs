@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -92,7 +92,7 @@ impl Rule for ValidNextTick {
                 let matches = match prop_name {
                     "$nextTick" => is_this_object(object, ctx),
                     "nextTick" => {
-                        matches!(object.get_inner_expression(), Expression::Identifier(id) if id.name == "Vue")
+                        matches!(object.get_inner_expression().kind(), ExpressionKind::Identifier(id) if id.name == "Vue")
                     }
                     _ => false,
                 };
@@ -190,7 +190,8 @@ fn is_awaited_promise(call_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
             let grandparent = ctx.nodes().parent_node(parent.id());
             if let AstKind::CallExpression(c) = grandparent.kind()
                 && let Some(member) = c.callee.get_member_expr()
-                && let Expression::Identifier(obj) = member.object().get_inner_expression()
+                && let ExpressionKind::Identifier(obj) =
+                    member.object().get_inner_expression().kind()
                 && obj.name == "Promise"
             {
                 return true;

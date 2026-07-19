@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectPropertyKind},
+    ast::{Expression, ExpressionKind, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -107,7 +107,9 @@ impl Rule for NoDeprecatedModelDefinition {
             return;
         }
 
-        let Expression::ObjectExpression(model_value) = prop.value.get_inner_expression() else {
+        let ExpressionKind::ObjectExpression(model_value) =
+            prop.value.get_inner_expression().kind()
+        else {
             return;
         };
 
@@ -152,9 +154,9 @@ fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<S
 }
 
 fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
-    match expr {
-        Expression::StringLiteral(lit) => Some(lit.value.to_string()),
-        Expression::TemplateLiteral(tpl) => tpl.single_quasi().map(Str::into_string),
+    match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => Some(lit.value.to_string()),
+        ExpressionKind::TemplateLiteral(tpl) => tpl.single_quasi().map(Str::into_string),
         _ => None,
     }
 }

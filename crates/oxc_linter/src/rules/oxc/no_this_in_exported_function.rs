@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName},
+    ast::{Declaration, ExportDefaultDeclarationKind, ExpressionKind, Function, ModuleExportName},
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -93,7 +93,7 @@ impl Rule for NoThisInExportedFunction {
                         AstKind::Function(func) => func,
                         AstKind::VariableDeclarator(var_decl) => {
                             if let Some(init) = var_decl.init.as_ref()
-                                && let Expression::FunctionExpression(func) = init
+                                && let ExpressionKind::FunctionExpression(func) = init.kind()
                             {
                                 func
                             } else {

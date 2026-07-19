@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -72,7 +75,7 @@ impl Rule for NoTypeofUndefined {
             return;
         }
 
-        let Expression::UnaryExpression(unary_expr) = &bin_expr.left else {
+        let ExpressionKind::UnaryExpression(unary_expr) = bin_expr.left.kind() else {
             return;
         };
 
@@ -110,7 +113,7 @@ impl Rule for NoTypeofUndefined {
 }
 
 fn is_global_variable<'a>(ident: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
-    let Expression::Identifier(ident) = ident else {
+    let ExpressionKind::Identifier(ident) = ident.kind() else {
         return false;
     };
 

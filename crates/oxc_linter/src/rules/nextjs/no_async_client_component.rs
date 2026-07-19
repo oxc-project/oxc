@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, ExportDefaultDeclarationKind, Expression, Statement},
+    ast::{BindingPattern, ExportDefaultDeclarationKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -118,8 +118,8 @@ impl Rule for NoAsyncClientComponent {
                 }
 
                 // async function MyComponent() {...}; export default MyComponent;
-                let ExportDefaultDeclarationKind::Identifier(export_default_id) =
-                    &export_default_decl.declaration
+                let Some(export_default_id) =
+                    export_default_decl.declaration.as_expression().and_then(|e| e.as_identifier())
                 else {
                     continue;
                 };
@@ -149,8 +149,8 @@ impl Rule for NoAsyncClientComponent {
                 };
                 // `binding_ident.name` MUST be > 0 chars
                 if binding_ident.name.chars().next().unwrap().is_uppercase()
-                    && let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
-                        &var_declarator.init
+                    && let Some(init) = &var_declarator.init
+                    && let Some(arrow_expr) = init.as_arrow_function_expression()
                     && arrow_expr.r#async
                 {
                     ctx.diagnostic(no_async_client_component_diagnostic(binding_ident.span));

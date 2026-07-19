@@ -80,8 +80,8 @@ impl<'a> PeepholeOptimizations {
             // predicate), preventing fixed-point convergence.
             if !test_has_side_effects
                 && !matches!(
-                    &if_stmt.test,
-                    Expression::NumericLiteral(n)
+                    if_stmt.test.kind(),
+                    ExpressionKind::NumericLiteral(n)
                         if (boolean && n.value == 1.0) || (!boolean && n.value == 0.0)
                 )
             {
@@ -332,7 +332,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ConditionalExpression(e) = expr else { return };
+        let Some(e) = expr.as_conditional_expression_mut() else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
         let new_expr = if e.test.may_have_side_effects(ctx) {
             // "(a, true) ? b : c" => "a, b"
@@ -375,7 +375,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::SequenceExpression(e) = expr else { return };
+        let Some(e) = expr.as_sequence_expression_mut() else { return };
         let should_keep_as_sequence_expr = e
             .expressions
             .last()
@@ -442,8 +442,8 @@ impl<'a> PeepholeOptimizations {
             Statement::VariableDeclaration(decl) => {
                 for d in &decl.declarations {
                     if let BindingPattern::BindingIdentifier(id) = &d.id {
-                        match &d.init {
-                            Some(Expression::ArrowFunctionExpression(a)) => {
+                        match d.init.as_ref().map(Expression::kind) {
+                            Some(ExpressionKind::ArrowFunctionExpression(a)) => {
                                 Self::try_save_pure_function(
                                     Some(id),
                                     &a.params,
@@ -453,7 +453,7 @@ impl<'a> PeepholeOptimizations {
                                     ctx,
                                 );
                             }
-                            Some(Expression::FunctionExpression(f)) => {
+                            Some(ExpressionKind::FunctionExpression(f)) => {
                                 if let Some(body) = &f.body {
                                     Self::try_save_pure_function(
                                         Some(id),
@@ -525,8 +525,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::CallExpression(e) = expr else { return };
-        if let Expression::Identifier(ident) = &e.callee {
+        let Some(e) = expr.as_call_expression_mut() else { return };
+        if let Some(ident) = e.callee.as_identifier() {
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
                 && ctx.state.symbols.function_summary(symbol_id).returns_undefined()
@@ -555,33 +555,37 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
-                match access_value {
-                    Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
-                    match_member_expression!(Expression) => true,
+                match access_value.kind() {
+                    ExpressionKind::Identifier(id) => {
+                        id.name == "eval" && ctx.is_global_reference(id)
+                    }
+                    ExpressionKind::ComputedMemberExpression(_)
+                    | ExpressionKind::StaticMemberExpression(_)
+                    | ExpressionKind::PrivateFieldExpression(_) => true,
                     _ => false,
                 }
             }
             Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
                 UnaryOperator::Typeof => {
                     // Example case: `typeof (0, foo)` (error) -> `typeof foo` (no error)
-                    if let Expression::Identifier(id) = access_value {
+                    if let Some(id) = access_value.as_identifier() {
                         ctx.is_global_reference(id)
                     } else {
                         false
                     }
                 }
                 UnaryOperator::Delete => {
-                    match access_value {
+                    match access_value.kind() {
                         // Example case: `delete (0, foo)` (no error) -> `delete foo` (error)
-                        Expression::Identifier(_)
+                        ExpressionKind::Identifier(_)
                         // Example case: `delete (0, foo.#a)` (no error) -> `delete foo.#a` (error)
-                        | Expression::PrivateFieldExpression(_)
+                        | ExpressionKind::PrivateFieldExpression(_)
                         // Example case: `typeof (0, foo.bar)` (noop) -> `typeof foo.bar` (deletes bar)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::StaticMemberExpression(_) => true,
+                        | ExpressionKind::ComputedMemberExpression(_)
+                        | ExpressionKind::StaticMemberExpression(_) => true,
                         // Example case: `typeof (0, foo?.bar)` (noop) -> `typeof foo?.bar` (deletes bar)
-                        Expression::ChainExpression(chain) => {
-                            matches!(&chain.expression, match_member_expression!(ChainElement))
+                        ExpressionKind::ChainExpression(chain) => {
+                            chain.expression.is_member_expression()
                         }
                         _ => false,
                     }
@@ -620,7 +624,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Argument::SpreadElement(e) = &args[0] else { return };
-        let Expression::ArrayExpression(e) = &e.argument else { return };
+        let Some(e) = e.argument.as_array_expression() else { return };
         if e.elements.is_empty() {
             args.drain(..);
         }

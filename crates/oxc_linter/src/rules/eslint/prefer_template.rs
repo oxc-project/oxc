@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, BinaryOperator, Expression},
+    ast::{BinaryExpression, BinaryOperator, Expression, ExpressionKind, ExpressionTag},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -137,18 +137,18 @@ fn build_template_for_expr(
 ) -> String {
     let inner = node.without_parentheses();
 
-    if let Expression::StringLiteral(lit) = inner {
+    if let ExpressionKind::StringLiteral(lit) = inner.kind() {
         let raw = &source_text[lit.span.start as usize + 1..lit.span.end as usize - 1];
         let quote_char = source_text.as_bytes()[lit.span.start as usize];
         let escaped = escape_string_for_template(raw, quote_char as char);
         return format!("`{escaped}`");
     }
 
-    if matches!(inner, Expression::TemplateLiteral(_)) {
+    if inner.is_template_literal() {
         return source_text[inner.span().start as usize..inner.span().end as usize].to_string();
     }
 
-    if let Expression::BinaryExpression(binary) = inner
+    if let ExpressionKind::BinaryExpression(binary) = inner.kind()
         && binary.operator == BinaryOperator::Addition
         && has_string_literal(inner)
     {
@@ -174,11 +174,11 @@ fn has_octal_or_non_octal_decimal_escape_in_binary(
 }
 
 fn has_octal_or_non_octal_decimal_escape_in_expr(source_text: &str, expr: &Expression) -> bool {
-    match expr.without_parentheses() {
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             has_octal_or_non_octal_decimal_escape_in_binary(source_text, binary)
         }
-        Expression::StringLiteral(lit) => {
+        ExpressionKind::StringLiteral(lit) => {
             let raw = &source_text[lit.span.start as usize + 1..lit.span.end as usize - 1];
             check_octal_escape(raw)
         }
@@ -222,27 +222,27 @@ fn check_octal_escape(raw: &str) -> bool {
 /// in its concatenation tree.
 fn has_string_literal(node: &Expression) -> bool {
     let node = node.without_parentheses();
-    match node {
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+    match node.kind() {
+        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             has_string_literal(&binary.right) || has_string_literal(&binary.left)
         }
-        _ => node.is_string_literal(),
+        _ => matches!(node.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral),
     }
 }
 
 /// Will this node start with `${}` when converted to a template literal?
 fn starts_with_template_curly(node: &Expression) -> bool {
     let node = node.without_parentheses();
-    match node {
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+    match node.kind() {
+        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             starts_with_template_curly(&binary.left)
         }
-        Expression::TemplateLiteral(tl) => {
+        ExpressionKind::TemplateLiteral(tl) => {
             !tl.expressions.is_empty()
                 && !tl.quasis.is_empty()
                 && tl.quasis[0].span.start == tl.quasis[0].span.end
         }
-        Expression::StringLiteral(_) => false,
+        ExpressionKind::StringLiteral(_) => false,
         _ => true,
     }
 }
@@ -250,18 +250,18 @@ fn starts_with_template_curly(node: &Expression) -> bool {
 /// Will this node end with `${}` when converted to a template literal?
 fn ends_with_template_curly(node: &Expression) -> bool {
     let node = node.without_parentheses();
-    match node {
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+    match node.kind() {
+        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             starts_with_template_curly(&binary.right)
         }
-        Expression::TemplateLiteral(tl) => {
+        ExpressionKind::TemplateLiteral(tl) => {
             if let Some(last) = tl.quasis.last() {
                 !tl.expressions.is_empty() && last.span.start == last.span.end
             } else {
                 false
             }
         }
-        Expression::StringLiteral(_) => false,
+        ExpressionKind::StringLiteral(_) => false,
         _ => true,
     }
 }
@@ -370,8 +370,10 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
     let left = expr.left.get_inner_expression();
     let right = expr.right.get_inner_expression();
 
-    let left_is_string = left.is_string_literal();
-    let right_is_string = right.is_string_literal();
+    let left_is_string =
+        matches!(left.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral);
+    let right_is_string =
+        matches!(right.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral);
 
     match (left_is_string, right_is_string) {
         // 'a' + 'v'
@@ -386,25 +388,25 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
 }
 
 fn all_none_string_literal(expr: &Expression) -> bool {
-    if let Expression::BinaryExpression(binary) = expr
+    if let ExpressionKind::BinaryExpression(binary) = expr.kind()
         && binary.operator == BinaryOperator::Addition
     {
         return all_none_string_literal(binary.left.get_inner_expression())
             && all_none_string_literal(binary.right.get_inner_expression());
     }
 
-    !expr.is_string_literal()
+    !matches!(expr.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
 }
 
 fn any_none_string_literal(expr: &Expression) -> bool {
-    if let Expression::BinaryExpression(binary) = expr
+    if let ExpressionKind::BinaryExpression(binary) = expr.kind()
         && binary.operator == BinaryOperator::Addition
     {
         return any_none_string_literal(binary.left.get_inner_expression())
             || any_none_string_literal(binary.right.get_inner_expression());
     }
 
-    !expr.is_string_literal()
+    !matches!(expr.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
 }
 #[test]
 fn test() {

@@ -137,20 +137,21 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
     let mut need_initializer = false;
 
     decl.body.members.iter().for_each(|member| {
-        #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(
-                initializer.without_parentheses(),
+                initializer.without_parentheses().tag(),
                 // A = 1
-                Expression::NumericLiteral(_)
+                ExpressionTag::NumericLiteral
                     // B = A
-                    | Expression::Identifier(_)
+                    | ExpressionTag::Identifier
                     // C = E.D
-                    | match_member_expression!(Expression)
+                    | ExpressionTag::ComputedMemberExpression
+                    | ExpressionTag::StaticMemberExpression
+                    | ExpressionTag::PrivateFieldExpression
                     // D = 1 + 2
-                    | Expression::BinaryExpression(_)
+                    | ExpressionTag::BinaryExpression
                     // E = -1
-                    | Expression::UnaryExpression(_)
+                    | ExpressionTag::UnaryExpression
             );
         } else if need_initializer {
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));

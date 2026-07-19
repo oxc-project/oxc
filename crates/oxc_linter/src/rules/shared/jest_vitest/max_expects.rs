@@ -2,7 +2,7 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
@@ -83,7 +83,7 @@ impl MaxExpectsConfig {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Expression::Identifier(ident) = &call_expr.callee else {
+        let ExpressionKind::Identifier(ident) = call_expr.callee.kind() else {
             return;
         };
 

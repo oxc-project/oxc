@@ -580,7 +580,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ClassExpression(class) = expr else { unreachable!() };
+        let Some(class) = expr.as_class_expression_mut() else { unreachable!() };
 
         // Ignore TS class declarations
         // TODO: Is this correct?
@@ -610,7 +610,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ClassExpression(class) = expr else { unreachable!() };
+        let Some(class) = expr.as_class_expression_mut() else { unreachable!() };
 
         // Transform static properties, remove static and instance properties, and move computed keys
         // to before class

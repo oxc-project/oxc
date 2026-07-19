@@ -105,10 +105,10 @@ impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
 
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::Identifier(_) => self.transform_identifier(expr, ctx),
-            Expression::ImportMeta(_) => Self::transform_import_meta(expr, ctx),
-            Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
+        match expr.tag() {
+            ExpressionTag::Identifier => self.transform_identifier(expr, ctx),
+            ExpressionTag::ImportMeta => Self::transform_import_meta(expr, ctx),
+            ExpressionTag::ImportExpression => self.transform_dynamic_import(expr, ctx),
             _ => {}
         }
     }
@@ -202,7 +202,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// (0, __vite_ssr_import_0__.foo)();
     /// ```
     fn transform_identifier(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::Identifier(ident) = expr else {
+        let Some(ident) = expr.as_identifier() else {
             unreachable!();
         };
 
@@ -245,13 +245,13 @@ impl<'a> ModuleRunnerTransform<'a> {
     #[inline]
     fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         expr.replace_with(|expr| {
-            let Expression::ImportExpression(import_expr) = expr else {
+            let ExpressionKindOwned::ImportExpression(import_expr) = expr.into_kind() else {
                 unreachable!();
             };
 
             let ImportExpression { span, source, options, .. } = import_expr.unbox();
 
-            if let Expression::StringLiteral(source) = &source {
+            if let Some(source) = source.as_string_literal() {
                 self.dynamic_deps.insert(source.value.to_string());
             }
 
@@ -271,7 +271,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// Transform `import.meta` to `__vite_ssr_import_meta__`.
     #[inline]
     fn transform_import_meta(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ImportMeta(import_meta) = expr else {
+        let Some(import_meta) = expr.as_import_meta() else {
             unreachable!();
         };
 
@@ -604,7 +604,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 // Do nothing for `export default interface Foo {}`
                 return;
             }
-            expr @ match_expression!(ExportDefaultDeclarationKind) => expr.into_expression(),
+            ExportDefaultDeclarationKind::Expression(expr) => expr,
         };
 
         new_stmts.push(Self::create_export_default_assignment(span, expr, ctx));

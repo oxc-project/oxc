@@ -25,12 +25,12 @@ impl<'a> Expression<'a> {
     /// Returns `true` if this expression is TypeScript-specific syntax.
     pub fn is_typescript_syntax(&self) -> bool {
         matches!(
-            self,
-            Self::TSAsExpression(_)
-                | Self::TSSatisfiesExpression(_)
-                | Self::TSTypeAssertion(_)
-                | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
+            self.tag(),
+            ExpressionTag::TSAsExpression
+                | ExpressionTag::TSSatisfiesExpression
+                | ExpressionTag::TSTypeAssertion
+                | ExpressionTag::TSNonNullExpression
+                | ExpressionTag::TSInstantiationExpression
         )
     }
 
@@ -38,14 +38,14 @@ impl<'a> Expression<'a> {
     pub fn is_primary_expression(&self) -> bool {
         self.is_literal()
             || matches!(
-                self,
-                Self::Identifier(_)
-                    | Self::ThisExpression(_)
-                    | Self::FunctionExpression(_)
-                    | Self::ClassExpression(_)
-                    | Self::ParenthesizedExpression(_)
-                    | Self::ArrayExpression(_)
-                    | Self::ObjectExpression(_)
+                self.tag(),
+                ExpressionTag::Identifier
+                    | ExpressionTag::ThisExpression
+                    | ExpressionTag::FunctionExpression
+                    | ExpressionTag::ClassExpression
+                    | ExpressionTag::ParenthesizedExpression
+                    | ExpressionTag::ArrayExpression
+                    | ExpressionTag::ObjectExpression
             )
     }
 
@@ -58,34 +58,24 @@ impl<'a> Expression<'a> {
     pub fn is_literal(&self) -> bool {
         // Note: TemplateLiteral is not `Literal`
         matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumericLiteral(_)
-                | Self::BigIntLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_)
+            self.tag(),
+            ExpressionTag::BooleanLiteral
+                | ExpressionTag::NullLiteral
+                | ExpressionTag::NumericLiteral
+                | ExpressionTag::BigIntLiteral
+                | ExpressionTag::RegExpLiteral
+                | ExpressionTag::StringLiteral
         )
-    }
-
-    /// Returns `true` for [string](StringLiteral) and [template](TemplateLiteral) literals.
-    pub fn is_string_literal(&self) -> bool {
-        matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
     /// Return `true` if the expression is a plain template.
     pub fn is_no_substitution_template(&self) -> bool {
-        matches!(self, Expression::TemplateLiteral(e) if e.is_no_substitution_template())
+        self.as_template_literal().is_some_and(TemplateLiteral::is_no_substitution_template)
     }
 
     /// Returns `true` for [numeric](NumericLiteral) and [big int](BigIntLiteral) literals.
     pub fn is_number_literal(&self) -> bool {
-        matches!(self, Self::NumericLiteral(_) | Self::BigIntLiteral(_))
-    }
-
-    /// Returns `true` for [bigint literals](BigIntLiteral).
-    pub fn is_big_int_literal(&self) -> bool {
-        matches!(self, Self::BigIntLiteral(_))
+        matches!(self.tag(), ExpressionTag::NumericLiteral | ExpressionTag::BigIntLiteral)
     }
 
     /// Returns `true` for [string literals](StringLiteral) matching the
@@ -93,50 +83,48 @@ impl<'a> Expression<'a> {
     /// literals](TemplateLiteral) are not considered.
     #[inline]
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
-        match self {
-            Self::StringLiteral(s) => s.value == string,
-            _ => false,
-        }
+        self.as_string_literal().is_some_and(|s| s.value == string)
     }
 
     /// Determines whether the given expr is a `null` literal
     pub fn is_null(&self) -> bool {
-        matches!(self, Expression::NullLiteral(_))
+        self.is_null_literal()
     }
 
     /// Determines whether the given expr is a `undefined` literal
     pub fn is_undefined(&self) -> bool {
-        matches!(self, Self::Identifier(ident) if ident.name == "undefined")
+        self.as_identifier().is_some_and(|ident| ident.name == "undefined")
     }
 
     /// Determines whether the given expr is a `void expr`
     pub fn is_void(&self) -> bool {
-        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
+        self.as_unary_expression().is_some_and(|expr| expr.operator == UnaryOperator::Void)
     }
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void && expr.argument.is_number_0())
+        self.as_unary_expression()
+            .is_some_and(|expr| expr.operator == UnaryOperator::Void && expr.argument.is_number_0())
     }
 
     /// Returns `true` for [numeric literals](NumericLiteral)
     pub fn is_number(&self) -> bool {
-        matches!(self, Self::NumericLiteral(_))
+        self.is_numeric_literal()
     }
 
     /// Determines whether the given expr is a `0`
     pub fn is_number_0(&self) -> bool {
-        matches!(self, Self::NumericLiteral(lit) if lit.value == 0.0)
+        self.as_numeric_literal().is_some_and(|lit| lit.value == 0.0)
     }
 
     /// Determines whether the given expr is a specific [number](NumericLiteral) literal.
     pub fn is_number_value(&self, val: f64) -> bool {
-        matches!(self, Self::NumericLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
+        self.as_numeric_literal().is_some_and(|lit| (lit.value - val).abs() < f64::EPSILON)
     }
 
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
-        matches!(self, Self::NumericLiteral(lit) if lit.raw.as_ref().is_some_and(|raw| raw == val))
+        self.as_numeric_literal().is_some_and(|lit| lit.raw.as_ref().is_some_and(|raw| raw == val))
     }
 
     /// Determines whether the given expr evaluate to `undefined`
@@ -153,13 +141,13 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `NaN` literal
     pub fn is_nan(&self) -> bool {
-        matches!(self, Self::Identifier(ident) if ident.name == "NaN")
+        self.as_identifier().is_some_and(|ident| ident.name == "NaN")
     }
 
     /// Remove nested parentheses from this expression.
     pub fn without_parentheses(&self) -> &Self {
         let mut expr = self;
-        while let Expression::ParenthesizedExpression(paren_expr) = expr {
+        while let Some(paren_expr) = expr.as_parenthesized_expression() {
             expr = &paren_expr.expression;
         }
         expr
@@ -167,19 +155,16 @@ impl<'a> Expression<'a> {
 
     /// Remove nested parentheses from this expression.
     pub fn without_parentheses_mut(&mut self) -> &mut Self {
-        let mut expr = self;
-        while let Expression::ParenthesizedExpression(paran_expr) = expr {
-            expr = &mut paran_expr.expression;
+        if self.is_parenthesized_expression() {
+            self.to_parenthesized_expression_mut().expression.without_parentheses_mut()
+        } else {
+            self
         }
-        expr
     }
 
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
     pub fn is_specific_id(&self, name: &str) -> bool {
-        match self.get_inner_expression() {
-            Expression::Identifier(ident) => ident.name == name,
-            _ => false,
-        }
+        self.get_inner_expression().as_identifier().is_some_and(|ident| ident.name == name)
     }
 
     /// Returns `true` if this [`Expression`] is a [`MemberExpression`] with the specified `object`
@@ -188,17 +173,16 @@ impl<'a> Expression<'a> {
     /// For example, `Array.from` is a specific member access with `object` `Array` and `property` `from`
     /// and could be checked like `expr.is_specific_member_access("Array", "from")`.
     pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
-        match self.get_inner_expression() {
-            expr if expr.is_member_expression() => {
-                expr.to_member_expression().is_specific_member_access(object, property)
-            }
-            Expression::ChainExpression(chain) => {
-                let Some(expr) = chain.expression.as_member_expression() else {
-                    return false;
-                };
-                expr.is_specific_member_access(object, property)
-            }
-            _ => false,
+        let expr = self.get_inner_expression();
+        if let Some(member_expr) = expr.as_member_expression() {
+            member_expr.is_specific_member_access(object, property)
+        } else if let Some(chain) = expr.as_chain_expression() {
+            chain
+                .expression
+                .as_member_expression()
+                .is_some_and(|expr| expr.is_specific_member_access(object, property))
+        } else {
+            false
         }
     }
 
@@ -212,17 +196,16 @@ impl<'a> Expression<'a> {
     pub fn into_inner_expression(self) -> Expression<'a> {
         let mut expr = self;
         loop {
-            expr = match expr {
-                Expression::ParenthesizedExpression(e) => e.unbox().expression,
-                Expression::TSAsExpression(e) => e.unbox().expression,
-                Expression::TSSatisfiesExpression(e) => e.unbox().expression,
-                Expression::TSInstantiationExpression(e) => e.unbox().expression,
-                Expression::TSNonNullExpression(e) => e.unbox().expression,
-                Expression::TSTypeAssertion(e) => e.unbox().expression,
-                _ => break,
+            expr = match expr.into_kind() {
+                ExpressionKindOwned::ParenthesizedExpression(e) => e.unbox().expression,
+                ExpressionKindOwned::TSAsExpression(e) => e.unbox().expression,
+                ExpressionKindOwned::TSSatisfiesExpression(e) => e.unbox().expression,
+                ExpressionKindOwned::TSInstantiationExpression(e) => e.unbox().expression,
+                ExpressionKindOwned::TSNonNullExpression(e) => e.unbox().expression,
+                ExpressionKindOwned::TSTypeAssertion(e) => e.unbox().expression,
+                other => return Expression::from_kind(other),
             };
         }
-        expr
     }
 
     /// Gets the expression inside of this one, if applicable, and returns a reference to it.
@@ -235,13 +218,13 @@ impl<'a> Expression<'a> {
     pub fn get_inner_expression(&self) -> &Expression<'a> {
         let mut expr = self;
         loop {
-            expr = match expr {
-                Expression::ParenthesizedExpression(e) => &e.expression,
-                Expression::TSAsExpression(e) => &e.expression,
-                Expression::TSSatisfiesExpression(e) => &e.expression,
-                Expression::TSInstantiationExpression(e) => &e.expression,
-                Expression::TSNonNullExpression(e) => &e.expression,
-                Expression::TSTypeAssertion(e) => &e.expression,
+            expr = match expr.kind() {
+                ExpressionKind::ParenthesizedExpression(e) => &e.expression,
+                ExpressionKind::TSAsExpression(e) => &e.expression,
+                ExpressionKind::TSSatisfiesExpression(e) => &e.expression,
+                ExpressionKind::TSInstantiationExpression(e) => &e.expression,
+                ExpressionKind::TSNonNullExpression(e) => &e.expression,
+                ExpressionKind::TSTypeAssertion(e) => &e.expression,
                 _ => break,
             };
         }
@@ -256,102 +239,112 @@ impl<'a> Expression<'a> {
     /// For taking ownership of the expression inside, use [`Expression::into_inner_expression`].
     /// For getting an immutable reference to the expression inside, use [`Expression::get_inner_expression`].
     pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
-        let mut expr = self;
-        loop {
-            expr = match expr {
-                Expression::ParenthesizedExpression(e) => &mut e.expression,
-                Expression::TSAsExpression(e) => &mut e.expression,
-                Expression::TSSatisfiesExpression(e) => &mut e.expression,
-                Expression::TSInstantiationExpression(e) => &mut e.expression,
-                Expression::TSNonNullExpression(e) => &mut e.expression,
-                Expression::TSTypeAssertion(e) => &mut e.expression,
-                _ => break,
-            };
+        match self.tag() {
+            ExpressionTag::ParenthesizedExpression => {
+                self.to_parenthesized_expression_mut().expression.get_inner_expression_mut()
+            }
+            ExpressionTag::TSAsExpression => {
+                self.to_ts_as_expression_mut().expression.get_inner_expression_mut()
+            }
+            ExpressionTag::TSSatisfiesExpression => {
+                self.to_ts_satisfies_expression_mut().expression.get_inner_expression_mut()
+            }
+            ExpressionTag::TSInstantiationExpression => {
+                self.to_ts_instantiation_expression_mut().expression.get_inner_expression_mut()
+            }
+            ExpressionTag::TSNonNullExpression => {
+                self.to_ts_non_null_expression_mut().expression.get_inner_expression_mut()
+            }
+            ExpressionTag::TSTypeAssertion => {
+                self.to_ts_type_assertion_mut().expression.get_inner_expression_mut()
+            }
+            _ => self,
         }
-        expr
     }
 
     /// Turns any chainable expression such as `a.b` or `b()` into the chained equivalent
     /// such as `a?.b` or `b?.()`.
     pub fn into_chain_element(self) -> Option<ChainElement<'a>> {
-        match self {
-            Expression::StaticMemberExpression(e) => Some(ChainElement::StaticMemberExpression(e)),
-            Expression::ComputedMemberExpression(e) => {
+        match self.into_kind() {
+            ExpressionKindOwned::StaticMemberExpression(e) => {
+                Some(ChainElement::StaticMemberExpression(e))
+            }
+            ExpressionKindOwned::ComputedMemberExpression(e) => {
                 Some(ChainElement::ComputedMemberExpression(e))
             }
-            Expression::PrivateFieldExpression(e) => Some(ChainElement::PrivateFieldExpression(e)),
-            Expression::CallExpression(e) => Some(ChainElement::CallExpression(e)),
-            Expression::TSNonNullExpression(e) => Some(ChainElement::TSNonNullExpression(e)),
+            ExpressionKindOwned::PrivateFieldExpression(e) => {
+                Some(ChainElement::PrivateFieldExpression(e))
+            }
+            ExpressionKindOwned::CallExpression(e) => Some(ChainElement::CallExpression(e)),
+            ExpressionKindOwned::TSNonNullExpression(e) => {
+                Some(ChainElement::TSNonNullExpression(e))
+            }
             _ => None,
         }
     }
 
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
-        matches!(self, Expression::Identifier(_))
+        self.is_identifier()
     }
 
     /// Returns the [`IdentifierReference`] if this expression is an [`Expression::Identifier`],
     /// or contains an [`Expression::Identifier`] and reruns `None` otherwise.
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
-        match self.get_inner_expression() {
-            Expression::Identifier(ident) => Some(ident),
-            _ => None,
-        }
+        self.get_inner_expression().as_identifier()
     }
 
     /// Returns `true` if this [`Expression`] is a function
     /// (either [`Function`] or [`ArrowFunctionExpression`]).
     pub fn is_function(&self) -> bool {
-        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+        matches!(
+            self.tag(),
+            ExpressionTag::FunctionExpression | ExpressionTag::ArrowFunctionExpression
+        )
     }
 
     /// Returns `true` if this [`Expression`] is an anonymous function definition.
     /// Note that this includes [`Class`]s.
     /// <https://262.ecma-international.org/15.0/#sec-isanonymousfunctiondefinition>
     pub fn is_anonymous_function_definition(&self) -> bool {
-        match self.without_parentheses() {
-            Self::ArrowFunctionExpression(_) => true,
-            Self::FunctionExpression(func) => func.name().is_none(),
-            Self::ClassExpression(class) => class.name().is_none(),
+        match self.without_parentheses().kind() {
+            ExpressionKind::ArrowFunctionExpression(_) => true,
+            ExpressionKind::FunctionExpression(func) => func.name().is_none(),
+            ExpressionKind::ClassExpression(class) => class.name().is_none(),
             _ => false,
         }
     }
 
-    /// Returns `true` if this [`Expression`] is a [`CallExpression`].
-    pub fn is_call_expression(&self) -> bool {
-        matches!(self, Expression::CallExpression(_))
-    }
-
-    /// Returns `true` if this [`Expression`] is a [`Super`].
-    pub fn is_super(&self) -> bool {
-        matches!(self, Expression::Super(_))
-    }
-
     /// Returns `true` if this [`Expression`] is a [`CallExpression`] with [`Super`] as callee.
     pub fn is_super_call_expression(&self) -> bool {
-        matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
+        self.as_call_expression().is_some_and(|expr| expr.callee.is_super())
     }
 
     /// Returns `true` if this [`Expression`] is a [`CallExpression`], [`NewExpression`],
     /// or [`ImportExpression`].
     pub fn is_call_like_expression(&self) -> bool {
-        self.is_call_expression()
-            || matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
+        matches!(
+            self.tag(),
+            ExpressionTag::CallExpression
+                | ExpressionTag::NewExpression
+                | ExpressionTag::ImportExpression
+        )
     }
 
     /// Returns `true` if this [`Expression`] is a [`BinaryExpression`] or [`LogicalExpression`].
     pub fn is_binaryish(&self) -> bool {
-        matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
+        matches!(self.tag(), ExpressionTag::BinaryExpression | ExpressionTag::LogicalExpression)
     }
 
     /// Returns the [`MemberExpression`] if this expression is a [`MemberExpression`], contains a
     /// [`MemberExpression`], or is or part of a [`ChainExpression`] (such as `a?.b`),
     /// and returns `None` otherwise if this is not a member expression.
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
-        match self.get_inner_expression() {
-            Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
-            expr => expr.as_member_expression(),
+        let expr = self.get_inner_expression();
+        if let Some(chain_expr) = expr.as_chain_expression() {
+            chain_expr.expression.as_member_expression()
+        } else {
+            expr.as_member_expression()
         }
     }
 
@@ -359,35 +352,31 @@ impl<'a> Expression<'a> {
     ///
     /// See [`CallExpression::is_require_call`] for details of the exact patterns that match.
     pub fn is_require_call(&self) -> bool {
-        if let Self::CallExpression(call_expr) = self { call_expr.is_require_call() } else { false }
+        self.as_call_expression().is_some_and(CallExpression::is_require_call)
     }
 
     /// Returns `true` if this is an [assignment expression](AssignmentExpression).
     pub fn is_assignment(&self) -> bool {
-        matches!(self, Expression::AssignmentExpression(_))
+        self.is_assignment_expression()
     }
 
     /// Is identifier or `a.b` expression where `a` is an identifier.
     pub fn is_entity_name_expression(&self) -> bool {
         // Special case: treat `this.B` like `this` was an identifier
         matches!(
-            self.without_parentheses(),
-            Expression::Identifier(_) | Expression::ThisExpression(_)
+            self.without_parentheses().tag(),
+            ExpressionTag::Identifier | ExpressionTag::ThisExpression
         ) || self.is_property_access_entity_name_expression()
     }
 
     /// `a.b` expression where `a` is an identifier.
     pub fn is_property_access_entity_name_expression(&self) -> bool {
-        if let Expression::StaticMemberExpression(e) = self {
-            e.object.is_entity_name_expression()
-        } else {
-            false
-        }
+        self.as_static_member_expression().is_some_and(|e| e.object.is_entity_name_expression())
     }
 
     /// Returns `true` if this [`Expression`] is a [`JSXElement`] or [`JSXFragment`].
     pub fn is_jsx(&self) -> bool {
-        matches!(self, Self::JSXElement(_) | Self::JSXFragment(_))
+        matches!(self.tag(), ExpressionTag::JSXElement | ExpressionTag::JSXFragment)
     }
 }
 
@@ -430,7 +419,7 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     fn from(argument: Argument<'a>) -> Self {
         match argument {
             Argument::SpreadElement(spread) => Self::SpreadElement(spread),
-            _ => Self::from(argument.into_expression()),
+            Argument::Expression(expr) => Self::from(expr),
         }
     }
 }
@@ -464,13 +453,16 @@ impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
-            Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
-            Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
-            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
-            Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
-            _ => None,
+            Self::Expression(expr) => match expr.kind() {
+                ExpressionKind::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+                ExpressionKind::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
+                ExpressionKind::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
+                ExpressionKind::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+                ExpressionKind::NullLiteral(_) => Some(Cow::Borrowed("null")),
+                ExpressionKind::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
+                _ => None,
+            },
+            Self::PrivateIdentifier(_) => None,
         }
     }
 
@@ -530,7 +522,7 @@ impl<'a> PropertyKey<'a> {
 
     /// Returns `true` if this property key is a string literal with the given value.
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
-        matches!(self, Self::StringLiteral(s) if s.value == string)
+        matches!(self, Self::Expression(e) if e.is_specific_string_literal(string))
     }
 }
 
@@ -565,34 +557,34 @@ impl<'a> MemberExpression<'a> {
     /// Returns `true` if this member expression is a [`MemberExpression::ComputedMemberExpression`]. For example, `a[b]`
     /// in `let a = { b: 1 }; a[b]` is a computed member expression.
     pub fn is_computed(&self) -> bool {
-        matches!(self, MemberExpression::ComputedMemberExpression(_))
+        self.is_computed_member_expression()
     }
 
     /// Returns `true` if this member expression is an optionally chained member expression. For example, `a?.b`
     /// in `let a = null; a?.b` is an optionally chained member expression.
     pub fn optional(&self) -> bool {
-        match self {
-            MemberExpression::ComputedMemberExpression(expr) => expr.optional,
-            MemberExpression::StaticMemberExpression(expr) => expr.optional,
-            MemberExpression::PrivateFieldExpression(expr) => expr.optional,
+        match self.kind() {
+            MemberExpressionKind::ComputedMemberExpression(expr) => expr.optional,
+            MemberExpressionKind::StaticMemberExpression(expr) => expr.optional,
+            MemberExpressionKind::PrivateFieldExpression(expr) => expr.optional,
         }
     }
 
     /// Returns a reference to the [`Expression`] that is the object of this member expression.
     pub fn object(&self) -> &Expression<'a> {
-        match self {
-            MemberExpression::ComputedMemberExpression(expr) => &expr.object,
-            MemberExpression::StaticMemberExpression(expr) => &expr.object,
-            MemberExpression::PrivateFieldExpression(expr) => &expr.object,
+        match self.kind() {
+            MemberExpressionKind::ComputedMemberExpression(expr) => &expr.object,
+            MemberExpressionKind::StaticMemberExpression(expr) => &expr.object,
+            MemberExpressionKind::PrivateFieldExpression(expr) => &expr.object,
         }
     }
 
     /// Returns a mutable reference to the [`Expression`] that is the object of this member expression.
     pub fn object_mut(&mut self) -> &mut Expression<'a> {
-        match self {
-            MemberExpression::ComputedMemberExpression(expr) => &mut expr.object,
-            MemberExpression::StaticMemberExpression(expr) => &mut expr.object,
-            MemberExpression::PrivateFieldExpression(expr) => &mut expr.object,
+        match self.kind_mut() {
+            MemberExpressionKindMut::ComputedMemberExpression(expr) => &mut expr.object,
+            MemberExpressionKindMut::StaticMemberExpression(expr) => &mut expr.object,
+            MemberExpressionKindMut::PrivateFieldExpression(expr) => &mut expr.object,
         }
     }
 
@@ -607,12 +599,12 @@ impl<'a> MemberExpression<'a> {
     /// - `a[b]` would return `None`
     /// - `a.#b` would return `None`
     pub fn static_property_name(&self) -> Option<&'a str> {
-        match self {
-            MemberExpression::ComputedMemberExpression(expr) => {
+        match self.kind() {
+            MemberExpressionKind::ComputedMemberExpression(expr) => {
                 expr.static_property_name().map(|name| name.as_str())
             }
-            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
-            MemberExpression::PrivateFieldExpression(_) => None,
+            MemberExpressionKind::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
+            MemberExpressionKind::PrivateFieldExpression(_) => None,
         }
     }
 
@@ -621,10 +613,10 @@ impl<'a> MemberExpression<'a> {
     ///
     /// If you don't need the [`Span`], use [`MemberExpression::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
-        match self {
-            MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
-                Expression::TemplateLiteral(lit) => {
+        match self.kind() {
+            MemberExpressionKind::ComputedMemberExpression(expr) => match expr.expression.kind() {
+                ExpressionKind::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                ExpressionKind::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
                         lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
                     } else {
@@ -633,24 +625,28 @@ impl<'a> MemberExpression<'a> {
                 }
                 _ => None,
             },
-            MemberExpression::StaticMemberExpression(expr) => {
+            MemberExpressionKind::StaticMemberExpression(expr) => {
                 Some((expr.property.span, expr.property.name.as_str()))
             }
-            MemberExpression::PrivateFieldExpression(_) => None,
+            MemberExpressionKind::PrivateFieldExpression(_) => None,
         }
     }
 
     /// Returns `true` if this member expression is a specific member access such as `a.b`, and takes
     /// into account whether it might also be an optionally chained member access such as `a?.b`.
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
-        let object_matches = match self.object().without_parentheses() {
-            Expression::ChainExpression(x) => match x.expression.member_expression() {
-                None => false,
-                Some(member_expr) => {
-                    member_expr.object().without_parentheses().is_specific_id(object)
+        let object_matches = {
+            let obj = self.object().without_parentheses();
+            if let Some(x) = obj.as_chain_expression() {
+                match x.expression.member_expression() {
+                    None => false,
+                    Some(member_expr) => {
+                        member_expr.object().without_parentheses().is_specific_id(object)
+                    }
                 }
-            },
-            x => x.is_specific_id(object),
+            } else {
+                obj.is_specific_id(object)
+            }
         };
 
         let property_matches = self.static_property_name().is_some_and(|p| p == property);
@@ -668,10 +664,12 @@ impl<'a> MemberExpression<'a> {
 impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
     pub fn static_property_name(&self) -> Option<Str<'a>> {
-        match &self.expression {
-            Expression::StringLiteral(lit) => Some(lit.value),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
-            Expression::RegExpLiteral(lit) => lit.raw,
+        match self.expression.kind() {
+            ExpressionKind::StringLiteral(lit) => Some(lit.value),
+            ExpressionKind::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                lit.quasis[0].value.cooked
+            }
+            ExpressionKind::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
     }
@@ -680,12 +678,12 @@ impl<'a> ComputedMemberExpression<'a> {
     /// or `None` otherwise.
     /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
-        match &self.expression {
-            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+        match self.expression.kind() {
+            ExpressionKind::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+            ExpressionKind::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
                 lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
             }
-            Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
+            ExpressionKind::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,
         }
     }
@@ -696,13 +694,17 @@ impl<'a> StaticMemberExpression<'a> {
     pub fn get_first_object(&self) -> &Expression<'a> {
         let mut object = &self.object;
         loop {
-            match object {
-                Expression::StaticMemberExpression(member) => {
+            match object.kind() {
+                ExpressionKind::StaticMemberExpression(member) => {
                     object = &member.object;
                     continue;
                 }
-                Expression::ChainExpression(chain) => {
-                    if let ChainElement::StaticMemberExpression(member) = &chain.expression {
+                ExpressionKind::ChainExpression(chain) => {
+                    if let Some(member) = chain
+                        .expression
+                        .as_member_expression()
+                        .and_then(MemberExpression::as_static_member_expression)
+                    {
                         object = &member.object;
                         continue;
                     }
@@ -725,10 +727,7 @@ impl<'a> ChainElement<'a> {
     /// Returns the member expression.
     pub fn member_expression(&self) -> Option<&MemberExpression<'a>> {
         match self {
-            ChainElement::TSNonNullExpression(e) => match &e.expression {
-                match_member_expression!(Expression) => e.expression.as_member_expression(),
-                _ => None,
-            },
+            ChainElement::TSNonNullExpression(e) => e.expression.as_member_expression(),
             _ => self.as_member_expression(),
         }
     }
@@ -739,9 +738,7 @@ impl<'a> From<ChainElement<'a>> for Expression<'a> {
         match value {
             ChainElement::CallExpression(e) => Expression::CallExpression(e),
             ChainElement::TSNonNullExpression(e) => Expression::TSNonNullExpression(e),
-            match_member_expression!(ChainElement) => {
-                Expression::from(value.into_member_expression())
-            }
+            ChainElement::MemberExpression(e) => Expression::from(e),
         }
     }
 }
@@ -749,9 +746,10 @@ impl<'a> From<ChainElement<'a>> for Expression<'a> {
 impl CallExpression<'_> {
     /// Returns the static name of the callee, if it has one, or `None` otherwise.
     pub fn callee_name(&self) -> Option<&str> {
-        match &self.callee {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
-            expr => expr.as_member_expression().and_then(MemberExpression::static_property_name),
+        if let Some(ident) = self.callee.as_identifier() {
+            Some(ident.name.as_str())
+        } else {
+            self.callee.as_member_expression().and_then(MemberExpression::static_property_name)
         }
     }
 
@@ -765,12 +763,11 @@ impl CallExpression<'_> {
         if self.arguments.len() != 1 {
             return false;
         }
-        if let Expression::Identifier(id) = &self.callee {
+        if let Some(id) = self.callee.as_identifier() {
             id.name == "require"
-                && matches!(
-                    self.arguments.first(),
-                    Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_)),
-                )
+                && self.arguments.first().and_then(Argument::as_expression).is_some_and(|e| {
+                    matches!(e.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
+                })
         } else {
             false
         }
@@ -780,15 +777,13 @@ impl CallExpression<'_> {
     /// or [`Symbol.for`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/for).
     pub fn is_symbol_or_symbol_for_call(&self) -> bool {
         // TODO: is 'Symbol' reference to global object
-        match &self.callee {
-            Expression::Identifier(id) => id.name == "Symbol",
-            expr => match expr.as_member_expression() {
-                Some(member) => {
-                    matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
-                        && member.static_property_name() == Some("for")
-                }
-                None => false,
-            },
+        if let Some(id) = self.callee.as_identifier() {
+            id.name == "Symbol"
+        } else if let Some(member) = self.callee.as_member_expression() {
+            member.object().as_identifier().is_some_and(|id| id.name == "Symbol")
+                && member.static_property_name() == Some("for")
+        } else {
+            false
         }
     }
 
@@ -803,10 +798,7 @@ impl CallExpression<'_> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;
         }
-        match &self.arguments[0] {
-            Argument::StringLiteral(str_literal) => Some(str_literal),
-            _ => None,
-        }
+        self.arguments[0].as_expression().and_then(Expression::as_string_literal)
     }
 
     /// Returns the span covering **all** arguments in this call expression.
@@ -910,7 +902,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_identifier_name(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
-            match_member_expression!(Self) => self.to_member_expression().static_property_name(),
+            Self::MemberExpression(member) => member.static_property_name(),
             _ => None,
         }
     }
@@ -1987,7 +1979,7 @@ impl ExportDefaultDeclarationKind<'_> {
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
             Self::TSInterfaceDeclaration(_) => true,
-            _ => false,
+            Self::Expression(_) => false,
         }
     }
 }

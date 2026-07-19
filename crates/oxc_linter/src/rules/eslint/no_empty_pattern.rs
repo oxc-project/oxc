@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -128,7 +128,7 @@ impl NoEmptyPattern {
             return parameter
                 .initializer
                 .as_ref()
-                .is_none_or(|expr| matches!(&**expr, Expression::ObjectExpression(expr) if expr.properties.is_empty()));
+                .is_none_or(|expr| matches!(expr.kind(), ExpressionKind::ObjectExpression(expr) if expr.properties.is_empty()));
         }
         false
     }

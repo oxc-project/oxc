@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -252,24 +252,27 @@ impl AnchorIsValid {
                 Self::href_value_kind_from_string(&str_lit.value)
             }
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
-                JSXExpression::Identifier(ident) if ident.name == "undefined" => {
-                    HrefValueKind::Nullish
-                }
-                JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
-                JSXExpression::StringLiteral(str_lit) => {
-                    Self::href_value_kind_from_string(&str_lit.value)
-                }
-                JSXExpression::TemplateLiteral(temp_lit) => {
-                    if !temp_lit.expressions.is_empty() {
-                        return HrefValueKind::Valid;
+                JSXExpression::Expression(expr) => match expr.kind() {
+                    ExpressionKind::Identifier(ident) if ident.name == "undefined" => {
+                        HrefValueKind::Nullish
                     }
+                    ExpressionKind::NullLiteral(_) => HrefValueKind::Nullish,
+                    ExpressionKind::StringLiteral(str_lit) => {
+                        Self::href_value_kind_from_string(&str_lit.value)
+                    }
+                    ExpressionKind::TemplateLiteral(temp_lit) => {
+                        if !temp_lit.expressions.is_empty() {
+                            return HrefValueKind::Valid;
+                        }
 
-                    let Some(quasi) = temp_lit.single_quasi() else {
-                        return HrefValueKind::Valid;
-                    };
-                    Self::href_value_kind_from_string(&quasi)
-                }
-                _ => HrefValueKind::Valid,
+                        let Some(quasi) = temp_lit.single_quasi() else {
+                            return HrefValueKind::Valid;
+                        };
+                        Self::href_value_kind_from_string(&quasi)
+                    }
+                    _ => HrefValueKind::Valid,
+                },
+                JSXExpression::EmptyExpression(_) => HrefValueKind::Valid,
             },
             JSXAttributeValue::Fragment(_) => HrefValueKind::Nullish,
         }

@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, FormalParameter, FormalParameters},
+    ast::{BindingPattern, ExpressionKind, FormalParameter, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -105,11 +105,11 @@ impl Rule for ParamNames {
             let Some(arg_expr) = argument.as_expression() else {
                 continue;
             };
-            match arg_expr {
-                Expression::ArrowFunctionExpression(arrow_expr) => {
+            match arg_expr.kind() {
+                ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
                     self.check_parameter_names(&arrow_expr.params, ctx);
                 }
-                Expression::FunctionExpression(func_expr) => {
+                ExpressionKind::FunctionExpression(func_expr) => {
                     self.check_parameter_names(&func_expr.params, ctx);
                 }
                 _ => {}

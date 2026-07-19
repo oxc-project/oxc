@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
+    ast::{ExpressionKind, ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -110,12 +110,14 @@ fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
 
 fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
     match key {
-        PropertyKey::Identifier(ident) => ident.name.as_str(),
         PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
         PropertyKey::PrivateIdentifier(ident) => ident.name.as_str(),
-        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
-        PropertyKey::NumericLiteral(lit) => lit.raw.as_ref().unwrap().as_str(),
-        _ => ctx.source_range(key.span()),
+        PropertyKey::Expression(expr) => match expr.kind() {
+            ExpressionKind::Identifier(ident) => ident.name.as_str(),
+            ExpressionKind::StringLiteral(lit) => lit.value.as_str(),
+            ExpressionKind::NumericLiteral(lit) => lit.raw.as_ref().unwrap().as_str(),
+            _ => ctx.source_range(key.span()),
+        },
     }
 }
 #[test]

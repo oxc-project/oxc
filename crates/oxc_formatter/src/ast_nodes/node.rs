@@ -1,8 +1,4 @@
-use std::{
-    fmt,
-    mem::{transmute, transmute_copy},
-    ops::Deref,
-};
+use std::{fmt, mem::transmute, ops::Deref};
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
@@ -163,21 +159,23 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         // a function call with arguments.
         let mut arguments = ArenaVec::new_in(&self.allocator);
 
-        // SAFETY: Argument inherits all Expression variants through the inherit_variants! macro,
-        // so Expression and Argument have identical memory layout for shared variants.
-        // Both are discriminated unions where each Expression variant (e.g., Expression::Identifier)
-        // has a corresponding Argument variant (e.g., Argument::Identifier) with the same discriminant
-        // and the same inner type (ArenaBox<'a, T>). Transmuting Expression to Argument via `transmute_copy`
-        // is safe because we're just copying the bits (discriminant + pointer).
+        // PROTOTYPE: `Expression` is now an 8-byte tagged-pointer struct while `Argument` is a
+        // 2-variant `#[repr(C, u8)]` enum, so the old `transmute_copy::<Expression, Argument>`
+        // (which relied on both being layout-identical discriminated unions) would read out of
+        // bounds. Instead, bitwise-duplicate the `Expression` with `ptr::read` and wrap it in
+        // `Argument::Expression`.
         //
-        // TODO(unsound): The logic in comment above is flawed - this is unsound.
-        // `Expression` and `Argument`'s variants both contain `Box`es, which own the node the `Box`es contain.
-        // `transmute_copy` here duplicates the `Box`, which means you have 2 `Box`es owning the same node.
-        // This can lead to a violation of Rust's aliasing rules. Fix this.
+        // SAFETY: `Expression` is `#[repr(transparent)]` over a tagged pointer, so `ptr::read`
+        // just copies 8 bytes; the pointee stays in the arena.
+        //
+        // TODO(unsound): This duplicates ownership of the payload (2 logical owners of the same
+        // node), same as the previous `transmute_copy` implementation. The formatter only reads
+        // through these `Argument`s and arena allocation means no `Drop` runs, but this can still
+        // violate Rust's aliasing rules. Fix this.
         unsafe {
-            arguments.push(transmute_copy(&self.inner.source));
-            if let Some(ref options) = self.inner.options {
-                arguments.push(transmute_copy(options));
+            arguments.push(Argument::Expression(std::ptr::read(&raw const self.inner.source)));
+            if let Some(options) = &self.inner.options {
+                arguments.push(Argument::Expression(std::ptr::read(std::ptr::from_ref(options))));
             }
         }
 

@@ -332,9 +332,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
             }
             // Member expressions are interior mutability, not a variable
             // reassignment — no-op.
-            AssignmentTarget::StaticMemberExpression(_)
-            | AssignmentTarget::ComputedMemberExpression(_)
-            | AssignmentTarget::PrivateFieldExpression(_) => {}
+            AssignmentTarget::MemberExpression(_) => {}
             // Unsupported TS assignment-target wrappers throw a TS-faithful Todo.
             AssignmentTarget::TSAsExpression(node) => {
                 self.record_unsupported_lval("TSAsExpression", node.span);

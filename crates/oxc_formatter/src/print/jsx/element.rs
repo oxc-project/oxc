@@ -1,5 +1,5 @@
 use oxc_allocator::ArenaVec;
-use oxc_ast::ast::{JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, JSXFragment};
+use oxc_ast::ast::{ExpressionTag, JSXChild, JSXElement, JSXExpressionContainer, JSXFragment};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -335,13 +335,19 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
                             ElementLayout::NoChildren
                         }
                     }
-                    AstNodes::JSXExpressionContainer(expression) => match &expression.expression {
-                        JSXExpression::TemplateLiteral(_) => ElementLayout::Template(expression),
-                        JSXExpression::TaggedTemplateExpression(_) => {
+                    AstNodes::JSXExpressionContainer(expression) => {
+                        if expression.expression.as_expression().is_some_and(|e| {
+                            matches!(
+                                e.tag(),
+                                ExpressionTag::TemplateLiteral
+                                    | ExpressionTag::TaggedTemplateExpression
+                            )
+                        }) {
                             ElementLayout::Template(expression)
+                        } else {
+                            ElementLayout::Default
                         }
-                        _ => ElementLayout::Default,
-                    },
+                    }
                     _ => ElementLayout::Default,
                 }
             }

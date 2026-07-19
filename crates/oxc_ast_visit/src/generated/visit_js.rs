@@ -1054,56 +1054,62 @@ pub mod walk_js {
 
     pub fn walk_expression<'a, V: VisitJs<'a>>(visitor: &mut V, it: &Expression<'a>) {
         // No `AstKind` for this type
-        match it {
-            Expression::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
-            Expression::NullLiteral(it) => visitor.visit_null_literal(it),
-            Expression::NumericLiteral(it) => visitor.visit_numeric_literal(it),
-            Expression::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
-            Expression::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
-            Expression::StringLiteral(it) => visitor.visit_string_literal(it),
-            Expression::TemplateLiteral(it) => visitor.visit_template_literal(it),
-            Expression::Identifier(it) => visitor.visit_identifier_reference(it),
-            Expression::Super(it) => visitor.visit_super(it),
-            Expression::ArrayExpression(it) => visitor.visit_array_expression(it),
-            Expression::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
-            Expression::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
-            Expression::AwaitExpression(it) => visitor.visit_await_expression(it),
-            Expression::BinaryExpression(it) => visitor.visit_binary_expression(it),
-            Expression::CallExpression(it) => visitor.visit_call_expression(it),
-            Expression::ChainExpression(it) => visitor.visit_chain_expression(it),
-            Expression::ClassExpression(it) => visitor.visit_class(it),
-            Expression::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
-            Expression::FunctionExpression(it) => {
+        match it.kind() {
+            ExpressionKind::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
+            ExpressionKind::NullLiteral(it) => visitor.visit_null_literal(it),
+            ExpressionKind::NumericLiteral(it) => visitor.visit_numeric_literal(it),
+            ExpressionKind::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
+            ExpressionKind::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
+            ExpressionKind::StringLiteral(it) => visitor.visit_string_literal(it),
+            ExpressionKind::TemplateLiteral(it) => visitor.visit_template_literal(it),
+            ExpressionKind::Identifier(it) => visitor.visit_identifier_reference(it),
+            ExpressionKind::Super(it) => visitor.visit_super(it),
+            ExpressionKind::ArrayExpression(it) => visitor.visit_array_expression(it),
+            ExpressionKind::ArrowFunctionExpression(it) => {
+                visitor.visit_arrow_function_expression(it)
+            }
+            ExpressionKind::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
+            ExpressionKind::AwaitExpression(it) => visitor.visit_await_expression(it),
+            ExpressionKind::BinaryExpression(it) => visitor.visit_binary_expression(it),
+            ExpressionKind::CallExpression(it) => visitor.visit_call_expression(it),
+            ExpressionKind::ChainExpression(it) => visitor.visit_chain_expression(it),
+            ExpressionKind::ClassExpression(it) => visitor.visit_class(it),
+            ExpressionKind::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
+            ExpressionKind::FunctionExpression(it) => {
                 let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
-            Expression::ImportExpression(it) => visitor.visit_import_expression(it),
-            Expression::LogicalExpression(it) => visitor.visit_logical_expression(it),
-            Expression::NewExpression(it) => visitor.visit_new_expression(it),
-            Expression::ObjectExpression(it) => visitor.visit_object_expression(it),
-            Expression::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
-            Expression::SequenceExpression(it) => visitor.visit_sequence_expression(it),
-            Expression::TaggedTemplateExpression(it) => {
+            ExpressionKind::ImportExpression(it) => visitor.visit_import_expression(it),
+            ExpressionKind::LogicalExpression(it) => visitor.visit_logical_expression(it),
+            ExpressionKind::NewExpression(it) => visitor.visit_new_expression(it),
+            ExpressionKind::ObjectExpression(it) => visitor.visit_object_expression(it),
+            ExpressionKind::ParenthesizedExpression(it) => {
+                visitor.visit_parenthesized_expression(it)
+            }
+            ExpressionKind::SequenceExpression(it) => visitor.visit_sequence_expression(it),
+            ExpressionKind::TaggedTemplateExpression(it) => {
                 visitor.visit_tagged_template_expression(it)
             }
-            Expression::ThisExpression(it) => visitor.visit_this_expression(it),
-            Expression::UnaryExpression(it) => visitor.visit_unary_expression(it),
-            Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
-            Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
-            Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
-            Expression::ImportMeta(it) => visitor.visit_import_meta(it),
-            Expression::NewTarget(it) => visitor.visit_new_target(it),
-            Expression::JSXElement(it) => visitor.visit_jsx_element(it),
-            Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
-            Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
-            Expression::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
-            Expression::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            Expression::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
-            Expression::TSInstantiationExpression(it) => {
+            ExpressionKind::ThisExpression(it) => visitor.visit_this_expression(it),
+            ExpressionKind::UnaryExpression(it) => visitor.visit_unary_expression(it),
+            ExpressionKind::UpdateExpression(it) => visitor.visit_update_expression(it),
+            ExpressionKind::YieldExpression(it) => visitor.visit_yield_expression(it),
+            ExpressionKind::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
+            ExpressionKind::ImportMeta(it) => visitor.visit_import_meta(it),
+            ExpressionKind::NewTarget(it) => visitor.visit_new_target(it),
+            ExpressionKind::JSXElement(it) => visitor.visit_jsx_element(it),
+            ExpressionKind::JSXFragment(it) => visitor.visit_jsx_fragment(it),
+            ExpressionKind::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
+            ExpressionKind::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
+            ExpressionKind::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
+            ExpressionKind::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
+            ExpressionKind::TSInstantiationExpression(it) => {
                 visitor.visit_ts_instantiation_expression(it)
             }
-            Expression::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
-            match_member_expression!(Expression) => {
+            ExpressionKind::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
                 visitor.visit_member_expression(it.to_member_expression())
             }
         }
@@ -1173,9 +1179,7 @@ pub mod walk_js {
         match it {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
-            match_expression!(ArrayExpressionElement) => {
-                visitor.visit_expression(it.to_expression())
-            }
+            ArrayExpressionElement::Expression(it) => visitor.visit_expression(it),
         }
     }
 
@@ -1224,7 +1228,7 @@ pub mod walk_js {
         match it {
             PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
-            match_expression!(PropertyKey) => visitor.visit_expression(it.to_expression()),
+            PropertyKey::Expression(it) => visitor.visit_expression(it),
         }
     }
 
@@ -1262,14 +1266,14 @@ pub mod walk_js {
     #[inline]
     pub fn walk_member_expression<'a, V: VisitJs<'a>>(visitor: &mut V, it: &MemberExpression<'a>) {
         // No `AstKind` for this type
-        match it {
-            MemberExpression::ComputedMemberExpression(it) => {
+        match it.kind() {
+            MemberExpressionKind::ComputedMemberExpression(it) => {
                 visitor.visit_computed_member_expression(it)
             }
-            MemberExpression::StaticMemberExpression(it) => {
+            MemberExpressionKind::StaticMemberExpression(it) => {
                 visitor.visit_static_member_expression(it)
             }
-            MemberExpression::PrivateFieldExpression(it) => {
+            MemberExpressionKind::PrivateFieldExpression(it) => {
                 visitor.visit_private_field_expression(it)
             }
         }
@@ -1364,7 +1368,7 @@ pub mod walk_js {
         // No `AstKind` for this type
         match it {
             Argument::SpreadElement(it) => visitor.visit_spread_element(it),
-            match_expression!(Argument) => visitor.visit_expression(it.to_expression()),
+            Argument::Expression(it) => visitor.visit_expression(it),
         }
     }
 
@@ -1479,9 +1483,7 @@ pub mod walk_js {
                 visitor.visit_ts_non_null_expression(it)
             }
             SimpleAssignmentTarget::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            match_member_expression!(SimpleAssignmentTarget) => {
-                visitor.visit_member_expression(it.to_member_expression())
-            }
+            SimpleAssignmentTarget::MemberExpression(it) => visitor.visit_member_expression(it),
         }
     }
 
@@ -1662,9 +1664,7 @@ pub mod walk_js {
         match it {
             ChainElement::CallExpression(it) => visitor.visit_call_expression(it),
             ChainElement::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
-            match_member_expression!(ChainElement) => {
-                visitor.visit_member_expression(it.to_member_expression())
-            }
+            ChainElement::MemberExpression(it) => visitor.visit_member_expression(it),
         }
     }
 
@@ -1860,7 +1860,7 @@ pub mod walk_js {
         // No `AstKind` for this type
         match it {
             ForStatementInit::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
-            match_expression!(ForStatementInit) => visitor.visit_expression(it.to_expression()),
+            ForStatementInit::Expression(it) => visitor.visit_expression(it),
         }
     }
 
@@ -2537,9 +2537,7 @@ pub mod walk_js {
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),
-            match_expression!(ExportDefaultDeclarationKind) => {
-                visitor.visit_expression(it.to_expression())
-            }
+            ExportDefaultDeclarationKind::Expression(it) => visitor.visit_expression(it),
             _ => {}
         }
     }
@@ -2752,7 +2750,7 @@ pub mod walk_js {
         // No `AstKind` for this type
         match it {
             JSXExpression::EmptyExpression(it) => visitor.visit_jsx_empty_expression(it),
-            match_expression!(JSXExpression) => visitor.visit_expression(it.to_expression()),
+            JSXExpression::Expression(it) => visitor.visit_expression(it),
         }
     }
 

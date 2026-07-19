@@ -435,10 +435,10 @@ fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: 
 /// Checks if an expression allows parameter hugging.
 /// Returns `true` for empty object `{}`, empty array `[]`, or an identifier.
 fn is_huggable_expression(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::ObjectExpression(object) => object.properties.is_empty(),
-        Expression::ArrayExpression(array) => array.elements.is_empty(),
-        Expression::Identifier(_) => true,
+    match expr.kind() {
+        ExpressionKind::ObjectExpression(object) => object.properties.is_empty(),
+        ExpressionKind::ArrayExpression(array) => array.elements.is_empty(),
+        ExpressionKind::Identifier(_) => true,
         _ => false,
     }
 }

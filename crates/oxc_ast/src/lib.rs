@@ -112,7 +112,8 @@ fn size_asserts() {
     use crate::ast;
 
     assert_eq!(size_of::<ast::Statement>(), 16);
-    assert_eq!(size_of::<ast::Expression>(), 16);
+    // PROTOTYPE: `Expression` is a tagged-pointer struct (8 bytes, was 16)
+    assert_eq!(size_of::<ast::Expression>(), 8);
     assert_eq!(size_of::<ast::Declaration>(), 16);
     assert_eq!(size_of::<ast::BindingPattern>(), 16);
     assert_eq!(size_of::<ast::ModuleDeclaration>(), 16);

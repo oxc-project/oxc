@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -81,7 +81,7 @@ impl Rule for PreferDateNow {
                 }
 
                 // `{Number,BigInt}(new Date())`
-                if let Expression::Identifier(ident) = &call_expr.callee
+                if let ExpressionKind::Identifier(ident) = call_expr.callee.kind()
                     && matches!(ident.name.as_str(), "Number" | "BigInt")
                     && call_expr.arguments.len() == 1
                     && let Some(expr) =
@@ -159,11 +159,11 @@ impl Rule for PreferDateNow {
 }
 
 fn is_new_date(expr: &Expression) -> bool {
-    let Expression::NewExpression(new_expr) = expr.get_inner_expression() else {
+    let ExpressionKind::NewExpression(new_expr) = expr.get_inner_expression().kind() else {
         return false;
     };
 
-    if let Expression::Identifier(ident) = &new_expr.callee {
+    if let ExpressionKind::Identifier(ident) = new_expr.callee.kind() {
         return ident.name == "Date" && new_expr.arguments.is_empty();
     }
     false

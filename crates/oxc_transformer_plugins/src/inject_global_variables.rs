@@ -268,8 +268,9 @@ impl<'a> InjectGlobalVariables<'a> {
     }
 
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
-        match expr {
-            Expression::StaticMemberExpression(member) => {
+        match expr.tag() {
+            ExpressionTag::StaticMemberExpression => {
+                let member = expr.to_static_member_expression();
                 for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
                     if ReplaceGlobalDefines::is_dot_define(
                         ctx.scoping(),
@@ -292,7 +293,7 @@ impl<'a> InjectGlobalVariables<'a> {
                     }
                 }
             }
-            Expression::ImportMeta(_) => {
+            ExpressionTag::ImportMeta => {
                 for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
                     // Check if dot_define is exactly ["import", "meta"]
                     if dot_define.parts.len() == 2

@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -125,34 +128,28 @@ impl Rule for JsxNoNewObjectAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.get_inner_expression() {
-        Expression::ObjectExpression(expr) => Some(expr.span),
-        Expression::CallExpression(expr) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::ObjectExpression(expr) => Some(expr.span),
+        ExpressionKind::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Object")
-                || is_method_call(
-                    expr.as_ref(),
-                    Some(&["Object"]),
-                    Some(&["assign", "create"]),
-                    None,
-                    None,
-                )
+                || is_method_call(expr, Some(&["Object"]), Some(&["assign", "create"]), None, None)
             {
                 Some(expr.span)
             } else {
                 None
             }
         }
-        Expression::NewExpression(expr) => {
+        ExpressionKind::NewExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Object") {
                 Some(expr.span)
             } else {
                 None
             }
         }
-        Expression::LogicalExpression(expr) => {
+        ExpressionKind::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))
         }
-        Expression::ConditionalExpression(expr) => {
+        ExpressionKind::ConditionalExpression(expr) => {
             check_expression(&expr.consequent).or_else(|| check_expression(&expr.alternate))
         }
         _ => None,

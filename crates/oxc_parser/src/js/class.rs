@@ -197,8 +197,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
             let type_argument;
-            if let Expression::TSInstantiationExpression(expr) = extend {
-                let expr = expr.unbox();
+            if extend.is_ts_instantiation_expression() {
+                let expr = extend.into_ts_instantiation_expression().unwrap().unbox();
                 extend = expr.expression;
                 type_argument = Some(expr.type_arguments);
             } else {

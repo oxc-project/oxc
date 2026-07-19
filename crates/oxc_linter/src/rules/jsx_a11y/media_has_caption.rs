@@ -2,7 +2,10 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
+    ast::{
+        ExpressionKind, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild,
+        JSXExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -132,8 +135,11 @@ impl Rule for MediaHasCaption {
             if iden.name == "muted" {
                 return match &attr.value {
                     Some(JSXAttributeValue::ExpressionContainer(exp)) => match &exp.expression {
-                        JSXExpression::BooleanLiteral(boolean) => boolean.value,
-                        _ => false,
+                        JSXExpression::Expression(expr) => match expr.kind() {
+                            ExpressionKind::BooleanLiteral(boolean) => boolean.value,
+                            _ => false,
+                        },
+                        JSXExpression::EmptyExpression(_) => false,
                     },
                     Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
                     None => true, // e.g. <video muted></video>

@@ -1,6 +1,6 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Argument, Expression};
+use oxc_ast::ast::ExpressionKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -59,11 +59,12 @@ impl Rule for ConsistentDateClone {
             return;
         }
 
-        let Argument::CallExpression(expr) = &expr.arguments[0] else {
+        let Some(expr) = expr.arguments[0].as_expression().and_then(|e| e.as_call_expression())
+        else {
             return;
         };
 
-        let Expression::StaticMemberExpression(callee) = &expr.callee else {
+        let ExpressionKind::StaticMemberExpression(callee) = expr.callee.kind() else {
             return;
         };
 

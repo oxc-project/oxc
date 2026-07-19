@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -103,7 +103,7 @@ impl Rule for NoConsole {
             _ => return,
         };
 
-        let Expression::Identifier(ident) = object else {
+        let ExpressionKind::Identifier(ident) = object.kind() else {
             return;
         };
 

@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, CallExpression, Expression, IdentifierReference, MemberExpression,
-        StaticMemberExpression,
-    },
+    ast::{Argument, CallExpression, ExpressionKind, IdentifierReference, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -70,28 +67,31 @@ impl Rule for PreferNumericLiterals {
             return;
         };
 
-        match &call_expr.callee.without_parentheses() {
-            Expression::Identifier(ident)
+        match call_expr.callee.without_parentheses().kind() {
+            ExpressionKind::Identifier(ident)
                 if ident.name == "parseInt" && is_parse_int_call(ctx, ident, None) =>
             {
                 check_arguments(call_expr, ctx);
             }
-            Expression::StaticMemberExpression(member_expr) => {
-                if let Expression::Identifier(ident) = &member_expr.object {
+            ExpressionKind::StaticMemberExpression(member_expr) => {
+                if let ExpressionKind::Identifier(ident) = member_expr.object.kind() {
                     if is_parse_int_call(ctx, ident, Some(member_expr)) {
                         check_arguments(call_expr, ctx);
                     }
-                } else if let Expression::ParenthesizedExpression(paren_expr) = &member_expr.object
-                    && let Expression::Identifier(ident) = &paren_expr.expression
+                } else if let ExpressionKind::ParenthesizedExpression(paren_expr) =
+                    member_expr.object.kind()
+                    && let ExpressionKind::Identifier(ident) = paren_expr.expression.kind()
                     && is_parse_int_call(ctx, ident, Some(member_expr))
                 {
                     check_arguments(call_expr, ctx);
                 }
             }
-            Expression::ChainExpression(chain_expr) => {
-                if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
-                    chain_expr.expression.as_member_expression()
-                    && let Expression::Identifier(ident) = &member_expr.object
+            ExpressionKind::ChainExpression(chain_expr) => {
+                if let Some(member_expr) = chain_expr
+                    .expression
+                    .as_member_expression()
+                    .and_then(|m| m.as_static_member_expression())
+                    && let ExpressionKind::Identifier(ident) = member_expr.object.kind()
                     && is_parse_int_call(ctx, ident, Some(member_expr))
                 {
                     check_arguments(call_expr, ctx);
@@ -103,9 +103,12 @@ impl Rule for PreferNumericLiterals {
 }
 
 fn is_string_type(arg: &Argument) -> bool {
-    match arg {
-        Argument::StringLiteral(_) => true,
-        Argument::TemplateLiteral(t) => t.is_no_substitution_template(),
+    let Some(expr) = arg.as_expression() else {
+        return false;
+    };
+    match expr.kind() {
+        ExpressionKind::StringLiteral(_) => true,
+        ExpressionKind::TemplateLiteral(t) => t.is_no_substitution_template(),
         _ => false,
     }
 }
@@ -135,7 +138,7 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     }
 
     let radix_arg = &call_expr.arguments[1];
-    let Some(Expression::NumericLiteral(numeric_lit)) = radix_arg.as_expression() else {
+    let Some(numeric_lit) = radix_arg.as_expression().and_then(|e| e.as_numeric_literal()) else {
         return;
     };
 
@@ -180,9 +183,12 @@ fn is_fixable(
 }
 
 fn get_string_argument(call_expr: &CallExpression) -> Option<String> {
-    if let Argument::StringLiteral(ident) = &call_expr.arguments[0] {
+    if let Some(ident) = call_expr.arguments[0].as_expression().and_then(|e| e.as_string_literal())
+    {
         return Some(ident.value.to_string());
-    } else if let Argument::TemplateLiteral(temp) = &call_expr.arguments[0] {
+    } else if let Some(temp) =
+        call_expr.arguments[0].as_expression().and_then(|e| e.as_template_literal())
+    {
         if temp.quasis.is_empty() {
             return None;
         }

@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Comment, Expression};
+use oxc_ast::ast::{Comment, Expression, ExpressionKind};
 
 use crate::{
     ast_nodes::AstNodes,
@@ -62,16 +62,14 @@ pub fn trailing_comments_to_move_behind_semicolon<'a>(
 ///
 /// `gated` is `true` when `expr` itself sits in one of those positions.
 pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) -> bool {
-    match expr {
-        Expression::SequenceExpression(_) => gated,
-        Expression::AssignmentExpression(assignment) => {
+    match expr.kind() {
+        ExpressionKind::SequenceExpression(_) => gated,
+        ExpressionKind::AssignmentExpression(assignment) => {
             gated
-                || match &assignment.right {
-                    Expression::SequenceExpression(_) => true,
-                    right => keeps_trailing_comment_inside_parens(right, false),
-                }
+                || assignment.right.is_sequence_expression()
+                || keeps_trailing_comment_inside_parens(&assignment.right, false)
         }
-        Expression::ArrowFunctionExpression(arrow) if arrow.expression => arrow
+        ExpressionKind::ArrowFunctionExpression(arrow) if arrow.expression => arrow
             .get_expression()
             .is_some_and(|body| keeps_trailing_comment_inside_parens(body, true)),
         _ => false,

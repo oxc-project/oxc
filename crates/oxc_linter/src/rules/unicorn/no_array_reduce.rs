@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, Statement},
+    ast::{Argument, CallExpression, ExpressionKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -110,10 +110,13 @@ fn is_simple_operation(node: &CallExpression) -> bool {
     let Some(callback_arg) = node.arguments.first() else {
         return false;
     };
-    let function_body = match callback_arg {
+    let Argument::Expression(callback_arg) = callback_arg else {
+        return false;
+    };
+    let function_body = match callback_arg.kind() {
         // `array.reduce((accumulator, element) => accumulator + element)`
-        Argument::ArrowFunctionExpression(callback) => &callback.body,
-        Argument::FunctionExpression(callback) => {
+        ExpressionKind::ArrowFunctionExpression(callback) => &callback.body,
+        ExpressionKind::FunctionExpression(callback) => {
             let Some(body) = &callback.body else {
                 return false;
             };
@@ -127,11 +130,9 @@ fn is_simple_operation(node: &CallExpression) -> bool {
     }
 
     match &function_body.statements[0] {
-        Statement::ExpressionStatement(expr) => {
-            matches!(expr.expression, Expression::BinaryExpression(_))
-        }
+        Statement::ExpressionStatement(expr) => expr.expression.is_binary_expression(),
         Statement::ReturnStatement(ret) => {
-            matches!(&ret.argument, Some(Expression::BinaryExpression(_)))
+            ret.argument.as_ref().is_some_and(oxc_ast::ast::Expression::is_binary_expression)
         }
         Statement::BlockStatement(block) => {
             if block.body.len() != 1 {
@@ -139,9 +140,10 @@ fn is_simple_operation(node: &CallExpression) -> bool {
             }
 
             match &block.body[0] {
-                Statement::ReturnStatement(ret) => {
-                    matches!(&ret.argument, Some(Expression::BinaryExpression(_)))
-                }
+                Statement::ReturnStatement(ret) => ret
+                    .argument
+                    .as_ref()
+                    .is_some_and(oxc_ast::ast::Expression::is_binary_expression),
                 _ => false,
             }
         }

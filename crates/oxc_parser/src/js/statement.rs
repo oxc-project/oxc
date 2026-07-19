@@ -86,13 +86,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let stmt = if expecting_directives {
                 match stmt {
                     // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                    Statement::ExpressionStatement(expr)
-                        if matches!(&expr.expression, Expression::StringLiteral(string)
-                            if expr.span.start == string.span.start) =>
+                    Statement::ExpressionStatement(expr) if matches!(expr.expression.kind(), ExpressionKind::StringLiteral(string) if expr.span.start == string.span.start) =>
                     {
                         let ExpressionStatement { span, expression, .. } = expr.unbox();
-                        let Expression::StringLiteral(string) = expression else { unreachable!() };
-                        let string = string.unbox();
+                        let string = string_literal_unbox(expression);
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         directives.push(Directive::new(span, string, Str::from(src), self));
@@ -219,13 +216,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 func.pure = true;
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
-                ExportDefaultDeclarationKind::FunctionExpression(func)
-                | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
                 }
-                ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
-                    func.pure = true;
-                }
+                ExportDefaultDeclarationKind::Expression(expr) => match expr.kind_mut() {
+                    ExpressionKindMut::FunctionExpression(func) => {
+                        func.pure = true;
+                    }
+                    ExpressionKindMut::ArrowFunctionExpression(func) => {
+                        func.pure = true;
+                    }
+                    _ => {}
+                },
                 _ => {}
             },
             Statement::ExportNamedDeclaration(decl) => match &mut decl.declaration {
@@ -252,7 +254,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_expression_or_labeled_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
         let expr = self.parse_expr();
-        if let Expression::Identifier(ident) = &expr {
+        if let ExpressionKind::Identifier(ident) = expr.kind() {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
@@ -884,4 +886,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.unexpected()
     }
+}
+
+/// Extract an owned `StringLiteral` box from an `Expression` known to be a string literal.
+fn string_literal_unbox(expression: Expression<'_>) -> StringLiteral<'_> {
+    expression.into_string_literal().unwrap().unbox()
 }

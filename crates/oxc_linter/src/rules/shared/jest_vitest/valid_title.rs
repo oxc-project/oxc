@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryExpression, Expression},
+    ast::{BinaryExpression, Expression, ExpressionKind, ExpressionTag},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -219,7 +219,12 @@ impl ValidTitleConfig {
         }
 
         // Handle allowArguments option (vitest feature)
-        if config.allow_arguments && matches!(arg, Argument::Identifier(_)) {
+        if config.allow_arguments
+            && matches!(
+                arg.as_expression().map(Expression::kind),
+                Some(ExpressionKind::Identifier(_))
+            )
+        {
             return;
         }
 
@@ -231,8 +236,8 @@ impl ValidTitleConfig {
             _ => unreachable!(),
         };
 
-        match arg {
-            Argument::StringLiteral(string_literal) => {
+        match arg.as_expression().map(Expression::kind) {
+            Some(ExpressionKind::StringLiteral(string_literal)) => {
                 validate_title(
                     &string_literal.value,
                     string_literal.span,
@@ -242,7 +247,7 @@ impl ValidTitleConfig {
                 );
             }
             // Handle String.raw`foo`
-            Argument::TaggedTemplateExpression(tagged_template) => {
+            Some(ExpressionKind::TaggedTemplateExpression(tagged_template)) => {
                 if !is_string_raw_member_expression(&tagged_template.tag, ctx.scoping()) {
                     if need_report_name {
                         ctx.diagnostic(title_must_be_string_diagnostic(arg.span()));
@@ -260,7 +265,7 @@ impl ValidTitleConfig {
                     );
                 }
             }
-            Argument::TemplateLiteral(template_literal) => {
+            Some(ExpressionKind::TemplateLiteral(template_literal)) => {
                 if let Some(quasi) = template_literal.single_quasi() {
                     validate_title(
                         quasi.as_str(),
@@ -271,7 +276,7 @@ impl ValidTitleConfig {
                     );
                 }
             }
-            Argument::BinaryExpression(binary_expr) => {
+            Some(ExpressionKind::BinaryExpression(binary_expr)) => {
                 if does_binary_expression_contain_string_node(binary_expr) {
                     return;
                 }
@@ -479,12 +484,14 @@ fn validate_title(
 }
 
 fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
-    if expr.left.is_string_literal() || expr.right.is_string_literal() {
+    if matches!(expr.left.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
+        || matches!(expr.right.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
+    {
         return true;
     }
 
-    match &expr.left {
-        Expression::BinaryExpression(left) => does_binary_expression_contain_string_node(left),
+    match expr.left.kind() {
+        ExpressionKind::BinaryExpression(left) => does_binary_expression_contain_string_node(left),
         _ => false,
     }
 }

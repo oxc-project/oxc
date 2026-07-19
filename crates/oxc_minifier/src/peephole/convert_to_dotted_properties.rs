@@ -18,8 +18,8 @@ impl<'a> PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let MemberExpression::ComputedMemberExpression(e) = expr else { return };
-        let Expression::StringLiteral(s) = &e.expression else { return };
+        let Some(e) = expr.as_computed_member_expression_mut() else { return };
+        let Some(s) = e.expression.as_string_literal() else { return };
         if is_identifier_name_patched(&s.value) {
             let property = IdentifierName::new(s.span, s.value, ctx);
             let new_member = StaticMemberExpression::boxed(

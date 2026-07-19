@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectPropertyKind},
+    ast::{Expression, ExpressionKind, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -137,7 +137,7 @@ fn has_function_type(opts: &ObjectExpression<'_>) -> bool {
         if is_function_identifier(&prop.value) {
             return true;
         }
-        if let Expression::ArrayExpression(arr) = prop.value.get_inner_expression() {
+        if let ExpressionKind::ArrayExpression(arr) = prop.value.get_inner_expression().kind() {
             return arr
                 .elements
                 .iter()

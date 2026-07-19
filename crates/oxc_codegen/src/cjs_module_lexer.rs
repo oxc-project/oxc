@@ -33,7 +33,9 @@
 //!
 //! [cjs-module-lexer]: https://github.com/nodejs/cjs-module-lexer
 
-use oxc_ast::ast::{Argument, AssignmentTarget, CallExpression, Expression};
+use oxc_ast::ast::{
+    Argument, AssignmentTarget, CallExpression, Expression, ExpressionKind, MemberExpression,
+};
 use oxc_syntax::precedence::Precedence;
 
 use crate::{
@@ -73,7 +75,12 @@ pub fn try_print_define_property_call(
     if !p.options.minify {
         return false;
     }
-    let Some(Argument::StringLiteral(name)) = call.arguments.get(1) else {
+    let Some(name) = call
+        .arguments
+        .get(1)
+        .and_then(Argument::as_expression)
+        .and_then(Expression::as_string_literal)
+    else {
         return false;
     };
     if !call.callee.is_specific_member_access("Object", "defineProperty")
@@ -109,10 +116,12 @@ pub fn try_print_exports_computed_target(
     if !p.options.minify {
         return false;
     }
-    let AssignmentTarget::ComputedMemberExpression(member) = target else {
+    let Some(member) =
+        target.as_member_expression().and_then(MemberExpression::as_computed_member_expression)
+    else {
         return false;
     };
-    let Expression::StringLiteral(key) = &member.expression else {
+    let ExpressionKind::StringLiteral(key) = member.expression.kind() else {
         return false;
     };
     if !member.object.is_specific_id("exports")
@@ -155,7 +164,7 @@ pub fn try_print_equality_string(
     if !op.is_equality() {
         return false;
     }
-    let Expression::StringLiteral(str_lit) = operand else {
+    let ExpressionKind::StringLiteral(str_lit) = operand.kind() else {
         return false;
     };
     if !matches!(str_lit.value.as_str(), "default" | "__esModule") {

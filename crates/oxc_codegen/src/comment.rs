@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{
     Comment, CommentKind,
-    ast::{Expression, Program},
+    ast::{Expression, ExpressionKind, Program},
 };
 use oxc_span::GetSpan;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
@@ -16,9 +16,9 @@ pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 /// A `pife`-marked arrow or function expression prints its leading comments
 /// inside its own `(` wrap, so operand emission sites must not consume them.
 fn is_pife_function(expression: &Expression<'_>) -> bool {
-    match expression {
-        Expression::ArrowFunctionExpression(arrow) => arrow.pife,
-        Expression::FunctionExpression(function) => function.pife,
+    match expression.kind() {
+        ExpressionKind::ArrowFunctionExpression(arrow) => arrow.pife,
+        ExpressionKind::FunctionExpression(function) => function.pife,
         _ => false,
     }
 }
@@ -200,7 +200,7 @@ impl Codegen<'_> {
             return;
         }
         self.print_leading_comments_anchored_to_self(expression.span().start);
-        if let Expression::ParenthesizedExpression(paren) = expression {
+        if let ExpressionKind::ParenthesizedExpression(paren) = expression.kind() {
             self.print_leading_comments_before_expression(&paren.expression);
         }
     }
@@ -234,7 +234,7 @@ impl Codegen<'_> {
         {
             self.print_leading_comments_anchored_to_self(start);
         }
-        if let Expression::ParenthesizedExpression(paren) = expression {
+        if let ExpressionKind::ParenthesizedExpression(paren) = expression.kind() {
             self.print_annotation_comments_before_expression(&paren.expression);
         }
     }

@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, ObjectProperty,
-        ObjectPropertyKind, StringLiteral,
+        Argument, Expression, ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXElementName,
+        ObjectProperty, ObjectPropertyKind, StringLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -119,7 +119,12 @@ impl Rule for IframeMissingSandbox {
                 );
             }
             AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
-                let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
+                let Some(str) = call_expr
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .and_then(Expression::as_string_literal)
+                else {
                     return;
                 };
 
@@ -140,7 +145,12 @@ impl Rule for IframeMissingSandbox {
                     return;
                 }
 
-                if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
+                if let Some(obj_expr) = call_expr
+                    .arguments
+                    .get(1)
+                    .and_then(Argument::as_expression)
+                    .and_then(Expression::as_object_expression)
+                {
                     obj_expr
                         .properties
                         .iter()
@@ -203,7 +213,7 @@ fn is_allowed_value(value: &str) -> bool {
 }
 
 fn validate_sandbox_property(object_property: &ObjectProperty, ctx: &LintContext) {
-    if let Expression::StringLiteral(str) = object_property.value.without_parentheses() {
+    if let ExpressionKind::StringLiteral(str) = object_property.value.without_parentheses().kind() {
         validate_sandbox_value(str, ctx);
     }
 }

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryExpression, Expression, UnaryOperator},
+    ast::{Argument, BinaryExpression, Expression, ExpressionKind, ExpressionTag, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -131,17 +131,15 @@ impl Rule for PreferArraySome {
                 // `.{findIndex,findLastIndex}(…) == -1`
                 // `.{findIndex,findLastIndex}(…) >= 0`
                 // `.{findIndex,findLastIndex}(…) < 0`
-                let with_negative_one = matches!(
-                    bin_expr.operator,
-                    BinaryOperator::StrictInequality
-                        | BinaryOperator::Inequality
-                        | BinaryOperator::GreaterThan
-                        | BinaryOperator::StrictEquality
-                        | BinaryOperator::Equality
-                ) && matches!(
-                    bin_expr.right.without_parentheses(),
-                    Expression::UnaryExpression(_)
-                );
+                let with_negative_one =
+                    matches!(
+                        bin_expr.operator,
+                        BinaryOperator::StrictInequality
+                            | BinaryOperator::Inequality
+                            | BinaryOperator::GreaterThan
+                            | BinaryOperator::StrictEquality
+                            | BinaryOperator::Equality
+                    ) && bin_expr.right.without_parentheses().is_unary_expression();
 
                 let matches_against_zero = matches!(
                     bin_expr.operator,
@@ -149,14 +147,14 @@ impl Rule for PreferArraySome {
                 );
 
                 if with_negative_one
-                    && let Expression::UnaryExpression(right_unary_expr) =
-                        &bin_expr.right.without_parentheses()
+                    && let ExpressionKind::UnaryExpression(right_unary_expr) =
+                        bin_expr.right.without_parentheses().kind()
                     && matches!(right_unary_expr.operator, UnaryOperator::UnaryNegation)
                     && right_unary_expr.argument.is_number_literal()
                     && right_unary_expr.argument.is_number_value(1_f64)
                 {
-                    let Expression::CallExpression(left_call_expr) =
-                        &bin_expr.left.without_parentheses()
+                    let ExpressionKind::CallExpression(left_call_expr) =
+                        bin_expr.left.without_parentheses().kind()
                     else {
                         return;
                     };
@@ -184,12 +182,13 @@ impl Rule for PreferArraySome {
                 }
 
                 if matches_against_zero {
-                    let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
+                    let ExpressionKind::NumericLiteral(right_num_lit) = bin_expr.right.kind()
+                    else {
                         return;
                     };
 
-                    let Expression::CallExpression(left_call_expr) =
-                        &bin_expr.left.without_parentheses()
+                    let ExpressionKind::CallExpression(left_call_expr) =
+                        bin_expr.left.without_parentheses().kind()
                     else {
                         return;
                     };
@@ -219,7 +218,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
+                let ExpressionKind::NumericLiteral(right_num_lit) = bin_expr.right.kind() else {
                     return;
                 };
 
@@ -241,8 +240,8 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Expression::CallExpression(left_call_expr) =
-                    &left_member_expr.object().without_parentheses()
+                let ExpressionKind::CallExpression(left_call_expr) =
+                    left_member_expr.object().without_parentheses().kind()
                 else {
                     return;
                 };
@@ -299,14 +298,14 @@ impl Rule for PreferArraySome {
 
 fn is_node_value_not_function(expr: &Expression) -> bool {
     if matches!(
-        expr,
-        Expression::ArrayExpression(_)
-            | Expression::BinaryExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::ObjectExpression(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::UnaryExpression(_)
-            | Expression::UpdateExpression(_)
+        expr.tag(),
+        ExpressionTag::ArrayExpression
+            | ExpressionTag::BinaryExpression
+            | ExpressionTag::ClassExpression
+            | ExpressionTag::ObjectExpression
+            | ExpressionTag::TemplateLiteral
+            | ExpressionTag::UnaryExpression
+            | ExpressionTag::UpdateExpression
     ) {
         return true;
     }
@@ -314,13 +313,13 @@ fn is_node_value_not_function(expr: &Expression) -> bool {
         return true;
     }
     if matches!(
-        expr,
-        Expression::AssignmentExpression(_)
-            | Expression::AwaitExpression(_)
-            | Expression::LogicalExpression(_)
-            | Expression::NewExpression(_)
-            | Expression::TaggedTemplateExpression(_)
-            | Expression::ThisExpression(_)
+        expr.tag(),
+        ExpressionTag::AssignmentExpression
+            | ExpressionTag::AwaitExpression
+            | ExpressionTag::LogicalExpression
+            | ExpressionTag::NewExpression
+            | ExpressionTag::TaggedTemplateExpression
+            | ExpressionTag::ThisExpression
     ) {
         return true;
     }

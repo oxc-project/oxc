@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -74,7 +74,7 @@ impl Rule for NoArrayConstructor {
             _ => return,
         };
 
-        let Expression::Identifier(ident) = &callee else {
+        let ExpressionKind::Identifier(ident) = callee.kind() else {
             return;
         };
 

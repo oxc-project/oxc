@@ -2,8 +2,9 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, Expression, MemberExpression, ObjectProperty, ObjectPropertyKind,
-        SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target,
+        AssignmentTargetProperty, Expression, ExpressionKind, MemberExpression,
+        MemberExpressionKind, ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
+        match_assignment_target, match_simple_assignment_target,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -137,8 +138,11 @@ impl NoSelfAssign {
         match left {
             match_simple_assignment_target!(AssignmentTarget) => {
                 let simple_assignment_target = left.to_simple_assignment_target();
-                if let Expression::Identifier(id2) = right.without_parentheses() {
-                    let self_assign = matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
+                if let ExpressionKind::Identifier(id2) = right.without_parentheses().kind() {
+                    let self_assign = simple_assignment_target
+                        .get_expression()
+                        .and_then(|e| e.as_identifier())
+                        .is_some_and(|id1| id1.name == id2.name)
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
                     if self_assign {
@@ -160,7 +164,9 @@ impl NoSelfAssign {
             }
 
             AssignmentTarget::ArrayAssignmentTarget(array_pattern) => {
-                let Expression::ArrayExpression(array_expr) = right.without_parentheses() else {
+                let ExpressionKind::ArrayExpression(array_expr) =
+                    right.without_parentheses().kind()
+                else {
                     return;
                 };
                 let end = std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
@@ -186,7 +192,9 @@ impl NoSelfAssign {
             }
 
             AssignmentTarget::ObjectAssignmentTarget(object_pattern) => {
-                let Expression::ObjectExpression(object_expr) = right.get_inner_expression() else {
+                let ExpressionKind::ObjectExpression(object_expr) =
+                    right.get_inner_expression().kind()
+                else {
                     return;
                 };
 
@@ -225,14 +233,16 @@ impl NoSelfAssign {
         let right = right.get_inner_expression();
 
         if matches!(
-            (left, right),
-            (Expression::Super(_), Expression::Super(_))
-                | (Expression::ThisExpression(_), Expression::ThisExpression(_))
+            (left.kind(), right.kind()),
+            (ExpressionKind::Super(_), ExpressionKind::Super(_))
+                | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
         ) {
             return true;
         }
 
-        if let (Expression::Identifier(id1), Expression::Identifier(id2)) = (left, right) {
+        if let (ExpressionKind::Identifier(id1), ExpressionKind::Identifier(id2)) =
+            (left.kind(), right.kind())
+        {
             return id1.name == id2.name;
         }
 
@@ -258,18 +268,17 @@ impl NoSelfAssign {
             return self.is_same_reference(member1.object(), member2.object());
         }
 
-        if matches!(member1, MemberExpression::ComputedMemberExpression(_))
-            == matches!(member2, MemberExpression::ComputedMemberExpression(_))
+        if member1.is_computed_member_expression() == member2.is_computed_member_expression()
             && self.is_same_reference(member1.object(), member2.object())
         {
-            return match (member1, member2) {
+            return match (member1.kind(), member2.kind()) {
                 (
-                    MemberExpression::ComputedMemberExpression(computed1),
-                    MemberExpression::ComputedMemberExpression(computed2),
+                    MemberExpressionKind::ComputedMemberExpression(computed1),
+                    MemberExpressionKind::ComputedMemberExpression(computed2),
                 ) => self.is_same_reference(&computed1.expression, &computed2.expression),
                 (
-                    MemberExpression::PrivateFieldExpression(private1),
-                    MemberExpression::PrivateFieldExpression(private2),
+                    MemberExpressionKind::PrivateFieldExpression(private1),
+                    MemberExpressionKind::PrivateFieldExpression(private2),
                 ) => private1.field.name == private2.field.name,
                 _ => false,
             };
@@ -297,7 +306,7 @@ impl NoSelfAssign {
                     return;
                 };
                 if key.static_name().is_some_and(|name| name == id1.binding.name)
-                    && let Expression::Identifier(id2) = expr.without_parentheses()
+                    && let ExpressionKind::Identifier(id2) = expr.without_parentheses().kind()
                     && id1.binding.name == id2.name
                 {
                     ctx.diagnostic(no_self_assign_diagnostic(*span));
