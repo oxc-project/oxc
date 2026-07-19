@@ -52,7 +52,8 @@ export interface LineColumn {
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
-// `lineStartIndices` starts as `[0]`, and `resetLinesAndLocs` doesn't remove that initial element, so it's never empty.
+// `lineStartIndices` starts as `[0]`, and `resetLinesLocsAndRanges` doesn't remove that initial element,
+// so it's never empty.
 export const lines: string[] = [];
 export const lineStartIndices: number[] = [0];
 
@@ -61,6 +62,12 @@ export const lineStartIndices: number[] = [0];
 // Never shrunk - `activeLocationsCount` tracks the active count to avoid freeing the backing store.
 const cachedLocations: Location[] = [];
 let activeLocationsCount = 0;
+
+// Pool of `Range` objects (`[start, end]` arrays), reused across files to reduce GC pressure.
+// Shared between tokens and comments (AST nodes hold their own `Range`s).
+// Never shrunk - `activeRangesCount` tracks the active count to avoid freeing the backing store.
+const cachedRanges: Range[] = [];
+let activeRangesCount = 0;
 
 /**
  * Split source text into lines.
@@ -88,7 +95,7 @@ export function initLines(): void {
    * and uses match.index to get the correct line start indices.
    */
 
-  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLinesAndLocs`.
+  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLinesLocsAndRanges`.
   // Debug check that `lines` and `lineStartIndices` are not already initialized.
   debugAssert(lines.length === 0, "`lines` should be empty at start of `initLines`");
   debugAssert(
@@ -123,14 +130,15 @@ export function debugAssertLinesIsInitialized(): void {
 
 /**
  * Reset lines after file has been linted, to free memory.
- * Reset `Location` object pool.
+ * Reset `Location` and `Range` object pools.
  */
-export function resetLinesAndLocs(): void {
+export function resetLinesLocsAndRanges(): void {
   lines.length = 0;
   // Leave first entry (0) in place, discard the rest
   lineStartIndices.length = 1;
 
   activeLocationsCount = 0;
+  activeRangesCount = 0;
 }
 
 /**
@@ -406,6 +414,36 @@ export function computeLoc(start: number, end: number): Location {
   }
 
   return loc;
+}
+
+/**
+ * Create a `Range` object (`[start, end]`) for a token or comment.
+ *
+ * Returns a recycled `Range` object from the pool when possible, allocating only during warmup.
+ * Shared between tokens and comments, the same way `computeLoc` is shared for `loc`.
+ *
+ * @param start - Start offset
+ * @param end - End offset
+ * @returns Range
+ */
+export function createRange(start: number, end: number): Range {
+  // Reuse a cached `Range` object if available, otherwise create a new one.
+  // Note: The comparison `activeRangesCount < cachedRanges.length` must be this way around
+  // so that V8 can remove the bounds check on `cachedRanges[activeRangesCount]`.
+  // `cachedRanges.length > activeRangesCount` would *not* remove the bounds check in Maglev compiler,
+  // even though it's semantically equivalent.
+  let range: Range;
+  if (activeRangesCount < cachedRanges.length) {
+    range = cachedRanges[activeRangesCount];
+    range[0] = start;
+    range[1] = end;
+  } else {
+    cachedRanges.push((range = [start, end]));
+  }
+
+  activeRangesCount++;
+
+  return range;
 }
 
 /**

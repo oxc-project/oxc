@@ -12,7 +12,7 @@ import {
   COMMENT_SHEBANG_KIND,
   DATA_POINTER_POS_32,
 } from "../generated/constants.ts";
-import { computeLoc } from "./location.ts";
+import { computeLoc, createRange } from "./location.ts";
 import { EMPTY_UINT8_ARRAY, EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -217,7 +217,7 @@ class Comment implements Span {
       activeCommentsWithRangeCount++;
 
       const pos32 = this.#pos >> 2;
-      return (this.#range = [commentsInt32[pos32], commentsInt32[pos32 + 1]]);
+      return (this.#range = createRange(commentsInt32[pos32], commentsInt32[pos32 + 1]));
     };
 
     getCommentLocTemp = function (this: Comment): Location {

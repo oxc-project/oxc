@@ -3,7 +3,7 @@
  */
 
 import { buffer, initSourceText, sourceText } from "./source_code.ts";
-import { computeLoc } from "./location.ts";
+import { computeLoc, createRange } from "./location.ts";
 import { COMMENT_SIZE, TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -279,7 +279,7 @@ class Token {
       activeTokensWithRangeCount++;
 
       const pos32 = this.#pos >> 2;
-      return (this.#range = [tokensInt32[pos32], tokensInt32[pos32 + 1]]);
+      return (this.#range = createRange(tokensInt32[pos32], tokensInt32[pos32 + 1]));
     };
 
     getTokenLocTemp = function (this: Token): Location {
