@@ -601,6 +601,7 @@ pub use crate::rules::unicorn::consistent_assert::ConsistentAssert as UnicornCon
 pub use crate::rules::unicorn::consistent_date_clone::ConsistentDateClone as UnicornConsistentDateClone;
 pub use crate::rules::unicorn::consistent_empty_array_spread::ConsistentEmptyArraySpread as UnicornConsistentEmptyArraySpread;
 pub use crate::rules::unicorn::consistent_existence_index_check::ConsistentExistenceIndexCheck as UnicornConsistentExistenceIndexCheck;
+pub use crate::rules::unicorn::consistent_export_decorator_position::ConsistentExportDecoratorPosition as UnicornConsistentExportDecoratorPosition;
 pub use crate::rules::unicorn::consistent_function_scoping::ConsistentFunctionScoping as UnicornConsistentFunctionScoping;
 pub use crate::rules::unicorn::consistent_template_literal_escape::ConsistentTemplateLiteralEscape as UnicornConsistentTemplateLiteralEscape;
 pub use crate::rules::unicorn::custom_error_definition::CustomErrorDefinition as UnicornCustomErrorDefinition;
@@ -1326,6 +1327,7 @@ pub enum RuleEnum {
     UnicornConsistentDateClone(UnicornConsistentDateClone),
     UnicornConsistentEmptyArraySpread(UnicornConsistentEmptyArraySpread),
     UnicornConsistentExistenceIndexCheck(UnicornConsistentExistenceIndexCheck),
+    UnicornConsistentExportDecoratorPosition(UnicornConsistentExportDecoratorPosition),
     UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping),
     UnicornConsistentTemplateLiteralEscape(UnicornConsistentTemplateLiteralEscape),
     UnicornCustomErrorDefinition(UnicornCustomErrorDefinition),
@@ -2229,8 +2231,10 @@ const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = UNICORN_CONSISTENT_ASSERT_ID + 1
 const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = UNICORN_CONSISTENT_DATE_CLONE_ID + 1usize;
 const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize =
     UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID + 1usize;
-const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize =
+const UNICORN_CONSISTENT_EXPORT_DECORATOR_POSITION_ID: usize =
     UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID + 1usize;
+const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize =
+    UNICORN_CONSISTENT_EXPORT_DECORATOR_POSITION_ID + 1usize;
 const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize =
     UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
 const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize =
@@ -3209,6 +3213,9 @@ impl RuleEnum {
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID
             }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UNICORN_CONSISTENT_EXPORT_DECORATOR_POSITION_ID
+            }
             Self::UnicornConsistentFunctionScoping(_) => UNICORN_CONSISTENT_FUNCTION_SCOPING_ID,
             Self::UnicornConsistentTemplateLiteralEscape(_) => {
                 UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID
@@ -4179,6 +4186,9 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(_) => UnicornConsistentEmptyArraySpread::NAME,
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::NAME
+            }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::NAME
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::NAME,
             Self::UnicornConsistentTemplateLiteralEscape(_) => {
@@ -5168,6 +5178,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::CATEGORY
+            }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::CATEGORY
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::CATEGORY,
             Self::UnicornConsistentTemplateLiteralEscape(_) => {
@@ -6160,6 +6173,9 @@ impl RuleEnum {
             Self::UnicornConsistentEmptyArraySpread(_) => UnicornConsistentEmptyArraySpread::FIX,
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::FIX
+            }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::FIX
             }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::FIX,
             Self::UnicornConsistentTemplateLiteralEscape(_) => {
@@ -7244,6 +7260,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::documentation()
+            }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::documentation()
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::documentation()
@@ -9127,6 +9146,10 @@ impl RuleEnum {
                 UnicornConsistentExistenceIndexCheck::config_schema(generator)
                     .or_else(|| UnicornConsistentExistenceIndexCheck::schema(generator))
             }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::config_schema(generator)
+                    .or_else(|| UnicornConsistentExportDecoratorPosition::schema(generator))
+            }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::config_schema(generator)
                     .or_else(|| UnicornConsistentFunctionScoping::schema(generator))
@@ -10711,6 +10734,7 @@ impl RuleEnum {
             Self::UnicornConsistentDateClone(_) => "unicorn",
             Self::UnicornConsistentEmptyArraySpread(_) => "unicorn",
             Self::UnicornConsistentExistenceIndexCheck(_) => "unicorn",
+            Self::UnicornConsistentExportDecoratorPosition(_) => "unicorn",
             Self::UnicornConsistentFunctionScoping(_) => "unicorn",
             Self::UnicornConsistentTemplateLiteralEscape(_) => "unicorn",
             Self::UnicornCustomErrorDefinition(_) => "unicorn",
@@ -12581,6 +12605,11 @@ impl RuleEnum {
                     UnicornConsistentExistenceIndexCheck::from_configuration(value)?,
                 ))
             }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                Ok(Self::UnicornConsistentExportDecoratorPosition(
+                    UnicornConsistentExportDecoratorPosition::from_configuration(value)?,
+                ))
+            }
             Self::UnicornConsistentFunctionScoping(_) => {
                 Ok(Self::UnicornConsistentFunctionScoping(
                     UnicornConsistentFunctionScoping::from_configuration(value)?,
@@ -14282,6 +14311,7 @@ impl RuleEnum {
             Self::UnicornConsistentDateClone(rule) => rule.to_configuration(),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.to_configuration(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.to_configuration(),
+            Self::UnicornConsistentExportDecoratorPosition(rule) => rule.to_configuration(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.to_configuration(),
             Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.to_configuration(),
             Self::UnicornCustomErrorDefinition(rule) => rule.to_configuration(),
@@ -15132,6 +15162,7 @@ impl RuleEnum {
             Self::UnicornConsistentDateClone(rule) => rule.run(node, ctx),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run(node, ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run(node, ctx),
+            Self::UnicornConsistentExportDecoratorPosition(rule) => rule.run(node, ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run(node, ctx),
             Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run(node, ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.run(node, ctx),
@@ -15992,6 +16023,7 @@ impl RuleEnum {
             Self::UnicornConsistentDateClone(rule) => rule.run_once(ctx),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_once(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_once(ctx),
+            Self::UnicornConsistentExportDecoratorPosition(rule) => rule.run_once(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_once(ctx),
             Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_once(ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.run_once(ctx),
@@ -16927,6 +16959,9 @@ impl RuleEnum {
             Self::UnicornConsistentExistenceIndexCheck(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::UnicornConsistentExportDecoratorPosition(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornConsistentTemplateLiteralEscape(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -17830,6 +17865,7 @@ impl RuleEnum {
             Self::UnicornConsistentDateClone(rule) => rule.should_run(ctx),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.should_run(ctx),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.should_run(ctx),
+            Self::UnicornConsistentExportDecoratorPosition(rule) => rule.should_run(ctx),
             Self::UnicornConsistentFunctionScoping(rule) => rule.should_run(ctx),
             Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.should_run(ctx),
             Self::UnicornCustomErrorDefinition(rule) => rule.should_run(ctx),
@@ -18870,6 +18906,9 @@ impl RuleEnum {
             }
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::IS_TSGOLINT_RULE
+            }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::IS_TSGOLINT_RULE
             }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::IS_TSGOLINT_RULE
@@ -20008,6 +20047,9 @@ impl RuleEnum {
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::VERSION
             }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::VERSION
+            }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::VERSION,
             Self::UnicornConsistentTemplateLiteralEscape(_) => {
                 UnicornConsistentTemplateLiteralEscape::VERSION
@@ -21046,6 +21088,9 @@ impl RuleEnum {
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::HAS_CONFIG
             }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::HAS_CONFIG
+            }
             Self::UnicornConsistentFunctionScoping(_) => {
                 UnicornConsistentFunctionScoping::HAS_CONFIG
             }
@@ -22061,6 +22106,9 @@ impl RuleEnum {
             Self::UnicornConsistentExistenceIndexCheck(_) => {
                 UnicornConsistentExistenceIndexCheck::INFO
             }
+            Self::UnicornConsistentExportDecoratorPosition(_) => {
+                UnicornConsistentExportDecoratorPosition::INFO
+            }
             Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::INFO,
             Self::UnicornConsistentTemplateLiteralEscape(_) => {
                 UnicornConsistentTemplateLiteralEscape::INFO
@@ -22955,6 +23003,7 @@ impl RuleEnum {
             Self::UnicornConsistentDateClone(rule) => rule.types_info(),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.types_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.types_info(),
+            Self::UnicornConsistentExportDecoratorPosition(rule) => rule.types_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.types_info(),
             Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.types_info(),
             Self::UnicornCustomErrorDefinition(rule) => rule.types_info(),
@@ -23802,6 +23851,7 @@ impl RuleEnum {
             Self::UnicornConsistentDateClone(rule) => rule.run_info(),
             Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_info(),
             Self::UnicornConsistentExistenceIndexCheck(rule) => rule.run_info(),
+            Self::UnicornConsistentExportDecoratorPosition(rule) => rule.run_info(),
             Self::UnicornConsistentFunctionScoping(rule) => rule.run_info(),
             Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.run_info(),
             Self::UnicornCustomErrorDefinition(rule) => rule.run_info(),
@@ -24742,6 +24792,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornConsistentEmptyArraySpread(UnicornConsistentEmptyArraySpread::default()),
         RuleEnum::UnicornConsistentExistenceIndexCheck(
             UnicornConsistentExistenceIndexCheck::default(),
+        ),
+        RuleEnum::UnicornConsistentExportDecoratorPosition(
+            UnicornConsistentExportDecoratorPosition::default(),
         ),
         RuleEnum::UnicornConsistentFunctionScoping(UnicornConsistentFunctionScoping::default()),
         RuleEnum::UnicornConsistentTemplateLiteralEscape(

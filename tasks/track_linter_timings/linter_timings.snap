@@ -525,6 +525,7 @@ unicorn/consistent-assert                                  |    103
 unicorn/consistent-date-clone                              |   1421
 unicorn/consistent-empty-array-spread                      |   4722
 unicorn/consistent-existence-index-check                   |  20604
+unicorn/consistent-export-decorator-position               |    300
 unicorn/consistent-function-scoping                        |  16812
 unicorn/consistent-template-literal-escape                 |    613
 unicorn/custom-error-definition                            |    300

@@ -490,6 +490,7 @@ pub(crate) mod unicorn {
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
+    pub mod consistent_export_decorator_position;
     pub mod consistent_function_scoping;
     pub mod consistent_template_literal_escape;
     pub mod custom_error_definition;
