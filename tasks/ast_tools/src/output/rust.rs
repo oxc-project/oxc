@@ -5,7 +5,7 @@ use std::{
 
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use proc_macro2::TokenStream;
-use syn3::parse2;
+use syn::parse2;
 
 use crate::logln;
 

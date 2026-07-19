@@ -1788,7 +1788,7 @@ dependencies = [
  "phf",
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.0",
 ]
 
 [[package]]
@@ -1822,7 +1822,6 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
- "syn 2.0.119",
  "syn 3.0.0",
  "toml",
 ]
@@ -1923,7 +1922,6 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
- "syn 2.0.119",
  "syn 3.0.0",
 ]
 
@@ -2242,7 +2240,7 @@ dependencies = [
  "project-root",
  "quote",
  "rustc-hash",
- "syn 2.0.119",
+ "syn 3.0.0",
 ]
 
 [[package]]
@@ -2253,7 +2251,7 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.0",
 ]
 
 [[package]]
@@ -3251,7 +3249,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
- "syn 2.0.119",
+ "syn 3.0.0",
 ]
 
 [[package]]
