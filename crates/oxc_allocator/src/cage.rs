@@ -269,7 +269,13 @@ fn ensure_cage_init() {
 #[cfg(miri)]
 fn reserve_cage() -> NonNull<u8> {
     use std::alloc::{GlobalAlloc, System};
-    let layout = Layout::from_size_align(RESERVED_SIZE, CHUNK_ALIGN).unwrap();
+    // Align the base like a page (as `mmap` would): a chunk's address is `base + offset`, and
+    // `offset` is only aligned to `max(requested_align, CHUNK_ALIGN)`. So the base itself must be
+    // aligned to the strongest alignment any allocation requests (up to a page) for a strongly-
+    // aligned chunk to land on the right boundary. A `CHUNK_ALIGN`-aligned base would break
+    // requests for e.g. 4096-byte alignment.
+    const MIRI_CAGE_ALIGN: usize = 16384;
+    let layout = Layout::from_size_align(RESERVED_SIZE, MIRI_CAGE_ALIGN).unwrap();
     // SAFETY: `layout` has non-zero size.
     let ptr = unsafe { System.alloc(layout) };
     NonNull::new(ptr).expect("pointer-compression cage: failed to reserve heap cage under Miri")
