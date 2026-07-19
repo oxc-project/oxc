@@ -182,7 +182,7 @@ quote = "1" # Quasi-quoting for macros
 rustc-hash = "2" # Fast hash algorithm
 serde = "1" # Serialization framework
 serde_json = "1" # JSON serialization
-syn = { version = "2", default-features = false } # Rust parser for macros
+syn = { version = "3", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
 unicode-segmentation = "1.13.3" # Unicode grapheme segmentation
 
