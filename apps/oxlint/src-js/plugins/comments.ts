@@ -299,17 +299,32 @@ const resetCommentLoc = resetCommentLocTemp;
 
 /**
  * Build the `comments` array (a slice of `cachedComments`).
- * Called by `ast.comments` getter.
+ *
+ * Unlike `initCommentsArray`, caller does not need to call `initCommentsBuffer()` first.
+ *
+ * This is used by `ast.comments` getter and `getAllComments` method.
  */
 export function initComments(): void {
   debugAssert(comments === null, "Comments already deserialized");
 
-  if (commentsInt32 === null) {
-    initCommentsBuffer();
+  if (commentsInt32 === null) initCommentsBuffer();
+  initCommentsArray();
+}
 
-    // `initCommentsBuffer` sets `comments` for zero-comment files
-    if (comments !== null) return;
-  }
+/*
+ * Build the `comments` array (a slice of `cachedComments`).
+ *
+ * Caller must ensure `initCommentsBuffer()` has been called first
+ * (so comment buffers and source text are already initialized).
+ *
+ * Called by `ast.comments` getter.
+ */
+export function initCommentsArray(): void {
+  debugAssert(comments === null, "Comments already deserialized");
+  debugAssert(
+    commentsInt32 !== null && sourceText !== null,
+    "`initCommentsBuffer` must be called before `initComments`",
+  );
 
   // Create `comments` array as a slice of `cachedComments` array.
   //
@@ -320,11 +335,15 @@ export function initComments(): void {
   // If the comments array from previous file is longer than the current one,
   // reuse it and truncate it to avoid the memcpy entirely.
   // Assuming random distribution of number of comments in files, this cheaper branch should be hit on 50% of files.
-  if (previousComments.length >= commentsLen) {
+  //
+  // Don't touch `previousComments` for files with no comments.
+  if (previousComments.length < commentsLen) {
+    comments = previousComments = cachedComments.slice(0, commentsLen);
+  } else if (commentsLen === 0) {
+    comments = EMPTY_COMMENTS;
+  } else {
     previousComments.length = commentsLen;
     comments = previousComments;
-  } else {
-    comments = previousComments = cachedComments.slice(0, commentsLen);
   }
 }
 
@@ -355,7 +374,6 @@ export function initCommentsBuffer(): void {
 
   // Fast path for files with no comments
   if (commentsLen === 0) {
-    comments = EMPTY_COMMENTS;
     commentsUint8 = EMPTY_UINT8_ARRAY;
     commentsInt32 = EMPTY_INT32_ARRAY;
     return;

@@ -8,13 +8,13 @@ import {
   commentsInt32,
   commentsLen,
   getComment,
-  initComments,
+  initCommentsArray,
   initCommentsBuffer,
 } from "./comments.ts";
 import {
   cachedTokens,
-  initTokens,
   getToken,
+  initTokensArray,
   initTokensBuffer,
   tokens,
   tokensLen,
@@ -316,14 +316,14 @@ export function getTokensAndComments(): TokenOrComment[] {
 
   // Fast path: No comments - build `tokens` array and return it directly
   if (commentsLen === 0) {
-    if (tokens === null) initTokens();
+    if (tokens === null) initTokensArray();
     debugAssertIsNonNull(tokens);
     return (tokensAndComments = tokens);
   }
 
   // Fast path: No tokens - build `comments` array and return it directly
   if (tokensLen === 0) {
-    if (comments === null) initComments();
+    if (comments === null) initCommentsArray();
     debugAssertIsNonNull(comments);
     return (tokensAndComments = comments);
   }

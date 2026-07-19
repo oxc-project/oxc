@@ -451,12 +451,32 @@ const IS_ESCAPED_FIELD_OFFSET = 10;
 
 /**
  * Build the `tokens` array (a slice of `cachedTokens`).
- * Called by `ast.tokens` getter.
+ *
+ * Unlike `initTokensArray`, caller does not need to call `initTokensBuffer()` first.
+ *
+ * This is used by `ast.tokens` getter.
  */
 export function initTokens(): void {
   debugAssert(tokens === null, "Tokens already initialized");
 
   if (tokensInt32 === null) initTokensBuffer();
+  initTokensArray();
+}
+
+/*
+ * Build the `tokens` array (a slice of `cachedTokens`).
+ *
+ * Caller must ensure `initTokensBuffer()` has been called first
+ * (so token buffers and source text are already initialized).
+ *
+ * Called by `ast.tokens` getter.
+ */
+export function initTokensArray(): void {
+  debugAssert(tokens === null, "Tokens already initialized");
+  debugAssert(
+    tokensInt32 !== null && sourceText !== null,
+    "`initTokensBuffer` must be called before `initTokens`",
+  );
 
   // Create `tokens` array as a slice of `cachedTokens` array.
   //
