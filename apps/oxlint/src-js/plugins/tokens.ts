@@ -543,18 +543,6 @@ export function initTokensBuffer(): void {
 }
 
 /**
- * Get token at `index`.
- *
- * Caller must ensure `initTokensBuffer()` has been called before calling this function.
- *
- * @param index - Token index in the tokens buffer
- * @returns Token
- */
-export function getToken(index: number): TokenType {
-  return cachedTokens[index] as TokenType;
-}
-
-/**
  * Unescape an identifier.
  *
  * We do this on JS side, because escaped identifiers are so extremely rare that this function

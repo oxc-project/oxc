@@ -407,18 +407,6 @@ export function initCommentsBuffer(): void {
 }
 
 /**
- * Get comment at `index`.
- *
- * Caller must ensure `initCommentsBuffer()` has been called before calling this function.
- *
- * @param index - Comment index in the comments buffer
- * @returns Comment
- */
-export function getComment(index: number): CommentType {
-  return cachedComments[index];
-}
-
-/**
  * Check all comments have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.

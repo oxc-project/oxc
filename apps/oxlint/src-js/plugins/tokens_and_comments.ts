@@ -7,13 +7,11 @@ import {
   comments,
   commentsInt32,
   commentsLen,
-  getComment,
   initCommentsArray,
   initCommentsBuffer,
 } from "./comments.ts";
 import {
   cachedTokens,
-  getToken,
   initTokensArray,
   initTokensBuffer,
   tokens,
@@ -277,8 +275,8 @@ export function getTokenOrComment(index: number): TokenOrComment {
   const originalIndex = tokensAndCommentsInt32![pos32 + MERGED_ORIGINAL_INDEX_OFFSET32];
 
   return tokensAndCommentsInt32![pos32 + MERGED_TYPE_OFFSET32] === MERGED_TYPE_TOKEN
-    ? getToken(originalIndex)
-    : getComment(originalIndex);
+    ? (cachedTokens[originalIndex] as Token)
+    : cachedComments[originalIndex];
 }
 
 /**

@@ -2,7 +2,7 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { cachedTokens, tokensInt32, tokensLen, initTokensBuffer, getToken } from "./tokens.ts";
+import { cachedTokens, tokensInt32, tokensLen, initTokensBuffer } from "./tokens.ts";
 import {
   tokensAndCommentsInt32,
   tokensAndCommentsLen,
@@ -1458,7 +1458,7 @@ function getIncludeComments(
  * @returns Deserialized token or comment
  */
 function getEntry(index: number, includeComments: boolean): TokenOrComment {
-  return includeComments === true ? getTokenOrComment(index) : getToken(index);
+  return includeComments === true ? getTokenOrComment(index) : (cachedTokens[index] as Token);
 }
 
 /**
@@ -1502,10 +1502,6 @@ function collectEntries(
   includeComments: boolean,
 ): TokenOrComment[] {
   if (includeComments === false) {
-    // Batch-deserialize tokens in range, then slice from `cachedTokens` array
-    for (let i = startIndex; i < endIndex; i++) {
-      getToken(i);
-    }
     return cachedTokens!.slice(startIndex, endIndex) as TokenOrComment[];
   }
 

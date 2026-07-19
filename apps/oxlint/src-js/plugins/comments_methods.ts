@@ -7,7 +7,6 @@ import {
   comments,
   commentsInt32,
   commentsLen,
-  getComment,
   initComments,
   initCommentsBuffer,
 } from "./comments.ts";
@@ -96,9 +95,6 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
     ];
   const sliceEnd = sliceStart + (count32 >> MERGED_SIZE32_SHIFT);
 
-  for (let i = sliceStart; i < sliceEnd; i++) {
-    getComment(i);
-  }
   return cachedComments.slice(sliceStart, sliceEnd);
 }
 
@@ -158,9 +154,6 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
     ];
   const sliceEnd = sliceStart + (count32 >> MERGED_SIZE32_SHIFT);
 
-  for (let i = sliceStart; i < sliceEnd; i++) {
-    getComment(i);
-  }
   return cachedComments.slice(sliceStart, sliceEnd);
 }
 
@@ -186,10 +179,6 @@ export function getCommentsInside(node: Node): Comment[] {
   // Its index is used as `sliceEnd`, which is exclusive of the slice.
   const sliceEnd = firstTokenAtOrAfter(commentsInt32, rangeEnd, sliceStart, commentsLen);
 
-  // Deserialize only the comments we're returning
-  for (let i = sliceStart; i < sliceEnd; i++) {
-    getComment(i);
-  }
   return cachedComments.slice(sliceStart, sliceEnd);
 }
 
