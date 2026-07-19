@@ -13,7 +13,7 @@
 
 use std::cmp::Ordering;
 
-use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::OrderedSet;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -33,7 +33,7 @@ use crate::react_compiler_hir::visitors::each_terminal_operand_ids;
 use crate::react_compiler_lowering::get_reverse_postordered_blocks;
 use crate::react_compiler_lowering::mark_instruction_ids;
 use crate::react_compiler_lowering::mark_predecessors;
-use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::OrderedMap;
 
 // =============================================================================
 // getScopes
@@ -210,7 +210,7 @@ fn handle_rewrite(
     };
 
     let curr_block_id = context.next_block_id;
-    let mut preds = FxIndexSet::default();
+    let mut preds = OrderedSet::default();
     for &p in &context.next_preds {
         preds.insert(p);
     }
@@ -249,7 +249,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
 
     // Step 2: Apply rewrites by splitting blocks
     let mut rewritten_final_blocks: FxHashMap<BlockId, BlockId> = FxHashMap::default();
-    let mut next_blocks: FxIndexMap<BlockId, BasicBlock> = FxIndexMap::default();
+    let mut next_blocks: OrderedMap<BlockId, BasicBlock> = OrderedMap::default();
 
     // Reverse so we can pop from the end while traversing in ascending order
     queued_rewrites.reverse();
@@ -284,7 +284,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
         }
 
         if !context.rewrites.is_empty() {
-            let mut final_preds = FxIndexSet::default();
+            let mut final_preds = OrderedSet::default();
             for &p in &context.next_preds {
                 final_preds.insert(p);
             }

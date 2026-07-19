@@ -14,6 +14,7 @@
 use std::borrow::Cow;
 
 use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::OrderedMap;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -640,7 +641,7 @@ impl InferenceState {
         self.uninitialized_access.set(None);
     }
 
-    fn infer_phi(&mut self, phi_place_id: IdentifierId, phi_operands: &FxIndexMap<BlockId, Place>) {
+    fn infer_phi(&mut self, phi_place_id: IdentifierId, phi_operands: &OrderedMap<BlockId, Place>) {
         let mut values: FxHashSet<ValueId> = FxHashSet::default();
         for (_, operand) in phi_operands {
             if let Some(operand_values) = self.variables.get(&operand.identifier) {
@@ -1140,7 +1141,7 @@ fn infer_block(
     let block = &func.body.blocks[&block_id];
 
     // Process phis
-    let phis: Vec<(IdentifierId, FxIndexMap<BlockId, Place>)> =
+    let phis: Vec<(IdentifierId, OrderedMap<BlockId, Place>)> =
         block.phis.iter().map(|phi| (phi.place.identifier, phi.operands.clone())).collect();
     for (place_id, operands) in &phis {
         state.infer_phi(*place_id, operands);

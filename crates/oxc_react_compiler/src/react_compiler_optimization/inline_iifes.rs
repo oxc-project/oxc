@@ -40,7 +40,7 @@
 //!
 //! Analogous to TS `Inference/InlineImmediatelyInvokedFunctionExpressions.ts`.
 
-use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::OrderedSet;
 use oxc_str::format_ident;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -142,7 +142,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         instructions: continuation_instructions,
                         kind: block_kind,
                         phis: Vec::new(),
-                        preds: FxIndexSet::default(),
+                        preds: OrderedSet::default(),
                         terminal: continuation_terminal,
                     };
                     func.body.blocks.insert(continuation_block_id, continuation_block);

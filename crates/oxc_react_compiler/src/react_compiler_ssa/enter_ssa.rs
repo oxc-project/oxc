@@ -8,7 +8,7 @@ use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::*;
-use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::OrderedMap;
 
 // =============================================================================
 // SSABuilder
@@ -36,7 +36,7 @@ struct SSABuilder {
 }
 
 impl SSABuilder {
-    fn new(blocks: &FxIndexMap<BlockId, BasicBlock>) -> Self {
+    fn new(blocks: &OrderedMap<BlockId, BasicBlock>) -> Self {
         let mut block_preds = FxHashMap::default();
         for (id, block) in blocks {
             block_preds.insert(*id, block.preds.iter().copied().collect());
@@ -198,7 +198,7 @@ impl SSABuilder {
     ) {
         let preds = self.block_preds.get(&block_id).cloned().unwrap_or_default();
 
-        let mut pred_defs: FxIndexMap<BlockId, Place> = FxIndexMap::default();
+        let mut pred_defs: OrderedMap<BlockId, Place> = OrderedMap::default();
         for pred_block_id in &preds {
             let pred_id = self.get_id_at(old_place, *pred_block_id, env);
             pred_defs.insert(
@@ -449,7 +449,7 @@ pub fn placeholder_function<'a>() -> HirFunction<'a> {
             span: None,
         },
         context: Vec::new(),
-        body: HIR { entry: BlockId::ENTRY, blocks: FxIndexMap::default() },
+        body: HIR { entry: BlockId::ENTRY, blocks: OrderedMap::default() },
         instructions: Vec::new(),
         generator: false,
         is_async: false,
