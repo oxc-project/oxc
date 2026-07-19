@@ -4,6 +4,91 @@ use crate::{
     CompressOptions, test_options, test_options_source_type, test_same_options, test_smallest,
 };
 
+// https://github.com/oxc-project/oxc/issues/24531
+// A `var` assigned only inside a conditional holds its hoisted `undefined`
+// on the untaken path; single-statement block flattening produces a
+// brace-less `if (c) var x = v;` whose declarator has no block scope, so
+// the value must not be treated as write-once.
+#[test]
+fn conditional_var_declarator_not_inlined() {
+    let options = CompressOptions::smallest();
+    test_options(
+        "function t() { if (window.x) { var callback = true } return () => callback ? 'ng' : 'ok'; } NOOP(t());",
+        "function t() { if (window.x) var callback = !0; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
+        &options,
+    );
+    // The already-flattened form.
+    test_options(
+        "function t() { if (window.x) var callback = true; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
+        "function t() { if (window.x) var callback = !0; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
+        &options,
+    );
+}
+
+#[test]
+fn conditional_var_alternate_after_declarative_consequent_not_inlined() {
+    // The alternate is still conditional when the consequent is itself
+    // declarative and therefore has not ended the body's prelude.
+    test_smallest(
+        "function t(c) { if (c) var a = 1; else var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+        "function t(c) { if (c) var a = 1; else var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+    );
+}
+
+#[test]
+fn conditional_var_is_not_assumed_fresh() {
+    // The untaken path leaves `x` undefined, so dropping the member write would
+    // remove a TypeError.
+    test_smallest(
+        "export function f(a) { if (a) var x = {}; x.p = 1; }",
+        "export function f(a) { if (a) var x = {}; x.p = 1; }",
+    );
+}
+
+#[test]
+fn single_conditional_falsy_var_still_folds_in_boolean_context() {
+    // Both possible values (`undefined` and `false`) are falsy, so the special
+    // boolean-context fact remains valid for a symbol with one declaration.
+    test_smallest(
+        "export function f(a) { if (a) var x = false; return x ? 'bad' : 'ok'; }",
+        "export function f(a) { if (a) var x = !1; return 'ok'; }",
+    );
+}
+
+#[test]
+fn conditional_labeled_var_declarator_not_inlined() {
+    // A label introduces no scope, so the ancestry check must reject this
+    // conditional body explicitly.
+    test_smallest(
+        "function t(c) { if (c) L: var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+        "function t(c) { if (c) L: var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+    );
+}
+
+#[test]
+fn unconditional_var_declarator_positions_still_inline() {
+    let options = CompressOptions::smallest();
+    // Unconditional declarators at the body top keep inlining.
+    test_options(
+        "function t() { var flag = false; return () => flag ? 'a' : 'b'; } NOOP(t());",
+        "function t() { return () => 'b'; } NOOP(t());",
+        &options,
+    );
+    // Direct declarations terminate at the module's ProgramBody ancestor.
+    test_options(
+        "var flag = true; export function f() { return flag ? 'a' : 'b'; }",
+        "export function f() { return 'a'; }",
+        &options,
+    );
+    // Export declarations add one transparent ancestry wrapper before the
+    // module's ProgramBody ancestor.
+    test_options(
+        "export var flag = true; export function f() { return flag ? 'a' : 'b'; }",
+        "export var flag = !0; export function f() { return 'a'; }",
+        &options,
+    );
+}
+
 // https://github.com/oxc-project/oxc/issues/13051
 #[test]
 fn readonly_var() {
