@@ -192,6 +192,6 @@ fn visit(
                 .with_labels(place.span.map(|s| s.label(format!("this is {}", prev_kind)))));
         }
     }
-    identifiers.insert(place.identifier, (place.clone(), kind));
+    identifiers.insert(place.identifier, (*place, kind));
     Ok(())
 }

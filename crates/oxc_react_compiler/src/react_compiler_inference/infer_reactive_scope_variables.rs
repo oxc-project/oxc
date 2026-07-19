@@ -50,14 +50,14 @@ pub fn infer_reactive_scope_variables(
     let mut scopes: FxHashMap<IdentifierId, ScopeState> = FxHashMap::default();
 
     scope_identifiers.for_each(|identifier_id, group_id| {
-        let ident_range = env.identifiers[identifier_id].mutable_range.clone();
+        let ident_range = env.identifiers[identifier_id].mutable_range;
         let ident_span = env.identifiers[identifier_id].span;
 
         let state = scopes.entry(group_id).or_insert_with(|| {
             let scope_id = env.next_scope_id();
             // Initialize scope range from the first member
             let scope = &mut env.scopes[scope_id];
-            scope.range = ident_range.clone();
+            scope.range = ident_range;
             ScopeState { scope_id, span: ident_span }
         });
 
@@ -89,12 +89,12 @@ pub fn infer_reactive_scope_variables(
 
     // Update each identifier's mutable_range to match its scope's range
     for (&_identifier_id, state) in &scopes {
-        let scope_range = env.scopes[state.scope_id].range.clone();
+        let scope_range = env.scopes[state.scope_id].range;
         // Find all identifiers with this scope and update their mutable_range
         // We iterate through all identifiers and check their scope
         for ident in &mut env.identifiers {
             if ident.scope == Some(state.scope_id) {
-                ident.mutable_range = scope_range.clone();
+                ident.mutable_range = scope_range;
             }
         }
     }

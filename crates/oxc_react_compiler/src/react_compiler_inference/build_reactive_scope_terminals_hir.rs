@@ -356,8 +356,7 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
     // reference as scope.range see the update automatically. We simulate
     // this by only syncing identifiers whose mutableRange matches the
     // scope's pre-update range.
-    let original_scope_ranges: Vec<MutableRange> =
-        env.scopes.iter().map(|s| s.range.clone()).collect();
+    let original_scope_ranges: Vec<MutableRange> = env.scopes.iter().map(|s| s.range).collect();
 
     for (_block_id, block) in &func.body.blocks {
         match &block.terminal {

@@ -111,7 +111,7 @@ pub fn merge_consecutive_blocks(
                     "Found a block with a single predecessor but where a phi has multiple ({}) operands",
                     phi.operands.len()
                 );
-                let operand = phi.operands.values().next().unwrap().clone();
+                let operand = *phi.operands.values().next().unwrap();
                 (phi.place.identifier, operand)
             })
             .collect();
@@ -129,11 +129,8 @@ pub fn merge_consecutive_blocks(
             };
             let instr = Instruction {
                 id: eval_order,
-                lvalue: lvalue.clone(),
-                value: InstructionValue::LoadLocal {
-                    place: operand.clone(),
-                    span: GENERATED_SOURCE,
-                },
+                lvalue,
+                value: InstructionValue::LoadLocal { place: operand, span: GENERATED_SOURCE },
                 span: GENERATED_SOURCE,
                 effects: Some(vec![AliasingEffect::Alias { from: operand, into: lvalue }]),
             };
@@ -161,11 +158,7 @@ pub fn merge_consecutive_blocks(
                 .iter()
                 .filter_map(|(pred_id, operand)| {
                     let mapped = merged.get(*pred_id);
-                    if mapped != *pred_id {
-                        Some((*pred_id, mapped, operand.clone()))
-                    } else {
-                        None
-                    }
+                    if mapped != *pred_id { Some((*pred_id, mapped, *operand)) } else { None }
                 })
                 .collect();
             for (old_id, new_id, operand) in updates {

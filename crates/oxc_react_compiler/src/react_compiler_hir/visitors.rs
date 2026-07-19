@@ -28,7 +28,7 @@ pub type PlaceList = SmallVec<[Place; 4]>;
 /// Equivalent to TS `eachInstructionLValue`.
 pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
     let mut result = PlaceList::new();
-    result.push(instr.lvalue.clone());
+    result.push(instr.lvalue);
     result.extend(each_instruction_value_lvalue(&instr.value));
     result
 }
@@ -42,14 +42,14 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
         | InstructionValue::StoreContext { lvalue, .. }
         | InstructionValue::DeclareLocal { lvalue, .. }
         | InstructionValue::StoreLocal { lvalue, .. } => {
-            result.push(lvalue.place.clone());
+            result.push(lvalue.place);
         }
         InstructionValue::Destructure { lvalue, .. } => {
             result.extend(each_pattern_operand(&lvalue.pattern));
         }
         InstructionValue::PostfixUpdate { lvalue, .. }
         | InstructionValue::PrefixUpdate { lvalue, .. } => {
-            result.push(lvalue.clone());
+            result.push(*lvalue);
         }
         // All other variants have no lvalues
         InstructionValue::LoadLocal { .. }
@@ -113,86 +113,86 @@ pub fn each_instruction_value_operand_with_functions(
     match value {
         InstructionValue::NewExpression { callee, args, .. }
         | InstructionValue::CallExpression { callee, args, .. } => {
-            result.push(callee.clone());
+            result.push(*callee);
             result.extend(each_call_argument(args));
         }
         InstructionValue::BinaryExpression { left, right, .. } => {
-            result.push(left.clone());
-            result.push(right.clone());
+            result.push(*left);
+            result.push(*right);
         }
         InstructionValue::MethodCall { receiver, property, args, .. } => {
-            result.push(receiver.clone());
-            result.push(property.clone());
+            result.push(*receiver);
+            result.push(*property);
             result.extend(each_call_argument(args));
         }
         InstructionValue::DeclareContext { .. } | InstructionValue::DeclareLocal { .. } => {
             // no operands
         }
         InstructionValue::LoadLocal { place, .. } | InstructionValue::LoadContext { place, .. } => {
-            result.push(place.clone());
+            result.push(*place);
         }
         InstructionValue::StoreLocal { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::StoreContext { lvalue, value: val, .. } => {
-            result.push(lvalue.place.clone());
-            result.push(val.clone());
+            result.push(lvalue.place);
+            result.push(*val);
         }
         InstructionValue::StoreGlobal { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::Destructure { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::PropertyLoad { object, .. } => {
-            result.push(object.clone());
+            result.push(*object);
         }
         InstructionValue::PropertyDelete { object, .. } => {
-            result.push(object.clone());
+            result.push(*object);
         }
         InstructionValue::PropertyStore { object, value: val, .. } => {
-            result.push(object.clone());
-            result.push(val.clone());
+            result.push(*object);
+            result.push(*val);
         }
         InstructionValue::ComputedLoad { object, property, .. } => {
-            result.push(object.clone());
-            result.push(property.clone());
+            result.push(*object);
+            result.push(*property);
         }
         InstructionValue::ComputedDelete { object, property, .. } => {
-            result.push(object.clone());
-            result.push(property.clone());
+            result.push(*object);
+            result.push(*property);
         }
         InstructionValue::ComputedStore { object, property, value: val, .. } => {
-            result.push(object.clone());
-            result.push(property.clone());
-            result.push(val.clone());
+            result.push(*object);
+            result.push(*property);
+            result.push(*val);
         }
         InstructionValue::UnaryExpression { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::JsxExpression { tag, props, children, .. } => {
             if let JsxTag::Place(place) = tag {
-                result.push(place.clone());
+                result.push(*place);
             }
             for attribute in props {
                 match attribute {
                     JsxAttribute::Attribute { place, .. } => {
-                        result.push(place.clone());
+                        result.push(*place);
                     }
                     JsxAttribute::SpreadAttribute { argument, .. } => {
-                        result.push(argument.clone());
+                        result.push(*argument);
                     }
                 }
             }
             if let Some(children) = children {
                 for child in children {
-                    result.push(child.clone());
+                    result.push(*child);
                 }
             }
         }
         InstructionValue::JsxFragment { children, .. } => {
             for child in children {
-                result.push(child.clone());
+                result.push(*child);
             }
         }
         InstructionValue::ObjectExpression { properties, .. } => {
@@ -200,12 +200,12 @@ pub fn each_instruction_value_operand_with_functions(
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
                         if let ObjectPropertyKey::Computed { name } = &prop.key {
-                            result.push(name.clone());
+                            result.push(*name);
                         }
-                        result.push(prop.place.clone());
+                        result.push(prop.place);
                     }
                     ObjectPropertyOrSpread::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                 }
             }
@@ -214,10 +214,10 @@ pub fn each_instruction_value_operand_with_functions(
             for element in elements {
                 match element {
                     ArrayElement::Place(place) => {
-                        result.push(place.clone());
+                        result.push(*place);
                     }
                     ArrayElement::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                     ArrayElement::Hole => {}
                 }
@@ -227,51 +227,51 @@ pub fn each_instruction_value_operand_with_functions(
         | InstructionValue::FunctionExpression { lowered_func, .. } => {
             let func = &functions[lowered_func.func];
             for ctx_place in &func.context {
-                result.push(ctx_place.clone());
+                result.push(*ctx_place);
             }
         }
         InstructionValue::TaggedTemplateExpression { tag, subexprs, .. } => {
-            result.push(tag.clone());
+            result.push(*tag);
             for subexpr in subexprs {
-                result.push(subexpr.clone());
+                result.push(*subexpr);
             }
         }
         InstructionValue::TypeCastExpression { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::TemplateLiteral { subexprs, .. } => {
             for subexpr in subexprs {
-                result.push(subexpr.clone());
+                result.push(*subexpr);
             }
         }
         InstructionValue::Await { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::GetIterator { collection, .. } => {
-            result.push(collection.clone());
+            result.push(*collection);
         }
         InstructionValue::IteratorNext { iterator, collection, .. } => {
-            result.push(iterator.clone());
-            result.push(collection.clone());
+            result.push(*iterator);
+            result.push(*collection);
         }
         InstructionValue::NextPropertyOf { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::PostfixUpdate { value: val, .. }
         | InstructionValue::PrefixUpdate { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::StartMemoize { deps, .. } => {
             if let Some(deps) = deps {
                 for dep in deps {
                     if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &dep.root {
-                        result.push(value.clone());
+                        result.push(*value);
                     }
                 }
             }
         }
         InstructionValue::FinishMemoize { decl, .. } => {
-            result.push(decl.clone());
+            result.push(*decl);
         }
         InstructionValue::Debugger { .. }
         | InstructionValue::RegExpLiteral { .. }
@@ -292,10 +292,10 @@ pub fn each_call_argument(args: &[PlaceOrSpread]) -> PlaceList {
     for arg in args {
         match arg {
             PlaceOrSpread::Place(place) => {
-                result.push(place.clone());
+                result.push(*place);
             }
             PlaceOrSpread::Spread(spread) => {
-                result.push(spread.place.clone());
+                result.push(spread.place);
             }
         }
     }
@@ -311,10 +311,10 @@ pub fn each_pattern_operand(pattern: &Pattern) -> PlaceList {
             for item in &arr.items {
                 match item {
                     ArrayPatternElement::Place(place) => {
-                        result.push(place.clone());
+                        result.push(*place);
                     }
                     ArrayPatternElement::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                     ArrayPatternElement::Hole => {}
                 }
@@ -324,10 +324,10 @@ pub fn each_pattern_operand(pattern: &Pattern) -> PlaceList {
             for property in &obj.properties {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        result.push(prop.place.clone());
+                        result.push(prop.place);
                     }
                     ObjectPropertyOrSpread::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                 }
             }
@@ -430,25 +430,25 @@ pub fn each_terminal_operand(terminal: &Terminal) -> PlaceList {
     let mut result = PlaceList::new();
     match terminal {
         Terminal::If { test, .. } => {
-            result.push(test.clone());
+            result.push(*test);
         }
         Terminal::Branch { test, .. } => {
-            result.push(test.clone());
+            result.push(*test);
         }
         Terminal::Switch { test, cases, .. } => {
-            result.push(test.clone());
+            result.push(*test);
             for case in cases {
                 if let Some(test) = &case.test {
-                    result.push(test.clone());
+                    result.push(*test);
                 }
             }
         }
         Terminal::Return { value, .. } | Terminal::Throw { value, .. } => {
-            result.push(value.clone());
+            result.push(*value);
         }
         Terminal::Try { handler_binding, .. } => {
             if let Some(binding) = handler_binding {
-                result.push(binding.clone());
+                result.push(*binding);
             }
         }
         Terminal::MaybeThrow { .. }
@@ -485,12 +485,10 @@ pub fn map_pattern_operands(pattern: &mut Pattern, f: &mut impl FnMut(Place) -> 
                 .items
                 .iter()
                 .map(|item| match item {
-                    ArrayPatternElement::Place(place) => {
-                        ArrayPatternElement::Place(f(place.clone()))
-                    }
+                    ArrayPatternElement::Place(place) => ArrayPatternElement::Place(f(*place)),
                     ArrayPatternElement::Spread(spread) => {
-                        let mut spread = spread.clone();
-                        spread.place = f(spread.place.clone());
+                        let mut spread = *spread;
+                        spread.place = f(spread.place);
                         ArrayPatternElement::Spread(spread)
                     }
                     ArrayPatternElement::Hole => ArrayPatternElement::Hole,
@@ -501,10 +499,10 @@ pub fn map_pattern_operands(pattern: &mut Pattern, f: &mut impl FnMut(Place) -> 
             for property in obj.properties.iter_mut() {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        prop.place = f(prop.place.clone());
+                        prop.place = f(prop.place);
                     }
                     ObjectPropertyOrSpread::Spread(spread) => {
-                        spread.place = f(spread.place.clone());
+                        spread.place = f(spread.place);
                     }
                 }
             }

@@ -115,7 +115,7 @@ fn pre_resolve_globals_recursive<'a>(
             let instr = &inner.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadGlobal { binding, span, .. } => {
-                    load_globals.push((instr_id, binding.clone(), *span));
+                    load_globals.push((instr_id, *binding, *span));
                 }
                 InstructionValue::FunctionExpression {
                     lowered_func: LoweredFunction { func: fid },
@@ -1369,7 +1369,7 @@ impl<'a> Unifier<'a> {
                 Some(Type::Property {
                     object_type: Box::new(object_type),
                     object_name: *object_name,
-                    property_name: property_name.clone(),
+                    property_name: *property_name,
                 })
             }
             Type::Function { shape_id, return_type, is_constructor } => {

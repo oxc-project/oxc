@@ -27,6 +27,7 @@ quote = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 syn = { workspace = true, features = ["parsing"] }
+syn3 = { package = "syn", version = "3", features = ["parsing"] }
 
 # `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
 [package.metadata.cargo-shear]

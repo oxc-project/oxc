@@ -1068,7 +1068,7 @@ impl<'a> PeepholeOptimizations {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs
                     // (init and TS type annotation) need an explicit walk to
-                    // reach `PassDirty`.
+                    // reach `PassChanges`.
                     ctx.drop_variable_declarator(decl);
                 }
                 should_keep
@@ -1424,9 +1424,7 @@ impl<'a> PeepholeOptimizations {
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
-            let Some(symbol_value) =
-                ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
-            else {
+            let Some(symbol_value) = ctx.state.symbols.value(prev_decl_id.symbol_id()) else {
                 return true;
             };
             // Implicitly observable bindings remain live independently of
@@ -1434,9 +1432,9 @@ impl<'a> PeepholeOptimizations {
             // An `export { foo }` specifier also contributes a reference, but
             // consult the shared metadata explicitly for consistency with the
             // other count-based consumers.
-            if ctx.state.symbol_is_implicitly_observable(prev_decl_id.symbol_id())
-                || symbol_value.read_references_count > 1
-                || symbol_value.write_references_count > 0
+            if ctx.state.symbols.is_implicitly_observable(prev_decl_id.symbol_id())
+                || symbol_value.references.has_multiple_reads()
+                || symbol_value.references.has_writes()
             {
                 return true;
             }

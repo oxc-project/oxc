@@ -72,7 +72,7 @@ pub trait ReactiveFunctionVisitor<'a> {
                 // Build a temporary ReactiveInstruction for the visitor
                 let reactive_instr = ReactiveInstruction {
                     id: instr.id,
-                    lvalue: Some(instr.lvalue.clone()),
+                    lvalue: Some(instr.lvalue),
                     value: ReactiveValue::Instruction(instr.value.clone()),
                     span: instr.span,
                 };

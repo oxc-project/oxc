@@ -773,7 +773,7 @@ impl<'a> PropertyPathRegistry<'a> {
         let parent_has_optional = self.nodes[parent_idx].has_optional;
         let idx = self.nodes.len();
         let mut new_path = parent_full_path.path.clone();
-        new_path.push(entry.clone());
+        new_path.push(*entry);
         self.nodes.push(PropertyPathNode {
             properties: FxHashMap::default(),
             optional_properties: FxHashMap::default(),
@@ -843,7 +843,7 @@ fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut Prop
                         span: entry.span,
                     }
                 } else {
-                    entry.clone()
+                    *entry
                 };
                 curr_node = registry.get_or_create_property_entry(curr_node, &next_entry);
             }

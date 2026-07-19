@@ -217,7 +217,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 | "object"
                 | "undefined"
         ) {
-            self.error(diagnostics::reserved_type_name(id.span, &id.name, syntax_name));
+            self.error(diagnostics::reserved_type_name(id.span, id.name.as_str(), syntax_name));
         }
     }
 

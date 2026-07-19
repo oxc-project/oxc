@@ -316,7 +316,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let instr = &self.hir.instructions[instr_id.index()];
                 block_value.push(ReactiveStatement::Instruction(ReactiveInstruction {
                     id: instr.id,
-                    lvalue: Some(instr.lvalue.clone()),
+                    lvalue: Some(instr.lvalue),
                     value: ReactiveValue::Instruction(instr.value.clone()),
                     span: instr.span,
                 }));
@@ -369,7 +369,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     block_value.push(ReactiveStatement::Terminal(Box::new(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::If {
-                                test: test.clone(),
+                                test: *test,
                                 consequent: consequent_block,
                                 alternate: alternate_block,
                                 id: *id,
@@ -413,10 +413,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         let case_schedule_id = self.cx.schedule(case_block_id, "case")?;
                         schedule_ids.push(case_schedule_id);
 
-                        reactive_cases.push(ReactiveSwitchCase {
-                            test: case.test.clone(),
-                            block: Some(consequent),
-                        });
+                        reactive_cases
+                            .push(ReactiveSwitchCase { test: case.test, block: Some(consequent) });
                     }
                     reactive_cases.reverse();
 
@@ -424,7 +422,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     block_value.push(ReactiveStatement::Terminal(Box::new(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Switch {
-                                test: test.clone(),
+                                test: *test,
                                 cases: reactive_cases,
                                 id: *id,
                             },
@@ -782,7 +780,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Try {
                                 block: try_body,
-                                handler_binding: handler_binding.clone(),
+                                handler_binding: *handler_binding,
                                 handler: handler_body,
                                 id: *id,
                             },
@@ -845,7 +843,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 Terminal::Return { value, id, .. } => {
                     block_value.push(ReactiveStatement::Terminal(Box::new(
                         ReactiveTerminalStatement {
-                            terminal: ReactiveTerminal::Return { value: value.clone(), id: *id },
+                            terminal: ReactiveTerminal::Return { value: *value, id: *id },
                             label: None,
                         },
                     )));
@@ -854,7 +852,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 Terminal::Throw { value, id, .. } => {
                     block_value.push(ReactiveStatement::Terminal(Box::new(
                         ReactiveTerminalStatement {
-                            terminal: ReactiveTerminal::Throw { value: value.clone(), id: *id },
+                            terminal: ReactiveTerminal::Throw { value: *value, id: *id },
                             label: None,
                         },
                     )));
@@ -885,7 +883,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     block_value.push(ReactiveStatement::Terminal(Box::new(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::If {
-                                test: test.clone(),
+                                test: *test,
                                 consequent: consequent_block,
                                 alternate: Some(alternate_block),
                                 id: *id,
@@ -932,9 +930,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 if instructions.is_empty() {
                     Ok(ValueBlockResult {
                         block: block_id_val,
-                        place: test.clone(),
+                        place: *test,
                         value: ReactiveValue::Instruction(InstructionValue::LoadLocal {
-                            place: test.clone(),
+                            place: *test,
                             span: test.span,
                         }),
                         id: *term_id,
@@ -990,7 +988,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         let instr = &self.hir.instructions[iid.index()];
                         ReactiveInstruction {
                             id: instr.id,
-                            lvalue: Some(instr.lvalue.clone()),
+                            lvalue: Some(instr.lvalue),
                             value: ReactiveValue::Instruction(instr.value.clone()),
                             span: instr.span,
                         }
@@ -1003,7 +1001,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 } else {
                     Ok(ValueBlockResult {
                         block: final_result.block,
-                        place: final_result.place.clone(),
+                        place: final_result.place,
                         value: ReactiveValue::SequenceExpression {
                             instructions: all_instrs,
                             id: final_result.id,
@@ -1062,7 +1060,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let call = ReactiveValue::SequenceExpression {
                     instructions: vec![ReactiveInstruction {
                         id: test_result.test.id,
-                        lvalue: Some(test_result.test.place.clone()),
+                        lvalue: Some(test_result.test.place),
                         value: test_result.test.value,
                         span: test_result.branch_span,
                     }],
@@ -1086,7 +1084,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let left = ReactiveValue::SequenceExpression {
                     instructions: vec![ReactiveInstruction {
                         id: test_result.test.id,
-                        lvalue: Some(test_result.test.place.clone()),
+                        lvalue: Some(test_result.test.place),
                         value: test_result.test.value,
                         span: *span,
                     }],
@@ -1148,7 +1146,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let instr = &self.hir.instructions[iid.index()];
                 ReactiveInstruction {
                     id: instr.id,
-                    lvalue: Some(instr.lvalue.clone()),
+                    lvalue: Some(instr.lvalue),
                     value: ReactiveValue::Instruction(instr.value.clone()),
                     span: instr.span,
                 }
@@ -1163,19 +1161,16 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 if ident.name.is_none() {
                     (
                         ReactiveValue::Instruction(InstructionValue::LoadLocal {
-                            place: store_value.clone(),
+                            place: *store_value,
                             span: store_value.span,
                         }),
-                        lvalue.place.clone(),
+                        lvalue.place,
                     )
                 } else {
-                    (
-                        ReactiveValue::Instruction(last_instr.value.clone()),
-                        last_instr.lvalue.clone(),
-                    )
+                    (ReactiveValue::Instruction(last_instr.value.clone()), last_instr.lvalue)
                 }
             }
-            _ => (ReactiveValue::Instruction(last_instr.value.clone()), last_instr.lvalue.clone()),
+            _ => (ReactiveValue::Instruction(last_instr.value.clone()), last_instr.lvalue),
         };
         let id = last_instr.id;
 
@@ -1210,7 +1205,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let instr = &self.hir.instructions[iid.index()];
                 ReactiveInstruction {
                     id: instr.id,
-                    lvalue: Some(instr.lvalue.clone()),
+                    lvalue: Some(instr.lvalue),
                     value: ReactiveValue::Instruction(instr.value.clone()),
                     span: instr.span,
                 }
@@ -1219,7 +1214,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
 
         ValueBlockResult {
             block: continuation.block,
-            place: continuation.place.clone(),
+            place: continuation.place,
             value: ReactiveValue::SequenceExpression {
                 instructions: reactive_instrs,
                 id: continuation.id,

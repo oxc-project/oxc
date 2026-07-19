@@ -98,8 +98,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
     // (same reference) automatically see scope range modifications. In Rust, we
     // simulate this by recording original ranges and only syncing identifiers
     // whose mutableRange matches the original.
-    let original_scope_ranges: Vec<MutableRange> =
-        env.scopes.iter().map(|s| s.range.clone()).collect();
+    let original_scope_ranges: Vec<MutableRange> = env.scopes.iter().map(|s| s.range).collect();
 
     let mut active_block_fallthrough_ranges: Vec<BlockFallthroughRange> = Vec::new();
     let mut active_scopes: FxHashSet<ScopeId> = FxHashSet::default();
@@ -242,7 +241,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
                 // or for ternary/logical/optional terminals.
                 let value_range = if let Some(node) = &node {
                     // Value -> value transition (ternary/logical/optional): reuse range
-                    node.value_range.clone()
+                    node.value_range
                 } else {
                     // Transition from block -> value block
                     let ft = fallthrough.expect("Expected a fallthrough for value block");

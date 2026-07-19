@@ -492,8 +492,8 @@ pub fn infer_mutation_aliasing_ranges(
             for (&pred, operand) in &phi.operands {
                 if !seen_blocks.contains(&pred) {
                     pending_phis.entry(pred).or_default().push(PendingPhiOperand {
-                        from: operand.clone(),
-                        into: phi.place.clone(),
+                        from: *operand,
+                        into: phi.place,
                         index,
                     });
                     index += 1;
@@ -559,7 +559,7 @@ pub fn infer_mutation_aliasing_ranges(
                                 MutationKind::Definite
                             },
                             reason: None,
-                            place: value.clone(),
+                            place: *value,
                         });
                         index += 1;
                     }
@@ -570,7 +570,7 @@ pub fn infer_mutation_aliasing_ranges(
                             transitive: false,
                             kind: MutationKind::Definite,
                             reason: reason.clone(),
-                            place: value.clone(),
+                            place: *value,
                         });
                         index += 1;
                     }
@@ -581,7 +581,7 @@ pub fn infer_mutation_aliasing_ranges(
                             transitive: false,
                             kind: MutationKind::Conditional,
                             reason: None,
-                            place: value.clone(),
+                            place: *value,
                         });
                         index += 1;
                     }
@@ -601,7 +601,7 @@ pub fn infer_mutation_aliasing_ranges(
                         function_effects.push(effect.clone());
                     }
                     AliasingEffect::Render { place } => {
-                        renders.push(PendingRender { index, place: place.clone() });
+                        renders.push(PendingRender { index, place: *place });
                         index += 1;
                         function_effects.push(effect.clone());
                     }
@@ -985,7 +985,7 @@ pub fn infer_mutation_aliasing_ranges(
     };
 
     function_effects.push(AliasingEffect::Create {
-        into: func.returns.clone(),
+        into: func.returns,
         value: return_value_kind,
         reason: ValueReason::KnownReturnSignature,
     });
@@ -994,20 +994,20 @@ pub fn infer_mutation_aliasing_ranges(
     let mut tracked: Vec<Place> = Vec::new();
     for param in &func.params {
         let place = match param {
-            ParamPattern::Place(p) => p.clone(),
-            ParamPattern::Spread(s) => s.place.clone(),
+            ParamPattern::Place(p) => *p,
+            ParamPattern::Spread(s) => s.place,
         };
         tracked.push(place);
     }
     for ctx in &func.context {
-        tracked.push(ctx.clone());
+        tracked.push(*ctx);
     }
-    tracked.push(func.returns.clone());
+    tracked.push(func.returns);
 
     let returns_identifier_id = func.returns.identifier;
 
     for i in 0..tracked.len() {
-        let into = tracked[i].clone();
+        let into = tracked[i];
         let mutation_index = index;
         index += 1;
 
@@ -1037,11 +1037,9 @@ pub fn infer_mutation_aliasing_ranges(
 
             if from_node.last_mutated == mutation_index {
                 if into.identifier == returns_identifier_id {
-                    function_effects
-                        .push(AliasingEffect::Alias { from: from.clone(), into: into.clone() });
+                    function_effects.push(AliasingEffect::Alias { from: *from, into });
                 } else {
-                    function_effects
-                        .push(AliasingEffect::Capture { from: from.clone(), into: into.clone() });
+                    function_effects.push(AliasingEffect::Capture { from: *from, into });
                 }
             }
         }
@@ -1068,12 +1066,12 @@ fn collect_param_effects(
         match local.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateConditionally {
-                    value: Place { span: local.span, ..place.clone() },
+                    value: Place { span: local.span, ..*place },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::Mutate {
-                    value: Place { span: local.span, ..place.clone() },
+                    value: Place { span: local.span, ..*place },
                     reason: node.mutation_reason.clone(),
                 });
             }
@@ -1084,12 +1082,12 @@ fn collect_param_effects(
         match transitive.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateTransitiveConditionally {
-                    value: Place { span: transitive.span, ..place.clone() },
+                    value: Place { span: transitive.span, ..*place },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::MutateTransitive {
-                    value: Place { span: transitive.span, ..place.clone() },
+                    value: Place { span: transitive.span, ..*place },
                 });
             }
         }

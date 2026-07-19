@@ -466,20 +466,12 @@ fn collect_temporaries_sidemap(
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
-                    let temp = env
-                        .temporaries
-                        .get(&place.identifier)
-                        .cloned()
-                        .unwrap_or_else(|| place.clone());
+                    let temp = env.temporaries.get(&place.identifier).cloned().unwrap_or(*place);
                     env.define(instr.lvalue.identifier, temp);
                 }
                 InstructionValue::StoreLocal { lvalue, value, .. } => {
-                    let temp = env
-                        .temporaries
-                        .get(&value.identifier)
-                        .cloned()
-                        .unwrap_or_else(|| value.clone());
-                    env.define(instr.lvalue.identifier, temp.clone());
+                    let temp = env.temporaries.get(&value.identifier).cloned().unwrap_or(*value);
+                    env.define(instr.lvalue.identifier, temp);
                     env.define(lvalue.place.identifier, temp);
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
@@ -488,11 +480,7 @@ fn collect_temporaries_sidemap(
                     {
                         continue;
                     }
-                    let temp = env
-                        .temporaries
-                        .get(&object.identifier)
-                        .cloned()
-                        .unwrap_or_else(|| object.clone());
+                    let temp = env.temporaries.get(&object.identifier).cloned().unwrap_or(*object);
                     env.define(instr.lvalue.identifier, temp);
                 }
                 _ => {}

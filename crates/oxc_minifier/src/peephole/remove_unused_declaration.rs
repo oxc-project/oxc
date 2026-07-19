@@ -6,25 +6,26 @@ use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
     pub(super) fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
-        ctx.state.options.unused != CompressOptionsUnused::Keep
+        ctx.options().unused != CompressOptionsUnused::Keep
             && !Self::is_script_root_scope(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
     }
 
     /// Count-based unusedness for declaration removal and IIFE folding. The
     /// assignment, member-write, and single-use-substitution consumers instead
-    /// pair `symbol_is_implicitly_observable` with their own count thresholds,
+    /// pair `is_implicitly_observable` with their own count thresholds,
     /// because some runtime semantics can observe a binding independently of
     /// resolved references.
     pub(super) fn symbol_is_unused_by_count(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        !ctx.state.symbol_is_implicitly_observable(symbol_id)
+        !ctx.state.symbols.is_implicitly_observable(symbol_id)
             && ctx.scoping().symbol_is_unused(symbol_id)
     }
 
     /// Function declarations additionally consume graph deadness, allowing
     /// self- and mutually-recursive cycles to be removed.
     fn function_has_no_live_references(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        Self::symbol_is_unused_by_count(symbol_id, ctx) || ctx.state.function_is_dead(symbol_id)
+        Self::symbol_is_unused_by_count(symbol_id, ctx)
+            || ctx.state.symbols.function_is_dead(symbol_id)
     }
 
     /// Return `true` when an exact function-valued initializer contains every
@@ -52,7 +53,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         // Covers exports, Script-root bindings, Annex B aliases, and `using`.
-        if ctx.state.symbol_is_implicitly_observable(symbol_id) {
+        if ctx.state.symbols.is_implicitly_observable(symbol_id) {
             return false;
         }
 
@@ -158,7 +159,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::FunctionDeclaration(f) = stmt else { return };
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+        if ctx.options().unused == CompressOptionsUnused::Keep {
             return;
         }
         let Some(id) = &f.id else { return };
@@ -175,7 +176,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(c) = stmt else { return };
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+        if ctx.options().unused == CompressOptionsUnused::Keep {
             return;
         }
         let Some(id) = &c.id else { return };
@@ -229,7 +230,7 @@ impl<'a> PeepholeOptimizations {
     /// ```
     pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.options().treeshake.invalid_import_side_effects
-            || ctx.state.options.unused == CompressOptionsUnused::Keep
+            || ctx.options().unused == CompressOptionsUnused::Keep
         {
             return;
         }

@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
@@ -529,7 +529,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 if self.at(Kind::Export) {
-                    self.error(diagnostics::modifier_already_seen(&Modifier::new(
+                    self.error(diagnostics::modifier_already_seen(Modifier::new(
                         self.cur_token().start(),
                         ModifierKind::Export,
                     )));
@@ -580,11 +580,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
-                        self.error(diagnostics::export_named_string(
-                            &specifier.local.to_string(),
-                            &specifier.exported.to_string(),
-                            literal.span,
-                        ));
+                        let local = self.allocator().alloc_str(&specifier.local.to_string());
+                        let exported = self.allocator().alloc_str(&specifier.exported.to_string());
+                        self.error(diagnostics::export_named_string(local, exported, literal.span));
                     }
                     // For each IdentifierName n in ReferencedBindings of NamedExports:
                     // It is a Syntax Error if StringValue of n is a ReservedWord or the StringValue of n
@@ -594,10 +592,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
+                            let local = self.allocator().alloc_str(&specifier.local.to_string());
+                            let exported =
+                                self.allocator().alloc_str(&specifier.exported.to_string());
                             self.error(diagnostics::export_reserved_word(
-                                &specifier.local.to_string(),
-                                &specifier.exported.to_string(),
-                                ident.span,
+                                local, exported, ident.span,
                             ));
                         }
 

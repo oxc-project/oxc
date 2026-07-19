@@ -5726,6 +5726,26 @@
             }
           ]
         },
+        "node/no-top-level-await": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoTopLevelAwaitConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "object-shorthand": {
           "anyOf": [
             {
@@ -15349,6 +15369,18 @@
           },
           "uniqueItems": true,
           "markdownDescription": "An array of variable names that are allowed to alias `this`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoTopLevelAwaitConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreBin": {
+          "description": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules."
         }
       },
       "additionalProperties": false

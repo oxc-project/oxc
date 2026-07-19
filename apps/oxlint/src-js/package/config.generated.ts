@@ -1234,6 +1234,7 @@ export interface DummyRuleMap {
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
   "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
+  "node/no-top-level-await"?: RuleNoConfig | [AllowWarnDeny, NoTopLevelAwaitConfig];
   "object-shorthand"?:
     RuleNoConfig | [AllowWarnDeny, ShorthandType] | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
@@ -4045,6 +4046,14 @@ export interface NoSyncConfig {
    * Function names to ignore.
    */
   ignores?: string[];
+}
+export interface NoTopLevelAwaitConfig {
+  /**
+   * If `true`, top-level `await` is allowed in files that start with a
+   * hashbang (`#!`), which marks them as executable scripts rather than
+   * importable modules.
+   */
+  ignoreBin?: boolean;
 }
 export interface ObjectShorthandOptions {
   avoidExplicitReturnArrows?: boolean;

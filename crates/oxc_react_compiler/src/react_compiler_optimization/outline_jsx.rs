@@ -276,7 +276,7 @@ fn collect_props<'a>(
                         attributes.push(OutlinedJsxAttribute {
                             original_name: *name,
                             new_name,
-                            place: place.clone(),
+                            place: *place,
                         });
                     }
                 }
@@ -305,7 +305,7 @@ fn collect_props<'a>(
                     attributes.push(OutlinedJsxAttribute {
                         original_name: child_name,
                         new_name,
-                        place: child.clone(),
+                        place: *child,
                     });
                 }
             }
@@ -324,7 +324,7 @@ fn emit_outlined_jsx<'a>(
 ) -> Option<Vec<Instruction<'a>>> {
     let props: Vec<JsxAttribute> = outlined_props
         .iter()
-        .map(|p| JsxAttribute::Attribute { name: p.new_name, place: p.place.clone() })
+        .map(|p| JsxAttribute::Attribute { name: p.new_name, place: p.place })
         .collect();
 
     // Create LoadGlobal for the outlined component
@@ -339,7 +339,7 @@ fn emit_outlined_jsx<'a>(
 
     let load_jsx = Instruction {
         id: EvaluationOrder::UNSET,
-        lvalue: load_place.clone(),
+        lvalue: load_place,
         value: InstructionValue::LoadGlobal {
             binding: NonLocalBinding::ModuleLocal { name: outlined_tag },
             span: None,
@@ -353,7 +353,7 @@ fn emit_outlined_jsx<'a>(
     let last_instr = &func.instructions[last_info.instr_idx];
     let jsx_expr = Instruction {
         id: EvaluationOrder::UNSET,
-        lvalue: last_instr.lvalue.clone(),
+        lvalue: last_instr.lvalue,
         value: InstructionValue::JsxExpression {
             tag: JsxTag::Place(load_place),
             props,
@@ -411,7 +411,7 @@ fn emit_outlined_fn<'a>(
     }
 
     // Return terminal uses the last instruction's lvalue
-    let last_lvalue = instr_table.last().unwrap().lvalue.clone();
+    let last_lvalue = instr_table.last().unwrap().lvalue;
 
     // Create return place
     let returns_id = env.next_identifier_id();
@@ -510,7 +510,7 @@ fn emit_updated_jsx<'a>(
                     .expect("Expected a new property for identifier");
                 new_props.push(JsxAttribute::Attribute {
                     name: new_prop.original_name,
-                    place: new_prop.place.clone(),
+                    place: new_prop.place,
                 });
             }
 
@@ -518,13 +518,13 @@ fn emit_updated_jsx<'a>(
                 kids.iter()
                     .map(|child| {
                         if jsx_ids.contains(&child.identifier) {
-                            child.clone()
+                            *child
                         } else {
                             // TS: invariant(newChild !== undefined, ...)
                             let new_prop = old_to_new_props
                                 .get(&child.identifier)
                                 .expect("Expected a new prop for child identifier");
-                            new_prop.place.clone()
+                            new_prop.place
                         }
                     })
                     .collect()
@@ -532,9 +532,9 @@ fn emit_updated_jsx<'a>(
 
             new_instrs.push(Instruction {
                 id: instr.id,
-                lvalue: instr.lvalue.clone(),
+                lvalue: instr.lvalue,
                 value: InstructionValue::JsxExpression {
-                    tag: tag.clone(),
+                    tag: *tag,
                     props: new_props,
                     children: new_children,
                     span: *span,
@@ -590,7 +590,7 @@ fn emit_destructure_props<'a>(
         properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
             key: ObjectPropertyKey::String { name: prop.new_name },
             property_type: ObjectPropertyType::Property,
-            place: prop.place.clone(),
+            place: prop.place,
         }));
     }
 
@@ -606,7 +606,7 @@ fn emit_destructure_props<'a>(
                 pattern: Pattern::Object(ObjectPattern { properties }),
                 kind: InstructionKind::Let,
             },
-            value: props_obj.clone(),
+            value: *props_obj,
             span: None,
         },
         span: None,
