@@ -10,7 +10,6 @@ import {
   TOKENS_OFFSET_POS_32,
   TOKENS_LEN_POS_32,
 } from "../generated/constants.ts";
-import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Range, Span } from "./location.ts";
@@ -128,20 +127,16 @@ let activeTokensWithRangeCount = 0;
 const tokensWithLoc: Token[] = [];
 let activeTokensWithLocCount = 0;
 
-// Cached regex descriptor objects, reused across files
+// Cached `Regex` objects, reused across files.
+// `activeTokensWithRegexCount` serves as the index into both `regexObjects` (for the next reusable object)
+// and `tokensWithRegex` (below), which grow in lockstep and so always have the same length.
 const regexObjects: Regex[] = [];
 
-// Indices of tokens whose `regex` property was set, and therefore needs clearing on reset.
+// Tokens whose `regex` property has been accessed, and therefore needs clearing on reset.
 // Regex tokens are rare, so this array is almost always very small.
-// `Int32Array` rather than `Array` to avoid GC tracing and write barriers.
-// `activeTokensWithRegexCount` also serves as the index into `regexObjects`
-// for the next regex descriptor object which can be reused.
-let tokensWithRegexIndexes = EMPTY_INT32_ARRAY;
+// Never shrunk - `activeTokensWithRegexCount` tracks the active count to avoid freeing the backing store.
+const tokensWithRegex: Token[] = [];
 let activeTokensWithRegexCount = 0;
-
-// Minimum capacity of `tokensWithRegexIndexes` array when not empty.
-// 16 elements = 64 bytes = 1 cache line.
-const REGEX_INDEXES_MIN_CAPACITY = 16;
 
 // `defineGetter(obj, prop, getter)` is equivalent to `obj.__defineGetter__(prop, getter)`,
 // but without `Object.prototype` lookup at each call site
@@ -151,7 +146,7 @@ const defineGetter = Function.prototype.call.bind(
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
-// Getters for `type`, `start`, `end`, `range`, `loc`, and `value` properties on a `Token` class instance.
+// Getters for `type`, `start`, `end`, `range`, `loc`, `value`, and `regex` properties on a `Token` class instance.
 // Copied into `const`s below after being defined in class static block.
 let getTokenTypeTemp: (this: Token) => TokenType["type"];
 let getTokenStartTemp: (this: Token) => number;
@@ -159,6 +154,7 @@ let getTokenEndTemp: (this: Token) => number;
 let getTokenRangeTemp: (this: Token) => Range;
 let getTokenLocTemp: (this: Token) => Location;
 let getTokenValueTemp: (this: Token) => string;
+let getTokenRegexTemp: (this: Token) => Regex | undefined;
 
 // Setter for `#pos` private property on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
@@ -172,6 +168,10 @@ let resetRangeTemp: (token: Token) => void;
 // Copied into a `const` below after being defined in class static block.
 let resetLocTemp: (token: Token) => void;
 
+// Reset `#regex` field on a `Token` class instance.
+// Copied into a `const` below after being defined in class static block.
+let resetRegexTemp: (token: Token) => void;
+
 // Get `#range` field on a `Token` class instance.
 // Only used in debug build (tests).
 let getTokenPrivateRange: (token: Token) => Range | null;
@@ -180,21 +180,24 @@ let getTokenPrivateRange: (token: Token) => Range | null;
 // Only used in debug build (tests).
 let getTokenPrivateLoc: (token: Token) => Location | null;
 
+// Get `#regex` field on a `Token` class instance.
+// Only used in debug build (tests).
+let getTokenPrivateRegex: (token: Token) => Regex | null;
+
 /**
- * Token implementation with lazy `range` and `loc` caching via private fields.
+ * Token implementation with lazy `range`, `loc`, and `regex` caching via private fields.
  *
- * `range` and `loc` are defined as own accessor properties via `__defineGetter__` in the constructor,
- * using shared getter functions (`getTokenRange` / `getTokenLoc`). This makes them own enumerable
- * properties, so `{...token}` spreads them and `JSON.stringify(token)` serializes them.
+ * `range`, `loc`, and `regex` are defined as own accessor properties via `__defineGetter__` in the constructor,
+ * using shared getter functions (`getTokenRange` / `getTokenLoc` / `getTokenRegex`). This makes them own
+ * enumerable properties, so `{...token}` spreads them and `JSON.stringify(token)` serializes them.
  *
- * The computed `range` array and `Location` value are cached in the private `#range` / `#loc` fields
- * on first access, so accessing either twice returns the same object. All instances share the same
- * getter functions, keeping the V8 hidden class transition identical across instances.
- * Reset only clears the `#range` and `#loc` fields.
+ * The computed `range` array, `Location` value, and `Regex` objects are cached in the private
+ * `#range` / `#loc` / `#regex` fields on first access, so accessing any of them twice returns the same object.
+ *
+ * All instances share the same getter functions, keeping the V8 hidden class transition identical across instances.
+ * Reset only clears the `#range`, `#loc`, and `#regex` fields.
  */
 class Token {
-  regex: Regex | undefined;
-
   // All defined with `__defineGetter__` in constructor
   declare type: TokenType["type"];
   declare start: number;
@@ -202,14 +205,15 @@ class Token {
   declare range: Range;
   declare loc: Location;
   declare value: string;
+  declare regex: Regex | undefined;
 
   #pos: number = 0;
   #range: Range | null = null;
   #loc: Location | null = null;
+  #regex: Regex | null = null;
 
   constructor() {
-    // Define `type`, `start`, `end`, `range`, `loc`, `value` as own getter properties
-    // (enumerable + configurable by default).
+    // Define all properties as own getter properties (enumerable + configurable by default).
     // This makes `{...token}` spread them, and `JSON.stringify(token)` serialize them.
     // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
@@ -219,6 +223,7 @@ class Token {
     defineGetter(this, "range", getTokenRange);
     defineGetter(this, "loc", getTokenLoc);
     defineGetter(this, "value", getTokenValue);
+    defineGetter(this, "regex", getTokenRegex);
   }
 
   // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
@@ -343,6 +348,51 @@ class Token {
       return value;
     };
 
+    getTokenRegexTemp = function (this: Token): Regex | undefined {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in `tokensUint8`, `tokensInt32`, or `sourceText`
+      // accesses below.
+      debugAssert(
+        tokensUint8 !== null && tokensInt32 !== null && sourceText !== null,
+        "`Token` object's `regex` field accessed after file finished linting",
+      );
+
+      // Only `RegularExpression` tokens have `regex` defined. All other tokens have `regex: undefined`.
+      const pos = this.#pos;
+      if (tokensUint8[pos + KIND_FIELD_OFFSET] !== REGEXP_KIND) return undefined;
+
+      const regex = this.#regex;
+      if (regex !== null) return regex;
+
+      // First access. Reuse a pooled `Regex` object if available, otherwise create a new one,
+      // and store this token in `tokensWithRegex` so `resetTokens` can clear its `#regex`
+      // (and the `Regex` object's fields).
+      // `regexObjects` and `tokensWithRegex` are the same length, so a single length check covers both.
+      // Note: The comparison `activeTokensWithRegexCount < regexObjects.length` must be this way around
+      // so that V8 can remove the bounds checks on the array accesses (see `getTokenLoc`).
+      let regexObj: Regex;
+      if (activeTokensWithRegexCount < regexObjects.length) {
+        regexObj = regexObjects[activeTokensWithRegexCount];
+        tokensWithRegex[activeTokensWithRegexCount] = this;
+      } else {
+        regexObjects.push((regexObj = { pattern: null!, flags: null! }));
+        tokensWithRegex.push(this);
+      }
+      activeTokensWithRegexCount++;
+
+      // Parse the regex literal (`/pattern/flags`) from source text.
+      const pos32 = pos >> 2,
+        start = tokensInt32[pos32],
+        end = tokensInt32[pos32 + 1];
+      const value = sourceText.slice(start, end);
+      const patternEnd = value.lastIndexOf("/");
+      regexObj.pattern = value.slice(1, patternEnd);
+      regexObj.flags = value.slice(patternEnd + 1);
+
+      return (this.#regex = regexObj);
+    };
+
     setTokenPosTemp = function (token: Token, pos: number) {
       token.#pos = pos;
     };
@@ -355,8 +405,17 @@ class Token {
       token.#loc = null;
     };
 
+    resetRegexTemp = (token: Token) => {
+      // Clear the `Regex` object's `pattern` and `flags` fields, to release source text string slices
+      const regex = token.#regex!;
+      regex.pattern = null!;
+      regex.flags = null!;
+      token.#regex = null;
+    };
+
     if (DEBUG) getTokenPrivateRange = (token: Token) => token.#range;
     if (DEBUG) getTokenPrivateLoc = (token: Token) => token.#loc;
+    if (DEBUG) getTokenPrivateRegex = (token: Token) => token.#regex;
   }
 }
 
@@ -367,10 +426,12 @@ const getTokenEnd = getTokenEndTemp;
 const getTokenRange = getTokenRangeTemp;
 const getTokenLoc = getTokenLocTemp;
 const getTokenValue = getTokenValueTemp;
+const getTokenRegex = getTokenRegexTemp;
 
 const setTokenPos = setTokenPosTemp;
 const resetRange = resetRangeTemp;
 const resetLoc = resetLocTemp;
+const resetRegex = resetRegexTemp;
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
@@ -545,46 +606,6 @@ function deserializeTokenIfNeeded(index: number): Token | null {
   // Set `#pos` private property, which is used in getters
   setTokenPos(token, pos);
 
-  const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
-
-  if (kind === REGEXP_KIND) {
-    // Reuse cached regex descriptor object if available, otherwise create a new one.
-    //
-    // The array access is inside the `activeTokensWithRegexCount < regexObjects.length` branch so V8 can remove
-    // the bounds check on `regexObjects[activeTokensWithRegexCount]`. Comparison *must* be this way around.
-    // Maglev would *not* remove bounds check if comparison was `regexObjects.length > activeTokensWithRegexCount`,
-    // even though it's semantically equivalent.
-    let regex: Regex;
-    if (activeTokensWithRegexCount < regexObjects.length) {
-      regex = regexObjects[activeTokensWithRegexCount];
-    } else {
-      regexObjects.push((regex = { pattern: null!, flags: null! }));
-
-      // Grow `tokensWithRegexIndexes` if full. `Int32Array`s can't grow in place,
-      // so allocate a new one (doubled, min 16), and copy the existing entries into it.
-      const indexesLen = tokensWithRegexIndexes.length;
-      if (indexesLen === activeTokensWithRegexCount) {
-        const newArr = new Int32Array(
-          indexesLen === 0 ? REGEX_INDEXES_MIN_CAPACITY : indexesLen << 1,
-        );
-        newArr.set(tokensWithRegexIndexes, 0);
-        tokensWithRegexIndexes = newArr;
-      }
-    }
-    token.regex = regex;
-
-    // Store index of this token, so `resetTokens` can set this token's `regex` property back to `undefined`
-    tokensWithRegexIndexes[activeTokensWithRegexCount++] = index;
-
-    const pos32 = pos >> 2,
-      start = tokensInt32[pos32],
-      end = tokensInt32[pos32 + 1];
-    const value = sourceText.slice(start, end);
-    const patternEnd = value.lastIndexOf("/");
-    regex.pattern = value.slice(1, patternEnd);
-    regex.flags = value.slice(patternEnd + 1);
-  }
-
   return token;
 }
 
@@ -692,17 +713,9 @@ export function resetTokens() {
 
   activeTokensWithLocCount = 0;
 
-  // Reset `regex` property on regex tokens.
-  // This avoids having to set it for every non-regex token in `deserializeTokenIfNeeded`.
-  // Clear `pattern` and `flags` fields of `Regex` object, to release source text string slices (see above).
+  // Reset `#regex` on tokens where `regex` has been accessed
   for (let i = 0; i < activeTokensWithRegexCount; i++) {
-    const token = cachedTokens[tokensWithRegexIndexes[i]];
-
-    const regex = token.regex!;
-    regex.pattern = null!;
-    regex.flags = null!;
-
-    token.regex = undefined;
+    resetRegex(tokensWithRegex[i]);
   }
 
   activeTokensWithRegexCount = 0;
@@ -724,7 +737,7 @@ export function resetTokens() {
 function debugAssertAllTokensCleared(): void {
   if (!DEBUG) return;
 
-  // Check all cached tokens have `#range: null`, `#loc: null`, and `regex: undefined`
+  // Check all cached tokens have `#range: null`, `#loc: null`, and `#regex: null`
   for (let i = 0; i < cachedTokens.length; i++) {
     const token = cachedTokens[i];
     if (getTokenPrivateRange(token) !== null) {
@@ -733,7 +746,9 @@ function debugAssertAllTokensCleared(): void {
     if (getTokenPrivateLoc(token) !== null) {
       throw new Error(`Token ${i} has not had \`#loc\` cleared`);
     }
-    if (token.regex !== undefined) throw new Error(`Token ${i} has not had \`regex\` cleared`);
+    if (getTokenPrivateRegex(token) !== null) {
+      throw new Error(`Token ${i} has not had \`#regex\` cleared`);
+    }
   }
 
   // Check all regex objects have `pattern: null` and `flags: null`

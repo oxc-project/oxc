@@ -1628,6 +1628,21 @@ describe("token regex across sequential files", () => {
       expect(token.regex).toBeUndefined();
     }
   });
+
+  it("should return the same `regex` object each time it is accessed", () => {
+    const withRegex = "var x = /abc/gi;";
+    setup(withRegex);
+    const tokens = getTokens({ range: [0, withRegex.length] } as Node);
+    const regexToken = tokens.find((t) => t.type === "RegularExpression");
+    expect(regexToken).toBeDefined();
+
+    // `regex` is a getter which caches its result on first access,
+    // so every subsequent access of `regex` on the same token returns the identical object
+    const { regex } = regexToken!;
+    expect(regexToken!.regex).toBe(regex);
+    expect(regexToken!.regex).toBe(regex);
+    expect(regex).toEqual({ pattern: "abc", flags: "gi" });
+  });
 });
 
 // Tests for `for (const key in token)` enumeration.
