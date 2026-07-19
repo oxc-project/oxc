@@ -49,8 +49,8 @@
 //! 2. **Do not move an existing reference across function owners.** Ownership
 //!    comes from `Reference::scope_id()` and the registered function-scope
 //!    ancestors. A transform that changes the nearest owning function must
-//!    instead drop and recreate the reference, so the dirty gate requests a
-//!    new analysis.
+//!    instead drop and recreate the reference, so the pass-change gate requests
+//!    a new analysis.
 //! 3. **Do not create a path to a function already published as dead.** Deadness
 //!    is monotonic. Transforms may duplicate an already-live reference, but
 //!    must not make an unreachable binding reachable; debug builds assert that
@@ -62,7 +62,7 @@
 //!    reach a removed function. Debug builds assert this never happens.
 //!
 //! A transform that needs to violate one of these invariants must first extend
-//! function registration or the dirty-analysis signal. Keeping this boundary
+//! function registration or the pass-change analysis signal. Keeping this boundary
 //! explicit is what lets the analysis run without per-transform collection
 //! hooks or a reference-mint log.
 //!
@@ -560,11 +560,11 @@ pub fn dead_references_affect_analysis(ctx: &TraverseCtx<'_>) -> bool {
     // The analysis is disabled while the root scope contains direct eval, so
     // removed references cannot affect it. The flag may be stale if this pass
     // dropped the last eval (flags refresh after this check), but that drop
-    // also sets `eval_dropped`, which forces the recompute anyway.
+    // also sets `direct_eval_dropped`, which forces the recompute anyway.
     if ctx.scoping().root_scope_flags().contains_direct_eval() {
         return false;
     }
-    ctx.state.dirty.dead_refs.ones().any(|bit| {
+    ctx.state.pass_changes.removed_references.ones().any(|bit| {
         ctx.scoping()
             .get_reference(ReferenceId::from_usize(bit))
             .symbol_id()

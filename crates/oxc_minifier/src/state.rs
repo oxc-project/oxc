@@ -9,21 +9,22 @@ use oxc_syntax::scope::ScopeId;
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
-/// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
-/// two consumption points. Live from `MinifierState::new` so the pre-loop
+/// Changes accumulated by the `replace_*` / `drop_*` helper calls between two
+/// consumption points. Live from `MinifierState::new` so the pre-loop
 /// `Normalize` pass records drops through the same typed helpers as the
-/// peephole loop; consumed and reset or resized by the end-of-pass sequence
-/// after `Normalize` and after every peephole pass.
-pub struct PassDirty<'a> {
+/// peephole loop; consumed and reset or resized by [`crate::compression_pass`]
+/// after Normalize and after every peephole pass.
+pub struct PassChanges<'a> {
     /// `ReferenceId`s whose AST node has been removed and not re-installed
     /// in any later mutation this pass.
     ///
     /// Arena-allocated bitset sized to the program's `references_len()` at
     /// construction / the previous flush. A `BitSet` (rather than an
-    /// `FxHashSet`) keeps the per-ident cost on the `DropDiff` hot path to
+    /// `FxHashSet`) keeps the per-ident cost on the
+    /// `DroppedSubtreeCollector` hot path to
     /// a direct array store instead of a hash + heap insert.
     ///
-    /// INVARIANT (the "capacity guard", relied on by `DropDiff`,
+    /// INVARIANT (the "capacity guard", relied on by `DroppedSubtreeCollector`,
     /// `Scoping::retain_resolved_references_excluding`, and the over-prune
     /// debug assert): references minted MID-pass have indices beyond the
     /// bitset's capacity and are treated as live everywhere — never marked,
@@ -31,16 +32,19 @@ pub struct PassDirty<'a> {
     /// list until callers rebuild scoping (a missed optimization, never a
     /// correctness issue). `Normalize` mints no references, so a capacity
     /// taken at construction is exact for the first pass.
-    pub(crate) dead_refs: BitSet<'a>,
+    pub(crate) removed_references: BitSet<'a>,
 
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at flush time.
-    pub(crate) eval_dropped: bool,
+    pub(crate) direct_eval_dropped: bool,
 }
 
-impl<'a> PassDirty<'a> {
+impl<'a> PassChanges<'a> {
     pub fn new(references_len: usize, allocator: &'a Allocator) -> Self {
-        Self { dead_refs: BitSet::new_in(references_len, allocator), eval_dropped: false }
+        Self {
+            removed_references: BitSet::new_in(references_len, allocator),
+            direct_eval_dropped: false,
+        }
     }
 }
 
@@ -91,11 +95,10 @@ pub struct MinifierState<'a> {
     /// the fixed-point loop driver via `take_mutated()`.
     mutated: bool,
 
-    /// Per-pass dirty accumulator populated by `replace_*` / `drop_*` helpers
-    /// as subtrees are removed. Consumed by the end-of-pass sequence after
-    /// Normalize and every peephole pass to drive the incremental scoping
-    /// refresh.
-    pub(crate) dirty: PassDirty<'a>,
+    /// Per-pass change accumulator populated by `replace_*` / `drop_*` helpers
+    /// as subtrees are removed. Consumed by `compression_pass` after Normalize
+    /// and every peephole pass to drive the incremental scoping refresh.
+    pub(crate) pass_changes: PassChanges<'a>,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
@@ -119,7 +122,7 @@ impl<'a> MinifierState<'a> {
             private_member_usage: PrivateMemberUsageStack::new(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
-            dirty: PassDirty::new(scoping.references_len(), allocator),
+            pass_changes: PassChanges::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
         }
     }

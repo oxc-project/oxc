@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::{Scoping, SemanticBuilder};
 
 use crate::{
-    CompressOptions, ReusableTraverseCtx,
+    CompressOptions, ReusableTraverseCtx, compression_pass,
     peephole::{Normalize, NormalizeOptions, PeepholeOptimizations},
     state::MinifierState,
 };
@@ -122,11 +122,7 @@ impl<'a> Compressor<'a> {
         // analysis makes source-level dead cycles (`function f() { f() }`)
         // visible to pass 1. Ignore the result because pass 1 runs
         // unconditionally and consumes any newly dead functions.
-        PeepholeOptimizations::end_pass(
-            program,
-            ctx.get_mut(),
-            /* force_liveness_analysis */ true,
-        );
+        compression_pass::end_pass(program, ctx.get_mut(), /* force_liveness_analysis */ true);
         // Start the loop from a clean signal: Normalize's drops are flushed
         // above, so a Normalize-only mutation must not force a pointless
         // extra iteration.
@@ -137,7 +133,7 @@ impl<'a> Compressor<'a> {
             // Flush every pass. Reachability is recomputed only when a removed
             // reference belonged to a graph candidate or direct eval was
             // dropped; only those changes can invalidate the previous verdict.
-            let found_new_dead_functions = PeepholeOptimizations::end_pass(
+            let found_new_dead_functions = compression_pass::end_pass(
                 program,
                 ctx.get_mut(),
                 /* force_liveness_analysis */ false,
@@ -159,7 +155,7 @@ impl<'a> Compressor<'a> {
             iteration += 1;
         }
         #[cfg(debug_assertions)]
-        PeepholeOptimizations::debug_assert_no_under_prune(
+        compression_pass::debug_assert_no_under_prune(
             program,
             ctx.get_mut(),
             initial_references_len,

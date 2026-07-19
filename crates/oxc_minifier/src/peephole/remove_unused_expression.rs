@@ -258,7 +258,7 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 }
                 // The spread is being elided — walk its argument so any
-                // identifier refs inside are marked dead in `PassDirty`
+                // identifier refs inside are marked removed in `PassChanges`
                 // and don't leak across passes.
                 let ArrayExpressionElement::SpreadElement(spread) = el else { unreachable!() };
                 ctx.drop_expression(&spread.argument);
@@ -350,7 +350,7 @@ impl<'a> PeepholeOptimizations {
                 pending_to_string_required_exprs.push(e);
             } else if Self::remove_unused_expression(&mut e, ctx) {
                 // The element collapsed to nothing and is dropped right here
-                // by the `drain` — walk it so refs inside reach `PassDirty`
+                // by the `drain` — walk it so refs inside reach `PassChanges`
                 // instead of leaking.
                 ctx.drop_expression(&e);
             } else {
@@ -480,7 +480,8 @@ impl<'a> PeepholeOptimizations {
                     if Self::remove_unused_expression(&mut value, ctx) {
                         // Same rationale as the key branch above — the property
                         // value is being dropped without a `replace_*` helper,
-                        // so its references must be walked into `dirty.dead_refs`.
+                        // so its references must be walked into
+                        // `pass_changes.removed_references`.
                         ctx.drop_expression(&value);
                     } else {
                         transformed_elements.push(value);
@@ -853,7 +854,7 @@ impl<'a> PeepholeOptimizations {
             return true;
         }
         // Impure RHS: hoist it in place (take FIRST so surviving RHS refs stay
-        // live; `replace_expression`'s DropDiff walk then marks only the LHS
+        // live; `replace_expression`'s `DroppedSubtreeCollector` walk then marks only the LHS
         // refs dead). Safe in value positions too — a plain `=` assignment's
         // value IS the RHS value.
         let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };

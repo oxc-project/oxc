@@ -122,7 +122,7 @@ fn test_fold_try_statement() {
     test_same("try { foo() } catch { bar() } finally { baz() }");
 
     // Leak regression: when the empty `try` drops, the catch arm's write-ref
-    // to `x` must be walked into `PassDirty`, else the stale write blocks
+    // to `x` must be walked into `PassChanges`, else the stale write blocks
     // constant inlining of `x`.
     let options = CompressOptions::smallest();
     test_options(

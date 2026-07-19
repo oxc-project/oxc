@@ -1006,7 +1006,7 @@ impl<'a> PeepholeOptimizations {
                 VariableDeclarator::new(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false, ctx);
             // The old declarators (`e`, `a`, and `r`'s original init) are
             // replaced wholesale — walk them so refs inside (e.g. `e` in
-            // `Array(e > 1 ? e - 1 : 0)`) reach `PassDirty`. The moved-out
+            // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
             // `r` binding and `arguments` ident left id-less dummies behind.
             for decl in &var_init.declarations {
                 ctx.drop_variable_declarator(decl);
@@ -1016,7 +1016,7 @@ impl<'a> PeepholeOptimizations {
             // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
             // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
             // folding becomes an empty statement. Walk the dropped
-            // declarators so their refs reach `PassDirty`.
+            // declarators so their refs reach `PassChanges`.
             for decl in &var_init.declarations {
                 ctx.drop_variable_declarator(decl);
             }

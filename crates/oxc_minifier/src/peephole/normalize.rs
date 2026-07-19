@@ -129,7 +129,7 @@ impl<'a> Traverse<'a> for Normalize {
         }
         // Handled outside the match below so the replacement can go through
         // `ctx.replace_expression`, which walks the dropped call (its
-        // argument subtrees may contain resolved references) into `PassDirty`.
+        // argument subtrees may contain resolved references) into `PassChanges`.
         if ctx.state.options.drop_console
             && let Expression::CallExpression(call_expr) = &*expr
             && Self::is_console_call_expression(call_expr)
@@ -340,7 +340,7 @@ impl<'a> Normalize {
         if ident.is_global_reference(ctx.scoping()) {
             return;
         }
-        // `replace_expression` walks the dropped ident into `PassDirty`, so
+        // `replace_expression` walks the dropped ident into `PassChanges`, so
         // its resolved reference is pruned by the pre-loop `end_pass` flush,
         // before pass 1 — otherwise the symbol would look referenced forever.
         let new_arg =

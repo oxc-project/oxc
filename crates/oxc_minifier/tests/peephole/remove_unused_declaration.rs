@@ -869,9 +869,9 @@ fn keep_script_root_var_in_nested_statement_after_cycle_removed() {
 
 // A dropped direct eval must re-enable the analysis: the initial compute
 // skips the whole program while the root scope carries `DirectEval`, so only
-// the `eval_dropped` recompute trigger lets a later pass remove the cycle.
+// the `direct_eval_dropped` recompute trigger lets a later pass remove the cycle.
 #[test]
-fn remove_recursive_function_after_eval_dropped() {
+fn remove_recursive_function_after_direct_eval_dropped() {
     test_smallest("if (false) eval('x'); function f() { f() }", "");
 
     let options = CompressOptions::smallest();
@@ -917,7 +917,7 @@ fn keep_recursive_cycle_in_for_in_head() {
 
 // For-head bindings need no special pin. References in the RHS participate in
 // normal scope ownership, while unreachable heads disappear through the
-// ordinary dirty-reference lifecycle.
+// ordinary removed-reference lifecycle.
 #[test]
 fn for_head_reachability_uses_ordinary_references() {
     test_same_smallest("function f() {\n\tf();\n}\nfor (var x of [f]);");

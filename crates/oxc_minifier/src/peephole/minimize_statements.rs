@@ -1094,7 +1094,7 @@ impl<'a> PeepholeOptimizations {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs
                     // (init and TS type annotation) need an explicit walk to
-                    // reach `PassDirty`.
+                    // reach `PassChanges`.
                     ctx.drop_variable_declarator(decl);
                 }
                 should_keep

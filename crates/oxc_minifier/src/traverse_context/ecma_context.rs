@@ -23,7 +23,7 @@ use crate::{
 
 use oxc_ast_visit::Visit;
 
-use super::{TraverseCtx, drop_diff::DropDiff};
+use super::{TraverseCtx, dropped_subtree_collector::DroppedSubtreeCollector};
 
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
@@ -389,11 +389,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         (options.class && is_class) || (options.function && !is_class)
     }
 
-    /// Construct a `DropDiff` borrowing the per-pass dirty accumulator.
+    /// Construct a `DroppedSubtreeCollector` borrowing the per-pass change accumulator.
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
-    fn dirty_diff(&mut self) -> DropDiff<'a, '_> {
-        DropDiff::new(&mut self.state.dirty)
+    fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.
@@ -403,7 +403,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// are the only way to record the mutation (compiler-enforced).
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
-        self.dirty_diff().visit_expression(slot);
+        self.dropped_subtree_collector().visit_expression(slot);
         *slot = new;
         self.state.record_mutation();
     }
@@ -411,7 +411,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a statement slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
-        self.dirty_diff().visit_statement(slot);
+        self.dropped_subtree_collector().visit_statement(slot);
         *slot = new;
         self.state.record_mutation();
     }
@@ -423,7 +423,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut AssignmentTargetProperty<'a>,
         new: AssignmentTargetProperty<'a>,
     ) {
-        self.dirty_diff().visit_assignment_target_property(slot);
+        self.dropped_subtree_collector().visit_assignment_target_property(slot);
         *slot = new;
         self.state.record_mutation();
     }
@@ -431,7 +431,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
-        self.dirty_diff().visit_property_key(slot);
+        self.dropped_subtree_collector().visit_property_key(slot);
         *slot = new;
         self.state.record_mutation();
     }
@@ -444,7 +444,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut ForStatementLeft<'a>,
         new: ForStatementLeft<'a>,
     ) {
-        self.dirty_diff().visit_for_statement_left(slot);
+        self.dropped_subtree_collector().visit_for_statement_left(slot);
         *slot = new;
         self.state.record_mutation();
     }
@@ -460,14 +460,14 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     /// Mark an expression subtree as about to be dropped (popped from a collection,
     /// taken out of an Option, etc.). Walks the subtree to record dead references
-    /// and dropped direct-eval calls into the per-pass `PassDirty` accumulator.
+    /// and dropped direct-eval calls into the per-pass `PassChanges` accumulator.
     ///
     /// Use this helper at every site where a subtree is being removed from the AST
     /// without an immediate slot-replacement helper (e.g. inside a `retain_mut`
     /// predicate, before `field = None`, after `vec.pop()`).
     #[inline]
     pub fn drop_expression(&mut self, expr: &Expression<'a>) {
-        self.dirty_diff().visit_expression(expr);
+        self.dropped_subtree_collector().visit_expression(expr);
         self.state.record_mutation();
     }
 
@@ -475,7 +475,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// `drop_expression`.
     #[inline]
     pub fn drop_statement(&mut self, stmt: &Statement<'a>) {
-        self.dirty_diff().visit_statement(stmt);
+        self.dropped_subtree_collector().visit_statement(stmt);
         self.state.record_mutation();
     }
 
@@ -483,7 +483,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// `drop_expression`.
     #[inline]
     pub fn drop_class_element(&mut self, element: &ClassElement<'a>) {
-        self.dirty_diff().visit_class_element(element);
+        self.dropped_subtree_collector().visit_class_element(element);
         self.state.record_mutation();
     }
 
@@ -494,7 +494,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// alive elsewhere, `take()` it out of the declarator before calling this.
     #[inline]
     pub fn drop_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
-        self.dirty_diff().visit_variable_declarator(decl);
+        self.dropped_subtree_collector().visit_variable_declarator(decl);
         self.state.record_mutation();
     }
 
@@ -504,7 +504,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// case vector to properly notify the scope tracking system about dropped references.
     #[inline]
     pub fn drop_switch_case(&mut self, switch_case: &SwitchCase<'a>) {
-        self.dirty_diff().visit_switch_case(switch_case);
+        self.dropped_subtree_collector().visit_switch_case(switch_case);
         self.state.record_mutation();
     }
 }
