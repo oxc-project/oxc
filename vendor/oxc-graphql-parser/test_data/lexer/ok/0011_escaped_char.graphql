@@ -1,6 +1,0 @@
-{ name: "\"my store\"" }
-
-type Query {
-    name: String
-    format: String = "Y-m-d\\TH:i:sP" 
-}

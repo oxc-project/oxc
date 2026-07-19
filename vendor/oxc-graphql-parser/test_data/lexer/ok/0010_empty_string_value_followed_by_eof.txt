@@ -1,2 +1,0 @@
-STRING_VALUE@0:2 "\"\""
-EOF@2:2

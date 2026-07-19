@@ -1,4 +1,0 @@
-- DOCUMENT@0..21
-    - ERROR@0..21 "awsas8d2934213hkj0987"
-- ERROR@0:21 "expected definition" awsas8d2934213hkj0987
-recursion limit: 500, high: 0

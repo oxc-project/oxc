@@ -1,7 +1,0 @@
-- DOCUMENT@0..10
-    - ERROR@0..6 "extend"
-    - WHITESPACE@6..7 " "
-    - ERROR@7..10 "Cat"
-- ERROR@0:6 "Invalid Type System Extension. This extension cannot be applied." extend
-- ERROR@7:10 "expected definition" Cat
-recursion limit: 500, high: 0

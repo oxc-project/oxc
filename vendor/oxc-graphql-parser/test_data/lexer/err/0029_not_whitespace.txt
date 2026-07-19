@@ -1,28 +1,0 @@
-WHITESPACE@0:3 "\u{feff}"
-COMMENT@3:11 "# U+FEFF"
-WHITESPACE@11:12 "\n"
-ERROR@12:13 "Unexpected character \"\u{b}\"" 
-COMMENT@13:21 "# U+000B"
-WHITESPACE@21:22 "\n"
-ERROR@22:23 "Unexpected character \"\u{c}\"" 
-COMMENT@23:31 "# U+000C"
-WHITESPACE@31:32 "\n"
-ERROR@32:34 "Unexpected character \"\u{85}\"" 
-COMMENT@34:42 "# U+0085"
-WHITESPACE@42:43 "\n"
-ERROR@43:45 "Unexpected character \"\u{a0}\""  
-COMMENT@45:53 "# U+00A0"
-WHITESPACE@53:54 "\n"
-ERROR@54:57 "Unexpected character \"\u{200e}\"" ‎
-COMMENT@57:65 "# U+200E"
-WHITESPACE@65:66 "\n"
-ERROR@66:69 "Unexpected character \"\u{200f}\"" ‏
-COMMENT@69:77 "# U+200F"
-WHITESPACE@77:78 "\n"
-ERROR@78:81 "Unexpected character \"\u{2028}\""  
-COMMENT@81:89 "# U+2028"
-WHITESPACE@89:90 "\n"
-ERROR@90:93 "Unexpected character \"\u{2029}\""  
-COMMENT@93:101 "# U+2029"
-WHITESPACE@101:102 "\n"
-EOF@102:102

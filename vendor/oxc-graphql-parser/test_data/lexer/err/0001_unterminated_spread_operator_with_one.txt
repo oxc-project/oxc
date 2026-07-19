@@ -1,2 +1,0 @@
-ERROR@0:1 "Unterminated spread operator" .
-EOF@1:1

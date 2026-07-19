@@ -1,9 +1,0 @@
-query {
-  ... on {
-    field
-  }
-}
-
-fragment F on {
-  field
-}

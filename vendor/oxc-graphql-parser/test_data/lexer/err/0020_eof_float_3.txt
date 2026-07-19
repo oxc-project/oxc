@@ -1,2 +1,0 @@
-ERROR@0:3 "Unexpected EOF in float value" 2e-
-EOF@3:3

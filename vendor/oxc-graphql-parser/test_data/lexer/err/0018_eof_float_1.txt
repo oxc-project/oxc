@@ -1,2 +1,0 @@
-ERROR@0:2 "Unexpected EOF in float value" 2.
-EOF@2:2

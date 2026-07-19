@@ -1,6 +1,0 @@
-ERROR@0:1 "Unexpected character \"+\"" +
-INT@1:2 "1"
-COMMA@2:3 ","
-WHITESPACE@3:4 " "
-ERROR@4:5 "Unexpected character \"+\"" +
-EOF@5:5
