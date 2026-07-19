@@ -183,7 +183,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
                 self.error(diagnostics::private_identifier_in_property_name(
-                    &private_ident.name,
+                    private_ident.name.as_str(),
                     private_ident.span,
                 ));
                 PropertyKey::PrivateIdentifier(self.alloc(private_ident))
