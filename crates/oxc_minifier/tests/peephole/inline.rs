@@ -55,6 +55,75 @@ fn single_conditional_falsy_var_still_folds_in_boolean_context() {
     );
 }
 
+// https://github.com/oxc-project/oxc/issues/24603
+#[test]
+fn conditional_var_redeclarations_do_not_overwrite_reaching_values() {
+    test_smallest(
+        "export function f(a) { if (a) var x = true; else var x = false; return x ? 'ok' : 'fail'; }",
+        "export function f(a) { if (a) var x = !0; else var x = !1; return x ? 'ok' : 'fail'; }",
+    );
+    // The result must not depend on which branch traversal visits last.
+    test_smallest(
+        "export function f(a) { if (a) var x = false; else var x = true; return x ? 'ok' : 'fail'; }",
+        "export function f(a) { if (a) var x = !1; else var x = !0; return x ? 'ok' : 'fail'; }",
+    );
+}
+
+#[test]
+fn redeclared_falsy_var_is_not_assumed_falsy() {
+    // The dirty prelude withholds the first declaration's constant. A nested
+    // reader can consume its independently cached boolean-falsy fact before
+    // traversal reaches the later declaration.
+    test_smallest(
+        "export function outer() { sideEffect(); var x = false; function read() { return x ? 'T' : 'F'; } var x = true; return read(); }",
+        "export function outer() { sideEffect(); var x = !1; function read() { return x ? 'T' : 'F'; } var x = !0; return read(); }",
+    );
+    // A conditional `var` that redeclares a parameter may leave the argument
+    // value untouched, so the falsy initializer is not the only runtime value.
+    test_smallest(
+        "export function f(x, c) { if (c) var x = false; return x ? 'T' : 'F'; }",
+        "export function f(x, c) { if (c) var x = !1; return x ? 'T' : 'F'; }",
+    );
+}
+
+#[test]
+fn redeclared_var_facts_are_disabled_before_first_use() {
+    // A nested function is traversed before the later declaration. Semantic
+    // redeclaration metadata must suppress the first declaration's constant
+    // immediately; invalidating the slot on the second visit is too late.
+    test_smallest(
+        "export function outer() { var x = false; function read() { return x ? 'ok' : 'fail'; } var x = true; return read(); }",
+        "export function outer() { var x = !1; function read() { return x ? 'ok' : 'fail'; } var x = !0; return read(); }",
+    );
+}
+
+#[test]
+fn redeclared_var_fact_invalidation_is_conservative() {
+    // Both declarations execute in order, so folding to `2` would be sound.
+    // Keep the conservative output until the fact cache can model declaration
+    // positions without weakening the early-consumer protection above.
+    test_smallest(
+        "export function f() { var x = 1; var x = 2; return () => x; }",
+        "export function f() { var x = 1, x = 2; return () => x; }",
+    );
+}
+
+#[test]
+fn redeclared_vars_are_not_assumed_fresh() {
+    // The last declaration visited is fresh, but the other branch may alias an
+    // external object with an observable setter.
+    test_smallest(
+        "export function f(a, o) { if (a) var x = o; else var x = {}; x.p = 1; }",
+        "export function f(a, o) { if (a) var x = o; else var x = {}; x.p = 1; }",
+    );
+    // As with constants, a nested consumer may run after a later declaration
+    // even though traversal sees it while the first declaration's fact is set.
+    test_smallest(
+        "export function outer(o) { var x = {}; function write() { x.p = 1; } var x = o; write(); }",
+        "export function outer(o) { var x = {}; function write() { x.p = 1; } var x = o; write(); }",
+    );
+}
+
 #[test]
 fn conditional_labeled_var_declarator_not_inlined() {
     // A label introduces no scope, so the ancestry check must reject this
