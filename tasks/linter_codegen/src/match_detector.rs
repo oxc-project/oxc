@@ -87,6 +87,13 @@ impl<'a> MatchDetector<'a> {
                 }
             }
             Pat::Guard(guard) => {
+                if let Pat::TupleStruct(ts) = guard.pat.as_ref() {
+                    if let Some(variant) = astkind_variant_from_path(&ts.path) {
+                        self.node_types.insert(variant);
+                        return CollectionResult::Complete;
+                    }
+                    return CollectionResult::Incomplete;
+                }
                 let Pat::Ident(ident) = guard.pat.as_ref() else {
                     return CollectionResult::Incomplete;
                 };
