@@ -5,7 +5,7 @@ use oxc_semantic::{Scoping, SemanticBuilder};
 use crate::{
     CompressOptions, ReusableTraverseCtx, compression_pass,
     peephole::{Normalize, NormalizeOptions},
-    state::MinifierState,
+    state::{CompressionMode, MinifierState},
 };
 
 pub struct Compressor<'a> {
@@ -17,9 +17,8 @@ impl<'a> Compressor<'a> {
         Self { allocator }
     }
 
-    /// Full minify: removes dead code and shrinks the output (`dce = false`).
-    /// For tree-shaking only, see [`Self::dead_code_elimination`] and the
-    /// `MinifierState::dce` docs.
+    /// Full minify: removes dead code and applies size-reducing transforms.
+    /// For tree-shaking only, see [`Self::dead_code_elimination`].
     pub fn build(self, program: &mut Program<'a>, options: CompressOptions) {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
         self.build_with_scoping(program, scoping, options);
@@ -52,7 +51,7 @@ impl<'a> Compressor<'a> {
         let state = MinifierState::new(
             program.source_type,
             options,
-            /* dce */ false,
+            CompressionMode::Full,
             &scoping,
             self.allocator,
         );
@@ -66,9 +65,8 @@ impl<'a> Compressor<'a> {
         Self::run_in_loop(max_iterations, program, &mut ctx)
     }
 
-    /// Tree-shaking only: removes dead and unused code, but does not shrink the
-    /// output like [`Self::build`] (`dce = true`). Rolldown runs this on its
-    /// own. See the `MinifierState::dce` docs.
+    /// Tree-shaking only: removes dead and unused code, but does not otherwise
+    /// shrink the output like [`Self::build`]. Rolldown runs this on its own.
     pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
         self.dead_code_elimination_with_scoping(program, scoping, options)
@@ -90,7 +88,7 @@ impl<'a> Compressor<'a> {
         let state = MinifierState::new(
             program.source_type,
             options,
-            /* dce */ true,
+            CompressionMode::TreeShakeOnly,
             &scoping,
             self.allocator,
         );

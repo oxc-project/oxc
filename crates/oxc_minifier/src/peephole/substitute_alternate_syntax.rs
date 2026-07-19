@@ -2072,7 +2072,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Take the IIFE body out for inlining and propagate `pure` onto a
-    /// call/new body. Bails in DCE-only mode — see the
+    /// call/new body. Bails in tree-shake-only mode — see the
     /// `preserve_iife_in_dce_mode` test.
     /// Returns `None` to signal the caller should leave the IIFE intact.
     fn try_take_iife_body(
@@ -2080,7 +2080,7 @@ impl<'a> PeepholeOptimizations {
         is_pure: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return None;
         }
         let mut taken = body.take_in(ctx);

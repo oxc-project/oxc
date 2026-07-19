@@ -82,11 +82,11 @@ impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
 
 impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn annotations(&self) -> bool {
-        self.state.options.treeshake.annotations
+        self.options().treeshake.annotations
     }
 
     fn manual_pure_functions(&self, callee: &Expression) -> bool {
-        let pure_functions = &self.state.options.treeshake.manual_pure_functions;
+        let pure_functions = &self.options().treeshake.manual_pure_functions;
         if pure_functions.is_empty() {
             return false;
         }
@@ -94,15 +94,15 @@ impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     }
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
-        self.state.options.treeshake.property_read_side_effects
+        self.options().treeshake.property_read_side_effects
     }
 
     fn property_write_side_effects(&self) -> bool {
-        self.state.options.treeshake.property_write_side_effects
+        self.options().treeshake.property_write_side_effects
     }
 
     fn unknown_global_side_effects(&self) -> bool {
-        self.state.options.treeshake.unknown_global_side_effects
+        self.options().treeshake.unknown_global_side_effects
     }
 }
 
@@ -154,7 +154,7 @@ impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {}
 
 impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn options(&self) -> &CompressOptions {
-        &self.state.options
+        self.state.options()
     }
 
     /// Check if the target engines supports a feature.
@@ -165,7 +165,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     }
 
     pub fn source_type(&self) -> SourceType {
-        self.state.source_type
+        self.state.source_type()
+    }
+
+    /// Whether this run removes dead code without applying size-only rewrites.
+    pub fn is_tree_shake_only(&self) -> bool {
+        self.state.is_tree_shake_only()
+    }
+
+    /// Whether `Normalize` should seed persistent member-write metadata for a
+    /// consumer enabled by this configuration.
+    pub fn should_track_member_write_effects(&self) -> bool {
+        self.state.should_track_member_write_effects()
     }
 
     pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {

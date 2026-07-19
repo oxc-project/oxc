@@ -6,7 +6,7 @@ use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
     pub(super) fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
-        ctx.state.options.unused != CompressOptionsUnused::Keep
+        ctx.options().unused != CompressOptionsUnused::Keep
             && !Self::is_script_root_scope(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
     }
@@ -159,7 +159,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::FunctionDeclaration(f) = stmt else { return };
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+        if ctx.options().unused == CompressOptionsUnused::Keep {
             return;
         }
         let Some(id) = &f.id else { return };
@@ -176,7 +176,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(c) = stmt else { return };
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+        if ctx.options().unused == CompressOptionsUnused::Keep {
             return;
         }
         let Some(id) = &c.id else { return };
@@ -230,7 +230,7 @@ impl<'a> PeepholeOptimizations {
     /// ```
     pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.options().treeshake.invalid_import_side_effects
-            || ctx.state.options.unused == CompressOptionsUnused::Keep
+            || ctx.options().unused == CompressOptionsUnused::Keep
         {
             return;
         }

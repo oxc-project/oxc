@@ -9,6 +9,25 @@ use oxc_syntax::scope::ScopeId;
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
+/// Compression pipeline selected for this run.
+#[derive(Clone, Copy)]
+pub enum CompressionMode {
+    /// Remove dead code and apply size-reducing transformations.
+    Full,
+    /// Remove dead and unused code without otherwise shrinking the output.
+    /// This still runs the constant folds needed to expose removable branches,
+    /// but skips transforms whose only purpose is smaller syntax. Rolldown uses
+    /// this pipeline for tree-shaking with or without output minification.
+    TreeShakeOnly,
+}
+
+/// Immutable configuration shared by all compression passes in one run.
+struct CompressionConfig {
+    source_type: SourceType,
+    options: CompressOptions,
+    mode: CompressionMode,
+}
+
 /// Changes accumulated between two pass-completion boundaries. Live from
 /// `MinifierState::new` so the pre-loop `Normalize` pass records drops through
 /// the same typed helpers as the peephole loop; consumed and reset or resized
@@ -55,26 +74,9 @@ impl<'a> PassChanges<'a> {
 }
 
 pub struct MinifierState<'a> {
-    pub source_type: SourceType,
-
-    pub options: CompressOptions,
-
-    /// Two modes: tree-shaking only (`true`), or full minify (`false`).
-    /// `Compressor::dead_code_elimination` uses `true`; `Compressor::build`
-    /// uses `false`.
-    ///
-    /// "DCE" here does not mean "removes dead code" (full minify does that
-    /// too). It means tree-shaking: remove code that nothing imports, without
-    /// making the rest smaller. Rolldown runs this on every tree-shaking build,
-    /// with or without `minify`, so users can see this output directly.
-    ///
-    /// In this mode `exit_*` only runs the passes that remove code, plus the
-    /// constant folds those removals need. For example, `fold_binary_expr`
-    /// folds `'production' === 'production'` to `true` so the dead `else`
-    /// branch can be dropped (this is how `define` values remove branches). The
-    /// passes that only shrink code (`substitute_*`, `minimize_*`) are left
-    /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
-    pub dce: bool,
+    /// Source semantics, compression options, and pipeline selection fixed for
+    /// the lifetime of this run.
+    config: CompressionConfig,
 
     /// Dense per-pass values, sparse persistent metadata, and optional
     /// reachability data indexed by semantic symbols.
@@ -106,18 +108,16 @@ pub struct MinifierState<'a> {
 }
 
 impl<'a> MinifierState<'a> {
-    pub fn new(
+    pub(crate) fn new(
         source_type: SourceType,
         options: CompressOptions,
-        dce: bool,
+        mode: CompressionMode,
         scoping: &Scoping,
         allocator: &'a Allocator,
     ) -> Self {
         let symbols = SymbolState::new(source_type, &options, scoping, allocator);
         Self {
-            source_type,
-            options,
-            dce,
+            config: CompressionConfig { source_type, options, mode },
             symbols,
             private_member_usage: PrivateMemberUsageStack::new(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
@@ -130,12 +130,24 @@ impl<'a> MinifierState<'a> {
     /// i.e. whether any consumer is live in this configuration. In full
     /// minify the default-mode write-only property drop reads
     /// hazardous-member state and the shared drop predicate reads possible
-    /// prototype mutation. In DCE mode the default path is disabled and only
-    /// the `property_write_side_effects: false` opt-in drop reads the prototype
-    /// state, so with the knob left on nothing reads the effects and seeding is
-    /// skipped.
-    pub fn should_track_member_write_effects(&self) -> bool {
-        !self.dce || !self.options.treeshake.property_write_side_effects
+    /// prototype mutation. In tree-shake-only mode the default path is disabled
+    /// and only the `property_write_side_effects: false` opt-in drop reads the
+    /// prototype state, so with the knob left on nothing reads the effects and
+    /// seeding is skipped.
+    pub(crate) fn should_track_member_write_effects(&self) -> bool {
+        !self.is_tree_shake_only() || !self.options().treeshake.property_write_side_effects
+    }
+
+    pub(crate) fn options(&self) -> &CompressOptions {
+        &self.config.options
+    }
+
+    pub(crate) fn source_type(&self) -> SourceType {
+        self.config.source_type
+    }
+
+    pub(crate) fn is_tree_shake_only(&self) -> bool {
+        matches!(self.config.mode, CompressionMode::TreeShakeOnly)
     }
 
     /// Request another peephole traversal after the current pass completes.

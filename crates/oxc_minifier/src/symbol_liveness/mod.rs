@@ -459,13 +459,14 @@ pub fn register_function(function: &Function<'_>, ctx: &mut TraverseCtx<'_>) {
     if !function.is_declaration() {
         return;
     }
-    if ctx.state.options.unused == CompressOptionsUnused::Keep {
+    if ctx.options().unused == CompressOptionsUnused::Keep {
         return;
     }
+    let source_type = ctx.source_type();
     let allocator = ctx.allocator();
     let TraverseCtx { state, scoping, .. } = ctx;
     if let Some(liveness) = state.symbols.liveness_mut() {
-        liveness.register_function(function, state.source_type, scoping.scoping(), allocator);
+        liveness.register_function(function, source_type, scoping.scoping(), allocator);
     }
 }
 
@@ -480,7 +481,7 @@ pub fn register_using_declaration(
         return;
     }
 
-    let source_type = ctx.state.source_type;
+    let source_type = ctx.source_type();
     let allocator = ctx.allocator();
     let TraverseCtx { state, scoping, .. } = ctx;
     let liveness = state

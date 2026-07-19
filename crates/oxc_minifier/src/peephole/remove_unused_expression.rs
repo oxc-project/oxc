@@ -688,8 +688,8 @@ impl<'a> PeepholeOptimizations {
         !Self::has_side_effects_or_preserved_iife(e, ctx)
     }
 
-    /// `Expression::may_have_side_effects`, except that in DCE-only mode an IIFE
-    /// call (`(function () {...})()` / `(() => {...})()`) is reported as
+    /// `Expression::may_have_side_effects`, except that in tree-shake-only mode
+    /// an IIFE call (`(function () {...})()` / `(() => {...})()`) is reported as
     /// effectful so its structure survives — matching Rollup / esbuild
     /// tree-shaking (see `preserve_iife_in_dce_mode`). Full minification still
     /// drops a pure-bodied IIFE, just as it inlines IIFE bodies. Every
@@ -699,9 +699,9 @@ impl<'a> PeepholeOptimizations {
         e: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        // Check the cheap DCE-preservation case first: in DCE-only mode an IIFE
-        // call is always kept, so its (potentially deep) body walk is skipped.
-        if ctx.state.dce
+        // Check the cheap preservation case first: in tree-shake-only mode an
+        // IIFE call is always kept, so its (potentially deep) body walk is skipped.
+        if ctx.is_tree_shake_only()
             && matches!(e, Expression::CallExpression(call) if call.callee.is_function())
         {
             return true;
@@ -742,7 +742,7 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         let Expression::AssignmentExpression(assign_expr) = &*e else { return false };
         if matches!(
-            ctx.state.options.unused,
+            ctx.options().unused,
             CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
         ) {
             return false;
@@ -816,9 +816,9 @@ impl<'a> PeepholeOptimizations {
             return Self::is_member_assign_to_unused_binding(symbol_id, ctx);
         }
 
-        // Default path. Full-minify only: in DCE (tree-shaking) mode rolldown
-        // owns `property_write_side_effects` as its opt-in knob.
-        if ctx.state.dce {
+        // Default path. Full-minify only: in tree-shake-only mode rolldown owns
+        // `property_write_side_effects` as its opt-in knob.
+        if ctx.is_tree_shake_only() {
             return false;
         }
         if ctx.current_scope_flags().contains_direct_eval() {

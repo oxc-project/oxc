@@ -99,7 +99,7 @@ impl<'a> Traverse<'a> for Normalize {
         // every console call (statement position included) to `void 0`.
         stmts.retain(|stmt| match stmt {
             Statement::EmptyStatement(_) => false,
-            Statement::DebuggerStatement(_) if ctx.state.options.drop_debugger => false,
+            Statement::DebuggerStatement(_) if ctx.options().drop_debugger => false,
             _ => true,
         });
     }
@@ -130,7 +130,7 @@ impl<'a> Traverse<'a> for Normalize {
         // Handled outside the match below so the replacement can go through
         // `ctx.replace_expression`, which walks the dropped call (its
         // argument subtrees may contain resolved references) into `PassChanges`.
-        if ctx.state.options.drop_console
+        if ctx.options().drop_console
             && let Expression::CallExpression(call_expr) = &*expr
             && Self::is_console_call_expression(call_expr)
         {
@@ -167,7 +167,7 @@ impl<'a> Traverse<'a> for Normalize {
         node: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !ctx.state.should_track_member_write_effects() {
+        if !ctx.should_track_member_write_effects() {
             return;
         }
         let Some(target) = node.as_simple_assignment_target() else { return };
@@ -182,7 +182,7 @@ impl<'a> Traverse<'a> for Normalize {
 
     /// `o.x++` / `--o.x` read the property before writing.
     fn exit_update_expression(&mut self, e: &mut UpdateExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.should_track_member_write_effects() {
+        if !ctx.should_track_member_write_effects() {
             return;
         }
         Self::record_simple_target_member_write_hazard(
@@ -196,7 +196,7 @@ impl<'a> Traverse<'a> for Normalize {
     /// single-level delete is harmless — but a CHAINED delete (`delete a.b.c`)
     /// reads the intermediate object `a.b`, hazarding the base `a`.
     fn exit_unary_expression(&mut self, e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.should_track_member_write_effects() {
+        if !ctx.should_track_member_write_effects() {
             return;
         }
         if e.operator.is_delete()
@@ -615,11 +615,12 @@ impl<'a> Normalize {
         is_read_modify: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // In DCE mode only possible prototype mutation has a live consumer
-        // (the opt-in drop); the default hazard reader is full-minify only.
+        // In tree-shake-only mode only possible prototype mutation has a live
+        // consumer (the opt-in drop); the default hazard reader is full-minify
+        // only.
         // Skip hazard-only work (safe-key read-modify ops, chained writes,
         // chained deletes) before walking the chain.
-        if ctx.state.dce && !key_is_unsafe {
+        if ctx.is_tree_shake_only() && !key_is_unsafe {
             return;
         }
         let mut depth = 1u32;

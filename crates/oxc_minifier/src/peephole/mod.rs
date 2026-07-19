@@ -234,7 +234,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // Private member usage is collected only in full optimization mode.
-        debug_assert!(ctx.state.dce || ctx.state.private_member_usage.is_at_root());
+        debug_assert!(ctx.is_tree_shake_only() || ctx.state.private_member_usage.is_at_root());
     }
 
     fn exit_statements(
@@ -250,7 +250,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
                 Statement::IfStatement(_) => Self::try_fold_if(stmt, ctx),
@@ -319,7 +319,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_for_statement(stmt, ctx);
@@ -327,7 +327,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_return_statement(stmt, ctx);
@@ -338,7 +338,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_variable_declaration(decl, ctx);
@@ -366,9 +366,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // folds stay on because the removal passes don't evaluate compound
         // conditions themselves: `if ('production' === 'production')` must fold
         // to `true` before the dead branch can be dropped. Passes that only
-        // shrink code (`substitute_*`, `minimize_*`) are left out. See the `dce`
-        // docs in `state.rs`.
-        if ctx.state.dce {
+        // shrink code (`substitute_*`, `minimize_*`) are left out.
+        if ctx.is_tree_shake_only() {
             match expr {
                 Expression::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
@@ -493,7 +492,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         if expr.operator.is_not() {
@@ -502,7 +501,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.dce {
+        if !ctx.is_tree_shake_only() {
             Self::substitute_call_expression(e, ctx);
             Self::remove_empty_spread_arguments(&mut e.arguments);
         }
@@ -512,7 +511,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.dce {
+        if !ctx.is_tree_shake_only() {
             Self::substitute_new_expression(e, ctx);
             Self::remove_empty_spread_arguments(&mut e.arguments);
         }
@@ -520,7 +519,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_object_property(prop, ctx);
@@ -531,7 +530,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_assignment_target_property(node, ctx);
@@ -542,14 +541,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_assignment_target_property_property(prop, ctx);
     }
 
     fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_binding_property(prop, ctx);
@@ -560,7 +559,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_method_definition(prop, ctx);
@@ -571,7 +570,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_property_definition(prop, ctx);
@@ -582,7 +581,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_accessor_property(prop, ctx);
@@ -593,21 +592,21 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::convert_to_dotted_properties(expr, ctx);
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         ctx.state.private_member_usage.enter_class();
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::remove_dead_code_exit_class_body(body, ctx);
@@ -616,7 +615,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_catch_clause(catch, ctx);
@@ -627,7 +626,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         ctx.state.private_member_usage.record_use(node.field.name.into());
@@ -638,7 +637,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut PrivateInExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         ctx.state.private_member_usage.record_use(node.left.name.into());
