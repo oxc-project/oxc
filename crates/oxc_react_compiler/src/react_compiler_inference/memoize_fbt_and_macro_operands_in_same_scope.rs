@@ -13,13 +13,14 @@
 //! 1. Forward data-flow: identify all macro tags (including property loads like `fbt.param`)
 //! 2. Reverse data-flow: merge arguments of macro invocations into the same scope
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     HirFunction, IdentifierId, InstructionValue, JsxTag, PrimitiveValue, PropertyLiteral, ScopeId,
 };
+use crate::react_compiler_utils::BitSet;
 
 /// Whether a macro requires its arguments to be transitively inlined (e.g., fbt)
 /// or just avoids having the top-level values be converted to variables (e.g., fbt.param).
@@ -34,7 +35,27 @@ enum InlineLevel {
 struct MacroDefinition {
     level: InlineLevel,
     /// Maps property names to their own MacroDefinition. `"*"` is a wildcard.
-    properties: Option<FxHashMap<String, MacroDefinition>>,
+    properties: Option<MacroKinds>,
+}
+
+/// Name -> definition map for macro tags, keyed like a map (last insert wins, no
+/// duplicate keys) but backed by a linear-scan `Vec`: the built-in FBT tags, their
+/// nested property tables, and any user-configured custom macros only ever amount to a
+/// handful of entries, so this avoids the hashing and monomorphization of a `HashMap`.
+#[derive(Debug, Clone)]
+struct MacroKinds(Vec<(String, MacroDefinition)>);
+
+impl MacroKinds {
+    fn get(&self, name: &str) -> Option<&MacroDefinition> {
+        self.0.iter().find(|(key, _)| key == name).map(|(_, def)| def)
+    }
+
+    fn insert(&mut self, name: String, def: MacroDefinition) {
+        match self.0.iter_mut().find(|(key, _)| *key == name) {
+            Some((_, existing)) => *existing = def,
+            None => self.0.push((name, def)),
+        }
+    }
 }
 
 fn shallow_macro() -> MacroDefinition {
@@ -46,49 +67,46 @@ fn transitive_macro() -> MacroDefinition {
 }
 
 fn fbt_macro() -> MacroDefinition {
-    let mut props = FxHashMap::default();
-    props.insert("*".to_string(), shallow_macro());
     // fbt.enum gets FBT_MACRO (recursive/transitive)
-    // We'll fill this in after construction since it's self-referential.
-    // Instead, we use a special marker and handle it in property lookup.
-    let mut fbt = MacroDefinition { level: InlineLevel::Transitive, properties: Some(props) };
-    // Add "enum" as a recursive reference (same as FBT_MACRO)
     // Since we can't do self-referential structs, we clone the structure.
+    // enum's enum is also recursive, but in practice the depth is bounded.
     let enum_macro = MacroDefinition {
         level: InlineLevel::Transitive,
-        properties: Some({
-            let mut p = FxHashMap::default();
-            p.insert("*".to_string(), shallow_macro());
-            // enum's enum is also recursive, but in practice the depth is bounded
-            p.insert("enum".to_string(), transitive_macro());
-            p
-        }),
+        properties: Some(MacroKinds(vec![
+            ("*".to_string(), shallow_macro()),
+            ("enum".to_string(), transitive_macro()),
+        ])),
     };
-    fbt.properties.as_mut().unwrap().insert("enum".to_string(), enum_macro);
-    fbt
+    MacroDefinition {
+        level: InlineLevel::Transitive,
+        properties: Some(MacroKinds(vec![
+            ("*".to_string(), shallow_macro()),
+            ("enum".to_string(), enum_macro),
+        ])),
+    }
 }
 
 /// Built-in FBT tags and their macro definitions.
-fn fbt_tags() -> FxHashMap<String, MacroDefinition> {
-    let mut tags = FxHashMap::default();
-    tags.insert("fbt".to_string(), fbt_macro());
-    tags.insert("fbt:param".to_string(), shallow_macro());
-    tags.insert("fbt:enum".to_string(), fbt_macro());
-    tags.insert("fbt:plural".to_string(), shallow_macro());
-    tags.insert("fbs".to_string(), fbt_macro());
-    tags.insert("fbs:param".to_string(), shallow_macro());
-    tags.insert("fbs:enum".to_string(), fbt_macro());
-    tags.insert("fbs:plural".to_string(), shallow_macro());
-    tags
+fn fbt_tags() -> MacroKinds {
+    MacroKinds(vec![
+        ("fbt".to_string(), fbt_macro()),
+        ("fbt:param".to_string(), shallow_macro()),
+        ("fbt:enum".to_string(), fbt_macro()),
+        ("fbt:plural".to_string(), shallow_macro()),
+        ("fbs".to_string(), fbt_macro()),
+        ("fbs:param".to_string(), shallow_macro()),
+        ("fbs:enum".to_string(), fbt_macro()),
+        ("fbs:plural".to_string(), shallow_macro()),
+    ])
 }
 
 /// Main entry point. Returns the set of identifier IDs that are fbt/macro operands.
 pub fn memoize_fbt_and_macro_operands_in_same_scope(
     func: &HirFunction,
     env: &mut Environment,
-) -> FxHashSet<IdentifierId> {
+) -> BitSet<IdentifierId> {
     // Phase 1: Build macro kinds map from built-in FBT tags + custom macros
-    let mut macro_kinds: FxHashMap<String, MacroDefinition> = fbt_tags();
+    let mut macro_kinds: MacroKinds = fbt_tags();
     if let Some(ref custom_macros) = env.config.custom_macros {
         for name in custom_macros {
             macro_kinds.insert(name.clone(), transitive_macro());
@@ -107,7 +125,7 @@ pub fn memoize_fbt_and_macro_operands_in_same_scope(
 /// things like `fbt.foo.bar(...)`.
 fn populate_macro_tags(
     func: &HirFunction,
-    macro_kinds: &FxHashMap<String, MacroDefinition>,
+    macro_kinds: &MacroKinds,
 ) -> FxHashMap<IdentifierId, MacroDefinition> {
     let mut macro_tags: FxHashMap<IdentifierId, MacroDefinition> = FxHashMap::default();
 
@@ -162,9 +180,9 @@ fn merge_macro_arguments(
     func: &HirFunction,
     env: &mut Environment,
     macro_tags: &mut FxHashMap<IdentifierId, MacroDefinition>,
-    macro_kinds: &FxHashMap<String, MacroDefinition>,
-) -> FxHashSet<IdentifierId> {
-    let mut macro_values: FxHashSet<IdentifierId> = macro_tags.keys().copied().collect();
+    macro_kinds: &MacroKinds,
+) -> BitSet<IdentifierId> {
+    let mut macro_values: BitSet<IdentifierId> = macro_tags.keys().copied().collect();
 
     // Iterate blocks in reverse order
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
@@ -335,7 +353,7 @@ fn visit_operands(
     lvalue_id: IdentifierId,
     value: &InstructionValue,
     env: &mut Environment,
-    macro_values: &mut FxHashSet<IdentifierId>,
+    macro_values: &mut BitSet<IdentifierId>,
     macro_tags: &mut FxHashMap<IdentifierId, MacroDefinition>,
 ) {
     macro_values.insert(lvalue_id);
