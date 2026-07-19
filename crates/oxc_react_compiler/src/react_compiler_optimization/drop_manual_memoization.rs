@@ -239,7 +239,7 @@ fn process_manual_memo_call<'a>(
         }
 
         let memo_decl: Place = if manual_memo.kind == ManualMemoKind::UseMemo {
-            func.instructions[instr_id.index()].lvalue.clone()
+            func.instructions[instr_id.index()].lvalue
         } else {
             Place {
                 identifier: fn_place.identifier,
@@ -329,7 +329,7 @@ fn collect_temporaries<'a>(
             let all_places: Option<Vec<Place>> = elements
                 .iter()
                 .map(|e| match e {
-                    ArrayElement::Place(p) => Some(p.clone()),
+                    ArrayElement::Place(p) => Some(*p),
                     _ => None,
                 })
                 .collect();
@@ -378,7 +378,7 @@ pub fn collect_maybe_memo_dependencies<'a>(
         }),
         InstructionValue::PropertyLoad { object, property, span, .. } => {
             maybe_deps.get(&object.identifier).map(|object_dep| ManualMemoDependency {
-                root: object_dep.root.clone(),
+                root: object_dep.root,
                 path: {
                     let mut path = object_dep.path.clone();
                     path.push(DependencyPathEntry { property: *property, optional, span: *span });
@@ -395,10 +395,7 @@ pub fn collect_maybe_memo_dependencies<'a>(
                 Some(IdentifierName::Named(_))
             ) {
                 Some(ManualMemoDependency {
-                    root: ManualMemoDependencyRoot::NamedLocal {
-                        value: place.clone(),
-                        constant: false,
-                    },
+                    root: ManualMemoDependencyRoot::NamedLocal { value: *place, constant: false },
                     path: vec![],
                     span: place.span,
                 })
@@ -437,7 +434,7 @@ fn get_manual_memoization_replacement<'a>(
 ) -> InstructionValue<'a> {
     if kind == ManualMemoKind::UseMemo {
         // Replace with Call fn() - invoke the memo function directly
-        InstructionValue::CallExpression { callee: fn_place.clone(), args: vec![], span }
+        InstructionValue::CallExpression { callee: *fn_place, args: vec![], span }
     } else {
         // Replace with LoadLocal fn - just reference the function
         InstructionValue::LoadLocal {
@@ -478,7 +475,7 @@ fn make_manual_memoization_markers<'a>(
         lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
-            decl: memo_decl.clone(),
+            decl: *memo_decl,
             pruned: false,
             span: fn_expr.span,
         },
@@ -507,7 +504,7 @@ fn extract_manual_memoization_args<'a>(
 
     // Get the first arg (fn)
     let fn_place = match args.first() {
-        Some(PlaceOrSpread::Place(p)) => p.clone(),
+        Some(PlaceOrSpread::Place(p)) => *p,
         _ => {
             let span = instr.value.span().cloned();
             env.record_diagnostic(

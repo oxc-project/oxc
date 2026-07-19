@@ -540,7 +540,7 @@ fn test_fold_is_object_and_not_null() {
 
 #[test]
 fn test_fold_is_object_and_not_null_minted_then_dropped() {
-    // Exercises same-pass mint-then-drop through `DropDiff`'s capacity guard.
+    // Exercises same-pass mint-then-drop through `DroppedSubtreeCollector`'s capacity guard.
     // The fresh references carry their semantic scope, so post-flush
     // reachability observes them without a separate mint log.
     test(

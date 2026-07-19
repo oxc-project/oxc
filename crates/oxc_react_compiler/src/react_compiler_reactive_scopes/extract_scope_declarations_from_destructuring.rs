@@ -147,7 +147,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         span: None, // GeneratedSource — matches TS createTemporaryPlace
                     };
                     let original = place;
-                    renamed.push((original, temporary.clone()));
+                    renamed.push((original, temporary));
                     temporary
                 });
 

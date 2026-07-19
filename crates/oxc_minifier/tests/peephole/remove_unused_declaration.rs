@@ -1,9 +1,9 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, CompressOptionsUnused, TreeShakeOptions, test_options, test_options_once,
-    test_options_source_type, test_same_options, test_same_options_source_type, test_same_smallest,
-    test_smallest,
+    CompressOptions, CompressOptionsUnused, TreeShakeOptions, test_options,
+    test_options_once_with_iterations, test_options_source_type, test_options_with_iterations,
+    test_same_options, test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
 // Leak regression: dropping an unused declarator must walk the whole
@@ -653,13 +653,14 @@ fn recursive_function_with_var_redeclaration() {
 
 #[test]
 fn recursive_function_var_redeclaration_converges_on_count_pass() {
-    test_smallest("function f() { f() } var f;", "");
+    let options = CompressOptions::smallest();
+    test_options_with_iterations("function f() { f() } var f;", "", 2, &options);
 
     // The first pass removes the function using published graph deadness.
     // Its body reference is pruned only at the following flush, so a capped
     // run conservatively retains the sibling `var` declaration.
     let options = CompressOptions { max_iterations: Some(0), ..CompressOptions::smallest() };
-    test_options_once("function f() { f() } var f;", "var f;", &options);
+    test_options_once_with_iterations("function f() { f() } var f;", "var f;", 0, &options);
 }
 
 // ---- Export observability ----
@@ -856,7 +857,9 @@ fn keep_sloppy_annex_b_alias_member_write_after_cycle_removed() {
 fn keep_script_root_var_in_nested_statement_after_cycle_removed() {
     let options = CompressOptions::smallest();
     let source = "function outer() { function d1() { return x + d2() } function d2() { return d1() } return 1 } outer(); switch (1) { case 1: var x = 42; }";
-    let expected = "function outer() { return 1 } var x = 42;";
+    // Script globals can be rebound through global-object properties without a
+    // resolved write reference, so the call cannot reuse a pure summary.
+    let expected = "function outer() { return 1 } if (outer(), !0) var x = 42;";
     test_options_source_type(source, expected, SourceType::script(), &options);
 
     // CommonJS top-level vars are wrapper-local, so ordinary counts may remove them.
@@ -867,9 +870,9 @@ fn keep_script_root_var_in_nested_statement_after_cycle_removed() {
 
 // A dropped direct eval must re-enable the analysis: the initial compute
 // skips the whole program while the root scope carries `DirectEval`, so only
-// the `eval_dropped` recompute trigger lets a later pass remove the cycle.
+// the `direct_eval_dropped` recompute trigger lets a later pass remove the cycle.
 #[test]
-fn remove_recursive_function_after_eval_dropped() {
+fn remove_recursive_function_after_direct_eval_dropped() {
     test_smallest("if (false) eval('x'); function f() { f() }", "");
 
     let options = CompressOptions::smallest();
@@ -915,7 +918,7 @@ fn keep_recursive_cycle_in_for_in_head() {
 
 // For-head bindings need no special pin. References in the RHS participate in
 // normal scope ownership, while unreachable heads disappear through the
-// ordinary dirty-reference lifecycle.
+// ordinary removed-reference lifecycle.
 #[test]
 fn for_head_reachability_uses_ordinary_references() {
     test_same_smallest("function f() {\n\tf();\n}\nfor (var x of [f]);");

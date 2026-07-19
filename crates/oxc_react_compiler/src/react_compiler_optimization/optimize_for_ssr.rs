@@ -76,7 +76,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                     inlined_state.insert(
                                         lvalue_id,
                                         InlinedStateReplacement::LoadLocal {
-                                            place: arg.clone(),
+                                            place: *arg,
                                             span: arg.span,
                                         },
                                     );
@@ -93,8 +93,8 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                 inlined_state.insert(
                                     lvalue_id,
                                     InlinedStateReplacement::CallExpression {
-                                        callee: initializer.clone(),
-                                        arg: arg.clone(),
+                                        callee: *initializer,
+                                        arg: *arg,
                                         span: call_span,
                                     },
                                 );
@@ -111,7 +111,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                     inlined_state.insert(
                                         lvalue_id,
                                         InlinedStateReplacement::LoadLocal {
-                                            place: arg.clone(),
+                                            place: *arg,
                                             span: arg.span,
                                         },
                                     );
@@ -187,8 +187,8 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             let span = *span;
                             let kind = lvalue.kind;
                             let store = InstructionValue::StoreLocal {
-                                lvalue: LValue { place: first_place.clone(), kind },
-                                value: value.clone(),
+                                lvalue: LValue { place: *first_place, kind },
+                                value: *value,
                                 span,
                             };
                             instr.value = store;
@@ -205,8 +205,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                 && let PlaceOrSpread::Place(arg) = &args[0]
                             {
                                 let span = *span;
-                                instr.value =
-                                    InstructionValue::LoadLocal { place: arg.clone(), span };
+                                instr.value = InstructionValue::LoadLocal { place: *arg, span };
                             }
                         }
                         Some(
@@ -225,18 +224,15 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             if let Some(replacement) = inlined_state.get(&lvalue_id) {
                                 instr.value = match replacement {
                                     InlinedStateReplacement::LoadLocal { place, span } => {
-                                        InstructionValue::LoadLocal {
-                                            place: place.clone(),
-                                            span: *span,
-                                        }
+                                        InstructionValue::LoadLocal { place: *place, span: *span }
                                     }
                                     InlinedStateReplacement::CallExpression {
                                         callee,
                                         arg,
                                         span,
                                     } => InstructionValue::CallExpression {
-                                        callee: callee.clone(),
-                                        args: vec![PlaceOrSpread::Place(arg.clone())],
+                                        callee: *callee,
+                                        args: vec![PlaceOrSpread::Place(*arg)],
                                         span: *span,
                                     },
                                 };

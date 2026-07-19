@@ -1327,7 +1327,7 @@ fn test_inline_values_in_template_literal() {
 // write-ref hangs around in `Scoping` (#22736).
 //
 // Test options keep unused declarations (`CompressOptionsUnused::Keep`), so
-// `let x` survives — but with `write_references_count == 0` the inline pass
+// `let x` survives — but with no cached write references the inline pass
 // replaces `return x` with the constant value. Without the drop walk, the
 // dropped subtree's stale write-ref leaves the count at 1 and inline is
 // blocked.

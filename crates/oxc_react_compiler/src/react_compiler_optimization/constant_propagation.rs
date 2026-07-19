@@ -280,21 +280,21 @@ fn evaluate_instruction<'a>(
             Some(Constant::Primitive { value: *value, span: *span })
         }
         InstructionValue::LoadGlobal { binding, span } => {
-            Some(Constant::LoadGlobal { binding: binding.clone(), span: *span })
+            Some(Constant::LoadGlobal { binding: *binding, span: *span })
         }
         InstructionValue::ComputedLoad { object, property, span } => {
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
                     PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
-                        let object = object.clone();
+                        let object = *object;
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
                         func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyLoad { object, property: new_property, span };
                     }
                     PrimitiveValue::Number(n) => {
-                        let object = object.clone();
+                        let object = *object;
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
                         func.instructions[instr_id.index()].value =
@@ -313,8 +313,8 @@ fn evaluate_instruction<'a>(
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
                     PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
-                        let object = object.clone();
-                        let store_value = value.clone();
+                        let object = *object;
+                        let store_value = *value;
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
                         func.instructions[instr_id.index()].value =
@@ -326,8 +326,8 @@ fn evaluate_instruction<'a>(
                             };
                     }
                     PrimitiveValue::Number(n) => {
-                        let object = object.clone();
-                        let store_value = value.clone();
+                        let object = *object;
+                        let store_value = *value;
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
                         func.instructions[instr_id.index()].value =

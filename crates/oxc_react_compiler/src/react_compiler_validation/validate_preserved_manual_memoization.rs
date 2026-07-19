@@ -340,10 +340,7 @@ fn record_temporaries<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSt
         state.temporaries.insert(
             lvalue.identifier,
             ManualMemoDependency {
-                root: ManualMemoDependencyRoot::NamedLocal {
-                    value: lvalue.clone(),
-                    constant: false,
-                },
+                root: ManualMemoDependencyRoot::NamedLocal { value: *lvalue, constant: false },
                 path: Vec::new(),
                 span: lvalue.span,
             },
@@ -394,7 +391,7 @@ fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<
                                 lvalue.place.identifier,
                                 ManualMemoDependency {
                                     root: ManualMemoDependencyRoot::NamedLocal {
-                                        value: lvalue.place.clone(),
+                                        value: lvalue.place,
                                         constant: false,
                                     },
                                     path: Vec::new(),
@@ -414,7 +411,7 @@ fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<
                                     place.identifier,
                                     ManualMemoDependency {
                                         root: ManualMemoDependencyRoot::NamedLocal {
-                                            value: place.clone(),
+                                            value: *place,
                                             constant: false,
                                         },
                                         path: Vec::new(),
@@ -437,7 +434,7 @@ fn start_memoize_operands(deps: &Option<Vec<ManualMemoDependency>>) -> Vec<Place
     if let Some(deps) = deps {
         for dep in deps {
             if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &dep.root {
-                result.push(value.clone());
+                result.push(*value);
             }
         }
     }
@@ -629,7 +626,7 @@ fn validate_inferred_dep<'h>(
     let normalized_dep = if let Some(temp) = temporaries.get(&dep_id) {
         let mut path = temp.path.clone();
         path.extend_from_slice(dep_path);
-        ManualMemoDependency { root: temp.root.clone(), path, span: temp.span }
+        ManualMemoDependency { root: temp.root, path, span: temp.span }
     } else {
         let ident = &env.identifiers[dep_id];
         // TS: Diagnostics.invariant(dep.identifier.name?.kind === 'named', ...)

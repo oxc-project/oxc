@@ -49,8 +49,8 @@
 //! 2. **Do not move an existing reference across function owners.** Ownership
 //!    comes from `Reference::scope_id()` and the registered function-scope
 //!    ancestors. A transform that changes the nearest owning function must
-//!    instead drop and recreate the reference, so the dirty gate requests a
-//!    new analysis.
+//!    instead drop and recreate the reference, so the pass-change gate requests
+//!    a new analysis.
 //! 3. **Do not create a path to a function already published as dead.** Deadness
 //!    is monotonic. Transforms may duplicate an already-live reference, but
 //!    must not make an unreachable binding reachable; debug builds assert that
@@ -62,7 +62,7 @@
 //!    reach a removed function. Debug builds assert this never happens.
 //!
 //! A transform that needs to violate one of these invariants must first extend
-//! function registration or the dirty-analysis signal. Keeping this boundary
+//! function registration or the pass-change analysis signal. Keeping this boundary
 //! explicit is what lets the analysis run without per-transform collection
 //! hooks or a reference-mint log.
 //!
@@ -459,13 +459,14 @@ pub fn register_function(function: &Function<'_>, ctx: &mut TraverseCtx<'_>) {
     if !function.is_declaration() {
         return;
     }
-    if ctx.state.options.unused == CompressOptionsUnused::Keep {
+    if ctx.options().unused == CompressOptionsUnused::Keep {
         return;
     }
+    let source_type = ctx.source_type();
     let allocator = ctx.allocator();
     let TraverseCtx { state, scoping, .. } = ctx;
-    if let Some(liveness) = &mut state.symbol_liveness {
-        liveness.register_function(function, state.source_type, scoping.scoping(), allocator);
+    if let Some(liveness) = state.symbols.liveness_mut() {
+        liveness.register_function(function, source_type, scoping.scoping(), allocator);
     }
 }
 
@@ -480,19 +481,19 @@ pub fn register_using_declaration(
         return;
     }
 
-    let source_type = ctx.state.source_type;
+    let source_type = ctx.source_type();
     let allocator = ctx.allocator();
     let TraverseCtx { state, scoping, .. } = ctx;
     let liveness = state
-        .symbol_liveness
-        .get_or_insert_with(|| SymbolLiveness::new(source_type, scoping.scoping(), allocator));
+        .symbols
+        .ensure_liveness(|| SymbolLiveness::new(source_type, scoping.scoping(), allocator));
     liveness.mark_bound_names(declaration);
 }
 
 /// Normalize hook: record runtime bindings exposed by a named export.
 pub fn register_named_export(declaration: &ExportNamedDeclaration<'_>, ctx: &mut TraverseCtx<'_>) {
     let TraverseCtx { state, scoping, .. } = ctx;
-    let Some(liveness) = &mut state.symbol_liveness else { return };
+    let Some(liveness) = state.symbols.liveness_mut() else { return };
 
     if !declaration.export_kind.is_type()
         && let Some(inner) = &declaration.declaration
@@ -537,7 +538,7 @@ pub fn register_default_export(
         _ => None,
     };
     if let Some(symbol_id) = symbol_id
-        && let Some(liveness) = &mut ctx.state.symbol_liveness
+        && let Some(liveness) = ctx.state.symbols.liveness_mut()
     {
         liveness.mark_implicitly_observable(symbol_id);
     }
@@ -555,16 +556,16 @@ pub fn register_default_export(
 /// cannot resurrect a published dead function, so additions alone need no
 /// recompute. Scope-only rewrites preserve the nearest function owner.
 pub fn dead_references_affect_analysis(ctx: &TraverseCtx<'_>) -> bool {
-    let Some(liveness) = &ctx.state.symbol_liveness else { return false };
+    let Some(liveness) = ctx.state.symbols.liveness() else { return false };
     let Some(graph) = &liveness.recursive_functions else { return false };
     // The analysis is disabled while the root scope contains direct eval, so
     // removed references cannot affect it. The flag may be stale if this pass
     // dropped the last eval (flags refresh after this check), but that drop
-    // also sets `eval_dropped`, which forces the recompute anyway.
+    // also sets `direct_eval_dropped`, which forces the recompute anyway.
     if ctx.scoping().root_scope_flags().contains_direct_eval() {
         return false;
     }
-    ctx.state.dirty.dead_refs.ones().any(|bit| {
+    ctx.state.pass_changes.removed_references.ones().any(|bit| {
         ctx.scoping()
             .get_reference(ReferenceId::from_usize(bit))
             .symbol_id()
@@ -574,15 +575,14 @@ pub fn dead_references_affect_analysis(ctx: &TraverseCtx<'_>) -> bool {
 
 /// Assert that the completed pass removed every previously published dead
 /// declaration, then optionally analyze settled semantic references and
-/// publish newly dead functions. Called only by the end-of-pass sequence after
+/// publish newly dead functions. Called only by pass completion after
 /// scoping has been flushed.
 pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: bool) -> bool {
     #[cfg(not(debug_assertions))]
     let _ = program;
 
     #[cfg(debug_assertions)]
-    if let Some(dead) = ctx.state.symbol_liveness.as_ref().and_then(SymbolLiveness::dead_functions)
-    {
+    if let Some(dead) = ctx.state.symbols.liveness().and_then(SymbolLiveness::dead_functions) {
         debug_assert_dead_function_declarations_removed(program, ctx.scoping(), dead);
     }
 
@@ -591,7 +591,7 @@ pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: 
     }
 
     let TraverseCtx { state, scoping, .. } = ctx;
-    state.symbol_liveness.as_mut().is_some_and(|liveness| liveness.analyze(scoping.scoping()))
+    state.symbols.liveness_mut().is_some_and(|liveness| liveness.analyze(scoping.scoping()))
 }
 
 /// Debug contract for previously published graph deadness: it is consumed only

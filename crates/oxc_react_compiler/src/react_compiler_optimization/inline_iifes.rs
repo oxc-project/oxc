@@ -127,7 +127,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     inlined_functions.insert(callee_id);
 
                     // Capture the lvalue from the call instruction
-                    let call_lvalue = func.instructions[instr_id.index()].lvalue.clone();
+                    let call_lvalue = func.instructions[instr_id.index()].lvalue;
                     let block_terminal_id = func.body.blocks[&block_id].terminal.evaluation_order();
                     let block_terminal_span = func.body.blocks[&block_id].terminal.span().cloned();
                     let block_kind = func.body.blocks[&block_id].kind;
@@ -189,9 +189,9 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                                 let load_instr = Instruction {
                                     id: EvaluationOrder::UNSET,
                                     span: *ret_span,
-                                    lvalue: call_lvalue.clone(),
+                                    lvalue: call_lvalue,
                                     value: InstructionValue::LoadLocal {
-                                        place: value.clone(),
+                                        place: *value,
                                         span: *ret_span,
                                     },
                                     effects: None,
@@ -215,7 +215,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         }
                     } else {
                         // Multi-return path: uses LabelTerminal
-                        let result = call_lvalue.clone();
+                        let result = call_lvalue;
 
                         // Set block terminal to Label
                         func.body.blocks.get_mut(&block_id).unwrap().terminal = Terminal::Label {
@@ -341,8 +341,8 @@ fn rewrite_block<'a>(
             span: *ret_span,
             lvalue: store_lvalue,
             value: InstructionValue::StoreLocal {
-                lvalue: LValue { kind: InstructionKind::Reassign, place: return_value.clone() },
-                value: value.clone(),
+                lvalue: LValue { kind: InstructionKind::Reassign, place: *return_value },
+                value: *value,
                 span: *ret_span,
             },
             effects: None,
@@ -374,7 +374,7 @@ fn declare_temporary<'a>(
         span: GENERATED_SOURCE,
         lvalue: declare_lvalue,
         value: InstructionValue::DeclareLocal {
-            lvalue: LValue { place: result.clone(), kind: InstructionKind::Let },
+            lvalue: LValue { place: *result, kind: InstructionKind::Let },
             span: result.span,
         },
         effects: None,

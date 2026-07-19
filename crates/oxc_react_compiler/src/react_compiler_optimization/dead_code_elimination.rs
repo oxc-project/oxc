@@ -232,7 +232,7 @@ fn rewrite_instruction(
                         match prop {
                             ObjectPropertyOrSpread::Property(p) => {
                                 if is_id_or_name_used(state, &env.identifiers, p.place.identifier) {
-                                    next_properties.get_or_insert_with(Vec::new).push(prop.clone());
+                                    next_properties.get_or_insert_with(Vec::new).push(*prop);
                                 }
                             }
                             ObjectPropertyOrSpread::Spread(s) => {
@@ -257,7 +257,7 @@ fn rewrite_instruction(
             // This is a const/let declaration where the variable is accessed later,
             // but where the value is always overwritten before being read.
             // Rewrite to DeclareLocal so the initializer value can be DCE'd.
-            let new_lvalue = lvalue.clone();
+            let new_lvalue = *lvalue;
             let new_span = *span;
             instr.value = InstructionValue::DeclareLocal { lvalue: new_lvalue, span: new_span };
         }

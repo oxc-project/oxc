@@ -23,7 +23,7 @@ impl<'a> PeepholeOptimizations {
         // mutated transient conditional and mark its leaked refs dead. Without
         // the slot wrapping, refs left in untouched slots of the discarded
         // transient `ConditionalExpression` (e.g. the leftover `b` in
-        // `b == null ? c : b` -> `b ?? c`) would never reach `PassDirty`.
+        // `b == null ? c : b` -> `b ?? c`) would never reach `PassChanges`.
         let mut as_expr =
             Expression::new_conditional_expression(span, test, consequent, alternate, ctx);
         let Expression::ConditionalExpression(cond_box) = &mut as_expr else { unreachable!() };

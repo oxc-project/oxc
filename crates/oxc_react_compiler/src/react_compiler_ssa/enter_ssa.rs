@@ -165,7 +165,7 @@ impl SSABuilder {
                 span: old_place.span,
             };
             let state = self.states.get_mut(&block_id).unwrap();
-            state.incomplete_phis.push(IncompletePhi { old_place: old_place.clone(), new_place });
+            state.incomplete_phis.push(IncompletePhi { old_place: *old_place, new_place });
             state.defs.insert(old_place.identifier, new_id);
             return new_id;
         }
@@ -212,7 +212,7 @@ impl SSABuilder {
             );
         }
 
-        let phi = Phi { place: new_place.clone(), operands: pred_defs };
+        let phi = Phi { place: *new_place, operands: pred_defs };
 
         self.pending_phis.entry(block_id).or_default().push(phi);
     }
