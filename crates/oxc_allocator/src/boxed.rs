@@ -27,25 +27,30 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
-    num::NonZeroU32,
     ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
+// Only the 64-bit compressed representation uses `NonZeroU32`.
+#[cfg(target_pointer_width = "64")]
+use std::num::NonZeroU32;
 
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{GetAllocator, cage};
+use crate::GetAllocator;
+#[cfg(target_pointer_width = "64")]
+use crate::cage;
 
-/// Compress a pointer to a cage offset.
+/// Compress a pointer to its stored representation (a cage offset on 64-bit).
 ///
 /// # Panics
-/// Panics if the pointer is not within the cage.
+/// (64-bit) Panics if the pointer is not within the cage.
 /// In debug builds, also asserts the pointer is 8-byte-aligned.
 //
 // `#[inline(always)]` because this is a hot path, and it's only a few instructions.
+#[cfg(target_pointer_width = "64")]
 #[expect(clippy::inline_always)]
 #[inline(always)]
 fn compress<T>(ptr: NonNull<T>) -> NonZeroU32 {
@@ -68,6 +73,15 @@ fn compress<T>(ptr: NonNull<T>) -> NonZeroU32 {
     }
 }
 
+/// 32-bit: the stored representation is the pointer itself.
+#[cfg(not(target_pointer_width = "64"))]
+#[expect(clippy::inline_always)]
+#[inline(always)]
+fn compress<T>(ptr: NonNull<T>) -> NonNull<T> {
+    ptr
+}
+
+#[cfg(target_pointer_width = "64")]
 #[cold]
 #[inline(never)]
 fn compress_failed() -> ! {
@@ -79,7 +93,7 @@ fn compress_failed() -> ! {
     )
 }
 
-/// Decompress a cage offset back to a pointer.
+/// Decompress a stored representation back to a pointer.
 ///
 /// The returned pointer is valid if `compressed` was produced by [`compress`] from a valid
 /// in-cage pointer. For [`Box::dangling`]'s sentinel value, the returned pointer is
@@ -87,6 +101,7 @@ fn compress_failed() -> ! {
 //
 // `#[inline(always)]` because this is a hot path (every `Box` deref), and it's only
 // a load + shift + add.
+#[cfg(target_pointer_width = "64")]
 #[expect(clippy::inline_always)]
 #[inline(always)]
 fn decompress<T>(compressed: NonZeroU32) -> NonNull<T> {
@@ -99,12 +114,25 @@ fn decompress<T>(compressed: NonZeroU32) -> NonNull<T> {
     unsafe { NonNull::new_unchecked(base.add(offset).cast::<T>()) }
 }
 
-/// Layout for allocating a `T` in a `Box`, over-aligned to at least 8.
+/// 32-bit: the stored representation is already the pointer.
+#[cfg(not(target_pointer_width = "64"))]
+#[expect(clippy::inline_always)]
+#[inline(always)]
+fn decompress<T>(compressed: NonNull<T>) -> NonNull<T> {
+    compressed
+}
+
+/// Layout for allocating a `T` in a `Box`.
 ///
-/// The compression scheme (scale 8) requires all boxed values to be 8-byte-aligned.
-/// The arena's per-allocation minimum alignment is 1, so alignment must be requested here.
+/// On 64-bit, over-aligned to at least 8: the compression scheme (scale 8) requires all boxed
+/// values to be 8-byte-aligned, and the arena's per-allocation minimum alignment is 1, so
+/// alignment must be requested here. On 32-bit there's no cage, so `T`'s natural alignment
+/// suffices.
 const fn boxed_layout<T>() -> Layout {
+    #[cfg(target_pointer_width = "64")]
     let align = if align_of::<T>() > 8 { align_of::<T>() } else { 8 };
+    #[cfg(not(target_pointer_width = "64"))]
+    let align = align_of::<T>();
     match Layout::from_size_align(size_of::<T>(), align) {
         Ok(layout) => layout,
         Err(_) => panic!("invalid layout for boxed value"),
@@ -129,10 +157,18 @@ const fn boxed_layout<T>() -> Layout {
 /// Static checks make this impossible to do. [`Box::new_in`] will refuse to compile if called
 /// with a [`Drop`] type.
 //
-// Field is a concrete `NonZeroU32` (not a type projection), so `T` remains covariant,
-// exactly as with the previous `NonNull<T>` representation.
+// Field is a concrete `NonZeroU32` / `NonNull<T>` (not a type projection), so `T` remains
+// covariant, exactly as with the pre-compression `NonNull<T>` representation.
+//
+// PROTOTYPE: 64-bit stores a 4-byte compressed cage offset; 32-bit (wasm32), where the 32 GiB
+// cage doesn't fit and a native pointer is already 4 bytes, stores a plain `NonNull<T>`.
+// Either way `Box` is 4 bytes with a niche, so boxed AST enums stay 8 bytes on both.
+#[cfg(target_pointer_width = "64")]
 #[repr(transparent)]
 pub struct Box<'alloc, T>(NonZeroU32, PhantomData<(&'alloc (), T)>);
+#[cfg(not(target_pointer_width = "64"))]
+#[repr(transparent)]
+pub struct Box<'alloc, T>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 const _: () = {
     assert!(size_of::<Box<'static, u64>>() == 4);
@@ -182,21 +218,27 @@ impl<'alloc, T> Box<'alloc, T> {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         if size_of::<T>() == 0 {
-            // Zero-sized values are not stored anywhere; use a sentinel offset whose decompressed
-            // address (`cage_base + max(align_of::<T>(), 8)`) is aligned for `T` (the cage base is
-            // page-aligned). Reading a ZST from that address is a no-op.
-            const {
-                assert!(
-                    size_of::<T>() != 0 || align_of::<T>() <= 4096,
-                    "Cannot Box a zero-sized type with alignment > 4096"
-                );
+            // Zero-sized values are not stored anywhere.
+            #[cfg(target_pointer_width = "64")]
+            {
+                // Use a sentinel offset whose decompressed address (`cage_base + max(align, 8)`)
+                // is aligned for `T` (the cage base is page-aligned). Reading a ZST is a no-op.
+                const {
+                    assert!(
+                        size_of::<T>() != 0 || align_of::<T>() <= 4096,
+                        "Cannot Box a zero-sized type with alignment > 4096"
+                    );
+                }
+                let align = align_of::<T>().max(8);
+                #[expect(clippy::cast_possible_truncation)]
+                let compressed = (align >> cage::COMPRESSED_SCALE_SHIFT) as u32;
+                // SAFETY: `align >= 8`, so `compressed >= 1`
+                let compressed = unsafe { NonZeroU32::new_unchecked(compressed) };
+                return Self(compressed, PhantomData);
             }
-            let align = align_of::<T>().max(8);
-            #[expect(clippy::cast_possible_truncation)]
-            let compressed = (align >> cage::COMPRESSED_SCALE_SHIFT) as u32;
-            // SAFETY: `align >= 8`, so `compressed >= 1`
-            let compressed = unsafe { NonZeroU32::new_unchecked(compressed) };
-            return Self(compressed, PhantomData);
+            // 32-bit: a dangling-but-aligned pointer; reading a ZST from it is a no-op.
+            #[cfg(not(target_pointer_width = "64"))]
+            return Self(NonNull::dangling(), PhantomData);
         }
 
         let allocator = allocator.allocator();
@@ -212,7 +254,10 @@ impl<'alloc, T> Box<'alloc, T> {
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.
     pub const unsafe fn dangling() -> Self {
-        Self(NonZeroU32::MAX, PhantomData)
+        #[cfg(target_pointer_width = "64")]
+        return Self(NonZeroU32::MAX, PhantomData);
+        #[cfg(not(target_pointer_width = "64"))]
+        return Self(NonNull::dangling(), PhantomData);
     }
 
     /// Take ownership of the value stored in this [`Box`], consuming the box in

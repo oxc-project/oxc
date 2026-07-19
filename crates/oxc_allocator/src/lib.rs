@@ -45,6 +45,9 @@ mod allocator_api2;
 mod bitset;
 mod boxed;
 mod boxed_slice;
+// PROTOTYPE: the pointer-compression cage only exists on 64-bit targets. On 32-bit (wasm32),
+// `Box` stays a native pointer and arena chunks come from the global allocator (see `arena`).
+#[cfg(target_pointer_width = "64")]
 mod cage;
 mod clone_in;
 mod convert;

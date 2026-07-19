@@ -155,8 +155,15 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     crate::tracking::start_chunk_operation();
 
-    // PROTOTYPE: Chunk memory comes from the pointer-compression cage. "Deallocation" pushes
-    // the chunk to the cage's free-list and advises the OS to reclaim the physical pages.
-    // (`is_fixed_size` is `false`, so the backing allocation was made from the cage.)
+    // PROTOTYPE: On 64-bit, chunk memory comes from the pointer-compression cage; "deallocation"
+    // pushes the chunk to the cage's free-list and advises the OS to reclaim the physical pages.
+    // On 32-bit there is no cage, so the chunk is returned to the global allocator, as before.
+    // (`is_fixed_size` is `false`, so the backing allocation was made from that source.)
+    #[cfg(target_pointer_width = "64")]
     crate::cage::dealloc_chunk(backing_alloc_ptr, layout);
+    #[cfg(not(target_pointer_width = "64"))]
+    // SAFETY: `backing_alloc_ptr`/`layout` describe the chunk's global-allocator allocation.
+    unsafe {
+        std::alloc::dealloc(backing_alloc_ptr.as_ptr(), layout);
+    }
 }
