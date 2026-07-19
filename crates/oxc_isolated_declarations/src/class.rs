@@ -48,22 +48,21 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    /// Check the property key whether it is a `Symbol.iterator` or `global.Symbol.iterator`
+    /// Check whether the property key is `Symbol.iterator` or `globalThis.Symbol.iterator`.
     pub(crate) fn is_global_symbol(key: &PropertyKey<'a>) -> bool {
         let PropertyKey::StaticMemberExpression(member) = key else {
             return false;
         };
 
-        // TODO: Unsupported checking if it is a global Symbol yet
         match &member.object {
             // `Symbol.iterator`
             Expression::Identifier(ident) => ident.name == "Symbol",
-            // `global.Symbol.iterator`
+            // `globalThis.Symbol.iterator`
             Expression::StaticMemberExpression(expr) => {
                 expr.property.name == "Symbol"
                     && matches!(
                         &expr.object, Expression::Identifier(ident)
-                        if matches!(ident.name.as_str(), "window" | "globalThis")
+                        if ident.name == "globalThis"
                     )
             }
             _ => false,
