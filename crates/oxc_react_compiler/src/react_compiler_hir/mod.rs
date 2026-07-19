@@ -1223,7 +1223,6 @@ pub struct ReactiveScopeEarlyReturn {
 // Aliasing effects (runtime types, from AliasingEffects.ts)
 // =============================================================================
 
-use crate::react_compiler_hir::object_shape::FunctionSignature;
 use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 
@@ -1268,7 +1267,10 @@ pub enum AliasingEffect {
         mutates_function: bool,
         args: Vec<PlaceOrSpreadOrHole>,
         into: Place,
-        signature: Option<std::rc::Rc<FunctionSignature>>,
+        /// Callee function `TypeId`, used to resolve the `FunctionSignature` from the
+        /// environment on demand. Storing the id (rather than an `Rc<FunctionSignature>`)
+        /// keeps this `Copy`/non-`Drop`, so `AliasingEffect` can be arena-allocated.
+        signature: Option<TypeId>,
         span: Option<Span>,
     },
     /// Function expression creation with captures.

@@ -1671,7 +1671,7 @@ fn apply_effect(
             mutates_function,
             ref args,
             ref into,
-            ref signature,
+            signature,
             ref span,
         } => {
             // First, check if the callee is a locally-declared function expression
@@ -1721,7 +1721,15 @@ fn apply_effect(
                     }
                 }
             }
-            if let Some(sig) = signature {
+            // Resolve the callee's `FunctionSignature` from its stored `TypeId`,
+            // cloning into a local so it is detached from the `env` borrow (the effect
+            // computations below take `&mut env`). This mirrors the previous
+            // `Rc<FunctionSignature>` snapshot taken at construction time.
+            let sig_owned = signature.and_then(|type_id| {
+                let ty = &env.types[type_id];
+                env.get_function_signature(ty).ok().flatten().cloned()
+            });
+            if let Some(sig) = &sig_owned {
                 // Check known_incompatible (TS line 2351-2370)
                 if let Some(ref incompatible_msg) = sig.known_incompatible
                     && env.enable_validations()
@@ -2019,38 +2027,35 @@ fn compute_signature_for_instruction(
             effects.push(AliasingEffect::Capture { from: *await_value, into: *lvalue });
         }
         InstructionValue::NewExpression { callee, args, span } => {
-            let sig = get_function_call_signature(env, callee.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
                 receiver: *callee,
                 function: *callee,
                 mutates_function: false,
                 args: args.iter().map(place_or_spread_to_hole).collect(),
                 into: *lvalue,
-                signature: sig,
+                signature: Some(env.identifiers[callee.identifier].type_),
                 span: *span,
             });
         }
         InstructionValue::CallExpression { callee, args, span } => {
-            let sig = get_function_call_signature(env, callee.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
                 receiver: *callee,
                 function: *callee,
                 mutates_function: true,
                 args: args.iter().map(place_or_spread_to_hole).collect(),
                 into: *lvalue,
-                signature: sig,
+                signature: Some(env.identifiers[callee.identifier].type_),
                 span: *span,
             });
         }
         InstructionValue::MethodCall { receiver, property, args, span } => {
-            let sig = get_function_call_signature(env, property.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
                 receiver: *receiver,
                 function: *property,
                 mutates_function: false,
                 args: args.iter().map(place_or_spread_to_hole).collect(),
                 into: *lvalue,
-                signature: sig,
+                signature: Some(env.identifiers[property.identifier].type_),
                 span: *span,
             });
         }
@@ -3049,7 +3054,7 @@ fn compute_effects_for_aliasing_signature(
                         mutates_function: *mf,
                         args: apply_args,
                         into: apply_into,
-                        signature: s.clone(),
+                        signature: *s,
                         span: span.copied(),
                     });
                 } else {
@@ -3123,14 +3128,6 @@ fn is_builtin_collection_type(ty: &Type) -> bool {
     matches!(ty, Type::Object { shape_id: Some(id) }
         if *id == BUILT_IN_ARRAY_ID || *id == BUILT_IN_SET_ID || *id == BUILT_IN_MAP_ID
     )
-}
-
-fn get_function_call_signature(
-    env: &Environment,
-    callee_id: IdentifierId,
-) -> Result<Option<Rc<FunctionSignature>>, OxcDiagnostic> {
-    let ty = &env.types[env.identifiers[callee_id].type_];
-    Ok(env.get_function_signature(ty)?.map(|s| Rc::new(s.clone())))
 }
 
 fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
