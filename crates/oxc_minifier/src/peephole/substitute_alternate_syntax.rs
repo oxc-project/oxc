@@ -1821,6 +1821,7 @@ impl<'a> PeepholeOptimizations {
     /// - `-(a, b)` -> `a, -b`
     /// - `await (a, b)` -> `a, await b`
     /// - `yield (a, b)` -> `a, yield b`
+    /// - `x = (a, b)` -> `a, x = b`
     pub fn fold_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let argument = match expr {
             Expression::BinaryExpression(binary_expr) => &mut binary_expr.left,
@@ -1834,6 +1835,15 @@ impl<'a> PeepholeOptimizations {
             Expression::YieldExpression(yield_expr) => {
                 let Some(maybe_sequence_expression) = &mut yield_expr.argument else { return };
                 maybe_sequence_expression
+            }
+            Expression::AssignmentExpression(assign_expr)
+                if assign_expr.operator.is_assign()
+                    && matches!(
+                        assign_expr.left,
+                        AssignmentTarget::AssignmentTargetIdentifier(_)
+                    ) =>
+            {
+                &mut assign_expr.right
             }
             _ => {
                 return;

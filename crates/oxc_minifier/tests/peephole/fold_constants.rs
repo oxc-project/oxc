@@ -543,7 +543,7 @@ fn test_unary_ops_string_compare() {
 #[test]
 fn test_fold_logical_op() {
     fold("x = true && x", "x = x");
-    fold("x = [foo()] && x", "x = (foo(),x)");
+    fold("x = [foo()] && x", "(foo(),x = x)");
 
     fold("x = false && x", "x = !1");
     fold("x = true || x", "x = !0");
@@ -571,7 +571,7 @@ fn test_fold_logical_op() {
     fold("x = foo() || true && bar()", "x = foo() || bar()");
     fold("x = foo() || false && bar()", "x = foo() || !1");
     fold("x = foo() && false && bar()", "x = foo() && !1");
-    fold("x = foo() && false || bar()", "x = (foo(), bar())");
+    fold("x = foo() && false || bar()", "(foo(), x = bar())");
     fold("x = foo() || false || bar()", "x = foo() || bar()");
     fold("x = foo() && true && bar()", "x = foo() && bar()");
     fold("x = foo() || true || bar()", "x = foo() || !0");
@@ -616,7 +616,7 @@ fn test_fold_logical_op() {
 fn test_fold_logical_op2() {
     fold("x = function(){} && x", "x=x");
     fold("x = true && function(){}", "x=function(){}");
-    fold("x = [(function(){alert(x)})()] && x", "x=((function(){alert(x)})(),x)");
+    fold("x = [(function(){alert(x)})()] && x", "((function(){alert(x)})(),x=x)");
 }
 
 // `cjs-module-lexer` scans `module.exports = { ... }` syntactically. esbuild
@@ -703,8 +703,8 @@ fn test_fold_opt_chain() {
     fold("x = null?.[foo]", "x = void 0");
     fold("x = undefined?.()", "x = void 0");
     fold("x = null?.()", "x = void 0");
-    fold("x = (foo(), null)?.y", "x = (foo(), void 0)");
-    fold("x = (foo(), null)?.()", "x = (foo(), void 0)");
+    fold("x = (foo(), null)?.y", "(foo(), x = void 0)");
+    fold("x = (foo(), null)?.()", "(foo(), x = void 0)");
 
     // Nested: nullish base short-circuits the entire chain even when the
     // optional is not on the outermost element.
@@ -712,7 +712,7 @@ fn test_fold_opt_chain() {
     fold("x = ((null))?.foo", "x = void 0");
     fold("x = null?.foo()", "x = void 0");
     fold("x = null?.foo.bar.baz()", "x = void 0");
-    fold("x = (foo(), null)?.bar.baz", "x = (foo(), void 0)");
+    fold("x = (foo(), null)?.bar.baz", "(foo(), x = void 0)");
 }
 
 #[test]
