@@ -2,11 +2,11 @@
 
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
+    diagnostics::ParserDiagnostic,
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
@@ -17,7 +17,7 @@ pub struct ParserCheckpoint<'a> {
     cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
-    fatal_error: Option<FatalError>,
+    fatal_error: Option<FatalError<'a>>,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -536,7 +536,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         E: Fn(&mut Self) -> A,
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
-        D: Fn(Span) -> OxcDiagnostic,
+        D: Fn(Span) -> ParserDiagnostic<'a>,
     {
         let mut list = ArenaVec::new_in(self);
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;

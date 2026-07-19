@@ -102,6 +102,7 @@ use crate::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
     context::{Context, StatementContext},
+    diagnostics::ParserDiagnostic,
     error_handler::FatalError,
     lexer::Lexer,
     module_record::ModuleRecordBuilder,
@@ -611,16 +612,16 @@ struct ParserImpl<'a, C: ParserConfig> {
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
-    errors: Vec<OxcDiagnostic>,
+    errors: Vec<ParserDiagnostic<'a>>,
 
     /// Errors that are only valid if the file is determined to be a Script (not a Module).
     /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
     /// until we know whether the file is ESM or Script.
     /// If resolved to Module → discard these errors.
     /// If resolved to Script → emit these errors.
-    deferred_script_errors: Vec<OxcDiagnostic>,
+    deferred_script_errors: Vec<ParserDiagnostic<'a>>,
 
-    fatal_error: Option<FatalError>,
+    fatal_error: Option<FatalError<'a>>,
 
     /// The current parsing token
     token: Token,
@@ -692,7 +693,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
                 // Noop
             } else {
-                self.error(fatal_error.error);
+                let error = fatal_error.into_diagnostic();
+                self.error(error);
             }
 
             program = Program::dummy(self.allocator());
@@ -722,8 +724,15 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         if errors.len() != 1 {
             errors
                 .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
-            errors.append(&mut self.lexer.errors);
-            errors.append(&mut self.errors);
+            // Materialize the deferred parser/lexer diagnostics into `OxcDiagnostic`s.
+            errors.extend(
+                std::mem::take(&mut self.lexer.errors)
+                    .into_iter()
+                    .map(ParserDiagnostic::into_diagnostic),
+            );
+            errors.extend(
+                std::mem::take(&mut self.errors).into_iter().map(ParserDiagnostic::into_diagnostic),
+            );
             errors.append(&mut module_record_errors);
         }
         let irregular_whitespaces =
@@ -735,12 +744,18 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
                 // but emit deferred module errors (HTML comments are invalid in ESM)
                 program.source_type = source_type.with_module(true);
-                errors.append(&mut self.lexer.deferred_module_errors);
+                errors.extend(
+                    std::mem::take(&mut self.lexer.deferred_module_errors)
+                        .into_iter()
+                        .map(ParserDiagnostic::into_diagnostic),
+                );
             } else {
                 // Resolved to Script - emit deferred script errors
                 // discard deferred module errors (HTML comments are valid in scripts)
                 program.source_type = source_type.with_script(true);
-                errors.extend(self.deferred_script_errors);
+                errors.extend(
+                    self.deferred_script_errors.into_iter().map(ParserDiagnostic::into_diagnostic),
+                );
             }
         }
 
@@ -764,11 +779,17 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
-        if let Some(FatalError { error, .. }) = self.fatal_error.take() {
-            return Err(error.into());
+        if let Some(fatal_error) = self.fatal_error.take() {
+            return Err(fatal_error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
-        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Diagnostics>();
+        let errors = self
+            .lexer
+            .errors
+            .into_iter()
+            .chain(self.errors)
+            .map(ParserDiagnostic::into_diagnostic)
+            .collect::<Diagnostics>();
         if !errors.is_empty() {
             return Err(errors);
         }
@@ -869,7 +890,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let span = self.lexer.trivia_builder.comments.first()?.span;
         if span.source_text(self.source_text).contains("@flow") {
             self.errors.clear();
-            Some(diagnostics::flow(span))
+            Some(diagnostics::flow(span).into_diagnostic())
         } else {
             None
         }
@@ -889,7 +910,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[cold]
     fn overlong_error(&self) -> Option<OxcDiagnostic> {
         if self.source_text.len() > MAX_LEN {
-            return Some(diagnostics::overlong_source());
+            return Some(diagnostics::overlong_source().into_diagnostic());
         }
         None
     }

@@ -4,15 +4,28 @@ use oxc_allocator::{Dummy, GetAllocator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    ParserConfig as Config, ParserImpl, diagnostics, diagnostics::ParserDiagnostic, lexer::Kind,
+};
 
 /// Fatal parsing error.
+///
+/// Holds a deferred [`ParserDiagnostic`] — construction of the `OxcDiagnostic` is deferred
+/// to the parse boundary, so a fatal error set and then discarded on speculative rewind
+/// never allocates.
 #[derive(Debug, Clone)]
-pub struct FatalError {
-    /// The fatal error
-    pub error: OxcDiagnostic,
+pub struct FatalError<'a> {
+    /// The fatal error, deferred.
+    pub error: ParserDiagnostic<'a>,
     /// Length of `errors` at time fatal error is recorded
     pub errors_len: usize,
+}
+
+impl FatalError<'_> {
+    /// Build the [`OxcDiagnostic`] for this fatal error.
+    pub fn into_diagnostic(self) -> OxcDiagnostic {
+        self.error.into_diagnostic()
+    }
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -35,8 +48,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
 
-        let error = diagnostics::unexpected_token(self.cur_token().span());
-        self.set_fatal_error(error);
+        self.set_fatal_error(diagnostics::unexpected_token(self.cur_token().span()));
     }
 
     /// Return error info at current token
@@ -53,8 +65,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Push a Syntax Error
     #[cold]
-    pub(crate) fn error(&mut self, error: OxcDiagnostic) {
-        self.errors.push(error);
+    pub(crate) fn error(&mut self, error: impl Into<ParserDiagnostic<'a>>) {
+        self.errors.push(error.into());
     }
 
     /// Defer an error that is only valid if the file is a Script (not a Module).
@@ -63,11 +75,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Errors like "await outside async function" are only valid if the file ends up being
     /// a Script. If ESM syntax is found, the file becomes a Module and these errors are discarded.
     #[cold]
-    pub(crate) fn error_on_script(&mut self, error: OxcDiagnostic) {
+    pub(crate) fn error_on_script(&mut self, error: impl Into<ParserDiagnostic<'a>>) {
         if self.source_type.is_unambiguous() {
-            self.deferred_script_errors.push(error);
+            self.deferred_script_errors.push(error.into());
         } else {
-            self.errors.push(error);
+            self.errors.push(error.into());
         }
     }
 
@@ -76,9 +88,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.errors.len() + self.lexer.errors.len()
     }
 
-    /// Advance lexer's cursor to end of file.
+    /// Record a fatal error. The diagnostic is deferred (see [`ParserDiagnostic`]), so a fatal
+    /// error set and then discarded on speculative rewind never allocates.
     #[cold]
-    pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) {
+    pub(crate) fn set_fatal_error(&mut self, error: impl Into<ParserDiagnostic<'a>>) {
+        self.set_fatal_error_impl(error.into());
+    }
+
+    /// Advance lexer's cursor to end of file and store the fatal error.
+    #[cold]
+    fn set_fatal_error_impl(&mut self, error: ParserDiagnostic<'a>) {
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
             self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
@@ -86,8 +105,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[cold]
-    pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
-        self.set_fatal_error(error);
+    pub(crate) fn fatal_error<T: Dummy<'a>>(
+        &mut self,
+        error: impl Into<ParserDiagnostic<'a>>,
+    ) -> T {
+        self.set_fatal_error_impl(error.into());
         Dummy::dummy(self.allocator())
     }
 
