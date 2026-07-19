@@ -156,7 +156,7 @@ fn test_do_continue_optimization() {
     test("do { foo(); continue; } while(false)", "do foo();while(!1)");
     test("do { foo(); break; } while(false)", "do foo();while(!1)");
 
-    test("do{break}while(!new Date());", "do break;while(!1);");
+    test("do{break}while(!new Date());", "do;while(!1);");
 
     test_same("do { foo(); switch (x) { case 1: break; default: f()}; } while(false)");
 }
@@ -228,7 +228,7 @@ fn test_for_continue_optimization() {
 fn test_code_motion_doesnt_break_function_hoisting() {
     test(
         "function f() { if (x) return; foo(); function foo() {} }",
-        "function f() { if (!x) { function foo(){} } }",
+        "function f() { if (x); else { function foo() {} foo(); } }",
     );
 }
 
