@@ -17,7 +17,7 @@ fn test_break_optimization() {
     test("f:{for(x in a())break}", "f:for(x in a())break;");
 
     test("f:try{break f;}catch(e){break f;}", "");
-    test("f:try{if(a()){break f;}else{break f;} break f;}catch(e){}", "f:try{a()}catch(e){}");
+    test("f:try{if(a()){break f;}else{break f;} break f;}catch(e){}", "f:try{a()}catch{}");
 
     test("f:g:break f", "");
     test("f:g:{if(a()){break f;}else{break f;} break f;}", "f:g:a();");
@@ -52,16 +52,13 @@ fn test_function_return_optimization2() {
     test("function f(){while(a())break;}", "function f(){for(;a();)break}");
     test_same("function f(){for(x in a())break}");
 
-    test(
-        "function f(){try{return;}catch(e){throw 9;}finally{return}}",
-        "function f(){try{}catch(e){throw 9;}finally{return}}",
-    );
+    test("function f(){try{return;}catch(e){throw 9;}finally{return}}", "function f(){}");
     test_same("function f(){try{throw 9;}finally{return;}}");
 
     test("function f(){try{return;}catch(e){return;}}", "function f(){}");
     test(
         "function f(){try{if(a()){return;}else{return;} return;}catch(e){}}",
-        "function f(){try{a()}catch(e){}}",
+        "function f(){try{a()}catch{}}",
     );
 
     test("function f(){g:return}", "function f(){}");
@@ -116,7 +113,7 @@ fn test_while_continue_optimization() {
     test("while(true){try{continue;}catch(e){continue;}}", "for(;;);");
     test(
         "while(true){try{if(a()){continue;}else{continue;} continue;}catch(e){}}",
-        "for(;;)try{a()}catch(e){}",
+        "for(;;)try{a()}catch{}",
     );
 
     test("while(true){g:continue}", "for(;;);");
@@ -146,7 +143,7 @@ fn test_do_continue_optimization() {
     test("do{try{continue;}catch(e){continue;}}while(true)", "do;while(!0)");
     test(
         "do{try{if(a()){continue;}else{continue;} continue;}catch(e){}}while(true)",
-        "do try{a()}catch(e){}while(!0)",
+        "do try{a()}catch{}while(!0);",
     );
 
     test("do{g:continue}while(true)", "do;while(!0)");
@@ -179,25 +176,28 @@ fn test_for_continue_optimization() {
     test("for(x of y){if(a()){b();}else{c();continue;}}", "for(x of y)a()?b():c()");
 
     test(
-        "async () => { for await (x of y){if(x)continue; x=3; continue; }}",
-        "async () => { for await (x of y)if(x);else x=3 }",
-    );
-    test_same("async () => { for await (x of y){a();continue;b()}}");
-    test(
-        "async () => { for await (x of y){if(true){a();continue;}else;b();}}",
-        "async () => { for await (x of y){if(true)a();else b();}}",
+        "r=async () => { for await (x of y){if(x)continue; x=3; continue; }}",
+        "r = async () => { for await (x of y) x||=3 };",
     );
     test(
-        "async () => { for await (x of y){if(false){a();continue;}else;b();continue;}}",
-        "async () => { for await (x of y){if(false){a();}else{b()}}}",
+        "r=async () => { for await (x of y){a();continue;b()}}",
+        "r=async () => { for await(x of y) a() };",
     );
     test(
-        "async () => { for await (x of y){if(a()){b();continue;}else;c();}}",
-        "async () => { for await (x of y){if(a()){b();}else{c();}}}",
+        "r=async () => { for await (x of y){if(true){a();continue;}else;b();}}",
+        "r=async () => { for await(x of y) b() };",
     );
     test(
-        "async () => { for await (x of y){if(a()){b();}else{c();continue;}}}",
-        "async () => { for await (x of y){if(a()){b();}else{c();}}}",
+        "r=async () => { for await (x of y){if(false){a();continue;}else;b();continue;}}",
+        "r=async() => { for await (x of y) b() };",
+    );
+    test(
+        "r=async () => { for await (x of y){if(a()){b();continue;}else;c();}}",
+        "r = async() => { for await (x of y) a() ? b() : c() };",
+    );
+    test(
+        "r=async () => { for await (x of y){if(a()){b();}else{c();continue;}}}",
+        "r=async () => { for await (x of y) a() ? b() : c() };",
     );
 
     test("for(x=0;x<y;x++){if(a()){b();continue;}else;}", "for(x=0;x<y;x++)a()&&b()");
@@ -213,7 +213,7 @@ fn test_for_continue_optimization() {
     test("for(x=0;x<y;x++){try{continue;}catch(e){continue;}}", "for(x=0;x<y;x++);");
     test(
         "for(x=0;x<y;x++){try{if(a()){continue;}else{continue;} continue;}catch(e){}}",
-        "for(x=0;x<y;x++)try{a()}catch(e){}",
+        "for(x=0;x<y;x++)try{a()}catch{}",
     );
 
     test("for(x=0;x<y;x++){g:continue}", "for(x=0;x<y;x++);");
@@ -258,7 +258,7 @@ fn test_switch_exit_points1() {
     );
     test(
         "switch (x) { case 1: if (x) { f(); break; } break; default: g(); break; }",
-        "switch (x) { case 1: if (x) { f();        } break; default: g();        }",
+        "switch (x) { case 1: x && f();              break; default: g()         }",
     );
 }
 
