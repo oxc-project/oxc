@@ -13,7 +13,9 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic, Severity};
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, Error, OxcDiagnostic, Severity, SourcePolicy,
+};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
@@ -319,6 +321,7 @@ impl TsGoLintState {
                             &path,
                             source_for_diagnostics,
                             filtered_messages,
+                            SourcePolicy::Always,
                         );
                         sender_for_fixes.send(diagnostics).expect("Failed to send diagnostics");
                     }
@@ -1113,6 +1116,7 @@ impl DiagnosticHandler {
                 file_path,
                 &source_text,
                 vec![oxc_diagnostic],
+                SourcePolicy::Always,
             )
         } else {
             vec![oxc_diagnostic.into()]
@@ -1138,6 +1142,7 @@ impl DiagnosticHandler {
             path,
             &source_text,
             vec![oxc_diagnostic],
+            SourcePolicy::Always,
         );
         self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
     }
@@ -1191,6 +1196,7 @@ impl DiagnosticHandler {
                         &path,
                         source_text.as_str(),
                         filtered_messages,
+                        SourcePolicy::Always,
                     );
                     self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
                 } else if !messages_requiring_fixes.contains_key(&path) {

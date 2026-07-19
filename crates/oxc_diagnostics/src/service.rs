@@ -18,6 +18,29 @@ use crate::{
 pub type DiagnosticSender = mpsc::Sender<Vec<Error>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 
+/// Controls whether [`wrap_diagnostics`](DiagnosticService::wrap_diagnostics) attaches a copy of
+/// the source text to the diagnostics it produces.
+///
+/// Attaching source text requires copying the entire file (`source_text.to_owned()`), so it is
+/// wasteful to do it for diagnostics that will never be rendered. The [`DiagnosticService`] filters
+/// warnings (`--quiet`) and all diagnostics (`--silent`) *after* they are produced, so without a
+/// policy the source of every violating file is copied even when it is immediately dropped.
+///
+/// The severity-based filtering in [`DiagnosticService::run`] still counts warnings even when they
+/// are not rendered, so [`ErrorsOnly`](SourcePolicy::ErrorsOnly)/[`Never`](SourcePolicy::Never) only
+/// skip attaching source — the diagnostics themselves are still returned and counted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SourcePolicy {
+    /// Always attach source text. Use when any diagnostic may be rendered (the default).
+    #[default]
+    Always,
+    /// Never attach source text. Use under `--silent`, where nothing is rendered.
+    Never,
+    /// Attach source text only if at least one diagnostic has [error](Severity::Error) severity.
+    /// Use under `--quiet`, where warnings are counted but never rendered.
+    ErrorsOnly,
+}
+
 /// Listens for diagnostics sent over a [channel](DiagnosticSender) by some job, and
 /// formats/reports them to the user.
 ///
@@ -121,7 +144,22 @@ impl DiagnosticService {
         path: P,
         source_text: &str,
         diagnostics: Vec<OxcDiagnostic>,
+        source_policy: SourcePolicy,
     ) -> Vec<Error> {
+        // Skip copying the source text when none of these diagnostics will be rendered.
+        // The source is shared across all diagnostics of a file, so it is only needed if at least
+        // one of them will actually be printed (see [`SourcePolicy`]).
+        let attach_source = match source_policy {
+            SourcePolicy::Always => true,
+            SourcePolicy::Never => false,
+            SourcePolicy::ErrorsOnly => {
+                diagnostics.iter().any(|diagnostic| diagnostic.severity == Severity::Error)
+            }
+        };
+        if !attach_source {
+            return diagnostics.into_iter().map(Error::from).collect();
+        }
+
         // TODO: This causes snapshots to fail when running tests through a JetBrains terminal.
         let is_jetbrains =
             std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
@@ -345,16 +383,77 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::{
-        Error, OxcDiagnostic,
+        Error, OxcDiagnostic, Severity,
         reporter::{DiagnosticReporter, DiagnosticResult},
         service::from_file_path,
     };
 
-    use super::DiagnosticService;
+    use super::{DiagnosticService, SourcePolicy};
 
     fn with_schema(path: &str) -> String {
         const EXPECTED_SCHEMA: &str = if cfg!(windows) { "file:///" } else { "file://" };
         format!("{EXPECTED_SCHEMA}{path}")
+    }
+
+    fn wrap(diagnostics: Vec<OxcDiagnostic>, policy: SourcePolicy) -> Vec<Error> {
+        DiagnosticService::wrap_diagnostics(
+            "/cwd",
+            "/cwd/file.js",
+            "source text",
+            diagnostics,
+            policy,
+        )
+    }
+
+    // Whether every diagnostic still carries its severity, so `DiagnosticService::run` can count it
+    // even when the source text was not attached.
+    fn severities(errors: &[Error]) -> Vec<Option<Severity>> {
+        errors.iter().map(|e| e.severity()).collect()
+    }
+
+    #[test]
+    fn source_policy_always_attaches_source() {
+        let errors =
+            wrap(vec![OxcDiagnostic::warn("w"), OxcDiagnostic::error("e")], SourcePolicy::Always);
+        assert_eq!(errors.len(), 2);
+        assert!(errors.iter().all(|e| e.source_code().is_some()));
+        assert_eq!(severities(&errors), vec![Some(Severity::Warning), Some(Severity::Error)]);
+    }
+
+    #[test]
+    fn source_policy_never_skips_source_but_keeps_diagnostics() {
+        // `--silent`: nothing is rendered, so no source is attached even for errors,
+        // but the diagnostics are still returned so they can be counted.
+        let errors =
+            wrap(vec![OxcDiagnostic::warn("w"), OxcDiagnostic::error("e")], SourcePolicy::Never);
+        assert_eq!(errors.len(), 2);
+        assert!(errors.iter().all(|e| e.source_code().is_none()));
+        assert_eq!(severities(&errors), vec![Some(Severity::Warning), Some(Severity::Error)]);
+    }
+
+    #[test]
+    fn source_policy_errors_only_skips_source_when_all_warnings() {
+        // `--quiet` on a warning-only file: warnings are counted but never rendered, so the
+        // expensive `source_text.to_owned()` copy is skipped entirely.
+        let errors = wrap(
+            vec![OxcDiagnostic::warn("w1"), OxcDiagnostic::warn("w2")],
+            SourcePolicy::ErrorsOnly,
+        );
+        assert_eq!(errors.len(), 2);
+        assert!(errors.iter().all(|e| e.source_code().is_none()));
+        assert_eq!(severities(&errors), vec![Some(Severity::Warning), Some(Severity::Warning)]);
+    }
+
+    #[test]
+    fn source_policy_errors_only_attaches_source_when_any_error() {
+        // `--quiet` on a file with at least one error: the error will be rendered, so source is
+        // attached (and shared with the warnings, which are dropped later without extra cost).
+        let errors = wrap(
+            vec![OxcDiagnostic::warn("w"), OxcDiagnostic::error("e")],
+            SourcePolicy::ErrorsOnly,
+        );
+        assert_eq!(errors.len(), 2);
+        assert!(errors.iter().all(|e| e.source_code().is_some()));
     }
 
     #[test]

@@ -56,7 +56,7 @@ use std::{
 
 pub mod reporter;
 
-pub use crate::service::{DiagnosticSender, DiagnosticService};
+pub use crate::service::{DiagnosticSender, DiagnosticService, SourcePolicy};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;

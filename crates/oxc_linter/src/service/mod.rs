@@ -6,7 +6,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::DiagnosticSender;
+use oxc_diagnostics::{DiagnosticSender, SourcePolicy};
 
 use crate::{Linter, RuleTimingStore, suppression::DiffManager};
 
@@ -21,6 +21,12 @@ pub struct LintServiceOptions {
     tsconfig: Option<PathBuf>,
 
     cross_module: bool,
+
+    /// Whether to attach source text to produced diagnostics.
+    ///
+    /// Set from `--quiet`/`--silent` so warning-only (or all, under `--silent`) files skip the
+    /// full `source_text.to_owned()` copy for diagnostics that will never be rendered.
+    source_policy: SourcePolicy,
 }
 
 impl LintServiceOptions {
@@ -29,7 +35,22 @@ impl LintServiceOptions {
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), tsconfig: None, cross_module: false }
+        Self {
+            cwd: cwd.into(),
+            tsconfig: None,
+            cross_module: false,
+            source_policy: SourcePolicy::Always,
+        }
+    }
+
+    /// Set the [`SourcePolicy`] controlling whether source text is attached to diagnostics.
+    ///
+    /// Defaults to [`SourcePolicy::Always`].
+    #[inline]
+    #[must_use]
+    pub fn with_source_policy(mut self, source_policy: SourcePolicy) -> Self {
+        self.source_policy = source_policy;
+        self
     }
 
     #[inline]

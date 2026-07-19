@@ -11,7 +11,9 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic, SourcePolicy,
+};
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
@@ -363,8 +365,19 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = lint_config.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options =
-            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+        // Skip attaching (copying) source text to diagnostics that will never be rendered:
+        // everything under `--silent`, and warnings under `--quiet`. This must mirror the
+        // severity filtering in `DiagnosticService::run`.
+        let source_policy = if misc_options.silent {
+            SourcePolicy::Never
+        } else if warning_options.quiet {
+            SourcePolicy::ErrorsOnly
+        } else {
+            SourcePolicy::Always
+        };
+        let mut options = LintServiceOptions::new(self.cwd.clone())
+            .with_cross_module(use_cross_module)
+            .with_source_policy(source_policy);
 
         let mut suppression_manager = SuppressionManager::load(
             options.cwd(),

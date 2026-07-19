@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, SourcePolicy};
 use rustc_hash::FxHashMap;
 
 mod diff;
@@ -169,8 +169,13 @@ impl SuppressionManager {
             // Read-only mode: report diagnostics for any differences
             let (errors, has_unused) = Self::compute_diagnostics(&static_map, &runtime_map);
             if !errors.is_empty() {
-                let diagnostics =
-                    DiagnosticService::wrap_diagnostics(cwd, Path::new(""), "", errors);
+                let diagnostics = DiagnosticService::wrap_diagnostics(
+                    cwd,
+                    Path::new(""),
+                    "",
+                    errors,
+                    SourcePolicy::Always,
+                );
                 tx_error.send(diagnostics).unwrap();
             }
             if has_unused {

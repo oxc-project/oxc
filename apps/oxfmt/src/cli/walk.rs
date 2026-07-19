@@ -10,7 +10,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::instrument;
 
 use oxc_config::{all_paths_have_vcs_boundary, configure_walk_builder};
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, SourcePolicy};
 
 use super::resolve::{build_global_ignore_matchers, is_ignored};
 #[cfg(feature = "napi")]
@@ -682,6 +682,7 @@ fn resolve_format_strategy(
                     ))
                     .with_help(err),
                 ],
+                SourcePolicy::Always,
             );
             let _ = tx_error.send(diagnostics);
             None

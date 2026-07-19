@@ -6,7 +6,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, SourcePolicy};
 use oxc_span::Span;
 
 use crate::{
@@ -102,6 +102,7 @@ impl DirectivesStore {
                     path.clone(),
                     &source_text,
                     diagnostics,
+                    SourcePolicy::Always,
                 );
                 tx_error.send(wrapped).expect("failed to send unused directive diagnostics");
             }

@@ -8,7 +8,7 @@ use std::{
 use cow_utils::CowUtils;
 use rayon::prelude::*;
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, SourcePolicy};
 
 use super::command::OutputMode;
 use crate::core::{FormatResult, FormatStrategy, SourceFormatter, utils};
@@ -57,6 +57,7 @@ impl FormatService {
                         ))
                         .with_help("This may be due to the file being a binary or inaccessible."),
                     ],
+                    SourcePolicy::Always,
                 );
                 let _ = tx_error.send(diagnostics);
                 return;
@@ -70,6 +71,7 @@ impl FormatService {
                         &path,
                         &source_text,
                         diagnostics,
+                        SourcePolicy::Always,
                     );
                     let _ = tx_error.send(errors);
                     return;
@@ -89,6 +91,7 @@ impl FormatService {
                                 "Failed to save '{}': {err}",
                                 path.display()
                             ))],
+                            SourcePolicy::Always,
                         );
                         let _ = tx_error.send(diagnostics);
                         return;

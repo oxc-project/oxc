@@ -20,7 +20,7 @@ use self_cell::self_cell;
 use smallvec::SmallVec;
 
 use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, ArenaBox};
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic, SourcePolicy};
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
@@ -66,6 +66,8 @@ pub struct Runtime {
     modules_by_path: ModulesByPath,
     /// Collected disable directives from linted files
     disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+    /// Whether to attach source text to produced diagnostics (see [`SourcePolicy`]).
+    source_policy: SourcePolicy,
 }
 
 /// Output of `Runtime::process_path`
@@ -256,6 +258,7 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
+        let source_policy = options.source_policy;
         let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
 
         Self {
@@ -270,6 +273,7 @@ impl Runtime {
                 .resize_mode(papaya::ResizeMode::Blocking)
                 .build(),
             disable_directives_map: Arc::new(Mutex::new(FxHashMap::default())),
+            source_policy,
         }
     }
 
@@ -658,6 +662,7 @@ impl Runtime {
                                             path,
                                             dep.source_text,
                                             messages,
+                                            me.source_policy,
                                         );
                                         tx_error.send(diagnostics).unwrap();
                                     }
@@ -719,6 +724,7 @@ impl Runtime {
                                 path,
                                 dep.source_text,
                                 errors,
+                                me.source_policy,
                             );
                             tx_error.send(diagnostics).unwrap();
                         }
@@ -873,6 +879,7 @@ impl Runtime {
                                                 Path::new(&module_to_lint.path),
                                                 source_text,
                                                 diagnostics,
+                                                me.source_policy,
                                             );
                                             tx_error.send(wrapped).unwrap();
                                         }
