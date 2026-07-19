@@ -3,20 +3,16 @@
  */
 
 import {
-  allCommentsDeserialized,
   cachedComments,
   comments,
   commentsInt32,
   commentsLen,
-  deserializeComments,
   getComment,
   initComments,
   initCommentsBuffer,
 } from "./comments.ts";
 import {
-  allTokensDeserialized,
   cachedTokens,
-  deserializeTokens,
   initTokens,
   getToken,
   initTokensBuffer,
@@ -332,16 +328,14 @@ export function getTokensAndComments(): TokenOrComment[] {
     return (tokensAndComments = comments);
   }
 
-  // General case: Deserialize all entries into `cachedTokens` / `cachedComments`,
-  // but skip building the `tokens` and `comments` arrays (they aren't needed here)
-  if (allTokensDeserialized === false) deserializeTokens();
-  if (allCommentsDeserialized === false) deserializeComments();
+  // General case: Look up entries from `cachedTokens` / `cachedComments` via the merged buffer,
+  // skipping the `tokens` and `comments` arrays (they aren't needed here).
+  // The token and comment buffers were already initialized above.
 
   // Ensure merged buffer is built
   if (tokensAndCommentsInt32 === null) initTokensAndCommentsBuffer();
   debugAssertIsNonNull(tokensAndCommentsInt32);
 
-  // Since `deserializeTokens` and `deserializeComments` are called first, all entries are already deserialized.
   // We just need to look up entries from `cachedTokens` and `cachedComments` by index.
   //
   // Reuse the array from the previous file to avoid allocation:

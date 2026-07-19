@@ -56,9 +56,6 @@ export let commentsInt32: Int32Array | null = null;
 // Number of comments for the current file.
 export let commentsLen = 0;
 
-// Whether all comments have been deserialized into `cachedComments`.
-export let allCommentsDeserialized = false;
-
 // Cached comment objects, reused across files to reduce GC pressure.
 // Comments are mutated in place during deserialization, then `comments` is set to a slice of this array.
 export const cachedComments: Comment[] = [];
@@ -301,16 +298,18 @@ const resetCommentRange = resetCommentRangeTemp;
 const resetCommentLoc = resetCommentLocTemp;
 
 /**
- * Deserialize all comments and build the `comments` array.
+ * Build the `comments` array (a slice of `cachedComments`).
  * Called by `ast.comments` getter.
  */
 export function initComments(): void {
   debugAssert(comments === null, "Comments already deserialized");
 
-  if (allCommentsDeserialized === false) deserializeComments();
+  if (commentsInt32 === null) {
+    initCommentsBuffer();
 
-  // `initCommentsBuffer` (called by `deserializeComments`) sets `comments` for zero-comment files
-  if (comments !== null) return;
+    // `initCommentsBuffer` sets `comments` for zero-comment files
+    if (comments !== null) return;
+  }
 
   // Create `comments` array as a slice of `cachedComments` array.
   //
@@ -330,20 +329,6 @@ export function initComments(): void {
 }
 
 /**
- * Deserialize all comments into `cachedComments`.
- * Does NOT build the `comments` array - use `initComments` for that.
- */
-export function deserializeComments(): void {
-  debugAssert(allCommentsDeserialized === false, "Comments already deserialized");
-
-  if (commentsInt32 === null) initCommentsBuffer();
-
-  allCommentsDeserialized = true;
-
-  debugCheckDeserializedComments();
-}
-
-/**
  * Initialize typed array views over the comments region of the buffer.
  *
  * Populates `commentsUint8`, `commentsInt32`, and `commentsLen`, and grows `cachedComments` if needed.
@@ -352,11 +337,6 @@ export function initCommentsBuffer(): void {
   debugAssert(
     commentsUint8 === null && commentsInt32 === null,
     "Comments buffer already initialized",
-  );
-
-  debugAssert(
-    allCommentsDeserialized === false,
-    "`allCommentsDeserialized` flag should have been reset at end of last file",
   );
 
   debugAssertIsNonNull(buffer);
@@ -378,7 +358,6 @@ export function initCommentsBuffer(): void {
     comments = EMPTY_COMMENTS;
     commentsUint8 = EMPTY_UINT8_ARRAY;
     commentsInt32 = EMPTY_INT32_ARRAY;
-    allCommentsDeserialized = true;
     return;
   }
 
@@ -405,7 +384,7 @@ export function initCommentsBuffer(): void {
     } while (pos < endPos);
   }
 
-  // Check buffer data has valid ranges and ascending order
+  // Check comments have valid ranges and are in ascending order
   debugCheckValidRanges();
 }
 
@@ -422,7 +401,7 @@ export function getComment(index: number): CommentType {
 }
 
 /**
- * Check all comments in buffer have valid ranges, are in ascending order, and are within the source text.
+ * Check all comments have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
@@ -433,39 +412,10 @@ function debugCheckValidRanges(): void {
 
   let lastEnd = 0;
   for (let i = 0; i < commentsLen; i++) {
-    const pos32 = i << 2;
-    const start = commentsInt32![pos32];
-    const end = commentsInt32![pos32 + 1];
+    const { start, end } = cachedComments[i];
     if (end <= start) throw new Error(`Invalid comment range: ${start}-${end}`);
     if (start < lastEnd) {
       throw new Error(`Overlapping comments: last end: ${lastEnd}, next start: ${start}`);
-    }
-    lastEnd = end;
-  }
-
-  if (lastEnd > sourceText.length) {
-    throw new Error(`Comments end beyond source text length: ${lastEnd} > ${sourceText.length}`);
-  }
-}
-
-/**
- * Check all deserialized comments have valid ranges, are in ascending order, and are within the source text.
- *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
- */
-function debugCheckDeserializedComments(): void {
-  if (!DEBUG) return;
-
-  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
-
-  let lastEnd = 0;
-  for (let i = 0; i < commentsLen; i++) {
-    const { start, end } = cachedComments[i];
-    if (end <= start) throw new Error(`Invalid deserialized comment range: ${start}-${end}`);
-    if (start < lastEnd) {
-      throw new Error(
-        `Deserialized comments not in order: last end: ${lastEnd}, next start: ${start}`,
-      );
     }
     lastEnd = end;
   }
@@ -487,9 +437,6 @@ export function resetComments(): void {
     debugAssertAllCommentsCleared();
     return;
   }
-
-  // Reset flag for all comments having been deserialized
-  allCommentsDeserialized = false;
 
   // Reset `#range` on comments where `range` has been accessed
   for (let i = 0; i < activeCommentsWithRangeCount; i++) {

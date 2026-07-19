@@ -101,9 +101,6 @@ export let tokensInt32: Int32Array | null = null;
 // Number of tokens for the current file.
 export let tokensLen = 0;
 
-// Whether all tokens have been deserialized into `cachedTokens`.
-export let allTokensDeserialized = false;
-
 // Cached token objects, reused across files to reduce GC pressure.
 // Tokens are mutated in place during deserialization, then `tokens` is set to a slice of this array.
 export const cachedTokens: Token[] = [];
@@ -453,13 +450,13 @@ const KIND_FIELD_OFFSET = 8;
 const IS_ESCAPED_FIELD_OFFSET = 10;
 
 /**
- * Deserialize all tokens and build the `tokens` array.
+ * Build the `tokens` array (a slice of `cachedTokens`).
  * Called by `ast.tokens` getter.
  */
 export function initTokens(): void {
   debugAssert(tokens === null, "Tokens already initialized");
 
-  if (allTokensDeserialized === false) deserializeTokens();
+  if (tokensInt32 === null) initTokensBuffer();
 
   // Create `tokens` array as a slice of `cachedTokens` array.
   //
@@ -479,31 +476,12 @@ export function initTokens(): void {
 }
 
 /**
- * Deserialize all tokens into `cachedTokens`.
- * Does NOT build the `tokens` array - use `initTokens` for that.
- */
-export function deserializeTokens(): void {
-  debugAssert(allTokensDeserialized === false, "Tokens already deserialized");
-
-  if (tokensInt32 === null) initTokensBuffer();
-
-  allTokensDeserialized = true;
-
-  debugCheckDeserializedTokens();
-}
-
-/**
  * Initialize typed array views over the tokens region of the buffer.
  *
  * Populates `tokensUint8`, `tokensInt32`, and `tokensLen`, and grows `cachedTokens` if needed.
  */
 export function initTokensBuffer(): void {
   debugAssert(tokensUint8 === null && tokensInt32 === null, "Tokens buffer already initialized");
-
-  debugAssert(
-    allTokensDeserialized === false,
-    "`allTokensDeserialized` flag should have been reset at end of last file",
-  );
 
   debugAssertIsNonNull(buffer);
 
@@ -540,7 +518,7 @@ export function initTokensBuffer(): void {
     } while (pos < endPos);
   }
 
-  // Check buffer data has valid ranges and ascending order
+  // Check tokens have valid ranges and are in ascending order
   debugCheckValidRanges();
 }
 
@@ -572,7 +550,7 @@ function unescapeIdentifier(name: string): string {
 }
 
 /**
- * Check all tokens in buffer have valid ranges, are in ascending order, and are within the source text.
+ * Check all tokens have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
@@ -583,39 +561,10 @@ function debugCheckValidRanges(): void {
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
-    const pos32 = i << 2;
-    const start = tokensInt32![pos32];
-    const end = tokensInt32![pos32 + 1];
+    const { start, end } = cachedTokens[i];
     if (end <= start) throw new Error(`Invalid token range: ${start}-${end}`);
     if (start < lastEnd) {
       throw new Error(`Overlapping tokens: last end: ${lastEnd}, next start: ${start}`);
-    }
-    lastEnd = end;
-  }
-
-  if (lastEnd > sourceText.length) {
-    throw new Error(`Tokens end beyond source text length: ${lastEnd} > ${sourceText.length}`);
-  }
-}
-
-/**
- * Check all deserialized tokens have valid ranges, are in ascending order, and are within the source text.
- *
- * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
- */
-function debugCheckDeserializedTokens(): void {
-  if (!DEBUG) return;
-
-  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
-
-  let lastEnd = 0;
-  for (let i = 0; i < tokensLen; i++) {
-    const { start, end } = cachedTokens[i];
-    if (end <= start) throw new Error(`Invalid deserialized token range: ${start}-${end}`);
-    if (start < lastEnd) {
-      throw new Error(
-        `Deserialized tokens not in order: last end: ${lastEnd}, next start: ${start}`,
-      );
     }
     lastEnd = end;
   }
@@ -637,9 +586,6 @@ export function resetTokens() {
     debugAssertAllTokensCleared();
     return;
   }
-
-  // Reset flag for all tokens having been deserialized
-  allTokensDeserialized = false;
 
   // Reset `#range` on tokens where `range` has been accessed
   for (let i = 0; i < activeTokensWithRangeCount; i++) {
