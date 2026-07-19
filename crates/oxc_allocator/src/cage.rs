@@ -55,6 +55,16 @@ const _: () = {
     assert!(CAGE_SIZE == (u32::MAX as usize + 1) << COMPRESSED_SCALE_SHIFT);
 };
 
+/// Size actually reserved from the OS, which the bump cursor is capped at.
+///
+/// Equals [`CAGE_SIZE`] in normal builds. Under Miri — which cannot `mmap` — the reservation
+/// is a bounded heap allocation instead, so the cursor stops well before 32 GiB. Handed-out
+/// offsets stay `< CAGE_SIZE`, so the "offset fits in `u32`" compression invariant still holds.
+#[cfg(not(miri))]
+const RESERVED_SIZE: usize = CAGE_SIZE;
+#[cfg(miri)]
+const RESERVED_SIZE: usize = 128 * 1024 * 1024;
+
 /// Number of bytes burned at the start of the cage, so that no allocation ever has offset 0.
 /// Must be `>= 1 << COMPRESSED_SCALE_SHIFT` (so scaled offsets are non-zero)
 /// and a multiple of `CHUNK_ALIGN`.
@@ -166,8 +176,22 @@ fn ensure_cage_init() {
     });
 }
 
+/// Reserve the cage as a bounded heap allocation under Miri, which cannot `mmap`.
+///
+/// `RESERVED_SIZE` (not `CAGE_SIZE`) bytes are allocated, and the base pointer carries
+/// provenance over that whole region, so reconstructing chunk pointers via
+/// `cage_base_ptr().add(offset)` stays valid under `-Zmiri-strict-provenance`.
+#[cfg(miri)]
+fn reserve_cage() -> NonNull<u8> {
+    use std::alloc::{GlobalAlloc, System};
+    let layout = Layout::from_size_align(RESERVED_SIZE, CHUNK_ALIGN).unwrap();
+    // SAFETY: `layout` has non-zero size.
+    let ptr = unsafe { System.alloc(layout) };
+    NonNull::new(ptr).expect("pointer-compression cage: failed to reserve heap cage under Miri")
+}
+
 /// Reserve `CAGE_SIZE` bytes of lazily-committed virtual address space.
-#[cfg(unix)]
+#[cfg(all(unix, not(miri)))]
 fn reserve_cage() -> NonNull<u8> {
     // MAP_NORESERVE: don't reserve swap for the whole range. Pages are committed lazily
     // on first touch. On macOS, anonymous mappings behave this way in any case.
@@ -199,7 +223,7 @@ fn reserve_cage() -> NonNull<u8> {
 ///
 /// PROTOTYPE: Only macOS is exercised. A production version would use `VirtualAlloc`
 /// with `MEM_RESERVE` on Windows.
-#[cfg(not(unix))]
+#[cfg(all(not(unix), not(miri)))]
 fn reserve_cage() -> NonNull<u8> {
     use std::alloc::{GlobalAlloc, System};
     let layout = Layout::from_size_align(CAGE_SIZE, CHUNK_ALIGN).unwrap();
@@ -246,7 +270,7 @@ pub fn alloc_chunk(layout: Layout) -> Option<NonNull<u8>> {
     let result = CAGE_CURSOR.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |cursor| {
         let start = cursor.checked_next_multiple_of(align)?;
         let end = start.checked_add(size)?;
-        (end <= CAGE_SIZE).then_some(end)
+        (end <= RESERVED_SIZE).then_some(end)
     });
 
     match result {
@@ -285,7 +309,8 @@ fn cage_exhausted(size: usize) -> Option<NonNull<u8>> {
 /// (they read back as zeros, or the old contents - either is fine for uninitialized
 /// chunk memory).
 pub fn dealloc_chunk(ptr: NonNull<u8>, layout: Layout) {
-    #[cfg(unix)]
+    // Miri can't `madvise`, and the heap-backed Miri cage doesn't need RSS trimming anyway.
+    #[cfg(all(unix, not(miri)))]
     {
         // Round inward to page boundaries; `madvise` requires page-aligned addresses.
         const PAGE_SIZE: usize = 0x1000;
