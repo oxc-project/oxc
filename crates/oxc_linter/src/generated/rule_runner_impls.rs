@@ -3586,7 +3586,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_dom_node_text_content::PreferD
 
 impl RuleRunner for crate::rules::unicorn::prefer_event_target::PreferEventTarget {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::IdentifierReference]));
+        Some(&AstTypesBitset::from_types(&[AstType::Class, AstType::NewExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
