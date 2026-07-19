@@ -1645,6 +1645,36 @@ describe("token regex across sequential files", () => {
   });
 });
 
+// Regression tests for parsing the `regex` descriptor from source text.
+describe("token regex parsing", () => {
+  it("should parse `regex` when immediately followed by division `/`", () => {
+    const source = "x = /a/g/2;";
+    setup(source);
+    const tokens = getTokens({ range: [0, source.length] } as Node);
+    const regexToken = tokens.find((t) => t.type === "RegularExpression");
+    expect(regexToken).toBeDefined();
+    expect(regexToken!.regex).toEqual({ pattern: "a", flags: "g" });
+  });
+
+  it("should parse `regex` when immediately followed by a comment", () => {
+    const source = "x = /b/i//comment";
+    setup(source);
+    const tokens = getTokens({ range: [0, source.length] } as Node);
+    const regexToken = tokens.find((t) => t.type === "RegularExpression");
+    expect(regexToken).toBeDefined();
+    expect(regexToken!.regex).toEqual({ pattern: "b", flags: "i" });
+  });
+
+  it("should parse `regex` with no flags when immediately followed by a comment", () => {
+    const source = "x = /abc/// comment";
+    setup(source);
+    const tokens = getTokens({ range: [0, source.length] } as Node);
+    const regexToken = tokens.find((t) => t.type === "RegularExpression");
+    expect(regexToken).toBeDefined();
+    expect(regexToken!.regex).toEqual({ pattern: "abc", flags: "" });
+  });
+});
+
 // Tests for `for (const key in token)` enumeration.
 // All token properties (including the `loc` getter and `regex`) should be enumerable.
 describe("token property enumeration", () => {

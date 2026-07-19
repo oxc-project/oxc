@@ -375,12 +375,14 @@ class Token {
       activeTokensWithRegexCount++;
 
       // Parse the regex literal (`/pattern/flags`) from source text.
+      // Find the closing `/` by searching back from `end - 1` (the token's last char).
+      // `end` (exclusive) would be wrong - `sourceText[end]` is the character *after* the token,
+      // which can itself be `/` - e.g. division `/a/g/2` or comment `/a/g//comment`.
       const start = tokensInt32[pos32],
         end = tokensInt32[pos32 + 1];
-      const value = sourceText.slice(start, end);
-      const patternEnd = value.lastIndexOf("/");
-      regexObj.pattern = value.slice(1, patternEnd);
-      regexObj.flags = value.slice(patternEnd + 1);
+      const patternEnd = sourceText.lastIndexOf("/", end - 1);
+      regexObj.pattern = sourceText.slice(start + 1, patternEnd);
+      regexObj.flags = sourceText.slice(patternEnd + 1, end);
 
       return (this.#regex = regexObj);
     };
