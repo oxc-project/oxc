@@ -362,6 +362,7 @@ node/no-new-require                                        |   1421
 node/no-path-concat                                        |  21217
 node/no-process-env                                        |  94090
 node/no-sync                                               |  62606
+node/no-top-level-await                                    |  32314
 oxc/approx-constant                                        |  14295
 oxc/bad-array-method-on-arguments                          |  94090
 oxc/bad-bitwise-operator                                   |  33609
