@@ -389,7 +389,7 @@ fn add_dependency<'a>(
             }
         }
         Temporary::Global { binding } => {
-            let inferred = InferredDependency::Global { binding: binding.clone() };
+            let inferred = InferredDependency::Global { binding: *binding };
             let key = dep_to_key(&inferred);
             if dep_keys.insert(key) {
                 dependencies.push(inferred);
@@ -500,7 +500,7 @@ fn collect_dependencies<'a>(
                             });
                         }
                         Temporary::Global { binding } => {
-                            deps.push(InferredDependency::Global { binding: binding.clone() });
+                            deps.push(InferredDependency::Global { binding: *binding });
                         }
                     }
                 }
@@ -522,10 +522,8 @@ fn collect_dependencies<'a>(
                         );
                     }
                     InferredDependency::Global { binding } => {
-                        temporaries.insert(
-                            phi.place.identifier,
-                            Temporary::Global { binding: binding.clone() },
-                        );
+                        temporaries
+                            .insert(phi.place.identifier, Temporary::Global { binding: *binding });
                     }
                 }
             } else {
@@ -543,7 +541,7 @@ fn collect_dependencies<'a>(
 
             match &instr.value {
                 InstructionValue::LoadGlobal { binding, .. } => {
-                    temporaries.insert(lvalue_id, Temporary::Global { binding: binding.clone() });
+                    temporaries.insert(lvalue_id, Temporary::Global { binding: *binding });
                 }
                 InstructionValue::LoadContext { place, .. }
                 | InstructionValue::LoadLocal { place, .. } => {

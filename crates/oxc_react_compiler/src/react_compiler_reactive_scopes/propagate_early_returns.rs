@@ -131,7 +131,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
 
             state.early_return_value = Some(early_return_value.clone());
 
-            let return_value = value.clone();
+            let return_value = *value;
 
             return Ok(Transformed::ReplaceMany(vec![
                 // StoreLocal: reassign the early return value

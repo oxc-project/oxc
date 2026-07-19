@@ -163,7 +163,7 @@ pub enum ReactFunctionType {
     Other,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ParamPattern {
     Place(Place),
     Spread(SpreadPattern),
@@ -466,7 +466,7 @@ pub enum GotoVariant {
     Try,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Case {
     pub test: Option<Place>,
     pub block: BlockId,
@@ -497,7 +497,7 @@ pub enum InstructionKind {
     Function,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct LValue {
     pub place: Place,
     pub kind: InstructionKind,
@@ -839,7 +839,7 @@ pub enum FunctionExpressionType {
     FunctionDeclaration,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct TemplateQuasi<'a> {
     pub raw: Str<'a>,
     pub cooked: Option<Str<'a>>,
@@ -852,13 +852,13 @@ pub struct ManualMemoDependency<'a> {
     pub span: Option<Span>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ManualMemoDependencyRoot<'a> {
     NamedLocal { value: Place, constant: bool },
     Global { identifier_name: Ident<'a> },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DependencyPathEntry<'a> {
     pub property: PropertyLiteral<'a>,
     pub optional: bool,
@@ -869,7 +869,7 @@ pub struct DependencyPathEntry<'a> {
 // Place, Identifier, and related types
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Place {
     pub identifier: IdentifierId,
     pub effect: Effect,
@@ -877,7 +877,7 @@ pub struct Place {
     pub span: Option<Span>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Identifier<'a> {
     pub id: IdentifierId,
     pub declaration_id: DeclarationId,
@@ -888,7 +888,7 @@ pub struct Identifier<'a> {
     pub span: Option<Span>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct MutableRange {
     /// Unique identity for this logical range. Cloning preserves the ID
     /// (same logical range); use `Environment::new_mutable_range()` to create
@@ -970,7 +970,7 @@ impl std::fmt::Display for Effect {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct SpreadPattern {
     pub place: Place,
 }
@@ -980,7 +980,7 @@ pub struct ArrayPattern {
     pub items: Vec<ArrayPatternElement>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ArrayPatternElement {
     Place(Place),
     Spread(SpreadPattern),
@@ -992,20 +992,20 @@ pub struct ObjectPattern<'a> {
     pub properties: Vec<ObjectPropertyOrSpread<'a>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ObjectPropertyOrSpread<'a> {
     Property(ObjectProperty<'a>),
     Spread(SpreadPattern),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ObjectProperty<'a> {
     pub key: ObjectPropertyKey<'a>,
     pub property_type: ObjectPropertyType,
     pub place: Place,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ObjectPropertyKey<'a> {
     String { name: Ident<'a> },
     Identifier { name: Ident<'a> },
@@ -1048,36 +1048,36 @@ impl std::fmt::Display for PropertyLiteral<'_> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum PlaceOrSpread {
     Place(Place),
     Spread(SpreadPattern),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ArrayElement {
     Place(Place),
     Spread(SpreadPattern),
     Hole,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct LoweredFunction {
     pub func: FunctionId,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct BuiltinTag<'a> {
     pub name: Ident<'a>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum JsxTag<'a> {
     Place(Place),
     Builtin(BuiltinTag<'a>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum JsxAttribute<'a> {
     SpreadAttribute { argument: Place },
     Attribute { name: Ident<'a>, place: Place },
@@ -1099,7 +1099,7 @@ pub enum BindingKind {
     Unknown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum VariableBinding<'a> {
     Identifier { identifier: IdentifierId, binding_kind: BindingKind },
     Global { name: Ident<'a> },
@@ -1109,7 +1109,7 @@ pub enum VariableBinding<'a> {
     ModuleLocal { name: Ident<'a> },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum NonLocalBinding<'a> {
     ImportDefault { name: Ident<'a>, module: Str<'a> },
     ImportSpecifier { name: Ident<'a>, module: Str<'a>, imported: Ident<'a> },
@@ -1161,7 +1161,7 @@ pub enum Type<'a> {
     ObjectMethod,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum PropertyNameKind<'a> {
     Literal { value: PropertyLiteral<'a> },
     Computed,

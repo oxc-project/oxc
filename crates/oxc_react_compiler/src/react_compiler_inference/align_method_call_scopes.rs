@@ -87,8 +87,8 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
         if scope_id == root_id {
             return;
         }
-        let scope_range = env.scopes[scope_id].range.clone();
-        let root_range = env.scopes[root_id].range.clone();
+        let scope_range = env.scopes[scope_id].range;
+        let root_range = env.scopes[root_id].range;
 
         let entry =
             range_updates.entry(root_id).or_insert_with(|| (root_range.start, root_range.end));
