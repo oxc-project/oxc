@@ -574,6 +574,8 @@ impl<'a> PeepholeOptimizations {
     /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
     ///
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
+    /// - `x ? a.b = 0 : a.b = 1` -> `a.b = x ? 0 : 1`
+    /// - `x ? a += 1 : a += 2` -> `a += x ? 1 : 2`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -585,18 +587,48 @@ impl<'a> PeepholeOptimizations {
         else {
             return None;
         };
-        if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
-            return None;
-        }
         // NOTE: if the right hand side is an anonymous function, applying this compression will
         // set the `name` property of that function.
         // Since codes relying on the fact that function's name is undefined should be rare,
         // we do this compression even if `keep_names` is enabled.
 
-        if consequent.operator != AssignmentOperator::Assign
-            || consequent.operator != alternate.operator
-            || consequent.left.content_ne(&alternate.left)
+        if consequent.operator != alternate.operator || consequent.left.content_ne(&alternate.left)
         {
+            return None;
+        }
+        // The merge moves the evaluation of the assignment target before the test, so any
+        // side effect of one that could be observed by (or observe) the other blocks the merge.
+        // For non-`=` operators the merge additionally moves `GetValue(lref)` (which may
+        // trigger a getter for member targets, or throw for global identifiers) before the test.
+        let is_plain_assign = consequent.operator == AssignmentOperator::Assign;
+        let can_merge = match &consequent.left {
+            AssignmentTarget::AssignmentTargetIdentifier(_) => {
+                // Resolving an identifier reference has no observable effect, so plain
+                // assignments can always be merged.
+                is_plain_assign || !expr.test.may_have_side_effects(ctx)
+            }
+            AssignmentTarget::StaticMemberExpression(member) => {
+                !expr.test.may_have_side_effects(ctx)
+                    && if is_plain_assign {
+                        Self::member_object_is_side_effect_free(&member.object, ctx)
+                    } else {
+                        !member.may_have_side_effects(ctx)
+                    }
+            }
+            AssignmentTarget::ComputedMemberExpression(member) => {
+                // A side-effectful key expression could affect the value of the test
+                // even when the test itself is side-effect free.
+                !expr.test.may_have_side_effects(ctx)
+                    && if is_plain_assign {
+                        Self::member_object_is_side_effect_free(&member.object, ctx)
+                            && !member.expression.may_have_side_effects(ctx)
+                    } else {
+                        !member.may_have_side_effects(ctx)
+                    }
+            }
+            _ => false,
+        };
+        if !can_merge {
             return None;
         }
         let cond_expr = Self::minimize_conditional(
@@ -613,6 +645,13 @@ impl<'a> PeepholeOptimizations {
             cond_expr,
             ctx,
         ))
+    }
+
+    /// Returns `true` if evaluating `object` as an assignment target's member object has no
+    /// observable effect. `this` is not covered by [`MayHaveSideEffects`] (which conservatively
+    /// returns `true` for it) but can never throw or trigger side effects when evaluated.
+    fn member_object_is_side_effect_free(object: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        matches!(object, Expression::ThisExpression(_)) || !object.may_have_side_effects(ctx)
     }
 
     /// Modify `expr` if that has `target_expr` as a parent, and returns true if modified.

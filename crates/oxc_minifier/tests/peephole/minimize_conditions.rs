@@ -1025,16 +1025,45 @@ fn test_compress_conditional_expression_inside() {
         "a = x ? function () { return 'a' } : function () { return 'b' }",
     );
 
-    // a.b might have a side effect
+    // `x` (global) may throw and `a` (global) may throw when evaluated as the member object,
+    // so the reordering introduced by the merge is observable
     test_same("x ? a.b = 0 : a.b = 1");
-    // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function, but we ignore that difference
+    // `a = x ? () => 'a' : a = () => 'b'` does not set the name property of the function, but we ignore that difference
     test("x ? a = () => 'a' : a = () => 'b'", "a = x ? () => 'a' : () => 'b'");
 
-    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
-    // so cannot be fold to `a += x ? 0 : 1`
+    // member targets can be merged when both the test and the member object are side-effect free
+    test("f = function(x, a) { x ? a.b = 0 : a.b = 1 }", "f = function(x, a) { a.b = +!x }");
+    test(
+        "f = function(x, a, b, c) { x ? a.b = b : a.b = c }",
+        "f = function(x, a, b, c) { a.b = x ? b : c }",
+    );
+    test("f = function(x) { x ? this.a = 0 : this.a = 1 }", "f = function(x) { this.a = +!x }");
+    test(
+        "f = function(x, a, k) { x ? a[k] = 0 : a[k] = 1 }",
+        "f = function(x, a, k) { a[k] = +!x }",
+    );
+    // evaluating `a.b` (the member object) may trigger a getter
+    test_same("f = function(x, a) { x ? a.b.c = 0 : a.b.c = 1 }");
+    // `g()` in the computed key has a side effect; its value may affect the test outcome
+    test_same("f = function(x, a) { x ? a[g()] = 0 : a[g()] = 1 }");
+    // the test has a side effect which may affect the member object
+    test_same("f = function(a) { g() ? a.b = 0 : a.b = 1 }");
+
+    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`,
+    // so merging is only possible when the test has no side effect (`x` here is a global which may throw)
     // example case: `(()=>{"use strict"; (console.log("log"), 1) ? a += 0 : a += 1; })()`
     test_same("x ? a += 0 : a += 1");
     test_same("x ? a &&= 0 : a &&= 1");
+
+    // non `=` operators on identifiers can be merged when the test is side-effect free
+    test("f = function(x, a) { x ? a += 1 : a += 2 }", "f = function(x, a) { a += x ? 1 : 2 }");
+    test("f = function(x, a) { x ? a ||= 1 : a ||= 2 }", "f = function(x, a) { a ||= x ? 1 : 2 }");
+    test_same("f = function(a) { g() ? a += 1 : a += 2 }");
+    // `GetValue(lref)` on a member target may trigger a getter whose side effects
+    // could affect the test outcome
+    test_same("f = function(x, a) { x ? a.b += 1 : a.b += 2 }");
+    // operators must match
+    test_same("f = function(x, a) { x ? a += 1 : a -= 2 }");
 }
 
 #[test]
