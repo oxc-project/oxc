@@ -34,7 +34,7 @@ use std::{
     ptr::NonNull,
     sync::{
         Once,
-        atomic::{AtomicBool, AtomicPtr, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
 };
 
@@ -73,11 +73,33 @@ const _: () = {
     assert!(BURNED_PREFIX.is_multiple_of(CHUNK_ALIGN));
 };
 
-/// Base pointer of the cage. Null until the cage is reserved.
+/// Write-once holder for the cage base pointer. Null until the cage is reserved.
 ///
-/// `AtomicPtr` rather than `AtomicUsize` so that reconstructed pointers derive their
-/// provenance from the original `mmap` pointer.
-static CAGE_BASE: AtomicPtr<u8> = AtomicPtr::new(std::ptr::null_mut());
+/// Deliberately **not** an `AtomicPtr`. A relaxed atomic load is treated by LLVM as an
+/// observable event: it is neither hoisted out of loops (LICM) nor common-subexpression-
+/// eliminated. Since the base is read on the hot path of *both* compression (once per
+/// `Box::new_in`) and decompression (once per deref), an atomic base is re-loaded on every
+/// one of those operations — the entire measured CPU regression. A plain (non-atomic) load
+/// *is* hoisted and CSE'd, so the base is materialized once per function instead of once per
+/// operation, which the addressing-mode fold (`base + offset << 3`) then consumes for free.
+///
+/// Holds a raw pointer (not `usize`) so reconstructed pointers derive their provenance from
+/// the original `mmap` pointer.
+///
+/// # Safety / soundness
+/// The pointer is written exactly once, inside [`CAGE_INIT`]'s `call_once` (see
+/// [`ensure_cage_init`]), strictly before any compressed pointer can exist — you cannot hold a
+/// compressed `Box` without having allocated from the cage, which runs `ensure_cage_init`
+/// first, and the allocation/hand-off path carries the release/acquire edge to every later
+/// reader. Every read therefore happens-after the single write, so the non-atomic accesses are
+/// free of data races.
+struct CageBase(UnsafeCell<*mut u8>);
+
+// SAFETY: The pointer is written once, before any read, with a happens-before edge to every
+// read (see the type docs), so sharing `&CageBase` across threads never races.
+unsafe impl Sync for CageBase {}
+
+static CAGE_BASE: CageBase = CageBase(UnsafeCell::new(std::ptr::null_mut()));
 
 /// Bump cursor: offset (in bytes, relative to the cage base) of the next free byte.
 static CAGE_CURSOR: AtomicUsize = AtomicUsize::new(BURNED_PREFIX);
@@ -85,10 +107,15 @@ static CAGE_CURSOR: AtomicUsize = AtomicUsize::new(BURNED_PREFIX);
 /// One-time initialization guard for the cage reservation.
 static CAGE_INIT: Once = Once::new();
 
-/// Number of distinct chunk-size classes the free-list tracks. Arena chunk sizes follow a
-/// doubling ladder, so a few dozen classes cover any realistic workload; sizes beyond this
-/// simply aren't recycled (their chunks leak into the cage, same as an exhausted list).
-const FREE_LIST_CLASSES: usize = 128;
+/// Number of power-of-two size classes tracked with O(1) indexing. A chunk of a power-of-two
+/// size `s` lives in class `s.trailing_zeros()`, so 64 classes cover every possible `usize`.
+/// Small arena chunks are sized with `.next_power_of_two()`, so they all land here.
+const POW2_CLASSES: usize = 64;
+
+/// Overflow classes for the rare non-power-of-two chunk sizes (large, page-rounded chunks).
+/// These are few and large, so a short exact-size linear scan is fine; sizes beyond this simply
+/// aren't recycled (their chunks leak into the cage, same as an exhausted list).
+const OVERFLOW_CLASSES: usize = 32;
 
 /// Free-list of "deallocated" chunks, keyed by exact chunk size (in bytes).
 ///
@@ -112,30 +139,46 @@ const FREE_LIST_CLASSES: usize = 128;
 static FREE_CHUNKS: SpinLock<FreeList> = SpinLock::new(FreeList::new());
 
 /// Intrusive, allocation-free free-list. See [`FREE_CHUNKS`].
+///
+/// Split into an O(1) direct-indexed table for power-of-two sizes (the common case — small
+/// arena chunks are `next_power_of_two`-sized) and a short linear-scanned overflow table for the
+/// rare non-power-of-two sizes (large, page-rounded chunks). Both are exact-size: the pow2 table
+/// keys the size implicitly in the index, the overflow table stores it explicitly.
 struct FreeList {
-    /// `(chunk_size, head_offset)` per class. `chunk_size == 0` marks an unused slot;
-    /// `head_offset == 0` marks an empty list (real offsets are always `>= BURNED_PREFIX > 0`).
-    classes: [(usize, usize); FREE_LIST_CLASSES],
+    /// List heads for power-of-two chunk sizes, indexed by `log2(size)` (`size.trailing_zeros()`).
+    /// The size is implicit in the index (`1 << index`), so matches are exact by construction.
+    /// `0` marks an empty list (real offsets are always `>= BURNED_PREFIX > 0`).
+    pow2_heads: [usize; POW2_CLASSES],
+    /// `(chunk_size, head_offset)` for non-power-of-two sizes. `chunk_size == 0` marks an unused
+    /// slot; `head_offset == 0` marks an empty list.
+    overflow: [(usize, usize); OVERFLOW_CLASSES],
 }
 
 impl FreeList {
     const fn new() -> Self {
-        Self { classes: [(0, 0); FREE_LIST_CLASSES] }
+        Self { pow2_heads: [0; POW2_CLASSES], overflow: [(0, 0); OVERFLOW_CLASSES] }
     }
 
     /// Push a freed chunk at cage offset `offset` (of `size` bytes) onto its size class.
-    /// No-op if all class slots are taken by other sizes (the chunk just isn't recycled).
+    /// No-op if a non-power-of-two size finds all overflow slots taken (the chunk isn't recycled).
     fn push(&mut self, size: usize, offset: usize) {
-        for slot in &mut self.classes {
+        if size.is_power_of_two() {
+            let head = &mut self.pow2_heads[size.trailing_zeros() as usize];
+            // SAFETY: `offset` is a valid, now-dead chunk of `size` bytes in the cage;
+            // chunks are far larger than a `usize`, so the intrusive link fits.
+            unsafe { write_chunk_link(offset, *head) };
+            *head = offset;
+            return;
+        }
+        for slot in &mut self.overflow {
             if slot.0 == size {
-                // SAFETY: `offset` is a valid, now-dead chunk of `size` bytes in the cage;
-                // chunks are far larger than a `usize`, so the intrusive link fits.
+                // SAFETY: as above.
                 unsafe { write_chunk_link(offset, slot.1) };
                 slot.1 = offset;
                 return;
             }
         }
-        for slot in &mut self.classes {
+        for slot in &mut self.overflow {
             if slot.0 == 0 {
                 // SAFETY: as above.
                 unsafe { write_chunk_link(offset, 0) };
@@ -147,14 +190,24 @@ impl FreeList {
 
     /// Pop a freed chunk of exactly `size` bytes, if one is available.
     fn pop(&mut self, size: usize) -> Option<usize> {
-        for slot in &mut self.classes {
+        if size.is_power_of_two() {
+            let head = &mut self.pow2_heads[size.trailing_zeros() as usize];
+            let offset = *head;
+            if offset == 0 {
+                return None;
+            }
+            // SAFETY: `offset` is a chunk previously pushed for this class; its intrusive link
+            // is still intact (the chunk has not been reallocated).
+            *head = unsafe { read_chunk_link(offset) };
+            return Some(offset);
+        }
+        for slot in &mut self.overflow {
             if slot.0 == size {
                 let head = slot.1;
                 if head == 0 {
                     return None;
                 }
-                // SAFETY: `head` is a chunk offset previously pushed for this size; its
-                // intrusive link is still intact (the chunk has not been reallocated).
+                // SAFETY: as above.
                 slot.1 = unsafe { read_chunk_link(head) };
                 return Some(head);
             }
@@ -229,12 +282,12 @@ impl<T> SpinLock<T> {
 /// the cage (e.g. a compressed `Box`) are guaranteed the cage is initialized, because the
 /// memory their pointer points into came from the cage.
 //
-// `#[inline(always)]` because this is a single relaxed atomic load (a plain `mov`/`ldr`
-// on x86-64 and aarch64), and it's on the hot path of every compressed-pointer deref.
+// `#[inline(always)]` because this is a single (non-atomic) load that LLVM can hoist/CSE,
+// and it's on the hot path of every compressed-pointer compress and deref.
 #[expect(clippy::inline_always)]
 #[inline(always)]
 pub fn cage_base() -> usize {
-    CAGE_BASE.load(Ordering::Relaxed).addr()
+    cage_base_ptr().addr()
 }
 
 /// Get the cage base pointer.
@@ -242,11 +295,13 @@ pub fn cage_base() -> usize {
 /// Same as [`cage_base`], but returns a pointer (with the provenance of the whole cage),
 /// for reconstructing pointers from compressed offsets.
 //
-// `#[inline(always)]` because this is a single relaxed atomic load.
+// `#[inline(always)]` because this is a single (non-atomic) load that LLVM can hoist/CSE.
 #[expect(clippy::inline_always)]
 #[inline(always)]
 pub fn cage_base_ptr() -> *mut u8 {
-    CAGE_BASE.load(Ordering::Relaxed)
+    // SAFETY: `CAGE_BASE` is written exactly once (in `ensure_cage_init`), strictly before any
+    // compressed pointer can exist, so this read always happens-after that write. See `CageBase`.
+    unsafe { *CAGE_BASE.0.get() }
 }
 
 /// Reserve the cage, if it hasn't been reserved already.
@@ -257,7 +312,10 @@ pub fn cage_base_ptr() -> *mut u8 {
 fn ensure_cage_init() {
     CAGE_INIT.call_once(|| {
         let base = reserve_cage();
-        CAGE_BASE.store(base.as_ptr(), Ordering::Release);
+        // SAFETY: `call_once` runs this exactly once, and `Once` guarantees it completes before
+        // any thread observes the cage as initialized. No compressed pointer can exist until
+        // after this write, so there is never a concurrent access to race with. See `CageBase`.
+        unsafe { *CAGE_BASE.0.get() = base.as_ptr() };
     });
 }
 
