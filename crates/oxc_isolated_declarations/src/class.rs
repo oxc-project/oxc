@@ -38,11 +38,7 @@ impl<'a> IsolatedDeclarations<'a> {
             PropertyKey::StringLiteral(_) | PropertyKey::NumericLiteral(_) => true,
             PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
             PropertyKey::UnaryExpression(expr) => {
-                expr.operator.is_arithmetic()
-                    && matches!(
-                        expr.argument,
-                        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
-                    )
+                expr.operator.is_arithmetic() && expr.argument.is_number_literal()
             }
             _ => false,
         }
