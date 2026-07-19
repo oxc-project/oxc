@@ -93,9 +93,8 @@ type Regex = RegularExpressionToken["regex"];
 // Created lazily only when needed.
 export let tokens: TokenType[] | null = null;
 
-// Typed array views over the tokens region of the buffer.
-// These persist for the lifetime of the file (cleared in `resetTokens`).
-let tokensUint8: Uint8Array | null = null;
+// Typed array view over the tokens region of the buffer.
+// Persists for the lifetime of the file (cleared in `resetTokens`).
 export let tokensInt32: Int32Array | null = null;
 
 // Number of tokens for the current file.
@@ -195,14 +194,15 @@ class Token {
   declare value: string;
   declare regex: Regex | undefined;
 
-  // `#pos` initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real buffer position.
-  #pos: number = 0;
+  // `#pos32` is the index of the token's first `i32` in `tokensInt32` (a word index, not a byte offset).
+  // Initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real position.
+  #pos32: number = 0;
   #range: Range | null = null;
   #loc: Location | null = null;
   #regex: Regex | null = null;
 
-  constructor(pos: number) {
-    this.#pos = pos;
+  constructor(pos32: number) {
+    this.#pos32 = pos32;
 
     // Define all properties as own getter properties (enumerable + configurable by default).
     // This makes `{...token}` spread them, and `JSON.stringify(token)` serialize them.
@@ -217,18 +217,18 @@ class Token {
     defineGetter(this, "regex", getTokenRegex);
   }
 
-  // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
+  // Functions requiring access to private props defined in static block to avoid exposing them as public methods
   static {
     getTokenTypeTemp = function (this: Token): TokenType["type"] {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
-      // In release build, it will result in an error in the `tokensUint8` access below.
+      // In release build, it will result in an error in the `tokensInt32` access below.
       debugAssertIsNonNull(
-        tokensUint8,
+        tokensInt32,
         "`Token` object's `type` field accessed after file finished linting",
       );
 
-      return TOKEN_TYPES[tokensUint8[this.#pos + KIND_FIELD_OFFSET]];
+      return TOKEN_TYPES[tokensInt32[this.#pos32 + KIND_FLAGS_OFFSET32] & TOKEN_KIND_MASK];
     };
 
     getTokenStartTemp = function (this: Token): number {
@@ -240,7 +240,7 @@ class Token {
         "`Token` object's `start` field accessed after file finished linting",
       );
 
-      return tokensInt32[this.#pos >> 2];
+      return tokensInt32[this.#pos32];
     };
 
     getTokenEndTemp = function (this: Token): number {
@@ -252,7 +252,7 @@ class Token {
         "`Token` object's `end` field accessed after file finished linting",
       );
 
-      return tokensInt32[(this.#pos >> 2) + 1];
+      return tokensInt32[this.#pos32 + 1];
     };
 
     getTokenRangeTemp = function (this: Token): Range {
@@ -278,7 +278,7 @@ class Token {
       }
       activeTokensWithRangeCount++;
 
-      const pos32 = this.#pos >> 2;
+      const pos32 = this.#pos32;
       return (this.#range = createRange(tokensInt32[pos32], tokensInt32[pos32 + 1]));
     };
 
@@ -305,7 +305,7 @@ class Token {
       }
       activeTokensWithLocCount++;
 
-      const pos32 = this.#pos >> 2,
+      const pos32 = this.#pos32,
         start = tokensInt32[pos32],
         end = tokensInt32[pos32 + 1];
       return (this.#loc = computeLoc(start, end));
@@ -314,25 +314,26 @@ class Token {
     getTokenValueTemp = function (this: Token): string {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
-      // In release build, it will result in an error in `tokensUint8`, `tokensInt32`, or `sourceText`
-      // accesses below.
+      // In release build, it will result in an error in the `tokensInt32` or `sourceText` accesses below.
       debugAssert(
-        tokensUint8 !== null && tokensInt32 !== null && sourceText !== null,
+        tokensInt32 !== null && sourceText !== null,
         "`Token` object's `value` field accessed after file finished linting",
       );
 
-      const pos = this.#pos;
-      const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
+      const pos32 = this.#pos32;
+
+      // `kind` (byte 8) and `escaped` (byte 10) share this word - read it once, extract each with a mask.
+      const kindAndFlags = tokensInt32[pos32 + KIND_FLAGS_OFFSET32];
+      const kind = kindAndFlags & TOKEN_KIND_MASK;
 
       // Get `value` as slice of source text `start..end`.
       // Slice `start + 1..end` for private identifiers, to strip leading `#`.
-      const pos32 = pos >> 2,
-        start = tokensInt32[pos32],
+      const start = tokensInt32[pos32],
         end = tokensInt32[pos32 + 1];
       let value = sourceText.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
 
       // Unescape if `escaped` flag is set
-      if (kind <= PRIVATE_IDENTIFIER_KIND && tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+      if (kind <= PRIVATE_IDENTIFIER_KIND && (kindAndFlags & IS_ESCAPED_MASK) !== 0) {
         value = unescapeIdentifier(value);
       }
 
@@ -342,16 +343,17 @@ class Token {
     getTokenRegexTemp = function (this: Token): Regex | undefined {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
-      // In release build, it will result in an error in `tokensUint8`, `tokensInt32`, or `sourceText`
-      // accesses below.
+      // In release build, it will result in an error in the `tokensInt32` or `sourceText` accesses below.
       debugAssert(
-        tokensUint8 !== null && tokensInt32 !== null && sourceText !== null,
+        tokensInt32 !== null && sourceText !== null,
         "`Token` object's `regex` field accessed after file finished linting",
       );
 
       // Only `RegularExpression` tokens have `regex` defined. All other tokens have `regex: undefined`.
-      const pos = this.#pos;
-      if (tokensUint8[pos + KIND_FIELD_OFFSET] !== REGEXP_KIND) return undefined;
+      const pos32 = this.#pos32;
+      if ((tokensInt32[pos32 + KIND_FLAGS_OFFSET32] & TOKEN_KIND_MASK) !== REGEXP_KIND) {
+        return undefined;
+      }
 
       const regex = this.#regex;
       if (regex !== null) return regex;
@@ -373,8 +375,7 @@ class Token {
       activeTokensWithRegexCount++;
 
       // Parse the regex literal (`/pattern/flags`) from source text.
-      const pos32 = pos >> 2,
-        start = tokensInt32[pos32],
+      const start = tokensInt32[pos32],
         end = tokensInt32[pos32 + 1];
       const value = sourceText.slice(start, end);
       const patternEnd = value.lastIndexOf("/");
@@ -439,6 +440,9 @@ const TOKEN_TYPES: TokenType["type"][] = [
   "JSXIdentifier",
 ];
 
+// Mask of bits containing token kind
+const TOKEN_KIND_MASK = 15;
+
 // Details of Rust `Token` type
 export const TOKEN_SIZE = 16;
 debugAssert(TOKEN_SIZE === COMMENT_SIZE, "Size of token, comment, and merged entry must be equal");
@@ -446,8 +450,16 @@ debugAssert(TOKEN_SIZE === COMMENT_SIZE, "Size of token, comment, and merged ent
 const TOKEN_SIZE_SHIFT = 4;
 debugAssert(TOKEN_SIZE === 1 << TOKEN_SIZE_SHIFT);
 
-const KIND_FIELD_OFFSET = 8;
-const IS_ESCAPED_FIELD_OFFSET = 10;
+// Same as `TOKEN_SIZE` / `TOKEN_SIZE_SHIFT`, but in units of `i32`s (for indexing `tokensInt32`).
+const TOKEN_SIZE32 = TOKEN_SIZE >> 2;
+const TOKEN_SIZE32_SHIFT = TOKEN_SIZE_SHIFT - 2;
+debugAssert(TOKEN_SIZE32 === 1 << TOKEN_SIZE32_SHIFT);
+
+// `kind` (byte 8) and `escaped` (byte 10) both live in the token's 3rd `i32` (bytes 8-11), so a single
+// `tokensInt32` read yields both - no `Uint8Array` view needed. Extract each with a mask.
+// See `Token` bit layout in `crates/oxc_parser/src/lexer/token.rs`.
+const KIND_FLAGS_OFFSET32 = 2;
+const IS_ESCAPED_MASK = 0x1_0000; // `escaped` bool is byte 10 = bit 16 of the word
 
 /**
  * Build the `tokens` array (a slice of `cachedTokens`).
@@ -498,10 +510,10 @@ export function initTokensArray(): void {
 /**
  * Initialize typed array views over the tokens region of the buffer.
  *
- * Populates `tokensUint8`, `tokensInt32`, and `tokensLen`, and grows `cachedTokens` if needed.
+ * Populates `tokensInt32` and `tokensLen`, and grows `cachedTokens` if needed.
  */
 export function initTokensBuffer(): void {
-  debugAssert(tokensUint8 === null && tokensInt32 === null, "Tokens buffer already initialized");
+  debugAssert(tokensInt32 === null, "Tokens buffer already initialized");
 
   debugAssertIsNonNull(buffer);
 
@@ -514,28 +526,27 @@ export function initTokensBuffer(): void {
   const tokensPos = int32[TOKENS_OFFSET_POS_32];
   tokensLen = int32[TOKENS_LEN_POS_32];
 
-  // Create typed array views over just the tokens region of the buffer.
-  // These are zero-copy views over the same underlying `ArrayBuffer`.
-  // Views persist for the lifetime of the file (cleared in `resetTokens`).
+  // Create typed array view over just the tokens region of the buffer.
+  // This is a zero-copy view over the same underlying `ArrayBuffer`.
+  // View persists for the lifetime of the file (cleared in `resetTokens`).
   const arrayBuffer = buffer.buffer,
     absolutePos = buffer.byteOffset + tokensPos;
-  tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
-  tokensInt32 = new Int32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
+  tokensInt32 = new Int32Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE32_SHIFT);
 
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
   if (cachedTokens.length < tokensLen) {
-    // Loop on a local `pos` counter rather than calculating `pos = cachedTokens.length << TOKEN_SIZE_SHIFT`
+    // Loop on a local `pos32` counter rather than calculating `pos32 = cachedTokens.length << TOKEN_SIZE32_SHIFT`
     // on each turn of the loop. `Array#push` is not inlined for arrays of objects, so testing `cachedTokens.length`
     // in the loop condition would reload `.length` from the heap on every iteration.
-    const endPos = tokensLen << TOKEN_SIZE_SHIFT;
-    let pos = cachedTokens.length << TOKEN_SIZE_SHIFT;
+    const endPos32 = tokensLen << TOKEN_SIZE32_SHIFT;
+    let pos32 = cachedTokens.length << TOKEN_SIZE32_SHIFT;
     do {
-      cachedTokens.push(new Token(pos));
+      cachedTokens.push(new Token(pos32));
       // `| 0` truncates the sum to int32, so V8 drops the SMI overflow check on this add.
-      // Buffer is limited to 2 GiB, so any valid `pos` is a positive int32, so this is safe.
-      pos = (pos + TOKEN_SIZE) | 0;
-    } while (pos < endPos);
+      // Buffer is limited to 2 GiB, so any valid `pos32` is a positive int32, so this is safe.
+      pos32 = (pos32 + TOKEN_SIZE32) | 0;
+    } while (pos32 < endPos32);
   }
 
   // Check tokens have valid ranges and are in ascending order
@@ -618,7 +629,6 @@ export function resetTokens() {
 
   // Clear other state
   tokens = null;
-  tokensUint8 = null;
   tokensInt32 = null;
   tokensLen = 0;
 

@@ -13,7 +13,7 @@ import {
   DATA_POINTER_POS_32,
 } from "../generated/constants.ts";
 import { computeLoc, createRange } from "./location.ts";
-import { EMPTY_UINT8_ARRAY, EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
+import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Range, Span } from "./location.ts";
@@ -44,13 +44,15 @@ COMMENT_TYPES[COMMENT_SHEBANG_KIND] = "Shebang";
 const BLOCK_COMMENT_KINDS_BITMAP =
   (0b1111 & ~(1 << COMMENT_LINE_KIND) & ~(1 << COMMENT_SHEBANG_KIND)) << 1;
 
+// Mask for bits containing comment kind.
+const COMMENT_KIND_MASK = 3;
+
 // Comments for the current file.
 // Created lazily only when needed.
 export let comments: CommentType[] | null = null;
 
-// Typed array views over the comments region of the buffer.
-// These persist for the lifetime of the file (cleared in `resetComments`).
-let commentsUint8: Uint8Array | null = null;
+// Typed array view over the comments region of the buffer.
+// Persists for the lifetime of the file (cleared in `resetComments`).
 export let commentsInt32: Int32Array | null = null;
 
 // Number of comments for the current file.
@@ -80,6 +82,19 @@ const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentTyp
 
 const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
+
+// Same as `COMMENT_SIZE` / `COMMENT_SIZE_SHIFT`, but in units of `i32`s (for indexing `commentsInt32`).
+const COMMENT_SIZE32 = COMMENT_SIZE >> 2;
+const COMMENT_SIZE32_SHIFT = COMMENT_SIZE_SHIFT - 2;
+debugAssert(COMMENT_SIZE32 === 1 << COMMENT_SIZE32_SHIFT);
+
+// `kind` is the low byte of the comment's 4th `i32` (byte 12), so a single `commentsInt32` read + a mask
+// yields it - no `Uint8Array` view needed. `>> 2` converts the byte offset to an `i32` (word) index.
+const COMMENT_KIND_OFFSET32 = COMMENT_KIND_OFFSET >> 2;
+debugAssert(
+  (COMMENT_KIND_OFFSET & 3) === 0,
+  "`COMMENT_KIND_OFFSET` must be 4-byte aligned to read via `i32`",
+);
 
 // `defineGetter(obj, prop, getter)` is equivalent to `obj.__defineGetter__(prop, getter)`,
 // but without `Object.prototype` lookup at each call site
@@ -135,13 +150,14 @@ class Comment implements Span {
   declare loc: Location;
   declare value: string;
 
-  // `#pos` initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real buffer position.
-  #pos: number = 0;
+  // `#pos32` is the index of the comment's first `i32` in `commentsInt32` (a word index, not a byte offset).
+  // Initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real position.
+  #pos32: number = 0;
   #range: Range | null = null;
   #loc: Location | null = null;
 
-  constructor(pos: number) {
-    this.#pos = pos;
+  constructor(pos32: number) {
+    this.#pos32 = pos32;
 
     // Define all properties as own getter properties (enumerable + configurable by default).
     // This makes `{...comment}` spread them, and `JSON.stringify(comment)` serialize them.
@@ -155,18 +171,18 @@ class Comment implements Span {
     defineGetter(this, "value", getCommentValue);
   }
 
-  // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
+  // Functions requiring access to private props defined in static block to avoid exposing them as public methods
   static {
     getCommentTypeTemp = function (this: Comment): CommentType["type"] {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
-      // In release build, it will result in an error in the `commentsUint8` access below.
+      // In release build, it will result in an error in the `commentsInt32` access below.
       debugAssertIsNonNull(
-        commentsUint8,
+        commentsInt32,
         "`Comment` object's `type` field accessed after file finished linting",
       );
 
-      return COMMENT_TYPES[commentsUint8[this.#pos + COMMENT_KIND_OFFSET]];
+      return COMMENT_TYPES[commentsInt32[this.#pos32 + COMMENT_KIND_OFFSET32] & COMMENT_KIND_MASK];
     };
 
     getCommentStartTemp = function (this: Comment): number {
@@ -178,7 +194,7 @@ class Comment implements Span {
         "`Comment` object's `start` field accessed after file finished linting",
       );
 
-      return commentsInt32[this.#pos >> 2];
+      return commentsInt32[this.#pos32];
     };
 
     getCommentEndTemp = function (this: Comment): number {
@@ -190,7 +206,7 @@ class Comment implements Span {
         "`Comment` object's `end` field accessed after file finished linting",
       );
 
-      return commentsInt32[(this.#pos >> 2) + 1];
+      return commentsInt32[this.#pos32 + 1];
     };
 
     getCommentRangeTemp = function (this: Comment): Range {
@@ -216,7 +232,7 @@ class Comment implements Span {
       }
       activeCommentsWithRangeCount++;
 
-      const pos32 = this.#pos >> 2;
+      const pos32 = this.#pos32;
       return (this.#range = createRange(commentsInt32[pos32], commentsInt32[pos32 + 1]));
     };
 
@@ -243,7 +259,7 @@ class Comment implements Span {
       }
       activeCommentsWithLocCount++;
 
-      const pos32 = this.#pos >> 2,
+      const pos32 = this.#pos32,
         start = commentsInt32[pos32],
         end = commentsInt32[pos32 + 1];
       return (this.#loc = computeLoc(start, end));
@@ -252,22 +268,20 @@ class Comment implements Span {
     getCommentValueTemp = function (this: Comment): string {
       // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
       // Only make this an explicit error in debug build, because it should be very uncommon.
-      // In release build, it will result in an error in `commentsUint8`, `commentsInt32`, or `sourceText`
-      // accesses below.
+      // In release build, it will result in an error in the `commentsInt32` or `sourceText` accesses below.
       debugAssert(
-        commentsUint8 !== null && commentsInt32 !== null && sourceText !== null,
+        commentsInt32 !== null && sourceText !== null,
         "`Comment` object's `value` field accessed after file finished linting",
       );
 
-      const pos = this.#pos;
+      const pos32 = this.#pos32;
 
-      const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
+      const kind = commentsInt32[pos32 + COMMENT_KIND_OFFSET32] & COMMENT_KIND_MASK;
 
       // Line comments: `// text` -> slice `start + 2..end`
       // Block comments: `/* text */` -> slice `start + 2..end - 2`
       // Hashbang: `#! text` -> slice `start + 2..end`
-      const pos32 = pos >> 2,
-        start = commentsInt32[pos32],
+      const start = commentsInt32[pos32],
         end = commentsInt32[pos32 + 1],
         endSubtract = (BLOCK_COMMENT_KINDS_BITMAP >> kind) & 2;
       return sourceText.slice(start + 2, end - endSubtract);
@@ -350,13 +364,10 @@ export function initCommentsArray(): void {
 /**
  * Initialize typed array views over the comments region of the buffer.
  *
- * Populates `commentsUint8`, `commentsInt32`, and `commentsLen`, and grows `cachedComments` if needed.
+ * Populates `commentsInt32` and `commentsLen`, and grows `cachedComments` if needed.
  */
 export function initCommentsBuffer(): void {
-  debugAssert(
-    commentsUint8 === null && commentsInt32 === null,
-    "Comments buffer already initialized",
-  );
+  debugAssert(commentsInt32 === null, "Comments buffer already initialized");
 
   debugAssertIsNonNull(buffer);
 
@@ -374,32 +385,30 @@ export function initCommentsBuffer(): void {
 
   // Fast path for files with no comments
   if (commentsLen === 0) {
-    commentsUint8 = EMPTY_UINT8_ARRAY;
     commentsInt32 = EMPTY_INT32_ARRAY;
     return;
   }
 
-  // Create typed array views over the comments region of the buffer.
-  // These are zero-copy views over the same underlying `ArrayBuffer`.
+  // Create typed array view over the comments region of the buffer.
+  // This is a zero-copy view over the same underlying `ArrayBuffer`.
   const arrayBuffer = buffer.buffer,
     absolutePos = buffer.byteOffset + commentsPos;
-  commentsUint8 = new Uint8Array(arrayBuffer, absolutePos, commentsLen * COMMENT_SIZE);
-  commentsInt32 = new Int32Array(arrayBuffer, absolutePos, commentsLen * (COMMENT_SIZE >> 2));
+  commentsInt32 = new Int32Array(arrayBuffer, absolutePos, commentsLen * COMMENT_SIZE32);
 
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
   if (cachedComments.length < commentsLen) {
-    // Loop on a local `pos` counter rather than calculating `pos = cachedComments.length << COMMENT_SIZE_SHIFT`
+    // Loop on a local `pos32` counter rather than calculating `pos32 = cachedComments.length << COMMENT_SIZE32_SHIFT`
     // on each turn of the loop. `Array#push` is not inlined for arrays of objects, so testing `cachedComments.length`
     // in the loop condition would reload `.length` from the heap on every iteration.
-    const endPos = commentsLen << COMMENT_SIZE_SHIFT;
-    let pos = cachedComments.length << COMMENT_SIZE_SHIFT;
+    const endPos32 = commentsLen << COMMENT_SIZE32_SHIFT;
+    let pos32 = cachedComments.length << COMMENT_SIZE32_SHIFT;
     do {
-      cachedComments.push(new Comment(pos));
+      cachedComments.push(new Comment(pos32));
       // `| 0` truncates the sum to int32, so V8 drops the SMI overflow check on this add.
-      // Buffer is limited to 2 GiB, so any valid `pos` is a positive int32, so this is safe.
-      pos = (pos + COMMENT_SIZE) | 0;
-    } while (pos < endPos);
+      // Buffer is limited to 2 GiB, so any valid `pos32` is a positive int32, so this is safe.
+      pos32 = (pos32 + COMMENT_SIZE32) | 0;
+    } while (pos32 < endPos32);
   }
 
   // Check comments have valid ranges and are in ascending order
@@ -460,7 +469,6 @@ export function resetComments(): void {
 
   // Reset other state
   comments = null;
-  commentsUint8 = null;
   commentsInt32 = null;
   commentsLen = 0;
 
