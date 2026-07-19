@@ -156,10 +156,6 @@ let getTokenLocTemp: (this: Token) => Location;
 let getTokenValueTemp: (this: Token) => string;
 let getTokenRegexTemp: (this: Token) => Regex | undefined;
 
-// Setter for `#pos` private property on a `Token` class instance.
-// Copied into a `const` below after being defined in class static block.
-let setTokenPosTemp: (token: Token, pos: number) => void;
-
 // Reset `#range` field on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetRangeTemp: (token: Token) => void;
@@ -207,12 +203,15 @@ class Token {
   declare value: string;
   declare regex: Regex | undefined;
 
+  // `#pos` initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real buffer position.
   #pos: number = 0;
   #range: Range | null = null;
   #loc: Location | null = null;
   #regex: Regex | null = null;
 
-  constructor() {
+  constructor(pos: number) {
+    this.#pos = pos;
+
     // Define all properties as own getter properties (enumerable + configurable by default).
     // This makes `{...token}` spread them, and `JSON.stringify(token)` serialize them.
     // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
@@ -393,10 +392,6 @@ class Token {
       return (this.#regex = regexObj);
     };
 
-    setTokenPosTemp = function (token: Token, pos: number) {
-      token.#pos = pos;
-    };
-
     resetRangeTemp = (token: Token) => {
       token.#range = null;
     };
@@ -428,7 +423,6 @@ const getTokenLoc = getTokenLocTemp;
 const getTokenValue = getTokenValueTemp;
 const getTokenRegex = getTokenRegexTemp;
 
-const setTokenPos = setTokenPosTemp;
 const resetRange = resetRangeTemp;
 const resetLoc = resetLocTemp;
 const resetRegex = resetRegexTemp;
@@ -550,9 +544,17 @@ export function initTokensBuffer(): void {
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
   if (cachedTokens.length < tokensLen) {
+    // Loop on a local `pos` counter rather than calculating `pos = cachedTokens.length << TOKEN_SIZE_SHIFT`
+    // on each turn of the loop. `Array#push` is not inlined for arrays of objects, so testing `cachedTokens.length`
+    // in the loop condition would reload `.length` from the heap on every iteration.
+    const endPos = tokensLen << TOKEN_SIZE_SHIFT;
+    let pos = cachedTokens.length << TOKEN_SIZE_SHIFT;
     do {
-      cachedTokens.push(new Token());
-    } while (cachedTokens.length < tokensLen);
+      cachedTokens.push(new Token(pos));
+      // `| 0` truncates the sum to int32, so V8 drops the SMI overflow check on this add.
+      // Buffer is limited to 2 GiB, so any valid `pos` is a positive int32, so this is safe.
+      pos = (pos + TOKEN_SIZE) | 0;
+    } while (pos < endPos);
   }
 
   // Check buffer data has valid ranges and ascending order
@@ -600,13 +602,7 @@ function deserializeTokenIfNeeded(index: number): Token | null {
   // Mark token as deserialized, so it won't be deserialized again
   tokensUint8[flagPos] = FLAG_DESERIALIZED;
 
-  // Deserialize token into a cached `Token` object
-  const token = cachedTokens[index];
-
-  // Set `#pos` private property, which is used in getters
-  setTokenPos(token, pos);
-
-  return token;
+  return cachedTokens[index];
 }
 
 /**

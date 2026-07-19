@@ -103,10 +103,6 @@ let getCommentRangeTemp: (this: Comment) => Range;
 let getCommentLocTemp: (this: Comment) => Location;
 let getCommentValueTemp: (this: Comment) => string;
 
-// Setter for `#pos` private property on a `Comment` class instance.
-// Copied into a `const` below after being defined in class static block.
-let setCommentPosTemp: (comment: Comment, pos: number) => void;
-
 // Reset `#range` field on a `Comment` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetCommentRangeTemp: (comment: Comment) => void;
@@ -144,11 +140,14 @@ class Comment implements Span {
   declare loc: Location;
   declare value: string;
 
+  // `#pos` initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real buffer position.
   #pos: number = 0;
   #range: Range | null = null;
   #loc: Location | null = null;
 
-  constructor() {
+  constructor(pos: number) {
+    this.#pos = pos;
+
     // Define all properties as own getter properties (enumerable + configurable by default).
     // This makes `{...comment}` spread them, and `JSON.stringify(comment)` serialize them.
     // Note: `new Comment()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
@@ -279,10 +278,6 @@ class Comment implements Span {
       return sourceText.slice(start + 2, end - endSubtract);
     };
 
-    setCommentPosTemp = function (comment: Comment, pos: number) {
-      comment.#pos = pos;
-    };
-
     resetCommentRangeTemp = (comment: Comment) => {
       comment.#range = null;
     };
@@ -304,7 +299,6 @@ const getCommentRange = getCommentRangeTemp;
 const getCommentLoc = getCommentLocTemp;
 const getCommentValue = getCommentValueTemp;
 
-const setCommentPos = setCommentPosTemp;
 const resetCommentRange = resetCommentRangeTemp;
 const resetCommentLoc = resetCommentLocTemp;
 
@@ -405,9 +399,17 @@ export function initCommentsBuffer(): void {
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
   if (cachedComments.length < commentsLen) {
+    // Loop on a local `pos` counter rather than calculating `pos = cachedComments.length << COMMENT_SIZE_SHIFT`
+    // on each turn of the loop. `Array#push` is not inlined for arrays of objects, so testing `cachedComments.length`
+    // in the loop condition would reload `.length` from the heap on every iteration.
+    const endPos = commentsLen << COMMENT_SIZE_SHIFT;
+    let pos = cachedComments.length << COMMENT_SIZE_SHIFT;
     do {
-      cachedComments.push(new Comment());
-    } while (cachedComments.length < commentsLen);
+      cachedComments.push(new Comment(pos));
+      // `| 0` truncates the sum to int32, so V8 drops the SMI overflow check on this add.
+      // Buffer is limited to 2 GiB, so any valid `pos` is a positive int32, so this is safe.
+      pos = (pos + COMMENT_SIZE) | 0;
+    } while (pos < endPos);
   }
 
   // Check buffer data has valid ranges and ascending order
@@ -455,13 +457,7 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
   // Mark comment as deserialized, so it won't be deserialized again
   commentsUint8[flagPos] = FLAG_DESERIALIZED;
 
-  // Deserialize comment into a cached `Comment` object
-  const comment = cachedComments[index];
-
-  // Set `#pos` private property, which is used in getters
-  setCommentPos(comment, pos);
-
-  return comment;
+  return cachedComments[index];
 }
 
 /**
