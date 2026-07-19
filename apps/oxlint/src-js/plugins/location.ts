@@ -48,6 +48,24 @@ export interface LineColumn {
   column: number;
 }
 
+// Constants for side tables for comment/token `range` and `loc`.
+//
+// Side tables store `i32`s comprising a generation ID in top bits, and index into `cachedLocations` / `cachedRanges`
+// in the lower bits. The lower bits must be able to contain any valid index.
+// Limiting factor is the 2 GiB buffer which must contain all tokens and comments.
+// `Token` and `Comment` structs are both 16 bytes, which means a file can contain a maximum of 1 << 27
+// tokens or comments. Therefore we use bottom 27 bits for index, and top 5 bits for the generation ID.
+//
+// The `loc` pool (`cachedLocations`) is also drawn from by AST nodes, but the same 27-bit index
+// suffices - see the bound argument in `computeLoc`.
+const GEN_ID_BITS = 5;
+export const GEN_ID_MAX = (1 << GEN_ID_BITS) - 1;
+export const GEN_ID_SHIFT = 32 - GEN_ID_BITS;
+export const GEN_ID_MASK = GEN_ID_MAX << GEN_ID_SHIFT;
+export const RANGES_AND_LOCS_MAX_COUNT = 1 << GEN_ID_SHIFT;
+// Minimum size of a side table when first allocated, to avoid tiny buffers.
+export const MIN_SIDE_TABLE_SIZE = 16;
+
 // Pattern for splitting source text into lines
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 
@@ -60,14 +78,14 @@ export const lineStartIndices: number[] = [0];
 // Pool of `Location` objects, reused across files to reduce GC pressure.
 // Each `Location` contains `start` and `end` `LineColumn` sub-objects, which are also reused.
 // Never shrunk - `activeLocationsCount` tracks the active count to avoid freeing the backing store.
-const cachedLocations: Location[] = [];
-let activeLocationsCount = 0;
+export const cachedLocations: Location[] = [];
+export let activeLocationsCount = 0;
 
 // Pool of `Range` objects (`[start, end]` arrays), reused across files to reduce GC pressure.
 // Shared between tokens and comments (AST nodes hold their own `Range`s).
 // Never shrunk - `activeRangesCount` tracks the active count to avoid freeing the backing store.
-const cachedRanges: Range[] = [];
-let activeRangesCount = 0;
+export const cachedRanges: Range[] = [];
+export let activeRangesCount = 0;
 
 /**
  * Split source text into lines.
@@ -270,8 +288,8 @@ export function getRange(nodeOrToken: NodeOrToken): Range {
  * @returns Location of the node or token
  */
 // AST nodes, tokens, and comments handle lazy `loc` computation and caching via their respective getters
-// (AST nodes via `NodeProto` prototype getter which caches via `Object.defineProperty`,
-// tokens and comments via `Token` / `Comment` class getters which cache in private fields).
+// (AST nodes via `NodeProto` prototype getter which caches via `Object.defineProperty`, tokens and comments
+// via the `tokenLocIndices` / `commentLocIndices` side tables).
 // So accessing `.loc` gives the right behavior for all 3, including stable object identity.
 export function getLoc(nodeOrToken: NodeOrToken): Location {
   return nodeOrToken.loc;
@@ -280,8 +298,8 @@ export function getLoc(nodeOrToken: NodeOrToken): Location {
 /**
  * Calculate the `Location` for an AST node, and cache it on the node.
  *
- * Used in `loc` getter on AST nodes (not tokens or comments - they use their own caching
- * via `Token` / `Comment` class private fields).
+ * Used in `loc` getter on AST nodes (not tokens or comments - they cache in the
+ * `tokenLocIndices` / `commentLocIndices` side tables).
  *
  * Defines a `loc` property on the node with the calculated `Location`, so accessing `loc` twice on same node
  * results in the same object each time.
@@ -330,6 +348,20 @@ const LOC_DESCRIPTOR: PropertyDescriptor = {
  * @returns Location
  */
 export function computeLoc(start: number, end: number): Location {
+  // Comment/token side tables store this index in 27 bits, so it must stay below 1 << 27.
+  //
+  // Unlike `createRange`, this pool is also drawn from by AST nodes (`getNodeLoc`), so tokens and comments
+  // being 16 bytes each doesn't bound the count on its own. But every draw is for a distinct token, comment,
+  // or AST node, and each costs at least ~24 bytes of the 2 GiB buffer once its full footprint is counted.
+  // Cheapest is `EmptyStatement` (`;`) - 1 byte source + 16 byte token + 16 byte `Statement` enum
+  // + 16 byte `EmptyStatement` = 49 bytes, for 2 draws (token + node).
+  // So count cannot reach 2^31 / 24 = ~89M, comfortably below 2^27 (134M).
+  // The margin holds even if future layout changes shrink AST types (e.g. pointer compression).
+  debugAssert(
+    activeLocationsCount < RANGES_AND_LOCS_MAX_COUNT,
+    "`activeLocationsCount` must fit in 27 bits for the comment/token `loc` side tables",
+  );
+
   // All AST nodes, tokens and comments have `start < end`, with only one exception:
   // `Program` node can have `start === end` if it has no directives or statements - either 0-length file,
   // or purely comments and/or whitespace and/or hashbang. But `start > end` is impossible.
@@ -427,6 +459,12 @@ export function computeLoc(start: number, end: number): Location {
  * @returns Range
  */
 export function createRange(start: number, end: number): Range {
+  // Comment/token side tables store this index in 27 bits, so it must stay below 1 << 27
+  debugAssert(
+    activeRangesCount < RANGES_AND_LOCS_MAX_COUNT,
+    "`activeRangesCount` must fit in 27 bits for the comment/token `range` side tables",
+  );
+
   // Reuse a cached `Range` object if available, otherwise create a new one.
   // Note: The comparison `activeRangesCount < cachedRanges.length` must be this way around
   // so that V8 can remove the bounds check on `cachedRanges[activeRangesCount]`.

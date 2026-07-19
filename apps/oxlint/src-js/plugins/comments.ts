@@ -12,7 +12,19 @@ import {
   COMMENT_SHEBANG_KIND,
   DATA_POINTER_POS_32,
 } from "../generated/constants.ts";
-import { computeLoc, createRange } from "./location.ts";
+import {
+  activeLocationsCount,
+  activeRangesCount,
+  cachedLocations,
+  cachedRanges,
+  computeLoc,
+  createRange,
+  GEN_ID_MASK,
+  GEN_ID_MAX,
+  GEN_ID_SHIFT,
+  MIN_SIDE_TABLE_SIZE,
+  RANGES_AND_LOCS_MAX_COUNT,
+} from "./location.ts";
 import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -66,15 +78,31 @@ export const cachedComments: Comment[] = [];
 // Reused for next file if next file has fewer comments than the previous file (by truncating to correct length).
 let previousComments: Comment[] = [];
 
-// Comments whose `range` property has been accessed, and therefore needs clearing on reset.
-// Never shrunk - `activeCommentsWithRangeCount` tracks the active count to avoid freeing the backing store.
-const commentsWithRange: Comment[] = [];
-let activeCommentsWithRangeCount = 0;
+// Side tables caching each comment's `range` and `loc`, keyed by comment index (`#pos32 >> COMMENT_SIZE32_SHIFT`).
+//
+// Each entry stores index into `cachedRanges` / `cachedLocations` pool in bits 0-26 and a gen ID in bits 27-31.
+//
+// An entry is valid only if its gen ID equals the current gen ID (`commentRangesGenId` / `commentLocsGenId`).
+// Gen IDs cycle through 1-31. 0 is reserved - it's the value of a zeroed (or never-written) entry,
+// so a zeroed entry can never validate (`resetComments` zeroes all entries).
+//
+// `range` and `loc` are fully independent (separate gen IDs, and reset), but the two tables always
+// have the same length - they're grown together in `initCommentsBuffer`.
+let commentRangeIndices = EMPTY_INT32_ARRAY;
+let commentRangesGenId = 1;
+let commentRangesGenIdShifted = 1 << GEN_ID_SHIFT;
+// `true` if any comment `range` was accessed for the current file.
+let commentRangesAccessed = false;
+// Max `commentsLen` across files in which comment `range`s were accessed, since the table was last reset.
+let maxCommentRangesLen = 0;
 
-// Comments whose `loc` property has been accessed, and therefore needs clearing on reset.
-// Never shrunk - `activeCommentsWithLocCount` tracks the active count to avoid freeing the backing store.
-const commentsWithLoc: Comment[] = [];
-let activeCommentsWithLocCount = 0;
+let commentLocIndices = EMPTY_INT32_ARRAY;
+let commentLocsGenId = 1;
+let commentLocsGenIdShifted = 1 << GEN_ID_SHIFT;
+// `true` if any comment `loc` was accessed for the current file.
+let commentLocsAccessed = false;
+// Max `commentsLen` across files in which comment `loc`s were accessed, since the table was last reset.
+let maxCommentLocsLen = 0;
 
 // Empty comments array.
 // Reused for all files which don't have any comments. Frozen to avoid rules mutating it.
@@ -113,33 +141,21 @@ let getCommentRangeTemp: (this: Comment) => Range;
 let getCommentLocTemp: (this: Comment) => Location;
 let getCommentValueTemp: (this: Comment) => string;
 
-// Reset `#range` field on a `Comment` class instance.
-// Copied into a `const` below after being defined in class static block.
-let resetCommentRangeTemp: (comment: Comment) => void;
-
-// Reset `#loc` field on a `Comment` class instance.
-// Copied into a `const` below after being defined in class static block.
-let resetCommentLocTemp: (comment: Comment) => void;
-
-// Get `#range` field on a `Comment` class instance.
-// Only used in debug build (tests).
-let getCommentPrivateRange: (comment: Comment) => Range | null;
-
-// Get `#loc` field on a `Comment` class instance.
-// Only used in debug build (tests).
-let getCommentPrivateLoc: (comment: Comment) => Location | null;
-
 /**
  * Comment class.
  *
- * `range` and `loc` are defined as own accessor properties via `__defineGetter__` in the constructor,
- * using shared getter functions (`getCommentRange` / `getCommentLoc`). This makes them own enumerable
+ * All properties are defined as own accessor properties via `__defineGetter__` in the constructor,
+ * using shared getter functions (e.g. `getCommentType`). This makes them own enumerable
  * properties, so `{...comment}` spreads them and `JSON.stringify(comment)` serializes them.
  *
- * The computed `range` array and `Location` value are cached in the private `#range` / `#loc` fields
- * on first access, so accessing either twice returns the same object. All instances share the same
- * getter functions, keeping the V8 hidden class transition identical across instances.
- * Reset only clears the `#range` and `#loc` fields.
+ * Both `range` and `loc` cache a pool index in a side table (`commentRangeIndices` / `commentLocIndices`),
+ * keyed by comment index and validated by gen ID (see the getters), so accessing either twice returns the
+ * same object.
+ *
+ * No value is cached on the instance itself - it holds only `#pos32`.
+ *
+ * All instances share the same getter functions, keeping the V8 hidden class transition identical across instances.
+ * Reset bumps the gen IDs to invalidate both side tables.
  */
 class Comment implements Span {
   // All defined with `__defineGetter__` in constructor
@@ -153,8 +169,6 @@ class Comment implements Span {
   // `#pos32` is the index of the comment's first `i32` in `commentsInt32` (a word index, not a byte offset).
   // Initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real position.
   #pos32: number = 0;
-  #range: Range | null = null;
-  #loc: Location | null = null;
 
   constructor(pos32: number) {
     this.#pos32 = pos32;
@@ -218,22 +232,20 @@ class Comment implements Span {
         "`Comment` object's `range` field accessed after file finished linting",
       );
 
-      const range = this.#range;
-      if (range !== null) return range;
-
-      // Store comment in `commentsWithRange` array. `resetComments` will clear the `#range` property.
-      // Note: The comparison `activeCommentsWithRangeCount < commentsWithRange.length` must be this way around
-      // so that V8 can remove the bounds check on `commentsWithRange[activeCommentsWithRangeCount]`.
-      // `commentsWithRange.length > activeCommentsWithRangeCount` would *not* remove the bounds check in Maglev compiler.
-      if (activeCommentsWithRangeCount < commentsWithRange.length) {
-        commentsWithRange[activeCommentsWithRangeCount] = this;
-      } else {
-        commentsWithRange.push(this);
-      }
-      activeCommentsWithRangeCount++;
-
+      // Check the side table for a `Range` created by an earlier access in this file.
+      // Entry layout: `cachedRanges` pool index in bits 0-26, gen ID in bits 27-31.
+      // XOR with the current shifted gen ID zeroes the gen bits if (and only if) the entry was written
+      // for the current file - what remains is then the pool index itself.
+      // Zeroed entries never match - gen IDs cycle through 1-31, and a zeroed entry has gen ID 0.
       const pos32 = this.#pos32;
-      return (this.#range = createRange(commentsInt32[pos32], commentsInt32[pos32 + 1]));
+      const index = pos32 >> COMMENT_SIZE32_SHIFT;
+      const rangeIndex = commentRangeIndices[index] ^ commentRangesGenIdShifted;
+      if ((rangeIndex & GEN_ID_MASK) === 0) return cachedRanges[rangeIndex];
+
+      // `activeRangesCount` is the index the new `Range` will occupy in `cachedRanges`
+      commentRangeIndices[index] = activeRangesCount | commentRangesGenIdShifted;
+      commentRangesAccessed = true;
+      return createRange(commentsInt32[pos32], commentsInt32[pos32 + 1]);
     };
 
     getCommentLocTemp = function (this: Comment): Location {
@@ -245,24 +257,20 @@ class Comment implements Span {
         "`Comment` object's `loc` field accessed after file finished linting",
       );
 
-      const loc = this.#loc;
-      if (loc !== null) return loc;
+      // Check the side table for a `Location` created by an earlier access in this file.
+      // Entry layout: `cachedLocations` pool index in bits 0-26, gen ID in bits 27-31.
+      // XOR with the current shifted gen ID zeroes the gen bits if (and only if) the entry was written
+      // for the current file - what remains is then the pool index itself.
+      // Zeroed entries never match - gen IDs cycle through 1-31, and a zeroed entry has gen ID 0.
+      const pos32 = this.#pos32;
+      const index = pos32 >> COMMENT_SIZE32_SHIFT;
+      const locIndex = commentLocIndices[index] ^ commentLocsGenIdShifted;
+      if ((locIndex & GEN_ID_MASK) === 0) return cachedLocations[locIndex];
 
-      // Store comment in `commentsWithLoc` array. `resetComments` will clear the `#loc` property.
-      // Note: The comparison `activeCommentsWithLocCount < commentsWithLoc.length` must be this way around
-      // so that V8 can remove the bounds check on `commentsWithLoc[activeCommentsWithLocCount]`.
-      // `commentsWithLoc.length > activeCommentsWithLocCount` would *not* remove the bounds check in Maglev compiler.
-      if (activeCommentsWithLocCount < commentsWithLoc.length) {
-        commentsWithLoc[activeCommentsWithLocCount] = this;
-      } else {
-        commentsWithLoc.push(this);
-      }
-      activeCommentsWithLocCount++;
-
-      const pos32 = this.#pos32,
-        start = commentsInt32[pos32],
-        end = commentsInt32[pos32 + 1];
-      return (this.#loc = computeLoc(start, end));
+      // `activeLocationsCount` is the index the new `Location` will occupy in `cachedLocations`
+      commentLocIndices[index] = activeLocationsCount | commentLocsGenIdShifted;
+      commentLocsAccessed = true;
+      return computeLoc(commentsInt32[pos32], commentsInt32[pos32 + 1]);
     };
 
     getCommentValueTemp = function (this: Comment): string {
@@ -286,17 +294,6 @@ class Comment implements Span {
         endSubtract = (BLOCK_COMMENT_KINDS_BITMAP >> kind) & 2;
       return sourceText.slice(start + 2, end - endSubtract);
     };
-
-    resetCommentRangeTemp = (comment: Comment) => {
-      comment.#range = null;
-    };
-
-    resetCommentLocTemp = (comment: Comment) => {
-      comment.#loc = null;
-    };
-
-    if (DEBUG) getCommentPrivateRange = (comment: Comment) => comment.#range;
-    if (DEBUG) getCommentPrivateLoc = (comment: Comment) => comment.#loc;
   }
 }
 
@@ -307,9 +304,6 @@ const getCommentEnd = getCommentEndTemp;
 const getCommentRange = getCommentRangeTemp;
 const getCommentLoc = getCommentLocTemp;
 const getCommentValue = getCommentValueTemp;
-
-const resetCommentRange = resetCommentRangeTemp;
-const resetCommentLoc = resetCommentLocTemp;
 
 /**
  * Build the `comments` array (a slice of `cachedComments`).
@@ -364,7 +358,8 @@ export function initCommentsArray(): void {
 /**
  * Initialize typed array views over the comments region of the buffer.
  *
- * Populates `commentsInt32` and `commentsLen`, and grows `cachedComments` if needed.
+ * Populates `commentsInt32` and `commentsLen`, and grows `cachedComments`
+ * and the `commentRangeIndices` / `commentLocIndices` side tables if needed.
  */
 export function initCommentsBuffer(): void {
   debugAssert(commentsInt32 === null, "Comments buffer already initialized");
@@ -409,6 +404,23 @@ export function initCommentsBuffer(): void {
       // Buffer is limited to 2 GiB, so any valid `pos32` is a positive int32, so this is safe.
       pos32 = (pos32 + COMMENT_SIZE32) | 0;
     } while (pos32 < endPos32);
+
+    // Grow the `range` and `loc` side tables, so they always have an entry for every comment.
+    // The two tables always have the same length - both start as `EMPTY_INT32_ARRAY` and are only ever
+    // grown here, together - so a single check and size covers both.
+    // `Int32Array`s can't grow in place, so allocate new ones, doubling to amortize growth across files,
+    // capped at max `RANGES_AND_LOCS_MAX_COUNT` (the most entries that could ever be required),
+    // and minimum `MIN_SIDE_TABLE_SIZE` (to avoid tiny buffers).
+    const sideTablesLen = commentRangeIndices.length;
+    if (sideTablesLen < commentsLen) {
+      const minSize =
+        sideTablesLen === 0
+          ? MIN_SIDE_TABLE_SIZE
+          : Math.min(sideTablesLen * 2, RANGES_AND_LOCS_MAX_COUNT);
+      const newSize = Math.max(commentsLen, minSize);
+      commentRangeIndices = new Int32Array(newSize);
+      commentLocIndices = new Int32Array(newSize);
+    }
   }
 
   // Check comments have valid ranges and are in ascending order
@@ -443,8 +455,8 @@ function debugCheckValidRanges(): void {
 /**
  * Reset comments after file has been linted.
  *
- * Clears cached `loc` on comments that had it accessed, so the getter
- * will recalculate it when the comment is reused for a different file.
+ * Bumps the `range` and `loc` gen IDs to invalidate their side tables, so the getters recompute
+ * and draw fresh pool objects when a comment is reused for a different file.
  */
 export function resetComments(): void {
   // Early exit if comments were never accessed (e.g. no rules used comments-related methods)
@@ -453,19 +465,44 @@ export function resetComments(): void {
     return;
   }
 
-  // Reset `#range` on comments where `range` has been accessed
-  for (let i = 0; i < activeCommentsWithRangeCount; i++) {
-    resetCommentRange(commentsWithRange[i]);
+  // If any comment `range`s were accessed for this file, bump the gen ID, which invalidates all entries
+  // in `commentRangeIndices` (the `Range`s they point to go back in the pool for reuse by the next file).
+  // Files where no comment `range` was accessed leave the gen ID alone - entries can only have been
+  // written in files that bumped it, so every live entry's gen ID stays behind the current one.
+  // After the gen ID has run through all 31 values, zero the table's used region and start over at 1.
+  // `maxCommentRangesLen` bounds the region that can contain entries written since the last zeroing.
+  if (commentRangesAccessed === true) {
+    if (commentsLen > maxCommentRangesLen) maxCommentRangesLen = commentsLen;
+
+    if (commentRangesGenId === GEN_ID_MAX) {
+      commentRangeIndices.fill(0, 0, maxCommentRangesLen);
+      commentRangesGenId = 1;
+      maxCommentRangesLen = 0;
+    } else {
+      commentRangesGenId++;
+    }
+
+    commentRangesGenIdShifted = commentRangesGenId << GEN_ID_SHIFT;
+    commentRangesAccessed = false;
   }
 
-  activeCommentsWithRangeCount = 0;
+  // Same as the `range` block above, but for `loc`.
+  // Bump the independent `loc` gen ID (or wrap and zero the used region at `GEN_ID_MAX`),
+  // invalidating all entries in `commentLocIndices`.
+  if (commentLocsAccessed === true) {
+    if (commentsLen > maxCommentLocsLen) maxCommentLocsLen = commentsLen;
 
-  // Reset `#loc` on comments where `loc` has been accessed
-  for (let i = 0; i < activeCommentsWithLocCount; i++) {
-    resetCommentLoc(commentsWithLoc[i]);
+    if (commentLocsGenId === GEN_ID_MAX) {
+      commentLocIndices.fill(0, 0, maxCommentLocsLen);
+      commentLocsGenId = 1;
+      maxCommentLocsLen = 0;
+    } else {
+      commentLocsGenId++;
+    }
+
+    commentLocsGenIdShifted = commentLocsGenId << GEN_ID_SHIFT;
+    commentLocsAccessed = false;
   }
-
-  activeCommentsWithLocCount = 0;
 
   // Reset other state
   comments = null;
@@ -476,21 +513,18 @@ export function resetComments(): void {
 }
 
 /**
- * Check that all comment objects have been cleared.
+ * Check that the comment side tables were invalidated for this file (gen IDs bumped, accessed flags reset).
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugAssertAllCommentsCleared(): void {
   if (!DEBUG) return;
 
-  // Check all cached comments have `#range: null` and `#loc: null`
-  for (let i = 0; i < cachedComments.length; i++) {
-    const comment = cachedComments[i];
-    if (getCommentPrivateRange(comment) !== null) {
-      throw new Error(`Comment ${i} has not had \`#range\` cleared`);
-    }
-    if (getCommentPrivateLoc(comment) !== null) {
-      throw new Error(`Comment ${i} has not had \`#loc\` cleared`);
-    }
+  // Check both comment side tables were invalidated for this file (gen IDs bumped, flags reset)
+  if (commentRangesAccessed !== false) {
+    throw new Error("`commentRangesAccessed` was not reset");
+  }
+  if (commentLocsAccessed !== false) {
+    throw new Error("`commentLocsAccessed` was not reset");
   }
 }

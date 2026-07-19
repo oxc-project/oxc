@@ -3,8 +3,21 @@
  */
 
 import { buffer, initSourceText, sourceText } from "./source_code.ts";
-import { computeLoc, createRange } from "./location.ts";
+import {
+  activeLocationsCount,
+  activeRangesCount,
+  cachedLocations,
+  cachedRanges,
+  computeLoc,
+  createRange,
+  GEN_ID_MASK,
+  GEN_ID_MAX,
+  GEN_ID_SHIFT,
+  MIN_SIDE_TABLE_SIZE,
+  RANGES_AND_LOCS_MAX_COUNT,
+} from "./location.ts";
 import { COMMENT_SIZE, TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
+import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Range, Span } from "./location.ts";
@@ -108,15 +121,31 @@ export const cachedTokens: Token[] = [];
 // Reused for next file if next file has less tokens than the previous file (by truncating it to correct length).
 let previousTokens: Token[] = [];
 
-// Tokens whose `range` property has been accessed, and therefore needs clearing on reset.
-// Never shrunk - `activeTokensWithRangeCount` tracks the active count to avoid freeing the backing store.
-const tokensWithRange: Token[] = [];
-let activeTokensWithRangeCount = 0;
+// Side tables caching each token's `range` and `loc`, keyed by token index (`#pos32 >> TOKEN_SIZE32_SHIFT`).
+//
+// Each entry stores index into `cachedRanges` / `cachedLocations` pool in bits 0-26 and a gen ID in bits 27-31.
+//
+// An entry is valid only if its gen ID equals the current gen ID (`tokenRangesGenId` / `tokenLocsGenId`).
+// Gen IDs cycle through 1-31. 0 is reserved - it's the value of a zeroed (or never-written) entry,
+// so a zeroed entry can never validate (`resetTokens` zeroes all entries).
+//
+// `range` and `loc` are fully independent (separate gen IDs, and reset), but the two tables always
+// have the same length - they're grown together in `initTokensBuffer`.
+let tokenRangeIndices = EMPTY_INT32_ARRAY;
+let tokenRangesGenId = 1;
+let tokenRangesGenIdShifted = 1 << GEN_ID_SHIFT;
+// `true` if any token `range` was accessed for the current file.
+let tokenRangesAccessed = false;
+// Max `tokensLen` across files in which token `range`s were accessed, since the table was last reset.
+let maxTokenRangesLen = 0;
 
-// Tokens whose `loc` property has been accessed, and therefore needs clearing on reset.
-// Never shrunk - `activeTokensWithLocCount` tracks the active count to avoid freeing the backing store.
-const tokensWithLoc: Token[] = [];
-let activeTokensWithLocCount = 0;
+let tokenLocIndices = EMPTY_INT32_ARRAY;
+let tokenLocsGenId = 1;
+let tokenLocsGenIdShifted = 1 << GEN_ID_SHIFT;
+// `true` if any token `loc` was accessed for the current file.
+let tokenLocsAccessed = false;
+// Max `tokensLen` across files in which token `loc`s were accessed, since the table was last reset.
+let maxTokenLocsLen = 0;
 
 // Cached `Regex` objects, reused across files.
 // `regexIndices.size` is the index of the next `Regex` object available for reuse (not already in use in this file).
@@ -146,35 +175,23 @@ let getTokenLocTemp: (this: Token) => Location;
 let getTokenValueTemp: (this: Token) => string;
 let getTokenRegexTemp: (this: Token) => Regex | undefined;
 
-// Reset `#range` field on a `Token` class instance.
-// Copied into a `const` below after being defined in class static block.
-let resetRangeTemp: (token: Token) => void;
-
-// Reset `#loc` field on a `Token` class instance.
-// Copied into a `const` below after being defined in class static block.
-let resetLocTemp: (token: Token) => void;
-
-// Get `#range` field on a `Token` class instance.
-// Only used in debug build (tests).
-let getTokenPrivateRange: (token: Token) => Range | null;
-
-// Get `#loc` field on a `Token` class instance.
-// Only used in debug build (tests).
-let getTokenPrivateLoc: (token: Token) => Location | null;
-
 /**
- * Token implementation with lazy `range` and `loc` caching via private fields.
+ * Token class.
  *
- * `range`, `loc`, and `regex` are defined as own accessor properties via `__defineGetter__` in the constructor,
- * using shared getter functions (`getTokenRange` / `getTokenLoc` / `getTokenRegex`). This makes them own
- * enumerable properties, so `{...token}` spreads them and `JSON.stringify(token)` serializes them.
+ * All properties are defined as own accessor properties via `__defineGetter__` in the constructor,
+ * using shared getter functions (e.g. `getTokenType`). This makes them own enumerable
+ * properties, so `{...token}` spreads them and `JSON.stringify(token)` serializes them.
  *
- * The computed `range` array and `Location` value are cached in the private `#range` / `#loc` fields
- * on first access, so accessing either twice returns the same object. `Regex` objects are cached
- * in the `regexIndices` map instead, keyed by `#pos32`, keeping them out of `Token` objects entirely.
+ * Both `range` and `loc` cache a pool index in a side table (`tokenRangeIndices` / `tokenLocIndices`),
+ * keyed by token index and validated by gen ID (see the getters), so accessing either twice returns the
+ * same object.
+ *
+ * `Regex` objects are cached in the `regexIndices` map, keyed by `#pos32`.
+ *
+ * No value is cached on the instance itself - it holds only `#pos32`.
  *
  * All instances share the same getter functions, keeping the V8 hidden class transition identical across instances.
- * Reset only clears the `#range` and `#loc` fields, and clears `regexIndices` map.
+ * Reset bumps the gen IDs to invalidate both side tables, and clears the `regexIndices` map.
  */
 class Token {
   // All defined with `__defineGetter__` in constructor
@@ -189,8 +206,6 @@ class Token {
   // `#pos32` is the index of the token's first `i32` in `tokensInt32` (a word index, not a byte offset).
   // Initialized to `0` so V8 keeps it as an SMI. Constructor overwrites it with the real position.
   #pos32: number = 0;
-  #range: Range | null = null;
-  #loc: Location | null = null;
 
   constructor(pos32: number) {
     this.#pos32 = pos32;
@@ -255,22 +270,20 @@ class Token {
         "`Token` object's `range` field accessed after file finished linting",
       );
 
-      const range = this.#range;
-      if (range !== null) return range;
-
-      // Store token in `tokensWithRange` array. `resetTokens` will clear the `#range` property.
-      // Note: The comparison `activeTokensWithRangeCount < tokensWithRange.length` must be this way around
-      // so that V8 can remove the bounds check on `tokensWithRange[activeTokensWithRangeCount]`.
-      // `tokensWithRange.length > activeTokensWithRangeCount` would *not* remove the bounds check in Maglev compiler.
-      if (activeTokensWithRangeCount < tokensWithRange.length) {
-        tokensWithRange[activeTokensWithRangeCount] = this;
-      } else {
-        tokensWithRange.push(this);
-      }
-      activeTokensWithRangeCount++;
-
+      // Check the side table for a `Range` created by an earlier access in this file.
+      // Entry layout: `cachedRanges` pool index in bits 0-26, gen ID in bits 27-31.
+      // XOR with the current shifted gen ID zeroes the gen bits if (and only if) the entry was written
+      // for the current file - what remains is then the pool index itself.
+      // Zeroed entries never match - gen IDs cycle through 1-31, and a zeroed entry has gen ID 0.
       const pos32 = this.#pos32;
-      return (this.#range = createRange(tokensInt32[pos32], tokensInt32[pos32 + 1]));
+      const index = pos32 >> TOKEN_SIZE32_SHIFT;
+      const rangeIndex = tokenRangeIndices[index] ^ tokenRangesGenIdShifted;
+      if ((rangeIndex & GEN_ID_MASK) === 0) return cachedRanges[rangeIndex];
+
+      // `activeRangesCount` is the index the new `Range` will occupy in `cachedRanges`
+      tokenRangeIndices[index] = activeRangesCount | tokenRangesGenIdShifted;
+      tokenRangesAccessed = true;
+      return createRange(tokensInt32[pos32], tokensInt32[pos32 + 1]);
     };
 
     getTokenLocTemp = function (this: Token): Location {
@@ -282,24 +295,20 @@ class Token {
         "`Token` object's `loc` field accessed after file finished linting",
       );
 
-      const loc = this.#loc;
-      if (loc !== null) return loc;
+      // Check the side table for a `Location` created by an earlier access in this file.
+      // Entry layout: `cachedLocations` pool index in bits 0-26, gen ID in bits 27-31.
+      // XOR with the current shifted gen ID zeroes the gen bits if (and only if) the entry was written
+      // for the current file - what remains is then the pool index itself.
+      // Zeroed entries never match - gen IDs cycle through 1-31, and a zeroed entry has gen ID 0.
+      const pos32 = this.#pos32;
+      const index = pos32 >> TOKEN_SIZE32_SHIFT;
+      const locIndex = tokenLocIndices[index] ^ tokenLocsGenIdShifted;
+      if ((locIndex & GEN_ID_MASK) === 0) return cachedLocations[locIndex];
 
-      // Store token in `tokensWithLoc` array. `resetTokens` will clear the `#loc` property.
-      // Note: The comparison `activeTokensWithLocCount < tokensWithLoc.length` must be this way around
-      // so that V8 can remove the bounds check on `tokensWithLoc[activeTokensWithLocCount]`.
-      // `tokensWithLoc.length > activeTokensWithLocCount` would *not* remove the bounds check in Maglev compiler.
-      if (activeTokensWithLocCount < tokensWithLoc.length) {
-        tokensWithLoc[activeTokensWithLocCount] = this;
-      } else {
-        tokensWithLoc.push(this);
-      }
-      activeTokensWithLocCount++;
-
-      const pos32 = this.#pos32,
-        start = tokensInt32[pos32],
-        end = tokensInt32[pos32 + 1];
-      return (this.#loc = computeLoc(start, end));
+      // `activeLocationsCount` is the index the new `Location` will occupy in `cachedLocations`
+      tokenLocIndices[index] = activeLocationsCount | tokenLocsGenIdShifted;
+      tokenLocsAccessed = true;
+      return computeLoc(tokensInt32[pos32], tokensInt32[pos32 + 1]);
     };
 
     getTokenValueTemp = function (this: Token): string {
@@ -376,17 +385,6 @@ class Token {
 
       return regexObj;
     };
-
-    resetRangeTemp = (token: Token) => {
-      token.#range = null;
-    };
-
-    resetLocTemp = (token: Token) => {
-      token.#loc = null;
-    };
-
-    if (DEBUG) getTokenPrivateRange = (token: Token) => token.#range;
-    if (DEBUG) getTokenPrivateLoc = (token: Token) => token.#loc;
   }
 }
 
@@ -398,9 +396,6 @@ const getTokenRange = getTokenRangeTemp;
 const getTokenLoc = getTokenLocTemp;
 const getTokenValue = getTokenValueTemp;
 const getTokenRegex = getTokenRegexTemp;
-
-const resetRange = resetRangeTemp;
-const resetLoc = resetLocTemp;
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
@@ -492,7 +487,8 @@ export function initTokensArray(): void {
 /**
  * Initialize typed array views over the tokens region of the buffer.
  *
- * Populates `tokensInt32` and `tokensLen`, and grows `cachedTokens` if needed.
+ * Populates `tokensInt32` and `tokensLen`, and grows `cachedTokens` and the
+ * `tokenRangeIndices` / `tokenLocIndices` side tables if needed.
  */
 export function initTokensBuffer(): void {
   debugAssert(tokensInt32 === null, "Tokens buffer already initialized");
@@ -529,6 +525,23 @@ export function initTokensBuffer(): void {
       // Buffer is limited to 2 GiB, so any valid `pos32` is a positive int32, so this is safe.
       pos32 = (pos32 + TOKEN_SIZE32) | 0;
     } while (pos32 < endPos32);
+
+    // Grow the `range` and `loc` side tables, so they always have an entry for every token.
+    // The two tables always have the same length - both start as `EMPTY_INT32_ARRAY` and are only ever
+    // grown here, together - so a single check and size covers both.
+    // `Int32Array`s can't grow in place, so allocate new ones, doubling to amortize growth across files,
+    // capped at max `RANGES_AND_LOCS_MAX_COUNT` (the most entries that could ever be required),
+    // and minimum `MIN_SIDE_TABLE_SIZE` (to avoid tiny buffers).
+    const sideTablesLen = tokenRangeIndices.length;
+    if (sideTablesLen < tokensLen) {
+      const minSize =
+        sideTablesLen === 0
+          ? MIN_SIDE_TABLE_SIZE
+          : Math.min(sideTablesLen * 2, RANGES_AND_LOCS_MAX_COUNT);
+      const newSize = Math.max(tokensLen, minSize);
+      tokenRangeIndices = new Int32Array(newSize);
+      tokenLocIndices = new Int32Array(newSize);
+    }
   }
 
   // Check tokens have valid ranges and are in ascending order
@@ -578,8 +591,8 @@ function debugCheckValidRanges(): void {
 /**
  * Reset tokens after file has been linted.
  *
- * Clears cached `loc` on tokens that had it accessed, so the getter
- * will recalculate it when the token is reused for a different file.
+ * Bumps the `range` and `loc` gen IDs to invalidate their side tables, so the getters recompute
+ * and draw fresh pool objects when a token is reused for a different file.
  */
 export function resetTokens() {
   // Early exit if tokens were never accessed (e.g. no rules used tokens-related methods)
@@ -588,19 +601,44 @@ export function resetTokens() {
     return;
   }
 
-  // Reset `#range` on tokens where `range` has been accessed
-  for (let i = 0; i < activeTokensWithRangeCount; i++) {
-    resetRange(tokensWithRange[i]);
+  // If any token `range`s were accessed for this file, bump the gen ID, which invalidates all entries
+  // in `tokenRangeIndices` (the `Range`s they point to go back in the pool for reuse by the next file).
+  // Files where no token `range` was accessed leave the gen ID alone - entries can only have been
+  // written in files that bumped it, so every live entry's gen ID stays behind the current one.
+  // After the gen ID has run through all 31 values, zero the table's used region and start over at 1.
+  // `maxTokenRangesLen` bounds the region that can contain entries written since the last zeroing.
+  if (tokenRangesAccessed === true) {
+    if (tokensLen > maxTokenRangesLen) maxTokenRangesLen = tokensLen;
+
+    if (tokenRangesGenId === GEN_ID_MAX) {
+      tokenRangeIndices.fill(0, 0, maxTokenRangesLen);
+      tokenRangesGenId = 1;
+      maxTokenRangesLen = 0;
+    } else {
+      tokenRangesGenId++;
+    }
+
+    tokenRangesGenIdShifted = tokenRangesGenId << GEN_ID_SHIFT;
+    tokenRangesAccessed = false;
   }
 
-  activeTokensWithRangeCount = 0;
+  // Same as the `range` block above, but for `loc`.
+  // Bump the independent `loc` gen ID (or wrap and zero the used region at `GEN_ID_MAX`),
+  // invalidating all entries in `tokenLocIndices`.
+  if (tokenLocsAccessed === true) {
+    if (tokensLen > maxTokenLocsLen) maxTokenLocsLen = tokensLen;
 
-  // Reset `#loc` on tokens where `loc` has been accessed
-  for (let i = 0; i < activeTokensWithLocCount; i++) {
-    resetLoc(tokensWithLoc[i]);
+    if (tokenLocsGenId === GEN_ID_MAX) {
+      tokenLocIndices.fill(0, 0, maxTokenLocsLen);
+      tokenLocsGenId = 1;
+      maxTokenLocsLen = 0;
+    } else {
+      tokenLocsGenId++;
+    }
+
+    tokenLocsGenIdShifted = tokenLocsGenId << GEN_ID_SHIFT;
+    tokenLocsAccessed = false;
   }
-
-  activeTokensWithLocCount = 0;
 
   // Clear `pattern` and `flags` on the `Regex` objects used for this file, to release source text string slices,
   // and clear the map from tokens to objects.
@@ -625,22 +663,20 @@ export function resetTokens() {
 }
 
 /**
- * Check that all token and regex objects have been cleared.
+ * Check that the token side tables were invalidated for this file (gen IDs bumped, accessed flags reset),
+ * and all regex objects have been cleared.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugAssertAllTokensCleared(): void {
   if (!DEBUG) return;
 
-  // Check all cached tokens have `#range: null` and `#loc: null`
-  for (let i = 0; i < cachedTokens.length; i++) {
-    const token = cachedTokens[i];
-    if (getTokenPrivateRange(token) !== null) {
-      throw new Error(`Token ${i} has not had \`#range\` cleared`);
-    }
-    if (getTokenPrivateLoc(token) !== null) {
-      throw new Error(`Token ${i} has not had \`#loc\` cleared`);
-    }
+  // Check both token side tables were invalidated for this file (gen IDs bumped, flags reset)
+  if (tokenRangesAccessed !== false) {
+    throw new Error("`tokenRangesAccessed` was not reset");
+  }
+  if (tokenLocsAccessed !== false) {
+    throw new Error("`tokenLocsAccessed` was not reset");
   }
 
   // Check the map from tokens to `Regex` objects has been cleared
