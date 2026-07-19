@@ -48,6 +48,7 @@ rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 syn = { workspace = true, features = ["extra-traits", "full", "parsing", "printing"] }
+syn3 = { package = "syn", version = "3", features = ["full", "parsing", "printing"] }
 toml = { workspace = true }
 
 [features]
