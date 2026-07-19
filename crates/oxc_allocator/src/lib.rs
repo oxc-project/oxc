@@ -44,6 +44,11 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
+mod boxed_slice;
+// PROTOTYPE: the pointer-compression cage only exists on 64-bit targets. On 32-bit (wasm32),
+// `Box` stays a native pointer and arena chunks come from the global allocator (see `arena`).
+#[cfg(target_pointer_width = "64")]
+mod cage;
 mod clone_in;
 mod convert;
 #[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
@@ -75,6 +80,7 @@ pub use allocator::Allocator;
 #[cfg(feature = "bitset")]
 pub use bitset::BitSet;
 pub use boxed::{Box, Box as ArenaBox};
+pub use boxed_slice::{BoxedSlice, BoxedSlice as ArenaBoxedSlice};
 pub use clone_in::{CloneIn, CloneInSemanticIds};
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::{HashMap, HashMap as ArenaHashMap};

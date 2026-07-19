@@ -1,6 +1,6 @@
 //! `Drop` implementation for `Arena`, and `reset` method.
 
-use std::{alloc, ptr::NonNull};
+use std::ptr::NonNull;
 
 use super::{Arena, ChunkFooter, utils::is_pointer_aligned_to};
 
@@ -117,7 +117,7 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
     let (backing_alloc_ptr, layout, is_fixed_size) = {
         // SAFETY: Caller guarantees that `footer_ptr` points to a valid `ChunkFooter`
         let footer = unsafe { footer_ptr.as_ref() };
-        (footer.backing_alloc_ptr.as_ptr(), footer.layout, footer.is_fixed_size)
+        (footer.backing_alloc_ptr, footer.layout, footer.is_fixed_size)
     };
 
     // If is a fixed-size allocator, delegate to `dealloc_fixed_size_arena_chunk`
@@ -155,7 +155,15 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     crate::tracking::start_chunk_operation();
 
-    // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
-    // `is_fixed_size` is `false`, so backing allocation was made via global allocator.
-    unsafe { alloc::dealloc(backing_alloc_ptr, layout) };
+    // PROTOTYPE: On 64-bit, chunk memory comes from the pointer-compression cage; "deallocation"
+    // pushes the chunk to the cage's free-list and advises the OS to reclaim the physical pages.
+    // On 32-bit there is no cage, so the chunk is returned to the global allocator, as before.
+    // (`is_fixed_size` is `false`, so the backing allocation was made from that source.)
+    #[cfg(target_pointer_width = "64")]
+    crate::cage::dealloc_chunk(backing_alloc_ptr, layout);
+    #[cfg(not(target_pointer_width = "64"))]
+    // SAFETY: `backing_alloc_ptr`/`layout` describe the chunk's global-allocator allocation.
+    unsafe {
+        std::alloc::dealloc(backing_alloc_ptr.as_ptr(), layout);
+    }
 }

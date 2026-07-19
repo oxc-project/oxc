@@ -469,10 +469,13 @@ impl LayoutCalculator<'_> {
     /// Calculate layout for a `Box`.
     ///
     /// All `Box`es have same layout, regardless of the inner type.
-    /// `Box`es are pointer-sized, with a single niche (like `NonNull`).
+    ///
+    /// PROTOTYPE: `Box` is a compressed pointer - a `NonZeroU32` scaled offset from the
+    /// pointer-compression cage base. 4 bytes on all platforms, with a single niche
+    /// (like `NonZeroU32`).
     fn calculate_box() -> Layout {
         Layout {
-            layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+            layout_64: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
             layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
         }
     }

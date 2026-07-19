@@ -197,7 +197,9 @@ oxc_sourcemap = "8.0.2" # Source map generation
 #
 allocator-api2 = "=0.2.21" # Allocator trait
 anyhow = "1.0" # Flexible error handling
-oxc-graphql-parser = "0.0.7" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
+oxc-graphql-parser = { version = "0.0.7", features = [
+  "unsized-box-prototype",
+] } # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
 bpaf = "0.9.26" # CLI parser
@@ -223,6 +225,7 @@ itertools = "0.15.0" # Iterator utilities
 itoa = "1.0.18" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.6.0" # Lazy regex compilation
+libc = "0.2" # Raw mmap for pointer-compression cage prototype
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.8.2" # Fast byte searching
 miette = { package = "oxc-miette", version = "3.0.0", features = [
@@ -283,6 +286,10 @@ ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi", "oxc_lexe
 # Force the registry request to resolve to the workspace copy so there's a single instance.
 [patch.crates-io]
 oxc_allocator = { path = "crates/oxc_allocator" }
+# PROTOTYPE: patched to a branch that gates its compile-time AST size asserts behind the
+# `unsized-box-prototype` feature, because pointer compression shrinks oxc_allocator's Box
+# (which this crate's AST embeds), changing every asserted size.
+oxc-graphql-parser = { git = "https://github.com/oxc-project/oxc-graphql-parser", branch = "feat/pointer-compression-prototype" }
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

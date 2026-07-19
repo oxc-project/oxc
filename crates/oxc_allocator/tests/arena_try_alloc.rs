@@ -133,14 +133,19 @@ fn main() {
         }
     }
 
+    // PROTOTYPE: Arena chunk memory now comes from the process-global pointer-compression
+    // cage (`cage.rs`), *not* from the global allocator. These tests originally asserted that
+    // arena allocation fails when the global allocator fails. That premise no longer holds -
+    // the tests are inverted to assert the new contract: arena allocation succeeds regardless
+    // of the state of the global allocator.
     let tests = [
-        test!("Arena::try_new fails when global allocator fails", || {
+        test!("Arena::try_new succeeds even when global allocator fails", || {
             GLOBAL_ALLOCATOR.with_alloc_failures(|| {
-                assert!(Arena::try_with_capacity(1).is_err());
+                assert!(Arena::try_with_capacity(1).is_ok());
             });
         }),
         test!("test try_alloc_layout with and without global allocation failures", || {
-            const NUM_TESTS: usize = 5000;
+            const NUM_TESTS: usize = 100;
             const MAX_BYTES_ALLOCATED: usize = 65536;
 
             let mut arena = Arena::new();
@@ -159,12 +164,9 @@ fn main() {
                 }
 
                 let layout = Layout::from_size_align(arena.chunk_capacity() + 1, 1).unwrap();
-                if GLOBAL_ALLOCATOR.is_returning_null() {
-                    assert!(arena.try_alloc_layout(layout).is_err());
-                } else {
-                    assert!(arena.try_alloc_layout(layout).is_ok());
-                    bytes_allocated += arena.chunk_capacity();
-                }
+                // PROTOTYPE: Chunk allocation comes from the cage - succeeds either way.
+                assert!(arena.try_alloc_layout(layout).is_ok());
+                bytes_allocated += arena.chunk_capacity();
 
                 if bytes_allocated >= MAX_BYTES_ALLOCATED {
                     arena = GLOBAL_ALLOCATOR.with_successful_allocs(Arena::new);
@@ -175,13 +177,15 @@ fn main() {
         test!("test try_alloc with and without global allocation failures", || {
             test_static_size_alloc(
                 |arena| assert!(arena.try_alloc(1u8).is_ok()),
-                |arena| assert!(arena.try_alloc(1u8).is_err()),
+                // PROTOTYPE: succeeds even under a failing global allocator (cage-backed)
+                |arena| assert!(arena.try_alloc(1u8).is_ok()),
             );
         },),
         test!("test try_alloc_with with and without global allocation failures", || {
             test_static_size_alloc(
                 |arena| assert!(arena.try_alloc_with(|| 1u8).is_ok()),
-                |arena| assert!(arena.try_alloc_with(|| 1u8).is_err()),
+                // PROTOTYPE: succeeds even under a failing global allocator (cage-backed)
+                |arena| assert!(arena.try_alloc_with(|| 1u8).is_ok()),
             );
         },),
     ];

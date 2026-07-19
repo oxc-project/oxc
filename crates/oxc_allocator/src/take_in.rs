@@ -1,6 +1,6 @@
 use std::{cell::Cell, mem, num};
 
-use crate::{Allocator, Box, GetAllocator, Vec};
+use crate::{Allocator, Box, BoxedSlice, GetAllocator, Vec};
 
 /// A trait to replace an existing AST node with a dummy.
 pub trait TakeIn<'a>: Dummy<'a> {
@@ -38,7 +38,7 @@ pub trait TakeIn<'a>: Dummy<'a> {
 
 impl<'a, T> TakeIn<'a> for Vec<'a, T> {}
 
-impl<'a, T> TakeIn<'a> for Box<'a, [T]> {}
+impl<'a, T> TakeIn<'a> for BoxedSlice<'a, T> {}
 
 /// A trait to create a dummy AST node.
 pub trait Dummy<'a>: Sized {
@@ -63,11 +63,11 @@ impl<'a, T: Dummy<'a>> Dummy<'a> for Box<'a, T> {
     }
 }
 
-impl<'a, T> Dummy<'a> for Box<'a, [T]> {
-    /// Create a dummy empty [`Box<[T]>`] boxed slice.
+impl<'a, T> Dummy<'a> for BoxedSlice<'a, T> {
+    /// Create a dummy empty [`BoxedSlice<T>`] boxed slice.
     #[inline]
     fn dummy(_allocator: &'a Allocator) -> Self {
-        Box::new_empty_boxed_slice()
+        BoxedSlice::new_empty()
     }
 }
 

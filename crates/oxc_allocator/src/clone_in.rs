@@ -6,7 +6,7 @@ use std::{
     slice,
 };
 
-use crate::{Allocator, Box, HashMap, Vec};
+use crate::{Allocator, Box, BoxedSlice, HashMap, Vec};
 
 /// Option to pass to [`CloneIn::clone_in_impl`] to determine how to clone semantic IDs.
 ///
@@ -129,11 +129,11 @@ where
     }
 }
 
-impl<'new_alloc, T, C> CloneIn<'new_alloc> for Box<'_, [T]>
+impl<'new_alloc, T, C> CloneIn<'new_alloc> for BoxedSlice<'_, T>
 where
     T: CloneIn<'new_alloc, Cloned = C>,
 {
-    type Cloned = Box<'new_alloc, [C]>;
+    type Cloned = BoxedSlice<'new_alloc, C>;
 
     fn clone_in_impl(
         &self,
@@ -171,8 +171,8 @@ where
         // SAFETY: We just initialized `slice.len()` x `C`s, starting at `dst_ptr`
         let new_slice = unsafe { slice::from_raw_parts_mut(dst_ptr.as_ptr(), slice.len()) };
         // SAFETY: `NonNull::from(new_slice)` produces a valid pointer. The data is in the arena.
-        // Lifetime of returned `Box` matches the `Allocator` the data was allocated in.
-        unsafe { Box::from_non_null(NonNull::from(new_slice)) }
+        // Lifetime of returned `BoxedSlice` matches the `Allocator` the data was allocated in.
+        unsafe { BoxedSlice::from_non_null(NonNull::from(new_slice)) }
     }
 }
 

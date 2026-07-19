@@ -19,7 +19,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, ArenaBox};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, ArenaBoxedSlice};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
@@ -138,7 +138,7 @@ struct SectionContent<'a> {
     semantic: Option<Semantic<'a>>,
     /// Parser tokens for the section.
     /// Empty if section parsing failed, or if token collection was not requested (no JS plugins).
-    parser_tokens: ArenaBox<'a, [Token]>,
+    parser_tokens: ArenaBoxedSlice<'a, Token>,
 }
 
 /// A module with its source text and semantic, ready to be linted.
@@ -1111,7 +1111,7 @@ impl Runtime {
                         sections.push(SectionContent {
                             source: section_source,
                             semantic: None,
-                            parser_tokens: ArenaBox::new_empty_boxed_slice(),
+                            parser_tokens: ArenaBoxedSlice::new_empty(),
                         });
                     }
                 }
@@ -1120,7 +1120,6 @@ impl Runtime {
         section_module_records
     }
 
-    #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
         path: &Path,
@@ -1128,7 +1127,7 @@ impl Runtime {
         source_text: &'a str,
         source_type: SourceType,
         check_syntax_errors: bool,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
+    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBoxedSlice<'a, Token>), Vec<OxcDiagnostic>>
     {
         let collect_tokens = self.linter.has_external_linter();
         let ret = Parser::new(allocator, source_text, source_type)

@@ -207,136 +207,136 @@ function walkProgram(pos, ast, visitors) {
 function walkExpression(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNullLiteral(pos + 8, ast, visitors);
+      walkBoxNullLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      walkBoxRegExpLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxSuper(pos + 8, ast, visitors);
+      walkBoxSuper(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxArrayExpression(pos + 8, ast, visitors);
+      walkBoxArrayExpression(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      walkBoxArrowFunctionExpression(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      walkBoxAssignmentExpression(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      walkBoxAwaitExpression(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      walkBoxBinaryExpression(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxChainExpression(pos + 8, ast, visitors);
+      walkBoxChainExpression(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      walkBoxConditionalExpression(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxImportExpression(pos + 8, ast, visitors);
+      walkBoxImportExpression(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      walkBoxLogicalExpression(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxNewExpression(pos + 8, ast, visitors);
+      walkBoxNewExpression(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxObjectExpression(pos + 8, ast, visitors);
+      walkBoxObjectExpression(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      walkBoxParenthesizedExpression(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      walkBoxSequenceExpression(pos + 4, ast, visitors);
       return;
     case 25:
-      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      walkBoxTaggedTemplateExpression(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      walkBoxUpdateExpression(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxYieldExpression(pos + 8, ast, visitors);
+      walkBoxYieldExpression(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      walkBoxPrivateInExpression(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxImportMeta(pos + 8, ast, visitors);
+      walkBoxImportMeta(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxNewTarget(pos + 8, ast, visitors);
+      walkBoxNewTarget(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      walkBoxTSInstantiationExpression(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      walkBoxV8IntrinsicExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Expression`);
@@ -387,142 +387,142 @@ function walkArrayExpression(pos, ast, visitors) {
 function walkArrayExpressionElement(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNullLiteral(pos + 8, ast, visitors);
+      walkBoxNullLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      walkBoxRegExpLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxSuper(pos + 8, ast, visitors);
+      walkBoxSuper(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxArrayExpression(pos + 8, ast, visitors);
+      walkBoxArrayExpression(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      walkBoxArrowFunctionExpression(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      walkBoxAssignmentExpression(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      walkBoxAwaitExpression(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      walkBoxBinaryExpression(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxChainExpression(pos + 8, ast, visitors);
+      walkBoxChainExpression(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      walkBoxConditionalExpression(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxImportExpression(pos + 8, ast, visitors);
+      walkBoxImportExpression(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      walkBoxLogicalExpression(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxNewExpression(pos + 8, ast, visitors);
+      walkBoxNewExpression(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxObjectExpression(pos + 8, ast, visitors);
+      walkBoxObjectExpression(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      walkBoxParenthesizedExpression(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      walkBoxSequenceExpression(pos + 4, ast, visitors);
       return;
     case 25:
-      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      walkBoxTaggedTemplateExpression(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      walkBoxUpdateExpression(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxYieldExpression(pos + 8, ast, visitors);
+      walkBoxYieldExpression(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      walkBoxPrivateInExpression(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxImportMeta(pos + 8, ast, visitors);
+      walkBoxImportMeta(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxNewTarget(pos + 8, ast, visitors);
+      walkBoxNewTarget(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      walkBoxTSInstantiationExpression(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      walkBoxV8IntrinsicExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxSpreadElement(pos + 8, ast, visitors);
+      walkBoxSpreadElement(pos + 4, ast, visitors);
       return;
     case 65:
-      walkBoxElision(pos + 8, ast, visitors);
+      walkBoxElision(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ArrayExpressionElement`);
@@ -553,10 +553,10 @@ function walkObjectExpression(pos, ast, visitors) {
 function walkObjectPropertyKind(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxObjectProperty(pos + 8, ast, visitors);
+      walkBoxObjectProperty(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxSpreadElement(pos + 8, ast, visitors);
+      walkBoxSpreadElement(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectPropertyKind`);
@@ -574,8 +574,8 @@ function walkObjectProperty(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkPropertyKey(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -583,142 +583,142 @@ function walkObjectProperty(pos, ast, visitors) {
 function walkPropertyKey(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNullLiteral(pos + 8, ast, visitors);
+      walkBoxNullLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      walkBoxRegExpLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxSuper(pos + 8, ast, visitors);
+      walkBoxSuper(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxArrayExpression(pos + 8, ast, visitors);
+      walkBoxArrayExpression(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      walkBoxArrowFunctionExpression(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      walkBoxAssignmentExpression(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      walkBoxAwaitExpression(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      walkBoxBinaryExpression(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxChainExpression(pos + 8, ast, visitors);
+      walkBoxChainExpression(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      walkBoxConditionalExpression(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxImportExpression(pos + 8, ast, visitors);
+      walkBoxImportExpression(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      walkBoxLogicalExpression(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxNewExpression(pos + 8, ast, visitors);
+      walkBoxNewExpression(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxObjectExpression(pos + 8, ast, visitors);
+      walkBoxObjectExpression(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      walkBoxParenthesizedExpression(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      walkBoxSequenceExpression(pos + 4, ast, visitors);
       return;
     case 25:
-      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      walkBoxTaggedTemplateExpression(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      walkBoxUpdateExpression(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxYieldExpression(pos + 8, ast, visitors);
+      walkBoxYieldExpression(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      walkBoxPrivateInExpression(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxImportMeta(pos + 8, ast, visitors);
+      walkBoxImportMeta(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxNewTarget(pos + 8, ast, visitors);
+      walkBoxNewTarget(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      walkBoxTSInstantiationExpression(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      walkBoxV8IntrinsicExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxIdentifierName(pos + 8, ast, visitors);
+      walkBoxIdentifierName(pos + 4, ast, visitors);
       return;
     case 65:
-      walkBoxPrivateIdentifier(pos + 8, ast, visitors);
+      walkBoxPrivateIdentifier(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKey`);
@@ -753,9 +753,9 @@ function walkTaggedTemplateExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
-  walkTemplateLiteral(pos + 40, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
+  walkTemplateLiteral(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -776,8 +776,8 @@ function walkComputedMemberExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -793,8 +793,8 @@ function walkStaticMemberExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkIdentifierName(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkIdentifierName(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -810,8 +810,8 @@ function walkPrivateFieldExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkPrivateIdentifier(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkPrivateIdentifier(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -827,9 +827,9 @@ function walkCallExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
-  walkVecArgument(pos + 40, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
+  walkVecArgument(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -845,9 +845,9 @@ function walkNewExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
-  walkVecArgument(pos + 40, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
+  walkVecArgument(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -873,7 +873,7 @@ function walkSpreadElement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -881,139 +881,139 @@ function walkSpreadElement(pos, ast, visitors) {
 function walkArgument(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNullLiteral(pos + 8, ast, visitors);
+      walkBoxNullLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      walkBoxRegExpLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxSuper(pos + 8, ast, visitors);
+      walkBoxSuper(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxArrayExpression(pos + 8, ast, visitors);
+      walkBoxArrayExpression(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      walkBoxArrowFunctionExpression(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      walkBoxAssignmentExpression(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      walkBoxAwaitExpression(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      walkBoxBinaryExpression(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxChainExpression(pos + 8, ast, visitors);
+      walkBoxChainExpression(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      walkBoxConditionalExpression(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxImportExpression(pos + 8, ast, visitors);
+      walkBoxImportExpression(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      walkBoxLogicalExpression(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxNewExpression(pos + 8, ast, visitors);
+      walkBoxNewExpression(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxObjectExpression(pos + 8, ast, visitors);
+      walkBoxObjectExpression(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      walkBoxParenthesizedExpression(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      walkBoxSequenceExpression(pos + 4, ast, visitors);
       return;
     case 25:
-      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      walkBoxTaggedTemplateExpression(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      walkBoxUpdateExpression(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxYieldExpression(pos + 8, ast, visitors);
+      walkBoxYieldExpression(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      walkBoxPrivateInExpression(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxImportMeta(pos + 8, ast, visitors);
+      walkBoxImportMeta(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxNewTarget(pos + 8, ast, visitors);
+      walkBoxNewTarget(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      walkBoxTSInstantiationExpression(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      walkBoxV8IntrinsicExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxSpreadElement(pos + 8, ast, visitors);
+      walkBoxSpreadElement(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Argument`);
@@ -1031,7 +1031,7 @@ function walkUpdateExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkSimpleAssignmentTarget(pos + 16, ast, visitors);
+  walkSimpleAssignmentTarget(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1047,7 +1047,7 @@ function walkUnaryExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1063,8 +1063,8 @@ function walkBinaryExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1080,8 +1080,8 @@ function walkPrivateInExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkPrivateIdentifier(pos + 16, ast, visitors);
-  walkExpression(pos + 48, ast, visitors);
+  walkPrivateIdentifier(pos + 24, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1097,8 +1097,8 @@ function walkLogicalExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1114,9 +1114,9 @@ function walkConditionalExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
-  walkExpression(pos + 48, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
+  walkExpression(pos + 28, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1132,8 +1132,8 @@ function walkAssignmentExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkAssignmentTarget(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkAssignmentTarget(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1141,34 +1141,34 @@ function walkAssignmentExpression(pos, ast, visitors) {
 function walkAssignmentTarget(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxArrayAssignmentTarget(pos + 8, ast, visitors);
+      walkBoxArrayAssignmentTarget(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxObjectAssignmentTarget(pos + 8, ast, visitors);
+      walkBoxObjectAssignmentTarget(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTarget`);
@@ -1178,28 +1178,28 @@ function walkAssignmentTarget(pos, ast, visitors) {
 function walkSimpleAssignmentTarget(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for SimpleAssignmentTarget`);
@@ -1241,37 +1241,37 @@ function walkObjectAssignmentTarget(pos, ast, visitors) {
 function walkAssignmentTargetMaybeDefault(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxArrayAssignmentTarget(pos + 8, ast, visitors);
+      walkBoxArrayAssignmentTarget(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxObjectAssignmentTarget(pos + 8, ast, visitors);
+      walkBoxObjectAssignmentTarget(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxAssignmentTargetWithDefault(pos + 8, ast, visitors);
+      walkBoxAssignmentTargetWithDefault(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(
@@ -1291,8 +1291,8 @@ function walkAssignmentTargetWithDefault(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkAssignmentTarget(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkAssignmentTarget(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1300,10 +1300,10 @@ function walkAssignmentTargetWithDefault(pos, ast, visitors) {
 function walkAssignmentTargetProperty(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxAssignmentTargetPropertyIdentifier(pos + 8, ast, visitors);
+      walkBoxAssignmentTargetPropertyIdentifier(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxAssignmentTargetPropertyProperty(pos + 8, ast, visitors);
+      walkBoxAssignmentTargetPropertyProperty(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetProperty`);
@@ -1321,8 +1321,8 @@ function walkAssignmentTargetPropertyIdentifier(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkIdentifierReference(pos + 16, ast, visitors);
-  walkOptionExpression(pos + 48, ast, visitors);
+  walkIdentifierReference(pos + 24, ast, visitors);
+  walkOptionExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1338,8 +1338,8 @@ function walkAssignmentTargetPropertyProperty(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkPropertyKey(pos + 16, ast, visitors);
-  walkAssignmentTargetMaybeDefault(pos + 32, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkAssignmentTargetMaybeDefault(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1376,7 +1376,7 @@ function walkAwaitExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1392,7 +1392,7 @@ function walkChainExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkChainElement(pos + 16, ast, visitors);
+  walkChainElement(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1400,19 +1400,19 @@ function walkChainExpression(pos, ast, visitors) {
 function walkChainElement(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ChainElement`);
@@ -1430,7 +1430,7 @@ function walkParenthesizedExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1438,103 +1438,103 @@ function walkParenthesizedExpression(pos, ast, visitors) {
 function walkStatement(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBlockStatement(pos + 8, ast, visitors);
+      walkBoxBlockStatement(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxBreakStatement(pos + 8, ast, visitors);
+      walkBoxBreakStatement(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxContinueStatement(pos + 8, ast, visitors);
+      walkBoxContinueStatement(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxDebuggerStatement(pos + 8, ast, visitors);
+      walkBoxDebuggerStatement(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxDoWhileStatement(pos + 8, ast, visitors);
+      walkBoxDoWhileStatement(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxEmptyStatement(pos + 8, ast, visitors);
+      walkBoxEmptyStatement(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxExpressionStatement(pos + 8, ast, visitors);
+      walkBoxExpressionStatement(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxForInStatement(pos + 8, ast, visitors);
+      walkBoxForInStatement(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxForOfStatement(pos + 8, ast, visitors);
+      walkBoxForOfStatement(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxForStatement(pos + 8, ast, visitors);
+      walkBoxForStatement(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxIfStatement(pos + 8, ast, visitors);
+      walkBoxIfStatement(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxLabeledStatement(pos + 8, ast, visitors);
+      walkBoxLabeledStatement(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxReturnStatement(pos + 8, ast, visitors);
+      walkBoxReturnStatement(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxSwitchStatement(pos + 8, ast, visitors);
+      walkBoxSwitchStatement(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxThrowStatement(pos + 8, ast, visitors);
+      walkBoxThrowStatement(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxTryStatement(pos + 8, ast, visitors);
+      walkBoxTryStatement(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxWhileStatement(pos + 8, ast, visitors);
+      walkBoxWhileStatement(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxWithStatement(pos + 8, ast, visitors);
+      walkBoxWithStatement(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxVariableDeclaration(pos + 8, ast, visitors);
+      walkBoxVariableDeclaration(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSTypeAliasDeclaration(pos + 8, ast, visitors);
+      walkBoxTSTypeAliasDeclaration(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSInterfaceDeclaration(pos + 8, ast, visitors);
+      walkBoxTSInterfaceDeclaration(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSEnumDeclaration(pos + 8, ast, visitors);
+      walkBoxTSEnumDeclaration(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSModuleDeclaration(pos + 8, ast, visitors);
+      walkBoxTSModuleDeclaration(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSGlobalDeclaration(pos + 8, ast, visitors);
+      walkBoxTSGlobalDeclaration(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxTSImportEqualsDeclaration(pos + 8, ast, visitors);
+      walkBoxTSImportEqualsDeclaration(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxImportDeclaration(pos + 8, ast, visitors);
+      walkBoxImportDeclaration(pos + 4, ast, visitors);
       return;
     case 65:
-      walkBoxExportAllDeclaration(pos + 8, ast, visitors);
+      walkBoxExportAllDeclaration(pos + 4, ast, visitors);
       return;
     case 66:
-      walkBoxExportDefaultDeclaration(pos + 8, ast, visitors);
+      walkBoxExportDefaultDeclaration(pos + 4, ast, visitors);
       return;
     case 67:
-      walkBoxExportNamedDeclaration(pos + 8, ast, visitors);
+      walkBoxExportNamedDeclaration(pos + 4, ast, visitors);
       return;
     case 68:
-      walkBoxTSExportAssignment(pos + 8, ast, visitors);
+      walkBoxTSExportAssignment(pos + 4, ast, visitors);
       return;
     case 69:
-      walkBoxTSNamespaceExportDeclaration(pos + 8, ast, visitors);
+      walkBoxTSNamespaceExportDeclaration(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Statement`);
@@ -1565,31 +1565,31 @@ function walkBlockStatement(pos, ast, visitors) {
 function walkDeclaration(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 32:
-      walkBoxVariableDeclaration(pos + 8, ast, visitors);
+      walkBoxVariableDeclaration(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSTypeAliasDeclaration(pos + 8, ast, visitors);
+      walkBoxTSTypeAliasDeclaration(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSInterfaceDeclaration(pos + 8, ast, visitors);
+      walkBoxTSInterfaceDeclaration(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSEnumDeclaration(pos + 8, ast, visitors);
+      walkBoxTSEnumDeclaration(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSModuleDeclaration(pos + 8, ast, visitors);
+      walkBoxTSModuleDeclaration(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSGlobalDeclaration(pos + 8, ast, visitors);
+      walkBoxTSGlobalDeclaration(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxTSImportEqualsDeclaration(pos + 8, ast, visitors);
+      walkBoxTSImportEqualsDeclaration(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Declaration`);
@@ -1623,8 +1623,8 @@ function walkVariableDeclarator(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBindingPattern(pos + 16, ast, visitors);
-  walkOptionExpression(pos + 40, ast, visitors);
+  walkBindingPattern(pos + 12, ast, visitors);
+  walkOptionExpression(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1645,7 +1645,7 @@ function walkExpressionStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1661,9 +1661,9 @@ function walkIfStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkStatement(pos + 32, ast, visitors);
-  walkOptionStatement(pos + 48, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkStatement(pos + 20, ast, visitors);
+  walkOptionStatement(pos + 28, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1679,8 +1679,8 @@ function walkDoWhileStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkStatement(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkStatement(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1696,8 +1696,8 @@ function walkWhileStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkStatement(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkStatement(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1713,10 +1713,10 @@ function walkForStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionForStatementInit(pos + 16, ast, visitors);
-  walkOptionExpression(pos + 32, ast, visitors);
-  walkOptionExpression(pos + 48, ast, visitors);
-  walkStatement(pos + 64, ast, visitors);
+  walkOptionForStatementInit(pos + 12, ast, visitors);
+  walkOptionExpression(pos + 20, ast, visitors);
+  walkOptionExpression(pos + 28, ast, visitors);
+  walkStatement(pos + 36, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1724,139 +1724,139 @@ function walkForStatement(pos, ast, visitors) {
 function walkForStatementInit(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNullLiteral(pos + 8, ast, visitors);
+      walkBoxNullLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      walkBoxRegExpLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxSuper(pos + 8, ast, visitors);
+      walkBoxSuper(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxArrayExpression(pos + 8, ast, visitors);
+      walkBoxArrayExpression(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      walkBoxArrowFunctionExpression(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      walkBoxAssignmentExpression(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      walkBoxAwaitExpression(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      walkBoxBinaryExpression(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxChainExpression(pos + 8, ast, visitors);
+      walkBoxChainExpression(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      walkBoxConditionalExpression(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxImportExpression(pos + 8, ast, visitors);
+      walkBoxImportExpression(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      walkBoxLogicalExpression(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxNewExpression(pos + 8, ast, visitors);
+      walkBoxNewExpression(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxObjectExpression(pos + 8, ast, visitors);
+      walkBoxObjectExpression(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      walkBoxParenthesizedExpression(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      walkBoxSequenceExpression(pos + 4, ast, visitors);
       return;
     case 25:
-      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      walkBoxTaggedTemplateExpression(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      walkBoxUpdateExpression(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxYieldExpression(pos + 8, ast, visitors);
+      walkBoxYieldExpression(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      walkBoxPrivateInExpression(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxImportMeta(pos + 8, ast, visitors);
+      walkBoxImportMeta(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxNewTarget(pos + 8, ast, visitors);
+      walkBoxNewTarget(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      walkBoxTSInstantiationExpression(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      walkBoxV8IntrinsicExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxVariableDeclaration(pos + 8, ast, visitors);
+      walkBoxVariableDeclaration(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ForStatementInit`);
@@ -1874,9 +1874,9 @@ function walkForInStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkForStatementLeft(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
-  walkStatement(pos + 48, ast, visitors);
+  walkForStatementLeft(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
+  walkStatement(pos + 28, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1884,37 +1884,37 @@ function walkForInStatement(pos, ast, visitors) {
 function walkForStatementLeft(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxArrayAssignmentTarget(pos + 8, ast, visitors);
+      walkBoxArrayAssignmentTarget(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxObjectAssignmentTarget(pos + 8, ast, visitors);
+      walkBoxObjectAssignmentTarget(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxVariableDeclaration(pos + 8, ast, visitors);
+      walkBoxVariableDeclaration(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ForStatementLeft`);
@@ -1932,9 +1932,9 @@ function walkForOfStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkForStatementLeft(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
-  walkStatement(pos + 48, ast, visitors);
+  walkForStatementLeft(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
+  walkStatement(pos + 28, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1982,7 +1982,7 @@ function walkReturnStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionExpression(pos + 16, ast, visitors);
+  walkOptionExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1998,8 +1998,8 @@ function walkWithStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkStatement(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkStatement(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2015,8 +2015,8 @@ function walkSwitchStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkVecSwitchCase(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkVecSwitchCase(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2032,8 +2032,8 @@ function walkSwitchCase(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionExpression(pos + 16, ast, visitors);
-  walkVecStatement(pos + 32, ast, visitors);
+  walkOptionExpression(pos + 12, ast, visitors);
+  walkVecStatement(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2049,8 +2049,8 @@ function walkLabeledStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkLabelIdentifier(pos + 16, ast, visitors);
-  walkStatement(pos + 48, ast, visitors);
+  walkLabelIdentifier(pos + 24, ast, visitors);
+  walkStatement(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2066,7 +2066,7 @@ function walkThrowStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2082,9 +2082,9 @@ function walkTryStatement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBoxBlockStatement(pos + 16, ast, visitors);
-  walkOptionBoxCatchClause(pos + 24, ast, visitors);
-  walkOptionBoxBlockStatement(pos + 32, ast, visitors);
+  walkBoxBlockStatement(pos + 12, ast, visitors);
+  walkOptionBoxCatchClause(pos + 16, ast, visitors);
+  walkOptionBoxBlockStatement(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2101,13 +2101,13 @@ function walkCatchClause(pos, ast, visitors) {
   }
 
   walkOptionCatchParameter(pos + 16, ast, visitors);
-  walkBoxBlockStatement(pos + 56, ast, visitors);
+  walkBoxBlockStatement(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
 
 function walkCatchParameter(pos, ast, visitors) {
-  walkBindingPattern(pos + 16, ast, visitors);
+  walkBindingPattern(pos + 12, ast, visitors);
 }
 
 function walkDebuggerStatement(pos, ast, visitors) {
@@ -2118,16 +2118,16 @@ function walkDebuggerStatement(pos, ast, visitors) {
 function walkBindingPattern(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBindingIdentifier(pos + 8, ast, visitors);
+      walkBoxBindingIdentifier(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxObjectPattern(pos + 8, ast, visitors);
+      walkBoxObjectPattern(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxArrayPattern(pos + 8, ast, visitors);
+      walkBoxArrayPattern(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxAssignmentPattern(pos + 8, ast, visitors);
+      walkBoxAssignmentPattern(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for BindingPattern`);
@@ -2145,8 +2145,8 @@ function walkAssignmentPattern(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBindingPattern(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkBindingPattern(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2178,8 +2178,8 @@ function walkBindingProperty(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkPropertyKey(pos + 16, ast, visitors);
-  walkBindingPattern(pos + 32, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkBindingPattern(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2212,10 +2212,10 @@ function walkFunction(pos, ast, visitors) {
   }
 
   walkOptionBindingIdentifier(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 48, ast, visitors);
-  walkBoxFormalParameters(pos + 64, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 72, ast, visitors);
-  walkOptionBoxFunctionBody(pos + 80, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkBoxFormalParameters(pos + 52, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 56, ast, visitors);
+  walkOptionBoxFunctionBody(pos + 60, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2237,10 +2237,10 @@ function walkFormalParameters(pos, ast, visitors) {
 }
 
 function walkFormalParameter(pos, ast, visitors) {
-  walkVecDecorator(pos + 16, ast, visitors);
-  walkBindingPattern(pos + 40, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 56, ast, visitors);
-  walkOptionBoxExpression(pos + 64, ast, visitors);
+  walkVecDecorator(pos + 24, ast, visitors);
+  walkBindingPattern(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 20, ast, visitors);
+  walkOptionBoxExpression(pos + 48, ast, visitors);
 }
 
 function walkFunctionBody(pos, ast, visitors) {
@@ -2270,10 +2270,10 @@ function walkArrowFunctionExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionBoxTSTypeParameterDeclaration(pos + 16, ast, visitors);
-  walkBoxFormalParameters(pos + 24, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
-  walkBoxFunctionBody(pos + 40, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkBoxFormalParameters(pos + 16, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 20, ast, visitors);
+  walkBoxFunctionBody(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2289,7 +2289,7 @@ function walkYieldExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionExpression(pos + 16, ast, visitors);
+  walkOptionExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2307,11 +2307,11 @@ function walkClass(pos, ast, visitors) {
 
   walkVecDecorator(pos + 16, ast, visitors);
   walkOptionBindingIdentifier(pos + 40, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 72, ast, visitors);
-  walkOptionExpression(pos + 80, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 96, ast, visitors);
-  walkVecTSClassImplements(pos + 104, ast, visitors);
-  walkBoxClassBody(pos + 128, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkOptionExpression(pos + 96, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 104, ast, visitors);
+  walkVecTSClassImplements(pos + 72, ast, visitors);
+  walkBoxClassBody(pos + 108, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2335,19 +2335,19 @@ function walkClassBody(pos, ast, visitors) {
 function walkClassElement(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxStaticBlock(pos + 8, ast, visitors);
+      walkBoxStaticBlock(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxMethodDefinition(pos + 8, ast, visitors);
+      walkBoxMethodDefinition(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxPropertyDefinition(pos + 8, ast, visitors);
+      walkBoxPropertyDefinition(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxAccessorProperty(pos + 8, ast, visitors);
+      walkBoxAccessorProperty(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSIndexSignature(pos + 8, ast, visitors);
+      walkBoxTSIndexSignature(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ClassElement`);
@@ -2365,9 +2365,9 @@ function walkMethodDefinition(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkVecDecorator(pos + 16, ast, visitors);
-  walkPropertyKey(pos + 40, ast, visitors);
-  walkBoxFunction(pos + 56, ast, visitors);
+  walkVecDecorator(pos + 24, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkBoxFunction(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2383,10 +2383,10 @@ function walkPropertyDefinition(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkVecDecorator(pos + 16, ast, visitors);
-  walkPropertyKey(pos + 40, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 56, ast, visitors);
-  walkOptionExpression(pos + 64, ast, visitors);
+  walkVecDecorator(pos + 24, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 20, ast, visitors);
+  walkOptionExpression(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2423,10 +2423,10 @@ function walkAccessorProperty(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkVecDecorator(pos + 16, ast, visitors);
-  walkPropertyKey(pos + 40, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 56, ast, visitors);
-  walkOptionExpression(pos + 64, ast, visitors);
+  walkVecDecorator(pos + 24, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 20, ast, visitors);
+  walkOptionExpression(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2442,8 +2442,8 @@ function walkImportExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkOptionExpression(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkOptionExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2461,7 +2461,7 @@ function walkImportDeclaration(pos, ast, visitors) {
 
   walkOptionVecImportDeclarationSpecifier(pos + 16, ast, visitors);
   walkStringLiteral(pos + 40, ast, visitors);
-  walkOptionBoxWithClause(pos + 88, ast, visitors);
+  walkOptionBoxWithClause(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2469,13 +2469,13 @@ function walkImportDeclaration(pos, ast, visitors) {
 function walkImportDeclarationSpecifier(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxImportSpecifier(pos + 8, ast, visitors);
+      walkBoxImportSpecifier(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxImportDefaultSpecifier(pos + 8, ast, visitors);
+      walkBoxImportDefaultSpecifier(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxImportNamespaceSpecifier(pos + 8, ast, visitors);
+      walkBoxImportNamespaceSpecifier(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ImportDeclarationSpecifier`);
@@ -2576,10 +2576,10 @@ function walkExportNamedDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionDeclaration(pos + 16, ast, visitors);
-  walkVecExportSpecifier(pos + 32, ast, visitors);
-  walkOptionStringLiteral(pos + 56, ast, visitors);
-  walkOptionBoxWithClause(pos + 104, ast, visitors);
+  walkOptionDeclaration(pos + 12, ast, visitors);
+  walkVecExportSpecifier(pos + 24, ast, visitors);
+  walkOptionStringLiteral(pos + 48, ast, visitors);
+  walkOptionBoxWithClause(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2595,7 +2595,7 @@ function walkExportDefaultDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExportDefaultDeclarationKind(pos + 16, ast, visitors);
+  walkExportDefaultDeclarationKind(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2613,7 +2613,7 @@ function walkExportAllDeclaration(pos, ast, visitors) {
 
   walkOptionModuleExportName(pos + 16, ast, visitors);
   walkStringLiteral(pos + 72, ast, visitors);
-  walkOptionBoxWithClause(pos + 120, ast, visitors);
+  walkOptionBoxWithClause(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2638,145 +2638,145 @@ function walkExportSpecifier(pos, ast, visitors) {
 function walkExportDefaultDeclarationKind(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNullLiteral(pos + 8, ast, visitors);
+      walkBoxNullLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      walkBoxRegExpLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxSuper(pos + 8, ast, visitors);
+      walkBoxSuper(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxArrayExpression(pos + 8, ast, visitors);
+      walkBoxArrayExpression(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      walkBoxArrowFunctionExpression(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      walkBoxAssignmentExpression(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      walkBoxAwaitExpression(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      walkBoxBinaryExpression(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxChainExpression(pos + 8, ast, visitors);
+      walkBoxChainExpression(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      walkBoxConditionalExpression(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxImportExpression(pos + 8, ast, visitors);
+      walkBoxImportExpression(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      walkBoxLogicalExpression(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxNewExpression(pos + 8, ast, visitors);
+      walkBoxNewExpression(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxObjectExpression(pos + 8, ast, visitors);
+      walkBoxObjectExpression(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      walkBoxParenthesizedExpression(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      walkBoxSequenceExpression(pos + 4, ast, visitors);
       return;
     case 25:
-      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      walkBoxTaggedTemplateExpression(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      walkBoxUpdateExpression(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxYieldExpression(pos + 8, ast, visitors);
+      walkBoxYieldExpression(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      walkBoxPrivateInExpression(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxImportMeta(pos + 8, ast, visitors);
+      walkBoxImportMeta(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxNewTarget(pos + 8, ast, visitors);
+      walkBoxNewTarget(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      walkBoxTSInstantiationExpression(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      walkBoxV8IntrinsicExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 65:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 66:
-      walkBoxTSInterfaceDeclaration(pos + 8, ast, visitors);
+      walkBoxTSInterfaceDeclaration(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(
@@ -2859,9 +2859,9 @@ function walkJSXElement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBoxJSXOpeningElement(pos + 16, ast, visitors);
-  walkVecJSXChild(pos + 24, ast, visitors);
-  walkOptionBoxJSXClosingElement(pos + 48, ast, visitors);
+  walkBoxJSXOpeningElement(pos + 12, ast, visitors);
+  walkVecJSXChild(pos + 16, ast, visitors);
+  walkOptionBoxJSXClosingElement(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2877,9 +2877,9 @@ function walkJSXOpeningElement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkJSXElementName(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
-  walkVecJSXAttributeItem(pos + 40, ast, visitors);
+  walkJSXElementName(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
+  walkVecJSXAttributeItem(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2895,7 +2895,7 @@ function walkJSXClosingElement(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkJSXElementName(pos + 16, ast, visitors);
+  walkJSXElementName(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2931,19 +2931,19 @@ function walkJSXClosingFragment(pos, ast, visitors) {
 function walkJSXElementName(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxJSXIdentifier(pos + 8, ast, visitors);
+      walkBoxJSXIdentifier(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxJSXNamespacedName(pos + 8, ast, visitors);
+      walkBoxJSXNamespacedName(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxJSXMemberExpression(pos + 8, ast, visitors);
+      walkBoxJSXMemberExpression(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXElementName`);
@@ -2978,8 +2978,8 @@ function walkJSXMemberExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkJSXMemberExpressionObject(pos + 16, ast, visitors);
-  walkJSXIdentifier(pos + 32, ast, visitors);
+  walkJSXMemberExpressionObject(pos + 12, ast, visitors);
+  walkJSXIdentifier(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2987,13 +2987,13 @@ function walkJSXMemberExpression(pos, ast, visitors) {
 function walkJSXMemberExpressionObject(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxJSXMemberExpression(pos + 8, ast, visitors);
+      walkBoxJSXMemberExpression(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXMemberExpressionObject`);
@@ -3011,7 +3011,7 @@ function walkJSXExpressionContainer(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkJSXExpression(pos + 16, ast, visitors);
+  walkJSXExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3019,139 +3019,139 @@ function walkJSXExpressionContainer(pos, ast, visitors) {
 function walkJSXExpression(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNullLiteral(pos + 8, ast, visitors);
+      walkBoxNullLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      walkBoxRegExpLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxSuper(pos + 8, ast, visitors);
+      walkBoxSuper(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxArrayExpression(pos + 8, ast, visitors);
+      walkBoxArrayExpression(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      walkBoxArrowFunctionExpression(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      walkBoxAssignmentExpression(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      walkBoxAwaitExpression(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      walkBoxBinaryExpression(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxCallExpression(pos + 8, ast, visitors);
+      walkBoxCallExpression(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxChainExpression(pos + 8, ast, visitors);
+      walkBoxChainExpression(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxClass(pos + 8, ast, visitors);
+      walkBoxClass(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      walkBoxConditionalExpression(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxFunction(pos + 8, ast, visitors);
+      walkBoxFunction(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxImportExpression(pos + 8, ast, visitors);
+      walkBoxImportExpression(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      walkBoxLogicalExpression(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxNewExpression(pos + 8, ast, visitors);
+      walkBoxNewExpression(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxObjectExpression(pos + 8, ast, visitors);
+      walkBoxObjectExpression(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      walkBoxParenthesizedExpression(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      walkBoxSequenceExpression(pos + 4, ast, visitors);
       return;
     case 25:
-      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      walkBoxTaggedTemplateExpression(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      walkBoxUpdateExpression(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxYieldExpression(pos + 8, ast, visitors);
+      walkBoxYieldExpression(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      walkBoxPrivateInExpression(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxImportMeta(pos + 8, ast, visitors);
+      walkBoxImportMeta(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxNewTarget(pos + 8, ast, visitors);
+      walkBoxNewTarget(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      walkBoxTSAsExpression(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      walkBoxTSSatisfiesExpression(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      walkBoxTSTypeAssertion(pos + 4, ast, visitors);
       return;
     case 38:
-      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      walkBoxTSNonNullExpression(pos + 4, ast, visitors);
       return;
     case 39:
-      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      walkBoxTSInstantiationExpression(pos + 4, ast, visitors);
       return;
     case 40:
-      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      walkBoxV8IntrinsicExpression(pos + 4, ast, visitors);
       return;
     case 48:
-      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      walkBoxComputedMemberExpression(pos + 4, ast, visitors);
       return;
     case 49:
-      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      walkBoxStaticMemberExpression(pos + 4, ast, visitors);
       return;
     case 50:
-      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      walkBoxPrivateFieldExpression(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxJSXEmptyExpression(pos + 8, ast, visitors);
+      walkBoxJSXEmptyExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXExpression`);
@@ -3166,10 +3166,10 @@ function walkJSXEmptyExpression(pos, ast, visitors) {
 function walkJSXAttributeItem(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxJSXAttribute(pos + 8, ast, visitors);
+      walkBoxJSXAttribute(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxJSXSpreadAttribute(pos + 8, ast, visitors);
+      walkBoxJSXSpreadAttribute(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeItem`);
@@ -3187,8 +3187,8 @@ function walkJSXAttribute(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkJSXAttributeName(pos + 16, ast, visitors);
-  walkOptionJSXAttributeValue(pos + 32, ast, visitors);
+  walkJSXAttributeName(pos + 12, ast, visitors);
+  walkOptionJSXAttributeValue(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3204,7 +3204,7 @@ function walkJSXSpreadAttribute(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3212,10 +3212,10 @@ function walkJSXSpreadAttribute(pos, ast, visitors) {
 function walkJSXAttributeName(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxJSXIdentifier(pos + 8, ast, visitors);
+      walkBoxJSXIdentifier(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxJSXNamespacedName(pos + 8, ast, visitors);
+      walkBoxJSXNamespacedName(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeName`);
@@ -3225,16 +3225,16 @@ function walkJSXAttributeName(pos, ast, visitors) {
 function walkJSXAttributeValue(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxJSXExpressionContainer(pos + 8, ast, visitors);
+      walkBoxJSXExpressionContainer(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeValue`);
@@ -3249,19 +3249,19 @@ function walkJSXIdentifier(pos, ast, visitors) {
 function walkJSXChild(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxJSXText(pos + 8, ast, visitors);
+      walkBoxJSXText(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxJSXElement(pos + 8, ast, visitors);
+      walkBoxJSXElement(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxJSXFragment(pos + 8, ast, visitors);
+      walkBoxJSXFragment(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxJSXExpressionContainer(pos + 8, ast, visitors);
+      walkBoxJSXExpressionContainer(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxJSXSpreadChild(pos + 8, ast, visitors);
+      walkBoxJSXSpreadChild(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXChild`);
@@ -3279,7 +3279,7 @@ function walkJSXSpreadChild(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3333,8 +3333,8 @@ function walkTSEnumMember(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSEnumMemberName(pos + 16, ast, visitors);
-  walkOptionExpression(pos + 32, ast, visitors);
+  walkTSEnumMemberName(pos + 12, ast, visitors);
+  walkOptionExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3342,16 +3342,16 @@ function walkTSEnumMember(pos, ast, visitors) {
 function walkTSEnumMemberName(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierName(pos + 8, ast, visitors);
+      walkBoxIdentifierName(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSEnumMemberName`);
@@ -3369,7 +3369,7 @@ function walkTSTypeAnnotation(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3385,7 +3385,7 @@ function walkTSLiteralType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSLiteral(pos + 16, ast, visitors);
+  walkTSLiteral(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3393,22 +3393,22 @@ function walkTSLiteralType(pos, ast, visitors) {
 function walkTSLiteral(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      walkBoxBooleanLiteral(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      walkBoxNumericLiteral(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      walkBoxBigIntLiteral(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxStringLiteral(pos + 8, ast, visitors);
+      walkBoxStringLiteral(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      walkBoxTemplateLiteral(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      walkBoxUnaryExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSLiteral`);
@@ -3418,115 +3418,115 @@ function walkTSLiteral(pos, ast, visitors) {
 function walkTSType(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxTSAnyKeyword(pos + 8, ast, visitors);
+      walkBoxTSAnyKeyword(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSBigIntKeyword(pos + 8, ast, visitors);
+      walkBoxTSBigIntKeyword(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSBooleanKeyword(pos + 8, ast, visitors);
+      walkBoxTSBooleanKeyword(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSIntrinsicKeyword(pos + 8, ast, visitors);
+      walkBoxTSIntrinsicKeyword(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSNeverKeyword(pos + 8, ast, visitors);
+      walkBoxTSNeverKeyword(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxTSNullKeyword(pos + 8, ast, visitors);
+      walkBoxTSNullKeyword(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTSNumberKeyword(pos + 8, ast, visitors);
+      walkBoxTSNumberKeyword(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxTSObjectKeyword(pos + 8, ast, visitors);
+      walkBoxTSObjectKeyword(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxTSStringKeyword(pos + 8, ast, visitors);
+      walkBoxTSStringKeyword(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxTSSymbolKeyword(pos + 8, ast, visitors);
+      walkBoxTSSymbolKeyword(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxTSThisType(pos + 8, ast, visitors);
+      walkBoxTSThisType(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxTSUndefinedKeyword(pos + 8, ast, visitors);
+      walkBoxTSUndefinedKeyword(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxTSUnknownKeyword(pos + 8, ast, visitors);
+      walkBoxTSUnknownKeyword(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxTSVoidKeyword(pos + 8, ast, visitors);
+      walkBoxTSVoidKeyword(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxTSArrayType(pos + 8, ast, visitors);
+      walkBoxTSArrayType(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxTSConditionalType(pos + 8, ast, visitors);
+      walkBoxTSConditionalType(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxTSConstructorType(pos + 8, ast, visitors);
+      walkBoxTSConstructorType(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxTSFunctionType(pos + 8, ast, visitors);
+      walkBoxTSFunctionType(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxTSImportType(pos + 8, ast, visitors);
+      walkBoxTSImportType(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxTSIndexedAccessType(pos + 8, ast, visitors);
+      walkBoxTSIndexedAccessType(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxTSInferType(pos + 8, ast, visitors);
+      walkBoxTSInferType(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxTSIntersectionType(pos + 8, ast, visitors);
+      walkBoxTSIntersectionType(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxTSLiteralType(pos + 8, ast, visitors);
+      walkBoxTSLiteralType(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxTSMappedType(pos + 8, ast, visitors);
+      walkBoxTSMappedType(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxTSNamedTupleMember(pos + 8, ast, visitors);
+      walkBoxTSNamedTupleMember(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxTSTemplateLiteralType(pos + 8, ast, visitors);
+      walkBoxTSTemplateLiteralType(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxTSTupleType(pos + 8, ast, visitors);
+      walkBoxTSTupleType(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxTSTypeLiteral(pos + 8, ast, visitors);
+      walkBoxTSTypeLiteral(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxTSTypeOperator(pos + 8, ast, visitors);
+      walkBoxTSTypeOperator(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxTSTypePredicate(pos + 8, ast, visitors);
+      walkBoxTSTypePredicate(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxTSTypeQuery(pos + 8, ast, visitors);
+      walkBoxTSTypeQuery(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxTSTypeReference(pos + 8, ast, visitors);
+      walkBoxTSTypeReference(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxTSUnionType(pos + 8, ast, visitors);
+      walkBoxTSUnionType(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxTSParenthesizedType(pos + 8, ast, visitors);
+      walkBoxTSParenthesizedType(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxJSDocNullableType(pos + 8, ast, visitors);
+      walkBoxJSDocNullableType(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxJSDocNonNullableType(pos + 8, ast, visitors);
+      walkBoxJSDocNonNullableType(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxJSDocUnknownType(pos + 8, ast, visitors);
+      walkBoxJSDocUnknownType(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSType`);
@@ -3544,10 +3544,10 @@ function walkTSConditionalType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
-  walkTSType(pos + 32, ast, visitors);
-  walkTSType(pos + 48, ast, visitors);
-  walkTSType(pos + 64, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
+  walkTSType(pos + 20, ast, visitors);
+  walkTSType(pos + 28, ast, visitors);
+  walkTSType(pos + 36, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3595,7 +3595,7 @@ function walkTSParenthesizedType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3611,7 +3611,7 @@ function walkTSTypeOperator(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3627,7 +3627,7 @@ function walkTSArrayType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3643,8 +3643,8 @@ function walkTSIndexedAccessType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
-  walkTSType(pos + 32, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
+  walkTSType(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3676,8 +3676,8 @@ function walkTSNamedTupleMember(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkIdentifierName(pos + 16, ast, visitors);
-  walkTSTupleElement(pos + 48, ast, visitors);
+  walkIdentifierName(pos + 24, ast, visitors);
+  walkTSTupleElement(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3693,7 +3693,7 @@ function walkTSOptionalType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3709,7 +3709,7 @@ function walkTSRestType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3717,121 +3717,121 @@ function walkTSRestType(pos, ast, visitors) {
 function walkTSTupleElement(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxTSAnyKeyword(pos + 8, ast, visitors);
+      walkBoxTSAnyKeyword(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSBigIntKeyword(pos + 8, ast, visitors);
+      walkBoxTSBigIntKeyword(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSBooleanKeyword(pos + 8, ast, visitors);
+      walkBoxTSBooleanKeyword(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSIntrinsicKeyword(pos + 8, ast, visitors);
+      walkBoxTSIntrinsicKeyword(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSNeverKeyword(pos + 8, ast, visitors);
+      walkBoxTSNeverKeyword(pos + 4, ast, visitors);
       return;
     case 5:
-      walkBoxTSNullKeyword(pos + 8, ast, visitors);
+      walkBoxTSNullKeyword(pos + 4, ast, visitors);
       return;
     case 6:
-      walkBoxTSNumberKeyword(pos + 8, ast, visitors);
+      walkBoxTSNumberKeyword(pos + 4, ast, visitors);
       return;
     case 7:
-      walkBoxTSObjectKeyword(pos + 8, ast, visitors);
+      walkBoxTSObjectKeyword(pos + 4, ast, visitors);
       return;
     case 8:
-      walkBoxTSStringKeyword(pos + 8, ast, visitors);
+      walkBoxTSStringKeyword(pos + 4, ast, visitors);
       return;
     case 9:
-      walkBoxTSSymbolKeyword(pos + 8, ast, visitors);
+      walkBoxTSSymbolKeyword(pos + 4, ast, visitors);
       return;
     case 10:
-      walkBoxTSThisType(pos + 8, ast, visitors);
+      walkBoxTSThisType(pos + 4, ast, visitors);
       return;
     case 11:
-      walkBoxTSUndefinedKeyword(pos + 8, ast, visitors);
+      walkBoxTSUndefinedKeyword(pos + 4, ast, visitors);
       return;
     case 12:
-      walkBoxTSUnknownKeyword(pos + 8, ast, visitors);
+      walkBoxTSUnknownKeyword(pos + 4, ast, visitors);
       return;
     case 13:
-      walkBoxTSVoidKeyword(pos + 8, ast, visitors);
+      walkBoxTSVoidKeyword(pos + 4, ast, visitors);
       return;
     case 14:
-      walkBoxTSArrayType(pos + 8, ast, visitors);
+      walkBoxTSArrayType(pos + 4, ast, visitors);
       return;
     case 15:
-      walkBoxTSConditionalType(pos + 8, ast, visitors);
+      walkBoxTSConditionalType(pos + 4, ast, visitors);
       return;
     case 16:
-      walkBoxTSConstructorType(pos + 8, ast, visitors);
+      walkBoxTSConstructorType(pos + 4, ast, visitors);
       return;
     case 17:
-      walkBoxTSFunctionType(pos + 8, ast, visitors);
+      walkBoxTSFunctionType(pos + 4, ast, visitors);
       return;
     case 18:
-      walkBoxTSImportType(pos + 8, ast, visitors);
+      walkBoxTSImportType(pos + 4, ast, visitors);
       return;
     case 19:
-      walkBoxTSIndexedAccessType(pos + 8, ast, visitors);
+      walkBoxTSIndexedAccessType(pos + 4, ast, visitors);
       return;
     case 20:
-      walkBoxTSInferType(pos + 8, ast, visitors);
+      walkBoxTSInferType(pos + 4, ast, visitors);
       return;
     case 21:
-      walkBoxTSIntersectionType(pos + 8, ast, visitors);
+      walkBoxTSIntersectionType(pos + 4, ast, visitors);
       return;
     case 22:
-      walkBoxTSLiteralType(pos + 8, ast, visitors);
+      walkBoxTSLiteralType(pos + 4, ast, visitors);
       return;
     case 23:
-      walkBoxTSMappedType(pos + 8, ast, visitors);
+      walkBoxTSMappedType(pos + 4, ast, visitors);
       return;
     case 24:
-      walkBoxTSNamedTupleMember(pos + 8, ast, visitors);
+      walkBoxTSNamedTupleMember(pos + 4, ast, visitors);
       return;
     case 26:
-      walkBoxTSTemplateLiteralType(pos + 8, ast, visitors);
+      walkBoxTSTemplateLiteralType(pos + 4, ast, visitors);
       return;
     case 27:
-      walkBoxTSTupleType(pos + 8, ast, visitors);
+      walkBoxTSTupleType(pos + 4, ast, visitors);
       return;
     case 28:
-      walkBoxTSTypeLiteral(pos + 8, ast, visitors);
+      walkBoxTSTypeLiteral(pos + 4, ast, visitors);
       return;
     case 29:
-      walkBoxTSTypeOperator(pos + 8, ast, visitors);
+      walkBoxTSTypeOperator(pos + 4, ast, visitors);
       return;
     case 30:
-      walkBoxTSTypePredicate(pos + 8, ast, visitors);
+      walkBoxTSTypePredicate(pos + 4, ast, visitors);
       return;
     case 31:
-      walkBoxTSTypeQuery(pos + 8, ast, visitors);
+      walkBoxTSTypeQuery(pos + 4, ast, visitors);
       return;
     case 32:
-      walkBoxTSTypeReference(pos + 8, ast, visitors);
+      walkBoxTSTypeReference(pos + 4, ast, visitors);
       return;
     case 33:
-      walkBoxTSUnionType(pos + 8, ast, visitors);
+      walkBoxTSUnionType(pos + 4, ast, visitors);
       return;
     case 34:
-      walkBoxTSParenthesizedType(pos + 8, ast, visitors);
+      walkBoxTSParenthesizedType(pos + 4, ast, visitors);
       return;
     case 35:
-      walkBoxJSDocNullableType(pos + 8, ast, visitors);
+      walkBoxJSDocNullableType(pos + 4, ast, visitors);
       return;
     case 36:
-      walkBoxJSDocNonNullableType(pos + 8, ast, visitors);
+      walkBoxJSDocNonNullableType(pos + 4, ast, visitors);
       return;
     case 37:
-      walkBoxJSDocUnknownType(pos + 8, ast, visitors);
+      walkBoxJSDocUnknownType(pos + 4, ast, visitors);
       return;
     case 64:
-      walkBoxTSOptionalType(pos + 8, ast, visitors);
+      walkBoxTSOptionalType(pos + 4, ast, visitors);
       return;
     case 65:
-      walkBoxTSRestType(pos + 8, ast, visitors);
+      walkBoxTSRestType(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTupleElement`);
@@ -3919,8 +3919,8 @@ function walkTSTypeReference(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSTypeName(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
+  walkTSTypeName(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3928,13 +3928,13 @@ function walkTSTypeReference(pos, ast, visitors) {
 function walkTSTypeName(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSQualifiedName(pos + 8, ast, visitors);
+      walkBoxTSQualifiedName(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeName`);
@@ -3952,8 +3952,8 @@ function walkTSQualifiedName(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSTypeName(pos + 16, ast, visitors);
-  walkIdentifierName(pos + 32, ast, visitors);
+  walkTSTypeName(pos + 12, ast, visitors);
+  walkIdentifierName(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3985,9 +3985,9 @@ function walkTSTypeParameter(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBindingIdentifier(pos + 16, ast, visitors);
-  walkOptionTSType(pos + 48, ast, visitors);
-  walkOptionTSType(pos + 64, ast, visitors);
+  walkBindingIdentifier(pos + 32, ast, visitors);
+  walkOptionTSType(pos + 12, ast, visitors);
+  walkOptionTSType(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4020,8 +4020,8 @@ function walkTSTypeAliasDeclaration(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 48, ast, visitors);
-  walkTSType(pos + 56, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkTSType(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4037,8 +4037,8 @@ function walkTSClassImplements(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSTypeName(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
+  walkTSTypeName(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4055,9 +4055,9 @@ function walkTSInterfaceDeclaration(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 48, ast, visitors);
-  walkVecTSInterfaceHeritage(pos + 56, ast, visitors);
-  walkBoxTSInterfaceBody(pos + 80, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkVecTSInterfaceHeritage(pos + 48, ast, visitors);
+  walkBoxTSInterfaceBody(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4089,8 +4089,8 @@ function walkTSPropertySignature(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkPropertyKey(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4098,19 +4098,19 @@ function walkTSPropertySignature(pos, ast, visitors) {
 function walkTSSignature(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxTSIndexSignature(pos + 8, ast, visitors);
+      walkBoxTSIndexSignature(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSPropertySignature(pos + 8, ast, visitors);
+      walkBoxTSPropertySignature(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSCallSignatureDeclaration(pos + 8, ast, visitors);
+      walkBoxTSCallSignatureDeclaration(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSConstructSignatureDeclaration(pos + 8, ast, visitors);
+      walkBoxTSConstructSignatureDeclaration(pos + 4, ast, visitors);
       return;
     case 4:
-      walkBoxTSMethodSignature(pos + 8, ast, visitors);
+      walkBoxTSMethodSignature(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSSignature`);
@@ -4129,7 +4129,7 @@ function walkTSIndexSignature(pos, ast, visitors) {
   }
 
   walkVecTSIndexSignatureName(pos + 16, ast, visitors);
-  walkBoxTSTypeAnnotation(pos + 40, ast, visitors);
+  walkBoxTSTypeAnnotation(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4145,9 +4145,9 @@ function walkTSCallSignatureDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionBoxTSTypeParameterDeclaration(pos + 16, ast, visitors);
-  walkBoxFormalParameters(pos + 32, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 40, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkBoxFormalParameters(pos + 20, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4163,10 +4163,10 @@ function walkTSMethodSignature(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkPropertyKey(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 32, ast, visitors);
-  walkBoxFormalParameters(pos + 48, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 56, ast, visitors);
+  walkPropertyKey(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 20, ast, visitors);
+  walkBoxFormalParameters(pos + 28, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4182,9 +4182,9 @@ function walkTSConstructSignatureDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionBoxTSTypeParameterDeclaration(pos + 16, ast, visitors);
-  walkBoxFormalParameters(pos + 24, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkBoxFormalParameters(pos + 16, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4200,7 +4200,7 @@ function walkTSIndexSignatureName(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBoxTSTypeAnnotation(pos + 32, ast, visitors);
+  walkBoxTSTypeAnnotation(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4216,8 +4216,8 @@ function walkTSInterfaceHeritage(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4233,8 +4233,8 @@ function walkTSTypePredicate(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSTypePredicateName(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
+  walkTSTypePredicateName(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4242,10 +4242,10 @@ function walkTSTypePredicate(pos, ast, visitors) {
 function walkTSTypePredicateName(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierName(pos + 8, ast, visitors);
+      walkBoxIdentifierName(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSThisType(pos + 8, ast, visitors);
+      walkBoxTSThisType(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypePredicateName`);
@@ -4263,8 +4263,8 @@ function walkTSModuleDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSModuleDeclarationName(pos + 16, ast, visitors);
-  walkOptionTSModuleDeclarationBody(pos + 72, ast, visitors);
+  walkTSModuleDeclarationName(pos + 24, ast, visitors);
+  walkOptionTSModuleDeclarationBody(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4285,10 +4285,10 @@ function walkTSModuleDeclarationName(pos, ast, visitors) {
 function walkTSModuleDeclarationBody(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxTSModuleDeclaration(pos + 8, ast, visitors);
+      walkBoxTSModuleDeclaration(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSModuleBlock(pos + 8, ast, visitors);
+      walkBoxTSModuleBlock(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationBody`);
@@ -4354,7 +4354,7 @@ function walkTSInferType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBoxTSTypeParameter(pos + 16, ast, visitors);
+  walkBoxTSTypeParameter(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4370,8 +4370,8 @@ function walkTSTypeQuery(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSTypeQueryExprName(pos + 16, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
+  walkTSTypeQueryExprName(pos + 12, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4379,16 +4379,16 @@ function walkTSTypeQuery(pos, ast, visitors) {
 function walkTSTypeQueryExprName(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSQualifiedName(pos + 8, ast, visitors);
+      walkBoxTSQualifiedName(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxThisExpression(pos + 8, ast, visitors);
+      walkBoxThisExpression(pos + 4, ast, visitors);
       return;
     case 3:
-      walkBoxTSImportType(pos + 8, ast, visitors);
+      walkBoxTSImportType(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeQueryExprName`);
@@ -4407,9 +4407,9 @@ function walkTSImportType(pos, ast, visitors) {
   }
 
   walkStringLiteral(pos + 16, ast, visitors);
-  walkOptionBoxObjectExpression(pos + 64, ast, visitors);
-  walkOptionTSImportTypeQualifier(pos + 72, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 88, ast, visitors);
+  walkOptionBoxObjectExpression(pos + 12, ast, visitors);
+  walkOptionTSImportTypeQualifier(pos + 64, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4417,10 +4417,10 @@ function walkTSImportType(pos, ast, visitors) {
 function walkTSImportTypeQualifier(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierName(pos + 8, ast, visitors);
+      walkBoxIdentifierName(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxTSImportTypeQualifiedName(pos + 8, ast, visitors);
+      walkBoxTSImportTypeQualifiedName(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSImportTypeQualifier`);
@@ -4438,8 +4438,8 @@ function walkTSImportTypeQualifiedName(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSImportTypeQualifier(pos + 16, ast, visitors);
-  walkIdentifierName(pos + 32, ast, visitors);
+  walkTSImportTypeQualifier(pos + 12, ast, visitors);
+  walkIdentifierName(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4455,9 +4455,9 @@ function walkTSFunctionType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionBoxTSTypeParameterDeclaration(pos + 16, ast, visitors);
-  walkBoxFormalParameters(pos + 32, ast, visitors);
-  walkBoxTSTypeAnnotation(pos + 40, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkBoxFormalParameters(pos + 20, ast, visitors);
+  walkBoxTSTypeAnnotation(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4473,9 +4473,9 @@ function walkTSConstructorType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionBoxTSTypeParameterDeclaration(pos + 16, ast, visitors);
-  walkBoxFormalParameters(pos + 24, ast, visitors);
-  walkBoxTSTypeAnnotation(pos + 32, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 12, ast, visitors);
+  walkBoxFormalParameters(pos + 16, ast, visitors);
+  walkBoxTSTypeAnnotation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4491,10 +4491,10 @@ function walkTSMappedType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBindingIdentifier(pos + 16, ast, visitors);
-  walkTSType(pos + 48, ast, visitors);
-  walkOptionTSType(pos + 64, ast, visitors);
-  walkOptionTSType(pos + 80, ast, visitors);
+  walkBindingIdentifier(pos + 40, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
+  walkOptionTSType(pos + 20, ast, visitors);
+  walkOptionTSType(pos + 28, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4527,8 +4527,8 @@ function walkTSAsExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkTSType(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkTSType(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4544,8 +4544,8 @@ function walkTSSatisfiesExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkTSType(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkTSType(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4561,8 +4561,8 @@ function walkTSTypeAssertion(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
+  walkExpression(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4578,8 +4578,8 @@ function walkTSImportEqualsDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkBindingIdentifier(pos + 16, ast, visitors);
-  walkTSModuleReference(pos + 48, ast, visitors);
+  walkBindingIdentifier(pos + 24, ast, visitors);
+  walkTSModuleReference(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4587,13 +4587,13 @@ function walkTSImportEqualsDeclaration(pos, ast, visitors) {
 function walkTSModuleReference(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxTSExternalModuleReference(pos + 8, ast, visitors);
+      walkBoxTSExternalModuleReference(pos + 4, ast, visitors);
       return;
     case 1:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 4, ast, visitors);
       return;
     case 2:
-      walkBoxTSQualifiedName(pos + 8, ast, visitors);
+      walkBoxTSQualifiedName(pos + 4, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleReference`);
@@ -4627,7 +4627,7 @@ function walkTSNonNullExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4643,7 +4643,7 @@ function walkDecorator(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4659,7 +4659,7 @@ function walkTSExportAssignment(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4691,8 +4691,8 @@ function walkTSInstantiationExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
-  walkBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
+  walkExpression(pos + 12, ast, visitors);
+  walkBoxTSTypeParameterInstantiation(pos + 20, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4708,7 +4708,7 @@ function walkJSDocNullableType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4724,7 +4724,7 @@ function walkJSDocNonNullableType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 16, ast, visitors);
+  walkTSType(pos + 12, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4743,10 +4743,10 @@ function walkVecStatement(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkStatement(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -4918,10 +4918,10 @@ function walkVecArrayExpressionElement(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkArrayExpressionElement(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -4937,10 +4937,10 @@ function walkVecObjectPropertyKind(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkObjectPropertyKind(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -4971,10 +4971,10 @@ function walkVecExpression(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkExpression(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -4983,8 +4983,7 @@ function walkBoxTSTypeParameterInstantiation(pos, ast, visitors) {
 }
 
 function walkOptionBoxTSTypeParameterInstantiation(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxTSTypeParameterInstantiation(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxTSTypeParameterInstantiation(pos, ast, visitors);
 }
 
 function walkBoxComputedMemberExpression(pos, ast, visitors) {
@@ -5003,10 +5002,10 @@ function walkVecArgument(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkArgument(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5026,10 +5025,10 @@ function walkVecOptionAssignmentTargetMaybeDefault(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkOptionAssignmentTargetMaybeDefault(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5037,10 +5036,10 @@ function walkVecAssignmentTargetProperty(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkAssignmentTargetProperty(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5164,10 +5163,10 @@ function walkVecVariableDeclarator(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 56;
+  const endPos = pos + int32[pos32 + 2] * 40;
   while (pos < endPos) {
     walkVariableDeclarator(pos, ast, visitors);
-    pos += 56;
+    pos += 40;
   }
 }
 
@@ -5176,8 +5175,7 @@ function walkBoxTSTypeAnnotation(pos, ast, visitors) {
 }
 
 function walkOptionBoxTSTypeAnnotation(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxTSTypeAnnotation(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxTSTypeAnnotation(pos, ast, visitors);
 }
 
 function walkOptionStatement(pos, ast, visitors) {
@@ -5197,10 +5195,10 @@ function walkVecSwitchCase(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 56;
+  const endPos = pos + int32[pos32 + 2] * 48;
   while (pos < endPos) {
     walkSwitchCase(pos, ast, visitors);
-    pos += 56;
+    pos += 48;
   }
 }
 
@@ -5209,17 +5207,15 @@ function walkBoxCatchClause(pos, ast, visitors) {
 }
 
 function walkOptionBoxCatchClause(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxCatchClause(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxCatchClause(pos, ast, visitors);
 }
 
 function walkOptionBoxBlockStatement(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxBlockStatement(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxBlockStatement(pos, ast, visitors);
 }
 
 function walkOptionCatchParameter(pos, ast, visitors) {
-  if (!(ast.buffer[pos + 16] === 255)) walkCatchParameter(pos, ast, visitors);
+  if (!(ast.buffer[pos + 12] === 255)) walkCatchParameter(pos, ast, visitors);
 }
 
 function walkBoxBindingIdentifier(pos, ast, visitors) {
@@ -5242,10 +5238,10 @@ function walkVecBindingProperty(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 48;
+  const endPos = pos + int32[pos32 + 2] * 32;
   while (pos < endPos) {
     walkBindingProperty(pos, ast, visitors);
-    pos += 48;
+    pos += 32;
   }
 }
 
@@ -5257,10 +5253,10 @@ function walkVecOptionBindingPattern(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkOptionBindingPattern(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5274,8 +5270,7 @@ function walkBoxTSTypeParameterDeclaration(pos, ast, visitors) {
 }
 
 function walkOptionBoxTSTypeParameterDeclaration(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxTSTypeParameterDeclaration(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxTSTypeParameterDeclaration(pos, ast, visitors);
 }
 
 function walkBoxFormalParameters(pos, ast, visitors) {
@@ -5287,18 +5282,17 @@ function walkBoxFunctionBody(pos, ast, visitors) {
 }
 
 function walkOptionBoxFunctionBody(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxFunctionBody(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxFunctionBody(pos, ast, visitors);
 }
 
 function walkVecFormalParameter(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 72;
+  const endPos = pos + int32[pos32 + 2] * 56;
   while (pos < endPos) {
     walkFormalParameter(pos, ast, visitors);
-    pos += 72;
+    pos += 56;
   }
 }
 
@@ -5306,10 +5300,10 @@ function walkVecDecorator(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 32;
+  const endPos = pos + int32[pos32 + 2] * 24;
   while (pos < endPos) {
     walkDecorator(pos, ast, visitors);
-    pos += 32;
+    pos += 24;
   }
 }
 
@@ -5318,18 +5312,17 @@ function walkBoxExpression(pos, ast, visitors) {
 }
 
 function walkOptionBoxExpression(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxExpression(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxExpression(pos, ast, visitors);
 }
 
 function walkVecTSClassImplements(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 40;
+  const endPos = pos + int32[pos32 + 2] * 24;
   while (pos < endPos) {
     walkTSClassImplements(pos, ast, visitors);
-    pos += 40;
+    pos += 24;
   }
 }
 
@@ -5341,10 +5334,10 @@ function walkVecClassElement(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkClassElement(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5396,10 +5389,10 @@ function walkVecImportDeclarationSpecifier(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkImportDeclarationSpecifier(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5413,8 +5406,7 @@ function walkBoxWithClause(pos, ast, visitors) {
 }
 
 function walkOptionBoxWithClause(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxWithClause(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxWithClause(pos, ast, visitors);
 }
 
 function walkBoxImportSpecifier(pos, ast, visitors) {
@@ -5471,10 +5463,10 @@ function walkVecJSXChild(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkJSXChild(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5483,18 +5475,17 @@ function walkBoxJSXClosingElement(pos, ast, visitors) {
 }
 
 function walkOptionBoxJSXClosingElement(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxJSXClosingElement(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxJSXClosingElement(pos, ast, visitors);
 }
 
 function walkVecJSXAttributeItem(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkJSXAttributeItem(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5542,10 +5533,10 @@ function walkVecTSEnumMember(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 48;
+  const endPos = pos + int32[pos32 + 2] * 32;
   while (pos < endPos) {
     walkTSEnumMember(pos, ast, visitors);
-    pos += 48;
+    pos += 32;
   }
 }
 
@@ -5701,10 +5692,10 @@ function walkVecTSType(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkTSType(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5712,10 +5703,10 @@ function walkVecTSTupleElement(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkTSTupleElement(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5739,10 +5730,10 @@ function walkVecTSTypeParameter(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 80;
+  const endPos = pos + int32[pos32 + 2] * 64;
   while (pos < endPos) {
     walkTSTypeParameter(pos, ast, visitors);
-    pos += 80;
+    pos += 64;
   }
 }
 
@@ -5750,10 +5741,10 @@ function walkVecTSInterfaceHeritage(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 40;
+  const endPos = pos + int32[pos32 + 2] * 24;
   while (pos < endPos) {
     walkTSInterfaceHeritage(pos, ast, visitors);
-    pos += 40;
+    pos += 24;
   }
 }
 
@@ -5765,10 +5756,10 @@ function walkVecTSSignature(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 16;
+  const endPos = pos + int32[pos32 + 2] * 8;
   while (pos < endPos) {
     walkTSSignature(pos, ast, visitors);
-    pos += 16;
+    pos += 8;
   }
 }
 
@@ -5792,10 +5783,10 @@ function walkVecTSIndexSignatureName(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 40;
+  const endPos = pos + int32[pos32 + 2] * 32;
   while (pos < endPos) {
     walkTSIndexSignatureName(pos, ast, visitors);
-    pos += 40;
+    pos += 32;
   }
 }
 
@@ -5812,8 +5803,7 @@ function walkBoxTSTypeParameter(pos, ast, visitors) {
 }
 
 function walkOptionBoxObjectExpression(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
-    walkBoxObjectExpression(pos, ast, visitors);
+  if (!(ast.buffer.int32[pos >> 2] === 0)) walkBoxObjectExpression(pos, ast, visitors);
 }
 
 function walkOptionTSImportTypeQualifier(pos, ast, visitors) {

@@ -103,8 +103,8 @@ const _: () = {
     assert!(size_of::<CharacterClassContentsKind>() == 1);
     assert!(align_of::<CharacterClassContentsKind>() == 1);
 
-    assert!(size_of::<CharacterClassContents>() == 16);
-    assert!(align_of::<CharacterClassContents>() == 8);
+    assert!(size_of::<CharacterClassContents>() == 8);
+    assert!(align_of::<CharacterClassContents>() == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<CharacterClassRange>() == 40);

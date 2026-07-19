@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use oxc_allocator::{Allocator, ArenaBox};
+use oxc_allocator::{Allocator, ArenaBoxedSlice};
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
@@ -43,7 +43,7 @@ pub struct ContextSubHost<'a> {
     pub(super) framework_options: FrameworkOptions,
     /// Parser tokens collected during parsing.
     /// Empty if parsing failed, or tokens are disabled (no JS plugins).
-    pub(super) parser_tokens: ArenaBox<'a, [Token]>,
+    pub(super) parser_tokens: ArenaBoxedSlice<'a, Token>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
@@ -108,7 +108,7 @@ impl<'a> ContextSubHost<'a> {
 #[non_exhaustive]
 pub struct ContextSubHostOptions<'a> {
     pub framework_options: FrameworkOptions,
-    pub parser_tokens: ArenaBox<'a, [Token]>,
+    pub parser_tokens: ArenaBoxedSlice<'a, Token>,
     pub respect_eslint_disable_directives: bool,
 }
 
@@ -116,7 +116,7 @@ impl Default for ContextSubHostOptions<'_> {
     fn default() -> Self {
         Self {
             framework_options: FrameworkOptions::Default,
-            parser_tokens: ArenaBox::new_empty_boxed_slice(),
+            parser_tokens: ArenaBoxedSlice::new_empty(),
             respect_eslint_disable_directives: true,
         }
     }
@@ -261,7 +261,7 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Mutable reference to the parser tokens collected for this script block.
-    pub fn parser_tokens_mut(&mut self) -> &mut ArenaBox<'a, [Token]> {
+    pub fn parser_tokens_mut(&mut self) -> &mut ArenaBoxedSlice<'a, Token> {
         &mut self.current_sub_host_mut().parser_tokens
     }
 
