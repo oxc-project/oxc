@@ -25,18 +25,17 @@ impl DiagnosticExt for OxcDiagnostic {
 }
 
 #[inline]
-fn ts_error<C, M>(code: C, message: M) -> OxcDiagnostic
+fn ts_error<M>(code: &'static str, message: M) -> OxcDiagnostic
 where
-    C: Into<Cow<'static, str>>,
     M: Into<Cow<'static, str>>,
 {
     OxcDiagnostic::error(message).with_error_code("TS", code)
 }
 
 #[cold]
-pub fn redeclaration(x0: &str, declare_span: Span, redeclare_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Identifier `{x0}` has already been declared")).with_labels([
-        declare_span.label(format!("`{x0}` has already been declared here")),
+pub fn redeclaration(name: &str, declare_span: Span, redeclare_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Identifier `{name}` has already been declared")).with_labels([
+        declare_span.label(format!("`{name}` has already been declared here")),
         redeclare_span.label("It can not be redeclared here"),
     ])
 }
@@ -132,9 +131,9 @@ pub fn jsx_in_non_jsx(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
-        .with_label(span.label(format!("`{x0}` expected")))
+pub fn expect_token(expected: &str, found: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected `{expected}` but found `{found}`"))
+        .with_label(span.label(format!("`{expected}` expected")))
 }
 
 #[cold]
@@ -170,8 +169,12 @@ pub fn expect_closing_or_separator(
 }
 
 #[cold]
-pub fn expect_conditional_alternative(x: &str, span: Span, question_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Expected `:` but found `{x}`")).with_labels([
+pub fn expect_conditional_alternative(
+    found: &str,
+    span: Span,
+    question_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected `:` but found `{found}`")).with_labels([
         span.primary_label("`:` expected"),
         question_span.label("Conditional starts here"),
     ])
@@ -195,8 +198,8 @@ pub fn unicode_escape_sequence(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn invalid_character(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Invalid Character `{x0}`")).with_label(span1)
+pub fn invalid_character(c: char, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Invalid Character `{c}`")).with_label(span)
 }
 
 #[cold]
@@ -215,16 +218,16 @@ pub fn unterminated_string(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn reg_exp_flag(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Unexpected flag {x0} in regular expression literal"))
-        .with_label(span1)
+pub fn reg_exp_flag(flag: char, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Unexpected flag {flag} in regular expression literal"))
+        .with_label(span)
         .with_help(format!("The allowed flags are `{REGEXP_FLAGS_LIST}`"))
 }
 
 #[cold]
-pub fn reg_exp_flag_twice(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Flag {x0} is mentioned twice in regular expression literal"))
-        .with_label(span1)
+pub fn reg_exp_flag_twice(flag: char, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Flag {flag} is mentioned twice in regular expression literal"))
+        .with_label(span)
         .with_help("Remove the duplicated flag here")
 }
 
@@ -234,8 +237,8 @@ pub fn unexpected_end(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn unexpected_jsx_end(span: Span, a: char, b: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Unexpected token. Did you mean `{{'{a}'}}` or `&{b};`?"))
+pub fn unexpected_jsx_end(span: Span, ch: char, entity: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Unexpected token. Did you mean `{{'{ch}'}}` or `&{entity};`?"))
         .with_label(span)
 }
 
@@ -245,8 +248,8 @@ pub fn unterminated_reg_exp(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn invalid_number(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Invalid Number {x0}")).with_label(span1)
+pub fn invalid_number(number: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Invalid Number {number}")).with_label(span)
 }
 
 #[cold]
@@ -538,6 +541,7 @@ pub fn for_loop_async_of(span: Span) -> OxcDiagnostic {
         .with_help("Did you mean to use a for await...of statement?")
 }
 
+#[cold]
 pub fn for_loop_let_reserved_word(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("The left-hand side of a `for...of` statement may not start with `let`")
         .with_label(span)
@@ -610,19 +614,20 @@ pub fn definite_assignment_assertion_not_permitted(span: Span) -> OxcDiagnostic 
 }
 
 #[cold]
-pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in an async context"))
-        .with_label(span1)
+pub fn identifier_async(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Cannot use `{name}` as an identifier in an async context"))
+        .with_label(span)
 }
 
 #[cold]
-pub fn identifier_generator(x0: &str, span1: Span, looks_like_expression: bool) -> OxcDiagnostic {
-    let diagnostic =
-        OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
-            .with_label(span1);
+pub fn identifier_generator(name: &str, span: Span, looks_like_expression: bool) -> OxcDiagnostic {
+    let diagnostic = OxcDiagnostic::error(format!(
+        "Cannot use `{name}` as an identifier in a generator context"
+    ))
+    .with_label(span);
     if looks_like_expression {
         diagnostic.with_help(format!(
-            "Wrap this in parentheses if you want to use a `{x0}` expression here"
+            "Wrap this in parentheses if you want to use a `{name}` expression here"
         ))
     } else {
         diagnostic
@@ -669,17 +674,17 @@ pub fn export_lone_surrogate(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn export_named_string(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+pub fn export_named_string(local: &str, exported: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A string literal cannot be used as an exported binding without `from`")
-        .with_help(format!("Did you mean `export {{ {x0} as {x1} }} from 'some-module'`?"))
-        .with_label(span2)
+        .with_help(format!("Did you mean `export {{ {local} as {exported} }} from 'some-module'`?"))
+        .with_label(span)
 }
 
 #[cold]
-pub fn export_reserved_word(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+pub fn export_reserved_word(local: &str, exported: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A reserved word cannot be used as an exported binding without `from`")
-        .with_help(format!("Did you mean `export {{ {x0} as {x1} }} from 'some-module'`?"))
-        .with_label(span2)
+        .with_help(format!("Did you mean `export {{ {local} as {exported} }} from 'some-module'`?"))
+        .with_label(span)
 }
 
 #[cold]
@@ -693,10 +698,10 @@ pub fn empty_parenthesized_expression(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn illegal_newline(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Illegal newline after {x0}")).with_labels([
-        span1.label(format!("{x0} starts here")),
-        span2.label("A newline is not expected here"),
+pub fn illegal_newline(token: &str, token_span: Span, newline_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Illegal newline after {token}")).with_labels([
+        token_span.label(format!("{token} starts here")),
+        newline_span.label("A newline is not expected here"),
     ])
 }
 
@@ -852,11 +857,11 @@ pub fn await_using_declarations_not_allowed_in_ambient_contexts(span: Span) -> O
 }
 
 #[cold]
-pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
+pub fn jsx_element_no_match(opening_span: Span, closing_span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
         .with_labels([
-            span1.primary_label(format!("Expected `</{name}>`")),
-            span.label("Opened here"),
+            closing_span.primary_label(format!("Expected `</{name}>`")),
+            opening_span.label("Opened here"),
         ])
 }
 
@@ -883,15 +888,15 @@ pub fn cover_initialized_name(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Duplicated export '{x0}'")).with_labels([
-        span1.label("Export has already been declared here"),
-        span2.label("It cannot be redeclared here"),
+pub fn duplicate_export(name: &str, declared_span: Span, redeclared_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Duplicated export '{name}'")).with_labels([
+        declared_span.label("Export has already been declared here"),
+        redeclared_span.label("It cannot be redeclared here"),
     ])
 }
 
 #[cold]
-pub fn duplicate_default_export(spans: impl IntoIterator<Item = Span>) -> OxcDiagnostic {
+pub fn duplicate_default_export(spans: Vec<Span>) -> OxcDiagnostic {
     ts_error("2528", "A module cannot have multiple default exports.").with_labels(spans)
 }
 
@@ -920,7 +925,7 @@ pub fn new_target_outside_function(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn switch_multiple_default_clause(first_default: Span, other_default: Span) -> OxcDiagnostic {
     ts_error("1113", "A 'default' clause cannot appear more than once in a 'switch' statement.")
-        .with_labels(vec![
+        .with_labels([
             first_default.label("First 'default' clause is here."),
             other_default.label("Another 'default' clause cannot appear here."),
         ])
@@ -1042,6 +1047,7 @@ pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
         .with_help("Remove the duplicate modifier.")
 }
 
+#[cold]
 pub fn cannot_appear_on_class_elements(
     modifier: &Modifier,
     allowed: Option<ModifierKinds>,
@@ -1054,6 +1060,7 @@ pub fn cannot_appear_on_class_elements(
     .with_allowed_modifier_help(allowed)
 }
 
+#[cold]
 pub fn cannot_appear_on_a_type_member(
     modifier: &Modifier,
     allowed: Option<ModifierKinds>,
@@ -1087,6 +1094,7 @@ pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
         .with_label(span)
 }
 
+#[cold]
 pub fn cannot_appear_on_a_parameter(
     modifier: &Modifier,
     allowed: Option<ModifierKinds>,
@@ -1107,6 +1115,7 @@ pub fn constructor_cannot_be_parameter_property_name(span: Span) -> OxcDiagnosti
     ts_error("2398", "'constructor' cannot be used as a parameter property name.").with_label(span)
 }
 
+#[cold]
 pub fn cannot_appear_on_an_index_signature(
     modifier: &Modifier,
     allowed: Option<ModifierKinds>,
@@ -1116,6 +1125,7 @@ pub fn cannot_appear_on_an_index_signature(
         .with_allowed_modifier_help(allowed)
 }
 
+#[cold]
 pub fn accessor_modifier(modifier: &Modifier, allowed: Option<ModifierKinds>) -> OxcDiagnostic {
     ts_error(
         "1243",
