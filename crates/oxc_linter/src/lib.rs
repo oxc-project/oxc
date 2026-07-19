@@ -17,7 +17,7 @@ use std::{
 
 use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{
-    ast::{Comment, CommentContent, CommentKind, Program},
+    ast::{Comment, CommentKind, Program},
     ast_kind::AST_TYPE_MAX,
 };
 use oxc_ast_macros::ast;
@@ -765,22 +765,8 @@ impl Linter {
             (0, 0)
         };
 
-        // Convert AST spans to UTF-16
-        span_converter.convert_program(program);
-
-        // Convert comment spans to UTF-16.
-        // Also set the `content` field (byte 15) of each comment to `None` (0).
-        // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
-        if let Some(mut converter) = span_converter.converter() {
-            for comment in &mut program.comments {
-                converter.convert_span(&mut comment.span);
-                comment.content = CommentContent::None;
-            }
-        } else {
-            for comment in &mut program.comments {
-                comment.content = CommentContent::None;
-            }
-        }
+        // Convert AST + comment spans to UTF-16
+        span_converter.convert_program_and_comments(program);
 
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;

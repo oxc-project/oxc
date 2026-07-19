@@ -4,12 +4,7 @@
 
 import { buffer, initSourceText, sourceText } from "./source_code.ts";
 import { computeLoc } from "./location.ts";
-import {
-  COMMENT_SIZE,
-  DESERIALIZED_FLAG_OFFSET,
-  TOKENS_OFFSET_POS_32,
-  TOKENS_LEN_POS_32,
-} from "../generated/constants.ts";
+import { COMMENT_SIZE, TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Range, Span } from "./location.ts";
@@ -457,13 +452,6 @@ debugAssert(TOKEN_SIZE === 1 << TOKEN_SIZE_SHIFT);
 const KIND_FIELD_OFFSET = 8;
 const IS_ESCAPED_FIELD_OFFSET = 10;
 
-// Values for the "deserialized" flag byte in buffer.
-// * `FLAG_DESERIALIZED` indicates the token/comment is already deserialized.
-// * `FLAG_NOT_DESERIALIZED` indicates the token/comment is not yet deserialized.
-//   `Token` / `Comment` object may be uninitialized, or contain stale data.
-export const FLAG_NOT_DESERIALIZED = 0;
-export const FLAG_DESERIALIZED = 1;
-
 /**
  * Deserialize all tokens and build the `tokens` array.
  * Called by `ast.tokens` getter.
@@ -499,10 +487,6 @@ export function deserializeTokens(): void {
 
   if (tokensInt32 === null) initTokensBuffer();
 
-  for (let i = 0; i < tokensLen; i++) {
-    deserializeTokenIfNeeded(i);
-  }
-
   allTokensDeserialized = true;
 
   debugCheckDeserializedTokens();
@@ -512,7 +496,6 @@ export function deserializeTokens(): void {
  * Initialize typed array views over the tokens region of the buffer.
  *
  * Populates `tokensUint8`, `tokensInt32`, and `tokensLen`, and grows `cachedTokens` if needed.
- * Does NOT deserialize tokens - they are deserialized lazily via `deserializeTokenIfNeeded`.
  */
 export function initTokensBuffer(): void {
   debugAssert(tokensUint8 === null && tokensInt32 === null, "Tokens buffer already initialized");
@@ -562,47 +545,15 @@ export function initTokensBuffer(): void {
 }
 
 /**
- * Get token at `index`, deserializing if needed.
+ * Get token at `index`.
  *
  * Caller must ensure `initTokensBuffer()` has been called before calling this function.
  *
  * @param index - Token index in the tokens buffer
- * @returns Deserialized token
+ * @returns Token
  */
 export function getToken(index: number): TokenType {
-  // Skip all other checks if all tokens have been deserialized
-  if (allTokensDeserialized === false) {
-    const token = deserializeTokenIfNeeded(index);
-    if (token !== null) return token as TokenType;
-  }
-
-  // Token was already deserialized
   return cachedTokens[index] as TokenType;
-}
-
-/**
- * Deserialize token at `index` if not already deserialized.
- *
- * Caller must ensure `initTokensBuffer()` has been called before calling this function.
- *
- * @param index - Token index in the tokens buffer
- * @returns `Token` object if newly deserialized, or `null` if already deserialized
- */
-function deserializeTokenIfNeeded(index: number): Token | null {
-  debugAssertIsNonNull(tokensUint8, "Token buffers should be initialized");
-  debugAssertIsNonNull(tokensInt32, "Token buffers should be initialized");
-  debugAssertIsNonNull(sourceText, "Source text should be initialized");
-
-  const pos = index << TOKEN_SIZE_SHIFT;
-
-  // Fast path: If already deserialized, exit
-  const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
-  if (tokensUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
-
-  // Mark token as deserialized, so it won't be deserialized again
-  tokensUint8[flagPos] = FLAG_DESERIALIZED;
-
-  return cachedTokens[index];
 }
 
 /**
@@ -659,11 +610,6 @@ function debugCheckDeserializedTokens(): void {
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
-    const flagPos = (i << TOKEN_SIZE_SHIFT) + DESERIALIZED_FLAG_OFFSET;
-    if (tokensUint8![flagPos] !== FLAG_DESERIALIZED) {
-      throw new Error(`Token ${i} not marked as deserialized after \`deserializeTokens()\` call`);
-    }
-
     const { start, end } = cachedTokens[i];
     if (end <= start) throw new Error(`Invalid deserialized token range: ${start}-${end}`);
     if (start < lastEnd) {

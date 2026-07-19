@@ -8,7 +8,7 @@ use napi::bindgen_prelude::Uint8Array;
 use napi_derive::napi;
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{Comment, CommentContent, CommentKind};
+use oxc_ast::ast::{Comment, CommentKind};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
@@ -255,22 +255,8 @@ unsafe fn parse_raw_impl(
             // Convert token spans to UTF-16 and update token kinds
             update_tokens(&mut tokens, program, &span_converter, ESTreeTokenOptionsJS);
 
-            // Convert AST spans to UTF-16
-            span_converter.convert_program(program);
-
-            // Convert comment spans to UTF-16.
-            // Also set the `content` field (byte 15) of each comment to `None` (0).
-            // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
-            if let Some(mut converter) = span_converter.converter() {
-                for comment in &mut program.comments {
-                    converter.convert_span(&mut comment.span);
-                    comment.content = CommentContent::None;
-                }
-            } else {
-                for comment in &mut program.comments {
-                    comment.content = CommentContent::None;
-                }
-            }
+            // Convert AST + comment spans to UTF-16
+            span_converter.convert_program_and_comments(program);
 
             let tokens_offset = tokens.as_ptr() as u32;
             #[expect(clippy::cast_possible_truncation)]

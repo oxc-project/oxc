@@ -11,10 +11,8 @@ import {
   COMMENT_LINE_KIND,
   COMMENT_SHEBANG_KIND,
   DATA_POINTER_POS_32,
-  DESERIALIZED_FLAG_OFFSET,
 } from "../generated/constants.ts";
 import { computeLoc } from "./location.ts";
-import { FLAG_NOT_DESERIALIZED, FLAG_DESERIALIZED } from "./tokens.ts";
 import { EMPTY_UINT8_ARRAY, EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -340,10 +338,6 @@ export function deserializeComments(): void {
 
   if (commentsInt32 === null) initCommentsBuffer();
 
-  for (let i = 0; i < commentsLen; i++) {
-    deserializeCommentIfNeeded(i);
-  }
-
   allCommentsDeserialized = true;
 
   debugCheckDeserializedComments();
@@ -353,7 +347,6 @@ export function deserializeComments(): void {
  * Initialize typed array views over the comments region of the buffer.
  *
  * Populates `commentsUint8`, `commentsInt32`, and `commentsLen`, and grows `cachedComments` if needed.
- * Does NOT deserialize comments - they are deserialized lazily via `deserializeCommentIfNeeded`.
  */
 export function initCommentsBuffer(): void {
   debugAssert(
@@ -417,46 +410,14 @@ export function initCommentsBuffer(): void {
 }
 
 /**
- * Get comment at `index`, deserializing if needed.
+ * Get comment at `index`.
  *
  * Caller must ensure `initCommentsBuffer()` has been called before calling this function.
  *
  * @param index - Comment index in the comments buffer
- * @returns Deserialized comment
+ * @returns Comment
  */
 export function getComment(index: number): CommentType {
-  // Skip all other checks if all comments have been deserialized
-  if (allCommentsDeserialized === false) {
-    const comment = deserializeCommentIfNeeded(index);
-    if (comment !== null) return comment;
-  }
-
-  // Comment was already deserialized
-  return cachedComments[index];
-}
-
-/**
- * Deserialize comment at `index` if not already deserialized.
- *
- * Caller must ensure `initCommentsBuffer()` has been called before calling this function.
- *
- * @param index - Comment index in the comments buffer
- * @returns `Comment` object if newly deserialized, or `null` if already deserialized
- */
-function deserializeCommentIfNeeded(index: number): Comment | null {
-  debugAssertIsNonNull(commentsUint8, "Comment buffers should be initialized");
-  debugAssertIsNonNull(commentsInt32, "Comment buffers should be initialized");
-  debugAssertIsNonNull(sourceText, "Source text should be initialized");
-
-  const pos = index << COMMENT_SIZE_SHIFT;
-
-  // Fast path: If already deserialized, exit
-  const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
-  if (commentsUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
-
-  // Mark comment as deserialized, so it won't be deserialized again
-  commentsUint8[flagPos] = FLAG_DESERIALIZED;
-
   return cachedComments[index];
 }
 
@@ -499,13 +460,6 @@ function debugCheckDeserializedComments(): void {
 
   let lastEnd = 0;
   for (let i = 0; i < commentsLen; i++) {
-    const flagPos = (i << COMMENT_SIZE_SHIFT) + DESERIALIZED_FLAG_OFFSET;
-    if (commentsUint8![flagPos] !== FLAG_DESERIALIZED) {
-      throw new Error(
-        `Comment ${i} not marked as deserialized after \`deserializeComments()\` call`,
-      );
-    }
-
     const { start, end } = cachedComments[i];
     if (end <= start) throw new Error(`Invalid deserialized comment range: ${start}-${end}`);
     if (start < lastEnd) {
