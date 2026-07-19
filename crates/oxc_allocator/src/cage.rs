@@ -168,6 +168,9 @@ impl FreeList {
 /// # SAFETY
 /// `offset` must be the cage offset of a freed chunk of at least `size_of::<usize>()` bytes.
 #[inline]
+// Chunk offsets are multiples of `CHUNK_ALIGN` (>= 16) from a page-aligned base, so the
+// `*mut usize` is always 8-byte-aligned despite the `*mut u8` source.
+#[expect(clippy::cast_ptr_alignment)]
 unsafe fn read_chunk_link(offset: usize) -> usize {
     let ptr = cage_base_ptr().wrapping_add(offset).cast::<usize>();
     // SAFETY: guaranteed by caller; `ptr` is within the cage and carries the cage's provenance.
@@ -179,6 +182,8 @@ unsafe fn read_chunk_link(offset: usize) -> usize {
 /// # SAFETY
 /// `offset` must be the cage offset of a freed chunk of at least `size_of::<usize>()` bytes.
 #[inline]
+// See `read_chunk_link`: the `*mut usize` is always 8-byte-aligned.
+#[expect(clippy::cast_ptr_alignment)]
 unsafe fn write_chunk_link(offset: usize, next: usize) {
     let ptr = cage_base_ptr().wrapping_add(offset).cast::<usize>();
     // SAFETY: guaranteed by caller; `ptr` is within the cage and carries the cage's provenance.
