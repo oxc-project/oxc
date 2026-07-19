@@ -38,8 +38,6 @@ use std::{
     },
 };
 
-use rustc_hash::{FxBuildHasher, FxHashMap};
-
 use super::arena::CHUNK_ALIGN;
 
 /// Size of the cage reservation: 32 GiB.
@@ -87,23 +85,105 @@ static CAGE_CURSOR: AtomicUsize = AtomicUsize::new(BURNED_PREFIX);
 /// One-time initialization guard for the cage reservation.
 static CAGE_INIT: Once = Once::new();
 
+/// Number of distinct chunk-size classes the free-list tracks. Arena chunk sizes follow a
+/// doubling ladder, so a few dozen classes cover any realistic workload; sizes beyond this
+/// simply aren't recycled (their chunks leak into the cage, same as an exhausted list).
+const FREE_LIST_CLASSES: usize = 128;
+
 /// Free-list of "deallocated" chunks, keyed by exact chunk size (in bytes).
-/// Values are cage-relative byte offsets of the chunk starts.
 ///
 /// Without this, workloads which create and drop many `Allocator`s (e.g. conformance runs
 /// parsing 100k+ files) burn through the whole 32 GiB reservation. Chunk sizes follow the
 /// arena's doubling ladder, so exact-size matches recycle nearly everything.
 ///
-/// This is deliberately dumb (no splitting, no coalescing): chunks are only ever reused for
-/// an allocation of *exactly* the same size, so alignment (>= `CHUNK_ALIGN`) is preserved.
-/// A production allocator would want something better.
+/// Deliberately dumb (no splitting, no coalescing): chunks are only ever reused for an
+/// allocation of *exactly* the same size, so alignment (>= `CHUNK_ALIGN`) is preserved.
 ///
-/// Guarded by a spin lock, NOT `std::sync::Mutex`: on macOS, `Mutex` lazily boxes a pthread
-/// mutex on first lock, and the cage's *allocation* path must never allocate from the global
-/// heap (arena allocation is documented to work even when the global allocator fails).
-/// Critical sections are a few instructions, so spinning is fine.
-static FREE_CHUNKS: SpinLock<FxHashMap<usize, Vec<usize>>> =
-    SpinLock::new(FxHashMap::with_hasher(FxBuildHasher));
+/// # Allocation-free
+/// The list uses **no global heap**: per-size-class list heads live in a fixed array, and the
+/// rest of each list is threaded *intrusively* through the freed chunk memory itself (the first
+/// `usize` of a freed chunk holds the cage offset of the next free chunk of the same size).
+/// This matters for two reasons: the cage's *allocation* path is documented to work even when
+/// the global allocator fails, and — with a heap-backed free-list — the allocation-tracking
+/// snapshot became platform-dependent (hashbrown control-group sizes differ x86_64 vs aarch64).
+///
+/// Guarded by a spin lock, NOT `std::sync::Mutex` (on macOS `Mutex` lazily boxes a pthread mutex
+/// on first lock — another global-heap allocation). Critical sections are a few instructions.
+static FREE_CHUNKS: SpinLock<FreeList> = SpinLock::new(FreeList::new());
+
+/// Intrusive, allocation-free free-list. See [`FREE_CHUNKS`].
+struct FreeList {
+    /// `(chunk_size, head_offset)` per class. `chunk_size == 0` marks an unused slot;
+    /// `head_offset == 0` marks an empty list (real offsets are always `>= BURNED_PREFIX > 0`).
+    classes: [(usize, usize); FREE_LIST_CLASSES],
+}
+
+impl FreeList {
+    const fn new() -> Self {
+        Self { classes: [(0, 0); FREE_LIST_CLASSES] }
+    }
+
+    /// Push a freed chunk at cage offset `offset` (of `size` bytes) onto its size class.
+    /// No-op if all class slots are taken by other sizes (the chunk just isn't recycled).
+    fn push(&mut self, size: usize, offset: usize) {
+        for slot in &mut self.classes {
+            if slot.0 == size {
+                // SAFETY: `offset` is a valid, now-dead chunk of `size` bytes in the cage;
+                // chunks are far larger than a `usize`, so the intrusive link fits.
+                unsafe { write_chunk_link(offset, slot.1) };
+                slot.1 = offset;
+                return;
+            }
+        }
+        for slot in &mut self.classes {
+            if slot.0 == 0 {
+                // SAFETY: as above.
+                unsafe { write_chunk_link(offset, 0) };
+                *slot = (size, offset);
+                return;
+            }
+        }
+    }
+
+    /// Pop a freed chunk of exactly `size` bytes, if one is available.
+    fn pop(&mut self, size: usize) -> Option<usize> {
+        for slot in &mut self.classes {
+            if slot.0 == size {
+                let head = slot.1;
+                if head == 0 {
+                    return None;
+                }
+                // SAFETY: `head` is a chunk offset previously pushed for this size; its
+                // intrusive link is still intact (the chunk has not been reallocated).
+                slot.1 = unsafe { read_chunk_link(head) };
+                return Some(head);
+            }
+        }
+        None
+    }
+}
+
+/// Read the intrusive "next free chunk" link stored at the start of a freed chunk.
+///
+/// # SAFETY
+/// `offset` must be the cage offset of a freed chunk of at least `size_of::<usize>()` bytes.
+#[inline]
+unsafe fn read_chunk_link(offset: usize) -> usize {
+    let ptr = cage_base_ptr().wrapping_add(offset).cast::<usize>();
+    // SAFETY: guaranteed by caller; `ptr` is within the cage and carries the cage's provenance.
+    unsafe { ptr.read() }
+}
+
+/// Write the intrusive "next free chunk" link at the start of a freed chunk.
+///
+/// # SAFETY
+/// `offset` must be the cage offset of a freed chunk of at least `size_of::<usize>()` bytes.
+#[inline]
+unsafe fn write_chunk_link(offset: usize, next: usize) {
+    let ptr = cage_base_ptr().wrapping_add(offset).cast::<usize>();
+    // SAFETY: guaranteed by caller; `ptr` is within the cage and carries the cage's provenance.
+    unsafe { ptr.write(next) };
+}
 
 /// A minimal allocation-free spin lock.
 struct SpinLock<T> {
@@ -252,7 +332,7 @@ pub fn alloc_chunk(layout: Layout) -> Option<NonNull<u8>> {
     // Freed chunk offsets are always aligned to at least `CHUNK_ALIGN`; only reuse when
     // that's sufficient for the requested alignment.
     if align <= CHUNK_ALIGN {
-        let offset = FREE_CHUNKS.with(|free_chunks| free_chunks.get_mut(&size).and_then(Vec::pop));
+        let offset = FREE_CHUNKS.with(|free_chunks| free_chunks.pop(size));
         if let Some(offset) = offset {
             let base = cage_base_ptr();
             debug_assert!(!base.is_null());
@@ -328,18 +408,9 @@ pub fn dealloc_chunk(ptr: NonNull<u8>, layout: Layout) {
 
     let offset = ptr.addr().get().wrapping_sub(cage_base());
     debug_assert!(offset >= BURNED_PREFIX && offset + layout.size() <= CAGE_SIZE);
-    // Free-list bookkeeping lives on the global heap. Deallocation must never fail or panic,
-    // so under global-allocator memory pressure, fall back to leaking the chunk
-    // (the cage's address range stays mapped either way).
-    FREE_CHUNKS.with(|free_chunks| {
-        if free_chunks.try_reserve(1).is_err() {
-            return;
-        }
-        let list = free_chunks.entry(layout.size()).or_default();
-        if list.try_reserve(1).is_ok() {
-            list.push(offset);
-        }
-    });
+    // The free-list is allocation-free (intrusive links + fixed class array), so this can
+    // never fail or need heap; an untracked size simply leaves the chunk unrecycled.
+    FREE_CHUNKS.with(|free_chunks| free_chunks.push(layout.size(), offset));
 }
 
 #[cfg(test)]

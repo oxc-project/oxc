@@ -55,7 +55,7 @@ antd.js:
 
 binder.ts:
   file size: 193077 # 193.08 kB
-  sys allocs: 1
+  sys allocs: 0
   sys reallocs: 0
   sys deallocs: 1
   sys alloc bytes: 3016 # 3.02 kB
