@@ -12,7 +12,6 @@ pub mod visitors;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 use oxc_ast::ast::*;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, Str};
 use oxc_syntax::number::ToJsString;
@@ -63,6 +62,12 @@ define_nonmax_u32_index_type! {
 
 define_nonmax_u32_index_type! {
     pub struct MutableRangeId;
+}
+
+define_nonmax_u32_index_type! {
+    /// Index into `Environment`'s interned aliasing-effect diagnostics
+    /// (`intern_aliasing_diagnostic` / `aliasing_diagnostic`).
+    pub struct DiagnosticId;
 }
 
 impl BlockId {
@@ -1276,11 +1281,15 @@ pub enum AliasingEffect {
     /// Function expression creation with captures.
     CreateFunction { captures: Vec<Place>, function_id: FunctionId, into: Place },
     /// Mutation of a value known to be frozen (error).
-    MutateFrozen { place: Place, error: OxcDiagnostic },
-    /// Mutation of a global value (error).
-    MutateGlobal { place: Place, error: OxcDiagnostic },
-    /// Side-effect not safe during render.
-    Impure { place: Place, error: OxcDiagnostic },
+    ///
+    /// `error` indexes the diagnostic interned on `Environment` (see
+    /// [`DiagnosticId`]); the `OxcDiagnostic` itself is held out-of-band so this
+    /// effect stays `Copy`/non-`Drop` and can be arena-allocated.
+    MutateFrozen { place: Place, error: DiagnosticId },
+    /// Mutation of a global value (error). `error` indexes the interned diagnostic.
+    MutateGlobal { place: Place, error: DiagnosticId },
+    /// Side-effect not safe during render. `error` indexes the interned diagnostic.
+    Impure { place: Place, error: DiagnosticId },
     /// Value is accessed during render.
     Render { place: Place },
 }
