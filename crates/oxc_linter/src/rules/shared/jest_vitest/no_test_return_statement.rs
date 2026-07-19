@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, Statement},
+    ast::{CallExpression, Expression, ExpressionKind, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
@@ -79,11 +79,11 @@ fn check_call_expression<'a>(
         let Some(arg_expr) = argument.as_expression() else {
             continue;
         };
-        match arg_expr {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
+        match arg_expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
                 check_test_return_statement(&arrow_expr.body, ctx);
             }
-            Expression::FunctionExpression(func_expr) => {
+            ExpressionKind::FunctionExpression(func_expr) => {
                 let Some(func_body) = &func_expr.body else {
                     continue;
                 };
@@ -107,16 +107,16 @@ fn check_test_return_statement<'a>(
     let Statement::ReturnStatement(stmt) = return_stmt else {
         return;
     };
-    let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
+    let Some(call_expr) = stmt.argument.as_ref().and_then(Expression::as_call_expression) else {
         return;
     };
     let Some(mem_expr) = call_expr.callee.as_member_expression() else {
         return;
     };
-    let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
+    let ExpressionKind::CallExpression(mem_call_expr) = mem_expr.object().kind() else {
         return;
     };
-    let Expression::Identifier(ident) = &mem_call_expr.callee else {
+    let ExpressionKind::Identifier(ident) = mem_call_expr.callee.kind() else {
         return;
     };
 

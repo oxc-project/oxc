@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BinaryExpression, BindingIdentifier, CallExpression, Expression,
+        Argument, BinaryExpression, BindingIdentifier, CallExpression, Expression, ExpressionKind,
         JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElement, JSXExpression,
         ObjectPropertyKind, PropertyKey,
     },
@@ -95,7 +95,12 @@ fn check_react_clone_element<'a>(
     if !is_method_call(call_expr, Some(&["React"]), Some(&["cloneElement"]), Some(2), Some(3)) {
         return;
     }
-    let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
+    let Some(obj_expr) = call_expr
+        .arguments
+        .get(1)
+        .and_then(Argument::as_expression)
+        .and_then(Expression::as_object_expression)
+    else {
         return;
     };
 
@@ -128,7 +133,7 @@ fn check_react_clone_element<'a>(
 }
 
 fn is_index_reference(ctx: &LintContext, symbol_id: SymbolId, expr: &Expression) -> bool {
-    if let Expression::Identifier(ident) = expr.get_inner_expression()
+    if let ExpressionKind::Identifier(ident) = expr.get_inner_expression().kind()
         && ctx.scoping().get_reference(ident.reference_id()).symbol_id() == Some(symbol_id)
     {
         return true;
@@ -143,8 +148,8 @@ fn binary_expression_uses_index(
 ) -> bool {
     is_index_reference(ctx, symbol_id, &bin.left)
         || is_index_reference(ctx, symbol_id, &bin.right)
-        || matches!(&bin.left, Expression::BinaryExpression(l) if binary_expression_uses_index(ctx, symbol_id, l))
-        || matches!(&bin.right, Expression::BinaryExpression(r) if binary_expression_uses_index(ctx, symbol_id, r))
+        || matches!(bin.left.kind(), ExpressionKind::BinaryExpression(l) if binary_expression_uses_index(ctx, symbol_id, l))
+        || matches!(bin.right.kind(), ExpressionKind::BinaryExpression(r) if binary_expression_uses_index(ctx, symbol_id, r))
 }
 
 fn expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &Expression) -> bool {
@@ -153,23 +158,23 @@ fn expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &Expressi
         return true;
     }
 
-    match expr {
+    match expr.kind() {
         // key={`abc${index}`}
-        Expression::TemplateLiteral(tmpl) => {
+        ExpressionKind::TemplateLiteral(tmpl) => {
             tmpl.expressions.iter().any(|e| is_index_reference(ctx, symbol_id, e))
         }
         // key={1 + index}
-        Expression::BinaryExpression(bin) => binary_expression_uses_index(ctx, symbol_id, bin),
-        Expression::CallExpression(call) => {
+        ExpressionKind::BinaryExpression(bin) => binary_expression_uses_index(ctx, symbol_id, bin),
+        ExpressionKind::CallExpression(call) => {
             // key={index.toString()}
-            if let Expression::StaticMemberExpression(member) = &call.callee
+            if let ExpressionKind::StaticMemberExpression(member) = call.callee.kind()
                 && member.property.name == "toString"
                 && is_index_reference(ctx, symbol_id, &member.object)
             {
                 return true;
             }
             // key={String(index)}
-            if let Expression::Identifier(callee) = &call.callee
+            if let ExpressionKind::Identifier(callee) = call.callee.kind()
                 && callee.name == "String"
                 && call
                     .arguments
@@ -188,14 +193,14 @@ fn expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &Expressi
 fn jsx_expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &JSXExpression) -> bool {
     match expr {
         JSXExpression::EmptyExpression(_) => false,
-        _ => expr.as_expression().is_some_and(|e| expression_uses_index(ctx, symbol_id, e)),
+        JSXExpression::Expression(inner) => expression_uses_index(ctx, symbol_id, inner),
     }
 }
 
 fn find_index_param_symbol_id<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<SymbolId> {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         if let AstKind::CallExpression(call_expr) = ancestor.kind() {
-            let Expression::StaticMemberExpression(expr) = &call_expr.callee else {
+            let ExpressionKind::StaticMemberExpression(expr) = call_expr.callee.kind() else {
                 continue;
             };
 
@@ -218,25 +223,28 @@ fn find_index_param_symbol_id_by_position(
     position: usize,
 ) -> Option<SymbolId> {
     call_expr.arguments.first().and_then(|argument| match argument {
-        Argument::ArrowFunctionExpression(arrow_fn_expr) => Some(
-            arrow_fn_expr
-                .params
-                .items
-                .get(position)?
-                .pattern
-                .get_binding_identifier()
-                .map(BindingIdentifier::symbol_id)?,
-        ),
-        Argument::FunctionExpression(regular_fn_expr) => Some(
-            regular_fn_expr
-                .params
-                .items
-                .get(position)?
-                .pattern
-                .get_binding_identifier()
-                .map(BindingIdentifier::symbol_id)?,
-        ),
-        _ => None,
+        Argument::Expression(expr) => match expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow_fn_expr) => Some(
+                arrow_fn_expr
+                    .params
+                    .items
+                    .get(position)?
+                    .pattern
+                    .get_binding_identifier()
+                    .map(BindingIdentifier::symbol_id)?,
+            ),
+            ExpressionKind::FunctionExpression(regular_fn_expr) => Some(
+                regular_fn_expr
+                    .params
+                    .items
+                    .get(position)?
+                    .pattern
+                    .get_binding_identifier()
+                    .map(BindingIdentifier::symbol_id)?,
+            ),
+            _ => None,
+        },
+        Argument::SpreadElement(_) => None,
     })
 }
 

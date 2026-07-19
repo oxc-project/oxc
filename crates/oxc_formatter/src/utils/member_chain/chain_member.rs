@@ -149,9 +149,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatComputedMemberExpressionWitho
             write!(f, [soft_line_break(), FormatLeadingComments::Comments(comments)]);
         }
 
-        if matches!(self.expression, Expression::NumericLiteral(_))
-            && !f.comments().has_comment_before(self.span.end)
-        {
+        if self.expression.is_numeric_literal() && !f.comments().has_comment_before(self.span.end) {
             write!(f, [self.optional().then_some("?."), "[", self.expression(), "]"]);
         } else {
             write!(

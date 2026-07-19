@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Expression, JSXAttribute, JSXAttributeName, JSXAttributeValue, JSXExpression,
-        JSXExpressionContainer,
-    },
+    ast::{JSXAttribute, JSXAttributeName, JSXAttributeValue, JSXExpressionContainer},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -94,9 +91,10 @@ fn contains_string_literal(
     expr_container: &JSXExpressionContainer,
     no_template_literals: bool,
 ) -> bool {
-    let expr = &expr_container.expression;
-    matches!(expr, JSXExpression::StringLiteral(_))
-        || (no_template_literals && matches!(expr, JSXExpression::TemplateLiteral(_)))
+    let Some(expr) = expr_container.expression.as_expression() else {
+        return false;
+    };
+    expr.is_string_literal() || (no_template_literals && expr.is_template_literal())
 }
 
 fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> bool {
@@ -134,7 +132,7 @@ impl Rule for NoStringRefs {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return;
                 };
-                if matches!(member_expr.object(), Expression::ThisExpression(_))
+                if member_expr.object().is_this_expression()
                     && member_expr.static_property_name().is_some_and(|name| name == "refs")
                     && get_parent_component(node, ctx).is_some()
                 {

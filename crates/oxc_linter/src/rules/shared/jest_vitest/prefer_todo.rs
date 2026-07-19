@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -61,14 +61,14 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
         {
             let span = call_expr.callee.span();
             ctx.diagnostic_with_fix(prefer_todo_diagnostic(span), |fixer| {
-                let fix = if let Expression::Identifier(ident) = &call_expr.callee {
+                let fix = if let ExpressionKind::Identifier(ident) = call_expr.callee.kind() {
                     fixer.insert_text_after_range(ident.span, ".todo")
                 } else {
-                    match &call_expr.callee {
-                        Expression::StaticMemberExpression(mem_expr) => {
+                    match call_expr.callee.kind() {
+                        ExpressionKind::StaticMemberExpression(mem_expr) => {
                             fixer.replace(mem_expr.property.span, "todo")
                         }
-                        Expression::ComputedMemberExpression(mem_expr) => {
+                        ExpressionKind::ComputedMemberExpression(mem_expr) => {
                             fixer.replace(mem_expr.expression.span(), "'todo'")
                         }
                         _ => return fixer.delete_range(call_expr.span),
@@ -102,26 +102,31 @@ fn filter_todo_case(expr: &CallExpression) -> bool {
 }
 
 fn should_filter_case(expr: &CallExpression) -> bool {
-    let result = match &expr.callee {
-        Expression::Identifier(ident) => ident.name.starts_with('x') || ident.name.starts_with('f'),
+    let result = match expr.callee.kind() {
+        ExpressionKind::Identifier(ident) => {
+            ident.name.starts_with('x') || ident.name.starts_with('f')
+        }
         _ => false,
     };
     result || filter_todo_case(expr)
 }
 
 fn is_string_type(arg: &Argument) -> bool {
-    matches!(arg, Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
+    arg.as_expression().is_some_and(|e| e.is_string_literal() || e.is_template_literal())
 }
 
 fn is_empty_function(expr: &CallExpression) -> bool {
     match &expr.arguments[1] {
-        Argument::ArrowFunctionExpression(arrow) => arrow.body.is_empty(),
-        Argument::FunctionExpression(func) => {
-            let Some(func_body) = &func.body else {
-                return false;
-            };
-            func_body.is_empty()
-        }
-        _ => false,
+        Argument::Expression(e) => match e.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow) => arrow.body.is_empty(),
+            ExpressionKind::FunctionExpression(func) => {
+                let Some(func_body) = &func.body else {
+                    return false;
+                };
+                func_body.is_empty()
+            }
+            _ => false,
+        },
+        Argument::SpreadElement(_) => false,
     }
 }

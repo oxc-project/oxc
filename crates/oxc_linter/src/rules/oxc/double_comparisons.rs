@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -54,21 +54,21 @@ impl Rule for DoubleComparisons {
             return;
         };
 
-        let (lkind, llhs, lrhs, rkind, rlhs, rrhs) = match (&logical_expr.left, &logical_expr.right)
-        {
-            (
-                Expression::BinaryExpression(left_bin_expr),
-                Expression::BinaryExpression(right_bin_expr),
-            ) => (
-                left_bin_expr.operator,
-                &left_bin_expr.left,
-                &left_bin_expr.right,
-                right_bin_expr.operator,
-                &right_bin_expr.left,
-                &right_bin_expr.right,
-            ),
-            _ => return,
-        };
+        let (lkind, llhs, lrhs, rkind, rlhs, rrhs) =
+            match (logical_expr.left.kind(), logical_expr.right.kind()) {
+                (
+                    ExpressionKind::BinaryExpression(left_bin_expr),
+                    ExpressionKind::BinaryExpression(right_bin_expr),
+                ) => (
+                    left_bin_expr.operator,
+                    &left_bin_expr.left,
+                    &left_bin_expr.right,
+                    right_bin_expr.operator,
+                    &right_bin_expr.left,
+                    &right_bin_expr.right,
+                ),
+                _ => return,
+            };
 
         // check that (LLHS === RLHS && LRHS === RRHS) || (LLHS === RRHS && LRHS === RLHS)
         let rhs_operator =

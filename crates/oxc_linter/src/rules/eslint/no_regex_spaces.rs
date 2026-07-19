@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
+    ast::{Argument, CallExpression, ExpressionTag, NewExpression, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -106,12 +106,14 @@ impl NoRegexSpaces {
 
     fn find_expr_to_report(args: &ArenaVec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
         if let Some(expr) = args.get(1).and_then(Argument::as_expression)
-            && !expr.is_string_literal()
+            && !matches!(expr.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
         {
             return None; // skip on indeterminate flag, e.g. RegExp('a  b', flags)
         }
 
-        let Some(Argument::StringLiteral(pattern)) = args.first() else {
+        let Some(pattern) =
+            args.first().and_then(Argument::as_expression).and_then(|e| e.as_string_literal())
+        else {
             return None;
         };
         if !Self::has_double_space(&pattern.value) {

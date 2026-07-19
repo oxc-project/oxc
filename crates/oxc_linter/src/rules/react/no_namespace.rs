@@ -63,7 +63,12 @@ impl Rule for NoNamespace {
                 }
             }
             AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
-                let Some(Argument::StringLiteral(str_lit)) = call_expr.arguments.first() else {
+                let Some(str_lit) = call_expr
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .and_then(|e| e.as_string_literal())
+                else {
                     return;
                 };
 

@@ -1,7 +1,7 @@
-use oxc_allocator::{GetAddress, UnstableAddress};
+use oxc_allocator::UnstableAddress;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPattern, Expression, IdentifierReference},
+    ast::{BindingPattern, Expression, ExpressionKind, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -68,11 +68,11 @@ impl Rule for PreferEventTarget {
         match ctx.nodes().parent_kind(node.id()) {
             AstKind::Class(_) => {}
             AstKind::NewExpression(new_expr) => {
-                let Expression::Identifier(callee_ident) = &new_expr.callee else {
+                let ExpressionKind::Identifier(callee_ident) = new_expr.callee.kind() else {
                     return;
                 };
 
-                if ident.unstable_address() != callee_ident.address() {
+                if ident.unstable_address() != callee_ident.unstable_address() {
                     return;
                 }
             }
@@ -92,32 +92,37 @@ fn is_ignored_package(source: &str) -> bool {
 }
 
 fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::CallExpression(call_expr) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::CallExpression(call_expr) => {
             !call_expr.optional
                 && call_expr.callee.is_specific_id("require")
                 && call_expr.arguments.len() == 1
-                && match &call_expr.arguments[0] {
-                    Argument::StringLiteral(source) => is_ignored_package(source.value.as_str()),
-                    Argument::TemplateLiteral(source) => source
+                && match call_expr.arguments[0].as_expression().map(|e| e.kind()) {
+                    Some(ExpressionKind::StringLiteral(source)) => {
+                        is_ignored_package(source.value.as_str())
+                    }
+                    Some(ExpressionKind::TemplateLiteral(source)) => source
                         .single_quasi()
                         .is_some_and(|source| is_ignored_package(source.as_str())),
                     _ => false,
                 }
         }
-        Expression::AwaitExpression(await_expr) => match await_expr.argument.get_inner_expression()
-        {
-            Expression::ImportExpression(import_expr) => {
-                match import_expr.source.get_inner_expression() {
-                    Expression::StringLiteral(source) => is_ignored_package(source.value.as_str()),
-                    Expression::TemplateLiteral(source) => source
-                        .single_quasi()
-                        .is_some_and(|source| is_ignored_package(source.as_str())),
-                    _ => false,
+        ExpressionKind::AwaitExpression(await_expr) => {
+            match await_expr.argument.get_inner_expression().kind() {
+                ExpressionKind::ImportExpression(import_expr) => {
+                    match import_expr.source.get_inner_expression().kind() {
+                        ExpressionKind::StringLiteral(source) => {
+                            is_ignored_package(source.value.as_str())
+                        }
+                        ExpressionKind::TemplateLiteral(source) => source
+                            .single_quasi()
+                            .is_some_and(|source| is_ignored_package(source.as_str())),
+                        _ => false,
+                    }
                 }
+                _ => false,
             }
-            _ => false,
-        },
+        }
         _ => false,
     }
 }

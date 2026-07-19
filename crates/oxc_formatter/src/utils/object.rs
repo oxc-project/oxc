@@ -98,7 +98,11 @@ pub fn is_quoted_new_method_signature(method: &TSMethodSignature<'_>) -> bool {
     method.kind == TSMethodSignatureKind::Method
         && !method.computed
         && !method.optional
-        && matches!(&method.key, PropertyKey::StringLiteral(string) if string.value == "new")
+        && method
+            .key
+            .as_expression()
+            .and_then(Expression::as_string_literal)
+            .is_some_and(|string| string.value == "new")
 }
 
 /// Determine if the string literal key should preserve its quotes,
@@ -110,7 +114,9 @@ pub fn should_preserve_string_quote(string: &StringLiteral<'_>, f: &JsFormatter<
 
 /// Determine if the property key string literal should preserve its quotes
 pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
+    key.as_expression()
+        .and_then(Expression::as_string_literal)
+        .is_some_and(|string| should_preserve_string_quote(string, f))
 }
 
 /// Determine if the enum member name string literal should preserve its quotes.

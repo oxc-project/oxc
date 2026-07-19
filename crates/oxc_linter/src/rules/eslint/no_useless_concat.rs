@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression},
+    ast::{BinaryExpression, Expression, ExpressionKind, ExpressionTag},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -69,7 +69,9 @@ impl Rule for NoUselessConcat {
         let left = get_left(binary_expr);
         let right = get_right(binary_expr);
 
-        if left.is_string_literal() && right.is_string_literal() {
+        if matches!(left.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
+            && matches!(right.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
+        {
             let left_span = left.span();
             let right_span = right.span();
             let span = Span::new(left_span.end, right_span.start);
@@ -86,7 +88,7 @@ impl Rule for NoUselessConcat {
 fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
     let mut left = &expr.left;
     loop {
-        if let Expression::BinaryExpression(binary_expr) = left
+        if let ExpressionKind::BinaryExpression(binary_expr) = left.kind()
             && binary_expr.operator == BinaryOperator::Addition
         {
             left = &binary_expr.right;
@@ -100,7 +102,7 @@ fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
 fn get_right<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
     let mut right = &expr.right;
     loop {
-        if let Expression::BinaryExpression(binary_expr) = right
+        if let ExpressionKind::BinaryExpression(binary_expr) = right.kind()
             && binary_expr.operator == BinaryOperator::Addition
         {
             right = &binary_expr.left;

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression, match_member_expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind, ExpressionTag},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -64,13 +67,15 @@ impl Rule for PreferExponentiationOperator {
 
         let member_expor_obj = member_expr.object();
 
-        match member_expor_obj {
-            Expression::Identifier(ident) => {
+        match member_expor_obj.kind() {
+            ExpressionKind::Identifier(ident) => {
                 if ident.name.as_str() != "Math" || !ctx.is_reference_to_global_variable(ident) {
                     return;
                 }
             }
-            match_member_expression!(Expression) => {
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
                 let member_expr = member_expor_obj.to_member_expression();
                 let Some(static_prop_name) = member_expr.static_property_name() else {
                     return;
@@ -79,7 +84,8 @@ impl Rule for PreferExponentiationOperator {
                     return;
                 }
 
-                if let Expression::Identifier(ident) = member_expr.object().without_parentheses()
+                if let ExpressionKind::Identifier(ident) =
+                    member_expr.object().without_parentheses().kind()
                     && GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
                     && ctx.is_reference_to_global_variable(ident)
                 {
@@ -124,7 +130,7 @@ impl Rule for PreferExponentiationOperator {
 
 fn does_base_need_parens(expr: &Expression) -> bool {
     let expr = expr.without_parentheses();
-    if matches!(expr, Expression::UnaryExpression(_) | Expression::AwaitExpression(_)) {
+    if matches!(expr.tag(), ExpressionTag::UnaryExpression | ExpressionTag::AwaitExpression) {
         return true;
     }
     if let Some(prec) = get_precedence(expr) {

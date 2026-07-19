@@ -4,8 +4,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
-        ClassElement, Expression, Function, MethodDefinitionKind, PropertyDefinition, PropertyKey,
-        Statement,
+        ClassElement, Expression, ExpressionKind, Function, MemberExpressionKind,
+        MethodDefinitionKind, PropertyDefinition, PropertyKey, Statement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -223,11 +223,11 @@ fn is_supported_literal(expression: &Expression<'_>) -> bool {
         return true;
     }
 
-    match expression {
-        Expression::TaggedTemplateExpression(tagged_template) => {
+    match expression.kind() {
+        ExpressionKind::TaggedTemplateExpression(tagged_template) => {
             tagged_template.quasi.is_no_substitution_template()
         }
-        Expression::TemplateLiteral(template_literal) => {
+        ExpressionKind::TemplateLiteral(template_literal) => {
             template_literal.is_no_substitution_template()
         }
         _ => false,
@@ -237,29 +237,37 @@ fn is_supported_literal(expression: &Expression<'_>) -> bool {
 fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     match (a.name(), b.name()) {
         (Some(a_name), Some(b_name)) => a_name == b_name,
-        _ => match (a.as_expression(), b.as_expression()) {
-            (Some(Expression::Identifier(a_ident)), Some(Expression::Identifier(b_ident))) => {
+        _ => {
+            if let (Some(a_expr), Some(b_expr)) = (a.as_expression(), b.as_expression())
+                && let Some(a_ident) = a_expr.as_identifier()
+                && let Some(b_ident) = b_expr.as_identifier()
+            {
                 a_ident.name == b_ident.name
+            } else {
+                false
             }
-            _ => false,
-        },
+        }
     }
 }
 
 fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Str<'a>> {
-    let is_this_object =
-        |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
+    let is_this_object = |expr: &Expression<'_>| expr.without_parentheses().is_this_expression();
 
     match left {
-        AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.property.name.as_arena_str())
-        }
-        AssignmentTarget::ComputedMemberExpression(expr) if is_this_object(&expr.object) => {
-            expr.static_property_name()
-        }
-        AssignmentTarget::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.field.name.as_arena_str())
-        }
+        AssignmentTarget::MemberExpression(member) => match member.kind() {
+            MemberExpressionKind::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
+                Some(expr.property.name.as_arena_str())
+            }
+            MemberExpressionKind::ComputedMemberExpression(expr)
+                if is_this_object(&expr.object) =>
+            {
+                expr.static_property_name()
+            }
+            MemberExpressionKind::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
+                Some(expr.field.name.as_arena_str())
+            }
+            _ => None,
+        },
         _ => None,
     }
 }

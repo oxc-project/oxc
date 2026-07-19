@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, CallExpression, Expression, ObjectExpression, ObjectPropertyKind,
-        PropertyKey, PropertyKind, Statement, TSSignature,
+        BindingPattern, CallExpression, Expression, ExpressionKind, ObjectExpression,
+        ObjectPropertyKind, PropertyKey, PropertyKind, Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -131,9 +131,7 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
     if ctx.frameworks_options() != FrameworkOptions::VueSetup {
         return;
     }
-    if !matches!(call.callee, Expression::Identifier(_))
-        || call.callee_name() != Some("defineProps")
-    {
+    if !call.callee.is_identifier() || call.callee_name() != Some("defineProps") {
         return;
     }
     let props = collect_prop_names_from_call(call, ctx);
@@ -210,8 +208,8 @@ fn collect_group_keys<'a>(
 ) {
     // Only unwrap parens: espree has no paren nodes, so upstream sees through them,
     // while a TS `as`-wrapped value is opaque to upstream and must stay opaque here.
-    match value.without_parentheses() {
-        Expression::ArrayExpression(arr) => {
+    match value.without_parentheses().kind() {
+        ExpressionKind::ArrayExpression(arr) => {
             for el in &arr.elements {
                 let Some(expr) = el.as_expression() else { continue };
                 let expr = expr.without_parentheses();
@@ -222,18 +220,19 @@ fn collect_group_keys<'a>(
                 }
             }
         }
-        Expression::ObjectExpression(obj) => {
+        ExpressionKind::ObjectExpression(obj) => {
             collect_object_keys(obj, seen, ctx);
         }
-        Expression::FunctionExpression(func) => {
+        ExpressionKind::FunctionExpression(func) => {
             if let Some(body) = &func.body {
                 collect_returned_object_keys(&body.statements, seen, ctx);
             }
         }
-        Expression::ArrowFunctionExpression(arrow) => {
+        ExpressionKind::ArrowFunctionExpression(arrow) => {
             if arrow.expression {
                 if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                    && let Expression::ObjectExpression(obj) = es.expression.without_parentheses()
+                    && let ExpressionKind::ObjectExpression(obj) =
+                        es.expression.without_parentheses().kind()
                 {
                     collect_object_keys(obj, seen, ctx);
                 }
@@ -253,7 +252,7 @@ fn collect_returned_object_keys<'a>(
     for stmt in statements {
         if let Statement::ReturnStatement(ret) = stmt
             && let Some(ret_expr) = &ret.argument
-            && let Expression::ObjectExpression(ret_obj) = ret_expr.without_parentheses()
+            && let ExpressionKind::ObjectExpression(ret_obj) = ret_expr.without_parentheses().kind()
         {
             collect_object_keys(ret_obj, seen, ctx);
         }
@@ -312,15 +311,15 @@ fn report_or_add<'a>(
 /// Mirrors upstream `getStringLiteralValue`: the prop-name string of a literal array element.
 /// Non-string literals are stringified like JS `String(value)`; `null` has no name.
 fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
-    match expr {
-        Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
-        Expression::TemplateLiteral(t) => t.single_quasi().map(Into::into),
-        Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
-        Expression::BooleanLiteral(b) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
+        ExpressionKind::TemplateLiteral(t) => t.single_quasi().map(Into::into),
+        ExpressionKind::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
+        ExpressionKind::BooleanLiteral(b) => {
             Some(Cow::Borrowed(if b.value { "true" } else { "false" }))
         }
-        Expression::BigIntLiteral(b) => Some(Cow::Borrowed(b.value.as_str())),
-        Expression::RegExpLiteral(r) => Some(Cow::Owned(r.regex.to_string())),
+        ExpressionKind::BigIntLiteral(b) => Some(Cow::Borrowed(b.value.as_str())),
+        ExpressionKind::RegExpLiteral(r) => Some(Cow::Owned(r.regex.to_string())),
         _ => None,
     }
 }
@@ -331,12 +330,12 @@ fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
 /// (upstream's `getStringLiteralValue` bails on `value == null`; a plain `null` key
 /// is an identifier, not this variant).
 fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
-    match key {
-        PropertyKey::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
-        PropertyKey::BooleanLiteral(b) => {
+    match key.as_expression().map(Expression::kind) {
+        Some(ExpressionKind::NumericLiteral(n)) => Some(Cow::Owned(n.value.to_js_string())),
+        Some(ExpressionKind::BooleanLiteral(b)) => {
             Some(Cow::Borrowed(if b.value { "true" } else { "false" }))
         }
-        PropertyKey::NullLiteral(_) => None,
+        Some(ExpressionKind::NullLiteral(_)) => None,
         _ => key.static_name(),
     }
 }
@@ -420,8 +419,8 @@ fn collect_prop_names_from_call<'a>(
 ) -> Vec<Cow<'a, str>> {
     let mut props: Vec<Cow<'a, str>> = Vec::new();
     if let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) {
-        match arg.without_parentheses() {
-            Expression::ObjectExpression(obj) => {
+        match arg.without_parentheses().kind() {
+            ExpressionKind::ObjectExpression(obj) => {
                 for prop_kind in &obj.properties {
                     if let ObjectPropertyKind::ObjectProperty(p) = prop_kind
                         && let Some(name) = static_key_name(&p.key)
@@ -430,7 +429,7 @@ fn collect_prop_names_from_call<'a>(
                     }
                 }
             }
-            Expression::ArrayExpression(arr) => {
+            ExpressionKind::ArrayExpression(arr) => {
                 for el in &arr.elements {
                     let Some(expr) = el.as_expression() else { continue };
                     if let Some(name) = literal_element_name(expr.without_parentheses()) {
@@ -466,10 +465,10 @@ fn collect_ts_type_prop_names<'a>(
 }
 
 fn is_define_props_initializer<'a>(init: &'a Expression<'a>, call: &'a CallExpression<'a>) -> bool {
-    match init {
-        Expression::CallExpression(c) => {
-            std::ptr::eq(c.as_ref(), call)
-                || (matches!(c.callee, Expression::Identifier(_))
+    match init.kind() {
+        ExpressionKind::CallExpression(c) => {
+            std::ptr::eq(c, call)
+                || (c.callee.is_identifier()
                     && c.callee_name() == Some("withDefaults")
                     && c.arguments
                         .first()

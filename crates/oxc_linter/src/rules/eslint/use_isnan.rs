@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression},
+    ast::{BinaryExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -171,7 +171,7 @@ fn get_nan_in_expression<'a>(expr: &'a Expression<'a>) -> Option<(Span, &'a Expr
     let expr = expr.get_inner_expression();
 
     // Handle sequence expressions like (1, NaN) - the result is the last expression
-    if let Expression::SequenceExpression(seq) = expr {
+    if let ExpressionKind::SequenceExpression(seq) = expr.kind() {
         if let Some(last) = seq.expressions.last() {
             let last = last.get_inner_expression();
             if is_nan_identifier(last) {
@@ -199,7 +199,7 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
-    if let Expression::ChainExpression(chain) = callee {
+    if let ExpressionKind::ChainExpression(chain) = callee.kind() {
         let expr = chain.expression.as_member_expression()?;
         return expr
             .static_property_name()

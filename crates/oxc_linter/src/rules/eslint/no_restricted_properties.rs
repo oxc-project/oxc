@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTargetProperty, Expression, PropertyKey, match_expression},
+    ast::{AssignmentTargetProperty, Expression, ExpressionKind, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -400,16 +400,16 @@ impl NoRestrictedProperties {
 }
 
 fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a, str>> {
-    match expression {
-        Expression::StringLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
-        Expression::RegExpLiteral(literal) => literal.raw.map(|r| Cow::Borrowed(r.as_str())),
-        Expression::NumericLiteral(literal) => Some(Cow::Owned(literal.value.to_string())),
-        Expression::BigIntLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
-        Expression::BooleanLiteral(literal) => {
+    match expression.kind() {
+        ExpressionKind::StringLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
+        ExpressionKind::RegExpLiteral(literal) => literal.raw.map(|r| Cow::Borrowed(r.as_str())),
+        ExpressionKind::NumericLiteral(literal) => Some(Cow::Owned(literal.value.to_string())),
+        ExpressionKind::BigIntLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
+        ExpressionKind::BooleanLiteral(literal) => {
             Some(Cow::Borrowed(if literal.value { "true" } else { "false" }))
         }
-        Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),
-        Expression::TemplateLiteral(literal) if literal.quasis.len() == 1 => {
+        ExpressionKind::NullLiteral(_) => Some(Cow::Borrowed("null")),
+        ExpressionKind::TemplateLiteral(literal) if literal.quasis.len() == 1 => {
             literal.quasis[0].value.cooked.map(|cooked| Cow::Borrowed(cooked.as_str()))
         }
         _ => None,
@@ -418,15 +418,18 @@ fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a
 
 fn property_key_name_and_span<'a>(key: &'a PropertyKey<'a>) -> Option<(Cow<'a, str>, Span)> {
     match key {
-        PropertyKey::Identifier(ident) => Some((Cow::Borrowed(ident.name.as_str()), ident.span)),
         PropertyKey::StaticIdentifier(ident) => {
             Some((Cow::Borrowed(ident.name.as_str()), ident.span))
         }
         PropertyKey::PrivateIdentifier(ident) => {
             Some((Cow::Borrowed(ident.name.as_str()), ident.span))
         }
-        match_expression!(PropertyKey) => {
-            expression_property_name(key.to_expression()).map(|name| (name, key.span()))
+        PropertyKey::Expression(expr) => {
+            if let Some(ident) = expr.as_identifier() {
+                Some((Cow::Borrowed(ident.name.as_str()), ident.span))
+            } else {
+                expression_property_name(expr).map(|name| (name, expr.span()))
+            }
         }
     }
 }

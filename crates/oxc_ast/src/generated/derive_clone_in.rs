@@ -38,179 +38,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for Program<'_> {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
-    type Cloned = Expression<'new_alloc>;
-
-    fn clone_in_impl(
-        &self,
-        with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        match self {
-            Self::BooleanLiteral(it) => {
-                Expression::BooleanLiteral(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::NullLiteral(it) => {
-                Expression::NullLiteral(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                Expression::NumericLiteral(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                Expression::BigIntLiteral(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                Expression::RegExpLiteral(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::StringLiteral(it) => {
-                Expression::StringLiteral(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::TemplateLiteral(it) => Expression::TemplateLiteral(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::Identifier(it) => {
-                Expression::Identifier(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::Super(it) => {
-                Expression::Super(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::ArrayExpression(it) => Expression::ArrayExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::ArrowFunctionExpression(it) => Expression::ArrowFunctionExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::AssignmentExpression(it) => Expression::AssignmentExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::AwaitExpression(it) => Expression::AwaitExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::BinaryExpression(it) => Expression::BinaryExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::CallExpression(it) => {
-                Expression::CallExpression(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::ChainExpression(it) => Expression::ChainExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::ClassExpression(it) => Expression::ClassExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::ConditionalExpression(it) => Expression::ConditionalExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::FunctionExpression(it) => Expression::FunctionExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::ImportExpression(it) => Expression::ImportExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::LogicalExpression(it) => Expression::LogicalExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::NewExpression(it) => {
-                Expression::NewExpression(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::ObjectExpression(it) => Expression::ObjectExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::ParenthesizedExpression(it) => Expression::ParenthesizedExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::SequenceExpression(it) => Expression::SequenceExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::TaggedTemplateExpression(it) => Expression::TaggedTemplateExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::ThisExpression(it) => {
-                Expression::ThisExpression(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::UnaryExpression(it) => Expression::UnaryExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::UpdateExpression(it) => Expression::UpdateExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::YieldExpression(it) => Expression::YieldExpression(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::PrivateInExpression(it) => Expression::PrivateInExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::ImportMeta(it) => {
-                Expression::ImportMeta(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::NewTarget(it) => {
-                Expression::NewTarget(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::JSXElement(it) => {
-                Expression::JSXElement(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::JSXFragment(it) => {
-                Expression::JSXFragment(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                Expression::TSAsExpression(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => Expression::TSSatisfiesExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::TSTypeAssertion(it) => Expression::TSTypeAssertion(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::TSNonNullExpression(it) => Expression::TSNonNullExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::TSInstantiationExpression(it) => Expression::TSInstantiationExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::V8IntrinsicExpression(it) => Expression::V8IntrinsicExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => Expression::from(CloneIn::clone_in_impl(
-                self.to_member_expression(),
-                with_semantic_ids,
-                allocator,
-            )),
-        }
-    }
-}
-
 impl<'new_alloc> CloneIn<'new_alloc> for IdentifierName<'_> {
     type Cloned = IdentifierName<'new_alloc>;
 
@@ -331,52 +158,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
                 with_semantic_ids,
                 allocator,
             )),
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_)
-            | Self::TemplateLiteral(_)
-            | Self::Identifier(_)
-            | Self::Super(_)
-            | Self::ArrayExpression(_)
-            | Self::ArrowFunctionExpression(_)
-            | Self::AssignmentExpression(_)
-            | Self::AwaitExpression(_)
-            | Self::BinaryExpression(_)
-            | Self::CallExpression(_)
-            | Self::ChainExpression(_)
-            | Self::ClassExpression(_)
-            | Self::ConditionalExpression(_)
-            | Self::FunctionExpression(_)
-            | Self::ImportExpression(_)
-            | Self::LogicalExpression(_)
-            | Self::NewExpression(_)
-            | Self::ObjectExpression(_)
-            | Self::ParenthesizedExpression(_)
-            | Self::SequenceExpression(_)
-            | Self::TaggedTemplateExpression(_)
-            | Self::ThisExpression(_)
-            | Self::UnaryExpression(_)
-            | Self::UpdateExpression(_)
-            | Self::YieldExpression(_)
-            | Self::PrivateInExpression(_)
-            | Self::ImportMeta(_)
-            | Self::NewTarget(_)
-            | Self::JSXElement(_)
-            | Self::JSXFragment(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSInstantiationExpression(_)
-            | Self::V8IntrinsicExpression(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => ArrayExpressionElement::from(
-                CloneIn::clone_in_impl(self.to_expression(), with_semantic_ids, allocator),
-            ),
+            Self::Expression(it) => ArrayExpressionElement::Expression(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
         }
     }
 }
@@ -475,54 +261,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
                 with_semantic_ids,
                 allocator,
             )),
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_)
-            | Self::TemplateLiteral(_)
-            | Self::Identifier(_)
-            | Self::Super(_)
-            | Self::ArrayExpression(_)
-            | Self::ArrowFunctionExpression(_)
-            | Self::AssignmentExpression(_)
-            | Self::AwaitExpression(_)
-            | Self::BinaryExpression(_)
-            | Self::CallExpression(_)
-            | Self::ChainExpression(_)
-            | Self::ClassExpression(_)
-            | Self::ConditionalExpression(_)
-            | Self::FunctionExpression(_)
-            | Self::ImportExpression(_)
-            | Self::LogicalExpression(_)
-            | Self::NewExpression(_)
-            | Self::ObjectExpression(_)
-            | Self::ParenthesizedExpression(_)
-            | Self::SequenceExpression(_)
-            | Self::TaggedTemplateExpression(_)
-            | Self::ThisExpression(_)
-            | Self::UnaryExpression(_)
-            | Self::UpdateExpression(_)
-            | Self::YieldExpression(_)
-            | Self::PrivateInExpression(_)
-            | Self::ImportMeta(_)
-            | Self::NewTarget(_)
-            | Self::JSXElement(_)
-            | Self::JSXFragment(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSInstantiationExpression(_)
-            | Self::V8IntrinsicExpression(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => PropertyKey::from(CloneIn::clone_in_impl(
-                self.to_expression(),
-                with_semantic_ids,
-                allocator,
-            )),
+            Self::Expression(it) => {
+                PropertyKey::Expression(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
         }
     }
 }
@@ -612,28 +353,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElementValue<'_> {
         TemplateElementValue {
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
             cooked: CloneIn::clone_in_impl(&self.cooked, with_semantic_ids, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for MemberExpression<'_> {
-    type Cloned = MemberExpression<'new_alloc>;
-
-    fn clone_in_impl(
-        &self,
-        with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        match self {
-            Self::ComputedMemberExpression(it) => MemberExpression::ComputedMemberExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::StaticMemberExpression(it) => MemberExpression::StaticMemberExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => MemberExpression::PrivateFieldExpression(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
         }
     }
 }
@@ -797,54 +516,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             Self::SpreadElement(it) => {
                 Argument::SpreadElement(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
             }
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_)
-            | Self::TemplateLiteral(_)
-            | Self::Identifier(_)
-            | Self::Super(_)
-            | Self::ArrayExpression(_)
-            | Self::ArrowFunctionExpression(_)
-            | Self::AssignmentExpression(_)
-            | Self::AwaitExpression(_)
-            | Self::BinaryExpression(_)
-            | Self::CallExpression(_)
-            | Self::ChainExpression(_)
-            | Self::ClassExpression(_)
-            | Self::ConditionalExpression(_)
-            | Self::FunctionExpression(_)
-            | Self::ImportExpression(_)
-            | Self::LogicalExpression(_)
-            | Self::NewExpression(_)
-            | Self::ObjectExpression(_)
-            | Self::ParenthesizedExpression(_)
-            | Self::SequenceExpression(_)
-            | Self::TaggedTemplateExpression(_)
-            | Self::ThisExpression(_)
-            | Self::UnaryExpression(_)
-            | Self::UpdateExpression(_)
-            | Self::YieldExpression(_)
-            | Self::PrivateInExpression(_)
-            | Self::ImportMeta(_)
-            | Self::NewTarget(_)
-            | Self::JSXElement(_)
-            | Self::JSXFragment(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSInstantiationExpression(_)
-            | Self::V8IntrinsicExpression(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => Argument::from(CloneIn::clone_in_impl(
-                self.to_expression(),
-                with_semantic_ids,
-                allocator,
-            )),
+            Self::Expression(it) => {
+                Argument::Expression(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
         }
     }
 }
@@ -982,25 +656,34 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTarget<'_> {
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         match self {
-            Self::AssignmentTargetIdentifier(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => AssignmentTarget::from(CloneIn::clone_in_impl(
-                self.to_simple_assignment_target(),
+            Self::AssignmentTargetIdentifier(it) => AssignmentTarget::AssignmentTargetIdentifier(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSAsExpression(it) => AssignmentTarget::TSAsExpression(CloneIn::clone_in_impl(
+                it,
                 with_semantic_ids,
                 allocator,
             )),
-            Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_) => {
-                AssignmentTarget::from(CloneIn::clone_in_impl(
-                    self.to_assignment_target_pattern(),
-                    with_semantic_ids,
-                    allocator,
-                ))
-            }
+            Self::TSSatisfiesExpression(it) => AssignmentTarget::TSSatisfiesExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSNonNullExpression(it) => AssignmentTarget::TSNonNullExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSTypeAssertion(it) => AssignmentTarget::TSTypeAssertion(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+            Self::MemberExpression(it) => AssignmentTarget::MemberExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ArrayAssignmentTarget(it) => AssignmentTarget::ArrayAssignmentTarget(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ObjectAssignmentTarget(it) => AssignmentTarget::ObjectAssignmentTarget(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
         }
     }
 }
@@ -1033,10 +716,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for SimpleAssignmentTarget<'_> {
             Self::TSTypeAssertion(it) => SimpleAssignmentTarget::TSTypeAssertion(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => SimpleAssignmentTarget::from(
-                CloneIn::clone_in_impl(self.to_member_expression(), with_semantic_ids, allocator),
+            Self::MemberExpression(it) => SimpleAssignmentTarget::MemberExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
         }
     }
@@ -1127,18 +808,38 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeDefault<'_> {
                     allocator,
                 ))
             }
-            Self::AssignmentTargetIdentifier(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_)
-            | Self::ArrayAssignmentTarget(_)
-            | Self::ObjectAssignmentTarget(_) => AssignmentTargetMaybeDefault::from(
-                CloneIn::clone_in_impl(self.to_assignment_target(), with_semantic_ids, allocator),
+            Self::AssignmentTargetIdentifier(it) => {
+                AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(CloneIn::clone_in_impl(
+                    it,
+                    with_semantic_ids,
+                    allocator,
+                ))
+            }
+            Self::TSAsExpression(it) => AssignmentTargetMaybeDefault::TSAsExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
+            Self::TSSatisfiesExpression(it) => AssignmentTargetMaybeDefault::TSSatisfiesExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSNonNullExpression(it) => AssignmentTargetMaybeDefault::TSNonNullExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSTypeAssertion(it) => AssignmentTargetMaybeDefault::TSTypeAssertion(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::MemberExpression(it) => AssignmentTargetMaybeDefault::MemberExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ArrayAssignmentTarget(it) => AssignmentTargetMaybeDefault::ArrayAssignmentTarget(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ObjectAssignmentTarget(it) => {
+                AssignmentTargetMaybeDefault::ObjectAssignmentTarget(CloneIn::clone_in_impl(
+                    it,
+                    with_semantic_ids,
+                    allocator,
+                ))
+            }
         }
     }
 }
@@ -1300,10 +1001,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ChainElement<'_> {
             Self::TSNonNullExpression(it) => ChainElement::TSNonNullExpression(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => ChainElement::from(CloneIn::clone_in_impl(
-                self.to_member_expression(),
+            Self::MemberExpression(it) => ChainElement::MemberExpression(CloneIn::clone_in_impl(
+                it,
                 with_semantic_ids,
                 allocator,
             )),
@@ -1695,51 +1394,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             Self::VariableDeclaration(it) => ForStatementInit::VariableDeclaration(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_)
-            | Self::TemplateLiteral(_)
-            | Self::Identifier(_)
-            | Self::Super(_)
-            | Self::ArrayExpression(_)
-            | Self::ArrowFunctionExpression(_)
-            | Self::AssignmentExpression(_)
-            | Self::AwaitExpression(_)
-            | Self::BinaryExpression(_)
-            | Self::CallExpression(_)
-            | Self::ChainExpression(_)
-            | Self::ClassExpression(_)
-            | Self::ConditionalExpression(_)
-            | Self::FunctionExpression(_)
-            | Self::ImportExpression(_)
-            | Self::LogicalExpression(_)
-            | Self::NewExpression(_)
-            | Self::ObjectExpression(_)
-            | Self::ParenthesizedExpression(_)
-            | Self::SequenceExpression(_)
-            | Self::TaggedTemplateExpression(_)
-            | Self::ThisExpression(_)
-            | Self::UnaryExpression(_)
-            | Self::UpdateExpression(_)
-            | Self::YieldExpression(_)
-            | Self::PrivateInExpression(_)
-            | Self::ImportMeta(_)
-            | Self::NewTarget(_)
-            | Self::JSXElement(_)
-            | Self::JSXFragment(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSInstantiationExpression(_)
-            | Self::V8IntrinsicExpression(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => ForStatementInit::from(CloneIn::clone_in_impl(
-                self.to_expression(),
+            Self::Expression(it) => ForStatementInit::Expression(CloneIn::clone_in_impl(
+                it,
                 with_semantic_ids,
                 allocator,
             )),
@@ -1781,20 +1437,34 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementLeft<'_> {
             Self::VariableDeclaration(it) => ForStatementLeft::VariableDeclaration(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
-            Self::AssignmentTargetIdentifier(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_)
-            | Self::ArrayAssignmentTarget(_)
-            | Self::ObjectAssignmentTarget(_) => ForStatementLeft::from(CloneIn::clone_in_impl(
-                self.to_assignment_target(),
+            Self::AssignmentTargetIdentifier(it) => ForStatementLeft::AssignmentTargetIdentifier(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSAsExpression(it) => ForStatementLeft::TSAsExpression(CloneIn::clone_in_impl(
+                it,
                 with_semantic_ids,
                 allocator,
             )),
+            Self::TSSatisfiesExpression(it) => ForStatementLeft::TSSatisfiesExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSNonNullExpression(it) => ForStatementLeft::TSNonNullExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSTypeAssertion(it) => ForStatementLeft::TSTypeAssertion(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+            Self::MemberExpression(it) => ForStatementLeft::MemberExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ArrayAssignmentTarget(it) => ForStatementLeft::ArrayAssignmentTarget(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ObjectAssignmentTarget(it) => ForStatementLeft::ObjectAssignmentTarget(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
         }
     }
 }
@@ -2962,51 +2632,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
                     allocator,
                 ))
             }
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_)
-            | Self::TemplateLiteral(_)
-            | Self::Identifier(_)
-            | Self::Super(_)
-            | Self::ArrayExpression(_)
-            | Self::ArrowFunctionExpression(_)
-            | Self::AssignmentExpression(_)
-            | Self::AwaitExpression(_)
-            | Self::BinaryExpression(_)
-            | Self::CallExpression(_)
-            | Self::ChainExpression(_)
-            | Self::ClassExpression(_)
-            | Self::ConditionalExpression(_)
-            | Self::FunctionExpression(_)
-            | Self::ImportExpression(_)
-            | Self::LogicalExpression(_)
-            | Self::NewExpression(_)
-            | Self::ObjectExpression(_)
-            | Self::ParenthesizedExpression(_)
-            | Self::SequenceExpression(_)
-            | Self::TaggedTemplateExpression(_)
-            | Self::ThisExpression(_)
-            | Self::UnaryExpression(_)
-            | Self::UpdateExpression(_)
-            | Self::YieldExpression(_)
-            | Self::PrivateInExpression(_)
-            | Self::ImportMeta(_)
-            | Self::NewTarget(_)
-            | Self::JSXElement(_)
-            | Self::JSXFragment(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSInstantiationExpression(_)
-            | Self::V8IntrinsicExpression(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => ExportDefaultDeclarationKind::from(
-                CloneIn::clone_in_impl(self.to_expression(), with_semantic_ids, allocator),
+            Self::Expression(it) => ExportDefaultDeclarationKind::Expression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
         }
     }
@@ -3431,54 +3058,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
                 with_semantic_ids,
                 allocator,
             )),
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_)
-            | Self::TemplateLiteral(_)
-            | Self::Identifier(_)
-            | Self::Super(_)
-            | Self::ArrayExpression(_)
-            | Self::ArrowFunctionExpression(_)
-            | Self::AssignmentExpression(_)
-            | Self::AwaitExpression(_)
-            | Self::BinaryExpression(_)
-            | Self::CallExpression(_)
-            | Self::ChainExpression(_)
-            | Self::ClassExpression(_)
-            | Self::ConditionalExpression(_)
-            | Self::FunctionExpression(_)
-            | Self::ImportExpression(_)
-            | Self::LogicalExpression(_)
-            | Self::NewExpression(_)
-            | Self::ObjectExpression(_)
-            | Self::ParenthesizedExpression(_)
-            | Self::SequenceExpression(_)
-            | Self::TaggedTemplateExpression(_)
-            | Self::ThisExpression(_)
-            | Self::UnaryExpression(_)
-            | Self::UpdateExpression(_)
-            | Self::YieldExpression(_)
-            | Self::PrivateInExpression(_)
-            | Self::ImportMeta(_)
-            | Self::NewTarget(_)
-            | Self::JSXElement(_)
-            | Self::JSXFragment(_)
-            | Self::TSAsExpression(_)
-            | Self::TSSatisfiesExpression(_)
-            | Self::TSTypeAssertion(_)
-            | Self::TSNonNullExpression(_)
-            | Self::TSInstantiationExpression(_)
-            | Self::V8IntrinsicExpression(_)
-            | Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => JSXExpression::from(CloneIn::clone_in_impl(
-                self.to_expression(),
-                with_semantic_ids,
-                allocator,
-            )),
+            Self::Expression(it) => {
+                JSXExpression::Expression(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
         }
     }
 }

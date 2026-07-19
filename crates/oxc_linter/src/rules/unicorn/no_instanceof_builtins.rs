@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -182,7 +182,7 @@ impl Rule for NoInstanceofBuiltins {
 
         let ctor_expr = bin.right.get_inner_expression();
 
-        let Expression::Identifier(ident) = ctor_expr else { return };
+        let ExpressionKind::Identifier(ident) = ctor_expr.kind() else { return };
         let ctor_name = ident.name.as_str();
 
         if self.0.exclude.iter().any(|s| s == ctor_name) {

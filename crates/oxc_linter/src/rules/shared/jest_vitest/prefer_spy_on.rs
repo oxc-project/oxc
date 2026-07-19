@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentExpression, CallExpression, Expression, MemberExpression,
-        SimpleAssignmentTarget,
+        Argument, AssignmentExpression, CallExpression, Expression, ExpressionKind,
+        MemberExpression, MemberExpressionKind, SimpleAssignmentTarget,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -70,13 +70,13 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    match &assign_expr.right {
-        Expression::CallExpression(call_expr) => {
+    match assign_expr.right.kind() {
+        ExpressionKind::CallExpression(call_expr) => {
             check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
         }
         _ => {
             if let Some(mem_expr) = assign_expr.right.as_member_expression() {
-                let Expression::CallExpression(call_expr) = mem_expr.object() else {
+                let ExpressionKind::CallExpression(call_expr) = mem_expr.object().kind() else {
                     return;
                 };
                 check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
@@ -143,21 +143,21 @@ fn build_code<'a>(
     let mut formatter = fixer.codegen();
     formatter.print_str(framework_spy);
 
-    match left_assign {
-        MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
+    match left_assign.kind() {
+        MemberExpressionKind::ComputedMemberExpression(cmp_mem_expr) => {
             formatter.print_expression(&cmp_mem_expr.object);
             formatter.print_ascii_byte(b',');
             formatter.print_ascii_byte(b' ');
             formatter.print_expression(&cmp_mem_expr.expression);
         }
-        MemberExpression::StaticMemberExpression(static_mem_expr) => {
+        MemberExpressionKind::StaticMemberExpression(static_mem_expr) => {
             let name = &static_mem_expr.property.name;
             formatter.print_expression(&static_mem_expr.object);
             formatter.print_ascii_byte(b',');
             formatter.print_ascii_byte(b' ');
             formatter.print_str(format!("\'{name}\'").as_str());
         }
-        MemberExpression::PrivateFieldExpression(_) => (),
+        MemberExpressionKind::PrivateFieldExpression(_) => (),
     }
 
     formatter.print_ascii_byte(b')');
@@ -190,15 +190,15 @@ fn get_test_fn_call<'a>(
         return (framework_spy, call_expr.arguments.first().and_then(Argument::as_expression));
     }
 
-    match &call_expr.callee {
-        expr if expr.is_member_expression() => {
-            let mem_expr = expr.to_member_expression();
+    match call_expr.callee.kind() {
+        _ if call_expr.callee.is_member_expression() => {
+            let mem_expr = call_expr.callee.to_member_expression();
             if let Some(call_expr) = find_mem_expr(mem_expr) {
                 return get_test_fn_call(call_expr);
             }
             ("", None)
         }
-        Expression::CallExpression(call_expr) => get_test_fn_call(call_expr),
+        ExpressionKind::CallExpression(call_expr) => get_test_fn_call(call_expr),
         _ => ("", None),
     }
 }
@@ -206,7 +206,7 @@ fn get_test_fn_call<'a>(
 fn find_mem_expr<'a>(mut mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
     loop {
         let object = mem_expr.object();
-        if let Expression::CallExpression(call_expr) = object {
+        if let ExpressionKind::CallExpression(call_expr) = object.kind() {
             return Some(call_expr);
         }
         if let Some(object_mem_expr) = object.as_member_expression() {

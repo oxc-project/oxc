@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -63,9 +63,12 @@ impl Rule for RequireTypedRef {
         }
 
         let is_valid_first_arg = match call_expr.arguments.first() {
-            Some(Argument::NullLiteral(_)) | None => false,
-            Some(Argument::Identifier(ident)) if ident.name == "undefined" => false,
-            _ => true,
+            None => false,
+            Some(arg) => match arg.as_expression().map(|e| e.kind()) {
+                Some(ExpressionKind::NullLiteral(_)) => false,
+                Some(ExpressionKind::Identifier(ident)) if ident.name == "undefined" => false,
+                _ => true,
+            },
         };
 
         if is_valid_first_arg {

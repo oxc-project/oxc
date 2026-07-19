@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -181,7 +181,7 @@ impl Rule for CatchOrReturn {
             return;
         };
 
-        let Expression::CallExpression(call_expr) = &expr_stmt.expression else {
+        let ExpressionKind::CallExpression(call_expr) = expr_stmt.expression.kind() else {
             return;
         };
 
@@ -218,14 +218,19 @@ impl CatchOrReturn {
             && call_expr.arguments.len() == 2
             && (self.allow_then
                 || (self.allow_then_strict
-                    && matches!(call_expr.arguments.first(), Some(Argument::NullLiteral(_)))))
+                    && call_expr
+                        .arguments
+                        .first()
+                        .and_then(Argument::as_expression)
+                        .is_some_and(oxc_ast::ast::Expression::is_null_literal)))
         {
             return true;
         }
 
         // somePromise.catch().finally(fn)
         if self.allow_finally && prop_name == "finally" {
-            let Expression::CallExpression(object_call_expr) = member_expr.object() else {
+            let ExpressionKind::CallExpression(object_call_expr) = member_expr.object().kind()
+            else {
                 return false;
             };
 
@@ -242,13 +247,11 @@ impl CatchOrReturn {
         }
 
         // somePromise['catch']()
-        if prop_name == "catch"
-            && matches!(call_expr.callee.get_inner_expression(), Expression::StringLiteral(_))
-        {
+        if prop_name == "catch" && call_expr.callee.get_inner_expression().is_string_literal() {
             return true;
         }
 
-        let Expression::CallExpression(object_call_expr) = member_expr.object() else {
+        let ExpressionKind::CallExpression(object_call_expr) = member_expr.object().kind() else {
             return false;
         };
 
@@ -262,7 +265,7 @@ fn is_part_of_promise(call_expr: &CallExpression) -> bool {
         return false;
     };
 
-    let Expression::CallExpression(object_call_expr) = member_expr.object() else {
+    let ExpressionKind::CallExpression(object_call_expr) = member_expr.object().kind() else {
         return false;
     };
 
@@ -278,7 +281,7 @@ fn is_cypress_call(call_expr: &CallExpression) -> bool {
         return false;
     };
 
-    let Expression::CallExpression(object_call_expr) = member_expr.object() else {
+    let ExpressionKind::CallExpression(object_call_expr) = member_expr.object().kind() else {
         return false;
     };
 

@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, FunctionBody, Statement},
+    ast::{ExpressionKind, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -327,7 +327,7 @@ pub fn get_array_method_info<'a>(
                 let callee = call.callee.get_inner_expression();
                 let callee = if let Some(member) = callee.as_member_expression() {
                     member
-                } else if let Expression::ChainExpression(chain) = callee {
+                } else if let ExpressionKind::ChainExpression(chain) = callee.kind() {
                     chain.expression.as_member_expression()?
                 } else {
                     return None;

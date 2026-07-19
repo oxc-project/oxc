@@ -333,7 +333,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a> {
 
     #[inline] // Because it's a hot path, and most `Expression`s are not `TaggedTemplateExpression`s
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if matches!(expr, Expression::TaggedTemplateExpression(_)) {
+        if expr.is_tagged_template_expression() {
             self.transform_tagged_template_expression(expr, ctx);
         }
     }
@@ -358,7 +358,7 @@ impl<'a> StyledComponents<'a> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        let Expression::TaggedTemplateExpression(tagged) = expr else {
+        let Some(tagged) = expr.as_tagged_template_expression_mut() else {
             unreachable!();
         };
 
@@ -369,7 +369,7 @@ impl<'a> StyledComponents<'a> {
         };
 
         if !is_styled
-            && !matches!(&tagged.tag, Expression::Identifier(ident) if self.is_helper(ident, ctx))
+            && !matches!(tagged.tag.kind(), ExpressionKind::Identifier(ident) if self.is_helper(ident, ctx))
         {
             return;
         }
@@ -396,8 +396,9 @@ impl<'a> StyledComponents<'a> {
         // TODO: Support adding pure annotation to `TaggedTemplateExpression`.
         // Note: As of now, no bundle can handle pure tagged template expressions.
         // <https://github.com/rollup/rollup/issues/4035>
-        if let Some(Expression::CallExpression(call)) = &mut declarator.init
-            && (matches!(&call.callee, Expression::Identifier(ident) if self.is_pure_helper(ident, ctx))
+        if let Some(init) = &mut declarator.init
+            && let Some(call) = init.as_call_expression_mut()
+            && (matches!(call.callee.kind(), ExpressionKind::Identifier(ident) if self.is_pure_helper(ident, ctx))
                 || self.is_styled(&call.callee, ctx))
         {
             call.pure = true;
@@ -440,9 +441,10 @@ impl<'a> StyledComponents<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         if let Some(call) = Self::get_with_config(expr) {
-            if let Expression::StaticMemberExpression(member) = &call.callee
+            if let Some(member) = call.callee.as_static_member_expression()
                 && self.is_styled(&member.object, ctx)
-                && let Some(Argument::ObjectExpression(object)) = call.arguments.first_mut()
+                && let Some(Argument::Expression(arg_expr)) = call.arguments.first_mut()
+                && let Some(object) = arg_expr.as_object_expression_mut()
                 && !object.properties.iter().any(|prop| {
                     matches!(prop, ObjectPropertyKind::ObjectProperty(property)
                         if matches!(&property.key, PropertyKey::StaticIdentifier(ident)
@@ -514,16 +516,18 @@ impl<'a> StyledComponents<'a> {
     fn get_with_config<'b>(expr: &'b mut Expression<'a>) -> Option<&'b mut CallExpression<'a>> {
         let mut current = expr;
         loop {
-            match current {
-                Expression::CallExpression(call) => {
-                    if let Expression::StaticMemberExpression(member) = &call.callee
+            match current.tag() {
+                ExpressionTag::CallExpression => {
+                    let call = current.to_call_expression_mut();
+                    if let Some(member) = call.callee.as_static_member_expression()
                         && member.property.name == "withConfig"
                     {
                         return Some(call);
                     }
                     current = &mut call.callee;
                 }
-                Expression::StaticMemberExpression(member) => {
+                ExpressionTag::StaticMemberExpression => {
+                    let member = current.to_static_member_expression_mut();
                     current = &mut member.object;
                 }
                 _ => return None,
@@ -565,8 +569,10 @@ impl<'a> StyledComponents<'a> {
                         AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                             Some(ident.name.into())
                         }
-                        AssignmentTarget::StaticMemberExpression(member) => {
-                            Some(member.property.name.into())
+                        AssignmentTarget::MemberExpression(member)
+                            if member.is_static_member_expression() =>
+                        {
+                            Some(member.to_static_member_expression().property.name.into())
                         }
                         _ => return None,
                     };
@@ -716,34 +722,36 @@ impl<'a> StyledComponents<'a> {
     /// Returns true if the given callee is a styled-components binding.
     /// Handles various forms: styled.div, styled.default, styled(...), etc.
     fn is_styled(&self, callee: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        match callee.without_parentheses() {
-            Expression::StaticMemberExpression(member) => {
-                if let Expression::Identifier(ident) = &member.object {
+        match callee.without_parentheses().kind() {
+            ExpressionKind::StaticMemberExpression(member) => {
+                if let Some(ident) = member.object.as_identifier() {
                     StyledComponentsHelper::from_str(&member.property.name).is_none()
                         && Self::is_reference_of_styled(self.styled_bindings.styled, ident, ctx)
-                } else if let Expression::StaticMemberExpression(static_member) = &member.object {
+                } else if let Some(static_member) = member.object.as_static_member_expression() {
                     // Handle `styled.default`
                     static_member.property.name == "default"
-                        && matches!(&static_member.object, Expression::Identifier(ident)
+                        && matches!(static_member.object.kind(), ExpressionKind::Identifier(ident)
                         if Self::is_reference_of_styled(self.styled_bindings.namespace, ident, ctx))
                 } else {
                     false
                 }
             }
-            Expression::CallExpression(call) => match &call.callee {
-                Expression::Identifier(ident) => {
+            ExpressionKind::CallExpression(call) => match call.callee.kind() {
+                ExpressionKind::Identifier(ident) => {
                     Self::is_reference_of_styled(self.styled_bindings.styled, ident, ctx)
                 }
-                Expression::StaticMemberExpression(member) => self.is_styled(&member.object, ctx),
-                Expression::SequenceExpression(sequence) => {
+                ExpressionKind::StaticMemberExpression(member) => {
+                    self.is_styled(&member.object, ctx)
+                }
+                ExpressionKind::SequenceExpression(sequence) => {
                     if let Some(last) = sequence.expressions.last() {
-                        match last {
-                            Expression::Identifier(ident) => Self::is_reference_of_styled(
+                        match last.kind() {
+                            ExpressionKind::Identifier(ident) => Self::is_reference_of_styled(
                                 self.styled_bindings.styled,
                                 ident,
                                 ctx,
                             ),
-                            Expression::StaticMemberExpression(member) => {
+                            ExpressionKind::StaticMemberExpression(member) => {
                                 self.is_styled(&member.object, ctx)
                             }
                             _ => false,

@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -102,7 +102,8 @@ impl Rule for PreferStructuredClone {
                 return;
             };
 
-            let Expression::CallExpression(inner_call_expr) = first_argument.without_parentheses()
+            let ExpressionKind::CallExpression(inner_call_expr) =
+                first_argument.without_parentheses().kind()
             else {
                 return;
             };

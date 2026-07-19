@@ -287,12 +287,13 @@ impl<'a> ClassProperties<'a> {
                     ctx,
                 )
             }
-            PropertyKey::StringLiteral(str_lit) if needs_define(&str_lit.value) => {
+            PropertyKey::Expression(e)
+                if e.as_string_literal().is_some_and(|str_lit| needs_define(&str_lit.value)) =>
+            {
                 return self
                     .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }
-            key @ match_expression!(PropertyKey) => {
-                let key = key.to_expression_mut();
+            PropertyKey::Expression(key) => {
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
@@ -328,8 +329,7 @@ impl<'a> ClassProperties<'a> {
             PropertyKey::StaticIdentifier(ident) => {
                 Expression::new_string_literal(ident.span, ident.name, None, ctx)
             }
-            key @ match_expression!(PropertyKey) => {
-                let key = key.to_expression_mut();
+            PropertyKey::Expression(key) => {
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.

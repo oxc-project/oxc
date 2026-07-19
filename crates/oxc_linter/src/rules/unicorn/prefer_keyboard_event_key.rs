@@ -1,11 +1,11 @@
 use phf::{Map, phf_map};
 
-use oxc_allocator::{GetAddress, UnstableAddress};
+use oxc_allocator::UnstableAddress;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, BindingProperty, CallExpression, Expression, Function,
-        MemberExpression, PropertyKey,
+        BindingPattern, BindingProperty, CallExpression, Expression, ExpressionKind, Function,
+        MemberExpressionKind, PropertyKey,
     },
 };
 use oxc_codegen::CodegenOptions;
@@ -273,8 +273,8 @@ impl PreferKeyboardEventKey {
         symbol_id: oxc_semantic::SymbolId,
         ctx: &LintContext,
     ) -> bool {
-        match expr {
-            Expression::Identifier(ident) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) => {
                 ctx.scoping().get_reference(ident.reference_id()).symbol_id() == Some(symbol_id)
             }
             _ => false,
@@ -340,7 +340,7 @@ impl PreferKeyboardEventKey {
             return false;
         };
 
-        let MemberExpression::StaticMemberExpression(static_member) = member_expr else {
+        let MemberExpressionKind::StaticMemberExpression(static_member) = member_expr.kind() else {
             return false;
         };
 
@@ -357,12 +357,12 @@ impl PreferKeyboardEventKey {
             return false;
         };
 
-        match second_arg {
-            Argument::ArrowFunctionExpression(arrow) => {
-                matches!(callback, CallbackFunction::Arrow(cb) if cb.unstable_address() == arrow.address())
+        match second_arg.as_expression().map(|e| e.kind()) {
+            Some(ExpressionKind::ArrowFunctionExpression(arrow)) => {
+                matches!(callback, CallbackFunction::Arrow(cb) if cb.unstable_address() == arrow.unstable_address())
             }
-            Argument::FunctionExpression(func) => {
-                matches!(callback, CallbackFunction::Regular(cb) if cb.unstable_address() == func.address())
+            Some(ExpressionKind::FunctionExpression(func)) => {
+                matches!(callback, CallbackFunction::Regular(cb) if cb.unstable_address() == func.unstable_address())
             }
             _ => false,
         }
@@ -393,8 +393,8 @@ impl PreferKeyboardEventKey {
         }
 
         // Get the numeric literal from the comparison
-        let number_value = match (&binary.left, &binary.right) {
-            (_, Expression::NumericLiteral(num)) | (Expression::NumericLiteral(num), _) => {
+        let number_value = match (binary.left.kind(), binary.right.kind()) {
+            (_, ExpressionKind::NumericLiteral(num)) | (ExpressionKind::NumericLiteral(num), _) => {
                 Some((num.value, num.span))
             }
             _ => None,

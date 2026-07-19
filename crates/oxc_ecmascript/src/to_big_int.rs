@@ -1,7 +1,7 @@
 use num_bigint::BigInt;
 use num_traits::{Num, One, Zero};
 
-use oxc_ast::ast::{BigIntLiteral, Expression};
+use oxc_ast::ast::{BigIntLiteral, Expression, ExpressionKind};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{GlobalContext, StringToBigInt, ToBoolean, ToJsString};
@@ -16,8 +16,8 @@ pub trait ToBigInt<'a> {
 impl<'a> ToBigInt<'a> for Expression<'a> {
     #[expect(clippy::cast_possible_truncation)]
     fn to_big_int(&self, ctx: &impl GlobalContext<'a>) -> Option<BigInt> {
-        match self {
-            Expression::NumericLiteral(number_literal) => {
+        match self.kind() {
+            ExpressionKind::NumericLiteral(number_literal) => {
                 let value = number_literal.value;
                 if value.abs() < 2_f64.powi(53) && value.fract() == 0.0 {
                     Some(BigInt::from(value as i64))
@@ -25,15 +25,15 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
                     None
                 }
             }
-            Expression::BigIntLiteral(lit) => lit.to_big_int(ctx),
-            Expression::BooleanLiteral(bool_literal) => {
+            ExpressionKind::BigIntLiteral(lit) => lit.to_big_int(ctx),
+            ExpressionKind::BooleanLiteral(bool_literal) => {
                 if bool_literal.value {
                     Some(BigInt::one())
                 } else {
                     Some(BigInt::zero())
                 }
             }
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+            ExpressionKind::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::LogicalNot => self
                     .to_boolean(ctx)
                     .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() }),
@@ -46,10 +46,10 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
                 UnaryOperator::UnaryPlus => unary_expr.argument.to_big_int(ctx),
                 _ => None,
             },
-            Expression::StringLiteral(string_literal) => {
+            ExpressionKind::StringLiteral(string_literal) => {
                 string_literal.value.as_str().string_to_big_int()
             }
-            Expression::TemplateLiteral(_) => {
+            ExpressionKind::TemplateLiteral(_) => {
                 self.to_js_string(ctx).and_then(|value| value.as_ref().string_to_big_int())
             }
             _ => None,

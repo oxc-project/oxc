@@ -1796,10 +1796,10 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
         // Check if object has `range` field (`...(RANGE && { range: [start, end] })`)
         let has_range_field = obj_expr.properties.iter().any(|prop| {
             if let ObjectPropertyKind::SpreadProperty(spread) = prop
-                && let Expression::ParenthesizedExpression(paren_expr) = &spread.argument
-                && let Expression::LogicalExpression(logical_expr) = &paren_expr.expression
+                && let Some(paren_expr) = spread.argument.as_parenthesized_expression()
+                && let Some(logical_expr) = paren_expr.expression.as_logical_expression()
                 && logical_expr.operator == LogicalOperator::And
-                && let Expression::Identifier(ident) = &logical_expr.left
+                && let Some(ident) = logical_expr.left.as_identifier()
                 && ident.name == "RANGE"
             {
                 true

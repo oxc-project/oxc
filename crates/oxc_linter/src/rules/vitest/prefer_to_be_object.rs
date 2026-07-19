@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryOperator, Expression},
+    ast::{Argument, BinaryOperator, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -27,8 +27,8 @@ fn is_parsed_instance_of_matcher_call(
 ) -> bool {
     parsed_expect_call.args.len() == 1
         && matches!(
-            parsed_expect_call.args.first(),
-            Some(Argument::Identifier(id)) if matcher.name().as_deref() == Some("toBeInstanceOf") && id.name == "Object"
+            parsed_expect_call.args.first().and_then(Argument::as_expression).map(|e| e.kind()),
+            Some(ExpressionKind::Identifier(id)) if matcher.name().as_deref() == Some("toBeInstanceOf") && id.name == "Object"
         )
 }
 
@@ -103,7 +103,8 @@ impl PreferToBeObject {
         }
 
         if matches!(matcher.name().as_deref(), Some("toBeTruthy" | "toBeFalsy")) {
-            let Some(Expression::CallExpression(parent_call_expr)) = parsed_expect_call.head.parent
+            let Some(parent_call_expr) =
+                parsed_expect_call.head.parent.and_then(|e| e.as_call_expression())
             else {
                 return;
             };
@@ -112,12 +113,13 @@ impl PreferToBeObject {
                 return;
             };
 
-            let expr = match &arg {
-                Argument::ParenthesizedExpression(paren_expr) => &paren_expr.expression,
-                _ => arg.to_expression(),
+            let arg_expr = arg.to_expression();
+            let expr = match arg_expr.kind() {
+                ExpressionKind::ParenthesizedExpression(paren_expr) => &paren_expr.expression,
+                _ => arg_expr,
             };
 
-            let Expression::BinaryExpression(binary_expr) = expr else {
+            let ExpressionKind::BinaryExpression(binary_expr) = expr.kind() else {
                 return;
             };
 
@@ -125,7 +127,7 @@ impl PreferToBeObject {
                 return;
             }
 
-            let Expression::Identifier(id) = &binary_expr.right else {
+            let ExpressionKind::Identifier(id) = binary_expr.right.kind() else {
                 return;
             };
 

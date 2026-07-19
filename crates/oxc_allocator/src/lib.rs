@@ -57,6 +57,7 @@ pub mod ident_hasher;
 mod pool;
 mod replace_with;
 mod string_builder;
+mod tagged_ptr;
 mod take_in;
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 mod tracking;
@@ -84,6 +85,7 @@ pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 pub use pool::*;
 pub use replace_with::ReplaceWith;
 pub use string_builder::{StringBuilder, StringBuilder as ArenaStringBuilder};
+pub use tagged_ptr::TaggedPtr;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::{Vec, Vec as ArenaVec};
 

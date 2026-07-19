@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{Expression, ExpressionKind, Statement},
 };
 use oxc_cfg::{
     BlockNodeId, EdgeType, ErrorEdgeKind, EvalConstConditionResult, Instruction, InstructionKind,
@@ -143,11 +143,11 @@ impl Rule for NoUnreachableLoop {
 }
 
 fn is_static_false(expr: &Expression<'_>) -> bool {
-    matches!(expr.without_parentheses(), Expression::BooleanLiteral(lit) if !lit.value)
+    matches!(expr.without_parentheses().kind(), ExpressionKind::BooleanLiteral(lit) if !lit.value)
 }
 
 fn is_static_true(expr: &Expression<'_>) -> bool {
-    matches!(expr.without_parentheses(), Expression::BooleanLiteral(lit) if lit.value)
+    matches!(expr.without_parentheses().kind(), ExpressionKind::BooleanLiteral(lit) if lit.value)
 }
 
 fn body_is_unreachable(

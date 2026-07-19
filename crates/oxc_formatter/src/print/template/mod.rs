@@ -422,15 +422,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                 // Determine if we should add indentation based on expression complexity
                 let indent = self.expression.as_expression().is_some_and(|e| {
                     has_comment_in_expression
-                        || match e.as_ref() {
-                            Expression::ConditionalExpression(_)
-                            | Expression::SequenceExpression(_)
-                            | Expression::TSAsExpression(_)
-                            | Expression::TSSatisfiesExpression(_)
-                            | Expression::BinaryExpression(_)
-                            | Expression::LogicalExpression(_)
-                            | Expression::Identifier(_) => true,
-                            e => is_member_expression_without_chain_wrappers(e),
+                        || match e.as_ref().tag() {
+                            ExpressionTag::ConditionalExpression
+                            | ExpressionTag::SequenceExpression
+                            | ExpressionTag::TSAsExpression
+                            | ExpressionTag::TSSatisfiesExpression
+                            | ExpressionTag::BinaryExpression
+                            | ExpressionTag::LogicalExpression
+                            | ExpressionTag::Identifier => true,
+                            _ => is_member_expression_without_chain_wrappers(e.as_ref()),
                         }
                 });
 

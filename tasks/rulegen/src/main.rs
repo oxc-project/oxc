@@ -14,10 +14,9 @@ use serde::Serialize;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
-    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
-    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
-    ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-    TaggedTemplateExpression, TemplateLiteral,
+    Argument, ArrayExpression, CallExpression, Expression, ExpressionKind, ExpressionStatement,
+    IdentifierName, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program, PropertyKey,
+    Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
 use oxc_parser::Parser;
@@ -252,12 +251,12 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
 
 impl<'a> VisitJs<'a> for TestCase {
     fn visit_expression(&mut self, expr: &Expression<'a>) {
-        match expr {
-            Expression::StringLiteral(lit) => self.visit_string_literal(lit),
-            Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
-            Expression::ObjectExpression(obj_expr) => self.visit_object_expression(obj_expr),
-            Expression::CallExpression(call_expr) => self.visit_call_expression(call_expr),
-            Expression::TaggedTemplateExpression(tag_expr) => {
+        match expr.kind() {
+            ExpressionKind::StringLiteral(lit) => self.visit_string_literal(lit),
+            ExpressionKind::TemplateLiteral(lit) => self.visit_template_literal(lit),
+            ExpressionKind::ObjectExpression(obj_expr) => self.visit_object_expression(obj_expr),
+            ExpressionKind::CallExpression(call_expr) => self.visit_call_expression(call_expr),
+            ExpressionKind::TaggedTemplateExpression(tag_expr) => {
                 self.visit_tagged_template_expression(tag_expr);
             }
             _ => {}
@@ -266,12 +265,12 @@ impl<'a> VisitJs<'a> for TestCase {
 
     fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
         if let Some(member_expr) = expr.callee.as_member_expression()
-            && let Expression::ArrayExpression(array_expr) = member_expr.object()
+            && let Some(array_expr) = member_expr.object().as_array_expression()
         {
             // ['class A {', '}'].join('\n')
             let mut code = String::new();
             for arg in &array_expr.elements {
-                let ArrayExpressionElement::StringLiteral(lit) = arg else {
+                let Some(lit) = arg.as_expression().and_then(Expression::as_string_literal) else {
                     continue;
                 };
                 code.push_str(lit.value.as_str());
@@ -287,38 +286,41 @@ impl<'a> VisitJs<'a> for TestCase {
             match obj_prop {
                 ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
-                        self.code = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
-                            Expression::TaggedTemplateExpression(tag_expr) => {
+                        self.code = match prop.value.kind() {
+                            ExpressionKind::StringLiteral(s) => Some(s.value.to_string()),
+                            ExpressionKind::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
-                            Expression::TemplateLiteral(tag_expr) => {
+                            ExpressionKind::TemplateLiteral(tag_expr) => {
                                 tag_expr.single_quasi().map(|quasi| quasi.to_string())
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
-                            Expression::CallExpression(call_expr) => {
-                                if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::StringLiteral(string) if string.value == "\n")) {
+                            ExpressionKind::CallExpression(call_expr) => {
+                                if !call_expr.arguments.first().is_some_and(|arg| {
+                                    arg.as_expression()
+                                        .and_then(Expression::as_string_literal)
+                                        .is_some_and(|string| string.value == "\n")
+                                }) {
                                     continue;
                                 }
-                                let Expression::StaticMemberExpression(member) = &call_expr.callee
+                                let Some(member) = call_expr.callee.as_static_member_expression()
                                 else {
                                     continue;
                                 };
                                 if member.property.name != "join" {
                                     continue;
                                 }
-                                let Expression::ArrayExpression(array_expr) = &member.object else {
+                                let Some(array_expr) = member.object.as_array_expression() else {
                                     continue;
                                 };
                                 Some(
                                     array_expr
                                         .elements
                                         .iter()
-                                        .map(|arg| match arg {
-                                            ArrayExpressionElement::StringLiteral(string) => {
-                                                string.value.as_str()
-                                            }
-                                            _ => "",
+                                        .map(|arg| {
+                                            arg.as_expression()
+                                                .and_then(Expression::as_string_literal)
+                                                .map_or("", |string| string.value.as_str())
                                         })
                                         .collect::<Vec<_>>()
                                         .join("\n"),
@@ -328,12 +330,12 @@ impl<'a> VisitJs<'a> for TestCase {
                         }
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "output" => {
-                        self.output = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
-                            Expression::TaggedTemplateExpression(tag_expr) => {
+                        self.output = match prop.value.kind() {
+                            ExpressionKind::StringLiteral(s) => Some(s.value.to_string()),
+                            ExpressionKind::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
-                            Expression::TemplateLiteral(tag_expr) => {
+                            ExpressionKind::TemplateLiteral(tag_expr) => {
                                 tag_expr.single_quasi().map(|quasi| quasi.to_string())
                             }
                             _ => None,
@@ -532,10 +534,11 @@ impl<'a> VisitJs<'a> for State<'a> {
             Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
             // for eslint-plugin-jsdoc
             Statement::ExportDefaultDeclaration(export_decl) => {
-                if let Some(Expression::ObjectExpression(obj_expr)) = &export_decl
+                if let Some(obj_expr) = export_decl
                     .declaration
                     .as_expression()
                     .map(oxc_ast::ast::Expression::get_inner_expression)
+                    .and_then(Expression::as_object_expression)
                 {
                     self.visit_object_expression(obj_expr);
                 }
@@ -550,11 +553,12 @@ impl<'a> VisitJs<'a> for State<'a> {
 
     fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
         let mut pushed = false;
-        if let Expression::Identifier(ident) = &expr.callee {
+        if let Some(ident) = expr.callee.as_identifier() {
             // Add describe's first parameter as part group comment
             // e.g. for `describe('valid', () => { ... })`, the group comment will be "valid"
             if ident.name == "describe"
-                && let Some(Argument::StringLiteral(lit)) = expr.arguments.first()
+                && let Some(arg) = expr.arguments.first()
+                && let Some(lit) = arg.as_expression().and_then(Expression::as_string_literal)
             {
                 pushed = true;
                 self.group_comment_stack.push(lit.value.to_string());
@@ -575,7 +579,7 @@ impl<'a> VisitJs<'a> for State<'a> {
         let PropertyKey::StaticIdentifier(ident) = &prop.key else { return };
         match ident.name.as_str() {
             "valid" => {
-                if let Expression::ArrayExpression(array_expr) = &prop.value {
+                if let Some(array_expr) = prop.value.as_array_expression() {
                     let array_expr = self.alloc(array_expr);
                     for arg in &array_expr.elements {
                         if let Some(expr) = arg.as_expression() {
@@ -594,11 +598,13 @@ impl<'a> VisitJs<'a> for State<'a> {
                     }
                 }
 
-                if let Expression::CallExpression(call_expr) = &prop.value
+                if let Some(call_expr) = prop.value.as_call_expression()
                     && call_expr.callee.is_member_expression()
                 {
                     // for eslint-plugin-react
-                    if let Some(Argument::ArrayExpression(array_expr)) = call_expr.arguments.first()
+                    if let Some(arg) = call_expr.arguments.first()
+                        && let Some(array_expr) =
+                            arg.as_expression().and_then(Expression::as_array_expression)
                     {
                         let array_expr = self.alloc(array_expr);
                         for arg in &array_expr.elements {
@@ -610,7 +616,7 @@ impl<'a> VisitJs<'a> for State<'a> {
                 }
             }
             "invalid" => {
-                if let Expression::ArrayExpression(array_expr) = &prop.value {
+                if let Some(array_expr) = prop.value.as_array_expression() {
                     let array_expr = self.alloc(array_expr);
                     for arg in &array_expr.elements {
                         if let Some(expr) = arg.as_expression() {
@@ -630,9 +636,11 @@ impl<'a> VisitJs<'a> for State<'a> {
                 }
 
                 // for eslint-plugin-react
-                if let Expression::CallExpression(call_expr) = &prop.value
+                if let Some(call_expr) = prop.value.as_call_expression()
                     && call_expr.callee.is_member_expression()
-                    && let Some(Argument::ArrayExpression(array_expr)) = call_expr.arguments.first()
+                    && let Some(arg) = call_expr.arguments.first()
+                    && let Some(array_expr) =
+                        arg.as_expression().and_then(Expression::as_array_expression)
                 {
                     let array_expr = self.alloc(array_expr);
                     for arg in &array_expr.elements {
@@ -651,17 +659,17 @@ fn find_parser_arguments<'a, 'b>(
     mut expr: &'b Expression<'a>,
 ) -> Option<&'b ArenaVec<'a, Argument<'a>>> {
     loop {
-        let Expression::CallExpression(call_expr) = expr else { return None };
-        let Expression::StaticMemberExpression(static_member_expr) = &call_expr.callee else {
+        let Some(call_expr) = expr.as_call_expression() else { return None };
+        let Some(static_member_expr) = call_expr.callee.as_static_member_expression() else {
             return None;
         };
-        let StaticMemberExpression { object, property, .. } = &**static_member_expr;
-        if let Expression::Identifier(iden) = object
+        let StaticMemberExpression { object, property, .. } = static_member_expr;
+        if let Some(iden) = object.as_identifier()
             && iden.name == "parsers"
             && property.name == "all"
             && let Some(arg) = call_expr.arguments.first()
         {
-            if let Argument::CallExpression(call_expr) = arg {
+            if let Some(call_expr) = arg.as_expression().and_then(Expression::as_call_expression) {
                 if call_expr.callee.is_member_expression() {
                     return Some(&call_expr.arguments);
                 }
@@ -966,9 +974,9 @@ impl<'a> RuleConfig<'a> {
 
     // Helper function to handle 'type' property
     fn handle_type_property(&mut self, value: &Expression<'a>) -> Option<RuleConfigElement> {
-        match value {
-            Expression::StringLiteral(lit) => self.parse_type_string_literal(lit),
-            Expression::ArrayExpression(array_expression) => {
+        match value.kind() {
+            ExpressionKind::StringLiteral(lit) => self.parse_type_string_literal(lit),
+            ExpressionKind::ArrayExpression(array_expression) => {
                 self.parse_type_array_expression(array_expression)
             }
             _ => {
@@ -1009,7 +1017,9 @@ impl<'a> RuleConfig<'a> {
                 ));
                 return None;
             }
-            let ArrayExpressionElement::StringLiteral(literal) = &array_expression.elements[0]
+            let Some(literal) = array_expression.elements[0]
+                .as_expression()
+                .and_then(Expression::as_string_literal)
             else {
                 self.log_error(&format!(
                     "Unhandled `type` expression: {}",
@@ -1022,14 +1032,18 @@ impl<'a> RuleConfig<'a> {
         }
         let first_element = &array_expression.elements[0];
         let second_element = &array_expression.elements[1];
-        let ArrayExpressionElement::StringLiteral(first_literal) = first_element else {
+        let Some(first_literal) =
+            first_element.as_expression().and_then(Expression::as_string_literal)
+        else {
             self.log_error(&format!(
                 "Unhandled `type` expression: {}",
                 array_expression.span().source_text(self.source_text)
             ));
             return None;
         };
-        let ArrayExpressionElement::StringLiteral(second_literal) = second_element else {
+        let Some(second_literal) =
+            second_element.as_expression().and_then(Expression::as_string_literal)
+        else {
             self.log_error(&format!(
                 "Unhandled `type` expression: {}",
                 array_expression.span().source_text(self.source_text)
@@ -1070,7 +1084,7 @@ impl<'a> RuleConfig<'a> {
                 ));
                 continue;
             };
-            let Expression::ObjectExpression(object_expression) = &object_property.value else {
+            let Some(object_expression) = object_property.value.as_object_expression() else {
                 self.log_error(&format!(
                     "Cannot parse object property value: {}",
                     object_property.value.span().source_text(self.source_text)
@@ -1095,18 +1109,18 @@ impl<'a> RuleConfig<'a> {
         array_expression
             .elements
             .iter()
-            .filter_map(|arg| match arg {
-                ArrayExpressionElement::StringLiteral(string_literal) => {
+            .filter_map(|arg| match arg.as_expression().map(Expression::kind) {
+                Some(ExpressionKind::StringLiteral(string_literal)) => {
                     Some(RuleConfigElement::StringLiteral(string_literal.value.into()))
                 }
-                ArrayExpressionElement::BooleanLiteral(boolean_literal) => {
+                Some(ExpressionKind::BooleanLiteral(boolean_literal)) => {
                     if boolean_literal.value {
                         Some(RuleConfigElement::True)
                     } else {
                         Some(RuleConfigElement::False)
                     }
                 }
-                ArrayExpressionElement::NullLiteral(_) => Some(RuleConfigElement::Null),
+                Some(ExpressionKind::NullLiteral(_)) => Some(RuleConfigElement::Null),
                 _ => {
                     self.log_error(&format!(
                         "Cannot parse `enum` value: {}",
@@ -1126,7 +1140,9 @@ impl<'a> RuleConfig<'a> {
     ) -> Vec<RuleConfigElement> {
         let mut elements = Vec::new();
         for arg in &array_expression.elements {
-            let ArrayExpressionElement::ObjectExpression(object_expression) = arg else {
+            let Some(object_expression) =
+                arg.as_expression().and_then(Expression::as_object_expression)
+            else {
                 self.log_error(&format!(
                     "Cannot parse `{}` value: {}",
                     identifier.name,
@@ -1162,17 +1178,19 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
         let Statement::ExpressionStatement(expression_statement) = stmt else {
             return;
         };
-        let Expression::AssignmentExpression(assignment_expression) =
-            &expression_statement.expression
+        let Some(assignment_expression) =
+            expression_statement.expression.as_assignment_expression()
         else {
             return;
         };
-        let AssignmentTarget::StaticMemberExpression(static_member_expression) =
-            &assignment_expression.left
+        let Some(static_member_expression) = assignment_expression
+            .left
+            .as_member_expression()
+            .and_then(|member| member.as_static_member_expression())
         else {
             return;
         };
-        let Expression::Identifier(identifier) = &static_member_expression.object else {
+        let Some(identifier) = static_member_expression.object.as_identifier() else {
             return;
         };
         if identifier.name != "module" {
@@ -1181,7 +1199,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
         if static_member_expression.property.name != "exports" {
             return;
         }
-        let Expression::ObjectExpression(object_expression) = &assignment_expression.right else {
+        let Some(object_expression) = assignment_expression.right.as_object_expression() else {
             return;
         };
         for object_property_kind in &object_expression.properties {
@@ -1194,7 +1212,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
             if identifier.name != "meta" {
                 continue;
             }
-            let Expression::ObjectExpression(object_expression) = &object_property.value else {
+            let Some(object_expression) = object_property.value.as_object_expression() else {
                 continue;
             };
             for object_property_kind in &object_expression.properties {
@@ -1208,14 +1226,15 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                 if identifier.name != "schema" {
                     continue;
                 }
-                match &object_property.value {
-                    Expression::ArrayExpression(array_expression) => {
+                match object_property.value.kind() {
+                    ExpressionKind::ArrayExpression(array_expression) => {
                         self.elements = array_expression
                             .elements
                             .iter()
                             .filter_map(|element| {
-                                let ArrayExpressionElement::ObjectExpression(object_expression) =
-                                    element
+                                let Some(object_expression) = element
+                                    .as_expression()
+                                    .and_then(Expression::as_object_expression)
                                 else {
                                     return None;
                                 };
@@ -1225,7 +1244,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                             })
                             .collect::<Vec<_>>();
                     }
-                    Expression::ObjectExpression(object_expression) => {
+                    ExpressionKind::ObjectExpression(object_expression) => {
                         self.visit_object_expression(object_expression);
                         let Some(element) = self.next_element.take() else {
                             return;
@@ -1267,7 +1286,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                     rule_config_element = self.handle_type_property(&object_property.value);
                 }
                 "properties" => {
-                    let Expression::ObjectExpression(object_expression) = &object_property.value
+                    let Some(object_expression) = object_property.value.as_object_expression()
                     else {
                         self.log_error(&format!(
                             "Cannot parse `properties` value: {}",
@@ -1279,7 +1298,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                     rule_config_element = Some(RuleConfigElement::Object(properties));
                 }
                 "items" => {
-                    let Expression::ObjectExpression(object_expression) = &object_property.value
+                    let Some(object_expression) = object_property.value.as_object_expression()
                     else {
                         self.log_error(&format!(
                             "Cannot parse `items` value: {}",
@@ -1299,7 +1318,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                     }
                 }
                 "uniqueItems" => {
-                    let Expression::BooleanLiteral(boolean_literal) = &object_property.value else {
+                    let Some(boolean_literal) = object_property.value.as_boolean_literal() else {
                         self.log_error(&format!(
                             "Cannot parse `uniqueItems` value: {}",
                             object_property.value.span().source_text(self.source_text)
@@ -1316,8 +1335,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                     rule_config_element = Some(RuleConfigElement::Set(element));
                 }
                 "enum" => {
-                    let Expression::ArrayExpression(array_expression) = &object_property.value
-                    else {
+                    let Some(array_expression) = object_property.value.as_array_expression() else {
                         self.log_error(&format!(
                             "Cannot parse `enum` values: {}",
                             object_property.value.span().source_text(self.source_text)
@@ -1328,8 +1346,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                     rule_config_element = Some(RuleConfigElement::Enum(elements));
                 }
                 "anyOf" | "oneOf" => {
-                    let Expression::ArrayExpression(array_expression) = &object_property.value
-                    else {
+                    let Some(array_expression) = object_property.value.as_array_expression() else {
                         self.log_error(&format!(
                             "Cannot parse `{}` value: {}",
                             identifier.name,
@@ -1340,8 +1357,8 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                     let elements = self.extract_any_of_elements(array_expression, identifier);
                     rule_config_element = Some(RuleConfigElement::Enum(elements));
                 }
-                "additionalProperties" => match &object_property.value {
-                    Expression::ObjectExpression(object_expression) => {
+                "additionalProperties" => match object_property.value.kind() {
+                    ExpressionKind::ObjectExpression(object_expression) => {
                         self.visit_object_expression(object_expression);
                         let Some(element) = self.next_element.take() else {
                             self.log_error(&String::from("Cannot find next element"));
@@ -1349,7 +1366,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                         };
                         rule_config_element = Some(RuleConfigElement::Map(Box::new(element)));
                     }
-                    Expression::BooleanLiteral(boolean_literal) => {
+                    ExpressionKind::BooleanLiteral(boolean_literal) => {
                         if boolean_literal.value {
                             self.log_error(&format!(
                                 "Unhandled `additionalProperties` value: {}",
@@ -2206,7 +2223,7 @@ mod tests {
         let Statement::ExpressionStatement(stmt) = ret.program.body.first().unwrap() else {
             panic!("expected expression statement");
         };
-        let Expression::TaggedTemplateExpression(tag_expr) = &stmt.expression else {
+        let Some(tag_expr) = stmt.expression.as_tagged_template_expression() else {
             panic!("expected tagged template expression");
         };
 

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -122,16 +125,16 @@ impl ForbiddenKind {
 }
 
 fn forbidden_default_kind(expr: &Expression) -> Option<ForbiddenKind> {
-    match expr {
-        Expression::ObjectExpression(_) => Some(ForbiddenKind::Object),
-        Expression::ArrayExpression(_) => Some(ForbiddenKind::Array),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
+    match expr.kind() {
+        ExpressionKind::ObjectExpression(_) => Some(ForbiddenKind::Object),
+        ExpressionKind::ArrayExpression(_) => Some(ForbiddenKind::Array),
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => {
             Some(ForbiddenKind::Function)
         }
-        Expression::ClassExpression(_) => Some(ForbiddenKind::Class),
-        Expression::NewExpression(_) => Some(ForbiddenKind::New),
-        Expression::RegExpLiteral(_) => Some(ForbiddenKind::Regex),
-        Expression::JSXElement(_) | Expression::JSXFragment(_) => Some(ForbiddenKind::Jsx),
+        ExpressionKind::ClassExpression(_) => Some(ForbiddenKind::Class),
+        ExpressionKind::NewExpression(_) => Some(ForbiddenKind::New),
+        ExpressionKind::RegExpLiteral(_) => Some(ForbiddenKind::Regex),
+        ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => Some(ForbiddenKind::Jsx),
         _ => None,
     }
 }

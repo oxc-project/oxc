@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, MemberExpression, RegExpFlags},
+    ast::{Argument, MemberExpressionKind, RegExpFlags},
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
@@ -67,7 +67,8 @@ impl Rule for PreferStringReplaceAll {
             return;
         };
 
-        let MemberExpression::StaticMemberExpression(static_member_expr) = member_expr else {
+        let MemberExpressionKind::StaticMemberExpression(static_member_expr) = member_expr.kind()
+        else {
             return;
         };
 
@@ -108,11 +109,11 @@ impl Rule for PreferStringReplaceAll {
 }
 
 fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
-    if let Argument::RegExpLiteral(reg_exp_literal) = expr {
+    if let Some(reg_exp_literal) = expr.as_expression().and_then(|e| e.as_reg_exp_literal()) {
         return reg_exp_literal.regex.flags.contains(RegExpFlags::G);
     }
 
-    if let Argument::NewExpression(new_expr) = expr {
+    if let Some(new_expr) = expr.as_expression().and_then(|e| e.as_new_expression()) {
         if !new_expr.callee.is_specific_id("RegExp") {
             return false;
         }
@@ -126,7 +127,7 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
 }
 
 fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
-    let Argument::RegExpLiteral(reg_exp_literal) = expr else {
+    let Some(reg_exp_literal) = expr.as_expression().and_then(|e| e.as_reg_exp_literal()) else {
         return None;
     };
 

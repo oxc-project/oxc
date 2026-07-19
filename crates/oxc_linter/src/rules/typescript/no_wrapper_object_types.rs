@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSTypeName},
+    ast::{ExpressionKind, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -80,7 +80,8 @@ impl Rule for NoWrapperObjectTypes {
                 }
             }
             AstKind::TSInterfaceHeritage(ts_interface_heritage) => {
-                if let Expression::Identifier(extends) = &ts_interface_heritage.expression {
+                if let ExpressionKind::Identifier(extends) = ts_interface_heritage.expression.kind()
+                {
                     (extends.name.as_str(), extends.span, extends.reference_id())
                 } else {
                     return;

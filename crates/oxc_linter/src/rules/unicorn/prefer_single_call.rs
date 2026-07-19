@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, Statement},
+    ast::{CallExpression, Expression, ExpressionKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -96,7 +96,7 @@ impl Rule for PreferSingleCall {
         let AstKind::ExpressionStatement(curr_es) = node.kind() else {
             return;
         };
-        let Expression::CallExpression(curr_call) = &curr_es.expression else {
+        let ExpressionKind::CallExpression(curr_call) = curr_es.expression.kind() else {
             return;
         };
 
@@ -125,7 +125,7 @@ impl Rule for PreferSingleCall {
         let Statement::ExpressionStatement(prev_es) = prev_stmt else {
             return;
         };
-        let Expression::CallExpression(prev_call) = &prev_es.expression else {
+        let ExpressionKind::CallExpression(prev_call) = prev_es.expression.kind() else {
             return;
         };
         let Some(prev_info) = classify_call(prev_call, src, &self.0.ignore) else {
@@ -262,9 +262,9 @@ struct CallInfo<'a> {
 /// consecutive statements. We accept identifiers, `this`, and chains of
 /// static (non-computed) member accesses built from those primitives.
 fn is_stable_receiver(expr: &Expression<'_>) -> bool {
-    match expr.without_parentheses() {
-        Expression::Identifier(_) | Expression::ThisExpression(_) => true,
-        Expression::StaticMemberExpression(m) if !m.optional => is_stable_receiver(&m.object),
+    match expr.without_parentheses().kind() {
+        ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_) => true,
+        ExpressionKind::StaticMemberExpression(m) if !m.optional => is_stable_receiver(&m.object),
         _ => false,
     }
 }
@@ -280,9 +280,9 @@ fn classify_call<'a>(
         return None;
     }
 
-    match call.callee.without_parentheses() {
+    match call.callee.without_parentheses().kind() {
         // `receiver.push/unshift(...)`, `el.classList.add(...)`, `el.classList.remove(...)`
-        Expression::StaticMemberExpression(member) => {
+        ExpressionKind::StaticMemberExpression(member) => {
             if member.optional {
                 return None;
             }
@@ -316,8 +316,8 @@ fn classify_call<'a>(
                 "add" | "remove" => {
                     // Must be `<element>.classList.add/remove`
                     let obj = member.object.without_parentheses();
-                    let obj_member = match obj {
-                        Expression::StaticMemberExpression(m) if !m.optional => m,
+                    let obj_member = match obj.kind() {
+                        ExpressionKind::StaticMemberExpression(m) if !m.optional => m,
                         _ => return None,
                     };
                     if obj_member.property.name.as_str() != "classList" {
@@ -346,7 +346,7 @@ fn classify_call<'a>(
         }
 
         // `importScripts(...)`
-        Expression::Identifier(ident) if ident.name == "importScripts" => Some(CallInfo {
+        ExpressionKind::Identifier(ident) if ident.name == "importScripts" => Some(CallInfo {
             description: "importScripts()",
             receiver_text: "importScripts",
             diagnostic_span: ident.span,

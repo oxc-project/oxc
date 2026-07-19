@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryExpression, Expression},
+    ast::{Argument, BinaryExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
@@ -68,14 +68,15 @@ pub fn run_on_jest_node<'a, 'c>(
         return;
     };
     let expr = expect_parent.get_inner_expression();
-    let Expression::CallExpression(expect_call_expr) = expr else {
+    let ExpressionKind::CallExpression(expect_call_expr) = expr.kind() else {
         return;
     };
     let Some(argument) = expect_call_expr.arguments.first() else {
         return;
     };
 
-    let Argument::BinaryExpression(binary_expr) = argument else {
+    let Some(binary_expr) = argument.as_expression().and_then(Expression::as_binary_expression)
+    else {
         return;
     };
 
@@ -96,7 +97,8 @@ pub fn run_on_jest_node<'a, 'c>(
     else {
         return;
     };
-    let Expression::BooleanLiteral(matcher_arg_value) = first_matcher_arg.get_inner_expression()
+    let ExpressionKind::BooleanLiteral(matcher_arg_value) =
+        first_matcher_arg.get_inner_expression().kind()
     else {
         return;
     };

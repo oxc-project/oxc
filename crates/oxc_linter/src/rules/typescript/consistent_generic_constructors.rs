@@ -2,8 +2,8 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, Expression, NewExpression, TSType, TSTypeAnnotation, TSTypeName,
-        TSTypeParameterInstantiation, TSTypeReference,
+        BindingPattern, Expression, ExpressionKind, NewExpression, TSType, TSTypeAnnotation,
+        TSTypeName, TSTypeParameterInstantiation, TSTypeReference,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -127,10 +127,11 @@ impl ConsistentGenericConstructors {
         ctx: &LintContext<'a>,
     ) {
         let Some(init) = init else { return };
-        let Expression::NewExpression(new_expression) = init.get_inner_expression() else {
+        let ExpressionKind::NewExpression(new_expression) = init.get_inner_expression().kind()
+        else {
             return;
         };
-        let Expression::Identifier(identifier) = &new_expression.callee else {
+        let ExpressionKind::Identifier(identifier) = new_expression.callee.kind() else {
             return;
         };
         if is_built_in_typed_array(&identifier.name)
@@ -300,7 +301,7 @@ impl ConsistentGenericConstructors {
         let source_text = ctx.source_text();
 
         // Get the callee name (constructor name)
-        let Expression::Identifier(callee_ident) = &new_expression.callee else {
+        let ExpressionKind::Identifier(callee_ident) = new_expression.callee.kind() else {
             return fixer.noop();
         };
         let callee_name = callee_ident.name.as_str();

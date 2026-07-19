@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget, PropertyKind,
+        AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, ExpressionKind,
+        Function, FunctionType, ObjectAssignmentTarget, PropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -339,7 +339,8 @@ fn has_object_assignment_target_name<'a>(
 ) -> bool {
     target.properties.iter().any(|property| {
         if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) = property
-            && let Some(Expression::FunctionExpression(func_expr)) = &identifier.init
+            && let Some(init) = &identifier.init
+            && let Some(func_expr) = init.as_function_expression()
         {
             return get_function_identifier(func_expr) == get_function_identifier(function);
         }
@@ -386,9 +387,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
 }
 
 fn is_same_function<'a>(fn1: &Expression<'a>, fn2: &Function<'a>) -> bool {
-    matches!(fn1, Expression::FunctionExpression(function_expression)
-        if get_function_identifier(function_expression) == get_function_identifier(fn2)
-    )
+    matches!(fn1.kind(), ExpressionKind::FunctionExpression(function_expression) if get_function_identifier(function_expression) == get_function_identifier(fn2))
 }
 
 /**

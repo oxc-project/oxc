@@ -2,7 +2,7 @@ use lazy_regex::Regex;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, TSModuleReference},
+    ast::{Argument, ExpressionKind, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -146,9 +146,10 @@ impl Rule for NoRequireImports {
                 // Check `allow` patterns against static string/template literal arguments
                 if !self.allow.is_empty()
                     && let Some(argument) = call_expr.arguments.first()
+                    && let Argument::Expression(expr) = argument
                 {
-                    match argument {
-                        Argument::TemplateLiteral(template_literal) => {
+                    match expr.kind() {
+                        ExpressionKind::TemplateLiteral(template_literal) => {
                             let Some(quasi) = template_literal.quasis.first() else {
                                 return;
                             };
@@ -156,7 +157,7 @@ impl Rule for NoRequireImports {
                                 return;
                             }
                         }
-                        Argument::StringLiteral(string_literal)
+                        ExpressionKind::StringLiteral(string_literal)
                             if match_argument_value_with_regex(
                                 &self.allow,
                                 &string_literal.value,

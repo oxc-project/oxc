@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, FormalParameters},
+    ast::{Argument, CallExpression, ExpressionKind, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -105,7 +105,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
     let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
 
-    if is_jest_each && !matches!(call_expr.callee, Expression::TaggedTemplateExpression(_)) {
+    if is_jest_each && !call_expr.callee.is_tagged_template_expression() {
         // isJestEach but not a TaggedTemplateExpression, so this must be
         // the `jest.each([])()` syntax which this rule doesn't support due
         // to its complexity (see jest-community/eslint-plugin-jest#710)
@@ -118,8 +118,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
     let callback_arg_index = usize::from(is_jest_each);
 
-    match arg {
-        Argument::FunctionExpression(func_expr) => {
+    match arg.as_expression().map(|expr| expr.kind()) {
+        Some(ExpressionKind::FunctionExpression(func_expr)) => {
             if func_expr.params.parameters_count() != 1 + callback_arg_index {
                 return;
             }
@@ -134,7 +134,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
             ctx.diagnostic(no_done_callback(span));
         }
-        Argument::ArrowFunctionExpression(arrow_expr) => {
+        Some(ExpressionKind::ArrowFunctionExpression(arrow_expr)) => {
             if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
                 return;
             }

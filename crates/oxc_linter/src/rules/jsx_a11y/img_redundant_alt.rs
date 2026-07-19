@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -170,25 +170,33 @@ impl Rule for ImgRedundantAlt {
                     ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
-            JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-                JSXExpression::StringLiteral(lit) => {
-                    let alt_text = lit.value.as_str();
+            JSXAttributeValue::ExpressionContainer(container) => {
+                if let JSXExpression::Expression(expr) = &container.expression {
+                    match expr.kind() {
+                        ExpressionKind::StringLiteral(lit) => {
+                            let alt_text = lit.value.as_str();
 
-                    if self.is_redundant_alt_text(alt_text) {
-                        ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
-                    }
-                }
-                JSXExpression::TemplateLiteral(lit) => {
-                    for quasi in &lit.quasis {
-                        let alt_text = quasi.value.raw.as_str();
-
-                        if self.is_redundant_alt_text(alt_text) {
-                            ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
+                            if self.is_redundant_alt_text(alt_text) {
+                                ctx.diagnostic(img_redundant_alt_diagnostic(
+                                    alt_attribute_name_span,
+                                ));
+                            }
                         }
+                        ExpressionKind::TemplateLiteral(lit) => {
+                            for quasi in &lit.quasis {
+                                let alt_text = quasi.value.raw.as_str();
+
+                                if self.is_redundant_alt_text(alt_text) {
+                                    ctx.diagnostic(img_redundant_alt_diagnostic(
+                                        alt_attribute_name_span,
+                                    ));
+                                }
+                            }
+                        }
+                        _ => {}
                     }
                 }
-                _ => {}
-            },
+            }
             _ => {}
         }
     }

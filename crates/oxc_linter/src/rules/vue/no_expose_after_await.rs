@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, BindingPattern, CallExpression, ChainElement,
-        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, ObjectPropertyKind,
-        Program, Statement,
+        Expression, ExpressionKind, Function, ObjectExpression, ObjectPropertyKind, Program,
+        Statement,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -67,8 +67,10 @@ impl Rule for NoExposeAfterAwait {
         match node.kind() {
             // e.g. `export default { setup() {} }`
             AstKind::ExportDefaultDeclaration(export_decl) => {
-                if let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-                    &export_decl.declaration
+                if let Some(obj_expr) = export_decl
+                    .declaration
+                    .as_expression()
+                    .and_then(Expression::as_object_expression)
                 {
                     check_setup_in_object(obj_expr, ctx);
                 }
@@ -78,7 +80,8 @@ impl Rule for NoExposeAfterAwait {
                 if let Some(ident) = call_expr.callee.get_identifier_reference()
                     && ident.name == "defineComponent"
                     && let Some(first_arg) = call_expr.arguments.first()
-                    && let Some(Expression::ObjectExpression(obj_expr)) = first_arg.as_expression()
+                    && let Some(obj_expr) =
+                        first_arg.as_expression().and_then(Expression::as_object_expression)
                 {
                     check_setup_in_object(obj_expr, ctx);
                 }
@@ -106,9 +109,9 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let (params, body) = match &setup_prop.value {
-        Expression::FunctionExpression(func) => (&func.params, func.body.as_ref()),
-        Expression::ArrowFunctionExpression(arrow) => (&arrow.params, Some(&arrow.body)),
+    let (params, body) = match setup_prop.value.kind() {
+        ExpressionKind::FunctionExpression(func) => (&func.params, func.body.as_ref()),
+        ExpressionKind::ArrowFunctionExpression(arrow) => (&arrow.params, Some(&arrow.body)),
         _ => return,
     };
     let Some(body) = body else {
@@ -172,9 +175,9 @@ fn check_script_setup<'a>(program: &Program<'a>, ctx: &LintContext<'a>) {
 }
 
 fn extract_call_expression<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b CallExpression<'a>> {
-    match expr.get_inner_expression() {
-        Expression::CallExpression(c) => Some(c),
-        Expression::ChainExpression(chain) => match &chain.expression {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::CallExpression(c) => Some(c),
+        ExpressionKind::ChainExpression(chain) => match &chain.expression {
             ChainElement::CallExpression(c) => Some(c),
             _ => None,
         },
@@ -228,7 +231,7 @@ impl<'a> ExposeAfterAwaitVisitor<'a> {
                 reference.symbol_id() == Some(expose_id)
             }
             ExposeBinding::Ctx(ctx_id) => {
-                let Expression::StaticMemberExpression(member) = callee else {
+                let ExpressionKind::StaticMemberExpression(member) = callee.kind() else {
                     return false;
                 };
                 if member.property.name != "expose" {

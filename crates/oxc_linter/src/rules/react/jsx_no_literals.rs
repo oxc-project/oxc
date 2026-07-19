@@ -7,9 +7,10 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, Expression, IdentifierReference, JSXAttribute, JSXAttributeItem,
-        JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
-        JSXFragment, JSXMemberExpression, JSXMemberExpressionObject, ModuleExportName, PropertyKey,
+        BindingPattern, Expression, ExpressionKind, IdentifierReference, JSXAttribute,
+        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
+        ModuleExportName, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -189,14 +190,14 @@ impl JsxNoLiterals {
     }
 
     fn is_require_statement(expr: &Expression) -> bool {
-        match expr.without_parentheses() {
-            Expression::CallExpression(call_expr) => {
-                matches!(call_expr.callee.without_parentheses(), Expression::Identifier(ident) if ident.name == "require")
+        match expr.without_parentheses().kind() {
+            ExpressionKind::CallExpression(call_expr) => {
+                matches!(call_expr.callee.without_parentheses().kind(), ExpressionKind::Identifier(ident) if ident.name == "require")
             }
-            Expression::StaticMemberExpression(member_expr) => {
+            ExpressionKind::StaticMemberExpression(member_expr) => {
                 Self::is_require_statement(&member_expr.object)
             }
-            Expression::ComputedMemberExpression(member_expr) => {
+            ExpressionKind::ComputedMemberExpression(member_expr) => {
                 Self::is_require_statement(&member_expr.object)
             }
             _ => false,
@@ -270,16 +271,18 @@ impl JsxNoLiterals {
                     }
                 }
                 JSXChild::ExpressionContainer(container) if options.no_strings => {
-                    match &container.expression {
-                        JSXExpression::StringLiteral(literal) => {
-                            if !Self::is_allowed_string(literal.value.as_str(), options) {
+                    if let JSXExpression::Expression(expr) = &container.expression {
+                        match expr.kind() {
+                            ExpressionKind::StringLiteral(literal) => {
+                                if !Self::is_allowed_string(literal.value.as_str(), options) {
+                                    ctx.diagnostic(literal_text_diagnostic(literal.span));
+                                }
+                            }
+                            ExpressionKind::TemplateLiteral(literal) => {
                                 ctx.diagnostic(literal_text_diagnostic(literal.span));
                             }
+                            _ => {}
                         }
-                        JSXExpression::TemplateLiteral(literal) => {
-                            ctx.diagnostic(literal_text_diagnostic(literal.span));
-                        }
-                        _ => {}
                     }
                 }
                 _ => {}
@@ -293,16 +296,16 @@ impl JsxNoLiterals {
         attr: &JSXAttribute,
         ctx: &LintContext,
     ) {
-        match &expr {
-            Expression::StringLiteral(literal) => {
+        match expr.kind() {
+            ExpressionKind::StringLiteral(literal) => {
                 if !Self::is_allowed_string(literal.value.as_str(), options) {
                     ctx.diagnostic(literal_attribute_diagnostic(attr.span));
                 }
             }
-            Expression::TemplateLiteral(_) => {
+            ExpressionKind::TemplateLiteral(_) => {
                 ctx.diagnostic(literal_attribute_diagnostic(attr.span));
             }
-            Expression::BinaryExpression(expression) => {
+            ExpressionKind::BinaryExpression(expression) => {
                 Self::inspect_jsx_expression(&expression.left, options, attr, ctx);
                 Self::inspect_jsx_expression(&expression.right, options, attr, ctx);
             }

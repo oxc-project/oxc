@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -133,9 +133,9 @@ fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx:
 }
 
 fn is_directly_supported_regex_argument(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::RegExpLiteral(_) | Expression::StringLiteral(_) => true,
-        Expression::TemplateLiteral(template) => template.is_no_substitution_template(),
+    match expr.kind() {
+        ExpressionKind::RegExpLiteral(_) | ExpressionKind::StringLiteral(_) => true,
+        ExpressionKind::TemplateLiteral(template) => template.is_no_substitution_template(),
         _ => false,
     }
 }

@@ -1,5 +1,6 @@
 use oxc_ast::ast::{
-    NumericLiteral, ObjectExpression, ObjectPropertyKind, PropertyKey, StringLiteral,
+    Expression, ExpressionKind, NumericLiteral, ObjectExpression, ObjectPropertyKind, PropertyKey,
+    StringLiteral,
 };
 use oxc_formatter_core::{
     Buffer, Format, FormatContext, arena_cow_str,
@@ -147,19 +148,22 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 /// `json5` diverges (see [`json5_write_object_key`]): keys may stay unquoted.
 fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
     match key {
-        PropertyKey::StringLiteral(lit) => FmtJsonString { lit: lit.as_ref() }.fmt(f),
         PropertyKey::StaticIdentifier(ident) => {
             write!(f, [text("\""), text(ident.name.as_str()), text("\"")]);
         }
-        PropertyKey::NumericLiteral(lit) => {
-            let printed_str = normalized_numeric_key(lit, f);
-            if should_quote_numeric_key(printed_str) {
-                write!(f, [text("\""), text(printed_str), text("\"")]);
-            } else {
-                write!(f, text(printed_str));
+        PropertyKey::Expression(expr) => match expr.kind() {
+            ExpressionKind::StringLiteral(lit) => FmtJsonString { lit }.fmt(f),
+            ExpressionKind::NumericLiteral(lit) => {
+                let printed_str = normalized_numeric_key(lit, f);
+                if should_quote_numeric_key(printed_str) {
+                    write!(f, [text("\""), text(printed_str), text("\"")]);
+                } else {
+                    write!(f, text(printed_str));
+                }
             }
-        }
-        _ => write!(f, FormatInvalidJson(key.span())),
+            _ => write!(f, FormatInvalidJson(key.span())),
+        },
+        PropertyKey::PrivateIdentifier(_) => write!(f, FormatInvalidJson(key.span())),
     }
 }
 
@@ -186,27 +190,30 @@ fn json5_write_object_key<'a>(
                 write!(f, text(name));
             }
         }
-        PropertyKey::StringLiteral(lit) => {
-            let may_unquote = match f.context().options().quote_props {
-                QuoteProps::AsNeeded => true,
-                QuoteProps::Consistent => !force_quote,
-                QuoteProps::Preserve => false,
-            };
-            if may_unquote && let Some(unquoted) = json5_unquoted_key(lit) {
-                write!(f, text(unquoted));
-                return;
+        PropertyKey::Expression(expr) => match expr.kind() {
+            ExpressionKind::StringLiteral(lit) => {
+                let may_unquote = match f.context().options().quote_props {
+                    QuoteProps::AsNeeded => true,
+                    QuoteProps::Consistent => !force_quote,
+                    QuoteProps::Preserve => false,
+                };
+                if may_unquote && let Some(unquoted) = json5_unquoted_key(lit) {
+                    write!(f, text(unquoted));
+                    return;
+                }
+                FmtJsonString { lit }.fmt(f);
             }
-            FmtJsonString { lit: lit.as_ref() }.fmt(f);
-        }
-        PropertyKey::NumericLiteral(lit) => {
-            let printed_str = normalized_numeric_key(lit, f);
-            if force_quote && should_quote_numeric_key(printed_str) {
-                json5_write_quoted_key(printed_str, f);
-            } else {
-                write!(f, text(printed_str));
+            ExpressionKind::NumericLiteral(lit) => {
+                let printed_str = normalized_numeric_key(lit, f);
+                if force_quote && should_quote_numeric_key(printed_str) {
+                    json5_write_quoted_key(printed_str, f);
+                } else {
+                    write!(f, text(printed_str));
+                }
             }
-        }
-        _ => write!(f, FormatInvalidJson(key.span())),
+            _ => write!(f, FormatInvalidJson(key.span())),
+        },
+        PropertyKey::PrivateIdentifier(_) => write!(f, FormatInvalidJson(key.span())),
     }
 }
 
@@ -250,11 +257,11 @@ fn json5_consistent_force_quote(object: &ObjectExpression<'_>, f: &JsonFormatter
         return false;
     }
     object.properties.iter().any(|property| {
-        matches!(
-            property,
-            ObjectPropertyKind::ObjectProperty(prop)
-                if matches!(&prop.key, PropertyKey::StringLiteral(lit) if json5_unquoted_key(lit).is_none())
-        )
+        let ObjectPropertyKind::ObjectProperty(prop) = property else { return false };
+        prop.key
+            .as_expression()
+            .and_then(Expression::as_string_literal)
+            .is_some_and(|lit| json5_unquoted_key(lit).is_none())
     })
 }
 

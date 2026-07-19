@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -163,7 +163,7 @@ fn get_define_property_call<'a>(
 fn is_define_property_call(call_expr: &CallExpression) -> bool {
     let callee = call_expr.callee.without_parentheses();
 
-    let member_expression = if let Expression::ChainExpression(chain_expr) = callee {
+    let member_expression = if let ExpressionKind::ChainExpression(chain_expr) = callee.kind() {
         chain_expr.expression.as_member_expression()
     } else {
         callee.as_member_expression()

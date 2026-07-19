@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, Expression, ObjectExpression, ObjectPropertyKind,
-        TemplateLiteral,
+        ArrayExpression, ArrayExpressionElement, Expression, ExpressionKind, ExpressionTag,
+        ObjectExpression, ObjectPropertyKind, TemplateLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -80,8 +80,8 @@ impl Rule for RequirePropTypeConstructor {
                     return;
                 }
                 let Some(props_prop) = find_property(obj, "props") else { return };
-                let Expression::ObjectExpression(props_obj) =
-                    props_prop.value.get_inner_expression()
+                let ExpressionKind::ObjectExpression(props_obj) =
+                    props_prop.value.get_inner_expression().kind()
                 else {
                     return;
                 };
@@ -98,7 +98,8 @@ impl Rule for RequirePropTypeConstructor {
                 let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) else {
                     return;
                 };
-                let Expression::ObjectExpression(props_obj) = arg.get_inner_expression() else {
+                let ExpressionKind::ObjectExpression(props_obj) = arg.get_inner_expression().kind()
+                else {
                     return;
                 };
                 verify_props(props_obj, ctx);
@@ -118,12 +119,14 @@ fn verify_props<'a>(props_obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         let Some(prop_name) = prop.key.static_name() else { continue };
         let value = prop.value.get_inner_expression();
 
-        match value {
-            Expression::ArrayExpression(arr) => check_array_elements(arr, prop_name.as_ref(), ctx),
-            Expression::ObjectExpression(obj) => {
+        match value.kind() {
+            ExpressionKind::ArrayExpression(arr) => {
+                check_array_elements(arr, prop_name.as_ref(), ctx);
+            }
+            ExpressionKind::ObjectExpression(obj) => {
                 let Some(type_prop) = find_property(obj, "type") else { continue };
                 let type_value = type_prop.value.get_inner_expression();
-                if let Expression::ArrayExpression(arr) = type_value {
+                if let ExpressionKind::ArrayExpression(arr) = type_value.kind() {
                     check_array_elements(arr, prop_name.as_ref(), ctx);
                 } else {
                     check_and_report(type_value, prop_name.as_ref(), ctx);
@@ -163,25 +166,25 @@ fn check_and_report<'a>(expr: &Expression<'a>, prop_name: &str, ctx: &LintContex
 
 fn is_forbidden_type(expr: &Expression) -> bool {
     matches!(
-        expr,
-        Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::StringLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::BinaryExpression(_)
-            | Expression::UpdateExpression(_)
+        expr.tag(),
+        ExpressionTag::BooleanLiteral
+            | ExpressionTag::NumericLiteral
+            | ExpressionTag::StringLiteral
+            | ExpressionTag::BigIntLiteral
+            | ExpressionTag::RegExpLiteral
+            | ExpressionTag::TemplateLiteral
+            | ExpressionTag::BinaryExpression
+            | ExpressionTag::UpdateExpression
     )
 }
 
 fn literal_identifier_replacement(expr: &Expression) -> Option<String> {
-    match expr {
-        Expression::StringLiteral(lit) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => {
             let value = lit.value.as_str();
             is_identifier_name(value).then(|| value.to_string())
         }
-        Expression::TemplateLiteral(tpl) => single_quasi_identifier(tpl),
+        ExpressionKind::TemplateLiteral(tpl) => single_quasi_identifier(tpl),
         _ => None,
     }
 }

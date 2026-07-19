@@ -3,7 +3,7 @@ use phf::{Set, phf_set};
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
+        CallExpression, ExportDefaultDeclarationKind, ExpressionKind, IdentifierReference,
         ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
@@ -84,8 +84,10 @@ pub fn has_default_exports_property(others: &Vec<&ContextSubHost<'_>>, check_nam
                 continue;
             };
 
-            let ExportDefaultDeclarationKind::ObjectExpression(export_obj) = &export.declaration
-            else {
+            let ExportDefaultDeclarationKind::Expression(export_expr) = &export.declaration else {
+                continue;
+            };
+            let ExpressionKind::ObjectExpression(export_obj) = export_expr.kind() else {
                 continue;
             };
 
@@ -147,9 +149,9 @@ pub fn check_define_macro_call_expression(
         return Some(DefineMacroProblem::DefineInBoth);
     }
 
-    match expression {
-        Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => None,
-        Expression::Identifier(identifier) => {
+    match expression.kind() {
+        ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_) => None,
+        ExpressionKind::Identifier(identifier) => {
             if !is_non_local_reference(identifier, ctx) {
                 return Some(DefineMacroProblem::ReferencingLocally);
             }
@@ -322,7 +324,7 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
         return false;
     };
 
-    if let Expression::Identifier(obj) = member_expr.object().get_inner_expression()
+    if let ExpressionKind::Identifier(obj) = member_expr.object().get_inner_expression().kind()
         && obj.name == "Vue"
     {
         return matches!(prop_name, "component" | "mixin" | "extend");
@@ -533,7 +535,7 @@ pub fn get_computed_getter_context(
 /// `'@vue/composition-api'`, or `'#imports'` (Nuxt). Matches by symbol id so
 /// aliases (`import { computed as c } from 'vue'`) are also recognized.
 pub fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
-    let Expression::Identifier(ident) = call.callee.get_inner_expression() else {
+    let ExpressionKind::Identifier(ident) = call.callee.get_inner_expression().kind() else {
         return false;
     };
     let scoping = ctx.scoping();

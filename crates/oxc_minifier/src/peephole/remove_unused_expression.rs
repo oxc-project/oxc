@@ -23,25 +23,25 @@ impl<'a> PeepholeOptimizations {
         // Routed through `expr_has_specialized_unused_handler` so the
         // predicate cannot drift from the dispatch (see its doc).
         if Self::expr_has_specialized_unused_handler(e) {
-            match e {
-                Expression::ArrayExpression(_) => Self::remove_unused_array_expr(e, ctx),
-                Expression::AssignmentExpression(_) => Self::remove_unused_assignment_expr(e, ctx),
-                Expression::BinaryExpression(_) => Self::remove_unused_binary_expr(e, ctx),
-                Expression::CallExpression(_) => Self::remove_unused_call_expr(e, ctx),
-                Expression::ClassExpression(_) => Self::remove_unused_class_expr(e, ctx),
-                Expression::ConditionalExpression(_) => {
+            match e.tag() {
+                ExpressionTag::ArrayExpression => Self::remove_unused_array_expr(e, ctx),
+                ExpressionTag::AssignmentExpression => Self::remove_unused_assignment_expr(e, ctx),
+                ExpressionTag::BinaryExpression => Self::remove_unused_binary_expr(e, ctx),
+                ExpressionTag::CallExpression => Self::remove_unused_call_expr(e, ctx),
+                ExpressionTag::ClassExpression => Self::remove_unused_class_expr(e, ctx),
+                ExpressionTag::ConditionalExpression => {
                     Self::remove_unused_conditional_expr(e, ctx)
                 }
-                Expression::LogicalExpression(_) => Self::remove_unused_logical_expr(e, ctx),
-                Expression::NewExpression(_) => Self::remove_unused_new_expr(e, ctx),
-                Expression::ObjectExpression(_) => Self::remove_unused_object_expr(e, ctx),
-                Expression::SequenceExpression(_) => Self::remove_unused_sequence_expr(e, ctx),
-                Expression::TemplateLiteral(_) => Self::remove_unused_template_literal(e, ctx),
-                Expression::UnaryExpression(_) => Self::remove_unused_unary_expr(e, ctx),
+                ExpressionTag::LogicalExpression => Self::remove_unused_logical_expr(e, ctx),
+                ExpressionTag::NewExpression => Self::remove_unused_new_expr(e, ctx),
+                ExpressionTag::ObjectExpression => Self::remove_unused_object_expr(e, ctx),
+                ExpressionTag::SequenceExpression => Self::remove_unused_sequence_expr(e, ctx),
+                ExpressionTag::TemplateLiteral => Self::remove_unused_template_literal(e, ctx),
+                ExpressionTag::UnaryExpression => Self::remove_unused_unary_expr(e, ctx),
                 // In a derived class constructor, accessing `this` before `super()` throws
                 // a `ReferenceError`, so we must keep it. In all other positions (including
                 // non-derived constructors) `this` is always initialized and can be dropped.
-                Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
+                ExpressionTag::ThisExpression => !Self::this_is_inside_derived_constructor(ctx),
                 _ => unreachable!(
                     "expr_has_specialized_unused_handler is out of sync with this dispatch"
                 ),
@@ -75,7 +75,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::UnaryExpression(unary_expr) = e else { return false };
+        let Some(unary_expr) = e.as_unary_expression_mut() else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
                 let new_expr = unary_expr.argument.take_in(ctx);
@@ -96,7 +96,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_sequence_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::SequenceExpression(sequence_expr) = e else { return false };
+        let Some(sequence_expr) = e.as_sequence_expression_mut() else { return false };
         sequence_expr.expressions.retain_mut(|e| {
             if Self::remove_unused_expression(e, ctx) {
                 ctx.drop_expression(e);
@@ -117,7 +117,7 @@ impl<'a> PeepholeOptimizations {
         // `treeshake.property_write_side_effects` (e.g. rolldown / vite)
         // reach the `!may_have_side_effects` branch below and silently drop
         // the hint.
-        if let Expression::LogicalExpression(logical_expr) = e
+        if let Some(logical_expr) = e.as_logical_expression()
             && is_cjs_module_exports_hint(&logical_expr.right)
         {
             return false;
@@ -125,7 +125,7 @@ impl<'a> PeepholeOptimizations {
         if !e.may_have_side_effects(ctx) {
             return true;
         }
-        let Expression::LogicalExpression(logical_expr) = e else { return false };
+        let Some(logical_expr) = e.as_logical_expression_mut() else { return false };
         if !logical_expr.operator.is_coalesce() {
             Self::minimize_expression_in_boolean_context(&mut logical_expr.left, ctx);
         }
@@ -146,8 +146,8 @@ impl<'a> PeepholeOptimizations {
                 right: logical_right,
                 operator: logical_op,
                 ..
-            } = logical_expr.as_mut();
-            if let Expression::BinaryExpression(binary_expr) = logical_left {
+            } = logical_expr;
+            if let Some(binary_expr) = Expression::as_binary_expression_mut(logical_left) {
                 match (logical_op, binary_expr.operator) {
                     // "a != null && a.b()" => "a?.b()"
                     // "a == null || a.b()" => "a?.b()"
@@ -155,10 +155,10 @@ impl<'a> PeepholeOptimizations {
                     | (LogicalOperator::Or, BinaryOperator::Equality)
                         if ctx.supports_feature(ESFeature::ES2020OptionalChaining) =>
                     {
-                        let name_and_id = if let Expression::Identifier(id) = &binary_expr.left {
+                        let name_and_id = if let Some(id) = binary_expr.left.as_identifier() {
                             (!ctx.is_global_reference(id) && binary_expr.right.is_null())
                                 .then_some((id.name, &mut binary_expr.left))
-                        } else if let Expression::Identifier(id) = &binary_expr.right {
+                        } else if let Some(id) = binary_expr.right.as_identifier() {
                             (!ctx.is_global_reference(id) && binary_expr.left.is_null())
                                 .then_some((id.name, &mut binary_expr.right))
                         } else {
@@ -194,8 +194,8 @@ impl<'a> PeepholeOptimizations {
                         };
                         if let Some(new_left_hand_expr) = new_left_hand_expr {
                             if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
-                                    && let Expression::AssignmentExpression(assignment_expr) =
-                                        logical_right
+                                    && let Some(assignment_expr) =
+                                        Expression::as_assignment_expression_mut(logical_right)
                                     && assignment_expr.operator == AssignmentOperator::Assign
                                     && Self::has_no_side_effect_for_evaluation_same_target(
                                         &assignment_expr.left,
@@ -237,7 +237,7 @@ impl<'a> PeepholeOptimizations {
 
     // `([1,2,3, foo()])` -> `foo()`
     fn remove_unused_array_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::ArrayExpression(array_expr) = e else {
+        let Some(array_expr) = e.as_array_expression_mut() else {
             return false;
         };
         if array_expr.elements.is_empty() {
@@ -264,8 +264,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.drop_expression(&spread.argument);
                 false
             }
-            match_expression!(ArrayExpressionElement) => {
-                let el_expr = el.to_expression_mut();
+            ArrayExpressionElement::Expression(el_expr) => {
                 if Self::remove_unused_expression(el_expr, ctx) {
                     ctx.drop_expression(el_expr);
                     false
@@ -312,7 +311,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_new_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::NewExpression(new_expr) = e else { return false };
+        let Some(new_expr) = e.as_new_expression_mut() else { return false };
         if (new_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&new_expr.callee) {
             let mut exprs =
                 Self::fold_arguments_into_needed_expressions(&mut new_expr.arguments, ctx);
@@ -332,7 +331,7 @@ impl<'a> PeepholeOptimizations {
 
     // "`${1}2${foo()}3`" -> "`${foo()}`"
     fn remove_unused_template_literal(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::TemplateLiteral(temp_lit) = e else { return false };
+        let Some(temp_lit) = e.as_template_literal_mut() else { return false };
         if temp_lit.expressions.is_empty() {
             return true;
         }
@@ -425,7 +424,7 @@ impl<'a> PeepholeOptimizations {
 
     // `({ 1: 1, [foo()]: bar() })` -> `foo(), bar()`
     fn remove_unused_object_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::ObjectExpression(object_expr) = e else {
+        let Some(object_expr) = e.as_object_expression_mut() else {
             return false;
         };
         if object_expr.properties.is_empty() {
@@ -464,8 +463,7 @@ impl<'a> PeepholeOptimizations {
                     // But we can ignore that by using the assumption.
                     match key {
                         PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
-                        match_expression!(PropertyKey) => {
-                            let mut prop_key = key.into_expression();
+                        PropertyKey::Expression(mut prop_key) => {
                             if Self::remove_unused_expression(&mut prop_key, ctx) {
                                 // Mark refs in the dropped key as dead so the per-pass
                                 // scoping refresh removes them; otherwise refs inside
@@ -515,7 +513,7 @@ impl<'a> PeepholeOptimizations {
         if !e.may_have_side_effects(ctx) {
             return true;
         }
-        let Expression::ConditionalExpression(conditional_expr) = e else {
+        let Some(conditional_expr) = e.as_conditional_expression_mut() else {
             return false;
         };
 
@@ -563,7 +561,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_binary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::BinaryExpression(binary_expr) = e else {
+        let Some(binary_expr) = Expression::as_binary_expression_mut(e) else {
             return false;
         };
 
@@ -603,7 +601,7 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::Addition => {
                 Self::fold_string_addition_chain(e, ctx);
-                matches!(e, Expression::StringLiteral(_))
+                e.is_string_literal()
             }
             _ => !e.may_have_side_effects(ctx),
         }
@@ -611,7 +609,7 @@ impl<'a> PeepholeOptimizations {
 
     /// returns whether the passed expression is a string
     fn fold_string_addition_chain(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::BinaryExpression(binary_expr) = e else {
+        let Some(binary_expr) = Expression::as_binary_expression_mut(e) else {
             return e.to_primitive(ctx).is_string() == Some(true);
         };
         if binary_expr.operator != BinaryOperator::Addition {
@@ -654,12 +652,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::CallExpression(call_expr) = e else { return false };
+        let Some(call_expr) = Expression::as_call_expression_mut(e) else { return false };
 
         let is_pure = {
             (call_expr.pure && ctx.annotations())
                 || ctx.manual_pure_functions(&call_expr.callee)
-                || (if let Expression::Identifier(id) = &call_expr.callee
+                || (if let Some(id) = call_expr.callee.as_identifier()
                     && let Some(symbol_id) =
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
@@ -701,7 +699,7 @@ impl<'a> PeepholeOptimizations {
         // Check the cheap DCE-preservation case first: in DCE-only mode an IIFE
         // call is always kept, so its (potentially deep) body walk is skipped.
         if ctx.state.dce
-            && matches!(e, Expression::CallExpression(call) if call.callee.is_function())
+            && matches!(e.kind(), ExpressionKind::CallExpression(call) if call.callee.is_function())
         {
             return true;
         }
@@ -724,7 +722,7 @@ impl<'a> PeepholeOptimizations {
                     [ArrayExpressionElement::SpreadElement(e)],
                     ctx,
                 ),
-                match_expression!(Argument) => arg.into_expression(),
+                Argument::Expression(expr) => expr,
             };
             if Self::remove_unused_expression(&mut expr, ctx) {
                 ctx.drop_expression(&expr);
@@ -739,7 +737,7 @@ impl<'a> PeepholeOptimizations {
         e: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        let Expression::AssignmentExpression(assign_expr) = &*e else { return false };
+        let Some(assign_expr) = e.as_assignment_expression() else { return false };
         if matches!(
             ctx.state.options.unused,
             CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
@@ -754,7 +752,7 @@ impl<'a> PeepholeOptimizations {
             return Self::remove_unused_member_assignment(e, ctx);
         }
         // Identifier assignments (e.g. `A = expr`).
-        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let Some(assign_expr) = Expression::as_assignment_expression_mut(e) else { unreachable!() };
         let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
             assign_expr.left.as_simple_assignment_target()
         else {
@@ -803,7 +801,7 @@ impl<'a> PeepholeOptimizations {
         if Self::is_script_root_scope(ctx) {
             return false;
         }
-        let Expression::AssignmentExpression(assign_expr) = &*e else { unreachable!() };
+        let Some(assign_expr) = e.as_assignment_expression() else { unreachable!() };
 
         let Some(symbol_id) = Self::resolve_member_assign_object_symbol(assign_expr, ctx) else {
             return false;
@@ -823,7 +821,7 @@ impl<'a> PeepholeOptimizations {
         if ctx.current_scope_flags().contains_direct_eval() {
             return false;
         }
-        let Expression::AssignmentExpression(assign_expr) = &*e else { unreachable!() };
+        let Some(assign_expr) = e.as_assignment_expression() else { unreachable!() };
         // Compound / logical assignments READ the property (getters, coercion).
         if assign_expr.operator != AssignmentOperator::Assign {
             return false;
@@ -856,7 +854,7 @@ impl<'a> PeepholeOptimizations {
         // live; `replace_expression`'s DropDiff walk then marks only the LHS
         // refs dead). Safe in value positions too — a plain `=` assignment's
         // value IS the RHS value.
-        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let Some(assign_expr) = Expression::as_assignment_expression_mut(e) else { unreachable!() };
         let new_expr = assign_expr.right.take_in(ctx);
         ctx.replace_expression(e, new_expr);
         false
@@ -873,13 +871,12 @@ impl<'a> PeepholeOptimizations {
     /// declares `#x`, which a fresh object / function / class / array literal
     /// never is — so the write always throws and must be kept.
     fn member_write_shape_is_safe(target: &AssignmentTarget<'a>) -> bool {
-        match target {
-            AssignmentTarget::StaticMemberExpression(e) => {
-                matches!(e.object, Expression::Identifier(_)) && e.property.name != "__proto__"
+        match target.as_member_expression().map(MemberExpression::kind) {
+            Some(MemberExpressionKind::StaticMemberExpression(e)) => {
+                e.object.is_identifier() && e.property.name != "__proto__"
             }
-            AssignmentTarget::ComputedMemberExpression(e) => {
-                matches!(e.object, Expression::Identifier(_))
-                    && Self::member_key_is_safe(&e.expression)
+            Some(MemberExpressionKind::ComputedMemberExpression(e)) => {
+                e.object.is_identifier() && Self::member_key_is_safe(&e.expression)
             }
             _ => false,
         }
@@ -890,12 +887,11 @@ impl<'a> PeepholeOptimizations {
     /// `None` for a numeric computed key (`o[0]`), whose `ToString` can never
     /// equal one of the denied names. Used by the kind-aware key denylist.
     fn member_write_key_name<'k>(target: &'k AssignmentTarget<'a>) -> Option<&'k str> {
-        match target {
-            AssignmentTarget::StaticMemberExpression(e) => Some(e.property.name.as_str()),
-            AssignmentTarget::ComputedMemberExpression(e) => match &e.expression {
-                Expression::StringLiteral(s) => Some(s.value.as_str()),
-                _ => None,
-            },
+        match target.as_member_expression().map(MemberExpression::kind) {
+            Some(MemberExpressionKind::StaticMemberExpression(e)) => Some(e.property.name.as_str()),
+            Some(MemberExpressionKind::ComputedMemberExpression(e)) => {
+                e.expression.as_string_literal().map(|s| s.value.as_str())
+            }
             _ => None,
         }
     }
@@ -929,9 +925,9 @@ impl<'a> PeepholeOptimizations {
     /// a string literal other than `"__proto__"`, or a number (whose string
     /// coercion can never be `"__proto__"`).
     pub(crate) fn member_key_is_safe(key: &Expression<'a>) -> bool {
-        match key {
-            Expression::StringLiteral(s) => s.value != "__proto__",
-            Expression::NumericLiteral(_) => true,
+        match key.kind() {
+            ExpressionKind::StringLiteral(s) => s.value != "__proto__",
+            ExpressionKind::NumericLiteral(_) => true,
             _ => false,
         }
     }
@@ -945,12 +941,10 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<SymbolId> {
         // Only handle single-level member expressions (A.foo, not a.b.c).
         let object = match &assign_expr.left {
-            AssignmentTarget::StaticMemberExpression(e) => &e.object,
-            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
-            AssignmentTarget::PrivateFieldExpression(e) => &e.object,
+            AssignmentTarget::MemberExpression(e) => e.object(),
             _ => return None,
         };
-        let Expression::Identifier(ident) = object else { return None };
+        let Some(ident) = object.as_identifier() else { return None };
         ctx.scoping().get_reference(ident.reference_id()).symbol_id()
     }
 
@@ -993,7 +987,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_class_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::ClassExpression(c) = e else { return false };
+        let Some(c) = Expression::as_class_expression_mut(e) else { return false };
         if let Some(exprs) = Self::remove_unused_class(c, ctx) {
             if exprs.is_empty() {
                 return true;
@@ -1087,14 +1081,14 @@ impl<'a> PeepholeOptimizations {
             // classification does not change when a later fold surfaces
             // the inner expression.
             let mut e = super_class.get_inner_expression();
-            while let Expression::SequenceExpression(seq) = e {
+            while let Some(seq) = e.as_sequence_expression() {
                 let Some(last) = seq.expressions.last() else { break };
                 e = last.get_inner_expression();
             }
-            match e {
+            match e.kind() {
                 // TypeError `class C extends (() => {}) {}`.
-                Expression::ArrowFunctionExpression(_) => return ClassRemovability::Keep,
-                Expression::Identifier(ident)
+                ExpressionKind::ArrowFunctionExpression(_) => return ClassRemovability::Keep,
+                ExpressionKind::Identifier(ident)
                     if Self::heritage_may_be_uninitialized(ident, scoping) =>
                 {
                     return ClassRemovability::Keep;
@@ -1177,20 +1171,20 @@ impl<'a> PeepholeOptimizations {
     /// dispatch arm hits the `unreachable!`.
     pub(crate) fn expr_has_specialized_unused_handler(e: &Expression<'a>) -> bool {
         matches!(
-            e,
-            Expression::ArrayExpression(_)
-                | Expression::AssignmentExpression(_)
-                | Expression::BinaryExpression(_)
-                | Expression::CallExpression(_)
-                | Expression::ClassExpression(_)
-                | Expression::ConditionalExpression(_)
-                | Expression::LogicalExpression(_)
-                | Expression::NewExpression(_)
-                | Expression::ObjectExpression(_)
-                | Expression::SequenceExpression(_)
-                | Expression::TemplateLiteral(_)
-                | Expression::UnaryExpression(_)
-                | Expression::ThisExpression(_)
+            e.tag(),
+            ExpressionTag::ArrayExpression
+                | ExpressionTag::AssignmentExpression
+                | ExpressionTag::BinaryExpression
+                | ExpressionTag::CallExpression
+                | ExpressionTag::ClassExpression
+                | ExpressionTag::ConditionalExpression
+                | ExpressionTag::LogicalExpression
+                | ExpressionTag::NewExpression
+                | ExpressionTag::ObjectExpression
+                | ExpressionTag::SequenceExpression
+                | ExpressionTag::TemplateLiteral
+                | ExpressionTag::UnaryExpression
+                | ExpressionTag::ThisExpression
         )
     }
 }

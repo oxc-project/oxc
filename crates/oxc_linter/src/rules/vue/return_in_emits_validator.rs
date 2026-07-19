@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement, Statement},
+    ast::{
+        ArrowFunctionExpression, Expression, ExpressionKind, Function, ReturnStatement, Statement,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
@@ -218,13 +220,13 @@ impl<'a> VisitJs<'a> for ReturnVisitor {
 }
 
 fn is_falsy(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::BooleanLiteral(b) => !b.value,
-        Expression::NumericLiteral(n) => n.value == 0.0,
-        Expression::NullLiteral(_) => true,
-        Expression::StringLiteral(s) => s.value.is_empty(),
-        Expression::BigIntLiteral(big) => big.is_zero(),
-        Expression::Identifier(ident) => matches!(ident.name.as_str(), "undefined" | "NaN"),
+    match expr.kind() {
+        ExpressionKind::BooleanLiteral(b) => !b.value,
+        ExpressionKind::NumericLiteral(n) => n.value == 0.0,
+        ExpressionKind::NullLiteral(_) => true,
+        ExpressionKind::StringLiteral(s) => s.value.is_empty(),
+        ExpressionKind::BigIntLiteral(big) => big.is_zero(),
+        ExpressionKind::Identifier(ident) => matches!(ident.name.as_str(), "undefined" | "NaN"),
         _ => false,
     }
 }

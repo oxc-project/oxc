@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{CallExpression, Expression, ExpressionKind},
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
@@ -108,7 +108,9 @@ impl Rule for PreferDomNodeDataset {
             _ => return,
         }
 
-        let Argument::StringLiteral(string_lit) = &call_expr.arguments[0] else {
+        let Some(string_lit) =
+            call_expr.arguments[0].as_expression().and_then(|e| e.as_string_literal())
+        else {
             return;
         };
 
@@ -251,7 +253,7 @@ fn call_uses_optional_chain(call_expr: &CallExpression) -> bool {
 fn expression_uses_optional_chain(expr: &Expression) -> bool {
     let expr = expr.get_inner_expression();
 
-    if matches!(expr, Expression::ChainExpression(_)) {
+    if expr.is_chain_expression() {
         return true;
     }
 
@@ -259,7 +261,7 @@ fn expression_uses_optional_chain(expr: &Expression) -> bool {
         return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
     }
 
-    if let Expression::CallExpression(call_expr) = expr {
+    if let ExpressionKind::CallExpression(call_expr) = expr.kind() {
         return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
     }
 

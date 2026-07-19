@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression},
+    ast::{BinaryExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -91,7 +91,7 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
 }
 
 fn bad_comparison_sequence(expr: &BinaryExpression) -> Option<(Span, Span)> {
-    let Expression::BinaryExpression(left_expr) = &expr.left else {
+    let ExpressionKind::BinaryExpression(left_expr) = expr.left.kind() else {
         return None;
     };
 

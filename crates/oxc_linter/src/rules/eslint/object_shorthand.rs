@@ -5,8 +5,8 @@ use schemars::JsonSchema;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, PropertyKind,
+        ArrowFunctionExpression, ExpressionKind, ExpressionTag, Function, ObjectExpression,
+        ObjectProperty, ObjectPropertyKind, PropertyKind,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -327,7 +327,8 @@ fn make_function_long_form<'a>(
         };
         let key_text = ctx.source_range(key_text_range);
 
-        let Expression::FunctionExpression(func) = &property.value.without_parentheses() else {
+        let ExpressionKind::FunctionExpression(func) = property.value.without_parentheses().kind()
+        else {
             return fixer.noop();
         };
         let function_header = match (func.r#async, func.generator) {
@@ -366,12 +367,13 @@ fn check_longform_methods<'a>(
         return;
     }
 
-    if let Expression::FunctionExpression(func) = &property.value.without_parentheses() {
+    if let ExpressionKind::FunctionExpression(func) = property.value.without_parentheses().kind() {
         make_function_shorthand(ctx, property, Either::Left(func));
     }
 
     if rule.avoid_explicit_return_arrows
-        && let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
+        && let ExpressionKind::ArrowFunctionExpression(func) =
+            property.value.without_parentheses().kind()
         && !arrow_uses_lexical_identifiers(ctx, func)
         && !func.expression
     {
@@ -396,7 +398,8 @@ fn check_longform_properties<'a>(
         return;
     }
 
-    let Expression::Identifier(value_identifier) = &property.value.without_parentheses() else {
+    let ExpressionKind::Identifier(value_identifier) = property.value.without_parentheses().kind()
+    else {
         return;
     };
 
@@ -561,21 +564,21 @@ fn is_constructor<N: AsRef<str>>(name: N) -> bool {
 
 fn is_property_value_function(property: &ObjectProperty) -> bool {
     matches!(
-        property.value,
-        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+        property.value.tag(),
+        ExpressionTag::FunctionExpression | ExpressionTag::ArrowFunctionExpression
     )
 }
 
 fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
-    match &property.value.without_parentheses() {
-        Expression::FunctionExpression(func) => func.id.is_none(),
-        Expression::ArrowFunctionExpression(_) => true,
+    match property.value.without_parentheses().kind() {
+        ExpressionKind::FunctionExpression(func) => func.id.is_none(),
+        ExpressionKind::ArrowFunctionExpression(_) => true,
         _ => false,
     }
 }
 
 fn is_property_key_string_literal(property: &ObjectProperty) -> bool {
-    matches!(property.key.as_expression(), Some(Expression::StringLiteral(_)))
+    property.key.as_expression().is_some_and(oxc_ast::ast::Expression::is_string_literal)
 }
 
 fn is_shorthand_property(property: &ObjectProperty) -> bool {
@@ -583,9 +586,9 @@ fn is_shorthand_property(property: &ObjectProperty) -> bool {
 }
 
 fn is_redundant_property(property: &ObjectProperty) -> bool {
-    match &property.value {
-        Expression::FunctionExpression(func) => func.id.is_none(),
-        Expression::Identifier(value_identifier) => {
+    match property.value.kind() {
+        ExpressionKind::FunctionExpression(func) => func.id.is_none(),
+        ExpressionKind::Identifier(value_identifier) => {
             if let Some(property_name) = property.key.name() {
                 property_name == value_identifier.name
             } else {

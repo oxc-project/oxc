@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -106,8 +109,9 @@ enum ParseTarget {
 }
 
 fn parse_target(callee: &Expression, ctx: &LintContext) -> Option<ParseTarget> {
-    match callee.without_parentheses() {
-        Expression::Identifier(ident) => {
+    let callee = callee.without_parentheses();
+    match callee.kind() {
+        ExpressionKind::Identifier(ident) => {
             if !ctx.is_reference_to_global_variable(ident) {
                 return None;
             }
@@ -117,9 +121,9 @@ fn parse_target(callee: &Expression, ctx: &LintContext) -> Option<ParseTarget> {
                 _ => None,
             }
         }
-        member_expr if member_expr.is_member_expression() => {
-            let member_expr = member_expr.to_member_expression();
-            let Expression::Identifier(object) = member_expr.object() else {
+        _ if callee.is_member_expression() => {
+            let member_expr = callee.to_member_expression();
+            let ExpressionKind::Identifier(object) = member_expr.object().kind() else {
                 return None;
             };
             if object.name != "Number" {

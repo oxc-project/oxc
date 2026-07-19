@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{ExpressionKind, ExpressionTag},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -56,13 +59,19 @@ impl Rule for NoDynamicDelete {
             return;
         }
 
-        let Expression::ComputedMemberExpression(computed_expr) = &expr.argument else { return };
+        let ExpressionKind::ComputedMemberExpression(computed_expr) = expr.argument.kind() else {
+            return;
+        };
         let inner_expression = computed_expr.expression.get_inner_expression();
-        if inner_expression.is_string_literal() || inner_expression.is_number_literal() {
+        if matches!(
+            inner_expression.tag(),
+            ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral
+        ) || inner_expression.is_number_literal()
+        {
             return;
         }
 
-        if let Expression::UnaryExpression(unary_expr) = &inner_expression
+        if let ExpressionKind::UnaryExpression(unary_expr) = inner_expression.kind()
             && unary_expr.operator == UnaryOperator::UnaryNegation
             && unary_expr.argument.is_number_literal()
         {

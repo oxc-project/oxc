@@ -1,7 +1,7 @@
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FunctionBody, Statement},
+    ast::{Argument, ExpressionKind, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -244,16 +244,17 @@ impl PreferEndingWithAnExpect {
             }
         };
 
-        let call_expression = match &statement_expression {
-            Expression::AwaitExpression(awaited) => {
-                let Expression::CallExpression(ref call_expression_awaited) = awaited.argument
+        let call_expression = match statement_expression.kind() {
+            ExpressionKind::AwaitExpression(awaited) => {
+                let ExpressionKind::CallExpression(call_expression_awaited) =
+                    awaited.argument.kind()
                 else {
                     return false;
                 };
 
                 call_expression_awaited
             }
-            Expression::CallExpression(last_call_expression) => last_call_expression,
+            ExpressionKind::CallExpression(last_call_expression) => last_call_expression,
             _ => {
                 return false;
             }
@@ -275,9 +276,10 @@ impl PreferEndingWithAnExpect {
 }
 
 fn function_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a FunctionBody<'a>> {
-    match argument {
-        Argument::ArrowFunctionExpression(array_fn) => Some(&array_fn.body),
-        Argument::FunctionExpression(function) => function.body.as_ref().map(AsRef::as_ref),
+    let expr = argument.as_expression()?;
+    match expr.kind() {
+        ExpressionKind::ArrowFunctionExpression(array_fn) => Some(&array_fn.body),
+        ExpressionKind::FunctionExpression(function) => function.body.as_ref().map(AsRef::as_ref),
         _ => None,
     }
 }

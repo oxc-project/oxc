@@ -234,9 +234,7 @@ impl PreferConst {
     /// Check if an assignment target contains any member expressions (recursively)
     fn has_member_expression_target(target: &AssignmentTargetMaybeDefault) -> bool {
         match target {
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(_)
-            | AssignmentTargetMaybeDefault::StaticMemberExpression(_)
-            | AssignmentTargetMaybeDefault::PrivateFieldExpression(_) => true,
+            AssignmentTargetMaybeDefault::MemberExpression(_) => true,
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
                 Self::has_member_expression_in_assignment_target(&t.binding)
             }
@@ -259,9 +257,7 @@ impl PreferConst {
     /// Check if an assignment target contains any member expressions (for non-default targets)
     fn has_member_expression_in_assignment_target(target: &AssignmentTarget) -> bool {
         match target {
-            AssignmentTarget::ComputedMemberExpression(_)
-            | AssignmentTarget::StaticMemberExpression(_)
-            | AssignmentTarget::PrivateFieldExpression(_) => true,
+            AssignmentTarget::MemberExpression(_) => true,
             AssignmentTarget::ArrayAssignmentTarget(array) => array
                 .elements
                 .iter()

@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ObjectExpression, ObjectPropertyKind, Statement, TSSignature,
+        CallExpression, Expression, ExpressionKind, ObjectExpression, ObjectPropertyKind,
+        Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -139,10 +140,12 @@ impl Rule for NoReservedKeys {
                     return;
                 }
 
-                match prop.value.get_inner_expression() {
-                    Expression::ArrayExpression(arr) => {
+                match prop.value.get_inner_expression().kind() {
+                    ExpressionKind::ArrayExpression(arr) => {
                         for elem in &arr.elements {
-                            let Some(Expression::StringLiteral(lit)) = elem.as_expression() else {
+                            let Some(lit) =
+                                elem.as_expression().and_then(Expression::as_string_literal)
+                            else {
                                 continue;
                             };
                             if self.is_reserved(lit.value.as_str()) {
@@ -153,28 +156,28 @@ impl Rule for NoReservedKeys {
                             }
                         }
                     }
-                    Expression::ObjectExpression(obj) => {
+                    ExpressionKind::ObjectExpression(obj) => {
                         self.check_keys(group, obj, ctx);
                     }
-                    Expression::FunctionExpression(func) => {
+                    ExpressionKind::FunctionExpression(func) => {
                         let Some(body) = &func.body else { return };
                         for stmt in &body.statements {
                             if let Statement::ReturnStatement(ret) = stmt
                                 && let Some(arg) = &ret.argument
-                                && let Expression::ObjectExpression(obj) =
-                                    arg.get_inner_expression()
+                                && let ExpressionKind::ObjectExpression(obj) =
+                                    arg.get_inner_expression().kind()
                             {
                                 self.check_keys(group, obj, ctx);
                             }
                         }
                     }
-                    Expression::ArrowFunctionExpression(arrow) => {
+                    ExpressionKind::ArrowFunctionExpression(arrow) => {
                         if arrow.expression {
                             // `() => ({foo})` expression body
                             if let Some(Statement::ExpressionStatement(es)) =
                                 arrow.body.statements.first()
-                                && let Expression::ObjectExpression(obj) =
-                                    es.expression.get_inner_expression()
+                                && let ExpressionKind::ObjectExpression(obj) =
+                                    es.expression.get_inner_expression().kind()
                             {
                                 self.check_keys(group, obj, ctx);
                             }
@@ -183,8 +186,8 @@ impl Rule for NoReservedKeys {
                             for stmt in &arrow.body.statements {
                                 if let Statement::ReturnStatement(ret) = stmt
                                     && let Some(arg) = &ret.argument
-                                    && let Expression::ObjectExpression(obj) =
-                                        arg.get_inner_expression()
+                                    && let ExpressionKind::ObjectExpression(obj) =
+                                        arg.get_inner_expression().kind()
                                 {
                                     self.check_keys(group, obj, ctx);
                                 }
@@ -240,17 +243,18 @@ impl NoReservedKeys {
 
         // Runtime declaration: `defineProps([...])` / `defineProps({...})`.
         if let Some(arg) = call.arguments.first().and_then(|arg| arg.as_expression()) {
-            match arg.get_inner_expression() {
-                Expression::ArrayExpression(arr) => {
+            match arg.get_inner_expression().kind() {
+                ExpressionKind::ArrayExpression(arr) => {
                     for elem in &arr.elements {
-                        if let Some(Expression::StringLiteral(lit)) = elem.as_expression()
+                        if let Some(lit) =
+                            elem.as_expression().and_then(Expression::as_string_literal)
                             && self.is_reserved(lit.value.as_str())
                         {
                             ctx.diagnostic(reserved_key_diagnostic(lit.value.as_str(), lit.span));
                         }
                     }
                 }
-                Expression::ObjectExpression(obj) => {
+                ExpressionKind::ObjectExpression(obj) => {
                     for prop_kind in &obj.properties {
                         let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
                         let Some(name) = p.key.static_name() else { continue };

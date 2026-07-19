@@ -75,18 +75,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 TSEnumMemberName::String(self.alloc(literal))
             }
-            Kind::LBrack => match self.parse_computed_property_name() {
-                Expression::StringLiteral(literal) => TSEnumMemberName::ComputedString(literal),
-                Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
+            Kind::LBrack => match self.parse_computed_property_name().into_kind() {
+                ExpressionKindOwned::StringLiteral(literal) => {
+                    TSEnumMemberName::ComputedString(literal)
+                }
+                ExpressionKindOwned::TemplateLiteral(template)
+                    if template.is_no_substitution_template() =>
+                {
                     TSEnumMemberName::ComputedTemplateString(template)
                 }
-                Expression::NumericLiteral(literal) => {
+                ExpressionKindOwned::NumericLiteral(literal) => {
                     let error = diagnostics::enum_member_cannot_have_numeric_name(literal.span());
                     self.fatal_error(error)
                 }
                 expr => {
-                    let error =
-                        diagnostics::computed_property_names_not_allowed_in_enums(expr.span());
+                    let error = diagnostics::computed_property_names_not_allowed_in_enums(
+                        Expression::from_kind(expr).span(),
+                    );
                     self.fatal_error(error)
                 }
             },
@@ -279,8 +284,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
             let type_argument;
-            if let Expression::TSInstantiationExpression(expr) = extend {
-                let expr = expr.unbox();
+            if extend.is_ts_instantiation_expression() {
+                let expr = extend.into_ts_instantiation_expression().unwrap().unbox();
                 extend = expr.expression;
                 type_argument = Some(expr.type_arguments);
             } else {

@@ -246,48 +246,52 @@ impl<'a, 'v> StaticVisitor<'a, 'v> {
 impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
+        match expr.tag() {
             // `this`
-            Expression::ThisExpression(this_expr) => {
-                let span = this_expr.span;
+            ExpressionTag::ThisExpression => {
+                let span = expr.to_this_expression().span;
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
             // `new.target` is always `undefined` in class static blocks. Replace it before moving
             // the block body outside the class.
-            Expression::NewTarget(new_target) if self.this_depth == 0 => {
-                *expr = Expression::new_void_0(new_target.span, self.ctx);
+            ExpressionTag::NewTarget if self.this_depth == 0 => {
+                let span = expr.to_new_target().span;
+                *expr = Expression::new_void_0(span, self.ctx);
                 return;
             }
             // `delete this`
-            Expression::UnaryExpression(unary_expr)
+            ExpressionTag::UnaryExpression => {
+                let unary_expr = expr.to_unary_expression();
                 if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_)) =>
-            {
-                let span = unary_expr.span;
-                self.replace_delete_this_with_true(expr, span);
-                return;
+                    && unary_expr.argument.is_this_expression()
+                {
+                    let span = unary_expr.span;
+                    self.replace_delete_this_with_true(expr, span);
+                    return;
+                }
             }
             // `super.prop`
-            Expression::StaticMemberExpression(_) if self.this_depth == 0 => {
+            ExpressionTag::StaticMemberExpression if self.this_depth == 0 => {
                 self.super_converter.transform_static_member_expression(expr, self.ctx);
             }
             // `super[prop]`
-            Expression::ComputedMemberExpression(_) if self.this_depth == 0 => {
+            ExpressionTag::ComputedMemberExpression if self.this_depth == 0 => {
                 self.super_converter.transform_computed_member_expression(expr, self.ctx);
             }
             // `super.prop()`
-            Expression::CallExpression(call_expr) if self.this_depth == 0 => {
+            ExpressionTag::CallExpression if self.this_depth == 0 => {
+                let call_expr = expr.to_call_expression_mut();
                 self.super_converter
                     .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
             }
             // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
-            Expression::AssignmentExpression(_) if self.this_depth == 0 => {
+            ExpressionTag::AssignmentExpression if self.this_depth == 0 => {
                 self.super_converter
                     .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
             }
             // `super.prop++`, `--super.prop`
-            Expression::UpdateExpression(_) if self.this_depth == 0 => {
+            ExpressionTag::UpdateExpression if self.this_depth == 0 => {
                 self.super_converter
                     .transform_update_expression_for_super_assignment_target(expr, self.ctx);
             }

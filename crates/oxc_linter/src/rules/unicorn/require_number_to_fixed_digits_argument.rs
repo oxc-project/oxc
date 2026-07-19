@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -55,7 +55,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
         }
 
         if let Some(member) = expr.callee.get_member_expr() {
-            if let Expression::NewExpression(_) = member.object() {
+            if let ExpressionKind::NewExpression(_) = member.object().kind() {
                 return;
             }
 

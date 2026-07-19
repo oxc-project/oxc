@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, match_expression};
+use oxc_ast::ast::*;
 
 /// This enum tracks the arguments inside a call expressions and checks if they are
 /// simple or not.
@@ -41,7 +41,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     pub fn new(node: &'b Argument<'a>) -> Self {
         match node {
             Argument::SpreadElement(_) => Self::Spread,
-            match_expression!(Argument) => Self::from(node.to_expression()),
+            Argument::Expression(expr) => Self::from(expr),
         }
     }
 
@@ -59,22 +59,22 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
         }
 
         match self {
-            Self::Expression(expr) => match expr {
-                Expression::NullLiteral(_)
-                | Expression::BooleanLiteral(_)
-                | Expression::StringLiteral(_)
-                | Expression::NumericLiteral(_)
-                | Expression::BigIntLiteral(_)
-                | Expression::ThisExpression(_)
-                | Expression::Identifier(_)
-                | Expression::Super(_) => true,
-                Expression::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= 5,
-                Expression::TemplateLiteral(template) => {
+            Self::Expression(expr) => match expr.kind() {
+                ExpressionKind::NullLiteral(_)
+                | ExpressionKind::BooleanLiteral(_)
+                | ExpressionKind::StringLiteral(_)
+                | ExpressionKind::NumericLiteral(_)
+                | ExpressionKind::BigIntLiteral(_)
+                | ExpressionKind::ThisExpression(_)
+                | ExpressionKind::Identifier(_)
+                | ExpressionKind::Super(_) => true,
+                ExpressionKind::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= 5,
+                ExpressionKind::TemplateLiteral(template) => {
                     is_simple_template_literal(template, depth + 1)
                 }
-                Expression::ObjectExpression(object) => Self::is_simple_object(object, depth),
-                Expression::ArrayExpression(array) => Self::is_simple_array(array, depth),
-                Expression::UnaryExpression(unary_expression) => {
+                ExpressionKind::ObjectExpression(object) => Self::is_simple_object(object, depth),
+                ExpressionKind::ArrayExpression(array) => Self::is_simple_array(array, depth),
+                ExpressionKind::UnaryExpression(unary_expression) => {
                     matches!(
                         unary_expression.operator,
                         UnaryOperator::LogicalNot
@@ -83,16 +83,16 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                             | UnaryOperator::BitwiseNot
                     ) && Self::from(&unary_expression.argument).is_simple_impl(depth)
                 }
-                Expression::UpdateExpression(update) => {
+                ExpressionKind::UpdateExpression(update) => {
                     Self::Assignment(&update.argument).is_simple_impl(depth)
                 }
-                Expression::TSNonNullExpression(assertion) => {
+                ExpressionKind::TSNonNullExpression(assertion) => {
                     Self::from(&assertion.expression).is_simple_impl(depth)
                 }
-                Expression::StaticMemberExpression(static_expression) => {
+                ExpressionKind::StaticMemberExpression(static_expression) => {
                     Self::from(&static_expression.object).is_simple_impl(depth)
                 }
-                Expression::ComputedMemberExpression(computed_expression) => {
+                ExpressionKind::ComputedMemberExpression(computed_expression) => {
                     Self::from(&computed_expression.expression).is_simple_impl(depth)
                         && Self::from(&computed_expression.object).is_simple_impl(depth)
                 }
@@ -101,17 +101,17 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                 // In oxc's AST, it's a separate type.
                 // The private field name is always simple, so only check the object.
                 // https://github.com/prettier/prettier/blob/093745f0ec429d3db47c1edd823357e0ef24e226/src/language-js/utilities/index.js#L643-L648
-                Expression::PrivateFieldExpression(private_field) => {
+                ExpressionKind::PrivateFieldExpression(private_field) => {
                     Self::from(&private_field.object).is_simple_impl(depth)
                 }
-                Expression::NewExpression(expr) => {
+                ExpressionKind::NewExpression(expr) => {
                     Self::is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
-                Expression::CallExpression(expr) => {
+                ExpressionKind::CallExpression(expr) => {
                     Self::is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
-                Expression::ImportExpression(expr) => depth < 2 && expr.options.is_none(),
-                Expression::ChainExpression(chain) => {
+                ExpressionKind::ImportExpression(expr) => depth < 2 && expr.options.is_none(),
+                ExpressionKind::ChainExpression(chain) => {
                     Self::is_simple_chain_element(&chain.expression, depth)
                 }
                 _ => false,
@@ -143,9 +143,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     #[inline]
     fn is_simple_array(array: &'b ArrayExpression<'a>, depth: u8) -> bool {
         array.elements.iter().all(|element| match element {
-            match_expression!(ArrayExpressionElement) => {
-                Self::from(element.to_expression()).is_simple_impl(depth + 1)
-            }
+            ArrayExpressionElement::Expression(expr) => Self::from(expr).is_simple_impl(depth + 1),
             ArrayExpressionElement::Elision(_) => true,
             ArrayExpressionElement::SpreadElement(_) => false,
         })
@@ -171,16 +169,18 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
             ChainElement::TSNonNullExpression(assertion) => {
                 Self::from(&assertion.expression).is_simple_impl(depth)
             }
-            ChainElement::StaticMemberExpression(static_expression) => {
-                Self::from(&static_expression.object).is_simple_impl(depth)
-            }
-            ChainElement::ComputedMemberExpression(computed_expression) => {
-                Self::from(&computed_expression.expression).is_simple_impl(depth)
-                    && Self::from(&computed_expression.object).is_simple_impl(depth)
-            }
-            ChainElement::PrivateFieldExpression(private_field) => {
-                Self::from(&private_field.object).is_simple_impl(depth)
-            }
+            ChainElement::MemberExpression(member) => match member.kind() {
+                MemberExpressionKind::StaticMemberExpression(static_expression) => {
+                    Self::from(&static_expression.object).is_simple_impl(depth)
+                }
+                MemberExpressionKind::ComputedMemberExpression(computed_expression) => {
+                    Self::from(&computed_expression.expression).is_simple_impl(depth)
+                        && Self::from(&computed_expression.object).is_simple_impl(depth)
+                }
+                MemberExpressionKind::PrivateFieldExpression(private_field) => {
+                    Self::from(&private_field.object).is_simple_impl(depth)
+                }
+            },
         }
     }
 }

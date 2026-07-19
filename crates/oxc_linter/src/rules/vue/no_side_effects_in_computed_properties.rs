@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, UnaryOperator},
+    ast::{
+        CallExpression, Expression, ExpressionKind, ExpressionTag, IdentifierReference,
+        UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -103,7 +106,7 @@ impl Rule for NoSideEffectsInComputedProperties {
 
                 // Special case: `Vue.set(...)`
                 if mem.property.name == "set"
-                    && matches!(&mem.object, Expression::Identifier(ident) if ident.name == "Vue")
+                    && matches!(mem.object.kind(), ExpressionKind::Identifier(ident) if ident.name == "Vue")
                 {
                     let parent = ctx.nodes().parent_node(node.id());
                     if matches!(parent.kind(), AstKind::CallExpression(_))
@@ -136,7 +139,7 @@ impl Rule for NoSideEffectsInComputedProperties {
 ///   identifiers (including `this` aliases) are checked as setup variables with
 ///   the walk starting at the identifier — so `foo.reverse()` IS a mutation.
 fn check_mutation<'a>(node: &AstNode<'a>, object: &Expression<'a>, ctx: &LintContext<'a>) {
-    if !matches!(object, Expression::ThisExpression(_) | Expression::Identifier(_)) {
+    if !matches!(object.tag(), ExpressionTag::ThisExpression | ExpressionTag::Identifier) {
         return;
     }
 
@@ -154,7 +157,7 @@ fn check_mutation<'a>(node: &AstNode<'a>, object: &Expression<'a>, ctx: &LintCon
             ctx.diagnostic(unexpected_side_effect_in_property(mutation_span, key));
         }
         Some(ComputedContext::CompositionApi(getter_fn_span)) => {
-            let Expression::Identifier(ident) = object else { return };
+            let ExpressionKind::Identifier(ident) = object.kind() else { return };
             if !is_setup_variable(ident, getter_fn_span, ctx) {
                 return;
             }
@@ -259,10 +262,13 @@ fn is_object_assign_first_arg(call: &CallExpression<'_>, first_arg_span: Span) -
     if first_arg.span() != first_arg_span {
         return false;
     }
-    let Expression::StaticMemberExpression(callee) = call.callee.get_inner_expression() else {
+    let ExpressionKind::StaticMemberExpression(callee) = call.callee.get_inner_expression().kind()
+    else {
         return false;
     };
-    let Expression::Identifier(obj) = callee.object.get_inner_expression() else { return false };
+    let ExpressionKind::Identifier(obj) = callee.object.get_inner_expression().kind() else {
+        return false;
+    };
     obj.name == "Object" && callee.property.name == "assign"
 }
 

@@ -6,9 +6,9 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BinaryOperator, CallExpression, ChainElement,
-        ComputedMemberExpression, Expression, MemberExpression, StaticMemberExpression,
-        UnaryOperator, VariableDeclarationKind,
+        Argument, BinaryOperator, CallExpression, ChainElement, ComputedMemberExpression,
+        Expression, ExpressionKind, ExpressionTag, StaticMemberExpression, UnaryOperator,
+        VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -201,16 +201,18 @@ impl PreferAt {
         node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let call_expr = match &computed.object {
-            Expression::ChainExpression(chain) => {
+        let call_expr = match computed.object.kind() {
+            ExpressionKind::ChainExpression(chain) => {
                 if let ChainElement::CallExpression(call) = &chain.expression {
-                    call
+                    call.as_ref()
                 } else {
                     return false;
                 }
             }
-            expr => {
-                if let Expression::CallExpression(call) = expr.get_inner_expression() {
+            _ => {
+                if let ExpressionKind::CallExpression(call) =
+                    computed.object.get_inner_expression().kind()
+                {
                     call
                 } else {
                     return false;
@@ -218,8 +220,8 @@ impl PreferAt {
             }
         };
 
-        if let Some(MemberExpression::StaticMemberExpression(static_member)) =
-            call_expr.callee.get_member_expr()
+        if let Some(static_member) =
+            call_expr.callee.get_member_expr().and_then(|m| m.as_static_member_expression())
             && static_member.property.name == "slice"
         {
             return Self::check_slice_index_access(call_expr, computed, node_id, ctx);
@@ -234,8 +236,8 @@ impl PreferAt {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(MemberExpression::StaticMemberExpression(static_member)) =
-            call_expr.callee.get_member_expr()
+        let Some(static_member) =
+            call_expr.callee.get_member_expr().and_then(|m| m.as_static_member_expression())
         else {
             return;
         };
@@ -302,13 +304,14 @@ impl PreferAt {
             return;
         }
 
-        let Expression::CallExpression(slice_call) = static_member.object.get_inner_expression()
+        let ExpressionKind::CallExpression(slice_call) =
+            static_member.object.get_inner_expression().kind()
         else {
             return;
         };
 
-        let Some(MemberExpression::StaticMemberExpression(slice_static)) =
-            slice_call.callee.get_member_expr()
+        let Some(slice_static) =
+            slice_call.callee.get_member_expr().and_then(|m| m.as_static_member_expression())
         else {
             return;
         };
@@ -447,8 +450,8 @@ impl PreferAt {
             return false;
         }
 
-        let Some(MemberExpression::StaticMemberExpression(static_member)) =
-            call_expr.callee.get_member_expr()
+        let Some(static_member) =
+            call_expr.callee.get_member_expr().and_then(|m| m.as_static_member_expression())
         else {
             return false;
         };
@@ -516,25 +519,30 @@ fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             | AstKind::AssignmentTargetWithDefault(_)
             | AstKind::ArrayAssignmentTarget(_)
     ) || matches!(parent_kind, AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Delete)
-        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTarget::ComputedMemberExpression(_)))
+        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if assign_expr.left.as_member_expression().is_some_and(oxc_ast::ast::MemberExpression::is_computed))
 }
 
 fn is_positive_number(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) => num.value > 0.0,
-        Expression::UnaryExpression(unary) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(num) => num.value > 0.0,
+        ExpressionKind::UnaryExpression(unary) => {
             unary.operator == UnaryOperator::UnaryPlus
-                && matches!(unary.argument.get_inner_expression(), Expression::NumericLiteral(_))
+                && unary.argument.get_inner_expression().is_numeric_literal()
         }
         _ => false,
     }
 }
 
 fn get_positive_index(expr: &Expression) -> Option<i64> {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) if num.value >= 0.0 && num.value.fract() == 0.0 => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(num) if num.value >= 0.0 && num.value.fract() == 0.0 =>
+        {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-            if num.value <= i64::MAX as f64 { Some(num.value as i64) } else { None }
+            if num.value <= i64::MAX as f64 {
+                Some(num.value as i64)
+            } else {
+                None
+            }
         }
         _ => None,
     }
@@ -547,16 +555,16 @@ fn get_positive_index(expr: &Expression) -> Option<i64> {
 /// excluded — strings do have `.at()`.
 fn is_unsupported_at_receiver(expr: &Expression) -> bool {
     matches!(
-        expr,
-        Expression::ObjectExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::NullLiteral(_)
-            | Expression::RegExpLiteral(_)
+        expr.tag(),
+        ExpressionTag::ObjectExpression
+            | ExpressionTag::ArrowFunctionExpression
+            | ExpressionTag::FunctionExpression
+            | ExpressionTag::ClassExpression
+            | ExpressionTag::NumericLiteral
+            | ExpressionTag::BigIntLiteral
+            | ExpressionTag::BooleanLiteral
+            | ExpressionTag::NullLiteral
+            | ExpressionTag::RegExpLiteral
     )
 }
 
@@ -574,7 +582,7 @@ fn is_obviously_non_array_receiver(expr: &Expression, ctx: &LintContext) -> bool
         return true;
     }
 
-    let Expression::Identifier(ident) = inner else {
+    let ExpressionKind::Identifier(ident) = inner.kind() else {
         return false;
     };
     let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
@@ -593,25 +601,31 @@ fn is_obviously_non_array_receiver(expr: &Expression, ctx: &LintContext) -> bool
 }
 
 fn is_addition_index_expression(expr: &Expression) -> bool {
-    let Expression::BinaryExpression(binary) = expr.get_inner_expression() else { return false };
+    let ExpressionKind::BinaryExpression(binary) = expr.get_inner_expression().kind() else {
+        return false;
+    };
     binary.operator == BinaryOperator::Addition
         && (get_positive_index(&binary.left).is_some()
             || get_positive_index(&binary.right).is_some())
 }
 
 fn is_static_positive_index_expression(expr: &Expression) -> bool {
-    let Expression::BinaryExpression(binary) = expr.get_inner_expression() else { return false };
+    let ExpressionKind::BinaryExpression(binary) = expr.get_inner_expression().kind() else {
+        return false;
+    };
     binary.operator == BinaryOperator::Addition
         && get_positive_index(&binary.left).is_some()
         && get_positive_index(&binary.right).is_some()
 }
 
 fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option<i64> {
-    let value = match expr.get_inner_expression() {
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation =>
+    let value = match expr.get_inner_expression().kind() {
+        ExpressionKind::UnaryExpression(unary)
+            if unary.operator == UnaryOperator::UnaryNegation =>
         {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-            if let Expression::NumericLiteral(num) = unary.argument.get_inner_expression()
+            if let ExpressionKind::NumericLiteral(num) =
+                unary.argument.get_inner_expression().kind()
                 && num.value > 0.0
                 && num.value.fract() == 0.0
                 && num.value <= i64::MAX as f64
@@ -621,7 +635,7 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
                 return None;
             }
         }
-        Expression::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
+        ExpressionKind::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
             #[expect(clippy::collapsible_match)]
             if num.value >= i64::MIN as f64 {
@@ -647,21 +661,21 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
 }
 
 fn is_zero_index(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) => num.value.abs() < f64::EPSILON,
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(num) => num.value.abs() < f64::EPSILON,
         _ => false,
     }
 }
 
 // Extract pattern: expression.length - N
 fn extract_length_minus_pattern<'a>(expr: &'a Expression<'a>) -> Option<(&'a Expression<'a>, i64)> {
-    let binary = match expr.get_inner_expression() {
-        Expression::BinaryExpression(b) if b.operator == BinaryOperator::Subtraction => b,
+    let binary = match expr.get_inner_expression().kind() {
+        ExpressionKind::BinaryExpression(b) if b.operator == BinaryOperator::Subtraction => b,
         _ => return None,
     };
 
-    let length_member = match binary.left.get_inner_expression() {
-        Expression::StaticMemberExpression(m) if m.property.name == "length" => m,
+    let length_member = match binary.left.get_inner_expression().kind() {
+        ExpressionKind::StaticMemberExpression(m) if m.property.name == "length" => m,
         _ => return None,
     };
 
@@ -670,9 +684,9 @@ fn extract_length_minus_pattern<'a>(expr: &'a Expression<'a>) -> Option<(&'a Exp
     }
 
     // Get the numeric value for the negative index
-    let value = match binary.right.get_inner_expression() {
+    let value = match binary.right.get_inner_expression().kind() {
         #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-        Expression::NumericLiteral(num) if num.value > 0.0 && num.value <= i64::MAX as f64 => {
+        ExpressionKind::NumericLiteral(num) if num.value > 0.0 && num.value <= i64::MAX as f64 => {
             -(num.value as i64)
         }
         _ => return None,

@@ -8,8 +8,7 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
-    match_member_expression,
+    ast::{CallExpression, MemberExpression},
 };
 
 fn prefer_to_have_been_called_times_diagnostic(span: Span) -> OxcDiagnostic {
@@ -86,22 +85,17 @@ fn check_and_fix<'a>(
 
     let expect_argument = parsed_expect_call.expect_arguments.and_then(|args| args.first());
 
-    let expect_argument_mem_expr =
-        expect_argument.and_then(|arg| arg.as_expression()).and_then(|arg| match arg {
-            expr @ match_member_expression!(Expression) => Some(expr.to_member_expression()),
-            _ => None,
-        });
+    let expect_argument_mem_expr = expect_argument
+        .and_then(|arg| arg.as_expression())
+        .and_then(|arg| arg.as_member_expression());
 
     let is_expect_argument_mock_calls = expect_argument_mem_expr.is_some_and(|mem_expr| {
         let is_last_member_calls = mem_expr.static_property_name() == Some("calls");
 
-        let is_reversed_second_member_mock = match mem_expr.object() {
-            expr_inner @ match_member_expression!(Expression) => {
-                let inner_mem_expr = expr_inner.to_member_expression();
-                inner_mem_expr.static_property_name() == Some("mock")
-            }
-            _ => false,
-        };
+        let is_reversed_second_member_mock = mem_expr
+            .object()
+            .as_member_expression()
+            .is_some_and(|inner_mem_expr| inner_mem_expr.static_property_name() == Some("mock"));
 
         is_last_member_calls && is_reversed_second_member_mock
     });

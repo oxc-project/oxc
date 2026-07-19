@@ -897,326 +897,332 @@ impl<'a> AstNode<'a, Expression<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            Expression::BooleanLiteral(s) => {
+        let node = match self.inner.kind() {
+            ExpressionKind::BooleanLiteral(s) => {
                 AstNodes::BooleanLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::NullLiteral(s) => AstNodes::NullLiteral(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::NumericLiteral(s) => {
+            ExpressionKind::NullLiteral(s) => {
+                AstNodes::NullLiteral(self.allocator.alloc(AstNode {
+                    inner: s,
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            ExpressionKind::NumericLiteral(s) => {
                 AstNodes::NumericLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::BigIntLiteral(s) => {
+            ExpressionKind::BigIntLiteral(s) => {
                 AstNodes::BigIntLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::RegExpLiteral(s) => {
+            ExpressionKind::RegExpLiteral(s) => {
                 AstNodes::RegExpLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::StringLiteral(s) => {
+            ExpressionKind::StringLiteral(s) => {
                 AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::TemplateLiteral(s) => {
+            ExpressionKind::TemplateLiteral(s) => {
                 AstNodes::TemplateLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::Identifier(s) => {
+            ExpressionKind::Identifier(s) => {
                 AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::Super(s) => AstNodes::Super(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            ExpressionKind::Super(s) => AstNodes::Super(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Expression::ArrayExpression(s) => {
+            ExpressionKind::ArrayExpression(s) => {
                 AstNodes::ArrayExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ArrowFunctionExpression(s) => {
+            ExpressionKind::ArrowFunctionExpression(s) => {
                 AstNodes::ArrowFunctionExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::AssignmentExpression(s) => {
+            ExpressionKind::AssignmentExpression(s) => {
                 AstNodes::AssignmentExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::AwaitExpression(s) => {
+            ExpressionKind::AwaitExpression(s) => {
                 AstNodes::AwaitExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::BinaryExpression(s) => {
+            ExpressionKind::BinaryExpression(s) => {
                 AstNodes::BinaryExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::CallExpression(s) => {
+            ExpressionKind::CallExpression(s) => {
                 AstNodes::CallExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ChainExpression(s) => {
+            ExpressionKind::ChainExpression(s) => {
                 AstNodes::ChainExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ClassExpression(s) => AstNodes::Class(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            ExpressionKind::ClassExpression(s) => AstNodes::Class(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Expression::ConditionalExpression(s) => {
+            ExpressionKind::ConditionalExpression(s) => {
                 AstNodes::ConditionalExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::FunctionExpression(s) => {
+            ExpressionKind::FunctionExpression(s) => {
                 AstNodes::Function(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ImportExpression(s) => {
+            ExpressionKind::ImportExpression(s) => {
                 AstNodes::ImportExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::LogicalExpression(s) => {
+            ExpressionKind::LogicalExpression(s) => {
                 AstNodes::LogicalExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::NewExpression(s) => {
+            ExpressionKind::NewExpression(s) => {
                 AstNodes::NewExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ObjectExpression(s) => {
+            ExpressionKind::ObjectExpression(s) => {
                 AstNodes::ObjectExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ParenthesizedExpression(s) => {
+            ExpressionKind::ParenthesizedExpression(s) => {
                 AstNodes::ParenthesizedExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::SequenceExpression(s) => {
+            ExpressionKind::SequenceExpression(s) => {
                 AstNodes::SequenceExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::TaggedTemplateExpression(s) => {
+            ExpressionKind::TaggedTemplateExpression(s) => {
                 AstNodes::TaggedTemplateExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ThisExpression(s) => {
+            ExpressionKind::ThisExpression(s) => {
                 AstNodes::ThisExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::UnaryExpression(s) => {
+            ExpressionKind::UnaryExpression(s) => {
                 AstNodes::UnaryExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::UpdateExpression(s) => {
+            ExpressionKind::UpdateExpression(s) => {
                 AstNodes::UpdateExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::YieldExpression(s) => {
+            ExpressionKind::YieldExpression(s) => {
                 AstNodes::YieldExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::PrivateInExpression(s) => {
+            ExpressionKind::PrivateInExpression(s) => {
                 AstNodes::PrivateInExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::ImportMeta(s) => AstNodes::ImportMeta(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            ExpressionKind::ImportMeta(s) => AstNodes::ImportMeta(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Expression::NewTarget(s) => AstNodes::NewTarget(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            ExpressionKind::NewTarget(s) => AstNodes::NewTarget(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Expression::JSXElement(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            ExpressionKind::JSXElement(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Expression::JSXFragment(s) => AstNodes::JSXFragment(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::TSAsExpression(s) => {
+            ExpressionKind::JSXFragment(s) => {
+                AstNodes::JSXFragment(self.allocator.alloc(AstNode {
+                    inner: s,
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            ExpressionKind::TSAsExpression(s) => {
                 AstNodes::TSAsExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::TSSatisfiesExpression(s) => {
+            ExpressionKind::TSSatisfiesExpression(s) => {
                 AstNodes::TSSatisfiesExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::TSTypeAssertion(s) => {
+            ExpressionKind::TSTypeAssertion(s) => {
                 AstNodes::TSTypeAssertion(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::TSNonNullExpression(s) => {
+            ExpressionKind::TSNonNullExpression(s) => {
                 AstNodes::TSNonNullExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::TSInstantiationExpression(s) => {
+            ExpressionKind::TSInstantiationExpression(s) => {
                 AstNodes::TSInstantiationExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::V8IntrinsicExpression(s) => {
+            ExpressionKind::V8IntrinsicExpression(s) => {
                 AstNodes::V8IntrinsicExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_member_expression!(Expression) => {
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_member_expression(),
+                        inner: self.inner.to_member_expression(),
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -1376,11 +1382,11 @@ impl<'a> AstNode<'a, ArrayExpressionElement<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_expression!(ArrayExpressionElement) => {
+            ArrayExpressionElement::Expression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -1540,11 +1546,11 @@ impl<'a> AstNode<'a, PropertyKey<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_expression!(PropertyKey) => {
+            PropertyKey::Expression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -1692,26 +1698,26 @@ impl<'a> AstNode<'a, MemberExpression<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            MemberExpression::ComputedMemberExpression(s) => {
+        let node = match self.inner.kind() {
+            MemberExpressionKind::ComputedMemberExpression(s) => {
                 AstNodes::ComputedMemberExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            MemberExpression::StaticMemberExpression(s) => {
+            MemberExpressionKind::StaticMemberExpression(s) => {
                 AstNodes::StaticMemberExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            MemberExpression::PrivateFieldExpression(s) => {
+            MemberExpressionKind::PrivateFieldExpression(s) => {
                 AstNodes::PrivateFieldExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
@@ -2064,11 +2070,11 @@ impl<'a> AstNode<'a, Argument<'a>> {
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            it @ match_expression!(Argument) => {
+            Argument::Expression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -2442,11 +2448,11 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_member_expression!(SimpleAssignmentTarget) => {
+            SimpleAssignmentTarget::MemberExpression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_member_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -2891,11 +2897,11 @@ impl<'a> AstNode<'a, ChainElement<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_member_expression!(ChainElement) => {
+            ChainElement::MemberExpression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_member_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -3637,11 +3643,11 @@ impl<'a> AstNode<'a, ForStatementInit<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_expression!(ForStatementInit) => {
+            ForStatementInit::Expression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -6202,11 +6208,11 @@ impl<'a> AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_expression!(ExportDefaultDeclarationKind) => {
+            ExportDefaultDeclarationKind::Expression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
@@ -6894,11 +6900,11 @@ impl<'a> AstNode<'a, JSXExpression<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_expression!(JSXExpression) => {
+            JSXExpression::Expression(it) => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_expression(),
+                        inner: it,
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,

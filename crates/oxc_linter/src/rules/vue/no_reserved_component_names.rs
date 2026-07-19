@@ -3,7 +3,10 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, ObjectExpression, ObjectPropertyKind, TemplateLiteral},
+    ast::{
+        CallExpression, Expression, ExpressionKind, ObjectExpression, ObjectPropertyKind,
+        TemplateLiteral,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -125,8 +128,8 @@ impl NoReservedComponentNames {
             self.check_name_expression(name_prop.value.get_inner_expression(), ctx);
         }
         let Some(components_prop) = find_property(obj, "components") else { return };
-        let Expression::ObjectExpression(components_obj) =
-            components_prop.value.get_inner_expression()
+        let ExpressionKind::ObjectExpression(components_obj) =
+            components_prop.value.get_inner_expression().kind()
         else {
             return;
         };
@@ -139,17 +142,19 @@ impl NoReservedComponentNames {
 
     fn check_define_options<'a>(&self, call: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) else { return };
-        let Expression::ObjectExpression(obj) = arg.get_inner_expression() else { return };
+        let ExpressionKind::ObjectExpression(obj) = arg.get_inner_expression().kind() else {
+            return;
+        };
         let Some(name_prop) = find_property(obj, "name") else { return };
         self.check_name_expression(name_prop.value.get_inner_expression(), ctx);
     }
 
     fn check_name_expression<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
-        match expr {
-            Expression::StringLiteral(lit) => {
+        match expr.kind() {
+            ExpressionKind::StringLiteral(lit) => {
                 self.report_if_reserved(&lit.value, lit.span, ctx);
             }
-            Expression::TemplateLiteral(tpl) => {
+            ExpressionKind::TemplateLiteral(tpl) => {
                 if let Some(value) = single_quasi_value(tpl) {
                     self.report_if_reserved(value, tpl.span, ctx);
                 }

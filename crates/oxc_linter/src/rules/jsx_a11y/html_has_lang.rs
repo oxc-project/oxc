@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -84,17 +84,19 @@ impl Rule for HtmlHasLang {
 fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
     match get_prop_value(item) {
         Some(JSXAttributeValue::ExpressionContainer(container)) => match &container.expression {
-            JSXExpression::EmptyExpression(_)
-            | JSXExpression::NullLiteral(_)
-            | JSXExpression::BooleanLiteral(_)
-            | JSXExpression::NumericLiteral(_) => false,
-            JSXExpression::Identifier(id) => id.name != "undefined",
-            JSXExpression::StringLiteral(str) => !str.value.as_str().is_empty(),
-            JSXExpression::TemplateLiteral(t) => {
-                !t.expressions.is_empty()
-                    || t.quasis.iter().filter(|q| !q.value.raw.is_empty()).count() > 0
-            }
-            _ => true,
+            JSXExpression::EmptyExpression(_) => false,
+            JSXExpression::Expression(expr) => match expr.kind() {
+                ExpressionKind::NullLiteral(_)
+                | ExpressionKind::BooleanLiteral(_)
+                | ExpressionKind::NumericLiteral(_) => false,
+                ExpressionKind::Identifier(id) => id.name != "undefined",
+                ExpressionKind::StringLiteral(str) => !str.value.as_str().is_empty(),
+                ExpressionKind::TemplateLiteral(t) => {
+                    !t.expressions.is_empty()
+                        || t.quasis.iter().filter(|q| !q.value.raw.is_empty()).count() > 0
+                }
+                _ => true,
+            },
         },
         Some(JSXAttributeValue::StringLiteral(str)) => !str.value.as_str().is_empty(),
         _ => true,

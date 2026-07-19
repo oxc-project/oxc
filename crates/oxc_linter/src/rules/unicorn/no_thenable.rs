@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, BindingPattern,
-        CallExpression, Declaration, Expression, ObjectPropertyKind, PropertyKey, match_expression,
+        CallExpression, Declaration, Expression, ExpressionKind, MemberExpressionKind,
+        ObjectPropertyKind, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -135,13 +136,18 @@ impl Rule for NoThenable {
             }
             AstKind::CallExpression(expr) => check_call_expression(expr, ctx),
             // foo.then = ...
-            AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => match left {
-                AssignmentTarget::ComputedMemberExpression(expr) => {
+            AstKind::AssignmentExpression(AssignmentExpression {
+                left: AssignmentTarget::MemberExpression(m),
+                ..
+            }) => match m.kind() {
+                MemberExpressionKind::ComputedMemberExpression(expr) => {
                     if let Some(span) = check_expression(&expr.expression, ctx) {
                         ctx.diagnostic(class(span));
                     }
                 }
-                AssignmentTarget::StaticMemberExpression(expr) if expr.property.name == "then" => {
+                MemberExpressionKind::StaticMemberExpression(expr)
+                    if expr.property.name == "then" =>
+                {
                     ctx.diagnostic(class(expr.span));
                 }
                 _ => {}
@@ -178,7 +184,9 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
     if !{
         !expr.optional
             && expr.arguments.len() == 1
-            && matches!(expr.arguments[0], Argument::ArrayExpression(_))
+            && expr.arguments[0]
+                .as_expression()
+                .is_some_and(oxc_ast::ast::Expression::is_array_expression)
             && match expr.callee.as_member_expression() {
                 Some(me) => {
                     me.object()
@@ -190,10 +198,12 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 _ => false,
             }
     } {
-    } else if let Argument::ArrayExpression(outer) = &expr.arguments[0] {
+    } else if let Some(outer) =
+        expr.arguments[0].as_expression().and_then(|e| e.as_array_expression())
+    {
         for inner in &outer.elements {
             // inner item is array
-            if let ArrayExpressionElement::ArrayExpression(inner) = inner
+            if let Some(inner) = inner.as_expression().and_then(|e| e.as_array_expression())
                 && !inner.elements.is_empty()
                 && !matches!(inner.elements[0], ArrayExpressionElement::SpreadElement(_))
                 && let Some(expr) = inner.elements[0].as_expression()
@@ -237,26 +247,26 @@ fn check_binding_pattern(pat: &BindingPattern, ctx: &LintContext) {
 }
 
 fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span::Span> {
-    match expr {
-        Expression::StringLiteral(lit) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => {
             if lit.value == "then" {
                 Some(lit.span)
             } else {
                 None
             }
         }
-        Expression::TemplateLiteral(lit) => {
+        ExpressionKind::TemplateLiteral(lit) => {
             lit.single_quasi().and_then(|quasi| if quasi == "then" { Some(lit.span) } else { None })
         }
-        Expression::Identifier(ident) => {
+        ExpressionKind::Identifier(ident) => {
             let symbols = ctx.scoping();
             let reference_id = ident.reference_id();
             symbols.get_reference(reference_id).symbol_id().and_then(|symbol_id| {
                 let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
                 let var_decl = decl.kind().as_variable_declarator()?;
 
-                match &var_decl.init {
-                    Some(Expression::StringLiteral(lit)) => {
+                match var_decl.init.as_ref().map(|e| e.kind()) {
+                    Some(ExpressionKind::StringLiteral(lit)) => {
                         if lit.value == "then" {
                             Some(lit.span)
                         } else {
@@ -274,7 +284,7 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
 fn contains_then(key: &PropertyKey, ctx: &LintContext) -> Option<Span> {
     match key {
         PropertyKey::StaticIdentifier(ident) if ident.name == "then" => Some(ident.span),
-        match_expression!(PropertyKey) => check_expression(key.to_expression(), ctx),
+        PropertyKey::Expression(expr) => check_expression(expr, ctx),
         _ => None,
     }
 }

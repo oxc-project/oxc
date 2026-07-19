@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -75,13 +75,13 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
     else {
         return;
     };
-    let Expression::CallExpression(expect_call_expr) = parent else {
+    let ExpressionKind::CallExpression(expect_call_expr) = parent.kind() else {
         return;
     };
 
     // handle "expect()"
     if expect_call_expr.arguments.is_empty()
-        || !matches!(jest_expect_first_arg.get_inner_expression(), Expression::BooleanLiteral(_))
+        || !jest_expect_first_arg.get_inner_expression().is_boolean_literal()
     {
         return;
     }
@@ -89,7 +89,9 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
     let Some(first_argument) = expect_call_expr.arguments.first() else {
         return;
     };
-    let Argument::CallExpression(includes_call_expr) = first_argument else {
+    let Some(includes_call_expr) =
+        first_argument.as_expression().and_then(Expression::as_call_expression)
+    else {
         return;
     };
 

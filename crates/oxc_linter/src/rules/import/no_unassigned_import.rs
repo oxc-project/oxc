@@ -1,10 +1,7 @@
 use schemars::JsonSchema;
 use serde_json::Value;
 
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression},
-};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -105,14 +102,16 @@ impl Rule for NoUnassignedImport {
                 }
             }
             AstKind::ExpressionStatement(statement) => {
-                let Expression::CallExpression(call_expr) = &statement.expression else {
+                let ExpressionKind::CallExpression(call_expr) = statement.expression.kind() else {
                     return;
                 };
                 if !call_expr.is_require_call() {
                     return;
                 }
                 let first_arg = &call_expr.arguments[0];
-                let Argument::StringLiteral(source_str) = first_arg else {
+                let Some(source_str) =
+                    first_arg.as_expression().and_then(|e| e.as_string_literal())
+                else {
                     return;
                 };
                 if !self.is_match_allow_globs(source_str.value.as_str()) {

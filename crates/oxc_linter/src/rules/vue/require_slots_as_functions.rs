@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, ChainElement, Expression, StaticMemberExpression},
+    ast::{AssignmentTarget, Expression, ExpressionKind, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -93,12 +93,11 @@ impl Rule for RequireSlotsAsFunctions {
 fn inner_static_member_expression<'a, 'b>(
     expr: &'b Expression<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
-    match expr.get_inner_expression() {
-        Expression::StaticMemberExpression(m) => Some(m),
-        Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::StaticMemberExpression(m) => Some(m),
-            _ => None,
-        },
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::StaticMemberExpression(m) => Some(m),
+        ExpressionKind::ChainExpression(chain) => {
+            chain.expression.as_member_expression().and_then(|m| m.as_static_member_expression())
+        }
         _ => None,
     }
 }

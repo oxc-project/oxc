@@ -5,9 +5,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, CallExpression, ExportDefaultDeclarationKind, Expression,
-        Function, FunctionBody, ReturnStatement,
+        ExpressionKind, Function, FunctionBody, ReturnStatement,
     },
-    match_expression,
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -112,7 +111,7 @@ impl Rule for RequireDirectExport {
                     ctx.diagnostic(require_direct_export_diagnostic(export_decl.span));
                 }
             }
-            match_expression!(ExportDefaultDeclarationKind) => {
+            ExportDefaultDeclarationKind::Expression(_) => {
                 let expr = export_decl.declaration.to_expression();
                 check_expression(expr, export_decl.span, ctx, self);
             }
@@ -136,26 +135,26 @@ fn check_expression<'a>(
 ) {
     let inner_expr = expr.get_inner_expression();
 
-    match inner_expr {
+    match inner_expr.kind() {
         // e.g. export default Foo;
-        Expression::Identifier(_) => {
+        ExpressionKind::Identifier(_) => {
             ctx.diagnostic(require_direct_export_diagnostic(span));
         }
         // e.g. export default (props) => { return h('div', props.msg) }
-        Expression::ArrowFunctionExpression(arrow_func) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             if rule.disallow_functional_component_function
                 || !has_arrow_function_return_value(arrow_func)
             {
                 ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
-        Expression::FunctionExpression(func) => {
+        ExpressionKind::FunctionExpression(func) => {
             if rule.disallow_functional_component_function || !has_function_return_value(func) {
                 ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
         // Check for CallExpression (Vue.extend, defineComponent)
-        Expression::CallExpression(call_expr) => {
+        ExpressionKind::CallExpression(call_expr) => {
             check_call_expression(call_expr, span, ctx);
         }
         _ => {}
@@ -187,7 +186,7 @@ fn has_object_expression_argument(call_expr: &CallExpression) -> bool {
         .arguments
         .first()
         .and_then(|arg| arg.as_expression())
-        .is_some_and(|expr| matches!(expr.get_inner_expression(), Expression::ObjectExpression(_)))
+        .is_some_and(|expr| expr.get_inner_expression().is_object_expression())
 }
 
 fn has_function_return_value(func: &Function) -> bool {

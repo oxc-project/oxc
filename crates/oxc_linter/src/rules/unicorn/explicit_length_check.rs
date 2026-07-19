@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, LogicalExpression, StaticMemberExpression},
+    ast::{
+        BinaryExpression, Expression, ExpressionKind, LogicalExpression, StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -98,7 +100,7 @@ declare_oxc_lint!(
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
+    matches!(expr.kind(), ExpressionKind::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
 }
 
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
@@ -126,7 +128,7 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
 fn expression_uses_optional_chain(expr: &Expression) -> bool {
     let expr = expr.get_inner_expression();
 
-    if matches!(expr, Expression::ChainExpression(_)) {
+    if expr.is_chain_expression() {
         return true;
     }
 
@@ -134,7 +136,7 @@ fn expression_uses_optional_chain(expr: &Expression) -> bool {
         return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
     }
 
-    if let Expression::CallExpression(call_expr) = expr {
+    if let ExpressionKind::CallExpression(call_expr) = expr.kind() {
         return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
     }
 
@@ -231,7 +233,7 @@ impl ExplicitLengthCheck {
                 call.arguments
                     .first()
                     .and_then(|arg| arg.as_expression())
-                    .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
+                    .filter(|expr| expr.is_logical_expression())
                     .map_or_else(|| node.span(), |_| static_member_expr.span)
             }
             _ => node.span(),
@@ -290,7 +292,7 @@ impl Rule for ExplicitLengthCheck {
             if static_member_expr.optional || expression_uses_optional_chain(object) {
                 return;
             }
-            if let Expression::ThisExpression(_) = object {
+            if let ExpressionKind::ThisExpression(_) = object.kind() {
                 return;
             }
 
@@ -312,7 +314,7 @@ impl Rule for ExplicitLengthCheck {
                     AstKind::LogicalExpression(LogicalExpression { operator, right, .. })
                         if *operator == LogicalOperator::And
                             || (*operator == LogicalOperator::Or
-                                && !matches!(right, Expression::NumericLiteral(_))) =>
+                                && !right.is_numeric_literal()) =>
                     {
                         self.report(ctx, ancestor, is_negative, static_member_expr, false);
                     }

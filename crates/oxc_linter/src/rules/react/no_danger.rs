@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
+    ast::{JSXAttributeItem, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -74,7 +74,8 @@ impl Rule for NoDanger {
                     return;
                 };
 
-                let Argument::ObjectExpression(obj_expr) = props else {
+                let Some(obj_expr) = props.as_expression().and_then(|e| e.as_object_expression())
+                else {
                     return;
                 };
 

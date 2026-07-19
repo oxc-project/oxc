@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression},
+    ast::{ExpressionKind, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -86,15 +86,17 @@ impl Rule for NoDeprecatedEventsApi {
             return;
         }
 
-        let member_expr = match call_expr.callee.get_inner_expression() {
-            Expression::StaticMemberExpression(member_expr) => member_expr.as_ref(),
-            Expression::ChainExpression(chain_expr) => {
-                let Some(MemberExpression::StaticMemberExpression(member_expr)) =
-                    chain_expr.expression.as_member_expression()
+        let member_expr = match call_expr.callee.get_inner_expression().kind() {
+            ExpressionKind::StaticMemberExpression(member_expr) => member_expr,
+            ExpressionKind::ChainExpression(chain_expr) => {
+                let Some(member_expr) = chain_expr
+                    .expression
+                    .as_member_expression()
+                    .and_then(MemberExpression::as_static_member_expression)
                 else {
                     return;
                 };
-                member_expr.as_ref()
+                member_expr
             }
             _ => return,
         };

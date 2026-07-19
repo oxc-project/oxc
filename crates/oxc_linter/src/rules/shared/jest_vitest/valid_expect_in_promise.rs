@@ -2,7 +2,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, FunctionBody, MemberExpression,
+        Argument, CallExpression, Expression, ExpressionKind, FunctionBody, MemberExpression,
         SimpleAssignmentTarget, Statement,
     },
 };
@@ -148,7 +148,7 @@ fn process_statements<'a>(
         let is_assignment = matches!(
             statement,
             Statement::ExpressionStatement(e)
-                if matches!(e.expression, Expression::AssignmentExpression(_))
+                if e.expression.is_assignment_expression()
         );
         let is_block = matches!(statement, Statement::BlockStatement(_));
 
@@ -174,7 +174,9 @@ fn process_statements<'a>(
                 }
             }
             Statement::ExpressionStatement(expr_stmt) => {
-                if let Expression::AssignmentExpression(assign_expr) = &expr_stmt.expression {
+                if let ExpressionKind::AssignmentExpression(assign_expr) =
+                    expr_stmt.expression.kind()
+                {
                     if let Some(name) = assign_expr
                         .left
                         .as_simple_assignment_target()
@@ -223,7 +225,11 @@ fn resolve_pending_promises(
 }
 
 fn ident_name_of<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
-    if let Expression::Identifier(ident) = expr { Some(ident.name.as_str()) } else { None }
+    if let ExpressionKind::Identifier(ident) = expr.kind() {
+        Some(ident.name.as_str())
+    } else {
+        None
+    }
 }
 
 /// Walks down the callee chain of `expect(x).resolves.not.toBe(2)` to find
@@ -231,7 +237,7 @@ fn ident_name_of<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 fn find_expect_args<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<&'a ArenaVec<'a, Argument<'a>>> {
-    if let Expression::Identifier(ident) = &call_expr.callee
+    if let ExpressionKind::Identifier(ident) = call_expr.callee.kind()
         && ident.name == "expect"
     {
         return Some(&call_expr.arguments);
@@ -240,8 +246,8 @@ fn find_expect_args<'a>(
 }
 
 fn find_inner_expect<'a>(expr: &'a Expression<'a>) -> Option<&'a ArenaVec<'a, Argument<'a>>> {
-    match expr {
-        Expression::CallExpression(call) => find_expect_args(call),
+    match expr.kind() {
+        ExpressionKind::CallExpression(call) => find_expect_args(call),
         _ => find_inner_expect(expr.as_member_expression()?.object()),
     }
 }
@@ -282,7 +288,7 @@ impl<'a> Visit<'a> for IdentifierFinder<'_> {
 /// return/await. Since there's no way to ensure this buried promise is handled,
 /// we bail out and don't report.
 fn is_top_level_promise_chain(expr: &Expression) -> bool {
-    let Expression::CallExpression(call_expr) = expr else {
+    let ExpressionKind::CallExpression(call_expr) = expr.kind() else {
         return false;
     };
     is_promise_call_expression(call_expr)
@@ -290,19 +296,22 @@ fn is_top_level_promise_chain(expr: &Expression) -> bool {
 
 fn get_checkable_callback_body<'a>(callback: &'a Argument<'a>) -> Option<&'a FunctionBody<'a>> {
     match callback {
-        Argument::ArrowFunctionExpression(arrow) => {
-            if arrow.expression || !arrow.params.items.is_empty() {
-                return None;
+        Argument::Expression(e) => match e.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
+                if arrow.expression || !arrow.params.items.is_empty() {
+                    return None;
+                }
+                Some(&arrow.body)
             }
-            Some(&arrow.body)
-        }
-        Argument::FunctionExpression(func) => {
-            if !func.params.items.is_empty() {
-                return None;
+            ExpressionKind::FunctionExpression(func) => {
+                if !func.params.items.is_empty() {
+                    return None;
+                }
+                func.body.as_ref().map(AsRef::as_ref)
             }
-            func.body.as_ref().map(AsRef::as_ref)
-        }
-        _ => None,
+            _ => None,
+        },
+        Argument::SpreadElement(_) => None,
     }
 }
 
@@ -336,7 +345,7 @@ impl PromiseExpectScanner {
 
     fn collect_resolved_from_promise_wrapper(&mut self, call_expr: &CallExpression) {
         let Some(member) = call_expr.callee.as_member_expression() else { return };
-        let Expression::Identifier(obj) = member.object() else { return };
+        let ExpressionKind::Identifier(obj) = member.object().kind() else { return };
         if obj.name != "Promise" {
             return;
         }
@@ -345,7 +354,7 @@ impl PromiseExpectScanner {
 
         match member.static_property_name() {
             Some("all" | "allSettled" | "race" | "any") => {
-                if let Some(Expression::ArrayExpression(arr)) = first_arg {
+                if let Some(arr) = first_arg.and_then(Expression::as_array_expression) {
                     for elem in &arr.elements {
                         if let Some(expr) = elem.as_expression() {
                             self.resolve_ident(expr);

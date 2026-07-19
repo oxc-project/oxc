@@ -55,20 +55,20 @@ pub fn try_fold_known_global_methods<'a>(
     arguments: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if let Expression::Identifier(ident) = callee {
+    if let ExpressionKind::Identifier(ident) = callee.kind() {
         if let Some(result) = try_fold_global_functions(ident, arguments, ctx) {
             return Some(result);
         }
         return None;
     }
 
-    let (name, object) = match callee {
-        Expression::StaticMemberExpression(member) if !member.optional => {
+    let (name, object) = match callee.kind() {
+        ExpressionKind::StaticMemberExpression(member) if !member.optional => {
             (member.property.name.as_str(), &member.object)
         }
-        Expression::ComputedMemberExpression(member) if !member.optional => {
-            match &member.expression {
-                Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+        ExpressionKind::ComputedMemberExpression(member) if !member.optional => {
+            match member.expression.kind() {
+                ExpressionKind::StringLiteral(s) => (s.value.as_str(), &member.object),
                 _ => return None,
             }
         }
@@ -108,9 +108,9 @@ fn try_fold_string_casing<'a>(
         return None;
     }
 
-    let value = match object {
-        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-        Expression::Identifier(ident) => ident
+    let value = match object.kind() {
+        ExpressionKind::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+        ExpressionKind::Identifier(ident) => ident
             .reference_id
             .get()
             .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
@@ -138,19 +138,15 @@ fn try_fold_string_index_of<'a>(
     if args.len() >= 3 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let ExpressionKind::StringLiteral(s) = object.kind() else { return None };
     let search_value = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
-        Some(arg @ match_expression!(Argument)) => {
-            Some(arg.to_expression().get_side_free_string_value(ctx)?)
-        }
+        Some(Argument::Expression(arg)) => Some(arg.get_side_free_string_value(ctx)?),
         None => None,
     };
     let search_start_index = match args.get(1) {
         Some(Argument::SpreadElement(_)) => return None,
-        Some(arg @ match_expression!(Argument)) => {
-            Some(arg.to_expression().get_side_free_number_value(ctx)?)
-        }
+        Some(Argument::Expression(arg)) => Some(arg.get_side_free_number_value(ctx)?),
         None => None,
     };
 
@@ -172,19 +168,15 @@ fn try_fold_string_substring_or_slice<'a>(
     if args.len() > 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let ExpressionKind::StringLiteral(s) = object.kind() else { return None };
     let start_idx = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
-        Some(arg @ match_expression!(Argument)) => {
-            Some(arg.to_expression().get_side_free_number_value(ctx)?)
-        }
+        Some(Argument::Expression(arg)) => Some(arg.get_side_free_number_value(ctx)?),
         None => None,
     };
     let end_idx = match args.get(1) {
         Some(Argument::SpreadElement(_)) => return None,
-        Some(arg @ match_expression!(Argument)) => {
-            Some(arg.to_expression().get_side_free_number_value(ctx)?)
-        }
+        Some(Argument::Expression(arg)) => Some(arg.get_side_free_number_value(ctx)?),
         None => None,
     };
     if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
@@ -209,12 +201,10 @@ fn try_fold_string_char_at<'a>(
     if args.len() > 1 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let ExpressionKind::StringLiteral(s) = object.kind() else { return None };
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
-        Some(arg @ match_expression!(Argument)) => {
-            Some(arg.to_expression().get_side_free_number_value(ctx)?)
-        }
+        Some(Argument::Expression(arg)) => Some(arg.get_side_free_number_value(ctx)?),
         None => None,
     };
 
@@ -231,12 +221,10 @@ fn try_fold_string_char_code_at<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    let Expression::StringLiteral(s) = object else { return None };
+    let ExpressionKind::StringLiteral(s) = object.kind() else { return None };
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
-        Some(arg @ match_expression!(Argument)) => {
-            Some(arg.to_expression().get_side_free_number_value(ctx)?)
-        }
+        Some(Argument::Expression(arg)) => Some(arg.get_side_free_number_value(ctx)?),
         None => None,
     };
 
@@ -252,8 +240,11 @@ fn try_fold_starts_with<'a>(
     if args.len() != 1 {
         return None;
     }
-    let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
-    let Expression::StringLiteral(s) = object else { return None };
+    let Some(arg) = args.first().unwrap().as_expression().and_then(Expression::as_string_literal)
+    else {
+        return None;
+    };
+    let ExpressionKind::StringLiteral(s) = object.kind() else { return None };
     Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
 }
 
@@ -266,11 +257,11 @@ fn try_fold_string_replace<'a>(
     if args.len() != 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let ExpressionKind::StringLiteral(s) = object.kind() else { return None };
     let search_value = args.first().unwrap();
     let search_value = match search_value {
         Argument::SpreadElement(_) => return None,
-        match_expression!(Argument) => {
+        Argument::Expression(_) => {
             let value = search_value.to_expression();
             if value.may_have_side_effects(ctx) {
                 return None;
@@ -281,9 +272,7 @@ fn try_fold_string_replace<'a>(
     let replace_value = args.get(1).unwrap();
     let replace_value = match replace_value {
         Argument::SpreadElement(_) => return None,
-        match_expression!(Argument) => {
-            replace_value.to_expression().get_side_free_string_value(ctx)?
-        }
+        Argument::Expression(_) => replace_value.to_expression().get_side_free_string_value(ctx)?,
     };
     if replace_value.contains('$') {
         return None;
@@ -320,15 +309,18 @@ fn try_fold_to_string<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    match object {
+    match object.kind() {
         // Number.prototype.toString()
         // Number.prototype.toString(radix)
-        Expression::NumericLiteral(lit) if args.len() <= 1 => {
+        ExpressionKind::NumericLiteral(lit) if args.len() <= 1 => {
             let mut radix: u32 = 0;
             if args.is_empty() {
                 radix = 10;
             }
-            if let Some(Argument::NumericLiteral(n)) = args.first()
+            if let Some(n) = args
+                .first()
+                .and_then(Argument::as_expression)
+                .and_then(Expression::as_numeric_literal)
                 && n.value >= 2.0
                 && n.value <= 36.0
                 && n.value.fract() == 0.0
@@ -361,10 +353,10 @@ fn try_fold_to_string<'a>(
             let result = format_radix(i, radix);
             Some(ConstantValue::String(Cow::Owned(result)))
         }
-        Expression::RegExpLiteral(lit) if args.is_empty() => {
+        ExpressionKind::RegExpLiteral(lit) if args.is_empty() => {
             lit.to_js_string(ctx).map(ConstantValue::String)
         }
-        e if args.is_empty() => e
+        _ if args.is_empty() => object
             .evaluate_value(ctx)
             // `null` and `undefined` returns type errors
             .filter(|v| !v.is_undefined() && !v.is_null())

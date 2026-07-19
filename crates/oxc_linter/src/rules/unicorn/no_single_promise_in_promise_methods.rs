@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,7 +73,8 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             return;
         };
         let first_argument = first_argument.get_inner_expression();
-        let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
+        let ExpressionKind::ArrayExpression(first_argument_array_expr) = first_argument.kind()
+        else {
             return;
         };
 

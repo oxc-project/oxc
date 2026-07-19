@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, TSSignature, TSType},
+    ast::{Expression, ExpressionKind, TSSignature, TSType},
 };
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -115,8 +115,8 @@ impl MaxProps {
             return;
         }
         if let Some(first_arg) = call_expr.arguments.first() {
-            match first_arg.as_expression() {
-                Some(Expression::ObjectExpression(obj_expr))
+            match first_arg.as_expression().map(Expression::kind) {
+                Some(ExpressionKind::ObjectExpression(obj_expr))
                     if obj_expr.properties.len() as u32 > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
@@ -125,7 +125,7 @@ impl MaxProps {
                         self.max_props,
                     ));
                 }
-                Some(Expression::ArrayExpression(arr_expr))
+                Some(ExpressionKind::ArrayExpression(arr_expr))
                     if arr_expr.elements.len() as u32 > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
@@ -157,8 +157,10 @@ impl MaxProps {
         let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
             return;
         };
-        let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-            &export_default_decl.declaration
+        let Some(obj_expr) = export_default_decl
+            .declaration
+            .as_expression()
+            .and_then(Expression::as_object_expression)
         else {
             return;
         };
@@ -166,7 +168,8 @@ impl MaxProps {
         let Some(props_prop) = find_property(obj_expr, "props") else {
             return;
         };
-        let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()
+        let ExpressionKind::ObjectExpression(props_obj_expr) =
+            props_prop.value.get_inner_expression().kind()
         else {
             return;
         };

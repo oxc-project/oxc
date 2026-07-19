@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -66,11 +66,12 @@ impl Rule for NoLengthAsSliceEnd {
             return;
         }
 
-        let Some(MemberExpression::StaticMemberExpression(second_argument)) = call_expr.arguments
-            [1]
-        .as_expression()
-        .map(Expression::without_parentheses)
-        .and_then(|e| e.get_member_expr()) else {
+        let Some(second_argument) = call_expr.arguments[1]
+            .as_expression()
+            .map(Expression::without_parentheses)
+            .and_then(|e| e.get_member_expr())
+            .and_then(|m| m.as_static_member_expression())
+        else {
             return;
         };
 

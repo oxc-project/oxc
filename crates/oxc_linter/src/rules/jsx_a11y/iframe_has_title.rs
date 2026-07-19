@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, JSXExpression},
+    ast::{ExpressionKind, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -82,32 +82,37 @@ impl Rule for IframeHasTitle {
                 return;
             }
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                match &container.expression {
-                    JSXExpression::StringLiteral(str) if !str.value.is_empty() => {
-                        return;
+                if let JSXExpression::Expression(expr) = &container.expression {
+                    match expr.kind() {
+                        ExpressionKind::StringLiteral(str) if !str.value.is_empty() => {
+                            return;
+                        }
+                        ExpressionKind::TemplateLiteral(tmpl)
+                            if (!tmpl.quasis.is_empty()
+                                && tmpl
+                                    .quasis
+                                    .iter()
+                                    .any(|q| !q.value.raw.as_str().is_empty()))
+                                || !tmpl.expressions.is_empty() =>
+                        {
+                            return;
+                        }
+                        ExpressionKind::Identifier(_) if !expr.is_undefined() => {
+                            return;
+                        }
+                        // These expressions are considered valid
+                        // (e.g., titleGenerator('hello'), file.name, obj.prop, obj['key'],
+                        //  a ? b : c, i18n`title`, new Title())
+                        ExpressionKind::CallExpression(_)
+                        | ExpressionKind::StaticMemberExpression(_)
+                        | ExpressionKind::ComputedMemberExpression(_)
+                        | ExpressionKind::PrivateFieldExpression(_)
+                        | ExpressionKind::LogicalExpression(_)
+                        | ExpressionKind::ConditionalExpression(_)
+                        | ExpressionKind::TaggedTemplateExpression(_)
+                        | ExpressionKind::NewExpression(_) => return,
+                        _ => {}
                     }
-                    JSXExpression::TemplateLiteral(tmpl)
-                        if (!tmpl.quasis.is_empty()
-                            && tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty()))
-                            || !tmpl.expressions.is_empty() =>
-                    {
-                        return;
-                    }
-                    expr @ JSXExpression::Identifier(_) if !expr.is_undefined() => {
-                        return;
-                    }
-                    // These expressions are considered valid
-                    // (e.g., titleGenerator('hello'), file.name, obj.prop, obj['key'],
-                    //  a ? b : c, i18n`title`, new Title())
-                    JSXExpression::CallExpression(_)
-                    | JSXExpression::StaticMemberExpression(_)
-                    | JSXExpression::ComputedMemberExpression(_)
-                    | JSXExpression::PrivateFieldExpression(_)
-                    | JSXExpression::LogicalExpression(_)
-                    | JSXExpression::ConditionalExpression(_)
-                    | JSXExpression::TaggedTemplateExpression(_)
-                    | JSXExpression::NewExpression(_) => return,
-                    _ => {}
                 }
             }
             _ => {}

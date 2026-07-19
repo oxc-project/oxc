@@ -294,15 +294,15 @@ impl<'a> Decorator<'a> {
     /// @decorator.a.b(xx)
     /// ```
     pub fn name(&self) -> Option<&'a str> {
-        match &self.expression {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
-            expr @ match_member_expression!(Expression) => {
-                expr.to_member_expression().static_property_name()
-            }
-            Expression::CallExpression(call) => {
+        match self.expression.kind() {
+            ExpressionKind::Identifier(ident) => Some(ident.name.as_str()),
+            ExpressionKind::CallExpression(call) => {
                 call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
             }
-            _ => None,
+            _ => self
+                .expression
+                .as_member_expression()
+                .and_then(MemberExpression::static_property_name),
         }
     }
 }

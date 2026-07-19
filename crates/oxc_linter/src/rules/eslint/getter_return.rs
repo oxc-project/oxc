@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
-        PropertyKind, match_member_expression,
+        ChainElement, Expression, ExpressionKind, MemberExpression, MethodDefinitionKind,
+        ObjectProperty, PropertyKind,
     },
 };
 use oxc_cfg::{
@@ -125,12 +125,15 @@ impl GetterReturn {
     }
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
-        match callee.without_parentheses() {
-            expr @ match_member_expression!(Expression) => {
+        let expr = callee.without_parentheses();
+        match expr.kind() {
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
                 Self::handle_member_expression(expr.to_member_expression())
             }
-            Expression::ChainExpression(ce) => match &ce.expression {
-                match_member_expression!(ChainElement) => {
+            ExpressionKind::ChainExpression(ce) => match &ce.expression {
+                ChainElement::MemberExpression(_) => {
                     Self::handle_member_expression(ce.expression.to_member_expression())
                 }
                 ChainElement::CallExpression(_) | ChainElement::TSNonNullExpression(_) => {
@@ -142,8 +145,8 @@ impl GetterReturn {
     }
 
     fn handle_paren_expr<'a>(expr: &'a Expression<'a>) -> bool {
-        match expr.without_parentheses() {
-            Expression::CallExpression(ce) => Self::handle_actual_expression(&ce.callee),
+        match expr.without_parentheses().kind() {
+            ExpressionKind::CallExpression(ce) => Self::handle_actual_expression(&ce.callee),
             _ => false,
         }
     }

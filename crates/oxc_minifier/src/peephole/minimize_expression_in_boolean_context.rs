@@ -15,10 +15,10 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match expr {
+        match expr.kind_mut() {
             // "!!a" => "a"
-            Expression::UnaryExpression(u1) if u1.operator.is_not() => {
-                if let Expression::UnaryExpression(u2) = &mut u1.argument
+            ExpressionKindMut::UnaryExpression(u1) if u1.operator.is_not() => {
+                if let Some(u2) = u1.argument.as_unary_expression_mut()
                     && u2.operator.is_not()
                 {
                     let mut e = u2.argument.take_in(ctx);
@@ -26,7 +26,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_expression(expr, e);
                 }
             }
-            Expression::BinaryExpression(e)
+            ExpressionKindMut::BinaryExpression(e)
                 if e.operator.is_equality()
                     && e.right.is_number_0()
                     && e.left.is_int32_or_uint32(ctx) =>
@@ -50,7 +50,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(expr, new_expr);
             }
             // "if (!!a && !!b)" => "if (a && b)"
-            Expression::LogicalExpression(e) if e.operator.is_and() => {
+            ExpressionKindMut::LogicalExpression(e) if e.operator.is_and() => {
                 Self::minimize_expression_in_boolean_context(&mut e.left, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
@@ -60,7 +60,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             // "if (!!a ||!!b)" => "if (a || b)"
-            Expression::LogicalExpression(e) if e.operator == LogicalOperator::Or => {
+            ExpressionKindMut::LogicalExpression(e) if e.operator == LogicalOperator::Or => {
                 Self::minimize_expression_in_boolean_context(&mut e.left, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
@@ -69,7 +69,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_expression(expr, new_expr);
                 }
             }
-            Expression::ConditionalExpression(e) => {
+            ExpressionKindMut::ConditionalExpression(e) => {
                 // "if (a ? !!b : !!c)" => "if (a ? b : c)"
                 Self::minimize_expression_in_boolean_context(&mut e.consequent, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.alternate, ctx);
@@ -103,7 +103,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_expression(expr, new_expr);
                 }
             }
-            Expression::SequenceExpression(seq_expr) => {
+            ExpressionKindMut::SequenceExpression(seq_expr) => {
                 if let Some(last) = seq_expr.expressions.last_mut() {
                     Self::minimize_expression_in_boolean_context(last, ctx);
                 }
@@ -113,7 +113,7 @@ impl<'a> PeepholeOptimizations {
             // e.g. a bundled `var hydrating = false` flag) folds to `false` here,
             // where `undefined`-before-init is indistinguishable from the falsy
             // init. The existing `if (false)` dead-code pass removes the branch.
-            Expression::Identifier(ident) => {
+            ExpressionKindMut::Identifier(ident) => {
                 let reference_id = ident.reference_id();
                 let span = ident.span;
                 if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()

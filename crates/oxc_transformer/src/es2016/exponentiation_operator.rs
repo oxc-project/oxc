@@ -57,9 +57,10 @@ impl ExponentiationOperator<'_> {
 impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
     // Note: Do not transform to `Math.pow` with BigInt arguments - that's a runtime error
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
+        match expr.tag() {
             // `left ** right`
-            Expression::BinaryExpression(binary_expr) => {
+            ExpressionTag::BinaryExpression => {
+                let binary_expr = expr.to_binary_expression();
                 if binary_expr.operator != BinaryOperator::Exponential
                     || binary_expr.left.is_big_int_literal()
                     || binary_expr.right.is_big_int_literal()
@@ -70,7 +71,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
                 Self::convert_binary_expression(expr, ctx);
             }
             // `left **= right`
-            Expression::AssignmentExpression(assign_expr) => {
+            ExpressionTag::AssignmentExpression => {
+                let assign_expr = expr.to_assignment_expression();
                 if assign_expr.operator != AssignmentOperator::Exponential
                     || assign_expr.right.is_big_int_literal()
                 {
@@ -81,18 +83,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
                     AssignmentTarget::AssignmentTargetIdentifier(_) => {
                         self.convert_identifier_assignment(expr, ctx);
                     }
-                    AssignmentTarget::StaticMemberExpression(_) => {
-                        self.convert_static_member_expression_assignment(expr, ctx);
-                    }
-                    AssignmentTarget::ComputedMemberExpression(_) => {
-                        self.convert_computed_member_expression_assignment(expr, ctx);
-                    }
-                    // Babel refuses to transform this: "We can't generate property ref for private name,
-                    // please install `@babel/plugin-transform-class-properties`".
-                    // But there's no reason not to.
-                    AssignmentTarget::PrivateFieldExpression(_) => {
-                        self.convert_private_field_assignment(expr, ctx);
-                    }
+                    AssignmentTarget::MemberExpression(member) => match member.tag() {
+                        MemberExpressionTag::StaticMemberExpression => {
+                            self.convert_static_member_expression_assignment(expr, ctx);
+                        }
+                        MemberExpressionTag::ComputedMemberExpression => {
+                            self.convert_computed_member_expression_assignment(expr, ctx);
+                        }
+                        // Babel refuses to transform this: "We can't generate property ref for private name,
+                        // please install `@babel/plugin-transform-class-properties`".
+                        // But there's no reason not to.
+                        MemberExpressionTag::PrivateFieldExpression => {
+                            self.convert_private_field_assignment(expr, ctx);
+                        }
+                    },
                     _ => {}
                 }
             }
@@ -110,8 +114,8 @@ impl<'a> ExponentiationOperator<'a> {
     #[inline]
     fn convert_binary_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         expr.replace_with(|expr| {
-            let binary_expr = match expr {
-                Expression::BinaryExpression(binary_expr) => binary_expr.unbox(),
+            let binary_expr = match expr.into_kind() {
+                ExpressionKindOwned::BinaryExpression(binary_expr) => binary_expr.unbox(),
                 _ => unreachable!(),
             };
             Self::math_pow(binary_expr.span, binary_expr.left, binary_expr.right, ctx)
@@ -131,7 +135,7 @@ impl<'a> ExponentiationOperator<'a> {
     // `#[inline]` so compiler knows `expr` is an `AssignmentExpression` with `IdentifierReference` on left
     #[inline]
     fn convert_identifier_assignment(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
         let AssignmentTarget::AssignmentTargetIdentifier(ident) = &mut assign_expr.left else {
             unreachable!()
@@ -202,11 +206,12 @@ impl<'a> ExponentiationOperator<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
-        let AssignmentTarget::StaticMemberExpression(member_expr) = &mut assign_expr.left else {
+        let AssignmentTarget::MemberExpression(member) = &mut assign_expr.left else {
             unreachable!()
         };
+        let member_expr = member.to_static_member_expression_mut();
 
         let (replacement_left, pow_left, temp_var_inits) =
             self.get_pow_left_static_member(member_expr, ctx);
@@ -302,11 +307,12 @@ impl<'a> ExponentiationOperator<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
-        let AssignmentTarget::ComputedMemberExpression(member_expr) = &mut assign_expr.left else {
+        let AssignmentTarget::MemberExpression(member) = &mut assign_expr.left else {
             unreachable!()
         };
+        let member_expr = member.to_computed_member_expression_mut();
 
         let (pow_left, temp_var_inits) = self.get_pow_left_computed_member(member_expr, ctx);
         Self::convert_assignment(assign_expr, pow_left, ctx);
@@ -384,11 +390,12 @@ impl<'a> ExponentiationOperator<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
-        let AssignmentTarget::PrivateFieldExpression(member_expr) = &mut assign_expr.left else {
+        let AssignmentTarget::MemberExpression(member) = &mut assign_expr.left else {
             unreachable!()
         };
+        let member_expr = member.to_private_field_expression_mut();
 
         let (pow_left, temp_var_inits) = self.get_pow_left_private_field(member_expr, ctx);
         Self::convert_assignment(assign_expr, pow_left, ctx);
@@ -483,9 +490,9 @@ impl<'a> ExponentiationOperator<'a> {
         // If the object reference that we need to save is locally declared, evaluating it multiple times
         // will not trigger getters or setters. `super` cannot be directly assigned, so use it directly too.
         // TODO(improve-on-babel): We could also skip creating a temp var for `this.x **= 2`.
-        match obj {
-            Expression::Super(super_) => return Expression::new_super(super_.span, ctx),
-            Expression::Identifier(ident) => {
+        match obj.kind() {
+            ExpressionKind::Super(super_) => return Expression::new_super(super_.span, ctx),
+            ExpressionKind::Identifier(ident) => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // This variable is declared in scope so evaluating it multiple times can't trigger a getter.

@@ -11,8 +11,9 @@
 //! calls in JavaScript files, and the ambient module declarations themselves.
 
 use oxc_ast::ast::{
-    CallExpression, Declaration, Expression, ImportExpression, Program as AstProgram, Statement,
-    TSImportType, TSModuleDeclarationBody, TSModuleDeclarationName, TSModuleReference,
+    CallExpression, Declaration, Expression, ExpressionKind, ImportExpression,
+    Program as AstProgram, Statement, TSImportType, TSModuleDeclarationBody,
+    TSModuleDeclarationName, TSModuleReference,
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::GetSpan;
@@ -246,14 +247,14 @@ impl CallCollector<'_> {
     /// string literal or a no-substitution template), using the parsed (cooked) value so escape
     /// sequences resolve the same file TypeScript would.
     fn add_string_literal_like(&mut self, expression: &Expression<'_>) {
-        match expression {
-            Expression::StringLiteral(literal) => {
+        match expression.kind() {
+            ExpressionKind::StringLiteral(literal) => {
                 if !literal.value.is_empty() {
                     self.dynamics
                         .push((literal.span.start, CompactStr::from(literal.value.as_str())));
                 }
             }
-            Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
+            ExpressionKind::TemplateLiteral(template) if template.is_no_substitution_template() => {
                 let value = template.quasis[0].value.cooked.as_ref().map_or_else(
                     || template.quasis[0].value.raw.as_str(),
                     |cooked| cooked.as_str(),
@@ -285,7 +286,7 @@ impl<'a> Visit<'a> for CallCollector<'_> {
         // tsgo `IsRequireCall` (shape only, no shadowing check): a call to the identifier
         // `require` with exactly one string-literal-like argument.
         if self.collect_require_calls
-            && let Expression::Identifier(callee) = &it.callee
+            && let Some(callee) = it.callee.as_identifier()
             && callee.name == "require"
             && it.arguments.len() == 1
             && let Some(argument) = it.arguments[0].as_expression()

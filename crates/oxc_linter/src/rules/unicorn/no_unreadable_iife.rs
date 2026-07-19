@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{ExpressionKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,8 +60,8 @@ impl Rule for NoUnreadableIife {
             return;
         };
 
-        let Expression::ArrowFunctionExpression(arrow_expr) =
-            &call_expr.callee.without_parentheses()
+        let ExpressionKind::ArrowFunctionExpression(arrow_expr) =
+            call_expr.callee.without_parentheses().kind()
         else {
             return;
         };
@@ -72,7 +72,7 @@ impl Rule for NoUnreadableIife {
         let Statement::ExpressionStatement(expr_stmt) = &arrow_expr.body.statements[0] else {
             return;
         };
-        if matches!(expr_stmt.expression, Expression::ParenthesizedExpression(_)) {
+        if expr_stmt.expression.is_parenthesized_expression() {
             ctx.diagnostic(no_unreadable_iife_diagnostic(expr_stmt.span));
         }
     }

@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -109,12 +112,12 @@ impl Rule for JsxNoJsxAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parentheses() {
-        Expression::JSXElement(expr) => Some(expr.span),
-        Expression::LogicalExpression(expr) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::JSXElement(expr) => Some(expr.span),
+        ExpressionKind::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))
         }
-        Expression::ConditionalExpression(expr) => {
+        ExpressionKind::ConditionalExpression(expr) => {
             check_expression(&expr.consequent).or_else(|| check_expression(&expr.alternate))
         }
         _ => None,

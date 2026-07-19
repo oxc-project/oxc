@@ -191,9 +191,12 @@ fn is_component_expression_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a
             {
                 true
             }
-            AssignmentTarget::StaticMemberExpression(member) => {
-                is_react_component_name(&member.property.name)
-                    || member.object.is_specific_id("module") && member.property.name == "exports"
+            AssignmentTarget::MemberExpression(member) => {
+                member.as_static_member_expression().is_some_and(|member| {
+                    is_react_component_name(&member.property.name)
+                        || member.object.is_specific_id("module")
+                            && member.property.name == "exports"
+                })
             }
             _ => false,
         },

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrayExpressionElement, CallExpression, Expression},
+    ast::{ArrayExpressionElement, CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -95,7 +95,7 @@ impl Rule for PreferSetSize {
 
 fn get_set_node<'a>(expression: &'a Expression<'a>) -> Option<(Span, &'a Expression<'a>)> {
     // `[...set].length`
-    if let Expression::ArrayExpression(array_expr) = expression
+    if let ExpressionKind::ArrayExpression(array_expr) = expression.kind()
         && array_expr.elements.len() == 1
         && let ArrayExpressionElement::SpreadElement(spread_element) = &array_expr.elements[0]
     {
@@ -103,7 +103,7 @@ fn get_set_node<'a>(expression: &'a Expression<'a>) -> Option<(Span, &'a Express
     }
 
     // `Array.from(set).length`
-    if let Expression::CallExpression(call_expr) = expression
+    if let ExpressionKind::CallExpression(call_expr) = expression.kind()
         && is_array_from_call(call_expr)
     {
         let set_expr = call_expr.arguments.first()?.as_expression()?;
@@ -130,14 +130,14 @@ fn is_array_from_call(call_expr: &CallExpression) -> bool {
 }
 
 fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
-    if let Expression::NewExpression(new_expr) = maybe_set {
-        if let Expression::Identifier(identifier) = &new_expr.callee {
+    if let ExpressionKind::NewExpression(new_expr) = maybe_set.kind() {
+        if let ExpressionKind::Identifier(identifier) = new_expr.callee.kind() {
             return identifier.name == "Set";
         }
         return false;
     }
 
-    let Expression::Identifier(ident) = maybe_set else {
+    let ExpressionKind::Identifier(ident) = maybe_set.kind() else {
         return false;
     };
 
@@ -165,8 +165,8 @@ fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn is_new_set(expr: &Expression) -> bool {
-    if let Expression::NewExpression(new_expr) = expr {
-        if let Expression::Identifier(identifier) = &new_expr.callee {
+    if let ExpressionKind::NewExpression(new_expr) = expr.kind() {
+        if let ExpressionKind::Identifier(identifier) = new_expr.callee.kind() {
             return identifier.name == "Set";
         }
         return false;

@@ -124,27 +124,27 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::ParenthesizedExpression(paren_expr) = expr {
+        if let Some(paren_expr) = expr.as_parenthesized_expression_mut() {
             *expr = paren_expr.expression.take_in(ctx);
         }
         // Handled outside the match below so the replacement can go through
         // `ctx.replace_expression`, which walks the dropped call (its
         // argument subtrees may contain resolved references) into `PassDirty`.
         if ctx.state.options.drop_console
-            && let Expression::CallExpression(call_expr) = &*expr
+            && let Some(call_expr) = expr.as_call_expression()
             && Self::is_console_call_expression(call_expr)
         {
             let new_expr = Expression::new_void_0(call_expr.span, ctx);
             ctx.replace_expression(expr, new_expr);
             return;
         }
-        if let Some(e) = match expr {
-            Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
-            Expression::UnaryExpression(e) if e.operator.is_void() => {
+        if let Some(e) = match expr.kind_mut() {
+            ExpressionKindMut::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
+            ExpressionKindMut::UnaryExpression(e) if e.operator.is_void() => {
                 Self::fold_void_ident(e, ctx);
                 None
             }
-            Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
+            ExpressionKindMut::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
         } {
             *expr = e;
@@ -336,7 +336,7 @@ impl<'a> Normalize {
 
     fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
-        let Expression::Identifier(ident) = &e.argument else { return };
+        let Some(ident) = e.argument.as_identifier() else { return };
         if ident.is_global_reference(ctx.scoping()) {
             return;
         }
@@ -352,7 +352,7 @@ impl<'a> Normalize {
         e: &StaticMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let Expression::Identifier(ident) = &e.object else { return None };
+        let Some(ident) = e.object.as_identifier() else { return None };
         if ident.name != "Number" {
             return None;
         }
@@ -482,10 +482,10 @@ impl<'a> Normalize {
             name if is_typed_array_constructor(name) => {
                 let safe_length = new_expr.arguments.is_empty()
                     || (new_expr.arguments.len() == 1
-                        && matches!(
-                            new_expr.arguments[0].as_expression(),
-                            Some(Expression::NumericLiteral(lit)) if lit.value >= 0.0
-                        ));
+                        && new_expr.arguments[0]
+                            .as_expression()
+                            .and_then(Expression::as_numeric_literal)
+                            .is_some_and(|lit| lit.value >= 0.0));
                 if safe_length && Self::can_set_pure(ident, ctx) {
                     new_expr.pure = true;
                 }
@@ -501,49 +501,47 @@ impl<'a> Normalize {
         if match len {
             0 if !zero_arg_throws_error => true,
             1 => match new_expr.arguments[0].as_expression() {
-                Some(Expression::ArrayExpression(array_expr)) => {
-                    if one_arg_array_throws_error {
-                        false
-                    } else if array_expr.elements.is_empty() {
-                        true
-                    } else {
-                        // A non-empty array literal is iterated via the built-in
-                        // array iterator (side-effect-free; element side effects are
-                        // preserved when the call is dropped). Only `Set`/`Map` accept
-                        // arbitrary entries: `Set` takes any values; `Map` requires
-                        // every entry to be an array literal (`new Map([1])` throws —
-                        // `1` is not iterable). `WeakSet`/`WeakMap` are excluded —
-                        // their keys must be objects, so `new WeakSet([1])` /
-                        // `new WeakMap([[1, 2]])` throw.
-                        match ident.name.as_str() {
-                            "Set" => true,
-                            "Map" => array_expr
-                                .elements
-                                .iter()
-                                .all(|el| matches!(el, ArrayExpressionElement::ArrayExpression(_))),
-                            _ => false,
+                Some(e) => match e.kind() {
+                    ExpressionKind::ArrayExpression(array_expr) => {
+                        if one_arg_array_throws_error {
+                            false
+                        } else if array_expr.elements.is_empty() {
+                            true
+                        } else {
+                            // A non-empty array literal is iterated via the built-in
+                            // array iterator (side-effect-free; element side effects are
+                            // preserved when the call is dropped). Only `Set`/`Map` accept
+                            // arbitrary entries: `Set` takes any values; `Map` requires
+                            // every entry to be an array literal (`new Map([1])` throws —
+                            // `1` is not iterable). `WeakSet`/`WeakMap` are excluded —
+                            // their keys must be objects, so `new WeakSet([1])` /
+                            // `new WeakMap([[1, 2]])` throw.
+                            match ident.name.as_str() {
+                                "Set" => true,
+                                "Map" => array_expr.elements.iter().all(|el| {
+                                    el.as_expression().is_some_and(Expression::is_array_expression)
+                                }),
+                                _ => false,
+                            }
                         }
                     }
-                }
-                Some(Expression::StringLiteral(str_lit)) => {
-                    // A string is an iterable of its characters. For constructors that
-                    // don't list `String` as throwing (e.g. `Set`, `AggregateError`,
-                    // `Number`) it is pure. `Map`/`WeakSet`/`WeakMap` list `String`
-                    // because their entries must be `[k, v]` pairs / object keys, so a
-                    // non-empty string throws -- but an empty string yields no entries
-                    // and is still pure. (`DataView` also lists `String` and throws even
-                    // on the empty string, as it needs an `ArrayBuffer`.)
-                    if one_arg_throws_error.contains(&ValueType::String) {
-                        str_lit.value.is_empty()
-                            && matches!(ident.name.as_str(), "Map" | "WeakSet" | "WeakMap")
-                    } else {
-                        true
+                    ExpressionKind::StringLiteral(str_lit) => {
+                        // A string is an iterable of its characters. For constructors that
+                        // don't list `String` as throwing (e.g. `Set`, `AggregateError`,
+                        // `Number`) it is pure. `Map`/`WeakSet`/`WeakMap` list `String`
+                        // because their entries must be `[k, v]` pairs / object keys, so a
+                        // non-empty string throws -- but an empty string yields no entries
+                        // and is still pure. (`DataView` also lists `String` and throws even
+                        // on the empty string, as it needs an `ArrayBuffer`.)
+                        if one_arg_throws_error.contains(&ValueType::String) {
+                            str_lit.value.is_empty()
+                                && matches!(ident.name.as_str(), "Map" | "WeakSet" | "WeakMap")
+                        } else {
+                            true
+                        }
                     }
-                }
-                Some(e) => {
-                    if let Expression::NewExpression(new_expr) = e {
-                        new_expr.pure
-                    } else {
+                    ExpressionKind::NewExpression(new_expr) => new_expr.pure,
+                    _ => {
                         let value_type = e.value_type(&ctx);
                         if value_type.is_undetermined() {
                             false
@@ -551,8 +549,8 @@ impl<'a> Normalize {
                             !one_arg_throws_error.contains(&value_type)
                         }
                     }
-                }
-                _ => false,
+                },
+                None => false,
             },
             _ => false,
         } {
@@ -583,14 +581,14 @@ impl<'a> Normalize {
         }) else {
             return;
         };
-        let key_is_unsafe = match member {
-            MemberExpression::StaticMemberExpression(e) => e.property.name == "__proto__",
-            MemberExpression::ComputedMemberExpression(e) => {
+        let key_is_unsafe = match member.kind() {
+            MemberExpressionKind::StaticMemberExpression(e) => e.property.name == "__proto__",
+            MemberExpressionKind::ComputedMemberExpression(e) => {
                 !PeepholeOptimizations::member_key_is_safe(&e.expression)
             }
             // Private fields can't be `__proto__` and aren't affected by the
             // prototype chain.
-            MemberExpression::PrivateFieldExpression(_) => false,
+            MemberExpressionKind::PrivateFieldExpression(_) => false,
         };
         Self::record_member_write_hazard(member.object(), key_is_unsafe, is_read_modify, ctx);
     }
@@ -626,7 +624,7 @@ impl<'a> Normalize {
         let mut object = object;
         let base = loop {
             let inner = object.get_inner_expression();
-            if let Expression::Identifier(ident) = inner {
+            if let Some(ident) = inner.as_identifier() {
                 break ident;
             }
             let Some(member) = inner.as_member_expression() else {

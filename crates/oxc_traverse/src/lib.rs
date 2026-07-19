@@ -127,7 +127,7 @@ mod compile_fail_tests;
 ///         // Read parent
 ///         if let Ancestor::BinaryExpressionRight(bin_expr_ref) = ctx.parent() {
 ///             // This is legal
-///             if let Expression::Identifier(id) = bin_expr_ref.left() {
+///             if let Some(id) = bin_expr_ref.left().as_identifier() {
 ///                 println!("left side is ID: {}", &id.name);
 ///             }
 ///

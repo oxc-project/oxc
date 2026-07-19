@@ -4,7 +4,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectPropertyKind},
+    ast::{ExpressionKind, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -127,8 +127,8 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
         ObjectPropertyKind::ObjectProperty(prop)
             if prop.key.is_specific_static_name("computed") =>
         {
-            match prop.value.get_inner_expression() {
-                Expression::ObjectExpression(obj) => Some(obj),
+            match prop.value.get_inner_expression().kind() {
+                ExpressionKind::ObjectExpression(obj) => Some(obj),
                 _ => None,
             }
         }

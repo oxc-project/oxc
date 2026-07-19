@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression,
+        Argument, AssignmentTarget, BindingPattern, CallExpression, ExpressionKind,
         SimpleAssignmentTarget, UnaryOperator,
     },
 };
@@ -68,8 +68,8 @@ impl Rule for PreferArrayFind {
             AstKind::ComputedMemberExpression(computed_member_expr) => {
                 // Zero index access
                 if computed_member_expr.expression.is_number_0()
-                    && let Expression::CallExpression(call_expr) =
-                        computed_member_expr.object.get_inner_expression()
+                    && let ExpressionKind::CallExpression(call_expr) =
+                        computed_member_expr.object.get_inner_expression().kind()
                     && is_filter_call(call_expr)
                     && !is_left_hand_side(node, ctx)
                 {
@@ -80,11 +80,12 @@ impl Rule for PreferArrayFind {
             }
             AstKind::CallExpression(call_expr) => {
                 if is_method_call(call_expr, None, Some(&["shift"]), Some(0), Some(0))
-                    && let Some(Expression::CallExpression(filter_call_expr)) = call_expr
+                    && let Some(filter_call_expr) = call_expr
                         .callee
                         .get_inner_expression()
                         .as_member_expression()
                         .map(|expression| expression.object().get_inner_expression())
+                        .and_then(|e| e.as_call_expression())
                     && is_filter_call(filter_call_expr)
                 {
                     ctx.diagnostic(prefer_array_find_diagnostic(
@@ -96,9 +97,9 @@ impl Rule for PreferArrayFind {
                 // `array.filter().at(-1)`
                 if is_method_call(call_expr, None, Some(&["at"]), Some(1), Some(1))
                     && call_expr.arguments.first().is_some_and(|arg| {
-                        arg.as_expression().is_some_and(|x| match x {
-                            Expression::NumericLiteral(_) if x.is_number_value(0.0) => true,
-                            Expression::UnaryExpression(u)
+                        arg.as_expression().is_some_and(|x| match x.kind() {
+                            ExpressionKind::NumericLiteral(_) if x.is_number_value(0.0) => true,
+                            ExpressionKind::UnaryExpression(u)
                                 if u.operator == UnaryOperator::UnaryNegation =>
                             {
                                 u.argument.is_number_value(1.0)
@@ -106,11 +107,12 @@ impl Rule for PreferArrayFind {
                             _ => false,
                         })
                     })
-                    && let Some(Expression::CallExpression(filter_call_expr)) = call_expr
+                    && let Some(filter_call_expr) = call_expr
                         .callee
                         .get_inner_expression()
                         .as_member_expression()
                         .map(|expression| expression.object().get_inner_expression())
+                        .and_then(|e| e.as_call_expression())
                     && is_filter_call(filter_call_expr)
                 {
                     ctx.diagnostic(prefer_array_find_diagnostic(
@@ -120,11 +122,12 @@ impl Rule for PreferArrayFind {
 
                 // `array.filter().pop()`
                 if is_method_call(call_expr, None, Some(&["pop"]), Some(0), Some(0))
-                    && let Some(Expression::CallExpression(filter_call_expr)) = call_expr
+                    && let Some(filter_call_expr) = call_expr
                         .callee
                         .get_inner_expression()
                         .as_member_expression()
                         .map(|expression| expression.object().get_inner_expression())
+                        .and_then(|e| e.as_call_expression())
                     && is_filter_call(filter_call_expr)
                 {
                     ctx.diagnostic(prefer_array_find_diagnostic(
@@ -138,7 +141,8 @@ impl Rule for PreferArrayFind {
                     && array_pat.elements.len() == 1
                     && array_pat.elements[0].is_some()
                     && array_pat.rest.is_none()
-                    && let Some(Expression::CallExpression(array_filter)) = &var_decl.init
+                    && let Some(array_filter) =
+                        var_decl.init.as_ref().and_then(|e| e.as_call_expression())
                     && is_filter_call(array_filter)
                 {
                     ctx.diagnostic(prefer_array_find_diagnostic(
@@ -147,7 +151,7 @@ impl Rule for PreferArrayFind {
                 }
 
                 // `const foo = array.filter(); foo[0]; [bar] = foo`
-                if let Some(Expression::CallExpression(call_expr)) = &var_decl.init
+                if let Some(call_expr) = var_decl.init.as_ref().and_then(|e| e.as_call_expression())
                     && is_filter_call(call_expr)
                     && !matches!(
                         ctx.nodes().ancestor_kinds(node.id()).nth(1),
@@ -220,7 +224,8 @@ impl Rule for PreferArrayFind {
                     && array_assignment_target.elements.len() == 1
                     && array_assignment_target.elements[0].is_some()
                     && array_assignment_target.rest.is_none()
-                    && let Expression::CallExpression(array_filter) = &assignment_expr.right
+                    && let ExpressionKind::CallExpression(array_filter) =
+                        assignment_expr.right.kind()
                     && is_filter_call(array_filter)
                 {
                     ctx.diagnostic(prefer_array_find_diagnostic(

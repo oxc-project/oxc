@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression},
-};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -89,7 +86,7 @@ impl Rule for PreferModernDomApis {
             return;
         };
 
-        let Expression::StaticMemberExpression(member_expr) = &call_expr.callee else {
+        let ExpressionKind::StaticMemberExpression(member_expr) = call_expr.callee.kind() else {
             return;
         };
         let method = member_expr.property.name.as_str();
@@ -100,7 +97,7 @@ impl Rule for PreferModernDomApis {
             Some(&["replaceChild", "insertBefore"]),
             Some(2),
             Some(2),
-        ) && matches!(member_expr.object, Expression::Identifier(_))
+        ) && member_expr.object.is_identifier()
             && !call_expr.optional
             && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
         {
@@ -112,7 +109,10 @@ impl Rule for PreferModernDomApis {
 
             // Reordering complex arguments can change evaluation semantics.
             let has_safe_arguments = call_expr.arguments.iter().all(|argument| {
-                matches!(argument, Argument::Identifier(identifier) if identifier.name != "undefined")
+                argument
+                    .as_expression()
+                    .and_then(|e| e.as_identifier())
+                    .is_some_and(|identifier| identifier.name != "undefined")
             });
 
             if has_safe_arguments && is_value_not_usable(node, ctx) {
@@ -137,7 +137,8 @@ impl Rule for PreferModernDomApis {
             Some(&["insertAdjacentText", "insertAdjacentElement"]),
             Some(2),
             Some(2),
-        ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
+        ) && let Some(lit) =
+            call_expr.arguments[0].as_expression().and_then(|e| e.as_string_literal())
             && let Some(preferred_method) = get_replacement_for_position(lit.value.as_str())
         {
             let diagnostic = prefer_modern_dom_apis_diagnostic(

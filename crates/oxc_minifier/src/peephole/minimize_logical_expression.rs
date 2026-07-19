@@ -10,7 +10,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::LogicalExpression(e) = expr else { return };
+        let Some(e) = expr.as_logical_expression_mut() else { return };
         if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
             ctx.replace_expression(expr, changed);
         }
@@ -48,7 +48,7 @@ impl<'a> PeepholeOptimizations {
         ) {
             return Some(new_expr);
         }
-        let Expression::LogicalExpression(left) = &mut expr.left else {
+        let Some(left) = expr.left.as_logical_expression_mut() else {
             return None;
         };
         if left.operator != op {
@@ -85,10 +85,8 @@ impl<'a> PeepholeOptimizations {
             Undefined,
         }
 
-        let (
-            Expression::BinaryExpression(left_binary_expr),
-            Expression::BinaryExpression(right_binary_expr),
-        ) = (left, right)
+        let (Some(left_binary_expr), Some(right_binary_expr)) =
+            (left.as_binary_expression_mut(), right.as_binary_expression_mut())
         else {
             return None;
         };
@@ -128,9 +126,7 @@ impl<'a> PeepholeOptimizations {
                 LeftPairValueResult::Null(_) => ctx.is_expression_undefined(a).then_some(None),
                 LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
             },
-            |b| {
-                if let Expression::Identifier(id) = b { Some(id) } else { None }
-            },
+            |b| b.as_identifier(),
         )?;
 
         if left_id_name != right_id.name {
@@ -166,31 +162,27 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        if let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::Identifier(read_id_ref),
-        ) = (assignment_target, expr)
+        if let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = assignment_target
+            && let Some(read_id_ref) = expr.as_identifier()
         {
             return write_id_ref.name == read_id_ref.name;
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
-            if let MemberExpression::ComputedMemberExpression(e) = write_expr
+            if let Some(e) = write_expr.as_computed_member_expression()
                 && !matches!(
-                    e.expression,
-                    Expression::StringLiteral(_) | Expression::NumericLiteral(_)
+                    e.expression.tag(),
+                    ExpressionTag::StringLiteral | ExpressionTag::NumericLiteral
                 )
             {
                 return false;
             }
-            let has_same_object = match &write_expr.object() {
+            let has_same_object = match write_expr.object().kind() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                Expression::Identifier(ident) => !ctx.is_global_reference(ident),
-                Expression::ThisExpression(_) => {
-                    expr.as_member_expression().is_some_and(|read_expr| {
-                        matches!(read_expr.object(), Expression::ThisExpression(_))
-                    })
-                }
+                ExpressionKind::Identifier(ident) => !ctx.is_global_reference(ident),
+                ExpressionKind::ThisExpression(_) => expr
+                    .as_member_expression()
+                    .is_some_and(|read_expr| read_expr.object().is_this_expression()),
                 _ => false,
             };
             if !has_same_object {
@@ -213,10 +205,10 @@ impl<'a> PeepholeOptimizations {
         if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators) {
             return;
         }
-        let Expression::LogicalExpression(e) = expr else { return };
-        if let Expression::SequenceExpression(sequence_expr) = &e.right {
-            let Some(Expression::AssignmentExpression(assignment_expr)) =
-                sequence_expr.expressions.last()
+        let Some(e) = expr.as_logical_expression_mut() else { return };
+        if let Some(sequence_expr) = e.right.as_sequence_expression() {
+            let Some(assignment_expr) =
+                sequence_expr.expressions.last().and_then(Expression::as_assignment_expression)
             else {
                 return;
             };
@@ -238,9 +230,9 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
-            let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
-            let Some(Expression::AssignmentExpression(mut assignment_expr)) =
-                sequence_expr.expressions.pop()
+            let Some(sequence_expr) = e.right.as_sequence_expression_mut() else { return };
+            let Some(mut assignment_expr) =
+                sequence_expr.expressions.pop().and_then(Expression::into_assignment_expression)
             else {
                 unreachable!()
             };
@@ -260,7 +252,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let Expression::AssignmentExpression(assignment_expr) = &e.right else {
+        let Some(assignment_expr) = e.right.as_assignment_expression() else {
             return;
         };
         if assignment_expr.operator != AssignmentOperator::Assign {
@@ -275,7 +267,7 @@ impl<'a> PeepholeOptimizations {
         Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
 
         let span = e.span;
-        let Expression::AssignmentExpression(assignment_expr) = &mut e.right else {
+        let Some(assignment_expr) = e.right.as_assignment_expression_mut() else {
             return;
         };
         assignment_expr.span = span;
@@ -307,12 +299,10 @@ impl<'a> PeepholeOptimizations {
                 reference.flags_mut().insert(ReferenceFlags::Read);
                 return;
             }
-            AssignmentTarget::StaticMemberExpression(e) => &e.object,
-            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
-            AssignmentTarget::PrivateFieldExpression(e) => &e.object,
+            AssignmentTarget::MemberExpression(e) => e.object(),
             _ => return,
         };
-        if let Expression::Identifier(ident) = object.get_inner_expression()
+        if let Some(ident) = object.get_inner_expression().as_identifier()
             && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
         {
             ctx.state.symbols.record_member_write_effect(symbol_id, MemberWriteEffect::Hazard);

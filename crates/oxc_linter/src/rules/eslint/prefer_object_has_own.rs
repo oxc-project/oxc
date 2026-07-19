@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression},
+    ast::{ExpressionKind, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -108,7 +108,7 @@ impl Rule for PreferObjectHasOwn {
 fn has_left_hand_object(node: &MemberExpression) -> bool {
     let object = node.object().get_inner_expression();
 
-    if let Expression::ObjectExpression(object_expr) = object {
+    if let ExpressionKind::ObjectExpression(object_expr) = object.kind() {
         return object_expr.properties.is_empty();
     }
 
@@ -123,7 +123,7 @@ fn has_left_hand_object(node: &MemberExpression) -> bool {
         _ => object,
     };
 
-    if let Expression::Identifier(ident) = object_node_to_check.get_inner_expression() {
+    if let ExpressionKind::Identifier(ident) = object_node_to_check.get_inner_expression().kind() {
         return ident.name == "Object";
     }
 

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, match_member_expression},
+    ast::{Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -96,8 +96,8 @@ fn is_document_cookie_reference<'a, 'b>(
     expr: &'a Expression<'b>,
     ctx: &'a LintContext<'b>,
 ) -> bool {
-    match expr {
-        Expression::Identifier(ident) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => {
             if ident.name.as_str() != "document" {
                 let Some(var_decl) = get_declaration_of_variable(ident, ctx) else {
                     return false;
@@ -115,7 +115,9 @@ fn is_document_cookie_reference<'a, 'b>(
             }
             true
         }
-        match_member_expression!(Expression) => {
+        ExpressionKind::ComputedMemberExpression(_)
+        | ExpressionKind::StaticMemberExpression(_)
+        | ExpressionKind::PrivateFieldExpression(_) => {
             let member_expr = expr.to_member_expression();
             let Some(static_prop_name) = member_expr.static_property_name() else {
                 return false;
@@ -124,7 +126,8 @@ fn is_document_cookie_reference<'a, 'b>(
                 return false;
             }
 
-            if let Expression::Identifier(ident) = member_expr.object().without_parentheses()
+            if let ExpressionKind::Identifier(ident) =
+                member_expr.object().without_parentheses().kind()
                 && !GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
             {
                 return false;

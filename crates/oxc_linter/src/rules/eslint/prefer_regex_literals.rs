@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -188,10 +188,10 @@ fn is_unnecessarily_wrapped_regex_literal(
 }
 
 fn is_regex_literal_argument(argument: &Argument) -> bool {
-    matches!(
-        argument.as_expression().map(Expression::get_inner_expression),
-        Some(Expression::RegExpLiteral(_))
-    )
+    argument
+        .as_expression()
+        .map(Expression::get_inner_expression)
+        .is_some_and(oxc_ast::ast::Expression::is_reg_exp_literal)
 }
 
 fn is_static_string_argument(argument: &Argument, ctx: &LintContext) -> bool {
@@ -199,10 +199,10 @@ fn is_static_string_argument(argument: &Argument, ctx: &LintContext) -> bool {
         return false;
     };
 
-    match expr {
-        Expression::StringLiteral(_) => true,
-        Expression::TemplateLiteral(template) => template.is_no_substitution_template(),
-        Expression::TaggedTemplateExpression(tagged) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(_) => true,
+        ExpressionKind::TemplateLiteral(template) => template.is_no_substitution_template(),
+        ExpressionKind::TaggedTemplateExpression(tagged) => {
             tagged.quasi.is_no_substitution_template()
                 && is_string_raw_member_expression(&tagged.tag, ctx.scoping())
         }

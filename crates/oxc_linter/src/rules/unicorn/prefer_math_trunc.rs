@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference},
+    ast::{Expression, ExpressionKind, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{
@@ -66,15 +66,16 @@ impl Rule for PreferMathTrunc {
                 if !matches!(unary_expr.operator, UnaryOperator::BitwiseNot) {
                     return;
                 }
-                let Expression::UnaryExpression(inner_unary_expr) = &unary_expr.argument else {
+                let ExpressionKind::UnaryExpression(inner_unary_expr) = unary_expr.argument.kind()
+                else {
                     return;
                 };
                 if !matches!(inner_unary_expr.operator, UnaryOperator::BitwiseNot) {
                     return;
                 }
 
-                if let Expression::UnaryExpression(inner_inner_unary_expr) =
-                    &inner_unary_expr.argument
+                if let ExpressionKind::UnaryExpression(inner_inner_unary_expr) =
+                    inner_unary_expr.argument.kind()
                     && matches!(inner_inner_unary_expr.operator, UnaryOperator::BitwiseNot)
                 {
                     return;
@@ -83,7 +84,7 @@ impl Rule for PreferMathTrunc {
                 (UnaryOperator::BitwiseNot.as_str(), inner_unary_expr.argument.span(), false, false)
             }
             AstKind::BinaryExpression(bin_expr) => {
-                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
+                let ExpressionKind::NumericLiteral(right_num_lit) = bin_expr.right.kind() else {
                     return;
                 };
                 if right_num_lit.value != 0.0 {
@@ -103,7 +104,8 @@ impl Rule for PreferMathTrunc {
                 (bin_expr.operator.as_str(), bin_expr.left.span(), false, false)
             }
             AstKind::AssignmentExpression(assignment_expr) => {
-                let Expression::NumericLiteral(right_num_lit) = &assignment_expr.right else {
+                let ExpressionKind::NumericLiteral(right_num_lit) = assignment_expr.right.kind()
+                else {
                     return;
                 };
 

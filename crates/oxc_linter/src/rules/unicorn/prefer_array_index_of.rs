@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, FormalParameter, Statement},
+    ast::{Expression, ExpressionKind, FormalParameter, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -81,7 +81,7 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
     fn is_simple_compare(arg: &FormalParameter, expr: &Expression, ctx: &LintContext) -> bool {
         let Some(ident) = arg.pattern.get_binding_identifier() else { return false };
 
-        if let Expression::BinaryExpression(expr) = expr
+        if let ExpressionKind::BinaryExpression(expr) = expr.kind()
             && ctx.symbol_references(ident.symbol_id()).count() == 1
             && expr.operator == BinaryOperator::StrictEquality
             && (expr
@@ -98,8 +98,8 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
         false
     }
 
-    match expr.get_inner_expression() {
-        Expression::ArrowFunctionExpression(arrow_function)
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::ArrowFunctionExpression(arrow_function)
             if !arrow_function.r#async && arrow_function.params.items.len() == 1 =>
         {
             let query = if arrow_function.expression {
@@ -120,7 +120,7 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
 
             query.is_some_and(|expr| is_simple_compare(&arrow_function.params.items[0], expr, ctx))
         }
-        Expression::FunctionExpression(function)
+        ExpressionKind::FunctionExpression(function)
             if !function.r#async && !function.generator && function.params.items.len() == 1 =>
         {
             let query = if let Some(Statement::ReturnStatement(ret)) =

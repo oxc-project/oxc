@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -78,8 +81,11 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
             return;
         }
 
-        let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
-        if let Expression::Identifier(ident) = ts_non_null_expr.expression.without_parentheses()
+        let ExpressionKind::TSNonNullExpression(ts_non_null_expr) = expr.left.kind() else {
+            return;
+        };
+        if let ExpressionKind::Identifier(ident) =
+            ts_non_null_expr.expression.without_parentheses().kind()
             && let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), ident.name)
             && !has_assignment_before_node(symbol_id, ctx, expr.span.end)
         {
@@ -122,9 +128,9 @@ fn collect_non_null_assertion_spans(
 }
 
 fn collect_non_null_assertion_spans_from_expression(expr: &Expression, spans: &mut Vec<Span>) {
-    match expr {
-        Expression::TSNonNullExpression(expr) => collect_non_null_assertion_spans(expr, spans),
-        Expression::ParenthesizedExpression(expr) => {
+    match expr.kind() {
+        ExpressionKind::TSNonNullExpression(expr) => collect_non_null_assertion_spans(expr, spans),
+        ExpressionKind::ParenthesizedExpression(expr) => {
             collect_non_null_assertion_spans_from_expression(&expr.expression, spans);
         }
         _ => {}

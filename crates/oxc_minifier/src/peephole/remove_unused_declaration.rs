@@ -44,9 +44,9 @@ impl<'a> PeepholeOptimizations {
         symbol_id: SymbolId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        let Some(function_scope_id) = decl.init.as_ref().and_then(|init| match init {
-            Expression::FunctionExpression(function) => function.scope_id.get(),
-            Expression::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
+        let Some(function_scope_id) = decl.init.as_ref().and_then(|init| match init.kind() {
+            ExpressionKind::FunctionExpression(function) => function.scope_id.get(),
+            ExpressionKind::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
             _ => None,
         }) else {
             return false;
@@ -65,11 +65,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        match expr {
-            Expression::ArrayExpression(_)
-            | Expression::StringLiteral(_)
-            | Expression::TemplateLiteral(_) => true,
-            Expression::Identifier(ident) => {
+        match expr.kind() {
+            ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::StringLiteral(_)
+            | ExpressionKind::TemplateLiteral(_) => true,
+            ExpressionKind::Identifier(ident) => {
                 ident.name == "arguments"
                     && ctx.is_global_reference(ident)
                     // arguments can be reassigned in non-strict mode

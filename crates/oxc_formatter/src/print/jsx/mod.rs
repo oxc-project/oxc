@@ -191,12 +191,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
 
                 write!(f, ["}"]);
             } else {
-                let is_conditional_or_binary = matches!(
-                    self.expression,
-                    JSXExpression::ConditionalExpression(_)
-                        | JSXExpression::LogicalExpression(_)
-                        | JSXExpression::BinaryExpression(_)
-                );
+                let is_conditional_or_binary = self.expression.as_expression().is_some_and(|e| {
+                    matches!(
+                        e.tag(),
+                        ExpressionTag::ConditionalExpression
+                            | ExpressionTag::LogicalExpression
+                            | ExpressionTag::BinaryExpression
+                    )
+                });
 
                 let should_inline = !has_comment(f)
                     && (is_conditional_or_binary || should_inline_jsx_expression(self));
@@ -274,37 +276,39 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
 ///     } />
 /// ```
 pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> bool {
-    match &container.expression {
-        JSXExpression::ArrayExpression(_)
-        | JSXExpression::ObjectExpression(_)
-        | JSXExpression::ArrowFunctionExpression(_)
-        | JSXExpression::CallExpression(_)
-        | JSXExpression::ImportExpression(_)
-        | JSXExpression::ImportMeta(_)
-        | JSXExpression::NewTarget(_)
-        | JSXExpression::FunctionExpression(_)
-        | JSXExpression::TemplateLiteral(_)
-        | JSXExpression::TaggedTemplateExpression(_) => true,
+    let JSXExpression::Expression(expression) = &container.expression else {
+        return false;
+    };
+    match expression.kind() {
+        ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::ArrowFunctionExpression(_)
+        | ExpressionKind::CallExpression(_)
+        | ExpressionKind::ImportExpression(_)
+        | ExpressionKind::ImportMeta(_)
+        | ExpressionKind::NewTarget(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::TemplateLiteral(_)
+        | ExpressionKind::TaggedTemplateExpression(_) => true,
         // A call wrapped in `?.` chains and/or `!` assertions still inlines.
-        JSXExpression::ChainExpression(_) | JSXExpression::TSNonNullExpression(_) => {
-            as_call_expression_without_chain_wrappers(container.expression.to_expression())
-                .is_some()
+        ExpressionKind::ChainExpression(_) | ExpressionKind::TSNonNullExpression(_) => {
+            as_call_expression_without_chain_wrappers(expression).is_some()
         }
-        JSXExpression::AwaitExpression(await_expression) => {
+        ExpressionKind::AwaitExpression(await_expression) => {
             matches!(
-                await_expression.argument,
-                Expression::ArrayExpression(_)
-                    | Expression::ObjectExpression(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::CallExpression(_)
-                    | Expression::ImportExpression(_)
-                    | Expression::ImportMeta(_)
-                    | Expression::NewTarget(_)
-                    | Expression::FunctionExpression(_)
-                    | Expression::TemplateLiteral(_)
-                    | Expression::TaggedTemplateExpression(_)
-                    | Expression::JSXElement(_)
-                    | Expression::JSXFragment(_)
+                await_expression.argument.tag(),
+                ExpressionTag::ArrayExpression
+                    | ExpressionTag::ObjectExpression
+                    | ExpressionTag::ArrowFunctionExpression
+                    | ExpressionTag::CallExpression
+                    | ExpressionTag::ImportExpression
+                    | ExpressionTag::ImportMeta
+                    | ExpressionTag::NewTarget
+                    | ExpressionTag::FunctionExpression
+                    | ExpressionTag::TemplateLiteral
+                    | ExpressionTag::TaggedTemplateExpression
+                    | ExpressionTag::JSXElement
+                    | ExpressionTag::JSXFragment
             )
         }
         _ => false,

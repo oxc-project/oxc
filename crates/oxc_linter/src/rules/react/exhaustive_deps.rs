@@ -10,10 +10,10 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
-        ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
-        StaticMemberExpression, VariableDeclarationKind, VariableDeclarator,
+        ChainElement, Expression, ExpressionKind, ExpressionTag, FormalParameters, Function,
+        FunctionBody, IdentifierReference, StaticMemberExpression, VariableDeclarationKind,
+        VariableDeclarator,
     },
-    match_expression,
 };
 use oxc_ast_visit::{
     VisitJs,
@@ -331,26 +331,26 @@ impl Rule for ExhaustiveDeps {
                 ctx.diagnostic(unknown_dependencies_diagnostic(hook_name, call_expr.callee.span()));
                 None
             }
-            match_expression!(Argument) => {
-                match callback_node.to_expression().get_inner_expression() {
-                    Expression::ArrowFunctionExpression(arrow_function_expression) => {
+            Argument::Expression(_) => {
+                match callback_node.to_expression().get_inner_expression().kind() {
+                    ExpressionKind::ArrowFunctionExpression(arrow_function_expression) => {
                         Some(CallbackNode::ArrowFunction(arrow_function_expression))
                     }
-                    Expression::FunctionExpression(function_expression) => {
+                    ExpressionKind::FunctionExpression(function_expression) => {
                         Some(CallbackNode::Function(function_expression))
                     }
-                    Expression::Identifier(ident) => {
+                    ExpressionKind::Identifier(ident) => {
                         if let Some(dependencies_node) = dependencies_node {
                             // The function passed as a callback is not written inline.
                             // But perhaps it's in the dependencies array?
                             if dependencies_node.as_expression().is_some_and(|v| {
-                                if let Expression::ArrayExpression(array_expr) =
-                                    v.get_inner_expression()
+                                if let ExpressionKind::ArrayExpression(array_expr) =
+                                    v.get_inner_expression().kind()
                                 {
                                     array_expr.elements.iter().any(|elem| {
                                         elem.as_expression().is_some_and(|elem| {
-                                            if let Expression::Identifier(array_el_ident) =
-                                                elem.get_inner_expression()
+                                            if let ExpressionKind::Identifier(array_el_ident) =
+                                                elem.get_inner_expression().kind()
                                             {
                                                 array_el_ident.name == ident.name
                                             } else {
@@ -378,17 +378,17 @@ impl Rule for ExhaustiveDeps {
                                 match decl.kind() {
                                     AstKind::VariableDeclarator(var_decl) => {
                                         if let Some(init) = &var_decl.init {
-                                            match init {
-                                                Expression::FunctionExpression(function) => {
+                                            match init.kind() {
+                                                ExpressionKind::FunctionExpression(function) => {
                                                     Some(CallbackNode::Function(function))
                                                 }
-                                                Expression::ArrowFunctionExpression(function) => {
-                                                    Some(CallbackNode::ArrowFunction(function))
-                                                }
+                                                ExpressionKind::ArrowFunctionExpression(
+                                                    function,
+                                                ) => Some(CallbackNode::ArrowFunction(function)),
                                                 _ => {
                                                     ctx.diagnostic(missing_dependency_diagnostic(
                                                         hook_name,
-                                                        &[Name::from(ident.as_ref())],
+                                                        &[Name::from(ident)],
                                                         dependencies_node.span(),
                                                         None,
                                                     ));
@@ -405,7 +405,7 @@ impl Rule for ExhaustiveDeps {
                                     AstKind::FormalParameter(_) => {
                                         ctx.diagnostic(missing_dependency_diagnostic(
                                             hook_name,
-                                            &[Name::from(ident.as_ref())],
+                                            &[Name::from(ident)],
                                             dependencies_node.span(),
                                             None,
                                         ));
@@ -448,11 +448,11 @@ impl Rule for ExhaustiveDeps {
                 ));
                 None
             }
-            match_expression!(Argument) => {
+            Argument::Expression(_) => {
                 let inner_expr = node.to_expression().get_inner_expression();
-                match inner_expr {
-                    Expression::ArrayExpression(array_expr) => Some(array_expr),
-                    Expression::Identifier(ident)
+                match inner_expr.kind() {
+                    ExpressionKind::ArrayExpression(array_expr) => Some(array_expr),
+                    ExpressionKind::Identifier(ident)
                         if ident.name == "undefined"
                             && ctx.is_reference_to_global_variable(ident) =>
                     {
@@ -483,7 +483,9 @@ impl Rule for ExhaustiveDeps {
 
         if is_effect {
             for r#ref in refs_inside_cleanups {
-                if let Expression::Identifier(ident) = r#ref.object.get_inner_expression() {
+                if let ExpressionKind::Identifier(ident) =
+                    r#ref.object.get_inner_expression().kind()
+                {
                     let reference = ctx.scoping().get_reference(ident.reference_id());
                     let has_write_reference = reference.symbol_id().is_some_and(|symbol_id| {
                         ctx.semantic().symbol_references(symbol_id).any(|reference| {
@@ -541,7 +543,7 @@ impl Rule for ExhaustiveDeps {
                     ));
                     None
                 }
-                match_expression!(ArrayExpressionElement) => {
+                ArrayExpressionElement::Expression(_) => {
                     let elem = elem.to_expression().get_inner_expression();
 
                     if let Ok(dep) = analyze_property_chain(elem, ctx) {
@@ -669,7 +671,7 @@ impl Rule for ExhaustiveDeps {
                     dependencies_node.span(),
                     mutable_ref_dependency.as_deref(),
                 ),
-                |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node.as_ref()),
+                |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node),
             );
         }
 
@@ -677,7 +679,8 @@ impl Rule for ExhaustiveDeps {
             if let Some(symbol_id) = dep.symbol_id
                 && let AstKind::VariableDeclarator(var_decl) =
                     ctx.semantic().symbol_declaration(symbol_id).kind()
-                && let Some(Expression::CallExpression(call_expr)) = &var_decl.init
+                && let Some(call_expr) =
+                    var_decl.init.as_ref().and_then(Expression::as_call_expression)
                 && let Some(name) = func_call_without_react_namespace(call_expr)
                 && name == "useEffectEvent"
             {
@@ -759,28 +762,28 @@ fn is_symbol_declaration_referentially_unique(symbol_id: SymbolId, ctx: &LintCon
 }
 
 fn is_expression_referentially_unique(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::ArrayExpression(_)
-        | Expression::ObjectExpression(_)
-        | Expression::ArrowFunctionExpression(_)
-        | Expression::FunctionExpression(_)
-        | Expression::ClassExpression(_)
-        | Expression::NewExpression(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_) => true,
-        Expression::ConditionalExpression(conditional) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::ArrowFunctionExpression(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::ClassExpression(_)
+        | ExpressionKind::NewExpression(_)
+        | ExpressionKind::RegExpLiteral(_)
+        | ExpressionKind::JSXElement(_)
+        | ExpressionKind::JSXFragment(_) => true,
+        ExpressionKind::ConditionalExpression(conditional) => {
             is_expression_referentially_unique(&conditional.consequent)
                 || is_expression_referentially_unique(&conditional.alternate)
         }
-        Expression::LogicalExpression(logical) => {
+        ExpressionKind::LogicalExpression(logical) => {
             is_expression_referentially_unique(&logical.left)
                 || is_expression_referentially_unique(&logical.right)
         }
-        Expression::BinaryExpression(bin_expr) => {
+        ExpressionKind::BinaryExpression(bin_expr) => {
             is_expression_referentially_unique(&bin_expr.right)
         }
-        Expression::AssignmentExpression(assignment) => {
+        ExpressionKind::AssignmentExpression(assignment) => {
             is_expression_referentially_unique(&assignment.right)
         }
         _ => false,
@@ -842,8 +845,8 @@ impl ExhaustiveDeps {
 }
 
 fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
-    match expr {
-        Expression::StaticMemberExpression(member) => {
+    match expr.kind() {
+        ExpressionKind::StaticMemberExpression(member) => {
             if member
                 .object
                 .get_identifier_reference()
@@ -853,7 +856,7 @@ fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'
             }
             None
         }
-        Expression::Identifier(ident) => Some(ident.name.as_str()),
+        ExpressionKind::Identifier(ident) => Some(ident.name.as_str()),
         _ => None,
     }
 }
@@ -937,8 +940,8 @@ fn analyze_property_chain<'a, 'b>(
     expr: &'b Expression<'a>,
     semantic: &'b Semantic<'a>,
 ) -> Result<Option<Dependency<'a>>, ()> {
-    match expr.get_inner_expression() {
-        Expression::Identifier(ident) => Ok(Some(Dependency {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::Identifier(ident) => Ok(Some(Dependency {
             span: ident.span(),
             name: ident.name.into(),
             reference_id: ident.reference_id(),
@@ -946,10 +949,12 @@ fn analyze_property_chain<'a, 'b>(
             symbol_id: semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
         })),
         // TODO; is this correct?
-        Expression::JSXElement(_) => Ok(None),
-        Expression::StaticMemberExpression(expr) => concat_members(expr, semantic),
-        Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
-            ChainElement::StaticMemberExpression(expr) => concat_members(expr, semantic),
+        ExpressionKind::JSXElement(_) => Ok(None),
+        ExpressionKind::StaticMemberExpression(expr) => concat_members(expr, semantic),
+        ExpressionKind::ChainExpression(chain_expr) => match &chain_expr.expression {
+            ChainElement::MemberExpression(member) => member
+                .as_static_member_expression()
+                .map_or(Err(()), |expr| concat_members(expr, semantic)),
             _ => Err(()),
         },
         _ => Err(()),
@@ -1081,9 +1086,9 @@ fn is_stable_value<'a, 'b>(
 
             {
                 // if the variables is a function, check whether the function is stable
-                let function_body = match init.get_inner_expression() {
-                    Expression::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
-                    Expression::FunctionExpression(func) => func.body.as_ref(),
+                let function_body = match init.get_inner_expression().kind() {
+                    ExpressionKind::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
+                    ExpressionKind::FunctionExpression(func) => func.body.as_ref(),
                     _ => None,
                 };
                 if let Some(function_body) = function_body {
@@ -1103,18 +1108,19 @@ fn is_stable_value<'a, 'b>(
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
             if declaration.kind == VariableDeclarationKind::Const
                 && (matches!(
-                    init.get_inner_expression(),
-                    Expression::BooleanLiteral(_)
-                        | Expression::NullLiteral(_)
-                        | Expression::NumericLiteral(_)
-                        | Expression::BigIntLiteral(_)
-                        | Expression::StringLiteral(_)
+                    init.get_inner_expression().tag(),
+                    ExpressionTag::BooleanLiteral
+                        | ExpressionTag::NullLiteral
+                        | ExpressionTag::NumericLiteral
+                        | ExpressionTag::BigIntLiteral
+                        | ExpressionTag::StringLiteral
                 ))
             {
                 return true;
             }
 
-            let Expression::CallExpression(init_expr) = init.get_inner_expression() else {
+            let ExpressionKind::CallExpression(init_expr) = init.get_inner_expression().kind()
+            else {
                 return false;
             };
 
@@ -1210,11 +1216,11 @@ fn is_function_stable<'a, 'b>(
 fn func_call_without_react_namespace<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a str> {
     let inner_exp = call_expr.callee.get_inner_expression();
 
-    if let Expression::Identifier(ident) = inner_exp {
+    if let ExpressionKind::Identifier(ident) = inner_exp.kind() {
         return Some(&ident.name);
     }
 
-    let Expression::StaticMemberExpression(member) = inner_exp else {
+    let ExpressionKind::StaticMemberExpression(member) = inner_exp.kind() else {
         return None;
     };
 
@@ -1403,9 +1409,7 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
 
         // consider `useEffect(() => { console.log(props.foo().foo.bar); }, [props.foo]);`
         // we don't care about `foo.bar`, only `props.foo`
-        if matches!(it.object.get_inner_expression(), Expression::CallExpression(_))
-            || self.skip_reporting_dependency
-        {
+        if it.object.get_inner_expression().is_call_expression() || self.skip_reporting_dependency {
             self.visit_expression(&it.object);
             return;
         }
@@ -1530,7 +1534,9 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(Expression::CallExpression(call_expr)) = &var_decl.init else {
+                    let Some(call_expr) =
+                        var_decl.init.as_ref().and_then(Expression::as_call_expression)
+                    else {
                         return;
                     };
 

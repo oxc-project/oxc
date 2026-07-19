@@ -207,16 +207,15 @@ impl<'a> PeepholeOptimizations {
                                 .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
                             // "if (!a) return b; return c;" => "return a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
+                            if let Some(unary_expr) = prev_if.test.as_unary_expression_mut()
                                 && unary_expr.operator.is_not()
                             {
                                 prev_if.test = unary_expr.argument.take_in(ctx);
                                 std::mem::swap(&mut left, &mut right);
                             }
 
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
+                            let argument = if prev_if.test.is_sequence_expression() {
+                                let sequence_expr = prev_if.test.to_sequence_expression_mut();
                                 // "if (a, b) return c; return d;" => "return a, b ? c : d;"
                                 let test = sequence_expr.expressions.pop().unwrap();
                                 let mut b = Self::minimize_conditional(
@@ -303,16 +302,15 @@ impl<'a> PeepholeOptimizations {
                             let mut right = last_throw.unbox().argument;
 
                             // "if (!a) throw b; throw c;" => "throw a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
+                            if let Some(unary_expr) = prev_if.test.as_unary_expression_mut()
                                 && unary_expr.operator.is_not()
                             {
                                 prev_if.test = unary_expr.argument.take_in(ctx);
                                 std::mem::swap(&mut left, &mut right);
                             }
 
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
+                            let argument = if prev_if.test.is_sequence_expression() {
+                                let sequence_expr = prev_if.test.to_sequence_expression_mut();
                                 // "if (a, b) throw c; throw d;" => "throw a, b ? c : d;"
                                 let test = sequence_expr.expressions.pop().unwrap();
                                 let mut b = Self::minimize_conditional(
@@ -349,7 +347,7 @@ impl<'a> PeepholeOptimizations {
     fn conditional_expression_count_exceeded(expr: &Expression<'a>) -> bool {
         let mut depth = 0u16;
         let mut current = expr;
-        while let Expression::ConditionalExpression(c) = current {
+        while let Some(c) = current.as_conditional_expression() {
             depth += 1;
             if depth == 500 {
                 return true;
@@ -410,13 +408,15 @@ impl<'a> PeepholeOptimizations {
     ) -> Expression<'a> {
         let a = a.take_in(ctx);
         let b = b.take_in(ctx);
-        if let Expression::SequenceExpression(mut sequence_expr) = a {
+        if a.is_sequence_expression() {
+            let mut sequence_expr = a.into_sequence_expression().unwrap();
             // `(a, b); c`
             sequence_expr.expressions.push(b);
             return Expression::SequenceExpression(sequence_expr);
         }
         let span = a.span();
-        let exprs = if let Expression::SequenceExpression(sequence_expr) = b {
+        let exprs = if b.is_sequence_expression() {
+            let sequence_expr = b.into_sequence_expression().unwrap();
             // `a; (b, c)`
             ArenaVec::from_iter_in(std::iter::once(a).chain(sequence_expr.unbox().expressions), ctx)
         } else {
@@ -560,9 +560,9 @@ impl<'a> PeepholeOptimizations {
     /// Whether an expression is or contains a `super()` call at the top level
     /// (i.e., in a sequence expression, but not nested inside conditionals/functions).
     fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
-        match expr {
+        match expr.kind() {
             _ if expr.is_super_call_expression() => true,
-            Expression::SequenceExpression(seq) => {
+            ExpressionKind::SequenceExpression(seq) => {
                 seq.expressions.iter().any(Expression::is_super_call_expression)
             }
             _ => false,
@@ -586,7 +586,7 @@ impl<'a> PeepholeOptimizations {
         // Walk backwards through preceding sibling statements looking for `super()`.
         // Only consider top-level expression statements — `super()` inside `if`/loops
         // is conditional and doesn't guarantee `this` is initialized.
-        if matches!(expr_stmt.expression, Expression::ThisExpression(_))
+        if expr_stmt.expression.is_this_expression()
             && Self::this_is_inside_derived_constructor(ctx)
             && result.iter().rev().any(|stmt| {
                 matches!(
@@ -611,8 +611,8 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
         // "var a; a = b();" => "var a = b();"
-        match &mut expr_stmt.expression {
-            Expression::AssignmentExpression(assign_expr) => {
+        match expr_stmt.expression.kind_mut() {
+            ExpressionKindMut::AssignmentExpression(assign_expr) => {
                 let merged = Self::merge_assignment_to_declaration(assign_expr, result, ctx);
                 if merged {
                     let dropped = Statement::ExpressionStatement(expr_stmt);
@@ -620,14 +620,14 @@ impl<'a> PeepholeOptimizations {
                     return;
                 }
             }
-            Expression::SequenceExpression(sequence_expr)
+            ExpressionKindMut::SequenceExpression(sequence_expr)
                 if result
                     .last()
                     .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_))) =>
             {
                 let first_non_merged_index =
                     sequence_expr.expressions.iter_mut().position(|expr| {
-                        if let Expression::AssignmentExpression(assign_expr) = expr {
+                        if let Some(assign_expr) = expr.as_assignment_expression_mut() {
                             !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
                         } else {
                             true
@@ -1075,8 +1075,7 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     );
                 }
-                match_expression!(ForStatementInit) => {
-                    let init = init.to_expression_mut();
+                ForStatementInit::Expression(init) => {
                     Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
                 }
             }
@@ -1511,7 +1510,7 @@ impl<'a> PeepholeOptimizations {
     /// reading `v` before the await). See [`Self::is_tdz_closed_over_read`].
     fn member_object_blocks_reorder(object: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         Self::is_expression_that_reference_may_change(object, ctx)
-            || matches!(object, Expression::Identifier(id)
+            || matches!(object.kind(), ExpressionKind::Identifier(id)
                 if ctx
                     .scoping()
                     .get_reference(id.reference_id())
@@ -1531,8 +1530,8 @@ impl<'a> PeepholeOptimizations {
         replacement_has_side_effect: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<bool> {
-        match target_expr {
-            Expression::Identifier(id) => {
+        match target_expr.kind_mut() {
+            ExpressionKindMut::Identifier(id) => {
                 if id.name == search_for {
                     // Preserve the span of the target identifier so that comments
                     // attached to it (via `attached_to`) remain correctly associated
@@ -1562,7 +1561,7 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
             }
-            Expression::AwaitExpression(await_expr) => {
+            ExpressionKindMut::AwaitExpression(await_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut await_expr.argument,
                     search_for,
@@ -1573,7 +1572,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::YieldExpression(yield_expr) => {
+            ExpressionKindMut::YieldExpression(yield_expr) => {
                 if let Some(argument) = &mut yield_expr.argument
                     && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         argument,
@@ -1586,7 +1585,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::ImportExpression(import_expr) => {
+            ExpressionKindMut::ImportExpression(import_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut import_expr.source,
                     search_for,
@@ -1605,7 +1604,7 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
             }
-            Expression::UnaryExpression(unary_expr) => {
+            ExpressionKindMut::UnaryExpression(unary_expr) => {
                 if unary_expr.operator != UnaryOperator::Delete
                     && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut unary_expr.argument,
@@ -1618,7 +1617,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::StaticMemberExpression(member_expr) => {
+            ExpressionKindMut::StaticMemberExpression(member_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut member_expr.object,
                     search_for,
@@ -1629,7 +1628,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::BinaryExpression(binary_expr) => {
+            ExpressionKindMut::BinaryExpression(binary_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut binary_expr.left,
                     search_for,
@@ -1649,7 +1648,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::AssignmentExpression(assign_expr) => {
+            ExpressionKindMut::AssignmentExpression(assign_expr) => {
                 if assign_expr.left.may_have_side_effects(ctx) {
                     // Do not reorder past a side effect in an assignment target, as that may
                     // change the replacement value. For example, "fn()" may change "a" here:
@@ -1683,14 +1682,8 @@ impl<'a> PeepholeOptimizations {
                     // ```
                     let may_depend_on_side_effect = match &assign_expr.left {
                         AssignmentTarget::AssignmentTargetIdentifier(_) => false,
-                        AssignmentTarget::ComputedMemberExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
-                        }
-                        AssignmentTarget::PrivateFieldExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
-                        }
-                        AssignmentTarget::StaticMemberExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
+                        AssignmentTarget::MemberExpression(member_expr) => {
+                            Self::member_object_blocks_reorder(member_expr.object(), ctx)
                         }
                         AssignmentTarget::ArrayAssignmentTarget(_)
                         | AssignmentTarget::ObjectAssignmentTarget(_)
@@ -1715,7 +1708,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::LogicalExpression(logical_expr) => {
+            ExpressionKindMut::LogicalExpression(logical_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut logical_expr.left,
                     search_for,
@@ -1739,7 +1732,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::PrivateInExpression(private_in_expr) => {
+            ExpressionKindMut::PrivateInExpression(private_in_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut private_in_expr.right,
                     search_for,
@@ -1750,7 +1743,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::ConditionalExpression(cond_expr) => {
+            ExpressionKindMut::ConditionalExpression(cond_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut cond_expr.test,
                     search_for,
@@ -1796,7 +1789,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
-            Expression::ComputedMemberExpression(member_expr) => {
+            ExpressionKindMut::ComputedMemberExpression(member_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut member_expr.object,
                     search_for,
@@ -1820,7 +1813,7 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::PrivateFieldExpression(private_field_expr) => {
+            ExpressionKindMut::PrivateFieldExpression(private_field_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut private_field_expr.object,
                     search_for,
@@ -1831,10 +1824,10 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::CallExpression(call_expr)
+            ExpressionKindMut::CallExpression(call_expr)
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
-                    || matches!(replacement, Expression::ChainExpression(_)))
+                    || replacement.is_chain_expression())
                     && call_expr.callee.is_identifier_reference())
                 => {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1867,10 +1860,10 @@ impl<'a> PeepholeOptimizations {
                                     // spread element may have sideeffects
                                     return Some(false);
                                 }
-                                match_expression!(Argument) => {
+                                Argument::Expression(arg) => {
                                     if let Some(changed) =
                                         Self::substitute_single_use_symbol_in_expression(
-                                            arg.to_expression_mut(),
+                                            arg,
                                             search_for,
                                             replacement,
                                             replacement_has_side_effect,
@@ -1884,10 +1877,10 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
-            Expression::NewExpression(new_expr)
+            ExpressionKindMut::NewExpression(new_expr)
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
-                    || matches!(replacement, Expression::ChainExpression(_)))
+                    || replacement.is_chain_expression())
                     && new_expr.callee.is_identifier_reference())
                 => {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1917,10 +1910,10 @@ impl<'a> PeepholeOptimizations {
                                 // spread element may have sideeffects
                                 return Some(false);
                             }
-                            match_expression!(Argument) => {
+                            Argument::Expression(arg) => {
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
-                                        arg.to_expression_mut(),
+                                        arg,
                                         search_for,
                                         replacement,
                                         replacement_has_side_effect,
@@ -1933,7 +1926,7 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
-            Expression::ArrayExpression(array_expr) => {
+            ExpressionKindMut::ArrayExpression(array_expr) => {
                 for elem in &mut array_expr.elements {
                     match elem {
                         ArrayExpressionElement::SpreadElement(spread_elem) => {
@@ -1950,9 +1943,9 @@ impl<'a> PeepholeOptimizations {
                             return Some(false);
                         }
                         ArrayExpressionElement::Elision(_) => {}
-                        match_expression!(ArrayExpressionElement) => {
+                        ArrayExpressionElement::Expression(elem) => {
                             if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
-                                elem.to_expression_mut(),
+                                elem,
                                 search_for,
                                 replacement,
                                 replacement_has_side_effect,
@@ -1964,7 +1957,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
-            Expression::ObjectExpression(obj_expr) => {
+            ExpressionKindMut::ObjectExpression(obj_expr) => {
                 for prop in &mut obj_expr.properties {
                     match prop {
                         ObjectPropertyKind::ObjectProperty(prop) => {
@@ -2016,7 +2009,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
-            Expression::TaggedTemplateExpression(tagged_expr) => {
+            ExpressionKindMut::TaggedTemplateExpression(tagged_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut tagged_expr.tag,
                     search_for,
@@ -2038,7 +2031,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
-            Expression::TemplateLiteral(template_literal) => {
+            ExpressionKindMut::TemplateLiteral(template_literal) => {
                 for elem in &mut template_literal.expressions {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         elem,
@@ -2051,7 +2044,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
-            Expression::ChainExpression(chain_expr) => {
+            ExpressionKindMut::ChainExpression(chain_expr) => {
                 let mut expr = Expression::from(chain_expr.expression.take_in(ctx));
                 let changed = Self::substitute_single_use_symbol_in_expression(
                     &mut expr,
@@ -2063,7 +2056,7 @@ impl<'a> PeepholeOptimizations {
                 chain_expr.expression = expr.into_chain_element().expect("should be chain element");
                 return changed;
             }
-            Expression::SequenceExpression(sequence_expr) => {
+            ExpressionKindMut::SequenceExpression(sequence_expr) => {
                 for expr in &mut sequence_expr.expressions {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         expr,

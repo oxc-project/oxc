@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        CallExpression, ExportDefaultDeclarationKind, Expression, ExpressionKind, ObjectExpression,
         ObjectPropertyKind,
     },
 };
@@ -98,7 +98,9 @@ fn check_export_default_declaration<'a>(
     export_default_decl: &'a ExportDefaultDeclarationKind<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) = export_default_decl else {
+    let Some(obj_expr) =
+        export_default_decl.as_expression().and_then(Expression::as_object_expression)
+    else {
         return;
     };
 
@@ -119,7 +121,7 @@ fn check_define_component_function<'a>(call_expr: &'a CallExpression<'a>, ctx: &
     };
     if ident.name.as_str() == "defineComponent" && call_expr.arguments.len() == 1 {
         let arg = &call_expr.arguments[0];
-        let Some(Expression::ObjectExpression(obj)) = arg.as_expression() else {
+        let Some(obj) = arg.as_expression().and_then(Expression::as_object_expression) else {
             return;
         };
         let Some(watch_obj) = get_watch_object_expression(obj) else {
@@ -135,7 +137,9 @@ fn get_watch_object_expression<'a>(
     obj_expr: &'a ObjectExpression<'a>,
 ) -> Option<&'a ObjectExpression<'a>> {
     let watch_prop = find_property(obj_expr, "watch")?;
-    let Expression::ObjectExpression(watch_obj) = watch_prop.value.get_inner_expression() else {
+    let ExpressionKind::ObjectExpression(watch_obj) =
+        watch_prop.value.get_inner_expression().kind()
+    else {
         return None;
     };
     Some(watch_obj)
@@ -147,23 +151,23 @@ fn handle_watch_inner_property<'a>(inner_prop: &ObjectPropertyKind<'a>, ctx: &Li
     };
 
     if obj_prop.key.static_name().is_some_and(|key| key == "handler")
-        && matches!(obj_prop.value.get_inner_expression(), Expression::ArrowFunctionExpression(_))
+        && obj_prop.value.get_inner_expression().is_arrow_function_expression()
     {
         ctx.diagnostic(no_arrow_functions_in_watch_diagnostic(obj_prop.value.span()));
     }
 }
 
 fn handle_watch_value<'a>(value: &Expression<'a>, ctx: &LintContext<'a>) {
-    match value.get_inner_expression() {
+    match value.get_inner_expression().kind() {
         // Direct arrow function: foo: () => {}
-        Expression::ArrowFunctionExpression(arrow_func) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             ctx.diagnostic(no_arrow_functions_in_watch_diagnostic(arrow_func.span));
         }
         // Handler object: foo: { handler: () => {} }
-        Expression::ObjectExpression(obj_expr) => obj_expr.properties.iter().for_each(|prop| {
+        ExpressionKind::ObjectExpression(obj_expr) => obj_expr.properties.iter().for_each(|prop| {
             handle_watch_inner_property(prop, ctx);
         }),
-        Expression::ArrayExpression(arr_expr) => arr_expr.elements.iter().for_each(|ele| {
+        ExpressionKind::ArrayExpression(arr_expr) => arr_expr.elements.iter().for_each(|ele| {
             if let Some(expr) = ele.as_expression() {
                 handle_watch_value(expr, ctx);
             }

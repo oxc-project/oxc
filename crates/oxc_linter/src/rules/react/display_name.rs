@@ -4,8 +4,8 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, ClassElement, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, Statement,
+        AssignmentTarget, ClassElement, ExportDefaultDeclarationKind, Expression, ExpressionKind,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -297,9 +297,9 @@ fn is_display_name_assignment_for_reference(
 
     // If component_name is provided, verify the object matches
     if let Some(name) = component_name {
-        if let Expression::Identifier(ident) = &member.object {
+        if let ExpressionKind::Identifier(ident) = member.object.kind() {
             return ident.name == name;
-        } else if let Expression::StaticMemberExpression(_) = &member.object {
+        } else if let ExpressionKind::StaticMemberExpression(_) = member.object.kind() {
             // Handle nested case like: Namespace.Component.displayName
             let path = extract_member_expression_path(&member.object);
             return path == name;
@@ -312,9 +312,9 @@ fn is_display_name_assignment_for_reference(
 
 /// Extract the full path from a member expression (e.g., "Namespace.Component")
 fn extract_member_expression_path(expr: &Expression) -> String {
-    match expr {
-        Expression::Identifier(ident) => ident.name.to_string(),
-        Expression::StaticMemberExpression(member) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => ident.name.to_string(),
+        ExpressionKind::StaticMemberExpression(member) => {
             let base = extract_member_expression_path(&member.object);
             format!("{}.{}", base, member.property.name)
         }
@@ -331,7 +331,7 @@ fn is_create_context_call(call: &oxc_ast::ast::CallExpression) -> bool {
 fn extends_react_component(class: &oxc_ast::ast::Class) -> bool {
     class.super_class.as_ref().is_some_and(|super_class| {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
+            && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
         {
             return ident.name == "React"
                 && member_expr
@@ -392,7 +392,7 @@ fn check_context_assignment_references(
         // Walk up to find the assignment expression
         for ancestor_kind in ctx.nodes().ancestor_kinds(ref_node.id()) {
             if let AstKind::AssignmentExpression(assign) = ancestor_kind
-                && let Expression::CallExpression(call) = &assign.right
+                && let ExpressionKind::CallExpression(call) = assign.right.kind()
                 && is_create_context_call(call)
             {
                 return Some(ReactComponentInfo { span: assign.span, is_context: true, name });
@@ -425,7 +425,7 @@ fn is_react_component_node<'a>(
             decl.init.as_ref()?;
 
             // Check for createContext
-            if let Some(Expression::CallExpression(call)) = &decl.init
+            if let Some(call) = decl.init.as_ref().and_then(Expression::as_call_expression)
                 && is_create_context_call(call)
             {
                 if check_context_objects {
@@ -438,7 +438,7 @@ fn is_react_component_node<'a>(
                 return None;
             }
 
-            if let Some(Expression::CallExpression(call)) = &decl.init
+            if let Some(call) = decl.init.as_ref().and_then(Expression::as_call_expression)
                 && let Some(callee_name) = call.callee_name()
             {
                 // Check for HOC patterns
@@ -446,8 +446,8 @@ fn is_react_component_node<'a>(
                     // Handle React.memo(React.forwardRef(...)) - skip if version compatible
                     if callee_name.ends_with("memo")
                         && let Some(first_arg) = call.arguments.first()
-                        && let Some(Expression::CallExpression(inner_call)) =
-                            first_arg.as_expression()
+                        && let Some(inner_call) =
+                            first_arg.as_expression().and_then(Expression::as_call_expression)
                         && let Some(inner_callee_name) = inner_call.callee_name()
                         && is_hoc_call(inner_callee_name, ctx)
                         && version_cache.get_memo_forwardref_compatible(ctx)
@@ -458,9 +458,9 @@ fn is_react_component_node<'a>(
                     // For HOCs, check if the inner function/component has a name
                     // If the first argument is a named function or identifier, that counts as having a name
                     let inner_has_name = if let Some(first_arg) = call.arguments.first() {
-                        match first_arg.as_expression() {
-                            Some(Expression::FunctionExpression(func)) => func.id.is_some(),
-                            Some(Expression::Identifier(_)) => true, // Reference to named component
+                        match first_arg.as_expression().map(Expression::kind) {
+                            Some(ExpressionKind::FunctionExpression(func)) => func.id.is_some(),
+                            Some(ExpressionKind::Identifier(_)) => true, // Reference to named component
                             _ => false,
                         }
                     } else {
@@ -524,7 +524,7 @@ fn is_react_component_node<'a>(
             }
 
             // Check for object expressions with methods
-            if let Some(Expression::ObjectExpression(obj_expr)) = &decl.init
+            if let Some(obj_expr) = decl.init.as_ref().and_then(Expression::as_object_expression)
                 && let Some(name) = &name
                 && has_component_methods_in_object(obj_expr, ctx, ignore_transpiler_name)
             {
@@ -585,7 +585,7 @@ fn is_react_component_node<'a>(
                             }
 
                             // Check if it returns createReactClass
-                            if let Expression::CallExpression(call) = expr
+                            if let ExpressionKind::CallExpression(call) = expr.kind()
                                 && let Some(callee_name) = call.callee_name()
                                 && (callee_name == "createClass"
                                     || callee_name == "createReactClass")
@@ -624,7 +624,7 @@ fn has_component_methods_in_object(
             && obj_prop.method
             && ignore_transpiler_name
             && is_react_component_name(&ident.name)
-            && matches!(&obj_prop.value, Expression::FunctionExpression(f) if function_returns(f, ctx).has_jsx())
+            && matches!(obj_prop.value.kind(), ExpressionKind::FunctionExpression(f) if function_returns(f, ctx).has_jsx())
         {
             return true;
         }
@@ -639,17 +639,28 @@ fn is_anonymous_export_component(
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
-        ExportDefaultDeclarationKind::ArrowFunctionExpression(func)
-            if arrow_function_returns(func, ctx).has_jsx() =>
-        {
-            return Some(ReactComponentInfo { span: export.span, is_context: false, name: None });
-        }
-        ExportDefaultDeclarationKind::FunctionExpression(func)
-            if function_returns(func, ctx).has_jsx()
-                && (func.id.is_none() || ignore_transpiler_name) =>
-        {
-            return Some(ReactComponentInfo { span: export.span, is_context: false, name: None });
-        }
+        ExportDefaultDeclarationKind::Expression(expr) => match expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(func)
+                if arrow_function_returns(func, ctx).has_jsx() =>
+            {
+                return Some(ReactComponentInfo {
+                    span: export.span,
+                    is_context: false,
+                    name: None,
+                });
+            }
+            ExpressionKind::FunctionExpression(func)
+                if function_returns(func, ctx).has_jsx()
+                    && (func.id.is_none() || ignore_transpiler_name) =>
+            {
+                return Some(ReactComponentInfo {
+                    span: export.span,
+                    is_context: false,
+                    name: None,
+                });
+            }
+            _ => {}
+        },
         ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
             // Named default-export functions are handled in phase 1 via symbols/references.
             // Keep this path for anonymous default-export functions only.
@@ -664,7 +675,7 @@ fn is_anonymous_export_component(
         ExportDefaultDeclarationKind::ClassDeclaration(class) => {
             return check_class_component(class, export.span, ctx, ignore_transpiler_name);
         }
-        _ => {}
+        ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {}
     }
     None
 }
@@ -709,13 +720,14 @@ fn is_module_exports_component(
     check_context_objects: bool,
     ctx: &LintContext,
 ) -> Option<ReactComponentInfo> {
-    if let AssignmentTarget::StaticMemberExpression(member) = &assign.left
-        && let Expression::Identifier(ident) = &member.object
+    if let AssignmentTarget::MemberExpression(member) = &assign.left
+        && let Some(member) = member.as_static_member_expression()
+        && let ExpressionKind::Identifier(ident) = member.object.kind()
         && ident.name == "module"
         && member.property.name == "exports"
     {
-        match &assign.right {
-            Expression::ArrowFunctionExpression(func)
+        match assign.right.kind() {
+            ExpressionKind::ArrowFunctionExpression(func)
                 if arrow_function_returns(func, ctx).has_jsx() =>
             {
                 return Some(ReactComponentInfo {
@@ -724,7 +736,7 @@ fn is_module_exports_component(
                     name: None,
                 });
             }
-            Expression::FunctionExpression(func)
+            ExpressionKind::FunctionExpression(func)
                 if function_returns(func, ctx).has_jsx()
                     && (func.id.is_none() || ignore_transpiler_name) =>
             {
@@ -734,7 +746,7 @@ fn is_module_exports_component(
                     name: None,
                 });
             }
-            Expression::CallExpression(call) => {
+            ExpressionKind::CallExpression(call) => {
                 if let Some(callee_name) = call.callee_name() {
                     if callee_name == "createClass" || callee_name == "createReactClass" {
                         if !has_create_react_class_display_name(call, ignore_transpiler_name) {
@@ -812,7 +824,7 @@ fn has_create_react_class_display_name(
     ignore_transpiler_name: bool,
 ) -> bool {
     call.arguments.iter().any(|arg| {
-        if let Some(Expression::ObjectExpression(obj_expr)) = arg.as_expression() {
+        if let Some(obj_expr) = arg.as_expression().and_then(Expression::as_object_expression) {
             obj_expr.properties.iter().any(|prop| {
                 if let Some((prop_name, _)) = prop.prop_name() {
                     prop_name == "displayName" || (!ignore_transpiler_name && prop_name == "name")

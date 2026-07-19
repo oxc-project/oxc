@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, ObjectPropertyKind, UnaryOperator},
+    ast::{Argument, Expression, ExpressionKind, ObjectPropertyKind, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -133,7 +133,12 @@ impl RequireTestTimeout {
                     return;
                 }
 
-                if let Some(Argument::ObjectExpression(test_config)) = call_expr.arguments.first() {
+                if let Some(test_config) = call_expr
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .and_then(|e| e.as_object_expression())
+                {
                     let Some(ObjectPropertyKind::ObjectProperty(property)) = test_config
                         .properties
                         .iter()
@@ -159,8 +164,11 @@ impl RequireTestTimeout {
 
                 if !call_expr.arguments.iter().any(|argument| {
                     matches!(
-                        argument,
-                        Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)
+                        argument.as_expression().map(|e| e.kind()),
+                        Some(
+                            ExpressionKind::ArrowFunctionExpression(_)
+                                | ExpressionKind::FunctionExpression(_)
+                        )
                     )
                 }) {
                     return;
@@ -168,7 +176,12 @@ impl RequireTestTimeout {
 
                 // test() and it() only have two options, a second parameter with options or a last argument with a number
 
-                if let Some(Argument::ObjectExpression(test_config)) = call_expr.arguments.get(1) {
+                if let Some(test_config) = call_expr
+                    .arguments
+                    .get(1)
+                    .and_then(Argument::as_expression)
+                    .and_then(|e| e.as_object_expression())
+                {
                     let Some(ObjectPropertyKind::ObjectProperty(property)) = test_config
                         .properties
                         .iter()
@@ -218,10 +231,10 @@ fn is_property_name_equals(property: &ObjectPropertyKind<'_>, name: &str) -> boo
 }
 
 fn parse_timeout_value(expression: &Expression<'_>, span: Span, ctx: &LintContext<'_>) {
-    match expression {
-        Expression::NumericLiteral(_) => {}
-        Expression::UnaryExpression(expression) => {
-            let Expression::NumericLiteral(_) = &expression.argument else {
+    match expression.kind() {
+        ExpressionKind::NumericLiteral(_) => {}
+        ExpressionKind::UnaryExpression(expression) => {
+            let ExpressionKind::NumericLiteral(_) = expression.argument.kind() else {
                 ctx.diagnostic(timeout_must_be_a_number(span));
                 return;
             };

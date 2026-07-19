@@ -42,10 +42,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
                     false
                 }
             } {
-                return matches!(
-                    argument,
-                    Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)
-                );
+                return argument.as_expression().is_some_and(Expression::is_function);
             }
 
             if is_unit_test_set_up_callee(callee) {
@@ -58,11 +55,14 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
         // it("description", ..)
         (Some(first), Some(second), third)
             if arguments.len() <= 3
-                && matches!(first, Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
+                && first.as_expression().is_some_and(|e| {
+                    matches!(e.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
+                })
                 && contains_a_test_pattern(callee) =>
         {
             // it('name', callback, duration)
-            if !matches!(third, None | Some(Argument::NumericLiteral(_))) {
+            if !third.is_none_or(|t| t.as_expression().is_some_and(Expression::is_numeric_literal))
+            {
                 return false;
             }
 
@@ -70,15 +70,16 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
                 return true;
             }
 
-            let (parameter_count, has_block_body) = match second {
-                Argument::FunctionExpression(function) => {
-                    (function.params.parameters_count(), true)
-                }
-                Argument::ArrowFunctionExpression(arrow) => {
-                    (arrow.params.parameters_count(), !arrow.expression)
-                }
-                _ => return false,
-            };
+            let (parameter_count, has_block_body) =
+                match second.as_expression().map(Expression::kind) {
+                    Some(ExpressionKind::FunctionExpression(function)) => {
+                        (function.params.parameters_count(), true)
+                    }
+                    Some(ExpressionKind::ArrowFunctionExpression(arrow)) => {
+                        (arrow.params.parameters_count(), !arrow.expression)
+                    }
+                    _ => return false,
+                };
 
             arguments.len() == 2 || (parameter_count <= 1 && has_block_body)
         }
@@ -96,20 +97,19 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
 /// @returns {boolean}
 ///
 fn is_angular_test_wrapper_expression(expression: &Expression) -> bool {
-    matches!(expression, Expression::CallExpression(call) if is_angular_test_wrapper(call))
+    expression.as_call_expression().is_some_and(|call| is_angular_test_wrapper(call))
 }
 
 pub fn is_angular_test_wrapper(call: &CallExpression) -> bool {
-    matches!(&call.callee,
-        Expression::Identifier(ident) if
+    call.callee.as_identifier().is_some_and(|ident| {
         matches!(ident.name.as_str(), "async" | "inject" | "fakeAsync" | "waitForAsync")
-    )
+    })
 }
 
 /// Tests if the callee is a `beforeEach`, `beforeAll`, `afterEach` or `afterAll` identifier
 /// that is commonly used in test frameworks.
 fn is_unit_test_set_up_callee(callee: &Expression) -> bool {
-    matches!(callee, Expression::Identifier(ident) if {
+    callee.as_identifier().is_some_and(|ident| {
         matches!(ident.name.as_str(), "beforeEach" | "beforeAll" | "afterEach" | "afterAll")
     })
 }
@@ -138,12 +138,12 @@ pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> Option<impl Iterato
     let mut current = Some(expr);
 
     for index in 0..5 {
-        match current {
-            Some(Expression::Identifier(ident)) => {
+        match current.map(Expression::kind) {
+            Some(ExpressionKind::Identifier(ident)) => {
                 names[index] = Some(ident.name.as_str());
                 return Some(names.into_iter().rev().flatten());
             }
-            Some(Expression::StaticMemberExpression(member)) => {
+            Some(ExpressionKind::StaticMemberExpression(member)) => {
                 current = Some(&member.object);
                 names[index] = Some(member.property.name.as_str());
             }

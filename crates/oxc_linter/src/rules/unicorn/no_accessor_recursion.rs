@@ -242,15 +242,9 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             AstKind::AssignmentExpression(assign_expr) => {
                 if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
                     let is_target = match simple_target {
-                        oxc_ast::ast::SimpleAssignmentTarget::ComputedMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::StaticMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::PrivateFieldExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
+                        oxc_ast::ast::SimpleAssignmentTarget::MemberExpression(member_expr) => {
+                            member_expr.span() == node.span()
+                        }
                         _ => false,
                     };
                     if is_target {

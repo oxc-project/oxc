@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
@@ -69,7 +72,7 @@ fn is_global_this_ref_or_global_window<'a>(
     ctx: &LintContext<'a>,
     expr: &Expression<'a>,
 ) -> bool {
-    if let Expression::ThisExpression(_) = expr
+    if let ExpressionKind::ThisExpression(_) = expr.kind()
         && ctx.scoping().scope_flags(scope_id).is_top()
     {
         return true;
@@ -101,7 +104,7 @@ impl Rule for NoAlert {
         let scope_id = node.scope_id();
         let callee = &call_expr.callee;
 
-        if let Expression::Identifier(ident) = callee {
+        if let ExpressionKind::Identifier(ident) = callee.kind() {
             if !is_shadowed(scope_id, ident.name, ctx) && is_prohibited_identifier(&ident.name) {
                 return ctx.diagnostic(no_alert_diagnostic(ident.span));
             }

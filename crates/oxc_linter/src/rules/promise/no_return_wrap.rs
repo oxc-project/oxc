@@ -7,8 +7,8 @@ use crate::{
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        ReturnStatement, Statement,
+        ArrowFunctionExpression, CallExpression, Expression, ExpressionKind, Function,
+        FunctionBody, ReturnStatement, Statement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -160,26 +160,27 @@ impl Rule for NoReturnWrap {
                 continue;
             };
 
-            match arg_expr {
-                Expression::ArrowFunctionExpression(arrow) => {
+            match arg_expr.kind() {
+                ExpressionKind::ArrowFunctionExpression(arrow) => {
                     check_arrow_cb_arg(ctx, self.allow_reject, arrow);
                 }
-                Expression::FunctionExpression(func_expr) => {
+                ExpressionKind::FunctionExpression(func_expr) => {
                     let Some(func_body) = &func_expr.body else {
                         continue;
                     };
                     check_function_body(ctx, self.allow_reject, func_body);
                 }
-                Expression::CallExpression(call) => {
-                    let Expression::StaticMemberExpression(static_memb_expr) =
-                        call.callee.get_inner_expression()
+                ExpressionKind::CallExpression(call) => {
+                    let ExpressionKind::StaticMemberExpression(static_memb_expr) =
+                        call.callee.get_inner_expression().kind()
                     else {
                         continue;
                     };
 
                     // `.bind(this)` is true but `.bind(foo)` is false.
                     let is_this_arg = call.arguments.first().is_some_and(|arg| {
-                        matches!(arg.as_expression(), Some(Expression::ThisExpression(_)))
+                        arg.as_expression()
+                            .is_some_and(oxc_ast::ast::Expression::is_this_expression)
                     });
 
                     let property_name = static_memb_expr.property.name;
@@ -194,10 +195,10 @@ impl Rule for NoReturnWrap {
 
                     let inner_obj = &static_memb_expr.object.get_inner_expression();
 
-                    if let Expression::CallExpression(nested_call) = inner_obj {
+                    if let ExpressionKind::CallExpression(nested_call) = inner_obj.kind() {
                         // if not a chained .bind(this) then skip
-                        let Expression::StaticMemberExpression(nested_expr) =
-                            nested_call.callee.get_inner_expression()
+                        let ExpressionKind::StaticMemberExpression(nested_expr) =
+                            nested_call.callee.get_inner_expression().kind()
                         else {
                             continue;
                         };
@@ -224,7 +225,7 @@ fn check_arrow_cb_arg<'a>(
 ) {
     if arrow_expr.expression {
         if let Some(Statement::ExpressionStatement(expr_stmt)) = arrow_expr.body.statements.first()
-            && let Expression::CallExpression(call_expr) = &expr_stmt.expression
+            && let ExpressionKind::CallExpression(call_expr) = expr_stmt.expression.kind()
         {
             check_for_resolve_reject(ctx, allow_reject, call_expr);
         }
@@ -234,11 +235,11 @@ fn check_arrow_cb_arg<'a>(
 }
 
 fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expression<'a>) {
-    match expr {
-        Expression::ArrowFunctionExpression(arrow_expr) => {
+    match expr.kind() {
+        ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
             check_arrow_cb_arg(ctx, allow_reject, arrow_expr);
         }
-        Expression::FunctionExpression(func_expr) => {
+        ExpressionKind::FunctionExpression(func_expr) => {
             let Some(func_body) = &func_expr.body else {
                 return;
             };
@@ -260,7 +261,9 @@ struct ReturnWrapFinder<'a, 'b> {
 
 impl<'a> VisitJs<'a> for ReturnWrapFinder<'a, '_> {
     fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
-        if let Some(Expression::CallExpression(call_expr)) = &it.argument {
+        if let Some(arg) = &it.argument
+            && let Some(call_expr) = arg.as_call_expression()
+        {
             check_for_resolve_reject(self.ctx, self.allow_reject, call_expr);
         }
     }
@@ -272,7 +275,7 @@ impl<'a> VisitJs<'a> for ReturnWrapFinder<'a, '_> {
 
 /// Checks for `return Promise.resolve()` or `return Promise.reject()`
 fn check_for_resolve_reject(ctx: &LintContext, allow_reject: bool, call_expr: &CallExpression) {
-    let Expression::StaticMemberExpression(stat_expr) = &call_expr.callee else {
+    let ExpressionKind::StaticMemberExpression(stat_expr) = call_expr.callee.kind() else {
         return;
     };
 

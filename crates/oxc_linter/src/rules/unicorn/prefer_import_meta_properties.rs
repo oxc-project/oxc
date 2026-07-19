@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, NewExpression, VariableDeclarator,
+        Argument, BindingPattern, CallExpression, Expression, ExpressionKind, NewExpression,
+        VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -167,25 +168,29 @@ fn is_process_get_builtin_module_call(call: &CallExpression<'_>, modules: &[&str
     if call.optional || call.arguments.len() != 1 || call.arguments[0].is_spread() {
         return false;
     }
-    let Expression::StaticMemberExpression(callee_member) = &call.callee else { return false };
+    let ExpressionKind::StaticMemberExpression(callee_member) = call.callee.kind() else {
+        return false;
+    };
     if callee_member.optional {
         return false;
     }
-    let Expression::Identifier(process_ident) = &callee_member.object else { return false };
+    let ExpressionKind::Identifier(process_ident) = callee_member.object.kind() else {
+        return false;
+    };
     if process_ident.name != "process" || callee_member.property.name != "getBuiltinModule" {
         return false;
     }
-    matches!(
-        &call.arguments[0],
-        Argument::StringLiteral(lit) if modules.contains(&lit.value.as_str())
-    )
+    call.arguments[0]
+        .as_expression()
+        .and_then(|e| e.as_string_literal())
+        .is_some_and(|lit| modules.contains(&lit.value.as_str()))
 }
 
 fn is_parent_literal(argument: &Argument<'_>) -> bool {
-    matches!(
-        argument,
-        Argument::StringLiteral(lit) if lit.value.as_str() == "." || lit.value.as_str() == "./"
-    )
+    argument
+        .as_expression()
+        .and_then(|e| e.as_string_literal())
+        .is_some_and(|lit| lit.value.as_str() == "." || lit.value.as_str() == "./")
 }
 
 fn has_argument_expression(arguments: &[Argument<'_>], index: usize, node_span: Span) -> bool {
@@ -200,7 +205,7 @@ fn is_url_constructor(new_expression: &NewExpression<'_>, ctx: &LintContext<'_>)
         return false;
     }
 
-    let Expression::Identifier(identifier) = &new_expression.callee else { return false };
+    let ExpressionKind::Identifier(identifier) = new_expression.callee.kind() else { return false };
     if identifier.name != "URL" {
         return false;
     }
@@ -240,8 +245,8 @@ fn check_expression(
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    match node {
-        Expression::StaticMemberExpression(member_expression) => {
+    match node.kind() {
+        ExpressionKind::StaticMemberExpression(member_expression) => {
             if !matches!(check_kind, CheckKind::Property)
                 || member_expression.optional
                 || member_expression.property.name != function_name
@@ -258,11 +263,11 @@ fn check_expression(
                 visited,
             )
         }
-        Expression::CallExpression(call_expression) => {
+        ExpressionKind::CallExpression(call_expression) => {
             matches!(check_kind, CheckKind::Module)
                 && is_process_get_builtin_module_call(call_expression, modules)
         }
-        Expression::Identifier(identifier) => {
+        ExpressionKind::Identifier(identifier) => {
             let reference = ctx.scoping().get_reference(identifier.reference_id());
             let Some(symbol_id) = reference.symbol_id() else { return false };
             if !visited.insert(symbol_id) {

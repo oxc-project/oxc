@@ -1,10 +1,7 @@
 use std::borrow::Cow;
 
 use nodejs_built_in_modules::is_nodejs_builtin_module;
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression},
-};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -548,12 +545,14 @@ impl Rule for Extensions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Process require() calls
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Expression::Identifier(ident) = &call_expr.callee else { return };
+        let ExpressionKind::Identifier(ident) = call_expr.callee.kind() else { return };
         if ident.name.as_str() != "require" {
             return;
         }
         for argument in &call_expr.arguments {
-            if let Argument::StringLiteral(s) = argument {
+            if let Some(expr) = argument.as_expression()
+                && let Some(s) = expr.as_string_literal()
+            {
                 self.process_import(
                     ctx,
                     s.value.as_str(),

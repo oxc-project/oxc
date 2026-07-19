@@ -79,7 +79,7 @@ impl JSXState for JSXStateTS {
     fn enter_member_expression(&mut self, member_expr: &MemberExpression<'_>) {
         if self.jsx_expression_depth > 0 {
             self.member_expression_depth += 1;
-            if matches!(member_expr, MemberExpression::ComputedMemberExpression(_)) {
+            if member_expr.is_computed_member_expression() {
                 self.computed_member_depth += 1;
             }
         }
@@ -89,7 +89,7 @@ impl JSXState for JSXStateTS {
     fn exit_member_expression(&mut self, member_expr: &MemberExpression<'_>) {
         if self.jsx_expression_depth > 0 {
             self.member_expression_depth -= 1;
-            if matches!(member_expr, MemberExpression::ComputedMemberExpression(_)) {
+            if member_expr.is_computed_member_expression() {
                 self.computed_member_depth -= 1;
             }
         }

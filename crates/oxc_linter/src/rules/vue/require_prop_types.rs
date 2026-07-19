@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
-        Expression, NewExpression, ObjectExpression, ObjectPropertyKind,
+        ArrayExpression, CallExpression, ExportDefaultDeclaration, Expression, ExpressionKind,
+        NewExpression, ObjectExpression, ObjectPropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -97,11 +97,16 @@ impl RequirePropTypes {
 
         match ident.name.as_str() {
             "defineProps" => {
-                match call_expr.arguments.first().and_then(|arg| arg.as_expression()) {
+                match call_expr
+                    .arguments
+                    .first()
+                    .and_then(|arg| arg.as_expression())
+                    .map(Expression::kind)
+                {
                     // foo: {
-                    Some(Expression::ObjectExpression(obj)) => Self::check_props(obj, ctx),
+                    Some(ExpressionKind::ObjectExpression(obj)) => Self::check_props(obj, ctx),
                     // foo: [
-                    Some(Expression::ArrayExpression(arr)) => Self::check_array_props(arr, ctx),
+                    Some(ExpressionKind::ArrayExpression(arr)) => Self::check_array_props(arr, ctx),
                     _ => {}
                 }
             }
@@ -118,18 +123,18 @@ impl RequirePropTypes {
 
         let Some(expr) = first_arg.as_expression() else { return };
 
-        if matches!(expr, Expression::Identifier(_)) {
+        if expr.is_identifier() {
             return;
         }
 
-        if let Expression::StringLiteral(lit) = expr {
+        if let ExpressionKind::StringLiteral(lit) = expr.kind() {
             if let Some(second_arg) = call_expr.arguments.get(1)
                 && let Some(second_expr) = second_arg.as_expression()
             {
-                if matches!(second_expr, Expression::Identifier(_)) {
+                if second_expr.is_identifier() {
                     return;
                 }
-                if let Expression::ObjectExpression(obj) = second_expr
+                if let ExpressionKind::ObjectExpression(obj) = second_expr.kind()
                     && prop_value_has_type(obj)
                 {
                     return;
@@ -139,7 +144,7 @@ impl RequirePropTypes {
             return;
         }
 
-        let Expression::ObjectExpression(obj) = expr else { return };
+        let ExpressionKind::ObjectExpression(obj) = expr.kind() else { return };
 
         if !prop_value_has_type(obj) {
             ctx.diagnostic(require_type_diagnostic(call_expr.span, "modelValue"));
@@ -150,11 +155,9 @@ impl RequirePropTypes {
         export_decl: &ExportDefaultDeclaration<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let obj = match &export_decl.declaration {
-            ExportDefaultDeclarationKind::ObjectExpression(obj) => Some(obj.as_ref()),
-            ExportDefaultDeclarationKind::CallExpression(call_expr) => {
-                Self::find_props_in_call(call_expr)
-            }
+        let obj = match export_decl.declaration.as_expression().map(Expression::kind) {
+            Some(ExpressionKind::ObjectExpression(obj)) => Some(obj),
+            Some(ExpressionKind::CallExpression(call_expr)) => Self::find_props_in_call(call_expr),
             _ => None,
         };
 
@@ -175,11 +178,11 @@ impl RequirePropTypes {
             return;
         };
 
-        match props_prop.value.get_inner_expression() {
+        match props_prop.value.get_inner_expression().kind() {
             // foo: {
-            Expression::ObjectExpression(o) => Self::check_props(o, ctx),
+            ExpressionKind::ObjectExpression(o) => Self::check_props(o, ctx),
             // foo: [
-            Expression::ArrayExpression(a) => Self::check_array_props(a, ctx),
+            ExpressionKind::ArrayExpression(a) => Self::check_array_props(a, ctx),
             _ => {}
         }
     }
@@ -190,8 +193,8 @@ impl RequirePropTypes {
         let member_expr = call_expr.callee.get_member_expr()?;
 
         if member_expr.static_property_name() == Some("extend")
-            && let Expression::ObjectExpression(obj) =
-                call_expr.arguments.first()?.as_expression()?.get_inner_expression()
+            && let ExpressionKind::ObjectExpression(obj) =
+                call_expr.arguments.first()?.as_expression()?.get_inner_expression().kind()
         {
             return Some(obj);
         }
@@ -201,7 +204,8 @@ impl RequirePropTypes {
     fn find_props_in_new_expr<'a>(
         new_expr: &'a NewExpression<'a>,
     ) -> Option<&'a ObjectExpression<'a>> {
-        let Expression::Identifier(ident) = new_expr.callee.get_inner_expression() else {
+        let ExpressionKind::Identifier(ident) = new_expr.callee.get_inner_expression().kind()
+        else {
             return None;
         };
         if ident.name != "Vue" {
@@ -209,8 +213,8 @@ impl RequirePropTypes {
         }
 
         let arg = new_expr.arguments.first()?.as_expression()?;
-        match arg.get_inner_expression() {
-            Expression::ObjectExpression(obj) => Some(obj),
+        match arg.get_inner_expression().kind() {
+            ExpressionKind::ObjectExpression(obj) => Some(obj),
             _ => None,
         }
     }
@@ -223,10 +227,10 @@ impl RequirePropTypes {
                 continue;
             };
 
-            let is_invalid = match p.value.get_inner_expression() {
-                Expression::ObjectExpression(o) => !prop_value_has_type(o),
-                Expression::ArrayExpression(a) => a.elements.is_empty(),
-                Expression::FunctionExpression(_) => true,
+            let is_invalid = match p.value.get_inner_expression().kind() {
+                ExpressionKind::ObjectExpression(o) => !prop_value_has_type(o),
+                ExpressionKind::ArrayExpression(a) => a.elements.is_empty(),
+                ExpressionKind::FunctionExpression(_) => true,
                 _ => false,
             };
 
@@ -239,10 +243,10 @@ impl RequirePropTypes {
     fn check_array_props(arr: &ArrayExpression, ctx: &LintContext) {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
-            let name = match expr {
-                Expression::StringLiteral(lit) => Some(lit.value.as_str()),
-                Expression::Identifier(id) => Some(id.name.as_str()),
-                Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+            let name = match expr.kind() {
+                ExpressionKind::StringLiteral(lit) => Some(lit.value.as_str()),
+                ExpressionKind::Identifier(id) => Some(id.name.as_str()),
+                ExpressionKind::TemplateLiteral(lit) if lit.expressions.is_empty() => {
                     lit.quasis.first().and_then(|q| q.value.cooked.as_deref())
                 }
                 _ => None,
@@ -260,7 +264,7 @@ fn prop_value_has_type(obj: &ObjectExpression) -> bool {
             && let Some(key) = p.key.static_name()
         {
             if key == "type" {
-                if let Expression::ArrayExpression(a) = p.value.get_inner_expression() {
+                if let ExpressionKind::ArrayExpression(a) = p.value.get_inner_expression().kind() {
                     return !a.elements.is_empty();
                 }
                 return true;

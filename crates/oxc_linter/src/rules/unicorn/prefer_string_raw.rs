@@ -1,7 +1,7 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName, TSLiteral},
+    ast::{JSXAttributeValue, TSEnumMemberName, TSLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -99,7 +99,7 @@ impl Rule for PreferStringRaw {
                 return;
             }
             AstKind::ObjectProperty(prop) => {
-                let PropertyKey::StringLiteral(key) = &prop.key else {
+                let Some(key) = prop.key.as_expression().and_then(|e| e.as_string_literal()) else {
                     return;
                 };
 
@@ -108,14 +108,14 @@ impl Rule for PreferStringRaw {
                 }
             }
             AstKind::TSPropertySignature(prop) => {
-                if let PropertyKey::StringLiteral(key) = &prop.key
+                if let Some(key) = prop.key.as_expression().and_then(|e| e.as_string_literal())
                     && string_literal.span == key.span
                 {
                     return;
                 }
             }
             AstKind::TSMethodSignature(method) => {
-                if let PropertyKey::StringLiteral(key) = &method.key
+                if let Some(key) = method.key.as_expression().and_then(|e| e.as_string_literal())
                     && string_literal.span == key.span
                 {
                     return;

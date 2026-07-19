@@ -2,8 +2,8 @@ use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
-        ObjectExpression, ObjectPropertyKind, SpreadElement,
+        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ExpressionKind,
+        ExpressionTag, NewExpression, ObjectExpression, ObjectPropertyKind, SpreadElement,
     },
     builder::AstBuilder,
 };
@@ -273,11 +273,11 @@ fn diagnose_array_in_array_spread<'a>(
                     ctx.diagnostic(diagnostic);
                     return;
                 };
-                let Expression::ArrayExpression(arr) = &spread.argument else {
+                let ExpressionKind::ArrayExpression(arr) = spread.argument.kind() else {
                     ctx.diagnostic(diagnostic);
                     return;
                 };
-                spreads.push(arr.as_ref());
+                spreads.push(arr);
             }
 
             // [ ...[a, b, c], ...[d, e, f] ] -> [a, b, c, d, e, f]
@@ -296,7 +296,9 @@ fn diagnose_array_in_array_spread<'a>(
                             codegen.print_str("...");
                             codegen.print_expression(&spread.argument);
                         }
-                        _ => codegen.print_expression(el.to_expression()),
+                        ArrayExpressionElement::Expression(_) => {
+                            codegen.print_expression(el.to_expression());
+                        }
                     }
                     if i < n - 1 {
                         codegen.print_ascii_byte(b',');
@@ -400,7 +402,7 @@ fn check_useless_clone<'a>(
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check
-    if matches!(target, Expression::ArrayExpression(_) | Expression::ObjectExpression(_)) {
+    if matches!(target.tag(), ExpressionTag::ArrayExpression | ExpressionTag::ObjectExpression) {
         return;
     }
 
@@ -410,7 +412,7 @@ fn check_useless_clone<'a>(
         let name = diagnostic_name(ctx, target);
 
         // `[...new Array(1)]` -> `new Array(1).fill()`
-        if let Expression::NewExpression(new_expr) = target {
+        if let ExpressionKind::NewExpression(new_expr) = target.kind() {
             let is_array_constructor = new_expr
                 .callee
                 .without_parentheses()
@@ -440,10 +442,10 @@ fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&
         if snippet.len() > 50 || snippet.contains('\n') { None } else { Some(snippet) }
     }
 
-    match expr {
-        Expression::CallExpression(call) => diagnostic_name(ctx, &call.callee),
-        Expression::AwaitExpression(expr) => diagnostic_name(ctx, &expr.argument),
-        Expression::SequenceExpression(expr) => {
+    match expr.kind() {
+        ExpressionKind::CallExpression(call) => diagnostic_name(ctx, &call.callee),
+        ExpressionKind::AwaitExpression(expr) => diagnostic_name(ctx, &expr.argument),
+        ExpressionKind::SequenceExpression(expr) => {
             let span_with_parens = expr.span().expand(1);
             pretty_snippet(ctx.source_range(span_with_parens))
         }
@@ -517,7 +519,7 @@ fn as_single_obj_spread<'a, 's>(node: &'s ObjectExpression<'a>) -> Option<&'s Sp
 fn get_method_name(call_expr: &CallExpression) -> Option<String> {
     let callee = call_expr.callee.get_member_expr()?;
 
-    let object_name = if let Expression::Identifier(ident) = &callee.object() {
+    let object_name = if let ExpressionKind::Identifier(ident) = callee.object().kind() {
         ident.name.as_str()
     } else {
         "unknown"

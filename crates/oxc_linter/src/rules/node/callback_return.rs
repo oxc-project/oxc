@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, Statement},
+    ast::{CallExpression, Expression, ExpressionKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -194,12 +194,12 @@ impl CallbackReturn {
 }
 
 fn contains_only_identifiers(expr: &Expression) -> bool {
-    if let Expression::Identifier(_) = expr {
+    if let ExpressionKind::Identifier(_) = expr.kind() {
         return true;
     }
 
     if let Some(member_expr) = &expr.as_member_expression() {
-        if matches!(member_expr.object(), Expression::Identifier(_)) {
+        if member_expr.object().is_identifier() {
             return true;
         }
 
@@ -246,11 +246,11 @@ fn is_callback_expression(call_expr: &CallExpression, parent_node: &Statement) -
         return true;
     }
 
-    match expr_stmt.expression.without_parentheses() {
-        Expression::BinaryExpression(binary_expr) => {
+    match expr_stmt.expression.without_parentheses().kind() {
+        ExpressionKind::BinaryExpression(binary_expr) => {
             binary_expr.right.without_parentheses().span() == call_expr.span
         }
-        Expression::LogicalExpression(logical_expr) => {
+        ExpressionKind::LogicalExpression(logical_expr) => {
             logical_expr.right.without_parentheses().span() == call_expr.span
         }
         _ => false,

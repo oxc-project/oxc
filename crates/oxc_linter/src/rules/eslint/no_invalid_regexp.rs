@@ -187,15 +187,19 @@ fn parse_arguments_to_check<'a>(
     arg1: Option<&Argument<'a>>,
     arg2: Option<&Argument<'a>>,
 ) -> (Option<Span>, Option<Span>) {
+    let pattern =
+        arg1.and_then(|arg| arg.as_expression()).and_then(|expr| expr.as_string_literal());
+    let flags = arg2.and_then(|arg| arg.as_expression()).and_then(|expr| expr.as_string_literal());
+
     match (arg1, arg2) {
         // ("pattern", "flags")
-        (Some(Argument::StringLiteral(pattern)), Some(Argument::StringLiteral(flags))) => {
-            (Some(pattern.span), Some(flags.span))
+        _ if pattern.is_some() && flags.is_some() => {
+            (pattern.map(|pattern| pattern.span), flags.map(|flags| flags.span))
         }
         // (pattern, "flags")
-        (Some(_arg), Some(Argument::StringLiteral(flags))) => (None, Some(flags.span)),
+        (Some(_arg), Some(_)) if flags.is_some() => (None, flags.map(|flags| flags.span)),
         // ("pattern")
-        (Some(Argument::StringLiteral(pattern)), None) => (Some(pattern.span), None),
+        (Some(_), None) if pattern.is_some() => (pattern.map(|pattern| pattern.span), None),
         // (pattern), ()
         _ => (None, None),
     }

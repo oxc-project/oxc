@@ -135,17 +135,17 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
 pub fn as_call_expression_without_chain_wrappers<'a, 'b>(
     expression: &'b Expression<'a>,
 ) -> Option<&'b CallExpression<'a>> {
-    match expression {
-        Expression::CallExpression(call) => Some(call),
-        Expression::TSNonNullExpression(non_null) => {
+    match expression.kind() {
+        ExpressionKind::CallExpression(call) => Some(call),
+        ExpressionKind::TSNonNullExpression(non_null) => {
             as_call_expression_without_chain_wrappers(&non_null.expression)
         }
-        Expression::ChainExpression(chain) => match &chain.expression {
+        ExpressionKind::ChainExpression(chain) => match &chain.expression {
             ChainElement::CallExpression(call) => Some(call),
             ChainElement::TSNonNullExpression(non_null) => {
                 as_call_expression_without_chain_wrappers(&non_null.expression)
             }
-            _ => None,
+            ChainElement::MemberExpression(_) => None,
         },
         _ => None,
     }
@@ -157,11 +157,11 @@ pub fn as_call_expression_without_chain_wrappers<'a, 'b>(
 /// Equivalent to Prettier's `isMemberExpression(stripChainElementWrappers(node))`;
 /// the member-expression sibling of [`as_call_expression_without_chain_wrappers`].
 pub fn is_member_expression_without_chain_wrappers(expression: &Expression<'_>) -> bool {
-    match expression {
-        Expression::TSNonNullExpression(non_null) => {
+    match expression.kind() {
+        ExpressionKind::TSNonNullExpression(non_null) => {
             is_member_expression_without_chain_wrappers(&non_null.expression)
         }
-        Expression::ChainExpression(chain) => match &chain.expression {
+        ExpressionKind::ChainExpression(chain) => match &chain.expression {
             ChainElement::TSNonNullExpression(non_null) => {
                 is_member_expression_without_chain_wrappers(&non_null.expression)
             }

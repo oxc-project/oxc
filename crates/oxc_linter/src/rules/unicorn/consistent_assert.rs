@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName},
+    ast::{ExpressionKind, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -119,7 +119,7 @@ fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
 
         match parent.kind() {
             AstKind::CallExpression(call_expr) => {
-                if let Expression::Identifier(ident) = &call_expr.callee {
+                if let ExpressionKind::Identifier(ident) = call_expr.callee.kind() {
                     ctx.diagnostic_with_fix(
                         consistent_assert_diagnostic(&ident.name, ident.span),
                         |fixer| fixer.insert_text_after(&ident.span, ".ok"),
@@ -127,7 +127,7 @@ fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
                 }
             }
             AstKind::ParenthesizedExpression(paren_expr) => {
-                let Expression::Identifier(ident) = &paren_expr.expression else {
+                let ExpressionKind::Identifier(ident) = paren_expr.expression.kind() else {
                     continue;
                 };
                 ctx.diagnostic_with_fix(

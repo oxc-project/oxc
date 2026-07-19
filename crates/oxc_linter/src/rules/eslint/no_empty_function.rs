@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, FormalParameter, Function, IdentifierName, IdentifierReference,
+        ExpressionKind, FormalParameter, Function, IdentifierName, IdentifierReference,
         MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
     },
 };
@@ -422,13 +422,13 @@ impl NoEmptyFunction {
                 }
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {
-                        match init.get_inner_expression() {
-                            Expression::FunctionExpression(function)
+                        match init.get_inner_expression().kind() {
+                            ExpressionKind::FunctionExpression(function)
                                 if self.is_allowed_function_expression(function) =>
                             {
                                 return ViolationInfo::default();
                             }
-                            Expression::ArrowFunctionExpression(function)
+                            ExpressionKind::ArrowFunctionExpression(function)
                                 if (self.allow.contains(Allowed::ArrowFunction)
                                     || function.r#async
                                         && self.allow.contains(Allowed::AsyncFunctions)) =>
@@ -492,7 +492,7 @@ impl NoEmptyFunction {
             PropertyKind::Get => self.allow.contains(Allowed::Getters),
             PropertyKind::Set => self.allow.contains(Allowed::Setters),
             PropertyKind::Init => {
-                let Expression::FunctionExpression(function) = &property.value else {
+                let ExpressionKind::FunctionExpression(function) = property.value.kind() else {
                     return false;
                 };
                 if property.method {

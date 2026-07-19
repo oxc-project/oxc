@@ -374,11 +374,12 @@ impl<'a> BooleanUnminifier<'a> {
 
 impl<'a> VisitMut<'a> for BooleanUnminifier<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        if let Expression::UnaryExpression(unary_expr) = expr
+        if let Some(unary_expr) = expr.as_unary_expression()
             && unary_expr.operator == UnaryOperator::LogicalNot
-            && let Expression::NumericLiteral(lit) = &unary_expr.argument
+            && let Some(lit) = unary_expr.argument.as_numeric_literal()
         {
-            *expr = Expression::new_boolean_literal(unary_expr.span, lit.value == 0.0, &self.ast);
+            let (span, is_zero) = (unary_expr.span, lit.value == 0.0);
+            *expr = Expression::new_boolean_literal(span, is_zero, &self.ast);
             return;
         }
         walk_mut::walk_expression(self, expr);

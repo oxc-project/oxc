@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, Expression, Function, IdentifierReference, PropertyDefinition, StaticBlock,
-        ThisExpression, VariableDeclarationKind,
+        BindingPattern, Expression, ExpressionKind, Function, IdentifierReference,
+        PropertyDefinition, StaticBlock, ThisExpression, VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -77,13 +77,13 @@ pub fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool
                 && matches!(&var.id, BindingPattern::BindingIdentifier(_))
         })
         .and_then(|var| var.init.as_ref())
-        .is_some_and(|init| matches!(init.get_inner_expression(), Expression::ThisExpression(_)))
+        .is_some_and(|init| init.get_inner_expression().is_this_expression())
 }
 
 pub fn is_this_object(expr: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
-    match expr.get_inner_expression() {
-        Expression::ThisExpression(_) => true,
-        Expression::Identifier(ident) => is_this_alias(ident, ctx),
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::ThisExpression(_) => true,
+        ExpressionKind::Identifier(ident) => is_this_alias(ident, ctx),
         _ => false,
     }
 }

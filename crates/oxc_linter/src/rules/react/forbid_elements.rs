@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -149,27 +152,38 @@ impl Rule for ForbidElements {
                     return;
                 };
 
-                match argument {
-                    Argument::Identifier(it) => {
-                        if !is_valid_identifier(&it.name) {
-                            return;
+                if let Argument::Expression(expr) = argument {
+                    match expr.kind() {
+                        ExpressionKind::Identifier(it) => {
+                            if !is_valid_identifier(&it.name) {
+                                return;
+                            }
+                            self.add_diagnostic_if_invalid_element(ctx, it.name.as_str(), it.span);
                         }
-                        self.add_diagnostic_if_invalid_element(ctx, it.name.as_str(), it.span);
-                    }
-                    Argument::StringLiteral(str) => {
-                        if !is_valid_literal(&str.value) {
-                            return;
+                        ExpressionKind::StringLiteral(str) => {
+                            if !is_valid_literal(&str.value) {
+                                return;
+                            }
+                            self.add_diagnostic_if_invalid_element(
+                                ctx,
+                                str.value.as_str(),
+                                str.span,
+                            );
                         }
-                        self.add_diagnostic_if_invalid_element(ctx, str.value.as_str(), str.span);
+                        ExpressionKind::StaticMemberExpression(member_expression) => {
+                            let Some(it) = member_expression.object.get_identifier_reference()
+                            else {
+                                return;
+                            };
+                            let name = format!("{}.{}", it.name, member_expression.property.name);
+                            self.add_diagnostic_if_invalid_element(
+                                ctx,
+                                &name,
+                                member_expression.span,
+                            );
+                        }
+                        _ => {}
                     }
-                    Argument::StaticMemberExpression(member_expression) => {
-                        let Some(it) = member_expression.object.get_identifier_reference() else {
-                            return;
-                        };
-                        let name = format!("{}.{}", it.name, member_expression.property.name);
-                        self.add_diagnostic_if_invalid_element(ctx, &name, member_expression.span);
-                    }
-                    _ => {}
                 }
             }
             _ => (),

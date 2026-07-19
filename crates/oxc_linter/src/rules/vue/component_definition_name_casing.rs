@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, ObjectExpression},
+    ast::{CallExpression, Expression, ExpressionKind, ObjectExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -111,7 +111,7 @@ impl ComponentDefinitionNameCasing {
             && ident.name == "defineOptions"
             && ctx.frameworks_options() == FrameworkOptions::VueSetup
             && let Some(arg) = call.arguments.first()
-            && let Some(Expression::ObjectExpression(obj)) = arg.as_expression()
+            && let Some(obj) = arg.as_expression().and_then(Expression::as_object_expression)
         {
             self.check_name_property(obj, ctx);
             return;
@@ -169,12 +169,12 @@ impl ComponentDefinitionNameCasing {
 /// is the range of the literal *contents* (excluding the quotes / backticks),
 /// suitable as a fix target.
 fn extract_convertible(expr: &Expression<'_>) -> Option<(String, Span)> {
-    match expr {
-        Expression::StringLiteral(lit) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => {
             let inner = Span::new(lit.span.start + 1, lit.span.end - 1);
             Some((lit.value.to_string(), inner))
         }
-        Expression::TemplateLiteral(tpl) => {
+        ExpressionKind::TemplateLiteral(tpl) => {
             if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
                 return None;
             }

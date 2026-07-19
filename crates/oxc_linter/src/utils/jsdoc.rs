@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, FormalParameters, ObjectPropertyKind, PropertyKey},
+    ast::{BindingPattern, ExpressionKind, FormalParameters, ObjectPropertyKind, PropertyKey},
 };
 use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;
@@ -263,11 +263,11 @@ pub fn collect_params(
 
                 ParamKind::Nested(collected)
             }
-            BindingPattern::AssignmentPattern(assign_pat) => match &assign_pat.right {
-                Expression::Identifier(_) => {
+            BindingPattern::AssignmentPattern(assign_pat) => match assign_pat.right.kind() {
+                ExpressionKind::Identifier(_) => {
                     get_param_name(&assign_pat.left, false, use_default_object_properties)
                 }
-                Expression::ObjectExpression(obj) if use_default_object_properties => {
+                ExpressionKind::ObjectExpression(obj) if use_default_object_properties => {
                     let mut collected = match get_param_name(
                         &assign_pat.left,
                         false,

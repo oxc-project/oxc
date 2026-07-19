@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -54,7 +54,7 @@ declare_oxc_lint!(
 impl Rule for NoAmd {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind()
-            && let Expression::Identifier(identifier) = &call_expr.callee
+            && let ExpressionKind::Identifier(identifier) = call_expr.callee.kind()
             // must be in top level
             && node.scope_id() == ctx.scoping().root_scope_id()
         {
@@ -66,7 +66,9 @@ impl Rule for NoAmd {
                 return;
             }
 
-            if let Argument::ArrayExpression(_) = call_expr.arguments[0] {
+            if let Argument::Expression(expr) = &call_expr.arguments[0]
+                && expr.is_array_expression()
+            {
                 ctx.diagnostic(no_amd_diagnostic(identifier.span, identifier.name.as_str()));
             }
         }

@@ -1245,15 +1245,19 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
 pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
-        match unary_expr.argument.get_inner_expression() {
-            Expression::Identifier(ident) if ctx.strict_mode() => {
+        match unary_expr.argument.get_inner_expression().kind() {
+            ExpressionKind::Identifier(ident) if ctx.strict_mode() => {
                 ctx.error(diagnostics::delete_of_unqualified(ident.span));
             }
-            Expression::PrivateFieldExpression(expr) => {
+            ExpressionKind::PrivateFieldExpression(expr) => {
                 ctx.error(diagnostics::delete_private_field(expr.span));
             }
-            Expression::ChainExpression(chain_expr) => {
-                if let ChainElement::PrivateFieldExpression(e) = &chain_expr.expression {
+            ExpressionKind::ChainExpression(chain_expr) => {
+                if let Some(e) = chain_expr
+                    .expression
+                    .as_member_expression()
+                    .and_then(MemberExpression::as_private_field_expression)
+                {
                     ctx.error(diagnostics::delete_private_field(e.field.span));
                 }
             }

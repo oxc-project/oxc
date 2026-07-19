@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, UnaryOperator},
+    ast::{Argument, CallExpression, Expression, ExpressionKind, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -156,12 +156,13 @@ fn check_never(call_expr: &CallExpression, ctx: &LintContext, name: &str) {
 }
 
 fn timer_name<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
-    match call_expr.callee.get_inner_expression() {
-        Expression::Identifier(ident) if is_timer_function_name(ident.name.as_str()) => {
+    let inner = call_expr.callee.get_inner_expression();
+    match inner.kind() {
+        ExpressionKind::Identifier(ident) if is_timer_function_name(ident.name.as_str()) => {
             ctx.is_reference_to_global_variable(ident).then_some(ident.name.as_str())
         }
-        callee => {
-            let member_expr = callee.as_member_expression()?;
+        _ => {
+            let member_expr = inner.as_member_expression()?;
             if member_expr.is_computed() {
                 return None;
             }
@@ -172,7 +173,9 @@ fn timer_name<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) -> Opti
                 return None;
             }
 
-            let Expression::Identifier(object) = member_expr.object().get_inner_expression() else {
+            let ExpressionKind::Identifier(object) =
+                member_expr.object().get_inner_expression().kind()
+            else {
                 return None;
             };
 
@@ -200,9 +203,9 @@ fn is_zero_delay(argument: &Argument<'_>) -> bool {
 }
 
 fn is_zero_expression(expression: &Expression<'_>) -> bool {
-    match expression {
-        Expression::NumericLiteral(literal) => literal.value == 0.0,
-        Expression::UnaryExpression(unary)
+    match expression.kind() {
+        ExpressionKind::NumericLiteral(literal) => literal.value == 0.0,
+        ExpressionKind::UnaryExpression(unary)
             if matches!(
                 unary.operator,
                 UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation

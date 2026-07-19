@@ -367,9 +367,11 @@ impl Gen for ForInStatement<'_> {
 fn for_of_head_starts_with_let(left: &ForStatementLeft) -> bool {
     match left {
         ForStatementLeft::AssignmentTargetIdentifier(id) => id.name == "let",
-        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
+        ForStatementLeft::MemberExpression(m) => match m.kind() {
+            MemberExpressionKind::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
+            MemberExpressionKind::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
+            MemberExpressionKind::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
+        },
         ForStatementLeft::TSAsExpression(e) => expr_starts_with_let(&e.expression),
         ForStatementLeft::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
         ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
@@ -378,16 +380,16 @@ fn for_of_head_starts_with_let(left: &ForStatementLeft) -> bool {
 }
 
 fn expr_starts_with_let(expr: &Expression) -> bool {
-    match expr {
-        Expression::Identifier(id) => id.name == "let",
-        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        Expression::TSAsExpression(e) => expr_starts_with_let(&e.expression),
-        Expression::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
-        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
+    match expr.kind() {
+        ExpressionKind::Identifier(id) => id.name == "let",
+        ExpressionKind::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
+        ExpressionKind::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
+        ExpressionKind::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
+        ExpressionKind::TSAsExpression(e) => expr_starts_with_let(&e.expression),
+        ExpressionKind::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
+        ExpressionKind::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
         // Codegen drops redundant parens around a `let` object (`(let).x` -> `let.x`).
-        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression),
+        ExpressionKind::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression),
         _ => false,
     }
 }
@@ -431,7 +433,7 @@ impl Gen for ForStatementInit<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::VariableDeclaration(var) => var.print(p, ctx),
-            _ => self.to_expression().print_expr(p, Precedence::Lowest, ctx),
+            Self::Expression(expr) => expr.print_expr(p, Precedence::Lowest, ctx),
         }
     }
 }
@@ -1245,9 +1247,9 @@ impl Gen for ExportDefaultDeclarationKind<'_> {
                 p.print_soft_newline();
             }
             Self::TSInterfaceDeclaration(interface) => interface.print(p, ctx),
-            _ => {
+            Self::Expression(expr) => {
                 p.start_of_default_export = p.code_len();
-                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
+                expr.print_expr(p, Precedence::Comma, Context::empty());
                 p.print_semicolon_after_statement();
             }
         }
@@ -1256,32 +1258,32 @@ impl Gen for ExportDefaultDeclarationKind<'_> {
 
 impl GenExpr for Expression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        match self {
+        match self.kind() {
             // Most common expressions first (identifiers, member access, calls)
-            Self::Identifier(ident) => ident.print(p, ctx),
-            Self::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::Identifier(ident) => ident.print(p, ctx),
+            ExpressionKind::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Literals (very common)
-            Self::NumericLiteral(lit) => lit.print_expr(p, precedence, ctx),
-            Self::StringLiteral(lit) => lit.print(p, ctx),
-            Self::BooleanLiteral(lit) => lit.print(p, ctx),
-            Self::NullLiteral(lit) => lit.print(p, ctx),
+            ExpressionKind::NumericLiteral(lit) => lit.print_expr(p, precedence, ctx),
+            ExpressionKind::StringLiteral(lit) => lit.print(p, ctx),
+            ExpressionKind::BooleanLiteral(lit) => lit.print(p, ctx),
+            ExpressionKind::NullLiteral(lit) => lit.print(p, ctx),
             // Binary and logical operations (common)
-            Self::BinaryExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::LogicalExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::BinaryExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::LogicalExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Object and array literals (common)
-            Self::ObjectExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::ArrayExpression(expr) => expr.print(p, ctx),
+            ExpressionKind::ObjectExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::ArrayExpression(expr) => expr.print(p, ctx),
             // Assignment and update (common)
-            Self::AssignmentExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::UpdateExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::UnaryExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::AssignmentExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::UpdateExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::UnaryExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Conditional and sequence
-            Self::ConditionalExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::SequenceExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::ConditionalExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::SequenceExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Function expressions
-            Self::ArrowFunctionExpression(func) => {
+            ExpressionKind::ArrowFunctionExpression(func) => {
                 if func.pure && p.options.print_annotation_comment() {
                     p.print_annotation_comment(
                         func.span.start,
@@ -1291,7 +1293,7 @@ impl GenExpr for Expression<'_> {
                 }
                 func.print_expr(p, precedence, ctx);
             }
-            Self::FunctionExpression(func) => {
+            ExpressionKind::FunctionExpression(func) => {
                 if func.pure && p.options.print_annotation_comment() {
                     p.print_annotation_comment(
                         func.span.start,
@@ -1302,44 +1304,44 @@ impl GenExpr for Expression<'_> {
                 func.print(p, ctx);
             }
             // This and super
-            Self::ThisExpression(expr) => expr.print(p, ctx),
-            Self::Super(sup) => sup.print(p, ctx),
+            ExpressionKind::ThisExpression(expr) => expr.print(p, ctx),
+            ExpressionKind::Super(sup) => sup.print(p, ctx),
             // New expression
-            Self::NewExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::NewExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Template literals
-            Self::TemplateLiteral(literal) => literal.print(p, ctx),
-            Self::TaggedTemplateExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::TemplateLiteral(literal) => literal.print(p, ctx),
+            ExpressionKind::TaggedTemplateExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Other literals
-            Self::RegExpLiteral(lit) => lit.print(p, ctx),
-            Self::BigIntLiteral(lit) => lit.print_expr(p, precedence, ctx),
+            ExpressionKind::RegExpLiteral(lit) => lit.print(p, ctx),
+            ExpressionKind::BigIntLiteral(lit) => lit.print_expr(p, precedence, ctx),
             // Class expression
-            Self::ClassExpression(expr) => expr.print(p, ctx),
+            ExpressionKind::ClassExpression(expr) => expr.print(p, ctx),
             // Async/await and yield
-            Self::AwaitExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::YieldExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::AwaitExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::YieldExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Import expression
-            Self::ImportExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::ImportExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Meta property
-            Self::ImportMeta(expr) => expr.print(p, ctx),
-            Self::NewTarget(expr) => expr.print(p, ctx),
+            ExpressionKind::ImportMeta(expr) => expr.print(p, ctx),
+            ExpressionKind::NewTarget(expr) => expr.print(p, ctx),
             // Chain expression
-            Self::ChainExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::ChainExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Private field
-            Self::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::PrivateInExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ExpressionKind::PrivateInExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Parenthesized
-            Self::ParenthesizedExpression(e) => e.print_expr(p, precedence, ctx),
+            ExpressionKind::ParenthesizedExpression(e) => e.print_expr(p, precedence, ctx),
             // JSX (less common in typical JS code)
-            Self::JSXElement(el) => el.print(p, ctx),
-            Self::JSXFragment(fragment) => fragment.print(p, ctx),
+            ExpressionKind::JSXElement(el) => el.print(p, ctx),
+            ExpressionKind::JSXFragment(fragment) => fragment.print(p, ctx),
             // TypeScript (less common in runtime)
-            Self::TSAsExpression(e) => e.print_expr(p, precedence, ctx),
-            Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
-            Self::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
-            Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
-            Self::TSInstantiationExpression(e) => e.print_expr(p, precedence, ctx),
+            ExpressionKind::TSAsExpression(e) => e.print_expr(p, precedence, ctx),
+            ExpressionKind::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
+            ExpressionKind::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
+            ExpressionKind::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
+            ExpressionKind::TSInstantiationExpression(e) => e.print_expr(p, precedence, ctx),
             // V8 intrinsics (rare)
-            Self::V8IntrinsicExpression(e) => e.print_expr(p, precedence, ctx),
+            ExpressionKind::V8IntrinsicExpression(e) => e.print_expr(p, precedence, ctx),
         }
     }
 }
@@ -1496,10 +1498,16 @@ impl Gen for ThisExpression {
 
 impl GenExpr for MemberExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        match self {
-            Self::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
+        match self.kind() {
+            MemberExpressionKind::ComputedMemberExpression(expr) => {
+                expr.print_expr(p, precedence, ctx);
+            }
+            MemberExpressionKind::StaticMemberExpression(expr) => {
+                expr.print_expr(p, precedence, ctx);
+            }
+            MemberExpressionKind::PrivateFieldExpression(expr) => {
+                expr.print_expr(p, precedence, ctx);
+            }
         }
     }
 }
@@ -1585,7 +1593,7 @@ impl Gen for Argument<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::SpreadElement(elem) => elem.print(p, ctx),
-            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
+            Self::Expression(expr) => expr.print_expr(p, Precedence::Comma, Context::empty()),
         }
     }
 }
@@ -1595,7 +1603,7 @@ impl Gen for ArrayExpressionElement<'_> {
         match self {
             Self::SpreadElement(elem) => elem.print(p, ctx),
             Self::Elision(_span) => {}
-            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
+            Self::Expression(expr) => expr.print_expr(p, Precedence::Comma, Context::empty()),
         }
     }
 }
@@ -1701,7 +1709,7 @@ impl Gen for ObjectPropertyKind<'_> {
 
 impl Gen for ObjectProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if let Expression::FunctionExpression(func) = &self.value {
+        if let ExpressionKind::FunctionExpression(func) = self.value.kind() {
             p.add_source_mapping(self.span);
             let is_accessor = match &self.kind {
                 PropertyKind::Init => false,
@@ -1762,7 +1770,8 @@ impl Gen for ObjectProperty<'_> {
         if let PropertyKey::StaticIdentifier(key) = &self.key {
             if key.name == "__proto__" {
                 shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
+            } else if let ExpressionKind::Identifier(ident) =
+                self.value.without_parentheses().kind()
                 && key.name == p.get_identifier_reference_name(ident)
             {
                 shorthand = true;
@@ -1774,7 +1783,7 @@ impl Gen for ObjectProperty<'_> {
         // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
         // "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
         if !computed
-            && let Some(Expression::NumericLiteral(n)) = self.key.as_expression()
+            && let Some(n) = self.key.as_expression().and_then(Expression::as_numeric_literal)
             && (n.value.is_sign_negative() || n.value.is_infinite())
         {
             computed = true;
@@ -1802,8 +1811,13 @@ impl Gen for PropertyKey<'_> {
         match self {
             Self::StaticIdentifier(ident) => ident.print(p, ctx),
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => p.print_string_literal(s, /* allow_backtick */ false),
-            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
+            Self::Expression(e) => {
+                if let Some(s) = e.as_string_literal() {
+                    p.print_string_literal(s, /* allow_backtick */ false);
+                } else {
+                    e.print_expr(p, Precedence::Comma, Context::empty());
+                }
+            }
         }
     }
 }
@@ -1926,7 +1940,7 @@ impl GenExpr for UnaryExpression<'_> {
             // Forbid `delete Infinity`, which is syntax error in strict mode.
             let is_delete_infinity = self.operator == UnaryOperator::Delete
                 && !p.options.minify
-                && matches!(&self.argument, Expression::NumericLiteral(lit) if lit.value.is_sign_positive() && lit.value.is_infinite());
+                && matches!(self.argument.kind(), ExpressionKind::NumericLiteral(lit) if lit.value.is_sign_positive() && lit.value.is_infinite());
             if is_delete_infinity {
                 p.print_str("(0,");
                 p.print_soft_space();
@@ -2062,9 +2076,17 @@ impl GenExpr for SimpleAssignmentTarget<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.print(p, ctx),
-            Self::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::MemberExpression(expr) => match expr.kind() {
+                MemberExpressionKind::ComputedMemberExpression(expr) => {
+                    expr.print_expr(p, precedence, ctx);
+                }
+                MemberExpressionKind::StaticMemberExpression(expr) => {
+                    expr.print_expr(p, precedence, ctx);
+                }
+                MemberExpressionKind::PrivateFieldExpression(expr) => {
+                    expr.print_expr(p, precedence, ctx);
+                }
+            },
             Self::TSAsExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
@@ -2197,20 +2219,15 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::PrivateIdentifier(ident) => {
                     ident.print(p, ctx);
                 }
-                PropertyKey::StringLiteral(s) => {
+                PropertyKey::Expression(e) => {
                     if self.computed {
                         p.print_ascii_byte(b'[');
                     }
-                    p.print_string_literal(s, /* allow_backtick */ false);
-                    if self.computed {
-                        p.print_ascii_byte(b']');
+                    if let Some(s) = e.as_string_literal() {
+                        p.print_string_literal(s, /* allow_backtick */ false);
+                    } else {
+                        e.print_expr(p, Precedence::Comma, Context::empty());
                     }
-                }
-                key => {
-                    if self.computed {
-                        p.print_ascii_byte(b'[');
-                    }
-                    key.to_expression().print_expr(p, Precedence::Comma, Context::empty());
                     if self.computed {
                         p.print_ascii_byte(b']');
                     }
@@ -2354,9 +2371,17 @@ impl GenExpr for ChainExpression<'_> {
         p.wrap(wrap, |p| match &self.expression {
             ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::TSNonNullExpression(expr) => expr.print_expr(p, precedence, ctx),
-            ChainElement::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            ChainElement::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
-            ChainElement::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ChainElement::MemberExpression(expr) => match expr.kind() {
+                MemberExpressionKind::ComputedMemberExpression(expr) => {
+                    expr.print_expr(p, precedence, ctx);
+                }
+                MemberExpressionKind::StaticMemberExpression(expr) => {
+                    expr.print_expr(p, precedence, ctx);
+                }
+                MemberExpressionKind::PrivateFieldExpression(expr) => {
+                    expr.print_expr(p, precedence, ctx);
+                }
+            },
         });
     }
 }
@@ -3145,14 +3170,14 @@ impl Gen for AssignmentPattern<'_> {
 impl Gen for Decorator<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         fn need_wrap(expr: &Expression) -> bool {
-            match expr {
+            match expr.kind() {
                 // "@foo"
                 // "@foo.bar"
                 // "@foo.#bar"
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => false,
-                Expression::CallExpression(call_expr) => need_wrap(&call_expr.callee),
+                ExpressionKind::Identifier(_)
+                | ExpressionKind::StaticMemberExpression(_)
+                | ExpressionKind::PrivateFieldExpression(_) => false,
+                ExpressionKind::CallExpression(call_expr) => need_wrap(&call_expr.callee),
                 // "@(foo + bar)"
                 // "@(() => {})"
                 // "@(foo['bar'])"
@@ -3753,11 +3778,12 @@ impl Gen for TSSignature<'_> {
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_str());
                         }
-                        PropertyKey::StringLiteral(key) => {
-                            p.print_string_literal(key, false);
-                        }
-                        key => {
-                            key.to_expression().print_expr(p, Precedence::Comma, ctx);
+                        PropertyKey::Expression(e) => {
+                            if let Some(key) = e.as_string_literal() {
+                                p.print_string_literal(key, false);
+                            } else {
+                                e.print_expr(p, Precedence::Comma, ctx);
+                            }
                         }
                     }
                 }
@@ -3804,11 +3830,12 @@ impl Gen for TSPropertySignature<'_> {
                 PropertyKey::PrivateIdentifier(key) => {
                     p.print_str(key.name.as_str());
                 }
-                PropertyKey::StringLiteral(key) => {
-                    p.print_string_literal(key, false);
-                }
-                key => {
-                    key.to_expression().print_expr(p, Precedence::Comma, ctx);
+                PropertyKey::Expression(e) => {
+                    if let Some(key) = e.as_string_literal() {
+                        p.print_string_literal(key, false);
+                    } else {
+                        e.print_expr(p, Precedence::Comma, ctx);
+                    }
                 }
             }
         }

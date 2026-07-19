@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, MemberExpression},
+    ast::{Argument, ExpressionKind, ExpressionTag, MemberExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -63,8 +63,8 @@ impl Rule for NoInvalidRemoveEventListener {
             return;
         };
 
-        let remove_event_listener_ident_span = match member_expr {
-            MemberExpression::StaticMemberExpression(v) => {
+        let remove_event_listener_ident_span = match member_expr.kind() {
+            MemberExpressionKind::StaticMemberExpression(v) => {
                 if v.property.name != "removeEventListener" {
                     return;
                 }
@@ -81,18 +81,20 @@ impl Rule for NoInvalidRemoveEventListener {
             return;
         };
 
-        if !matches!(
-            listener,
-            Argument::FunctionExpression(_)
-                | Argument::ArrowFunctionExpression(_)
-                | Argument::CallExpression(_)
-        ) {
+        if !listener.as_expression().is_some_and(|e| {
+            matches!(
+                e.tag(),
+                ExpressionTag::FunctionExpression
+                    | ExpressionTag::ArrowFunctionExpression
+                    | ExpressionTag::CallExpression
+            )
+        }) {
             return;
         }
 
-        if let Argument::CallExpression(call_expr) = listener {
-            match call_expr.callee.get_member_expr() {
-                Some(MemberExpression::StaticMemberExpression(v)) => {
+        if let Some(call_expr) = listener.as_expression().and_then(|e| e.as_call_expression()) {
+            match call_expr.callee.get_member_expr().and_then(|m| m.as_static_member_expression()) {
+                Some(v) => {
                     if v.property.name != "bind" {
                         return;
                     }
@@ -103,14 +105,14 @@ impl Rule for NoInvalidRemoveEventListener {
 
         let listener_span = listener.span();
         let listener_span = if listener_span.size() > 20 {
-            match listener {
-                Argument::FunctionExpression(func_expr) => {
+            match listener.to_expression().kind() {
+                ExpressionKind::FunctionExpression(func_expr) => {
                     Span::new(func_expr.span.start, func_expr.params.span.end)
                 }
-                Argument::ArrowFunctionExpression(arrow_expr) => {
+                ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
                     Span::new(arrow_expr.span.start, arrow_expr.body.span.start)
                 }
-                Argument::CallExpression(_) => listener_span,
+                ExpressionKind::CallExpression(_) => listener_span,
                 _ => unreachable!(),
             }
         } else {

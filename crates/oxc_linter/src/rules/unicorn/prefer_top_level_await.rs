@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, VariableDeclarationKind},
+    ast::{ExpressionKind, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -127,23 +127,23 @@ impl Rule for PreferTopLevelAwait {
             return;
         }
 
-        if let Expression::StaticMemberExpression(member_expr) = &call_expr.callee
+        if let ExpressionKind::StaticMemberExpression(member_expr) = call_expr.callee.kind()
             && matches!(member_expr.property.name.as_str(), "then" | "catch" | "finally")
         {
             ctx.diagnostic(prefer_top_level_await_over_promise_chain_diagnostic(call_expr.span));
             return;
         }
 
-        if match call_expr.callee.get_inner_expression() {
-            Expression::FunctionExpression(func) if func.r#async && !func.generator => true,
-            Expression::ArrowFunctionExpression(func) if func.r#async => true,
+        if match call_expr.callee.get_inner_expression().kind() {
+            ExpressionKind::FunctionExpression(func) if func.r#async && !func.generator => true,
+            ExpressionKind::ArrowFunctionExpression(func) if func.r#async => true,
             _ => false,
         } {
             ctx.diagnostic(prefer_top_level_await_over_async_iife_diagnostic(call_expr.span));
             return;
         }
 
-        let Expression::Identifier(ident) = &call_expr.callee else {
+        let ExpressionKind::Identifier(ident) = call_expr.callee.kind() else {
             return;
         };
 
@@ -163,8 +163,8 @@ impl Rule for PreferTopLevelAwait {
             {
                 let Some(init) = &var_decl.init else { return };
 
-                if !matches!(init.get_inner_expression(), Expression::ArrowFunctionExpression(func) if func.r#async)
-                    && !matches!(init.get_inner_expression(), Expression::FunctionExpression(func) if func.r#async && !func.generator)
+                if !matches!(init.get_inner_expression().kind(), ExpressionKind::ArrowFunctionExpression(func) if func.r#async)
+                    && !matches!(init.get_inner_expression().kind(), ExpressionKind::FunctionExpression(func) if func.r#async && !func.generator)
                 {
                     return;
                 }

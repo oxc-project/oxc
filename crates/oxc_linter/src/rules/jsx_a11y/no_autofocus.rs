@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -145,10 +145,10 @@ fn is_false_attribute_value(value: &JSXAttributeValue) -> bool {
                 return false;
             };
 
-            match expression.get_inner_expression() {
-                Expression::BooleanLiteral(bool_lit) => !bool_lit.value,
-                Expression::StringLiteral(string_lit) => string_lit.value == "false",
-                Expression::TemplateLiteral(template_lit) => {
+            match expression.get_inner_expression().kind() {
+                ExpressionKind::BooleanLiteral(bool_lit) => !bool_lit.value,
+                ExpressionKind::StringLiteral(string_lit) => string_lit.value == "false",
+                ExpressionKind::TemplateLiteral(template_lit) => {
                     template_lit.quasis.len() == 1
                         && template_lit.expressions.is_empty()
                         && template_lit.quasis[0]

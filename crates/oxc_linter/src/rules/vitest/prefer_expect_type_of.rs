@@ -92,8 +92,11 @@ impl PreferExpectTypeOf {
             return;
         };
 
-        let Some(Argument::UnaryExpression(typeof_expression)) =
-            expect_call.expect_arguments.and_then(|arguments| arguments.first())
+        let Some(typeof_expression) = expect_call
+            .expect_arguments
+            .and_then(|arguments| arguments.first())
+            .and_then(Argument::as_expression)
+            .and_then(|e| e.as_unary_expression())
         else {
             return;
         };

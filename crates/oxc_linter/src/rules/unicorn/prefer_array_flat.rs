@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
-        IdentifierReference, MemberExpression, Statement,
+        ExpressionKind, IdentifierReference, MemberExpression, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -87,7 +87,9 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     }
 
-    let Argument::ArrowFunctionExpression(first_argument) = &call_expr.arguments[0] else {
+    let Some(first_argument) =
+        call_expr.arguments[0].as_expression().and_then(|e| e.as_arrow_function_expression())
+    else {
         return;
     };
 
@@ -134,7 +136,7 @@ enum ConstInitKind {
 }
 
 fn is_obviously_non_array_flat_map_receiver(object: &Expression, ctx: &LintContext) -> bool {
-    let Expression::Identifier(ident) = object.without_parentheses() else {
+    let ExpressionKind::Identifier(ident) = object.without_parentheses().kind() else {
         return false;
     };
     let is_pascal_case = ident.name.chars().next().is_some_and(char::is_uppercase);
@@ -168,30 +170,30 @@ fn const_variable_initializer_kind(
 }
 
 fn is_definitely_array_expression(expr: &Expression) -> bool {
-    match expr {
-        Expression::ArrayExpression(_) => true,
-        Expression::NewExpression(new_expr) => {
-            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name == "Array")
+    match expr.kind() {
+        ExpressionKind::ArrayExpression(_) => true,
+        ExpressionKind::NewExpression(new_expr) => {
+            matches!(new_expr.callee.kind(), ExpressionKind::Identifier(ident) if ident.name == "Array")
         }
         _ => false,
     }
 }
 
 fn is_definitely_non_array_expression(expr: &Expression) -> bool {
-    match expr {
-        Expression::ObjectExpression(_)
-        | Expression::StringLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::ArrowFunctionExpression(_)
-        | Expression::FunctionExpression(_)
-        | Expression::ClassExpression(_) => true,
-        Expression::NewExpression(new_expr) => {
-            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name != "Array")
+    match expr.kind() {
+        ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::StringLiteral(_)
+        | ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::BigIntLiteral(_)
+        | ExpressionKind::RegExpLiteral(_)
+        | ExpressionKind::TemplateLiteral(_)
+        | ExpressionKind::ArrowFunctionExpression(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::ClassExpression(_) => true,
+        ExpressionKind::NewExpression(new_expr) => {
+            matches!(new_expr.callee.kind(), ExpressionKind::Identifier(ident) if ident.name != "Array")
         }
         _ => false,
     }
@@ -203,7 +205,9 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     if !is_method_call(call_expr, None, Some(&["reduce"]), Some(2), Some(2)) {
         return;
     }
-    let Argument::ArrowFunctionExpression(first_argument) = &call_expr.arguments[0] else {
+    let Some(first_argument) =
+        call_expr.arguments[0].as_expression().and_then(|e| e.as_arrow_function_expression())
+    else {
         return;
     };
     let Some(second_argument) = call_expr.arguments[1].as_expression() else {
@@ -236,16 +240,17 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     };
 
     // `array.reduce((a, b) => a.concat(b), [])`
-    if let Expression::CallExpression(concat_call_expr) = &expr_stmt.expression
+    if let ExpressionKind::CallExpression(concat_call_expr) = expr_stmt.expression.kind()
         && is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1))
-        && let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0]
+        && let Some(first_argument_ident) =
+            concat_call_expr.arguments[0].as_expression().and_then(|e| e.as_identifier())
     {
         if first_argument_ident.name != second_parameter {
             return;
         }
 
-        let Expression::Identifier(second_argument_ident) =
-            concat_call_expr.callee.get_member_expr().unwrap().object()
+        let ExpressionKind::Identifier(second_argument_ident) =
+            concat_call_expr.callee.get_member_expr().unwrap().object().kind()
         else {
             return;
         };
@@ -272,7 +277,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 
     // `array.reduce((a, b) => [...a, ...b], [])`
-    if let Expression::ArrayExpression(array_expr) = &expr_stmt.expression {
+    if let ExpressionKind::ArrayExpression(array_expr) = expr_stmt.expression.kind() {
         if array_expr.elements.len() != 2 {
             return;
         }
@@ -282,10 +287,10 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
                 (
                     ArrayExpressionElement::SpreadElement(first_element),
                     ArrayExpressionElement::SpreadElement(second_element),
-                ) => match (&first_element.argument, &second_element.argument) {
+                ) => match (first_element.argument.kind(), second_element.argument.kind()) {
                     (
-                        Expression::Identifier(first_element),
-                        Expression::Identifier(second_element),
+                        ExpressionKind::Identifier(first_element),
+                        ExpressionKind::Identifier(second_element),
                     ) => Some((first_element, second_element)),
                     _ => None,
                 },
@@ -333,7 +338,7 @@ fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 
     // `array.concat(maybeArray)`
-    if let Expression::ArrayExpression(array_expr) = member_expr.object() {
+    if let ExpressionKind::ArrayExpression(array_expr) = member_expr.object().kind() {
         if !array_expr.elements.is_empty() {
             return;
         }

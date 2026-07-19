@@ -3,9 +3,9 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
-        Expression, ObjectExpression, ObjectPropertyKind, PropertyKey, TSMethodSignatureKind,
-        TSSignature, TSType, VariableDeclarator,
+        BindingPattern, CallExpression, ExportDefaultDeclaration, Expression, ExpressionKind,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, TSMethodSignatureKind, TSSignature,
+        TSType, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -120,7 +120,7 @@ impl NoRequiredPropWithDefault {
         };
         if ident.name.as_str() == "defineComponent" && call_expr.arguments.len() == 1 {
             let arg = &call_expr.arguments[0];
-            let Some(Expression::ObjectExpression(obj)) = arg.as_expression() else {
+            let Some(obj) = arg.as_expression().and_then(Expression::as_object_expression) else {
                 return;
             };
             handle_object_expression(ctx, obj);
@@ -135,7 +135,8 @@ impl NoRequiredPropWithDefault {
         match ident.name.as_str() {
             "defineProps" => {
                 if let Some(arge) = call_expr.arguments.first() {
-                    let Some(Expression::ObjectExpression(obj)) = arge.as_expression() else {
+                    let Some(obj) = arge.as_expression().and_then(Expression::as_object_expression)
+                    else {
                         return;
                     };
                     // Here we need to consider the following two examples
@@ -166,8 +167,8 @@ impl NoRequiredPropWithDefault {
                 if let (Some(first_arg_expr), Some(second_arg_expr)) =
                     (first_arg.as_expression(), second_arg.as_expression())
                 {
-                    let Expression::ObjectExpression(second_obj_expr) =
-                        second_arg_expr.get_inner_expression()
+                    let ExpressionKind::ObjectExpression(second_obj_expr) =
+                        second_arg_expr.get_inner_expression().kind()
                     else {
                         return;
                     };
@@ -187,8 +188,10 @@ impl NoRequiredPropWithDefault {
         export_default_decl: &ExportDefaultDeclaration<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-            &export_default_decl.declaration
+        let Some(obj_expr) = export_default_decl
+            .declaration
+            .as_expression()
+            .and_then(Expression::as_object_expression)
         else {
             return;
         };
@@ -257,10 +260,12 @@ fn process_define_props_call<'a>(
     first_arg_expr: &Expression<'a>,
     key_hash: &FxHashSet<String>,
 ) {
-    let Expression::CallExpression(first_call_expr) = first_arg_expr.get_inner_expression() else {
+    let ExpressionKind::CallExpression(first_call_expr) =
+        first_arg_expr.get_inner_expression().kind()
+    else {
         return;
     };
-    let Expression::Identifier(first_call_ident) = &first_call_expr.callee else {
+    let ExpressionKind::Identifier(first_call_ident) = first_call_expr.callee.kind() else {
         return;
     };
     if first_call_ident.name != "defineProps" {
@@ -320,7 +325,9 @@ fn handle_object_expression(ctx: &LintContext, obj: &ObjectExpression) {
     let Some(prop_obj) = find_property(obj, "props") else {
         return;
     };
-    let Expression::ObjectExpression(prop_obj_expr) = prop_obj.value.get_inner_expression() else {
+    let ExpressionKind::ObjectExpression(prop_obj_expr) =
+        prop_obj.value.get_inner_expression().kind()
+    else {
         return;
     };
     handle_prop_object(ctx, prop_obj_expr, None);
@@ -334,8 +341,8 @@ fn handle_prop_object(
     obj.properties.iter().for_each(|v| {
         if let ObjectPropertyKind::ObjectProperty(inner_prop) = v
             && let Some(inner_key) = inner_prop.key.static_name()
-            && let Expression::ObjectExpression(inner_prop_value_expr) =
-                inner_prop.value.get_inner_expression()
+            && let ExpressionKind::ObjectExpression(inner_prop_value_expr) =
+                inner_prop.value.get_inner_expression().kind()
         {
             let mut has_default_key = false;
             let mut required_true_span: Option<Span> = None;
@@ -354,7 +361,8 @@ fn handle_prop_object(
                         has_default_key = true;
                     }
                     if item_key == "required" {
-                        let Expression::BooleanLiteral(inner_value) = &item_obj.value else {
+                        let ExpressionKind::BooleanLiteral(inner_value) = item_obj.value.kind()
+                        else {
                             continue;
                         };
                         if inner_value.value {

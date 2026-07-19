@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
+        ArrayExpression, CallExpression, Expression, ExpressionKind, ObjectExpression,
         ObjectPropertyKind, PropertyKey, TSSignature,
     },
 };
@@ -151,16 +151,18 @@ impl PropNameCasing {
     }
 
     fn check_props_value<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
-        match expr.get_inner_expression() {
-            Expression::ArrayExpression(arr) => self.check_array_props(arr, ctx),
-            Expression::ObjectExpression(obj) => self.check_object_props(obj, ctx),
+        match expr.get_inner_expression().kind() {
+            ExpressionKind::ArrayExpression(arr) => self.check_array_props(arr, ctx),
+            ExpressionKind::ObjectExpression(obj) => self.check_object_props(obj, ctx),
             _ => {}
         }
     }
 
     fn check_array_props<'a>(&self, arr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
         for element in &arr.elements {
-            let ArrayExpressionElement::StringLiteral(lit) = element else { continue };
+            let Some(lit) = element.as_expression().and_then(Expression::as_string_literal) else {
+                continue;
+            };
             self.report_if_invalid(lit.value.as_str(), lit.span, ctx);
         }
     }
@@ -204,22 +206,22 @@ fn property_key_static_name<'a>(
     match key {
         PropertyKey::StaticIdentifier(ident) => Some((ident.name.as_str().into(), ident.span)),
         PropertyKey::PrivateIdentifier(_) => None,
-        key => {
+        key @ PropertyKey::Expression(_) => {
             // Computed key expressions: pull the inner expression and accept
             // statically resolvable literals. Dynamic shapes (variable,
             // call, binary expression, member, this) are treated as
             // unresolvable and skipped.
             let expr = key.as_expression()?.get_inner_expression();
-            match expr {
-                Expression::StringLiteral(lit) => Some((lit.value.as_str().into(), lit.span)),
-                Expression::TemplateLiteral(tpl)
+            match expr.kind() {
+                ExpressionKind::StringLiteral(lit) => Some((lit.value.as_str().into(), lit.span)),
+                ExpressionKind::TemplateLiteral(tpl)
                     if tpl.expressions.is_empty() && tpl.quasis.len() == 1 =>
                 {
                     let quasi = tpl.quasis.first()?;
                     let cooked = quasi.value.cooked.as_ref()?;
                     Some((cooked.as_str().into(), tpl.span))
                 }
-                Expression::RegExpLiteral(regex) => {
+                ExpressionKind::RegExpLiteral(regex) => {
                     Some((regex.raw.as_ref()?.as_str().into(), regex.span))
                 }
                 _ => None,

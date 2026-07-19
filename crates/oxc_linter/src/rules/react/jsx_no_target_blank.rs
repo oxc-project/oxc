@@ -3,8 +3,8 @@ use std::ops::Deref;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression,
-        StringLiteral, match_expression,
+        Expression, ExpressionKind, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
+        JSXExpression, StringLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -262,10 +262,12 @@ fn match_href_expression(
     is_external_link: &mut bool,
     is_dynamic_link: &mut bool,
 ) {
-    match expr {
-        Expression::StringLiteral(str) => *is_external_link = check_is_external_link(&str.value),
-        Expression::Identifier(_) => *is_dynamic_link = true,
-        Expression::ConditionalExpression(expr) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(str) => {
+            *is_external_link = check_is_external_link(&str.value);
+        }
+        ExpressionKind::Identifier(_) => *is_dynamic_link = true,
+        ExpressionKind::ConditionalExpression(expr) => {
             match_href_expression(&expr.consequent, is_external_link, is_dynamic_link);
             match_href_expression(&expr.alternate, is_external_link, is_dynamic_link);
         }
@@ -329,9 +331,11 @@ fn match_rel_expression<'a>(
     allow_referrer: bool,
 ) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
     let default = (false, None, false, false);
-    match expr {
-        Expression::StringLiteral(str) => (check_rel_val(str, allow_referrer), None, false, false),
-        Expression::ConditionalExpression(expr) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(str) => {
+            (check_rel_val(str, allow_referrer), None, false, false)
+        }
+        ExpressionKind::ConditionalExpression(expr) => {
             let consequent = match_rel_expression(&expr.consequent, allow_referrer);
             let alternate = match_rel_expression(&expr.alternate, allow_referrer);
             (consequent.0 && alternate.0, Some(&expr.test), consequent.0, alternate.0)
@@ -351,9 +355,7 @@ fn check_rel<'a>(
         }
         JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
             JSXExpression::EmptyExpression(_) => default,
-            expr @ match_expression!(JSXExpression) => {
-                match_rel_expression(expr.to_expression(), allow_referrer)
-            }
+            JSXExpression::Expression(expr) => match_rel_expression(expr, allow_referrer),
         },
         _ => default,
     }
@@ -363,11 +365,11 @@ fn match_target_expression<'a>(
     expr: &'a Expression<'a>,
 ) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
     let default = (false, None, false, false);
-    match expr {
-        Expression::StringLiteral(str) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(str) => {
             (str.value.eq_ignore_ascii_case("_blank"), None, false, false)
         }
-        Expression::ConditionalExpression(expr) => {
+        ExpressionKind::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
             let alternate = match_target_expression(&expr.alternate);
             (consequent.0 || alternate.0, Some(&expr.test), consequent.0, alternate.0)

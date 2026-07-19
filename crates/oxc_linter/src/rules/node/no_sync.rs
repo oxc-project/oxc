@@ -2,7 +2,10 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -98,18 +101,18 @@ impl Rule for NoSync {
 }
 
 fn get_sync_property_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
-    match expr.get_inner_expression() {
-        Expression::Identifier(ident) if ident.name.as_str().ends_with("Sync") => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::Identifier(ident) if ident.name.as_str().ends_with("Sync") => {
             Some(ident.name.as_str())
         }
-        Expression::StaticMemberExpression(member) => {
+        ExpressionKind::StaticMemberExpression(member) => {
             if member.property.name.as_str().ends_with("Sync") {
                 Some(member.property.name.as_str())
             } else {
                 get_sync_property_name(&member.object)
             }
         }
-        Expression::ComputedMemberExpression(member) => {
+        ExpressionKind::ComputedMemberExpression(member) => {
             if let Some(name) = member.static_property_name()
                 && name.as_str().ends_with("Sync")
             {

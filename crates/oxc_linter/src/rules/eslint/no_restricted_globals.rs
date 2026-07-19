@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference},
+    ast::{ExpressionKind, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -264,9 +264,9 @@ impl NoRestrictedGlobals {
                 if obj_ident.span != ident_span {
                     return;
                 }
-                let property_name = match &expression.expression {
-                    Expression::StringLiteral(str) => str.value.as_str(),
-                    Expression::TemplateLiteral(template)
+                let property_name = match expression.expression.kind() {
+                    ExpressionKind::StringLiteral(str) => str.value.as_str(),
+                    ExpressionKind::TemplateLiteral(template)
                         if template.is_no_substitution_template() =>
                     {
                         let Some(cooked) = &template.quasis[0].value.cooked else {
@@ -296,7 +296,7 @@ fn is_ident_property(ident: &IdentifierReference, kind: &AstKind) -> bool {
             expression.property.node_id() == ident.node_id()
         }
         AstKind::ComputedMemberExpression(expression) => {
-            let Expression::Identifier(ident_ref) = &expression.expression else {
+            let ExpressionKind::Identifier(ident_ref) = expression.expression.kind() else {
                 return false;
             };
 

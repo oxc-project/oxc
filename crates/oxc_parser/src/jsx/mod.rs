@@ -363,7 +363,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             let expr = JSXExpression::from(self.parse_expr());
             // JSX expressions may not use the comma operator.
-            if matches!(expr, JSXExpression::SequenceExpression(_)) {
+            if matches!(&expr, JSXExpression::Expression(e) if e.is_sequence_expression()) {
                 self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
                     expr.span(),
                 ));
@@ -469,9 +469,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self.parse_jsx_expression_container(span_start, /* in_jsx_child */ false);
                 JSXAttributeValue::ExpressionContainer(expr)
             }
-            Kind::LAngle => match self.parse_jsx_expression() {
-                Expression::JSXFragment(fragment) => JSXAttributeValue::Fragment(fragment),
-                Expression::JSXElement(element) => JSXAttributeValue::Element(element),
+            Kind::LAngle => match self.parse_jsx_expression().into_kind() {
+                ExpressionKindOwned::JSXFragment(fragment) => JSXAttributeValue::Fragment(fragment),
+                ExpressionKindOwned::JSXElement(element) => JSXAttributeValue::Element(element),
                 _ => self.unexpected(),
             },
             _ => self.unexpected(),

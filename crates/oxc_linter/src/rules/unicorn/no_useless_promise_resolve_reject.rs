@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, MemberExpression},
+    ast::{CallExpression, MemberExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -92,7 +92,8 @@ impl Rule for NoUselessPromiseResolveReject {
             return;
         }
 
-        let MemberExpression::StaticMemberExpression(static_member_expr) = member_expr else {
+        let MemberExpressionKind::StaticMemberExpression(static_member_expr) = member_expr.kind()
+        else {
             return;
         };
 
@@ -364,7 +365,10 @@ fn generate_fix<'a>(
                 text
             }
         } else {
-            if matches!(&call_expr.arguments[0], Argument::ObjectExpression(_)) {
+            if call_expr.arguments[0]
+                .as_expression()
+                .is_some_and(oxc_ast::ast::Expression::is_object_expression)
+            {
                 text = format!("({text})");
             }
             text

@@ -5,8 +5,8 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        ArrowFunctionExpression, CallExpression, Expression, ExpressionKind, Function,
+        FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
         JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
         JSXOpeningElement, Statement, StaticMemberExpression,
     },
@@ -26,8 +26,8 @@ use crate::globals::HTML_TAG;
 use crate::{LintContext, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
-    match &call_expr.callee {
-        Expression::StaticMemberExpression(member_expr) => {
+    match call_expr.callee.kind() {
+        ExpressionKind::StaticMemberExpression(member_expr) => {
             if member_expr
                 .object
                 .get_identifier_reference()
@@ -38,7 +38,7 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
 
             member_expr.property.name == "createElement"
         }
-        Expression::ComputedMemberExpression(member_expr) => {
+        ExpressionKind::ComputedMemberExpression(member_expr) => {
             if member_expr
                 .object
                 .get_identifier_reference()
@@ -49,7 +49,7 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
 
             member_expr.static_property_name().is_some_and(|name| name == "createElement")
         }
-        Expression::Identifier(ident) => ident.name == "createElement",
+        ExpressionKind::Identifier(ident) => ident.name == "createElement",
         _ => false,
     }
 }
@@ -134,9 +134,11 @@ pub fn is_disabled_element(jsx_el: &JSXOpeningElement) -> bool {
     };
     match &attr.value {
         Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
-        Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            matches!(&container.expression, JSXExpression::BooleanLiteral(b) if b.value)
-        }
+        Some(JSXAttributeValue::ExpressionContainer(container)) => container
+            .expression
+            .as_expression()
+            .and_then(Expression::as_boolean_literal)
+            .is_some_and(|b| b.value),
         _ => false,
     }
 }
@@ -147,7 +149,7 @@ pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<
         JSXChild::Text(text) => !text.value.is_empty(),
         JSXChild::Element(el) => !is_hidden_from_screen_reader(ctx, &el.opening_element),
         JSXChild::ExpressionContainer(container) => {
-            !matches!(&container.expression, JSXExpression::NullLiteral(_))
+            !container.expression.as_expression().is_some_and(Expression::is_null_literal)
                 && !container.expression.is_undefined()
         }
         _ => false,
@@ -558,7 +560,7 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     };
 
     if let Some(member_expr) = call_expr.callee.as_member_expression()
-        && let Expression::Identifier(ident) = member_expr.object()
+        && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
     {
         return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
     }
@@ -579,7 +581,7 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     };
     if let Some(super_class) = &class_expr.super_class {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
+            && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
         {
             return ident.name == PRAGMA
                 && member_expr
@@ -720,14 +722,14 @@ fn parse_jsx_expression(expression: &JSXExpression) -> Result<f64, ()> {
 }
 
 fn parse_expression(expression: &Expression) -> Result<f64, ()> {
-    match expression {
-        Expression::StringLiteral(str) => str.value.parse().or(Err(())),
-        Expression::TemplateLiteral(tmpl) => {
+    match expression.kind() {
+        ExpressionKind::StringLiteral(str) => str.value.parse().or(Err(())),
+        ExpressionKind::TemplateLiteral(tmpl) => {
             tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
         }
-        Expression::NumericLiteral(num) => Ok(num.value),
-        Expression::UnaryExpression(expr) => {
-            let Expression::NumericLiteral(num) = &expr.argument else {
+        ExpressionKind::NumericLiteral(num) => Ok(num.value),
+        ExpressionKind::UnaryExpression(expr) => {
+            let ExpressionKind::NumericLiteral(num) = expr.argument.kind() else {
                 return Err(());
             };
 
@@ -737,7 +739,7 @@ fn parse_expression(expression: &Expression) -> Result<f64, ()> {
                 _ => Err(()),
             }
         }
-        Expression::ConditionalExpression(expr) => {
+        ExpressionKind::ConditionalExpression(expr) => {
             if expr.test.to_boolean(&WithoutGlobalReferenceInformation {}).unwrap_or(true) {
                 parse_expression(&expr.consequent)
             } else {
@@ -764,16 +766,16 @@ pub fn is_react_hook_name(name: &str) -> bool {
 ///
 /// Identifies `use(...)` as a valid hook.
 pub fn is_react_hook(expr: &Expression) -> bool {
-    match expr {
-        Expression::StaticMemberExpression(static_expr) => {
+    match expr.kind() {
+        ExpressionKind::StaticMemberExpression(static_expr) => {
             let is_valid_property = is_react_hook_name(&static_expr.property.name);
-            let is_valid_namespace = match &static_expr.object {
-                Expression::Identifier(ident) => is_react_component_name(&ident.name),
+            let is_valid_namespace = match static_expr.object.kind() {
+                ExpressionKind::Identifier(ident) => is_react_component_name(&ident.name),
                 _ => false,
             };
             is_valid_namespace && is_valid_property
         }
-        Expression::Identifier(ident) => is_react_hook_name(ident.name.as_str()),
+        ExpressionKind::Identifier(ident) => is_react_hook_name(ident.name.as_str()),
         _ => false,
     }
 }
@@ -827,7 +829,7 @@ pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
 
 // check current node is this.state.xx
 pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
-    if let Expression::ThisExpression(_) = &expression.object {
+    if let ExpressionKind::ThisExpression(_) = expression.object.kind() {
         return expression.property.name == "state";
     }
 
@@ -867,24 +869,24 @@ impl FunctionReturns {
         ctx: &LintContext<'_>,
         visited: &mut FxHashSet<SymbolId>,
     ) {
-        match expression.get_inner_expression() {
-            Expression::JSXElement(_) | Expression::JSXFragment(_) => self.jsx = true,
-            Expression::CallExpression(call) if is_create_element_call(call) => self.jsx = true,
-            Expression::NullLiteral(_) => self.null = true,
-            Expression::ConditionalExpression(expression) => {
+        match expression.get_inner_expression().kind() {
+            ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => self.jsx = true,
+            ExpressionKind::CallExpression(call) if is_create_element_call(call) => self.jsx = true,
+            ExpressionKind::NullLiteral(_) => self.null = true,
+            ExpressionKind::ConditionalExpression(expression) => {
                 self.add_expression(&expression.consequent, ctx, visited);
                 self.add_expression(&expression.alternate, ctx, visited);
             }
-            Expression::LogicalExpression(expression) => {
+            ExpressionKind::LogicalExpression(expression) => {
                 self.add_expression(&expression.left, ctx, visited);
                 self.add_expression(&expression.right, ctx, visited);
             }
-            Expression::SequenceExpression(expression) => {
+            ExpressionKind::SequenceExpression(expression) => {
                 if let Some(last) = expression.expressions.last() {
                     self.add_expression(last, ctx, visited);
                 }
             }
-            Expression::Identifier(identifier) => {
+            ExpressionKind::Identifier(identifier) => {
                 let Some(symbol_id) =
                     ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
                 else {
@@ -923,9 +925,9 @@ pub fn arrow_function_returns(
 }
 
 pub fn expression_returns(expression: &Expression<'_>, ctx: &LintContext<'_>) -> FunctionReturns {
-    match expression {
-        Expression::FunctionExpression(function) => function_returns(function, ctx),
-        Expression::ArrowFunctionExpression(arrow) => arrow_function_returns(arrow, ctx),
+    match expression.kind() {
+        ExpressionKind::FunctionExpression(function) => function_returns(function, ctx),
+        ExpressionKind::ArrowFunctionExpression(arrow) => arrow_function_returns(arrow, ctx),
         _ => FunctionReturns::default(),
     }
 }
@@ -979,8 +981,8 @@ pub fn find_innermost_function_with_jsx<'a>(
     expr: &'a Expression<'a>,
     ctx: &LintContext<'_>,
 ) -> Option<InnermostFunction<'a>> {
-    match expr {
-        Expression::CallExpression(call) => {
+    match expr.kind() {
+        ExpressionKind::CallExpression(call) => {
             // Check if this is a HOC call
             if let Some(callee_name) = call.callee_name()
                 && is_hoc_call(callee_name, ctx)
@@ -994,14 +996,14 @@ pub fn find_innermost_function_with_jsx<'a>(
             }
             None
         }
-        Expression::FunctionExpression(func) => {
+        ExpressionKind::FunctionExpression(func) => {
             if function_returns(func, ctx).has_jsx() {
                 Some(InnermostFunction::Function(func))
             } else {
                 None
             }
         }
-        Expression::ArrowFunctionExpression(arrow_func) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             if arrow_function_returns(arrow_func, ctx).has_jsx() {
                 Some(InnermostFunction::ArrowFunction)
             } else {
@@ -1086,9 +1088,9 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
 
 /// Checks if a function-like expression (function or arrow function) contains JSX
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
-    match expr {
-        Expression::FunctionExpression(func) => function_contains_jsx(func),
-        Expression::ArrowFunctionExpression(arrow_func) => {
+    match expr.kind() {
+        ExpressionKind::FunctionExpression(func) => function_contains_jsx(func),
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             function_body_contains_jsx(&arrow_func.body)
         }
         _ => false,

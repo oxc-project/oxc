@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression},
+    ast::{Expression, ExpressionKind},
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -68,15 +68,17 @@ declare_oxc_lint!(
 impl Rule for NoThisInBeforeRouteEnter {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else { return };
-        let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-            &export_default_decl.declaration
+        let Some(obj_expr) = export_default_decl
+            .declaration
+            .as_expression()
+            .and_then(Expression::as_object_expression)
         else {
             return;
         };
 
         if let Some(before_route_enter_prop) = find_property(obj_expr, "beforeRouteEnter") {
-            let function_body = match &before_route_enter_prop.value {
-                Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
+            let function_body = match before_route_enter_prop.value.kind() {
+                ExpressionKind::FunctionExpression(func_expr) => func_expr.body.as_ref(),
                 _ => return,
             };
 

@@ -29,7 +29,7 @@ use std::sync::Arc;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, ReplaceWith, UnstableAddress};
+use oxc_allocator::{Address, Allocator, GetAddress, ReplaceWith, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
@@ -356,7 +356,7 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         // carried `optional: true` (e.g. `process?.env[0]` with define `process.env -> {}`),
         // leaving an invalid `ChainExpression` with no optional elements.
         // Unwrap it to a plain expression to produce a valid AST.
-        if matches!(expr, Expression::ChainExpression(_)) {
+        if expr.is_chain_expression() {
             Self::unwrap_chain_expression_if_no_optional(expr);
         }
     }
@@ -495,14 +495,14 @@ impl<'a> ReplaceGlobalDefines<'a> {
     // typeof -> identifier -> dot/meta; the first one to match replaces the node.
 
     fn replace_identifier_defines(&mut self, expr: &mut Expression<'a>) -> bool {
-        match expr {
-            Expression::Identifier(ident) => {
-                if let Some(new_expr) = self.replace_identifier_define_impl(ident) {
+        match expr.tag() {
+            ExpressionTag::Identifier => {
+                if let Some(new_expr) = self.replace_identifier_define_impl(expr.to_identifier()) {
                     *expr = new_expr;
                     return true;
                 }
             }
-            Expression::ThisExpression(_)
+            ExpressionTag::ThisExpression
                 if self.config.0.identifier.has_this_expr_define
                     && should_replace_this_expr(self.current_scope_flags()) =>
             {
@@ -519,7 +519,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_typeof_defines(&mut self, expr: &mut Expression<'a>) -> bool {
-        let Expression::UnaryExpression(unary) = expr else {
+        let Some(unary) = expr.as_unary_expression() else {
             return false;
         };
         if unary.operator != UnaryOperator::Typeof {
@@ -550,40 +550,40 @@ impl<'a> ReplaceGlobalDefines<'a> {
     ) -> bool {
         let argument = argument.without_parentheses();
         if define.parts.len() == 1 {
-            return match argument {
-                Expression::Identifier(ident) => {
+            return match argument.kind() {
+                ExpressionKind::Identifier(ident) => {
                     ident.name == define.parts[0].as_str()
                         && Self::is_global_or_ambient_reference(scoping, ident)
                 }
-                Expression::ThisExpression(_) => {
+                ExpressionKind::ThisExpression(_) => {
                     define.parts[0].as_str() == "this" && should_replace_this_expr(scope_flags)
                 }
                 _ => false,
             };
         }
 
-        let member = match argument {
-            Expression::StaticMemberExpression(member) => {
+        let member = match argument.kind() {
+            ExpressionKind::StaticMemberExpression(member) => {
                 DotDefineMemberExpression::StaticMemberExpression(member)
             }
-            Expression::ComputedMemberExpression(member) => {
+            ExpressionKind::ComputedMemberExpression(member) => {
                 DotDefineMemberExpression::ComputedMemberExpression(member)
             }
-            Expression::ChainExpression(chain) => {
+            ExpressionKind::ChainExpression(chain) => {
                 let Some(member) = chain.expression.as_member_expression() else {
                     return false;
                 };
-                match member {
-                    MemberExpression::StaticMemberExpression(member) => {
+                match member.kind() {
+                    MemberExpressionKind::StaticMemberExpression(member) => {
                         DotDefineMemberExpression::StaticMemberExpression(member)
                     }
-                    MemberExpression::ComputedMemberExpression(member) => {
+                    MemberExpressionKind::ComputedMemberExpression(member) => {
                         DotDefineMemberExpression::ComputedMemberExpression(member)
                     }
-                    MemberExpression::PrivateFieldExpression(_) => return false,
+                    MemberExpressionKind::PrivateFieldExpression(_) => return false,
                 }
             }
-            Expression::ImportMeta(_) => {
+            ExpressionKind::ImportMeta(_) => {
                 return define.parts.len() == 2
                     && define.parts[0].as_str() == "import"
                     && define.parts[1].as_str() == "meta";
@@ -595,7 +595,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_identifier_define_impl(
         &mut self,
-        ident: &ArenaBox<'_, IdentifierReference<'_>>,
+        ident: &IdentifierReference<'_>,
     ) -> Option<Expression<'a>> {
         if !Self::is_global_or_ambient_reference(self.scoping(), ident) {
             return None;
@@ -610,12 +610,15 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .left
             .as_simple_assignment_target_mut()
             .and_then(|item| match item {
-                SimpleAssignmentTarget::ComputedMemberExpression(computed_member_expr) => {
-                    self.replace_dot_computed_member_expr(computed_member_expr)
-                }
-                SimpleAssignmentTarget::StaticMemberExpression(member) => {
-                    self.replace_dot_static_member_expr_no_optimize(member)
-                }
+                SimpleAssignmentTarget::MemberExpression(member) => match member.kind_mut() {
+                    MemberExpressionKindMut::ComputedMemberExpression(computed_member_expr) => {
+                        self.replace_dot_computed_member_expr(computed_member_expr)
+                    }
+                    MemberExpressionKindMut::StaticMemberExpression(member) => {
+                        self.replace_dot_static_member_expr_no_optimize(member)
+                    }
+                    MemberExpressionKindMut::PrivateFieldExpression(_) => None,
+                },
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                     self.replace_identifier_define_impl(ident)
                 }
@@ -630,37 +633,40 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) -> bool {
-        match expr {
-            Expression::ChainExpression(chain) => {
-                let Some(new_expr) =
-                    chain.expression.as_member_expression_mut().and_then(|item| match item {
-                        MemberExpression::ComputedMemberExpression(computed_member_expr) => {
+        match expr.tag() {
+            ExpressionTag::ChainExpression => {
+                let chain = expr.to_chain_expression_mut();
+                let Some(new_expr) = chain.expression.as_member_expression_mut().and_then(|item| {
+                    match item.kind_mut() {
+                        MemberExpressionKindMut::ComputedMemberExpression(computed_member_expr) => {
                             self.replace_dot_computed_member_expr(computed_member_expr)
                         }
-                        MemberExpression::StaticMemberExpression(member) => {
+                        MemberExpressionKindMut::StaticMemberExpression(member) => {
                             self.replace_dot_static_member_expr(member)
                         }
-                        MemberExpression::PrivateFieldExpression(_) => None,
-                    })
-                else {
+                        MemberExpressionKindMut::PrivateFieldExpression(_) => None,
+                    }
+                }) else {
                     return false;
                 };
                 *expr = new_expr;
                 return true;
             }
-            Expression::StaticMemberExpression(member) => {
+            ExpressionTag::StaticMemberExpression => {
+                let member = expr.to_static_member_expression_mut();
                 if let Some(new_expr) = self.replace_dot_static_member_expr(member) {
                     *expr = new_expr;
                     return true;
                 }
             }
-            Expression::ComputedMemberExpression(member) => {
+            ExpressionTag::ComputedMemberExpression => {
+                let member = expr.to_computed_member_expression_mut();
                 if let Some(new_expr) = self.replace_dot_computed_member_expr(member) {
                     *expr = new_expr;
                     return true;
                 }
             }
-            Expression::ImportMeta(_) => {
+            ExpressionTag::ImportMeta => {
                 if let Some(replacement) = self.config.0.import_meta.clone() {
                     let value = self.parse_value(&replacement);
                     *expr = value;
@@ -769,7 +775,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     /// skip the whole wildcard scan for ordinary member expressions such as `console.log` or
     /// `a.b.c`.
     fn is_import_meta_member(member: &StaticMemberExpression<'a>) -> bool {
-        matches!(member.get_first_object(), Expression::ImportMeta(_))
+        member.get_first_object().is_import_meta()
     }
 
     pub fn is_meta_property_define(
@@ -782,10 +788,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             Matched,
         }
         if meta_define.parts.is_empty() && meta_define.postfix_wildcard {
-            match &member.object {
-                Expression::ImportMeta(_) => return true,
-                _ => return false,
-            }
+            return member.object.is_import_meta();
         }
         debug_assert!(!meta_define.parts.is_empty());
 
@@ -824,19 +827,19 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
 
             current_part_member_expression = if let Some(member) = current_part_member_expression {
-                match &member.object {
-                    Expression::StaticMemberExpression(member) => {
+                match member.object.kind() {
+                    ExpressionKind::StaticMemberExpression(member) => {
                         cur_part_name = &member.property.name;
                         Some(member)
                     }
-                    Expression::ImportMeta(_) => {
+                    ExpressionKind::ImportMeta(_) => {
                         if meta_define.postfix_wildcard {
                             // `import.meta.env` should not match `import.meta.env.*`
                             return has_matched_part && !is_full_match;
                         }
                         return i == 0;
                     }
-                    Expression::Identifier(_) => {
+                    ExpressionKind::Identifier(_) => {
                         return false;
                     }
                     _ => None,
@@ -877,16 +880,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
     /// `optional: true` markers (because a define replacement removed them),
     /// unwrap it to a plain expression.
     fn unwrap_chain_expression_if_no_optional(expr: &mut Expression<'a>) {
-        let Expression::ChainExpression(chain) = &*expr else { return };
+        let Some(chain) = expr.as_chain_expression() else { return };
 
         // Check the chain element's optional flag and get the first object/callee to walk.
         let (optional, mut current) = match &chain.expression {
             ChainElement::CallExpression(c) => (c.optional, Some(&c.callee)),
             ChainElement::TSNonNullExpression(ts) => (false, Some(&ts.expression)),
-            _ => match chain.expression.as_member_expression() {
-                Some(m) => (m.optional(), Some(m.object())),
-                None => return,
-            },
+            ChainElement::MemberExpression(m) => (m.optional(), Some(m.object())),
         };
         if optional {
             return;
@@ -894,26 +894,30 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
         // Walk down the object/callee chain. If any node has `optional: true`, keep the chain.
         while let Some(e) = current {
-            match e {
-                Expression::StaticMemberExpression(m) => {
+            match e.tag() {
+                ExpressionTag::StaticMemberExpression => {
+                    let m = e.to_static_member_expression();
                     if m.optional {
                         return;
                     }
                     current = Some(&m.object);
                 }
-                Expression::ComputedMemberExpression(m) => {
+                ExpressionTag::ComputedMemberExpression => {
+                    let m = e.to_computed_member_expression();
                     if m.optional {
                         return;
                     }
                     current = Some(&m.object);
                 }
-                Expression::PrivateFieldExpression(m) => {
+                ExpressionTag::PrivateFieldExpression => {
+                    let m = e.to_private_field_expression();
                     if m.optional {
                         return;
                     }
                     current = Some(&m.object);
                 }
-                Expression::CallExpression(c) => {
+                ExpressionTag::CallExpression => {
+                    let c = e.to_call_expression();
                     if c.optional {
                         return;
                     }
@@ -925,7 +929,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
         // No optional markers remain — unwrap the chain to a plain expression.
         expr.replace_with(|chain_expr| {
-            let Expression::ChainExpression(chain) = chain_expr else { unreachable!() };
+            let ExpressionKindOwned::ChainExpression(chain) = chain_expr.into_kind() else {
+                unreachable!()
+            };
             Expression::from(chain.unbox().expression)
         });
     }
@@ -962,29 +968,29 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
 
             current_part_member_expression = if let Some(member) = current_part_member_expression {
-                match member.object().without_parentheses() {
-                    Expression::StaticMemberExpression(member) => {
+                match member.object().without_parentheses().kind() {
+                    ExpressionKind::StaticMemberExpression(member) => {
                         cur_part_name = &member.property.name;
                         Some(DotDefineMemberExpression::StaticMemberExpression(member))
                     }
-                    Expression::ComputedMemberExpression(computed_member) => {
+                    ExpressionKind::ComputedMemberExpression(computed_member) => {
                         static_property_name_of_computed_expr(computed_member).map(|name| {
                             cur_part_name = name.as_str();
                             DotDefineMemberExpression::ComputedMemberExpression(computed_member)
                         })
                     }
-                    Expression::Identifier(ident) => {
+                    ExpressionKind::Identifier(ident) => {
                         if !Self::is_global_or_ambient_reference(scoping, ident) {
                             return false;
                         }
                         cur_part_name = &ident.name;
                         None
                     }
-                    Expression::ThisExpression(_) if should_replace_this_expr => {
+                    ExpressionKind::ThisExpression(_) if should_replace_this_expr => {
                         cur_part_name = THIS_STR.as_str();
                         None
                     }
-                    Expression::ImportMeta(_) => {
+                    ExpressionKind::ImportMeta(_) => {
                         // Handle import.meta
                         // When we encounter import.meta, verify that the remaining
                         // parts match ["import", "meta"]
@@ -1013,7 +1019,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     /// Optimize object expression replacements in destructuring patterns by only keeping needed
     /// keys.
     fn destructing_dot_define_optimizer(&self, mut expr: Expression<'a>) -> Expression<'a> {
-        let Expression::ObjectExpression(obj) = &mut expr else { return expr };
+        let Some(obj) = expr.as_object_expression_mut() else { return expr };
         let Some(needed_keys) = &self.destructuring_keys else { return expr };
 
         // here we iterate the object properties twice
@@ -1100,9 +1106,11 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
 fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     expr: &'b ComputedMemberExpression<'a>,
 ) -> Option<&'b Str<'a>> {
-    match &expr.expression {
-        Expression::StringLiteral(lit) => Some(&lit.value),
-        Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
+    match expr.expression.kind() {
+        ExpressionKind::StringLiteral(lit) => Some(&lit.value),
+        ExpressionKind::TemplateLiteral(lit)
+            if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
+        {
             Some(&lit.quasis[0].value.raw)
         }
         _ => None,
@@ -1115,14 +1123,16 @@ const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
 }
 
 fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
-    match expr {
-        Expression::ComputedMemberExpression(expr) => {
-            Some(AssignmentTarget::ComputedMemberExpression(expr))
+    match expr.into_kind() {
+        ExpressionKindOwned::ComputedMemberExpression(expr) => {
+            Some(AssignmentTarget::MemberExpression(MemberExpression::from(expr)))
         }
-        Expression::StaticMemberExpression(expr) => {
-            Some(AssignmentTarget::StaticMemberExpression(expr))
+        ExpressionKindOwned::StaticMemberExpression(expr) => {
+            Some(AssignmentTarget::MemberExpression(MemberExpression::from(expr)))
         }
-        Expression::Identifier(ident) => Some(AssignmentTarget::AssignmentTargetIdentifier(ident)),
+        ExpressionKindOwned::Identifier(ident) => {
+            Some(AssignmentTarget::AssignmentTargetIdentifier(ident))
+        }
         _ => None,
     }
 }

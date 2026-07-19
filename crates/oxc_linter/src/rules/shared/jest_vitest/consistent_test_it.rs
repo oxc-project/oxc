@@ -3,7 +3,10 @@ use std::borrow::Cow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -205,8 +208,8 @@ impl ConsistentTestItConfig {
         test_name: &str,
         fix_jest_name: &'s str,
     ) -> Option<(Span, Cow<'s, str>)> {
-        match expr {
-            Expression::Identifier(ident) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) => {
                 if ident.name.eq("fit") {
                     return Some((ident.span(), Cow::Borrowed("test.only")));
                 }
@@ -218,15 +221,15 @@ impl ConsistentTestItConfig {
                 };
                 Some((ident.span(), prefer_test_name))
             }
-            Expression::StaticMemberExpression(expr) => {
+            ExpressionKind::StaticMemberExpression(expr) => {
                 Self::get_prefer_test_name_and_span(&expr.object, test_name, fix_jest_name)
             }
-            Expression::CallExpression(call_expr) => Self::get_prefer_test_name_and_span(
+            ExpressionKind::CallExpression(call_expr) => Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),
                 test_name,
                 fix_jest_name,
             ),
-            Expression::TaggedTemplateExpression(expr) => Self::get_prefer_test_name_and_span(
+            ExpressionKind::TaggedTemplateExpression(expr) => Self::get_prefer_test_name_and_span(
                 expr.tag.get_inner_expression(),
                 test_name,
                 fix_jest_name,

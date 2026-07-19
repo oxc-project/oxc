@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{ConditionalExpression, Expression, IfStatement, Statement},
+    ast::{
+        ConditionalExpression, Expression, ExpressionKind, ExpressionTag, IfStatement, Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -91,9 +93,11 @@ pub fn run_on_conditional_expression<'a>(
 }
 
 fn is_negated_expression(expr: &Expression) -> bool {
-    match expr {
-        Expression::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::LogicalNot,
-        Expression::BinaryExpression(binary_expr) => matches!(
+    match expr.kind() {
+        ExpressionKind::UnaryExpression(unary_expr) => {
+            unary_expr.operator == UnaryOperator::LogicalNot
+        }
+        ExpressionKind::BinaryExpression(binary_expr) => matches!(
             binary_expr.operator,
             BinaryOperator::Inequality | BinaryOperator::StrictInequality
         ),
@@ -132,21 +136,23 @@ fn fix_conditional_expression<'a>(
     let fixer = fixer.for_multifix();
     let mut fixes = fixer.new_fix_with_capacity(10);
 
-    let is_unary = matches!(negated_test, Expression::UnaryExpression(_));
+    let is_unary = negated_test.is_unary_expression();
     let source = ctx.source_text();
     let expr_span = conditional_expr.span;
 
     // Detect ASI / keyword spacing from what the expression will look like after removing `!`.
     let (needs_space_before, needs_asi_semi, needs_restricted_parens, needs_exposed_expr_parens) =
         if is_unary {
-            let Expression::UnaryExpression(unary) = negated_test else { unreachable!() };
+            let ExpressionKind::UnaryExpression(unary) = negated_test.kind() else {
+                unreachable!()
+            };
             // Text after deleting the leading `!` (preserves comments between `!` and operand).
             let after_bang = ctx.source_range(Span::new(unary.span.start + 1, unary.span.end));
             let first_significant = after_bang.trim_start().chars().next();
             let has_line_terminator_in_remainder = after_bang.chars().any(is_line_terminator);
 
             let needs_restricted_parens = has_line_terminator_in_remainder
-                && !matches!(conditional_expr.test, Expression::ParenthesizedExpression(_))
+                && !conditional_expr.test.is_parenthesized_expression()
                 && is_restricted_statement_or_yield_argument(node, ctx);
 
             let needs_space_before = !needs_restricted_parens && {
@@ -163,10 +169,10 @@ fn fix_conditional_expression<'a>(
 
             let needs_exposed_expr_parens = is_expression_statement_start(node, ctx)
                 && matches!(
-                    unary.argument.without_parentheses(),
-                    Expression::ObjectExpression(_)
-                        | Expression::FunctionExpression(_)
-                        | Expression::ClassExpression(_)
+                    unary.argument.without_parentheses().tag(),
+                    ExpressionTag::ObjectExpression
+                        | ExpressionTag::FunctionExpression
+                        | ExpressionTag::ClassExpression
                 );
 
             (needs_space_before, needs_asi_semi, needs_restricted_parens, needs_exposed_expr_parens)
@@ -185,7 +191,8 @@ fn fix_conditional_expression<'a>(
         fixes.push(fixer.insert_text_after_range(expr_span, ")"));
     }
 
-    if needs_exposed_expr_parens && let Expression::UnaryExpression(unary) = negated_test {
+    if needs_exposed_expr_parens && let ExpressionKind::UnaryExpression(unary) = negated_test.kind()
+    {
         let argument_span = unary.argument.span();
         fixes.push(fixer.insert_text_before_range(argument_span, "("));
         fixes.push(fixer.insert_text_after_range(argument_span, ")"));
@@ -214,12 +221,12 @@ fn push_invert_test_fixes<'a>(
     negated_test: &Expression<'a>,
     ctx: &LintContext<'a>,
 ) {
-    match negated_test {
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
+    match negated_test.kind() {
+        ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
             // Delete only the `!` punctuator (1 byte) so comments/whitespace after it stay.
             fixes.push(fixer.delete_range(Span::new(unary.span.start, unary.span.start + 1)));
         }
-        Expression::BinaryExpression(binary) => {
+        ExpressionKind::BinaryExpression(binary) => {
             let binary_operator_str = binary.operator.as_str();
             if let Some(op_span) = ctx
                 .find_next_token_within(
@@ -351,8 +358,5 @@ fn is_for_statement_init(
 }
 
 fn contains_unparenthesized_in_expression(expr: &Expression) -> bool {
-    matches!(
-        expr,
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::In
-    )
+    matches!(expr.kind(), ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::In)
 }

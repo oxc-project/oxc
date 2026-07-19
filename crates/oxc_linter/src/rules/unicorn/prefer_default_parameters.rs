@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, MethodDefinitionKind, PropertyKind, Statement,
+        AssignmentOperator, AssignmentTarget, BindingPattern, Expression, ExpressionKind,
+        FormalParameter, LogicalOperator, MethodDefinitionKind, PropertyKind, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -126,7 +126,7 @@ fn check_expression<'a>(
     stmt_span: Span,
     statement_span: Option<Span>,
 ) {
-    let Expression::LogicalExpression(logical_expr) = right.without_parentheses() else {
+    let ExpressionKind::LogicalExpression(logical_expr) = right.without_parentheses().kind() else {
         return;
     };
 
@@ -134,7 +134,8 @@ fn check_expression<'a>(
         return;
     }
 
-    let Expression::Identifier(param_ident) = logical_expr.left.without_parentheses() else {
+    let ExpressionKind::Identifier(param_ident) = logical_expr.left.without_parentheses().kind()
+    else {
         return;
     };
 
@@ -360,18 +361,18 @@ fn is_side_effect_free_statement(stmt: &oxc_ast::ast::Statement, param_name: &st
 }
 
 fn is_side_effect_free_expression(expr: &Expression, param_name: &str) -> bool {
-    match expr.without_parentheses() {
-        Expression::NumericLiteral(_)
-        | Expression::StringLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::FunctionExpression(_)
-        | Expression::ArrowFunctionExpression(_) => true,
-        Expression::Identifier(ident) => ident.name.as_str() != param_name,
-        Expression::AssignmentExpression(assign) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::StringLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::BigIntLiteral(_)
+        | ExpressionKind::RegExpLiteral(_)
+        | ExpressionKind::TemplateLiteral(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::ArrowFunctionExpression(_) => true,
+        ExpressionKind::Identifier(ident) => ident.name.as_str() != param_name,
+        ExpressionKind::AssignmentExpression(assign) => {
             let target_ok = match &assign.left {
                 AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                     ident.name.as_str() != param_name
@@ -380,11 +381,11 @@ fn is_side_effect_free_expression(expr: &Expression, param_name: &str) -> bool {
             };
             target_ok && is_side_effect_free_expression(&assign.right, param_name)
         }
-        Expression::BinaryExpression(bin) => {
+        ExpressionKind::BinaryExpression(bin) => {
             is_side_effect_free_expression(&bin.left, param_name)
                 && is_side_effect_free_expression(&bin.right, param_name)
         }
-        Expression::UnaryExpression(unary) => {
+        ExpressionKind::UnaryExpression(unary) => {
             !matches!(unary.operator, oxc_ast::ast::UnaryOperator::Delete)
                 && is_side_effect_free_expression(&unary.argument, param_name)
         }

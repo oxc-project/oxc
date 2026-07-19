@@ -2,8 +2,8 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        ChainElement, Expression, FormalParameter, TSLiteral, TSType, TSTypeAnnotation, TSTypeName,
-        UnaryOperator,
+        ChainElement, Expression, ExpressionKind, FormalParameter, TSLiteral, TSType,
+        TSTypeAnnotation, TSTypeName, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -211,7 +211,7 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
             if is_chain_call_expression_with_name(init, "Symbol") {
                 return true;
             }
-            if let Expression::CallExpression(call_expr) = init.get_inner_expression() {
+            if let ExpressionKind::CallExpression(call_expr) = init.get_inner_expression().kind() {
                 call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "Symbol")
             } else {
                 false
@@ -226,9 +226,9 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
 
             false
         }
-        TSType::TSUndefinedKeyword(_) => match init.get_inner_expression() {
-            Expression::Identifier(id) => id.name == "undefined",
-            Expression::UnaryExpression(unary_expr) => {
+        TSType::TSUndefinedKeyword(_) => match init.get_inner_expression().kind() {
+            ExpressionKind::Identifier(id) => id.name == "undefined",
+            ExpressionKind::UnaryExpression(unary_expr) => {
                 matches!(unary_expr.operator, UnaryOperator::Void)
             }
             _ => false,
@@ -238,7 +238,7 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
 }
 
 fn is_chain_call_expression_with_name(init: &Expression, name: &str) -> bool {
-    if let Expression::ChainExpression(chain_expr) = init
+    if let ExpressionKind::ChainExpression(chain_expr) = init.kind()
         && let ChainElement::CallExpression(call_expr) = &chain_expr.expression
     {
         return call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == name);
@@ -249,7 +249,7 @@ fn is_chain_call_expression_with_name(init: &Expression, name: &str) -> bool {
 fn is_init_bigint(init: &Expression) -> bool {
     let init = {
         let init = init.get_inner_expression();
-        if let Expression::UnaryExpression(unary_expr) = init {
+        if let ExpressionKind::UnaryExpression(unary_expr) = init.kind() {
             if matches!(
                 unary_expr.operator,
                 UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
@@ -267,11 +267,11 @@ fn is_init_bigint(init: &Expression) -> bool {
         return true;
     }
 
-    match init {
-        Expression::CallExpression(call_expr) => {
+    match init.kind() {
+        ExpressionKind::CallExpression(call_expr) => {
             call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "BigInt")
         }
-        Expression::BigIntLiteral(_) => true,
+        ExpressionKind::BigIntLiteral(_) => true,
         _ => false,
     }
 }
@@ -280,27 +280,27 @@ fn is_init_boolean(init: &Expression) -> bool {
     if is_chain_call_expression_with_name(init, "Boolean") {
         return true;
     }
-    match init.get_inner_expression() {
-        Expression::UnaryExpression(unary_expr) => {
+    match init.get_inner_expression().kind() {
+        ExpressionKind::UnaryExpression(unary_expr) => {
             matches!(unary_expr.operator, UnaryOperator::LogicalNot)
         }
-        Expression::CallExpression(call_expr) => {
+        ExpressionKind::CallExpression(call_expr) => {
             call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "Boolean")
         }
-        Expression::BooleanLiteral(_) => true,
+        ExpressionKind::BooleanLiteral(_) => true,
         _ => false,
     }
 }
 
 fn is_init_null(init: &Expression) -> bool {
     let init = init.get_inner_expression();
-    matches!(init, Expression::NullLiteral(_))
+    init.is_null_literal()
 }
 
 fn is_init_number(init: &Expression) -> bool {
     let init = {
         let init = init.get_inner_expression();
-        if let Expression::UnaryExpression(unary_expr) = init {
+        if let ExpressionKind::UnaryExpression(unary_expr) = init.kind() {
             if matches!(
                 unary_expr.operator,
                 UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
@@ -316,12 +316,12 @@ fn is_init_number(init: &Expression) -> bool {
     if is_chain_call_expression_with_name(init, "Number") {
         return true;
     }
-    match init {
-        Expression::Identifier(id) => id.name == "Infinity" || id.name == "NaN",
-        Expression::CallExpression(call_expr) => {
+    match init.kind() {
+        ExpressionKind::Identifier(id) => id.name == "Infinity" || id.name == "NaN",
+        ExpressionKind::CallExpression(call_expr) => {
             call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "Number")
         }
-        Expression::NumericLiteral(_) => true,
+        ExpressionKind::NumericLiteral(_) => true,
         _ => false,
     }
 }
@@ -329,11 +329,11 @@ fn is_init_string(init: &Expression) -> bool {
     if is_chain_call_expression_with_name(init, "String") {
         return true;
     }
-    match init {
-        Expression::CallExpression(call_expr) => {
+    match init.kind() {
+        ExpressionKind::CallExpression(call_expr) => {
             call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "String")
         }
-        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
+        ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => true,
         _ => false,
     }
 }
@@ -341,17 +341,17 @@ fn is_init_regexp(init: &Expression) -> bool {
     if is_chain_call_expression_with_name(init, "RegExp") {
         return true;
     }
-    match init.get_inner_expression() {
-        Expression::RegExpLiteral(_) => true,
-        Expression::NewExpression(new_expr) => {
-            if let Expression::Identifier(id) = new_expr.callee.get_inner_expression() {
+    match init.get_inner_expression().kind() {
+        ExpressionKind::RegExpLiteral(_) => true,
+        ExpressionKind::NewExpression(new_expr) => {
+            if let ExpressionKind::Identifier(id) = new_expr.callee.get_inner_expression().kind() {
                 id.name == "RegExp"
             } else {
                 false
             }
         }
-        Expression::CallExpression(call_expr) => {
-            if let Expression::Identifier(id) = call_expr.callee.get_inner_expression() {
+        ExpressionKind::CallExpression(call_expr) => {
+            if let ExpressionKind::Identifier(id) = call_expr.callee.get_inner_expression().kind() {
                 id.name == "RegExp"
             } else {
                 false

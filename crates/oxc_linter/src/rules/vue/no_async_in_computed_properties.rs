@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression},
+    ast::{CallExpression, ChainElement, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -146,7 +146,8 @@ impl Rule for NoAsyncInComputedProperties {
                 }
             }
             AstKind::NewExpression(new_expr) => {
-                if let Expression::Identifier(id) = new_expr.callee.get_inner_expression()
+                if let ExpressionKind::Identifier(id) =
+                    new_expr.callee.get_inner_expression().kind()
                     && id.name == "Promise"
                     && let Some(c) = find_computed_context(node, ctx)
                 {
@@ -201,10 +202,13 @@ fn callee_static_member<'a, 'b>(
     callee: &'b Expression<'a>,
 ) -> Option<(&'b str, &'b Expression<'a>)> {
     let inner = callee.get_inner_expression();
-    let member = match inner {
-        Expression::StaticMemberExpression(m) => m.as_ref(),
-        Expression::ChainExpression(c) => match &c.expression {
-            ChainElement::StaticMemberExpression(m) => m.as_ref(),
+    let member = match inner.kind() {
+        ExpressionKind::StaticMemberExpression(m) => m,
+        ExpressionKind::ChainExpression(c) => match &c.expression {
+            ChainElement::MemberExpression(m) => match m.as_static_member_expression() {
+                Some(m) => m,
+                None => return None,
+            },
             _ => return None,
         },
         _ => return None,
@@ -219,7 +223,7 @@ fn is_promise_method_call(
     let Some((name, object)) = callee_static_member(&call.callee) else { return false };
 
     let is_promise_static = PROMISE_METHODS.contains(&name)
-        && matches!(object.get_inner_expression(), Expression::Identifier(id) if id.name == "Promise");
+        && matches!(object.get_inner_expression().kind(), ExpressionKind::Identifier(id) if id.name == "Promise");
     let is_thenable = PROMISE_FUNCTIONS.contains(&name);
 
     if !is_promise_static && !is_thenable {
@@ -241,13 +245,13 @@ fn is_timed_function_call(call: &CallExpression<'_>) -> bool {
     let inner = call.callee.get_inner_expression();
     // `setTimeout(...)` / `setTimeout?.(...)` — bare identifier (the optional-chain
     // wrapper sits on the *outer* CallExpression).
-    if let Expression::Identifier(id) = inner {
+    if let ExpressionKind::Identifier(id) = inner.kind() {
         return TIMED_FUNCTIONS.contains(&id.name.as_str());
     }
     // `window.setTimeout(...)` / `window?.setTimeout?.(...)` / `(window?.setTimeout)?.(...)`.
     if let Some((name, object)) = callee_static_member(&call.callee) {
         return TIMED_FUNCTIONS.contains(&name)
-            && matches!(object.get_inner_expression(), Expression::Identifier(id) if id.name == "window");
+            && matches!(object.get_inner_expression().kind(), ExpressionKind::Identifier(id) if id.name == "window");
     }
     false
 }
@@ -258,7 +262,7 @@ fn is_next_tick_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
         return true;
     }
     if name == "nextTick"
-        && matches!(object.get_inner_expression(), Expression::Identifier(id) if id.name == "Vue")
+        && matches!(object.get_inner_expression().kind(), ExpressionKind::Identifier(id) if id.name == "Vue")
     {
         return true;
     }
@@ -269,29 +273,27 @@ fn is_next_tick_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
 /// identifier name. Mirrors upstream `getRootObjectName`.
 fn get_root_object_name<'a>(expr: &Expression<'a>) -> Option<&'a str> {
     let inner = expr.get_inner_expression();
-    if let Expression::ChainExpression(c) = inner {
+    if let ExpressionKind::ChainExpression(c) = inner.kind() {
         return root_from_chain_element(&c.expression);
     }
     root_from_expr(inner)
 }
 
 fn root_from_expr<'a>(expr: &Expression<'a>) -> Option<&'a str> {
-    match expr {
-        Expression::Identifier(id) => Some(id.name.as_str()),
-        Expression::StaticMemberExpression(m) => get_root_object_name(&m.object),
-        Expression::ComputedMemberExpression(m) => get_root_object_name(&m.object),
-        Expression::PrivateFieldExpression(m) => get_root_object_name(&m.object),
-        Expression::CallExpression(call) => get_root_object_name(&call.callee),
-        Expression::TSNonNullExpression(t) => get_root_object_name(&t.expression),
+    match expr.kind() {
+        ExpressionKind::Identifier(id) => Some(id.name.as_str()),
+        ExpressionKind::StaticMemberExpression(m) => get_root_object_name(&m.object),
+        ExpressionKind::ComputedMemberExpression(m) => get_root_object_name(&m.object),
+        ExpressionKind::PrivateFieldExpression(m) => get_root_object_name(&m.object),
+        ExpressionKind::CallExpression(call) => get_root_object_name(&call.callee),
+        ExpressionKind::TSNonNullExpression(t) => get_root_object_name(&t.expression),
         _ => None,
     }
 }
 
 fn root_from_chain_element<'a>(elem: &ChainElement<'a>) -> Option<&'a str> {
     match elem {
-        ChainElement::StaticMemberExpression(m) => get_root_object_name(&m.object),
-        ChainElement::ComputedMemberExpression(m) => get_root_object_name(&m.object),
-        ChainElement::PrivateFieldExpression(m) => get_root_object_name(&m.object),
+        ChainElement::MemberExpression(m) => get_root_object_name(m.object()),
         ChainElement::CallExpression(call) => get_root_object_name(&call.callee),
         ChainElement::TSNonNullExpression(t) => get_root_object_name(&t.expression),
     }

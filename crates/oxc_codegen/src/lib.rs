@@ -711,7 +711,7 @@ impl<'a> Codegen<'a> {
             && let Statement::ExpressionStatement(s) = first
         {
             let s = s.expression.without_parentheses();
-            if matches!(s, Expression::StringLiteral(_)) {
+            if matches!(s.tag(), ExpressionTag::StringLiteral) {
                 first_needs_parens = true;
                 self.print_ascii_byte(b'(');
                 s.print_expr(self, Precedence::Lowest, ctx);

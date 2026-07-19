@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -69,7 +69,7 @@ impl Rule for NoDeprecatedDataObjectDeclaration {
             return;
         }
 
-        if !matches!(prop.value.get_inner_expression(), Expression::ObjectExpression(_)) {
+        if !prop.value.get_inner_expression().is_object_expression() {
             return;
         }
 

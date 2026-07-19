@@ -452,8 +452,7 @@ impl<'a> TypeScript<'a> {
                     ctx,
                 )
             }
-            key @ match_expression!(PropertyKey) => {
-                let key = key.to_expression_mut();
+            PropertyKey::Expression(key) => {
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.

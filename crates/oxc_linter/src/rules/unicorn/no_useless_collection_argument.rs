@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, LogicalExpression, NewExpression},
+    ast::{Expression, ExpressionKind, LogicalExpression, NewExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -85,8 +85,8 @@ impl Rule for NoUselessCollectionArgument {
 
         let first_arg_expr_inner = first_arg_expr.get_inner_expression();
 
-        let (useless_expr, logical_expr) = if let Expression::LogicalExpression(logical_expr) =
-            first_arg_expr_inner
+        let (useless_expr, logical_expr) = if let ExpressionKind::LogicalExpression(logical_expr) =
+            first_arg_expr_inner.kind()
             && logical_expr.operator.is_coalesce()
         {
             (logical_expr.right.get_inner_expression(), Some(logical_expr))

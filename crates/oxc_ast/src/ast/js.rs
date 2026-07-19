@@ -22,7 +22,10 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, ReplaceWith, TakeIn, UnstableAddress, Vec};
+use oxc_allocator::{
+    Address, Allocator, Box, CloneIn, CloneInSemanticIds, Dummy, GetAddress, ReplaceWith,
+    TaggedPtr, TakeIn, UnstableAddress, Vec,
+};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SourceType, Span};
@@ -68,108 +71,582 @@ pub struct Program<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// Represents a type for AST nodes corresponding to JavaScript's expressions.
-///
-/// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
-///
-/// [`ast` module docs]: `super`
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
-pub enum Expression<'a> {
-    /// See [`BooleanLiteral`] for AST node details.
-    BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
-    /// See [`NullLiteral`] for AST node details.
-    NullLiteral(Box<'a, NullLiteral>) = 1,
-    /// See [`NumericLiteral`] for AST node details.
-    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
-    /// See [`BigIntLiteral`] for AST node details.
-    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
-    /// See [`RegExpLiteral`] for AST node details.
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
-    /// See [`StringLiteral`] for AST node details.
-    StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
-    /// See [`TemplateLiteral`] for AST node details.
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
+// PROTOTYPE: `Expression` and `MemberExpression` are tagged-pointer structs rather than
+// `#[repr(C, u8)]` enums. The discriminant is packed into the low byte of the payload pointer
+// (`TaggedPtr` encoding: stored address = `(payload_addr << 8) | tag`), reducing these types
+// from 16 bytes to 8 bytes.
+//
+// Pattern matching is done via the `ExpressionKind` / `ExpressionKindMut` / `ExpressionKindOwned`
+// view enums returned by `kind()` / `kind_mut()` / `into_kind()`.
+//
+// NOTE: `just ast` must NOT be re-run on this branch - it would overwrite the hand-edited
+// generated files that accompany this change.
+macro_rules! tagged_ptr_enum {
+    (
+        $(#[$struct_attr:meta])*
+        pub struct $Enum:ident;
+        tag_enum = $(#[$tag_attr:meta])* $Tag:ident;
+        kind_enum = $(#[$kind_attr:meta])* $Kind:ident;
+        kind_mut_enum = $(#[$kind_mut_attr:meta])* $KindMut:ident;
+        kind_owned_enum = $(#[$kind_owned_attr:meta])* $KindOwned:ident;
+        variants = {
+            $(
+                $(#[$variant_attr:meta])*
+                $Variant:ident($Inner:ty) = $disc:literal
+                    [$is:ident, $as_ref:ident, $as_mut:ident, $to_ref:ident, $to_mut:ident, $into:ident]
+            ),* $(,)?
+        }
+    ) => {
+        $(#[$tag_attr])*
+        #[repr(u8)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        pub enum $Tag {
+            $(
+                $(#[$variant_attr])*
+                $Variant = $disc,
+            )*
+        }
 
-    /// See [`IdentifierReference`] for AST node details.
-    Identifier(Box<'a, IdentifierReference<'a>>) = 7,
+        $(#[$struct_attr])*
+        #[repr(transparent)]
+        pub struct $Enum<'a>(pub(crate) TaggedPtr<'a>);
 
-    /// See [`Super`] for AST node details.
-    Super(Box<'a, Super>) = 8,
+        $(#[$kind_attr])*
+        #[derive(Debug, Clone, Copy)]
+        pub enum $Kind<'a, 'b> {
+            $(
+                $(#[$variant_attr])*
+                $Variant(&'b $Inner),
+            )*
+        }
 
-    /// See [`ArrayExpression`] for AST node details.
-    ArrayExpression(Box<'a, ArrayExpression<'a>>) = 9,
-    /// See [`ArrowFunctionExpression`] for AST node details.
-    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 10,
-    /// See [`AssignmentExpression`] for AST node details.
-    AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 11,
-    /// See [`AwaitExpression`] for AST node details.
-    AwaitExpression(Box<'a, AwaitExpression<'a>>) = 12,
-    /// See [`BinaryExpression`] for AST node details.
-    BinaryExpression(Box<'a, BinaryExpression<'a>>) = 13,
-    /// See [`CallExpression`] for AST node details.
-    CallExpression(Box<'a, CallExpression<'a>>) = 14,
-    /// See [`ChainExpression`] for AST node details.
-    ChainExpression(Box<'a, ChainExpression<'a>>) = 15,
-    /// See [`Class`] for AST node details.
-    ClassExpression(Box<'a, Class<'a>>) = 16,
-    /// See [`ConditionalExpression`] for AST node details.
-    ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 17,
-    /// See [`Function`] for AST node details.
-    #[visit(args(flags = ScopeFlags::Function))]
-    FunctionExpression(Box<'a, Function<'a>>) = 18,
-    /// See [`ImportExpression`] for AST node details.
-    ImportExpression(Box<'a, ImportExpression<'a>>) = 19,
-    /// See [`LogicalExpression`] for AST node details.
-    LogicalExpression(Box<'a, LogicalExpression<'a>>) = 20,
-    /// See [`NewExpression`] for AST node details.
-    NewExpression(Box<'a, NewExpression<'a>>) = 21,
-    /// See [`ObjectExpression`] for AST node details.
-    ObjectExpression(Box<'a, ObjectExpression<'a>>) = 22,
-    /// See [`ParenthesizedExpression`] for AST node details.
-    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 23,
-    /// See [`SequenceExpression`] for AST node details.
-    SequenceExpression(Box<'a, SequenceExpression<'a>>) = 24,
-    /// See [`TaggedTemplateExpression`] for AST node details.
-    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 25,
-    /// See [`ThisExpression`] for AST node details.
-    ThisExpression(Box<'a, ThisExpression>) = 26,
-    /// See [`UnaryExpression`] for AST node details.
-    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 27,
-    /// See [`UpdateExpression`] for AST node details.
-    UpdateExpression(Box<'a, UpdateExpression<'a>>) = 28,
-    /// See [`YieldExpression`] for AST node details.
-    YieldExpression(Box<'a, YieldExpression<'a>>) = 29,
-    /// See [`PrivateInExpression`] for AST node details.
-    PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 30,
+        $(#[$kind_mut_attr])*
+        #[derive(Debug)]
+        pub enum $KindMut<'a, 'b> {
+            $(
+                $(#[$variant_attr])*
+                $Variant(&'b mut $Inner),
+            )*
+        }
 
-    /// See [`ImportMeta`] for AST node details.
-    ImportMeta(Box<'a, ImportMeta>) = 31,
-    /// See [`NewTarget`] for AST node details.
-    NewTarget(Box<'a, NewTarget>) = 32,
+        $(#[$kind_owned_attr])*
+        #[derive(Debug)]
+        pub enum $KindOwned<'a> {
+            $(
+                $(#[$variant_attr])*
+                $Variant(Box<'a, $Inner>),
+            )*
+        }
 
-    /// See [`JSXElement`] for AST node details.
-    JSXElement(Box<'a, JSXElement<'a>>) = 33,
-    /// See [`JSXFragment`] for AST node details.
-    JSXFragment(Box<'a, JSXFragment<'a>>) = 34,
+        impl<'a> $Enum<'a> {
+            /// Get the tag (discriminant) of this node.
+            #[inline]
+            pub fn tag(&self) -> $Tag {
+                // SAFETY: `$Enum` is only ever constructed with a tag that is
+                // a valid `$Tag` discriminant, so the transmute is sound.
+                unsafe { std::mem::transmute::<u8, $Tag>(self.0.tag()) }
+            }
 
-    /// See [`TSAsExpression`] for AST node details.
-    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 35,
-    /// See [`TSSatisfiesExpression`] for AST node details.
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 36,
-    /// See [`TSTypeAssertion`] for AST node details.
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 37,
-    /// See [`TSNonNullExpression`] for AST node details.
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 38,
-    /// See [`TSInstantiationExpression`] for AST node details.
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 39,
-    /// See [`V8IntrinsicExpression`] for AST node details.
-    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 40,
+            /// Get a view of this node's variant, with a shared reference to the payload.
+            #[inline]
+            pub fn kind(&self) -> $Kind<'a, '_> {
+                match self.tag() {
+                    $(
+                        // SAFETY: The tag guarantees the payload pointer points to a valid
+                        // `$Inner` in the arena. The returned reference borrows `self`.
+                        $Tag::$Variant => $Kind::$Variant(unsafe {
+                            self.0.ptr().cast::<$Inner>().as_ref()
+                        }),
+                    )*
+                }
+            }
 
-    // `MemberExpression` variants added here by `#[ast]` macro
-    INHERIT(MemberExpression<'a>),
+            /// Get a view of this node's variant, with a mutable reference to the payload.
+            #[inline]
+            pub fn kind_mut(&mut self) -> $KindMut<'a, '_> {
+                match self.tag() {
+                    $(
+                        // SAFETY: The tag guarantees the payload pointer points to a valid
+                        // `$Inner` in the arena. The returned reference mutably borrows `self`.
+                        $Tag::$Variant => $KindMut::$Variant(unsafe {
+                            self.0.ptr().cast::<$Inner>().as_mut()
+                        }),
+                    )*
+                }
+            }
+
+            /// Construct from an owned kind view.
+            ///
+            /// Inverse of [`Self::into_kind`].
+            #[inline]
+            pub fn from_kind(kind: $KindOwned<'a>) -> Self {
+                match kind {
+                    $($KindOwned::$Variant(inner) => Self::$Variant(inner),)*
+                }
+            }
+
+            /// Consume this node and return the owned payload [`Box`].
+            ///
+            /// This is the ONLY way to get owned payloads out of the node.
+            #[inline]
+            pub fn into_kind(self) -> $KindOwned<'a> {
+                match self.tag() {
+                    $(
+                        // SAFETY: The tag guarantees the payload pointer points to a valid
+                        // `$Inner` in the arena. `self` is consumed, so ownership of the
+                        // payload transfers to the returned `Box`.
+                        $Tag::$Variant => $KindOwned::$Variant(unsafe {
+                            Box::from_non_null(self.0.ptr().cast::<$Inner>())
+                        }),
+                    )*
+                }
+            }
+
+            $(
+                #[doc = concat!("Construct a `", stringify!($Variant), "` variant.")]
+                #[expect(non_snake_case)]
+                #[inline]
+                pub fn $Variant(inner: Box<'a, $Inner>) -> Self {
+                    // SAFETY: Arena allocations are at addresses below 2^56
+                    // (checked by `debug_assert!` in `TaggedPtr::new`).
+                    Self(unsafe {
+                        TaggedPtr::new($Tag::$Variant as u8, Box::into_non_null(inner).cast::<u8>())
+                    })
+                }
+
+                #[doc = concat!("Return `true` if this is a `", stringify!($Variant), "`.")]
+                #[inline]
+                pub fn $is(&self) -> bool {
+                    self.tag() == $Tag::$Variant
+                }
+
+                #[doc = concat!("Get a shared reference to the payload if this is a `", stringify!($Variant), "`.")]
+                #[inline]
+                pub fn $as_ref(&self) -> Option<&$Inner> {
+                    if self.$is() {
+                        // SAFETY: Tag checked; payload pointer points to a valid `$Inner`.
+                        Some(unsafe { self.0.ptr().cast::<$Inner>().as_ref() })
+                    } else {
+                        None
+                    }
+                }
+
+                #[doc = concat!("Get a mutable reference to the payload if this is a `", stringify!($Variant), "`.")]
+                #[inline]
+                pub fn $as_mut(&mut self) -> Option<&mut $Inner> {
+                    if self.$is() {
+                        // SAFETY: Tag checked; payload pointer points to a valid `$Inner`.
+                        Some(unsafe { self.0.ptr().cast::<$Inner>().as_mut() })
+                    } else {
+                        None
+                    }
+                }
+
+                #[doc = concat!("Get a shared reference to the payload. Panics if this is not a `", stringify!($Variant), "`.")]
+                #[inline]
+                pub fn $to_ref(&self) -> &$Inner {
+                    self.$as_ref().unwrap()
+                }
+
+                #[doc = concat!("Get a mutable reference to the payload. Panics if this is not a `", stringify!($Variant), "`.")]
+                #[inline]
+                pub fn $to_mut(&mut self) -> &mut $Inner {
+                    self.$as_mut().unwrap()
+                }
+
+                #[doc = concat!("Consume this node and return the owned payload if this is a `", stringify!($Variant), "`.")]
+                #[inline]
+                pub fn $into(self) -> Option<Box<'a, $Inner>> {
+                    if self.$is() {
+                        // SAFETY: Tag checked; `self` is consumed, so ownership of the
+                        // payload transfers to the returned `Box`.
+                        Some(unsafe { Box::from_non_null(self.0.ptr().cast::<$Inner>()) })
+                    } else {
+                        None
+                    }
+                }
+            )*
+        }
+
+        $(
+            impl<'a> From<Box<'a, $Inner>> for $Enum<'a> {
+                #[inline]
+                fn from(inner: Box<'a, $Inner>) -> Self {
+                    Self::$Variant(inner)
+                }
+            }
+        )*
+
+        impl std::fmt::Debug for $Enum<'_> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self.kind() {
+                    $($Kind::$Variant(it) => f.debug_tuple(stringify!($Variant)).field(it).finish(),)*
+                }
+            }
+        }
+
+        impl GetSpan for $Enum<'_> {
+            fn span(&self) -> Span {
+                match self.kind() {
+                    $($Kind::$Variant(it) => GetSpan::span(it),)*
+                }
+            }
+        }
+
+        impl GetSpanMut for $Enum<'_> {
+            fn span_mut(&mut self) -> &mut Span {
+                match self.kind_mut() {
+                    $($KindMut::$Variant(it) => GetSpanMut::span_mut(it),)*
+                }
+            }
+        }
+
+        impl GetAddress for $Enum<'_> {
+            // `#[inline]` because compiler should boil this down to a couple of assembly instructions
+            #[inline]
+            fn address(&self) -> Address {
+                // SAFETY: Payload pointer is non-null and points to the AST node in the arena
+                unsafe { Address::from_ptr(self.0.ptr().as_ptr()) }
+            }
+        }
+
+        impl<'new_alloc> CloneIn<'new_alloc> for $Enum<'_> {
+            type Cloned = $Enum<'new_alloc>;
+
+            fn clone_in_impl(
+                &self,
+                with_semantic_ids: CloneInSemanticIds,
+                allocator: &'new_alloc Allocator,
+            ) -> Self::Cloned {
+                match self.kind() {
+                    $(
+                        $Kind::$Variant(it) => $Enum::$Variant(Box::new_in(
+                            CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+                            &allocator,
+                        )),
+                    )*
+                }
+            }
+        }
+
+        impl ContentEq for $Enum<'_> {
+            fn content_eq(&self, other: &Self) -> bool {
+                match (self.kind(), other.kind()) {
+                    $(($Kind::$Variant(a), $Kind::$Variant(b)) => a.content_eq(b),)*
+                    _ => false,
+                }
+            }
+        }
+
+        #[cfg(feature = "serialize")]
+        impl ESTree for $Enum<'_> {
+            fn serialize<S: ::oxc_estree::Serializer>(&self, serializer: S) {
+                match self.kind() {
+                    $($Kind::$Variant(it) => it.serialize(serializer),)*
+                }
+            }
+        }
+    };
+}
+
+tagged_ptr_enum! {
+    /// Represents a type for AST nodes corresponding to JavaScript's expressions.
+    ///
+    /// Includes [`MemberExpression`]'s variants (tags 48-50), so an `Expression` can be cheaply
+    /// cast to a `MemberExpression` via [`Expression::as_member_expression`].
+    ///
+    /// This is a tagged-pointer struct: 8 bytes, with the discriminant packed into the low byte
+    /// of the payload pointer. Use [`Expression::kind`] / [`Expression::kind_mut`] /
+    /// [`Expression::into_kind`] to pattern match on the variant.
+    pub struct Expression;
+    tag_enum =
+        /// Discriminant of an [`Expression`].
+        ExpressionTag;
+    kind_enum =
+        /// Shared-reference view of an [`Expression`]'s variant, returned by [`Expression::kind`].
+        ExpressionKind;
+    kind_mut_enum =
+        /// Mutable-reference view of an [`Expression`]'s variant, returned by [`Expression::kind_mut`].
+        ExpressionKindMut;
+    kind_owned_enum =
+        /// Owned view of an [`Expression`]'s variant, returned by [`Expression::into_kind`].
+        ExpressionKindOwned;
+    variants = {
+        /// See [`BooleanLiteral`] for AST node details.
+        BooleanLiteral(BooleanLiteral) = 0
+            [is_boolean_literal, as_boolean_literal, as_boolean_literal_mut,
+             to_boolean_literal, to_boolean_literal_mut, into_boolean_literal],
+        /// See [`NullLiteral`] for AST node details.
+        NullLiteral(NullLiteral) = 1
+            [is_null_literal, as_null_literal, as_null_literal_mut,
+             to_null_literal, to_null_literal_mut, into_null_literal],
+        /// See [`NumericLiteral`] for AST node details.
+        NumericLiteral(NumericLiteral<'a>) = 2
+            [is_numeric_literal, as_numeric_literal, as_numeric_literal_mut,
+             to_numeric_literal, to_numeric_literal_mut, into_numeric_literal],
+        /// See [`BigIntLiteral`] for AST node details.
+        BigIntLiteral(BigIntLiteral<'a>) = 3
+            [is_big_int_literal, as_big_int_literal, as_big_int_literal_mut,
+             to_big_int_literal, to_big_int_literal_mut, into_big_int_literal],
+        /// See [`RegExpLiteral`] for AST node details.
+        RegExpLiteral(RegExpLiteral<'a>) = 4
+            [is_reg_exp_literal, as_reg_exp_literal, as_reg_exp_literal_mut,
+             to_reg_exp_literal, to_reg_exp_literal_mut, into_reg_exp_literal],
+        /// See [`StringLiteral`] for AST node details.
+        StringLiteral(StringLiteral<'a>) = 5
+            [is_string_literal, as_string_literal, as_string_literal_mut,
+             to_string_literal, to_string_literal_mut, into_string_literal],
+        /// See [`TemplateLiteral`] for AST node details.
+        TemplateLiteral(TemplateLiteral<'a>) = 6
+            [is_template_literal, as_template_literal, as_template_literal_mut,
+             to_template_literal, to_template_literal_mut, into_template_literal],
+        /// See [`IdentifierReference`] for AST node details.
+        Identifier(IdentifierReference<'a>) = 7
+            [is_identifier, as_identifier, as_identifier_mut,
+             to_identifier, to_identifier_mut, into_identifier],
+        /// See [`Super`] for AST node details.
+        Super(Super) = 8
+            [is_super, as_super, as_super_mut, to_super, to_super_mut, into_super],
+        /// See [`ArrayExpression`] for AST node details.
+        ArrayExpression(ArrayExpression<'a>) = 9
+            [is_array_expression, as_array_expression, as_array_expression_mut,
+             to_array_expression, to_array_expression_mut, into_array_expression],
+        /// See [`ArrowFunctionExpression`] for AST node details.
+        ArrowFunctionExpression(ArrowFunctionExpression<'a>) = 10
+            [is_arrow_function_expression, as_arrow_function_expression, as_arrow_function_expression_mut,
+             to_arrow_function_expression, to_arrow_function_expression_mut, into_arrow_function_expression],
+        /// See [`AssignmentExpression`] for AST node details.
+        AssignmentExpression(AssignmentExpression<'a>) = 11
+            [is_assignment_expression, as_assignment_expression, as_assignment_expression_mut,
+             to_assignment_expression, to_assignment_expression_mut, into_assignment_expression],
+        /// See [`AwaitExpression`] for AST node details.
+        AwaitExpression(AwaitExpression<'a>) = 12
+            [is_await_expression, as_await_expression, as_await_expression_mut,
+             to_await_expression, to_await_expression_mut, into_await_expression],
+        /// See [`BinaryExpression`] for AST node details.
+        BinaryExpression(BinaryExpression<'a>) = 13
+            [is_binary_expression, as_binary_expression, as_binary_expression_mut,
+             to_binary_expression, to_binary_expression_mut, into_binary_expression],
+        /// See [`CallExpression`] for AST node details.
+        CallExpression(CallExpression<'a>) = 14
+            [is_call_expression, as_call_expression, as_call_expression_mut,
+             to_call_expression, to_call_expression_mut, into_call_expression],
+        /// See [`ChainExpression`] for AST node details.
+        ChainExpression(ChainExpression<'a>) = 15
+            [is_chain_expression, as_chain_expression, as_chain_expression_mut,
+             to_chain_expression, to_chain_expression_mut, into_chain_expression],
+        /// See [`Class`] for AST node details.
+        ClassExpression(Class<'a>) = 16
+            [is_class_expression, as_class_expression, as_class_expression_mut,
+             to_class_expression, to_class_expression_mut, into_class_expression],
+        /// See [`ConditionalExpression`] for AST node details.
+        ConditionalExpression(ConditionalExpression<'a>) = 17
+            [is_conditional_expression, as_conditional_expression, as_conditional_expression_mut,
+             to_conditional_expression, to_conditional_expression_mut, into_conditional_expression],
+        /// See [`Function`] for AST node details.
+        FunctionExpression(Function<'a>) = 18
+            [is_function_expression, as_function_expression, as_function_expression_mut,
+             to_function_expression, to_function_expression_mut, into_function_expression],
+        /// See [`ImportExpression`] for AST node details.
+        ImportExpression(ImportExpression<'a>) = 19
+            [is_import_expression, as_import_expression, as_import_expression_mut,
+             to_import_expression, to_import_expression_mut, into_import_expression],
+        /// See [`LogicalExpression`] for AST node details.
+        LogicalExpression(LogicalExpression<'a>) = 20
+            [is_logical_expression, as_logical_expression, as_logical_expression_mut,
+             to_logical_expression, to_logical_expression_mut, into_logical_expression],
+        /// See [`NewExpression`] for AST node details.
+        NewExpression(NewExpression<'a>) = 21
+            [is_new_expression, as_new_expression, as_new_expression_mut,
+             to_new_expression, to_new_expression_mut, into_new_expression],
+        /// See [`ObjectExpression`] for AST node details.
+        ObjectExpression(ObjectExpression<'a>) = 22
+            [is_object_expression, as_object_expression, as_object_expression_mut,
+             to_object_expression, to_object_expression_mut, into_object_expression],
+        /// See [`ParenthesizedExpression`] for AST node details.
+        ParenthesizedExpression(ParenthesizedExpression<'a>) = 23
+            [is_parenthesized_expression, as_parenthesized_expression, as_parenthesized_expression_mut,
+             to_parenthesized_expression, to_parenthesized_expression_mut, into_parenthesized_expression],
+        /// See [`SequenceExpression`] for AST node details.
+        SequenceExpression(SequenceExpression<'a>) = 24
+            [is_sequence_expression, as_sequence_expression, as_sequence_expression_mut,
+             to_sequence_expression, to_sequence_expression_mut, into_sequence_expression],
+        /// See [`TaggedTemplateExpression`] for AST node details.
+        TaggedTemplateExpression(TaggedTemplateExpression<'a>) = 25
+            [is_tagged_template_expression, as_tagged_template_expression, as_tagged_template_expression_mut,
+             to_tagged_template_expression, to_tagged_template_expression_mut, into_tagged_template_expression],
+        /// See [`ThisExpression`] for AST node details.
+        ThisExpression(ThisExpression) = 26
+            [is_this_expression, as_this_expression, as_this_expression_mut,
+             to_this_expression, to_this_expression_mut, into_this_expression],
+        /// See [`UnaryExpression`] for AST node details.
+        UnaryExpression(UnaryExpression<'a>) = 27
+            [is_unary_expression, as_unary_expression, as_unary_expression_mut,
+             to_unary_expression, to_unary_expression_mut, into_unary_expression],
+        /// See [`UpdateExpression`] for AST node details.
+        UpdateExpression(UpdateExpression<'a>) = 28
+            [is_update_expression, as_update_expression, as_update_expression_mut,
+             to_update_expression, to_update_expression_mut, into_update_expression],
+        /// See [`YieldExpression`] for AST node details.
+        YieldExpression(YieldExpression<'a>) = 29
+            [is_yield_expression, as_yield_expression, as_yield_expression_mut,
+             to_yield_expression, to_yield_expression_mut, into_yield_expression],
+        /// See [`PrivateInExpression`] for AST node details.
+        PrivateInExpression(PrivateInExpression<'a>) = 30
+            [is_private_in_expression, as_private_in_expression, as_private_in_expression_mut,
+             to_private_in_expression, to_private_in_expression_mut, into_private_in_expression],
+        /// See [`ImportMeta`] for AST node details.
+        ImportMeta(ImportMeta) = 31
+            [is_import_meta, as_import_meta, as_import_meta_mut,
+             to_import_meta, to_import_meta_mut, into_import_meta],
+        /// See [`NewTarget`] for AST node details.
+        NewTarget(NewTarget) = 32
+            [is_new_target, as_new_target, as_new_target_mut,
+             to_new_target, to_new_target_mut, into_new_target],
+        /// See [`JSXElement`] for AST node details.
+        JSXElement(JSXElement<'a>) = 33
+            [is_jsx_element, as_jsx_element, as_jsx_element_mut,
+             to_jsx_element, to_jsx_element_mut, into_jsx_element],
+        /// See [`JSXFragment`] for AST node details.
+        JSXFragment(JSXFragment<'a>) = 34
+            [is_jsx_fragment, as_jsx_fragment, as_jsx_fragment_mut,
+             to_jsx_fragment, to_jsx_fragment_mut, into_jsx_fragment],
+        /// See [`TSAsExpression`] for AST node details.
+        TSAsExpression(TSAsExpression<'a>) = 35
+            [is_ts_as_expression, as_ts_as_expression, as_ts_as_expression_mut,
+             to_ts_as_expression, to_ts_as_expression_mut, into_ts_as_expression],
+        /// See [`TSSatisfiesExpression`] for AST node details.
+        TSSatisfiesExpression(TSSatisfiesExpression<'a>) = 36
+            [is_ts_satisfies_expression, as_ts_satisfies_expression, as_ts_satisfies_expression_mut,
+             to_ts_satisfies_expression, to_ts_satisfies_expression_mut, into_ts_satisfies_expression],
+        /// See [`TSTypeAssertion`] for AST node details.
+        TSTypeAssertion(TSTypeAssertion<'a>) = 37
+            [is_ts_type_assertion, as_ts_type_assertion, as_ts_type_assertion_mut,
+             to_ts_type_assertion, to_ts_type_assertion_mut, into_ts_type_assertion],
+        /// See [`TSNonNullExpression`] for AST node details.
+        TSNonNullExpression(TSNonNullExpression<'a>) = 38
+            [is_ts_non_null_expression, as_ts_non_null_expression, as_ts_non_null_expression_mut,
+             to_ts_non_null_expression, to_ts_non_null_expression_mut, into_ts_non_null_expression],
+        /// See [`TSInstantiationExpression`] for AST node details.
+        TSInstantiationExpression(TSInstantiationExpression<'a>) = 39
+            [is_ts_instantiation_expression, as_ts_instantiation_expression, as_ts_instantiation_expression_mut,
+             to_ts_instantiation_expression, to_ts_instantiation_expression_mut, into_ts_instantiation_expression],
+        /// See [`V8IntrinsicExpression`] for AST node details.
+        V8IntrinsicExpression(V8IntrinsicExpression<'a>) = 40
+            [is_v8_intrinsic_expression, as_v8_intrinsic_expression, as_v8_intrinsic_expression_mut,
+             to_v8_intrinsic_expression, to_v8_intrinsic_expression_mut, into_v8_intrinsic_expression],
+        /// `ar[0]` in `const ar = [1, 2]; ar[0];`
+        ComputedMemberExpression(ComputedMemberExpression<'a>) = 48
+            [is_computed_member_expression, as_computed_member_expression, as_computed_member_expression_mut,
+             to_computed_member_expression, to_computed_member_expression_mut, into_computed_member_expression],
+        /// `console.log` in `console.log('Hello, World!');`
+        StaticMemberExpression(StaticMemberExpression<'a>) = 49
+            [is_static_member_expression, as_static_member_expression, as_static_member_expression_mut,
+             to_static_member_expression, to_static_member_expression_mut, into_static_member_expression],
+        /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
+        PrivateFieldExpression(PrivateFieldExpression<'a>) = 50
+            [is_private_field_expression, as_private_field_expression, as_private_field_expression_mut,
+             to_private_field_expression, to_private_field_expression_mut, into_private_field_expression],
+    }
+}
+
+impl<'a> Expression<'a> {
+    /// Return if an [`Expression`] is a [`MemberExpression`].
+    #[inline]
+    pub fn is_member_expression(&self) -> bool {
+        matches!(
+            self.tag(),
+            ExpressionTag::ComputedMemberExpression
+                | ExpressionTag::StaticMemberExpression
+                | ExpressionTag::PrivateFieldExpression
+        )
+    }
+
+    /// Convert an [`Expression`] to a [`MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_member_expression(self) -> MemberExpression<'a> {
+        assert!(self.is_member_expression());
+        MemberExpression(self.0)
+    }
+
+    /// Convert an [`&Expression`] to a [`&MemberExpression`].
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        if self.is_member_expression() {
+            // SAFETY: Both types are `#[repr(transparent)]` wrappers around `TaggedPtr`,
+            // and the tag (48-50) is a valid `MemberExpressionTag`
+            Some(unsafe { std::ptr::NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&mut Expression`] to a [`&mut MemberExpression`].
+    ///
+    /// [`&mut Expression`]: Expression
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
+        if self.is_member_expression() {
+            // SAFETY: Both types are `#[repr(transparent)]` wrappers around `TaggedPtr`,
+            // and the tag (48-50) is a valid `MemberExpressionTag`
+            Some(unsafe { std::ptr::NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&Expression`] to a [`&MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&Expression`]: Expression
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
+        self.as_member_expression().unwrap()
+    }
+
+    /// Convert an [`&mut Expression`] to a [`&mut MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut Expression`]: Expression
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
+        self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> TryFrom<Expression<'a>> for MemberExpression<'a> {
+    type Error = ();
+
+    /// Convert an [`Expression`] to a [`MemberExpression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: Expression<'a>) -> Result<Self, Self::Error> {
+        if value.is_member_expression() { Ok(MemberExpression(value.0)) } else { Err(()) }
+    }
+}
+
+impl<'a> From<MemberExpression<'a>> for Expression<'a> {
+    /// Convert a [`MemberExpression`] to an [`Expression`].
+    #[inline]
+    fn from(value: MemberExpression<'a>) -> Self {
+        // `MemberExpression` tags (48-50) are all valid `Expression` tags
+        Expression(value.0)
+    }
 }
 
 /// `foo` in `let foo = 1;`
@@ -480,21 +957,64 @@ pub struct TemplateElementValue<'a> {
     pub cooked: Option<Str<'a>>,
 }
 
-/// Represents a member access expression, which can include computed member access,
-/// static member access, or private field access.
-///
-/// <https://tc39.es/ecma262/#prod-MemberExpression>
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
-pub enum MemberExpression<'a> {
-    /// `ar[0]` in `const ar = [1, 2]; ar[0];`
-    ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
-    /// `console.log` in `console.log('Hello, World!');`
-    StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
-    /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
-    PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
+// PROTOTYPE: `MemberExpression` is a tagged-pointer struct sharing `Expression`'s tag values
+// 48-50, so `Expression` <-> `MemberExpression` casts are a tag-range check plus a transparent
+// rewrap. See `Expression` above for details of the representation.
+tagged_ptr_enum! {
+    /// Represents a member access expression, which can include computed member access,
+    /// static member access, or private field access.
+    ///
+    /// <https://tc39.es/ecma262/#prod-MemberExpression>
+    ///
+    /// This is a tagged-pointer struct: 8 bytes, with the discriminant packed into the low byte
+    /// of the payload pointer. Its tags are the same numeric values these variants have inside
+    /// [`Expression`], so casts between the two are cheap.
+    pub struct MemberExpression;
+    tag_enum =
+        /// Discriminant of a [`MemberExpression`].
+        MemberExpressionTag;
+    kind_enum =
+        /// Shared-reference view of a [`MemberExpression`]'s variant, returned by [`MemberExpression::kind`].
+        MemberExpressionKind;
+    kind_mut_enum =
+        /// Mutable-reference view of a [`MemberExpression`]'s variant, returned by [`MemberExpression::kind_mut`].
+        MemberExpressionKindMut;
+    kind_owned_enum =
+        /// Owned view of a [`MemberExpression`]'s variant, returned by [`MemberExpression::into_kind`].
+        MemberExpressionKindOwned;
+    variants = {
+        /// `ar[0]` in `const ar = [1, 2]; ar[0];`
+        ComputedMemberExpression(ComputedMemberExpression<'a>) = 48
+            [is_computed_member_expression, as_computed_member_expression, as_computed_member_expression_mut,
+             to_computed_member_expression, to_computed_member_expression_mut, into_computed_member_expression],
+        /// `console.log` in `console.log('Hello, World!');`
+        StaticMemberExpression(StaticMemberExpression<'a>) = 49
+            [is_static_member_expression, as_static_member_expression, as_static_member_expression_mut,
+             to_static_member_expression, to_static_member_expression_mut, into_static_member_expression],
+        /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
+        PrivateFieldExpression(PrivateFieldExpression<'a>) = 50
+            [is_private_field_expression, as_private_field_expression, as_private_field_expression_mut,
+             to_private_field_expression, to_private_field_expression_mut, into_private_field_expression],
+    }
+}
+
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&Expression`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&Expression`]: Expression
+    #[inline]
+    pub fn as_expression(&self) -> &Expression<'a> {
+        // SAFETY: Both types are `#[repr(transparent)]` wrappers around `TaggedPtr`,
+        // and all `MemberExpressionTag`s (48-50) are valid `ExpressionTag`s
+        unsafe { std::ptr::NonNull::from_ref(self).cast::<Expression>().as_ref() }
+    }
+
+    /// Convert a [`MemberExpression`] to an [`Expression`].
+    #[inline]
+    pub fn into_expression(self) -> Expression<'a> {
+        Expression(self.0)
+    }
 }
 
 /// `ar[0]` in `const ar = [1, 2]; ar[0];`
@@ -2805,3 +3325,111 @@ pub struct V8IntrinsicExpression<'a> {
     pub name: IdentifierName<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
 }
+
+// PROTOTYPE: Constructor functions named after the inherited `Expression` variants, for enums
+// which now have a single `Expression(Expression<'a>)` variant. These keep constructor call
+// sites like `Argument::CallExpression(boxed)` (used by generated builder methods and consumer
+// crates) compiling unchanged: they build `Self::Expression(Expression::Variant(boxed))`.
+macro_rules! inherited_expression_constructors {
+    ($Enum:ident) => {
+        inherited_expression_constructors!(@impl $Enum, [
+            (BooleanLiteral, BooleanLiteral),
+            (NullLiteral, NullLiteral),
+            (NumericLiteral, NumericLiteral<'a>),
+            (BigIntLiteral, BigIntLiteral<'a>),
+            (RegExpLiteral, RegExpLiteral<'a>),
+            (StringLiteral, StringLiteral<'a>),
+            (TemplateLiteral, TemplateLiteral<'a>),
+            (Identifier, IdentifierReference<'a>),
+            (Super, Super),
+            (ArrayExpression, ArrayExpression<'a>),
+            (ArrowFunctionExpression, ArrowFunctionExpression<'a>),
+            (AssignmentExpression, AssignmentExpression<'a>),
+            (AwaitExpression, AwaitExpression<'a>),
+            (BinaryExpression, BinaryExpression<'a>),
+            (CallExpression, CallExpression<'a>),
+            (ChainExpression, ChainExpression<'a>),
+            (ClassExpression, Class<'a>),
+            (ConditionalExpression, ConditionalExpression<'a>),
+            (FunctionExpression, Function<'a>),
+            (ImportExpression, ImportExpression<'a>),
+            (LogicalExpression, LogicalExpression<'a>),
+            (NewExpression, NewExpression<'a>),
+            (ObjectExpression, ObjectExpression<'a>),
+            (ParenthesizedExpression, ParenthesizedExpression<'a>),
+            (SequenceExpression, SequenceExpression<'a>),
+            (TaggedTemplateExpression, TaggedTemplateExpression<'a>),
+            (ThisExpression, ThisExpression),
+            (UnaryExpression, UnaryExpression<'a>),
+            (UpdateExpression, UpdateExpression<'a>),
+            (YieldExpression, YieldExpression<'a>),
+            (PrivateInExpression, PrivateInExpression<'a>),
+            (ImportMeta, ImportMeta),
+            (NewTarget, NewTarget),
+            (JSXElement, JSXElement<'a>),
+            (JSXFragment, JSXFragment<'a>),
+            (TSAsExpression, TSAsExpression<'a>),
+            (TSSatisfiesExpression, TSSatisfiesExpression<'a>),
+            (TSTypeAssertion, TSTypeAssertion<'a>),
+            (TSNonNullExpression, TSNonNullExpression<'a>),
+            (TSInstantiationExpression, TSInstantiationExpression<'a>),
+            (V8IntrinsicExpression, V8IntrinsicExpression<'a>),
+            (ComputedMemberExpression, ComputedMemberExpression<'a>),
+            (StaticMemberExpression, StaticMemberExpression<'a>),
+            (PrivateFieldExpression, PrivateFieldExpression<'a>),
+        ]);
+    };
+    (@impl $Enum:ident, [$(($Variant:ident, $Inner:ty)),* $(,)?]) => {
+        impl<'a> $Enum<'a> {
+            $(
+                #[doc = concat!("Construct an `Expression::", stringify!($Variant), "` wrapped in `Self::Expression`.")]
+                #[expect(non_snake_case)]
+                #[inline]
+                pub fn $Variant(inner: Box<'a, $Inner>) -> Self {
+                    Self::Expression(Expression::$Variant(inner))
+                }
+            )*
+        }
+    };
+}
+pub(crate) use inherited_expression_constructors;
+
+// PROTOTYPE: Same for enums with a single `MemberExpression(MemberExpression<'a>)` variant.
+macro_rules! inherited_member_expression_constructors {
+    ($Enum:ident) => {
+        impl<'a> $Enum<'a> {
+            /// Construct a `MemberExpression::ComputedMemberExpression` wrapped in `Self::MemberExpression`.
+            #[expect(non_snake_case)]
+            #[inline]
+            pub fn ComputedMemberExpression(inner: Box<'a, ComputedMemberExpression<'a>>) -> Self {
+                Self::MemberExpression(MemberExpression::ComputedMemberExpression(inner))
+            }
+
+            /// Construct a `MemberExpression::StaticMemberExpression` wrapped in `Self::MemberExpression`.
+            #[expect(non_snake_case)]
+            #[inline]
+            pub fn StaticMemberExpression(inner: Box<'a, StaticMemberExpression<'a>>) -> Self {
+                Self::MemberExpression(MemberExpression::StaticMemberExpression(inner))
+            }
+
+            /// Construct a `MemberExpression::PrivateFieldExpression` wrapped in `Self::MemberExpression`.
+            #[expect(non_snake_case)]
+            #[inline]
+            pub fn PrivateFieldExpression(inner: Box<'a, PrivateFieldExpression<'a>>) -> Self {
+                Self::MemberExpression(MemberExpression::PrivateFieldExpression(inner))
+            }
+        }
+    };
+}
+
+inherited_expression_constructors!(Argument);
+inherited_expression_constructors!(ArrayExpressionElement);
+inherited_expression_constructors!(PropertyKey);
+inherited_expression_constructors!(ForStatementInit);
+inherited_expression_constructors!(ExportDefaultDeclarationKind);
+
+inherited_member_expression_constructors!(SimpleAssignmentTarget);
+inherited_member_expression_constructors!(ChainElement);
+inherited_member_expression_constructors!(AssignmentTarget);
+inherited_member_expression_constructors!(AssignmentTargetMaybeDefault);
+inherited_member_expression_constructors!(ForStatementLeft);

@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectExpression,
+        AwaitExpression, CallExpression, Expression, ExpressionKind, Function, ObjectExpression,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -92,8 +91,10 @@ impl Rule for NoLifecycleAfterAwait {
         match node.kind() {
             // e.g. `export default { setup() {} }`
             AstKind::ExportDefaultDeclaration(export_decl) => {
-                if let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-                    &export_decl.declaration
+                if let Some(obj_expr) = export_decl
+                    .declaration
+                    .as_expression()
+                    .and_then(Expression::as_object_expression)
                 {
                     check_setup_in_object(obj_expr, ctx);
                 }
@@ -103,7 +104,8 @@ impl Rule for NoLifecycleAfterAwait {
                 if let Some(ident) = call_expr.callee.get_identifier_reference()
                     && ident.name == "defineComponent"
                     && let Some(first_arg) = call_expr.arguments.first()
-                    && let Some(Expression::ObjectExpression(obj_expr)) = first_arg.as_expression()
+                    && let Some(obj_expr) =
+                        first_arg.as_expression().and_then(Expression::as_object_expression)
                 {
                     check_setup_in_object(obj_expr, ctx);
                 }
@@ -123,9 +125,9 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let function_body_opt = match &setup_prop.value {
-        Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
-        Expression::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
+    let function_body_opt = match setup_prop.value.kind() {
+        ExpressionKind::FunctionExpression(func_expr) => func_expr.body.as_ref(),
+        ExpressionKind::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
         _ => None,
     };
     let Some(function_body) = function_body_opt else {

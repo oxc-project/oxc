@@ -156,9 +156,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         let object = match assignment_target {
-            AssignmentTarget::ComputedMemberExpression(member_expr) => &member_expr.object,
-            AssignmentTarget::PrivateFieldExpression(member_expr) => &member_expr.object,
-            AssignmentTarget::StaticMemberExpression(member_expr) => &member_expr.object,
+            AssignmentTarget::MemberExpression(member_expr) => member_expr.object(),
             _ => return false,
         };
 
@@ -173,8 +171,8 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        match expr {
-            Expression::Identifier(id) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(id) => {
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
                     Self::is_symbol_mutated(symbol_id, ctx)
@@ -182,7 +180,7 @@ impl<'a> PeepholeOptimizations {
                     true
                 }
             }
-            Expression::ThisExpression(_) => false,
+            ExpressionKind::ThisExpression(_) => false,
             _ => true,
         }
     }
@@ -631,48 +629,48 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // shrink code (`substitute_*`, `minimize_*`) are left out. See the `dce`
         // docs in `state.rs`.
         if ctx.state.dce {
-            match expr {
-                Expression::TemplateLiteral(t) => {
+            match expr.kind_mut() {
+                ExpressionKindMut::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
                 }
-                Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
-                Expression::BinaryExpression(_) => {
+                ExpressionKindMut::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
+                ExpressionKindMut::BinaryExpression(_) => {
                     Self::fold_binary_expr(expr, ctx);
                     Self::fold_binary_typeof_comparison(expr, ctx);
                 }
-                Expression::UnaryExpression(_) => Self::fold_unary_expr(expr, ctx),
-                Expression::StaticMemberExpression(_) => {
+                ExpressionKindMut::UnaryExpression(_) => Self::fold_unary_expr(expr, ctx),
+                ExpressionKindMut::StaticMemberExpression(_) => {
                     Self::fold_static_member_expr(expr, ctx);
                 }
-                Expression::ComputedMemberExpression(_) => {
+                ExpressionKindMut::ComputedMemberExpression(_) => {
                     Self::fold_computed_member_expr(expr, ctx);
                 }
-                Expression::LogicalExpression(_) => Self::fold_logical_expr(expr, ctx),
-                Expression::ChainExpression(_) => Self::fold_chain_expr(expr, ctx),
-                Expression::CallExpression(_) => {
+                ExpressionKindMut::LogicalExpression(_) => Self::fold_logical_expr(expr, ctx),
+                ExpressionKindMut::ChainExpression(_) => Self::fold_chain_expr(expr, ctx),
+                ExpressionKindMut::CallExpression(_) => {
                     Self::fold_call_expression(expr, ctx);
                     Self::substitute_iife_call(expr, ctx);
                     Self::remove_dead_code_call_expression(expr, ctx);
                 }
-                Expression::ConditionalExpression(_) => {
+                ExpressionKindMut::ConditionalExpression(_) => {
                     Self::try_fold_conditional_expression(expr, ctx);
                 }
-                Expression::SequenceExpression(_) => {
+                ExpressionKindMut::SequenceExpression(_) => {
                     Self::remove_sequence_expression(expr, ctx);
                 }
-                Expression::AssignmentExpression(_) => {
+                ExpressionKindMut::AssignmentExpression(_) => {
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
                 _ => {}
             }
         } else {
-            match expr {
-                Expression::TemplateLiteral(t) => {
+            match expr.kind_mut() {
+                ExpressionKindMut::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
                     Self::substitute_template_literal(expr, ctx);
                 }
-                Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
-                Expression::BinaryExpression(e) => {
+                ExpressionKindMut::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
+                ExpressionKindMut::BinaryExpression(e) => {
                     Self::substitute_swap_binary_expressions(e);
                     Self::fold_binary_expr(expr, ctx);
                     Self::fold_binary_typeof_comparison(expr, ctx);
@@ -683,35 +681,35 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_typeof_undefined(expr, ctx);
                     Self::substitute_rotate_binary_expression(expr, ctx);
                 }
-                Expression::UnaryExpression(_) => {
+                ExpressionKindMut::UnaryExpression(_) => {
                     Self::fold_unary_expr(expr, ctx);
                     Self::minimize_unary(expr, ctx);
                     Self::substitute_unary_plus(expr, ctx);
                     Self::fold_sequence_expression(expr, ctx);
                 }
-                Expression::YieldExpression(_) | Expression::AwaitExpression(_) => {
+                ExpressionKindMut::YieldExpression(_) | ExpressionKindMut::AwaitExpression(_) => {
                     Self::fold_sequence_expression(expr, ctx);
                 }
-                Expression::StaticMemberExpression(_) => {
+                ExpressionKindMut::StaticMemberExpression(_) => {
                     Self::fold_static_member_expr(expr, ctx);
                     Self::replace_known_property_access(expr, ctx);
                 }
-                Expression::ComputedMemberExpression(_) => {
+                ExpressionKindMut::ComputedMemberExpression(_) => {
                     Self::fold_computed_member_expr(expr, ctx);
                     Self::replace_known_property_access(expr, ctx);
                 }
-                Expression::LogicalExpression(_) => {
+                ExpressionKindMut::LogicalExpression(_) => {
                     Self::fold_logical_expr(expr, ctx);
                     Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_logical_expression(expr, ctx);
                     Self::substitute_is_object_and_not_null(expr, ctx);
                     Self::substitute_rotate_logical_expression(expr, ctx);
                 }
-                Expression::ChainExpression(_) => {
+                ExpressionKindMut::ChainExpression(_) => {
                     Self::fold_chain_expr(expr, ctx);
                     Self::substitute_chain_expression(expr, ctx);
                 }
-                Expression::CallExpression(_) => {
+                ExpressionKindMut::CallExpression(_) => {
                     Self::fold_call_expression(expr, ctx);
                     Self::substitute_iife_call(expr, ctx);
                     Self::remove_dead_code_call_expression(expr, ctx);
@@ -720,7 +718,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_simple_function_call(expr, ctx);
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
-                Expression::ConditionalExpression(logical_expr) => {
+                ExpressionKindMut::ConditionalExpression(logical_expr) => {
                     Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
@@ -728,27 +726,33 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     }
                     Self::try_fold_conditional_expression(expr, ctx);
                 }
-                Expression::AssignmentExpression(e) => {
+                ExpressionKindMut::AssignmentExpression(e) => {
                     Self::minimize_normal_assignment_to_combined_logical_assignment(e, ctx);
                     Self::minimize_normal_assignment_to_combined_assignment(e, ctx);
                     Self::minimize_assignment_to_update_expression(expr, ctx);
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
-                Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
-                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
-                Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
-                Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
-                Expression::NewExpression(e) => {
+                ExpressionKindMut::SequenceExpression(_) => {
+                    Self::remove_sequence_expression(expr, ctx);
+                }
+                ExpressionKindMut::ArrowFunctionExpression(e) => {
+                    Self::substitute_arrow_expression(e, ctx);
+                }
+                ExpressionKindMut::FunctionExpression(e) => {
+                    Self::try_remove_name_from_functions(e, ctx);
+                }
+                ExpressionKindMut::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
+                ExpressionKindMut::NewExpression(e) => {
                     Self::substitute_typed_array_constructor(e, ctx);
                     Self::substitute_global_new_expression(expr, ctx);
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
-                Expression::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
-                Expression::ArrayExpression(_) => {
+                ExpressionKindMut::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
+                ExpressionKindMut::ArrayExpression(_) => {
                     Self::try_flatten_array_expression_elements(expr, ctx);
                     Self::substitute_array_expression(expr, ctx);
                 }
-                Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
+                ExpressionKindMut::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
                 _ => {}
             }
         }

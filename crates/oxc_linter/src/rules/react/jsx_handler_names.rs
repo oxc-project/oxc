@@ -5,8 +5,8 @@ use lazy_regex::{Regex, RegexBuilder, regex};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, Expression, JSXAttributeName, JSXAttributeValue, JSXElementName,
-        JSXExpression, JSXMemberExpression, JSXMemberExpressionObject, Statement,
+        ArrowFunctionExpression, Expression, ExpressionKind, JSXAttributeName, JSXAttributeValue,
+        JSXElementName, JSXMemberExpression, JSXMemberExpressionObject, Statement,
         StaticMemberExpression,
     },
 };
@@ -291,43 +291,44 @@ impl Rule for JsxHandlerNames {
         };
         let value_expr = &expression_container.expression;
 
-        let (handler_name, handler_span, is_props_handler) = match value_expr {
-            JSXExpression::ArrowFunctionExpression(arrow_function) => {
-                if !self.check_inline_functions {
-                    return;
+        let (handler_name, handler_span, is_props_handler) =
+            match value_expr.as_expression().map(Expression::kind) {
+                Some(ExpressionKind::ArrowFunctionExpression(arrow_function)) => {
+                    if !self.check_inline_functions {
+                        return;
+                    }
+                    if !self.check_local_variables && !is_member_expression_callee(arrow_function) {
+                        return;
+                    }
+                    if let Some((name, span, is_props_handler)) =
+                        get_event_handler_name_from_arrow_function(arrow_function)
+                    {
+                        (Some(Cow::Borrowed(name.as_str())), span, is_props_handler)
+                    } else {
+                        (None, arrow_function.body.span, false)
+                    }
                 }
-                if !self.check_local_variables && !is_member_expression_callee(arrow_function) {
-                    return;
+                Some(ExpressionKind::Identifier(ident)) => {
+                    if !self.check_local_variables {
+                        return;
+                    }
+                    (Some(Cow::Borrowed(ident.name.as_str())), ident.span, false)
                 }
-                if let Some((name, span, is_props_handler)) =
-                    get_event_handler_name_from_arrow_function(arrow_function)
-                {
+                Some(ExpressionKind::StaticMemberExpression(member_expr)) => {
+                    let (name, span, is_props_handler) =
+                        get_event_handler_name_from_static_member_expression(member_expr);
                     (Some(Cow::Borrowed(name.as_str())), span, is_props_handler)
-                } else {
-                    (None, arrow_function.body.span, false)
                 }
-            }
-            JSXExpression::Identifier(ident) => {
-                if !self.check_local_variables {
-                    return;
+                _ => {
+                    if !self.check_local_variables && !value_expr.is_member_expression() {
+                        return;
+                    }
+                    // For other expressions types, use the whole content inside the braces as the handler name,
+                    // which will be marked as a bad handler name if the prop key is an event handler prop.
+                    let span = expression_container.span.shrink(1);
+                    (Some(Cow::Owned(normalize_handler_name(ctx.source_range(span)))), span, false)
                 }
-                (Some(Cow::Borrowed(ident.name.as_str())), ident.span, false)
-            }
-            JSXExpression::StaticMemberExpression(member_expr) => {
-                let (name, span, is_props_handler) =
-                    get_event_handler_name_from_static_member_expression(member_expr);
-                (Some(Cow::Borrowed(name.as_str())), span, is_props_handler)
-            }
-            _ => {
-                if !self.check_local_variables && !value_expr.is_member_expression() {
-                    return;
-                }
-                // For other expressions types, use the whole content inside the braces as the handler name,
-                // which will be marked as a bad handler name if the prop key is an event handler prop.
-                let span = expression_container.span.shrink(1);
-                (Some(Cow::Owned(normalize_handler_name(ctx.source_range(span)))), span, false)
-            }
-        };
+            };
 
         let (prop_key, prop_span) = match &jsx_attribute.name {
             JSXAttributeName::Identifier(ident) => (ident.name.as_str(), ident.span),
@@ -390,7 +391,7 @@ fn is_member_expression_callee(arrow_function: &ArrowFunctionExpression<'_>) -> 
     let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
         return false;
     };
-    let Expression::CallExpression(callee_expr) = &stmt.expression else {
+    let ExpressionKind::CallExpression(callee_expr) = stmt.expression.kind() else {
         return false;
     };
     callee_expr.callee.is_member_expression()
@@ -401,13 +402,13 @@ fn get_event_handler_name_from_static_member_expression<'a>(
 ) -> (Ident<'a>, Span, bool) {
     let name = member_expr.property.name;
     let span = member_expr.property.span;
-    match &member_expr.object {
-        Expression::Identifier(ident) => {
+    match member_expr.object.kind() {
+        ExpressionKind::Identifier(ident) => {
             let obj_name = ident.name.as_str();
             (name, span, obj_name == "props") // props.handleChange or obj.handleChange
         }
-        Expression::StaticMemberExpression(expr) => {
-            if let Expression::ThisExpression(_) = &expr.object {
+        ExpressionKind::StaticMemberExpression(expr) => {
+            if let ExpressionKind::ThisExpression(_) = expr.object.kind() {
                 let obj_name = expr.property.name.as_str();
                 (name, span, obj_name == "props") // this.props.handleChange or this.obj.handleChange
             } else {
@@ -484,13 +485,13 @@ fn get_event_handler_name_from_arrow_function<'a>(
     let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
         return None;
     };
-    let Expression::CallExpression(call_expr) = &stmt.expression else {
+    let ExpressionKind::CallExpression(call_expr) = stmt.expression.kind() else {
         return None;
     };
 
-    match &call_expr.callee {
-        Expression::Identifier(ident) => Some((ident.name, ident.span, false)),
-        Expression::StaticMemberExpression(member_expr) => {
+    match call_expr.callee.kind() {
+        ExpressionKind::Identifier(ident) => Some((ident.name, ident.span, false)),
+        ExpressionKind::StaticMemberExpression(member_expr) => {
             Some(get_event_handler_name_from_static_member_expression(member_expr))
         }
         _ => None,

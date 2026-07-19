@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::ExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -88,7 +88,7 @@ impl Rule for NoUnsafeNegation {
         let should_check = expr.operator.is_relational()
             || (self.enforce_for_ordering_relations && expr.operator.is_compare());
         if should_check {
-            let Expression::UnaryExpression(left) = &expr.left else {
+            let ExpressionKind::UnaryExpression(left) = expr.left.kind() else {
                 return;
             };
             if left.operator == UnaryOperator::LogicalNot {

@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, MemberExpression, StaticMemberExpression},
+    ast::{
+        Expression, ExpressionKind, IdentifierReference, MemberExpressionKind,
+        StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -76,7 +79,7 @@ impl Rule for NoDeprecatedDeleteSet {
             let object = member.object.get_inner_expression();
 
             if matches!(prop_name, "set" | "delete")
-                && let Expression::Identifier(ident) = object
+                && let ExpressionKind::Identifier(ident) = object.kind()
                 && is_vue_global_or_default_import(ident, ctx)
             {
                 ctx.diagnostic(no_deprecated_delete_set_diagnostic(member.property.span));
@@ -93,7 +96,7 @@ impl Rule for NoDeprecatedDeleteSet {
         }
 
         // Phase 3: `import { set, del } from 'vue'; set()` / `del()`
-        if let Expression::Identifier(ident) = call.callee.get_inner_expression()
+        if let ExpressionKind::Identifier(ident) = call.callee.get_inner_expression().kind()
             && is_imported_set_or_del_from_vue(ident, ctx)
         {
             ctx.diagnostic(no_deprecated_delete_set_diagnostic(ident.span));
@@ -132,12 +135,12 @@ fn static_member_callee<'a, 'b>(
     callee: &'b Expression<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
     let inner = callee.get_inner_expression();
-    let member = match inner {
-        Expression::ChainExpression(chain) => chain.expression.as_member_expression()?,
+    let member = match inner.kind() {
+        ExpressionKind::ChainExpression(chain) => chain.expression.as_member_expression()?,
         _ => inner.as_member_expression()?,
     };
-    match member {
-        MemberExpression::StaticMemberExpression(m) => Some(m),
+    match member.kind() {
+        MemberExpressionKind::StaticMemberExpression(m) => Some(m),
         _ => None,
     }
 }

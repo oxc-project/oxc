@@ -2,7 +2,7 @@ use std::{env, path::PathBuf};
 
 use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{Expression, Statement};
+use oxc_ast::ast::Statement;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
@@ -98,7 +98,7 @@ fn incorrect_ast() {
     program.span = Span::new(0, 0);
     if let Statement::ExpressionStatement(s) = &mut program.body[0] {
         s.span = Span::new(17, 17);
-        if let Expression::Identifier(ident) = &mut s.expression {
+        if let Some(ident) = s.expression.as_identifier_mut() {
             ident.span = Span::new(17, 17);
         }
     }

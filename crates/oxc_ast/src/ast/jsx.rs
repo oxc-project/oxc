@@ -541,3 +541,7 @@ pub struct JSXText<'a> {
     #[estree(from_span)]
     pub raw: Option<Str<'a>>,
 }
+
+// PROTOTYPE: Constructor functions named after the inherited `Expression` variants.
+// See `js.rs` for the macro definition.
+super::js::inherited_expression_constructors!(JSXExpression);

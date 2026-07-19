@@ -1,5 +1,5 @@
 use oxc_ast::ast::{
-    Argument, CallExpression, ConditionalExpression, Expression, NewExpression, match_expression,
+    Argument, CallExpression, ConditionalExpression, Expression, ExpressionKind, NewExpression,
 };
 
 use crate::ast_util::{is_method_call, is_new_expression};
@@ -55,16 +55,16 @@ pub(super) trait ConstEval {
 
 impl ConstEval for Expression<'_> {
     fn const_eval(&self) -> ValueHint {
-        match self.get_inner_expression() {
-            Self::ArrayExpression(_) => ValueHint::NewArray,
-            Self::ObjectExpression(_) => ValueHint::NewObject,
-            Self::AwaitExpression(expr) => expr.argument.const_eval().r#await(),
-            Self::SequenceExpression(expr) => {
+        match self.get_inner_expression().kind() {
+            ExpressionKind::ArrayExpression(_) => ValueHint::NewArray,
+            ExpressionKind::ObjectExpression(_) => ValueHint::NewObject,
+            ExpressionKind::AwaitExpression(expr) => expr.argument.const_eval().r#await(),
+            ExpressionKind::SequenceExpression(expr) => {
                 expr.expressions.last().map_or(ValueHint::Unknown, ConstEval::const_eval)
             }
-            Self::ConditionalExpression(cond) => cond.const_eval(),
-            Self::CallExpression(call) => call.const_eval(),
-            Self::NewExpression(new) => new.const_eval(),
+            ExpressionKind::ConditionalExpression(cond) => cond.const_eval(),
+            ExpressionKind::CallExpression(call) => call.const_eval(),
+            ExpressionKind::NewExpression(new) => new.const_eval(),
             _ => ValueHint::Unknown,
         }
     }
@@ -82,7 +82,7 @@ impl ConstEval for Argument<'_> {
             // using a spread as an initial accumulator value creates a new
             // object or array
             Self::SpreadElement(spread) => spread.argument.const_eval(),
-            expr @ match_expression!(Argument) => expr.as_expression().unwrap().const_eval(),
+            Self::Expression(expr) => expr.const_eval(),
         }
     }
 }

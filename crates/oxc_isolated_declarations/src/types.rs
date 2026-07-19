@@ -1,10 +1,10 @@
-use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
     ast::{
-        ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
-        ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSLiteral,
-        TSMethodSignatureKind, TSSignature, TSTupleElement, TSType, TSTypeAnnotation,
-        TSTypeOperatorOperator,
+        ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression,
+        ExpressionKind, ExpressionTag, Function, ObjectExpression, ObjectPropertyKind, PropertyKey,
+        PropertyKind, TSLiteral, TSMethodSignatureKind, TSSignature, TSTupleElement, TSType,
+        TSTypeAnnotation, TSTypeOperatorOperator,
     },
     builder::NONE,
 };
@@ -71,13 +71,13 @@ impl<'a> IsolatedDeclarations<'a> {
 
     /// Convert a computed property key to a static property key when possible
     fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
-        match key {
+        match key.as_expression().map(Expression::kind) {
             // ["string"] -> string
-            PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
+            Some(ExpressionKind::StringLiteral(literal)) if is_identifier_name(&literal.value) => {
                 PropertyKey::new_static_identifier(literal.span, literal.value.as_str(), self)
             }
             // [`string`] -> string
-            PropertyKey::TemplateLiteral(literal)
+            Some(ExpressionKind::TemplateLiteral(literal))
                 if is_identifier_name(&literal.quasis[0].value.raw) =>
             {
                 PropertyKey::new_static_identifier(literal.span, literal.quasis[0].value.raw, self)
@@ -127,7 +127,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     let key = &object.key;
 
                     if !is_const && object.method {
-                        let Expression::FunctionExpression(function) = &object.value else {
+                        let Some(function) = object.value.as_function_expression() else {
                             unreachable!(
                                 "`object.kind` being `Method` guarantees that it is a function"
                             );
@@ -138,9 +138,15 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         let params = self.transform_formal_parameters(&function.params, false);
                         let key = self.transform_property_key(key);
-                        let computed = key
-                            .as_expression()
-                            .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal());
+                        // PROTOTYPE: the old hand-written `Expression::is_string_literal` matched
+                        // `StringLiteral | TemplateLiteral`; the generated one is strict
+                        // (`StringLiteral` only), so match tags to preserve the old semantics.
+                        let computed = key.as_expression().is_some_and(|k| {
+                            !matches!(
+                                k.tag(),
+                                ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral
+                            ) && !k.is_number_literal()
+                        });
 
                         return Some(TSSignature::new_ts_method_signature(
                             object.span,
@@ -162,7 +168,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 return None;
                             }
 
-                            let Expression::FunctionExpression(function) = &object.value else {
+                            let Some(function) = object.value.as_function_expression() else {
                                 unreachable!(
                                     "`object.kind` being `Get` guarantees that it is a function"
                                 );
@@ -182,7 +188,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 return None;
                             }
 
-                            let Expression::FunctionExpression(function) = &object.value else {
+                            let Some(function) = object.value.as_function_expression() else {
                                 unreachable!(
                                     "`object.kind` being `Set` guarantees that it is a function"
                                 );
@@ -218,10 +224,16 @@ impl<'a> IsolatedDeclarations<'a> {
                     };
 
                     let key = self.transform_property_key(key);
+                    // PROTOTYPE: preserve the old `StringLiteral | TemplateLiteral` semantics of
+                    // the previous hand-written `is_string_literal` (see above).
                     let property_signature = TSSignature::new_ts_property_signature(
                         object.span,
-                        key.as_expression()
-                            .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal()),
+                        key.as_expression().is_some_and(|k| {
+                            !matches!(
+                                k.tag(),
+                                ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral
+                            ) && !k.is_number_literal()
+                        }),
                         false,
                         is_const,
                         key,
@@ -262,11 +274,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 ArrayExpressionElement::Elision(elision) => {
                     Some(TSTupleElement::new_ts_undefined_keyword(elision.span, self))
                 }
-                _ => self
-                    .transform_expression_to_ts_type_with_const_context(
-                        element.to_expression(),
-                        is_const,
-                    )
+                ArrayExpressionElement::Expression(expression) => self
+                    .transform_expression_to_ts_type_with_const_context(expression, is_const)
                     .map(TSTupleElement::from)
                     .or_else(|| {
                         self.error(inferred_type_of_expression(element.span()));
@@ -304,73 +313,76 @@ impl<'a> IsolatedDeclarations<'a> {
         expr: &Expression<'a>,
         is_const: bool,
     ) -> Option<TSType<'a>> {
-        match expr {
-            Expression::BooleanLiteral(lit) => Some(TSType::new_ts_literal_type(
+        match expr.kind() {
+            ExpressionKind::BooleanLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::BooleanLiteral(lit.clone_in(self.allocator())),
+                TSLiteral::BooleanLiteral(ArenaBox::new_in(lit.clone_in(self.allocator()), self)),
                 self,
             )),
-            Expression::NumericLiteral(lit) => Some(TSType::new_ts_literal_type(
+            ExpressionKind::NumericLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::NumericLiteral(lit.clone_in(self.allocator())),
+                TSLiteral::NumericLiteral(ArenaBox::new_in(lit.clone_in(self.allocator()), self)),
                 self,
             )),
-            Expression::BigIntLiteral(lit) => Some(TSType::new_ts_literal_type(
+            ExpressionKind::BigIntLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::BigIntLiteral(lit.clone_in(self.allocator())),
+                TSLiteral::BigIntLiteral(ArenaBox::new_in(lit.clone_in(self.allocator()), self)),
                 self,
             )),
-            Expression::StringLiteral(lit) => Some(TSType::new_ts_literal_type(
+            ExpressionKind::StringLiteral(lit) => Some(TSType::new_ts_literal_type(
                 SPAN,
-                TSLiteral::StringLiteral(lit.clone_in(self.allocator())),
+                TSLiteral::StringLiteral(ArenaBox::new_in(lit.clone_in(self.allocator()), self)),
                 self,
             )),
-            Expression::NullLiteral(lit) => Some(TSType::new_ts_null_keyword(lit.span, self)),
-            Expression::Identifier(ident) => match ident.name.as_str() {
+            ExpressionKind::NullLiteral(lit) => Some(TSType::new_ts_null_keyword(lit.span, self)),
+            ExpressionKind::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Some(TSType::new_ts_undefined_keyword(ident.span, self)),
                 _ => None,
             },
-            Expression::TemplateLiteral(lit) => {
+            ExpressionKind::TemplateLiteral(lit) => {
                 self.transform_template_to_string(lit).map(|string| {
                     TSType::new_ts_literal_type(lit.span, TSLiteral::StringLiteral(string), self)
                 })
             }
-            Expression::UnaryExpression(expr) => {
+            ExpressionKind::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {
                     Some(TSType::new_ts_literal_type(
                         SPAN,
-                        TSLiteral::UnaryExpression(expr.clone_in(self.allocator())),
+                        TSLiteral::UnaryExpression(ArenaBox::new_in(
+                            expr.clone_in(self.allocator()),
+                            self,
+                        )),
                         self,
                     ))
                 } else {
                     None
                 }
             }
-            Expression::ArrayExpression(expr) => {
+            ExpressionKind::ArrayExpression(expr) => {
                 Some(self.transform_array_expression_to_ts_type(expr, is_const))
             }
-            Expression::ObjectExpression(expr) => {
+            ExpressionKind::ObjectExpression(expr) => {
                 Some(self.transform_object_expression_to_ts_type(expr, is_const))
             }
-            Expression::FunctionExpression(func) => self.transform_function_to_ts_type(func),
-            Expression::ArrowFunctionExpression(func) => {
+            ExpressionKind::FunctionExpression(func) => self.transform_function_to_ts_type(func),
+            ExpressionKind::ArrowFunctionExpression(func) => {
                 self.transform_arrow_function_to_ts_type(func)
             }
-            Expression::TSAsExpression(expr) => {
+            ExpressionKind::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
-            Expression::TSTypeAssertion(expr) => {
+            ExpressionKind::TSTypeAssertion(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
-            Expression::ParenthesizedExpression(expr) => {
+            ExpressionKind::ParenthesizedExpression(expr) => {
                 self.transform_expression_to_ts_type_with_const_context(&expr.expression, is_const)
             }
             _ => None,

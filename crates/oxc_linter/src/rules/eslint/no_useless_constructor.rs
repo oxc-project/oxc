@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, FormalParameterRest,
+        Argument, BindingPattern, CallExpression, ExpressionKind, FormalParameterRest,
         FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
     },
 };
@@ -213,7 +213,7 @@ fn is_single_super_call<'a, 'f>(body: &'f FunctionBody<'a>) -> Option<&'f CallEx
         return None;
     }
     let Statement::ExpressionStatement(expr) = &body.statements[0] else { return None };
-    let Expression::CallExpression(call) = &expr.expression else { return None };
+    let ExpressionKind::CallExpression(call) = expr.expression.kind() else { return None };
 
     if call.callee.is_super() { Some(call) } else { None }
 }
@@ -266,17 +266,17 @@ fn is_passing_through<'a>(
 }
 
 fn is_matching_identifier_pair<'a>(param: &BindingPattern<'a>, arg: &Argument<'a>) -> bool {
-    match (&param, arg) {
-        (BindingPattern::BindingIdentifier(param), Argument::Identifier(arg)) => {
-            param.name == arg.name
-        }
-        _ => false,
-    }
+    let (BindingPattern::BindingIdentifier(param), Some(arg)) =
+        (&param, arg.as_expression().and_then(|e| e.as_identifier()))
+    else {
+        return false;
+    };
+    param.name == arg.name
 }
 fn is_matching_rest_spread_pair<'a>(rest: &FormalParameterRest<'a>, arg: &Argument<'a>) -> bool {
     match (&rest.rest.argument, arg) {
         (BindingPattern::BindingIdentifier(param), Argument::SpreadElement(spread)) => {
-            matches!(&spread.argument, Expression::Identifier(ident) if param.name == ident.name)
+            matches!(spread.argument.kind(), ExpressionKind::Identifier(ident) if param.name == ident.name)
         }
         _ => false,
     }

@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, IfStatement, MemberExpression, Statement},
+    ast::{
+        CallExpression, ChainElement, Expression, ExpressionKind, IfStatement,
+        MemberExpressionKind, Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -108,15 +111,15 @@ fn check_if_statement<'a>(if_stmt: &'a IfStatement<'a>, node: &AstNode<'a>, ctx:
 }
 
 fn extract_call_expression<'a>(expr: &'a Expression<'a>) -> Option<&'a CallExpression<'a>> {
-    match expr {
-        Expression::ChainExpression(chain) => {
+    match expr.kind() {
+        ExpressionKind::ChainExpression(chain) => {
             if let ChainElement::CallExpression(call) = &chain.expression {
                 Some(call)
             } else {
                 None
             }
         }
-        Expression::CallExpression(call) => Some(call),
+        ExpressionKind::CallExpression(call) => Some(call),
         _ => None,
     }
 }
@@ -201,7 +204,7 @@ fn check_computed_member_call<'a>(call_expr: &CallExpression<'a>, ctx: &LintCont
         return;
     };
 
-    let MemberExpression::ComputedMemberExpression(computed) = member_expr else {
+    let MemberExpressionKind::ComputedMemberExpression(computed) = member_expr.kind() else {
         return;
     };
 
@@ -213,7 +216,7 @@ fn check_computed_member_call<'a>(call_expr: &CallExpression<'a>, ctx: &LintCont
         return;
     }
 
-    let Expression::ConditionalExpression(cond_expr) = &computed.expression else {
+    let ExpressionKind::ConditionalExpression(cond_expr) = computed.expression.kind() else {
         return;
     };
 
@@ -251,11 +254,13 @@ fn identify_add_remove_pair<'a>(
         return None;
     }
 
-    let Expression::StaticMemberExpression(first_member) = first.callee.get_inner_expression()
+    let ExpressionKind::StaticMemberExpression(first_member) =
+        first.callee.get_inner_expression().kind()
     else {
         return None;
     };
-    let Expression::StaticMemberExpression(second_member) = second.callee.get_inner_expression()
+    let ExpressionKind::StaticMemberExpression(second_member) =
+        second.callee.get_inner_expression().kind()
     else {
         return None;
     };
@@ -279,13 +284,13 @@ fn identify_add_remove_pair<'a>(
         (&second_member, &first_member)
     };
 
-    let Expression::StaticMemberExpression(classlist_add_member_expr) =
-        classlist_add_callee.object.get_inner_expression()
+    let ExpressionKind::StaticMemberExpression(classlist_add_member_expr) =
+        classlist_add_callee.object.get_inner_expression().kind()
     else {
         return None;
     };
-    let Expression::StaticMemberExpression(classlist_remove_member_expr) =
-        classlist_remove_callee.object.get_inner_expression()
+    let ExpressionKind::StaticMemberExpression(classlist_remove_member_expr) =
+        classlist_remove_callee.object.get_inner_expression().kind()
     else {
         return None;
     };
@@ -308,11 +313,11 @@ fn identify_add_remove_pair<'a>(
 }
 
 fn is_classlist_access(expr: &Expression) -> bool {
-    match expr {
-        Expression::StaticMemberExpression(static_member) => {
+    match expr.kind() {
+        ExpressionKind::StaticMemberExpression(static_member) => {
             static_member.property.name == "classList"
         }
-        Expression::ChainExpression(chain) => {
+        ExpressionKind::ChainExpression(chain) => {
             if let Some(member_expr) = chain.expression.as_member_expression() {
                 member_expr.static_property_name() == Some("classList")
             } else {
@@ -324,8 +329,8 @@ fn is_classlist_access(expr: &Expression) -> bool {
 }
 
 fn check_add_remove_ternary(consequent: &Expression, alternate: &Expression) -> Option<bool> {
-    let (Expression::StringLiteral(cons_str), Expression::StringLiteral(alt_str)) =
-        (consequent.get_inner_expression(), alternate.get_inner_expression())
+    let (ExpressionKind::StringLiteral(cons_str), ExpressionKind::StringLiteral(alt_str)) =
+        (consequent.get_inner_expression().kind(), alternate.get_inner_expression().kind())
     else {
         return None;
     };
@@ -404,7 +409,7 @@ fn fix_computed_member_call<'a>(
         return fixer.noop();
     };
 
-    let MemberExpression::ComputedMemberExpression(computed) = member_expr else {
+    let MemberExpressionKind::ComputedMemberExpression(computed) = member_expr.kind() else {
         return fixer.noop();
     };
 

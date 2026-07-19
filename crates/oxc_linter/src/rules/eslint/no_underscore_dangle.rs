@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingIdentifier, Expression, FunctionType, PrivateFieldExpression, PropertyKey,
-        StaticMemberExpression,
+        BindingIdentifier, Expression, ExpressionKind, FunctionType, PrivateFieldExpression,
+        PropertyKey, StaticMemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -191,13 +191,13 @@ impl NoUnderscoreDangle {
     }
 
     fn member_object_is_allowed(&self, object: &Expression) -> bool {
-        match object.get_inner_expression() {
-            Expression::ThisExpression(_) => self.allow_after_this,
-            Expression::Super(_) => self.allow_after_super,
-            Expression::StaticMemberExpression(inner) => {
+        match object.get_inner_expression().kind() {
+            ExpressionKind::ThisExpression(_) => self.allow_after_this,
+            ExpressionKind::Super(_) => self.allow_after_super,
+            ExpressionKind::StaticMemberExpression(inner) => {
                 self.allow_after_this_constructor
                     && inner.property.name == "constructor"
-                    && matches!(inner.object, Expression::ThisExpression(_))
+                    && inner.object.is_this_expression()
             }
             _ => false,
         }
@@ -275,7 +275,7 @@ fn property_key_name_span<'a>(key: &PropertyKey<'a>) -> Option<(&'a str, Span)> 
     match key {
         PropertyKey::StaticIdentifier(i) => Some((i.name.as_str(), i.span)),
         PropertyKey::PrivateIdentifier(i) => Some((i.name.as_str(), i.span)),
-        _ => None,
+        PropertyKey::Expression(_) => None,
     }
 }
 

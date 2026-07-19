@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ChainElement, Expression, match_member_expression},
+    ast::{ChainElement, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -68,21 +68,16 @@ impl Rule for NoNonNullAssertedOptionalChain {
             return;
         };
 
-        let chain_span = match non_null_expr.expression.get_inner_expression() {
-            Expression::ChainExpression(chain) => match &chain.expression {
-                ChainElement::ComputedMemberExpression(member) if member.optional => {
-                    Some(member.object.span())
-                }
-                ChainElement::StaticMemberExpression(member) if member.optional => {
-                    Some(member.object.span())
-                }
-                ChainElement::PrivateFieldExpression(member) if member.optional => {
-                    Some(member.object.span())
+        let inner_expr = non_null_expr.expression.get_inner_expression();
+        let chain_span = match inner_expr.kind() {
+            ExpressionKind::ChainExpression(chain) => match &chain.expression {
+                ChainElement::MemberExpression(member) if member.optional() => {
+                    Some(member.object().span())
                 }
                 ChainElement::CallExpression(call) if call.optional => Some(call.callee.span()),
                 _ => None,
             },
-            Expression::CallExpression(call) => {
+            ExpressionKind::CallExpression(call) => {
                 if call.optional && !is_parent_member_or_call(node, ctx) {
                     Some(call.callee.span())
                 } else if let Some(member) = call.callee.as_member_expression() {
@@ -95,8 +90,10 @@ impl Rule for NoNonNullAssertedOptionalChain {
                     None
                 }
             }
-            expr @ match_member_expression!(Expression) => {
-                let member_expr = expr.to_member_expression();
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
+                let member_expr = inner_expr.to_member_expression();
                 if member_expr.optional() && !is_parent_member_or_call(node, ctx) {
                     Some(member_expr.object().span())
                 } else {

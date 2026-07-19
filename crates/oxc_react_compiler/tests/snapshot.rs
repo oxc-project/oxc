@@ -36,6 +36,21 @@ use oxc_span::SourceType;
 
 #[test]
 fn snapshots() {
+    // `many-scopes-no-stack-overflow.js` compiles to a very deep logical-expression
+    // chain, and cloning the compiled function back into the program recurses one
+    // stack frame per `||` term. With `Expression` as a tagged-pointer struct, the
+    // unoptimized `CloneIn` frames are larger than the old enum's, overflowing the
+    // libtest worker thread's default stack, so run the fixture loop on a thread
+    // with a larger stack.
+    std::thread::Builder::new()
+        .stack_size(64 * 1024 * 1024)
+        .spawn(run_snapshots)
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+fn run_snapshots() {
     let fixtures = concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures");
     insta::glob!(fixtures, "**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}", |path| {
         let source = fs::read_to_string(path).unwrap();

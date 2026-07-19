@@ -628,10 +628,12 @@ impl<'a> IsolatedDeclarations<'a> {
                     );
                 }
                 Statement::ExpressionStatement(stmt) => {
-                    if let Expression::AssignmentExpression(assignment) = &stmt.expression
-                        && let AssignmentTarget::StaticMemberExpression(static_member_expr) =
-                            &assignment.left
-                        && let Expression::Identifier(ident) = &static_member_expr.object
+                    if let Some(assignment) = stmt.expression.as_assignment_expression()
+                        && let Some(static_member_expr) = assignment
+                            .left
+                            .as_member_expression()
+                            .and_then(MemberExpression::as_static_member_expression)
+                        && let Some(ident) = static_member_expr.object.as_identifier()
                         && can_expando_function_names.contains(ident.name.as_str())
                         && !assignable_properties_for_namespace
                             .get(ident.name.as_str())

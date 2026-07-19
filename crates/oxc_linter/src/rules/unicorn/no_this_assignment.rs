@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPattern, Expression},
+    ast::{AssignmentTarget, BindingPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -68,7 +68,7 @@ impl Rule for NoThisAssignment {
                     return;
                 };
 
-                if !matches!(init.without_parentheses(), Expression::ThisExpression(_)) {
+                if !init.without_parentheses().is_this_expression() {
                     return;
                 }
 
@@ -82,10 +82,7 @@ impl Rule for NoThisAssignment {
                 ));
             }
             AstKind::AssignmentExpression(assignment_expr) => {
-                if !matches!(
-                    assignment_expr.right.without_parentheses(),
-                    Expression::ThisExpression(_)
-                ) {
+                if !assignment_expr.right.without_parentheses().is_this_expression() {
                     return;
                 }
 

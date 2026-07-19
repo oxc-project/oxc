@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, CallExpression, Expression, Function, ObjectProperty,
-        PropertyDefinition, PropertyKey,
+        Argument, AssignmentTarget, CallExpression, Expression, ExpressionKind, Function,
+        ObjectProperty, PropertyDefinition, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -397,7 +397,7 @@ enum DescriptorName<'a> {
 }
 
 fn as_named_function<'a>(expr: &'a Expression<'a>) -> Option<&'a Function<'a>> {
-    let Expression::FunctionExpression(function) = expr.without_parentheses() else {
+    let ExpressionKind::FunctionExpression(function) = expr.without_parentheses().kind() else {
         return None;
     };
     function.id.as_ref()?;
@@ -443,15 +443,15 @@ fn property_key_is_identifier(key: &PropertyKey) -> bool {
 }
 
 fn string_literal_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
-    match key {
-        PropertyKey::StringLiteral(lit) => Some(lit.value.as_str()),
+    match key.as_expression()?.kind() {
+        ExpressionKind::StringLiteral(lit) => Some(lit.value.as_str()),
         _ => None,
     }
 }
 
 fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a str> {
-    match argument.as_expression()?.without_parentheses() {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+    match argument.as_expression()?.without_parentheses().kind() {
+        ExpressionKind::StringLiteral(lit) => Some(lit.value.as_str()),
         _ => None,
     }
 }

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FunctionBody, Statement},
+    ast::{Argument, Expression, ExpressionKind, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -84,8 +84,8 @@ pub fn run<'a>(
         &call_expr.arguments[1]
     };
 
-    match callback {
-        Argument::FunctionExpression(fn_expr) => {
+    match callback.as_expression().map(Expression::kind) {
+        Some(ExpressionKind::FunctionExpression(fn_expr)) => {
             if fn_expr.r#async && !options.allow_async_describe_callback {
                 diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
             }
@@ -104,7 +104,7 @@ pub fn run<'a>(
                 diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
             }
         }
-        Argument::ArrowFunctionExpression(arrow_expr) => {
+        Some(ExpressionKind::ArrowFunctionExpression(arrow_expr)) => {
             if arrow_expr.r#async && !options.allow_async_describe_callback {
                 diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
             }
@@ -121,7 +121,7 @@ pub fn run<'a>(
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     return;
                 };
-                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
+                if let ExpressionKind::CallExpression(call_expr) = expr_stmt.expression.kind() {
                     diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
                 }
             }
@@ -130,12 +130,15 @@ pub fn run<'a>(
                 diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
             }
         }
-        callback => diagnostic(ctx, callback.span(), Message::SecondArgumentMustBeFunction),
+        _ => diagnostic(ctx, callback.span(), Message::SecondArgumentMustBeFunction),
     }
 }
 
 fn is_function_argument(arg: &Argument) -> bool {
-    matches!(arg, Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
+    matches!(
+        arg.as_expression().map(Expression::kind),
+        Some(ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_))
+    )
 }
 
 fn find_first_return_stmt_span(function_body: &FunctionBody) -> Option<Span> {

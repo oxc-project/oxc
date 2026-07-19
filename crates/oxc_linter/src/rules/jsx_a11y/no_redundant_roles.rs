@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -200,7 +200,8 @@ fn get_static_string_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'
     match get_prop_value(item)? {
         JSXAttributeValue::StringLiteral(lit) => Some(lit.value.as_str()),
         JSXAttributeValue::ExpressionContainer(container) => {
-            let Expression::StringLiteral(lit) = container.expression.as_expression()? else {
+            let ExpressionKind::StringLiteral(lit) = container.expression.as_expression()?.kind()
+            else {
                 return None;
             };
             Some(lit.value.as_str())
@@ -218,10 +219,10 @@ fn jsx_prop_value_is_truthy(item: &JSXAttributeItem) -> bool {
                 return false;
             };
 
-            match expression {
-                Expression::BooleanLiteral(lit) => lit.value,
-                Expression::StringLiteral(lit) => !lit.value.is_empty(),
-                Expression::NumericLiteral(lit) => lit.value != 0.0,
+            match expression.kind() {
+                ExpressionKind::BooleanLiteral(lit) => lit.value,
+                ExpressionKind::StringLiteral(lit) => !lit.value.is_empty(),
+                ExpressionKind::NumericLiteral(lit) => lit.value != 0.0,
                 _ => false,
             }
         }

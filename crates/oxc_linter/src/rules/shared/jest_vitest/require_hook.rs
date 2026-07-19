@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement, VariableDeclarationKind},
+    ast::{Argument, Expression, ExpressionKind, Statement, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
@@ -165,18 +165,20 @@ impl RequireHookConfig {
                     return;
                 }
 
-                match &call_expr.arguments[1] {
-                    Argument::FunctionExpression(func_expr) => {
-                        if let Some(func_body) = &func_expr.body {
-                            self.check_block_body(&func_body.statements, ctx);
+                if let Argument::Expression(e) = &call_expr.arguments[1] {
+                    match e.kind() {
+                        ExpressionKind::FunctionExpression(func_expr) => {
+                            if let Some(func_body) = &func_expr.body {
+                                self.check_block_body(&func_body.statements, ctx);
+                            }
                         }
+                        ExpressionKind::ArrowFunctionExpression(arrow_func_expr)
+                            if !arrow_func_expr.expression =>
+                        {
+                            self.check_block_body(&arrow_func_expr.body.statements, ctx);
+                        }
+                        _ => (),
                     }
-                    Argument::ArrowFunctionExpression(arrow_func_expr)
-                        if !arrow_func_expr.expression =>
-                    {
-                        self.check_block_body(&arrow_func_expr.body.statements, ctx);
-                    }
-                    _ => (),
                 }
             }
             _ => {}
@@ -210,7 +212,7 @@ impl RequireHookConfig {
     }
 
     fn check_should_report_in_hook<'a>(&self, expr: &'a Expression<'a>, ctx: &LintContext<'a>) {
-        if let Expression::CallExpression(call_expr) = expr {
+        if let ExpressionKind::CallExpression(call_expr) = expr.kind() {
             let name = get_node_name(&call_expr.callee);
 
             let node_name_split: Vec<&str> = name.split('.').collect();

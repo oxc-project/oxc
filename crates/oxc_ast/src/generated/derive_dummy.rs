@@ -179,7 +179,7 @@ impl<'a> Dummy<'a> for PropertyKey<'a> {
     ///
     /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::NullLiteral(Dummy::dummy(allocator))
+        Self::Expression(Dummy::dummy(allocator))
     }
 }
 
@@ -369,7 +369,7 @@ impl<'a> Dummy<'a> for Argument<'a> {
     ///
     /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::NullLiteral(Dummy::dummy(allocator))
+        Self::Expression(Dummy::dummy(allocator))
     }
 }
 
@@ -863,7 +863,7 @@ impl<'a> Dummy<'a> for ForStatementInit<'a> {
     ///
     /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::NullLiteral(Dummy::dummy(allocator))
+        Self::Expression(Dummy::dummy(allocator))
     }
 }
 
@@ -1701,7 +1701,7 @@ impl<'a> Dummy<'a> for ExportDefaultDeclarationKind<'a> {
     ///
     /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::NullLiteral(Dummy::dummy(allocator))
+        Self::Expression(Dummy::dummy(allocator))
     }
 }
 

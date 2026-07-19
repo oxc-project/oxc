@@ -42,11 +42,16 @@ impl<'a> PeepholeOptimizations {
 
             let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
 
-            let expr = match if_stmt.test.take_in(ctx) {
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+            let expr = match if_stmt.test.take_in(ctx).into_kind() {
+                ExpressionKindOwned::UnaryExpression(unary_expr)
+                    if unary_expr.operator.is_not() =>
+                {
                     unary_expr.unbox().argument
                 }
-                e => Self::minimize_not(e.span(), e, ctx),
+                other => {
+                    let e = Expression::from_kind(other);
+                    Self::minimize_not(e.span(), e, ctx)
+                }
             };
 
             if let Some(test) = &mut for_stmt.test {

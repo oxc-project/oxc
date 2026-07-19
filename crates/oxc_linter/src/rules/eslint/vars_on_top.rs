@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind};
+use oxc_ast::ast::{Declaration, ExpressionTag, Program, Statement, VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -127,10 +127,7 @@ impl Rule for VarsOnTop {
 fn looks_like_directive(node: &Statement) -> bool {
     matches!(
         node,
-        Statement::ExpressionStatement(expr_stmt) if matches!(
-            &expr_stmt.expression,
-            Expression::StringLiteral(_)
-        )
+        Statement::ExpressionStatement(expr_stmt) if matches!(expr_stmt.expression.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
     )
 }
 

@@ -66,7 +66,7 @@ impl Rule for RequireArrayJoinSeparator {
         // foo.join()
         if is_method_call(call_expr, None, Some(&["join"]), Some(0), Some(0))
             && !call_expr.optional
-            && !matches!(member_expr, MemberExpression::ComputedMemberExpression(_))
+            && !member_expr.is_computed_member_expression()
         {
             ctx.diagnostic_with_fix(
                 require_array_join_separator_diagnostic(Span::new(

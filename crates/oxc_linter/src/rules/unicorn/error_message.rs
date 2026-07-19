@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, NewExpression},
+    ast::{Argument, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -67,20 +67,17 @@ declare_oxc_lint!(
 
 impl Rule for ErrorMessage {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (callee, span, args) = match node.kind() {
-            AstKind::NewExpression(NewExpression {
-                callee: Expression::Identifier(id),
-                span,
-                arguments,
-                ..
-            })
-            | AstKind::CallExpression(CallExpression {
-                callee: Expression::Identifier(id),
-                span,
-                arguments,
-                ..
-            }) => (id, *span, arguments),
+        let (callee_expr, span, args) = match node.kind() {
+            AstKind::NewExpression(new_expr) => {
+                (&new_expr.callee, new_expr.span, &new_expr.arguments)
+            }
+            AstKind::CallExpression(call_expr) => {
+                (&call_expr.callee, call_expr.span, &call_expr.arguments)
+            }
             _ => return,
+        };
+        let Some(callee) = callee_expr.as_identifier() else {
+            return;
         };
 
         if !BUILT_IN_ERRORS.contains(&callee.name.as_str()) {
@@ -100,11 +97,14 @@ impl Rule for ErrorMessage {
             return ctx.diagnostic(missing_message(constructor_name, span));
         };
 
-        let diagnostic = match arg {
-            Argument::ArrayExpression(array_expr) => not_string(array_expr.span),
-            Argument::ObjectExpression(object_expr) => not_string(object_expr.span),
-            Argument::StringLiteral(lit) if lit.value.is_empty() => empty_message(lit.span),
-            Argument::TemplateLiteral(template_lit)
+        let Argument::Expression(arg_expr) = arg else {
+            return;
+        };
+        let diagnostic = match arg_expr.kind() {
+            ExpressionKind::ArrayExpression(array_expr) => not_string(array_expr.span),
+            ExpressionKind::ObjectExpression(object_expr) => not_string(object_expr.span),
+            ExpressionKind::StringLiteral(lit) if lit.value.is_empty() => empty_message(lit.span),
+            ExpressionKind::TemplateLiteral(template_lit)
                 if template_lit.span.source_text(ctx.source_text()).len() == 2 =>
             {
                 empty_message(template_lit.span)

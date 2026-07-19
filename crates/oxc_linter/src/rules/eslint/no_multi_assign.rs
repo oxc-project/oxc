@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -118,14 +121,18 @@ impl Rule for NoMultiAssign {
         match node.kind() {
             // e.g. `var a = b = c;`
             AstKind::VariableDeclarator(declarator) => {
-                let Some(Expression::AssignmentExpression(assign_expr)) = &declarator.init else {
+                let Some(assign_expr) =
+                    declarator.init.as_ref().and_then(Expression::as_assignment_expression)
+                else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
             }
             // e.g. `class A { a = b = 1; }`
             AstKind::PropertyDefinition(prop_def) => {
-                let Some(Expression::AssignmentExpression(assign_expr)) = &prop_def.value else {
+                let Some(assign_expr) =
+                    prop_def.value.as_ref().and_then(Expression::as_assignment_expression)
+                else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
@@ -135,7 +142,7 @@ impl Rule for NoMultiAssign {
                 if self.ignore_non_declaration {
                     return;
                 }
-                let Expression::AssignmentExpression(expr) = &parent_expr.right else {
+                let ExpressionKind::AssignmentExpression(expr) = parent_expr.right.kind() else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(expr.span));

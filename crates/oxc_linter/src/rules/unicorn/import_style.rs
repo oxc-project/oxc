@@ -12,8 +12,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         BinaryOperator, BindingPattern, CallExpression, ExportAllDeclaration,
-        ExportNamedDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
-        ModuleExportName, VariableDeclarator,
+        ExportNamedDeclaration, Expression, ExpressionKind, ImportDeclaration,
+        ImportDeclarationSpecifier, ModuleExportName, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -329,7 +329,9 @@ impl Rule for ImportStyle {
                 self.check_export_named_declaration(export_decl, ctx);
             }
             AstKind::ExpressionStatement(statement) if self.check_require => {
-                let Expression::CallExpression(call_expr) = &statement.expression else { return };
+                let ExpressionKind::CallExpression(call_expr) = statement.expression.kind() else {
+                    return;
+                };
                 let Some(source) = get_require_module_name(call_expr) else { return };
                 self.report_if_needed(
                     call_expr.span,
@@ -395,8 +397,8 @@ impl ImportStyle {
         ctx: &LintContext<'_>,
     ) {
         if self.check_dynamic_import
-            && let Some(Expression::AwaitExpression(await_expr)) = &declarator.init
-            && let Expression::ImportExpression(import_expr) = &await_expr.argument
+            && let Some(await_expr) = declarator.init.as_ref().and_then(|e| e.as_await_expression())
+            && let ExpressionKind::ImportExpression(import_expr) = await_expr.argument.kind()
             && let Some(source) = get_module_name(&import_expr.source)
         {
             self.report_if_needed(
@@ -410,7 +412,7 @@ impl ImportStyle {
         }
 
         if self.check_require
-            && let Some(Expression::CallExpression(call_expr)) = &declarator.init
+            && let Some(call_expr) = declarator.init.as_ref().and_then(|e| e.as_call_expression())
             && let Some(source) = get_require_module_name(call_expr)
         {
             self.report_if_needed(
@@ -550,7 +552,7 @@ fn get_module_name<'a>(expr: &'a Expression<'a>) -> Option<Cow<'a, str>> {
         return Some(value);
     }
 
-    if let Expression::BinaryExpression(binary_expr) = expr
+    if let ExpressionKind::BinaryExpression(binary_expr) = expr.kind()
         && binary_expr.operator == BinaryOperator::Addition
     {
         let left = get_module_name(&binary_expr.left)?;

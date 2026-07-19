@@ -1,9 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, CallExpression, Expression, FormalParameters, FunctionBody,
-        IdentifierReference, ImportDeclarationSpecifier, LogicalExpression, MemberExpression,
-        Statement, match_member_expression,
+        BindingPattern, CallExpression, Expression, ExpressionKind, ExpressionTag,
+        FormalParameters, FunctionBody, IdentifierReference, ImportDeclarationSpecifier,
+        LogicalExpression, MemberExpression, MemberExpressionKind, Statement,
     },
 };
 use oxc_semantic::AstNode;
@@ -101,14 +101,14 @@ pub fn is_import_symbol(
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(
-        expr,
-        Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ObjectExpression(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::StringLiteral(_)
+        expr.tag(),
+        ExpressionTag::ArrayExpression
+            | ExpressionTag::ArrowFunctionExpression
+            | ExpressionTag::ClassExpression
+            | ExpressionTag::FunctionExpression
+            | ExpressionTag::ObjectExpression
+            | ExpressionTag::TemplateLiteral
+            | ExpressionTag::StringLiteral
     )
 }
 
@@ -140,7 +140,7 @@ pub fn is_prototype_property(
 
     // `Object.prototype.method` or `Array.prototype.method`
     if let Some(member_expr_obj) = member_expr.object().as_member_expression()
-        && let Expression::Identifier(iden) = member_expr_obj.object()
+        && let ExpressionKind::Identifier(iden) = member_expr_obj.object().kind()
         && member_expr_obj.static_property_name().is_some_and(|name| name == "prototype")
         && object.is_some_and(|val| val == iden.name)
         && !member_expr.optional()
@@ -155,7 +155,7 @@ pub fn is_prototype_property(
 
         // `{}.method`
         Some("Object") => {
-            if let Expression::ObjectExpression(obj_expr) = member_expr.object() {
+            if let ExpressionKind::ObjectExpression(obj_expr) = member_expr.object().kind() {
                 obj_expr.properties.is_empty()
             } else {
                 false
@@ -166,7 +166,7 @@ pub fn is_prototype_property(
 }
 
 pub fn is_empty_array_expression(expr: &Expression) -> bool {
-    if let Expression::ArrayExpression(array_expr) = expr {
+    if let ExpressionKind::ArrayExpression(array_expr) = expr.kind() {
         array_expr.elements.is_empty()
     } else {
         false
@@ -174,7 +174,7 @@ pub fn is_empty_array_expression(expr: &Expression) -> bool {
 }
 
 pub fn is_empty_object_expression(expr: &Expression) -> bool {
-    if let Expression::ObjectExpression(object_expr) = expr {
+    if let ExpressionKind::ObjectExpression(object_expr) = expr.kind() {
         object_expr.properties.is_empty()
     } else {
         false
@@ -207,7 +207,8 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
                 return None;
             };
 
-            let Some(Expression::Identifier(ident)) = return_stmt.argument.as_ref() else {
+            let Some(ident) = return_stmt.argument.as_ref().and_then(|arg| arg.as_identifier())
+            else {
                 return None;
             };
 
@@ -215,13 +216,13 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
         }
         Statement::ReturnStatement(return_stmt) => {
             let return_expr = return_stmt.argument.as_ref()?;
-            match return_expr {
-                Expression::Identifier(ident) => Some(ident.name.as_str()),
+            match return_expr.kind() {
+                ExpressionKind::Identifier(ident) => Some(ident.name.as_str()),
                 _ => None,
             }
         }
         Statement::ExpressionStatement(expr_stmt) => {
-            let Expression::Identifier(ident) = &expr_stmt.expression else {
+            let ExpressionKind::Identifier(ident) = expr_stmt.expression.kind() else {
                 return None;
             };
 
@@ -233,7 +234,7 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
 
 /// Compares two expressions to see if they are the same.
 pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
-    if let Expression::ChainExpression(left_chain_expr) = left
+    if let ExpressionKind::ChainExpression(left_chain_expr) = left.kind()
         && let Some(right_member_expr) = right.as_member_expression()
         && let Some(v) = left_chain_expr.expression.as_member_expression()
     {
@@ -241,30 +242,36 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
     }
 
     if let Some(left_chain_expr) = left.as_member_expression()
-        && let Expression::ChainExpression(right_member_expr) = right
+        && let ExpressionKind::ChainExpression(right_member_expr) = right.kind()
         && let Some(v) = right_member_expr.expression.as_member_expression()
     {
         return is_same_member_expression(left_chain_expr, v, ctx);
     }
 
-    match (left, right) {
+    match (left.kind(), right.kind()) {
         // super // this
-        (Expression::Super(_), Expression::Super(_))
-        | (Expression::ThisExpression(_), Expression::ThisExpression(_))
-        | (Expression::NullLiteral(_), Expression::NullLiteral(_)) => return true,
+        (ExpressionKind::Super(_), ExpressionKind::Super(_))
+        | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
+        | (ExpressionKind::NullLiteral(_), ExpressionKind::NullLiteral(_)) => return true,
 
-        (Expression::Identifier(left_ident), Expression::Identifier(right_ident)) => {
+        (ExpressionKind::Identifier(left_ident), ExpressionKind::Identifier(right_ident)) => {
             return left_ident.name == right_ident.name;
         }
 
-        (Expression::StringLiteral(left_str), Expression::StringLiteral(right_str)) => {
+        (ExpressionKind::StringLiteral(left_str), ExpressionKind::StringLiteral(right_str)) => {
             return left_str.value == right_str.value;
         }
-        (Expression::StringLiteral(string_lit), Expression::TemplateLiteral(template_lit))
-        | (Expression::TemplateLiteral(template_lit), Expression::StringLiteral(string_lit)) => {
+        (
+            ExpressionKind::StringLiteral(string_lit),
+            ExpressionKind::TemplateLiteral(template_lit),
+        )
+        | (
+            ExpressionKind::TemplateLiteral(template_lit),
+            ExpressionKind::StringLiteral(string_lit),
+        ) => {
             return template_lit.single_quasi().is_some_and(|val| val.as_str() == string_lit.value);
         }
-        (Expression::TemplateLiteral(left_str), Expression::TemplateLiteral(right_str)) => {
+        (ExpressionKind::TemplateLiteral(left_str), ExpressionKind::TemplateLiteral(right_str)) => {
             return left_str.quasis.content_eq(&right_str.quasis)
                 && left_str.expressions.len() == right_str.expressions.len()
                 && left_str
@@ -273,20 +280,23 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
                     .zip(right_str.expressions.iter())
                     .all(|(left, right)| is_same_expression(left, right, ctx));
         }
-        (Expression::NumericLiteral(left_num), Expression::NumericLiteral(right_num)) => {
+        (ExpressionKind::NumericLiteral(left_num), ExpressionKind::NumericLiteral(right_num)) => {
             return left_num.raw == right_num.raw;
         }
-        (Expression::RegExpLiteral(left_regexp), Expression::RegExpLiteral(right_regexp)) => {
+        (
+            ExpressionKind::RegExpLiteral(left_regexp),
+            ExpressionKind::RegExpLiteral(right_regexp),
+        ) => {
             return left_regexp.regex.pattern.text == right_regexp.regex.pattern.text
                 && left_regexp.regex.flags == right_regexp.regex.flags;
         }
-        (Expression::BooleanLiteral(left_bool), Expression::BooleanLiteral(right_bool)) => {
+        (ExpressionKind::BooleanLiteral(left_bool), ExpressionKind::BooleanLiteral(right_bool)) => {
             return left_bool.value == right_bool.value;
         }
 
         (
-            Expression::BinaryExpression(left_bin_expr),
-            Expression::BinaryExpression(right_bin_expr),
+            ExpressionKind::BinaryExpression(left_bin_expr),
+            ExpressionKind::BinaryExpression(right_bin_expr),
         ) => {
             return left_bin_expr.operator == right_bin_expr.operator
                 && is_same_expression(
@@ -302,8 +312,8 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         }
 
         (
-            Expression::LogicalExpression(left_logical_expr),
-            Expression::LogicalExpression(right_logical_expr),
+            ExpressionKind::LogicalExpression(left_logical_expr),
+            ExpressionKind::LogicalExpression(right_logical_expr),
         ) => {
             return left_logical_expr.operator == right_logical_expr.operator
                 && is_same_expression(
@@ -319,8 +329,8 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         }
 
         (
-            Expression::UnaryExpression(left_unary_expr),
-            Expression::UnaryExpression(right_unary_expr),
+            ExpressionKind::UnaryExpression(left_unary_expr),
+            ExpressionKind::UnaryExpression(right_unary_expr),
         ) => {
             return left_unary_expr.operator == right_unary_expr.operator
                 && is_same_expression(
@@ -331,8 +341,8 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         }
 
         (
-            Expression::ChainExpression(left_chain_expr),
-            Expression::ChainExpression(right_chain_expr),
+            ExpressionKind::ChainExpression(left_chain_expr),
+            ExpressionKind::ChainExpression(right_chain_expr),
         ) => {
             if let Some(left_member_expr) = left_chain_expr.expression.as_member_expression()
                 && let Some(right_member_expr) = right_chain_expr.expression.as_member_expression()
@@ -371,9 +381,9 @@ pub fn is_same_member_expression(
         }
         (None, None) => {
             if let (
-                MemberExpression::PrivateFieldExpression(left),
-                MemberExpression::PrivateFieldExpression(right),
-            ) = (left, right)
+                MemberExpressionKind::PrivateFieldExpression(left),
+                MemberExpressionKind::PrivateFieldExpression(right),
+            ) = (left.kind(), right.kind())
             {
                 return left.field.name == right.field.name
                     && is_same_expression(&left.object, &right.object, ctx);
@@ -382,24 +392,36 @@ pub fn is_same_member_expression(
     }
 
     if let (
-        MemberExpression::ComputedMemberExpression(left),
-        MemberExpression::ComputedMemberExpression(right),
-    ) = (left, right)
+        MemberExpressionKind::ComputedMemberExpression(left),
+        MemberExpressionKind::ComputedMemberExpression(right),
+    ) = (left.kind(), right.kind())
     {
         // TODO(camc314): refactor this to go through `is_same_reference` and introduce some sort of `context` to indicate how the two values should be compared.
-        match (&left.expression, &right.expression) {
+        match (left.expression.kind(), right.expression.kind()) {
             // x['/regex/'] === x[/regex/]
             // x[/regex/] === x['/regex/']
-            (Expression::StringLiteral(string_lit), Expression::RegExpLiteral(regex_lit))
-            | (Expression::RegExpLiteral(regex_lit), Expression::StringLiteral(string_lit)) => {
+            (
+                ExpressionKind::StringLiteral(string_lit),
+                ExpressionKind::RegExpLiteral(regex_lit),
+            )
+            | (
+                ExpressionKind::RegExpLiteral(regex_lit),
+                ExpressionKind::StringLiteral(string_lit),
+            ) => {
                 if string_lit.value != regex_lit.raw.as_ref().unwrap() {
                     return false;
                 }
             }
             // ex) x[`/regex/`] === x[/regex/]
             // ex) x[/regex/] === x[`/regex/`]
-            (Expression::TemplateLiteral(template_lit), Expression::RegExpLiteral(regex_lit))
-            | (Expression::RegExpLiteral(regex_lit), Expression::TemplateLiteral(template_lit)) => {
+            (
+                ExpressionKind::TemplateLiteral(template_lit),
+                ExpressionKind::RegExpLiteral(regex_lit),
+            )
+            | (
+                ExpressionKind::RegExpLiteral(regex_lit),
+                ExpressionKind::TemplateLiteral(template_lit),
+            ) => {
                 if !template_lit
                     .single_quasi()
                     .is_some_and(|val| val == regex_lit.raw.as_ref().unwrap())
@@ -442,7 +464,8 @@ where
     let mut path = Vec::new();
 
     while let Some(member_expr) = expr.as_member_expression() {
-        let MemberExpression::StaticMemberExpression(static_mem_expr) = member_expr else {
+        let MemberExpressionKind::StaticMemberExpression(static_mem_expr) = member_expr.kind()
+        else {
             return false;
         };
         path.push(static_mem_expr.property.name.as_str());
@@ -450,7 +473,7 @@ where
         expr = member_expr.object().get_inner_expression();
     }
 
-    let Expression::Identifier(ident) = expr else { return false };
+    let ExpressionKind::Identifier(ident) = expr.kind() else { return false };
     path.push(ident.name.as_str());
     let path = path.iter().rev();
 
@@ -475,23 +498,25 @@ where
 /// If `get_precedence(expr)` returns `None`, the expression never needs parentheses.
 /// If it returns `Some(p)`, compare `p` against the context's precedence to decide.
 pub fn get_precedence(expr: &Expression) -> Option<Precedence> {
-    match expr {
-        Expression::SequenceExpression(e) => Some(e.precedence()),
-        Expression::AssignmentExpression(e) => Some(e.precedence()),
-        Expression::YieldExpression(e) => Some(e.precedence()),
-        Expression::ConditionalExpression(e) => Some(e.precedence()),
-        Expression::LogicalExpression(e) => Some(e.precedence()),
-        Expression::BinaryExpression(e) => Some(e.precedence()),
-        Expression::UnaryExpression(e) => Some(e.precedence()),
-        Expression::UpdateExpression(e) => Some(e.precedence()),
-        Expression::AwaitExpression(e) => Some(e.precedence()),
-        Expression::NewExpression(e) => Some(e.precedence()),
-        Expression::CallExpression(e) => Some(e.precedence()),
-        match_member_expression!(Expression) => Some(expr.to_member_expression().precedence()),
-        Expression::TSAsExpression(_)
-        | Expression::TSSatisfiesExpression(_)
-        | Expression::TSTypeAssertion(_)
-        | Expression::ArrowFunctionExpression(_) => Some(Precedence::Lowest),
+    match expr.kind() {
+        ExpressionKind::SequenceExpression(e) => Some(e.precedence()),
+        ExpressionKind::AssignmentExpression(e) => Some(e.precedence()),
+        ExpressionKind::YieldExpression(e) => Some(e.precedence()),
+        ExpressionKind::ConditionalExpression(e) => Some(e.precedence()),
+        ExpressionKind::LogicalExpression(e) => Some(e.precedence()),
+        ExpressionKind::BinaryExpression(e) => Some(e.precedence()),
+        ExpressionKind::UnaryExpression(e) => Some(e.precedence()),
+        ExpressionKind::UpdateExpression(e) => Some(e.precedence()),
+        ExpressionKind::AwaitExpression(e) => Some(e.precedence()),
+        ExpressionKind::NewExpression(e) => Some(e.precedence()),
+        ExpressionKind::CallExpression(e) => Some(e.precedence()),
+        ExpressionKind::ComputedMemberExpression(e) => Some(e.precedence()),
+        ExpressionKind::StaticMemberExpression(e) => Some(e.precedence()),
+        ExpressionKind::PrivateFieldExpression(e) => Some(e.precedence()),
+        ExpressionKind::TSAsExpression(_)
+        | ExpressionKind::TSSatisfiesExpression(_)
+        | ExpressionKind::TSTypeAssertion(_)
+        | ExpressionKind::ArrowFunctionExpression(_) => Some(Precedence::Lowest),
         // Literals, identifiers, and other atomic expressions have highest precedence
         _ => None,
     }
@@ -499,8 +524,9 @@ pub fn get_precedence(expr: &Expression) -> Option<Precedence> {
 
 pub fn is_string_raw_tagged_template_expression(node: &AstKind) -> bool {
     if let AstKind::TaggedTemplateExpression(tagged_template_expression) = node
-        && let Expression::StaticMemberExpression(member_expr) = &tagged_template_expression.tag
-        && let Expression::Identifier(ident) = &member_expr.object
+        && let ExpressionKind::StaticMemberExpression(member_expr) =
+            tagged_template_expression.tag.kind()
+        && let ExpressionKind::Identifier(ident) = member_expr.object.kind()
         && member_expr.property.name == "raw"
         && ident.name == "String"
     {

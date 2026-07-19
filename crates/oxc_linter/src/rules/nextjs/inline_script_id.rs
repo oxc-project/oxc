@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
+    ast::{ExpressionKind, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -131,8 +131,8 @@ impl Rule for InlineScriptId {
                         }
                     }
                     JSXAttributeItem::SpreadAttribute(spread_attr) => {
-                        if let Expression::ObjectExpression(obj_expr) =
-                            spread_attr.argument.without_parentheses()
+                        if let ExpressionKind::ObjectExpression(obj_expr) =
+                            spread_attr.argument.without_parentheses().kind()
                         {
                             for prop in &obj_expr.properties {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop

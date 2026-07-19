@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, IdentifierReference},
+    ast::{Argument, CallExpression, ExpressionKind, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -100,22 +100,23 @@ impl Rule for Radix {
             return;
         };
 
-        match call_expr.callee.without_parentheses() {
-            Expression::Identifier(ident) if Self::is_global_parse_int_ident(ident, ctx) => {
+        match call_expr.callee.without_parentheses().kind() {
+            ExpressionKind::Identifier(ident) if Self::is_global_parse_int_ident(ident, ctx) => {
                 Self::check_arguments(call_expr, ctx);
             }
-            Expression::StaticMemberExpression(member_expr)
+            ExpressionKind::StaticMemberExpression(member_expr)
                 if member_expr.property.name == "parseInt" =>
             {
-                if let Expression::Identifier(ident) = member_expr.object.without_parentheses()
+                if let ExpressionKind::Identifier(ident) =
+                    member_expr.object.without_parentheses().kind()
                     && Self::is_global_number_ident(ident, ctx)
                 {
                     Self::check_arguments(call_expr, ctx);
                 }
             }
-            Expression::ChainExpression(chain_expr) => {
+            ExpressionKind::ChainExpression(chain_expr) => {
                 if let Some(member_expr) = chain_expr.expression.as_member_expression()
-                    && let Expression::Identifier(ident) = member_expr.object()
+                    && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
                     && member_expr.static_property_name() == Some("parseInt")
                     && Self::is_global_number_ident(ident, ctx)
                 {
@@ -164,11 +165,11 @@ fn is_valid_radix(node: &Argument) -> bool {
         return false;
     };
 
-    if let Expression::NumericLiteral(lit) = expr {
+    if let ExpressionKind::NumericLiteral(lit) = expr.kind() {
         return lit.value.fract() == 0.0 && lit.value >= 2.0 && lit.value <= 36.0;
     }
 
-    if let Expression::Identifier(_) = expr {
+    if let ExpressionKind::Identifier(_) = expr.kind() {
         return !expr.is_undefined();
     }
 

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, Statement},
+    ast::{Argument, CallExpression, Expression, ExpressionKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
@@ -78,8 +78,8 @@ pub fn run<'a>(node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
     if property_name.eq("mockReturnValue") || property_name.eq("mockReturnValueOnce") {
         report(is_once, property_span, None, expr, ctx);
     } else if property_name.eq("mockImplementation") || property_name.eq("mockImplementationOnce") {
-        match expr {
-            Expression::ArrowFunctionExpression(arrow_func) => {
+        match expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow_func) => {
                 if !arrow_func.params.is_empty() {
                     return;
                 }
@@ -96,7 +96,7 @@ pub fn run<'a>(node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
                     report(is_once, property_span, Some(arrow_func.span), arg_expr, ctx);
                 }
             }
-            Expression::FunctionExpression(func_expr) => {
+            ExpressionKind::FunctionExpression(func_expr) => {
                 if !func_expr.params.is_empty() {
                     return;
                 }
@@ -126,7 +126,7 @@ fn report<'a>(
     arg_expr: &'a Expression<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let Expression::CallExpression(call_expr) = arg_expr else {
+    let ExpressionKind::CallExpression(call_expr) = arg_expr.kind() else {
         return;
     };
     let arg_name = get_node_name(arg_expr);

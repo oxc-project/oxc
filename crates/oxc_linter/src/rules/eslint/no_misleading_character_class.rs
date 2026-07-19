@@ -2,7 +2,7 @@ use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, RegExpLiteral},
+    ast::{Argument, Expression, ExpressionKind, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -481,7 +481,7 @@ fn fix_on_arguments<'a>(
                 return fixer.noop();
             };
             if span.is_none()
-                && let Expression::RegExpLiteral(lit) = &arg1_expr
+                && let ExpressionKind::RegExpLiteral(lit) = arg1_expr.kind()
             {
                 return fix_regexp_literal(fixer, lit);
             }
@@ -492,7 +492,7 @@ fn fix_on_arguments<'a>(
                     .expect("invalid patterns should be filtered out by `run_on_regex_node`"),
                 arg1.unwrap().span(),
                 span.map(|span: Span| span.shrink(1)),
-                matches!(arg1_expr, Expression::RegExpLiteral(_)),
+                arg1_expr.is_reg_exp_literal(),
                 ctx,
             )
         }

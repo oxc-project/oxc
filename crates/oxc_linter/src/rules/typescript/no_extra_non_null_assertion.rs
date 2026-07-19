@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ChainElement, Expression, match_member_expression},
+    ast::{ChainElement, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -93,31 +93,18 @@ impl Rule for NoExtraNonNullAssertion {
             AstKind::TSNonNullExpression(_) => true,
             _ if let Some(member_expr) = parent.kind().as_member_expression_kind() => {
                 member_expr.optional()
-                    && matches!(
-                        member_expr.object().without_parentheses(),
-                        Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
-                    )
+                    && matches!(member_expr.object().without_parentheses().kind(), ExpressionKind::TSNonNullExpression(expr) if expr.span == non_null_expr.span)
             }
             AstKind::CallExpression(expr) if expr.optional => {
-                matches!(
-                    expr.callee.without_parentheses(),
-                    Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
-                )
+                matches!(expr.callee.without_parentheses().kind(), ExpressionKind::TSNonNullExpression(expr) if expr.span == non_null_expr.span)
             }
             AstKind::ChainExpression(expr) => match &expr.expression {
-                chain_element @ match_member_expression!(ChainElement) => {
-                    let member_expr = chain_element.to_member_expression();
+                ChainElement::MemberExpression(member_expr) => {
                     member_expr.optional()
-                        && matches!(
-                            member_expr.object().without_parentheses(),
-                            Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
-                        )
+                        && matches!(member_expr.object().without_parentheses().kind(), ExpressionKind::TSNonNullExpression(expr) if expr.span == non_null_expr.span)
                 }
                 ChainElement::CallExpression(expr) if expr.optional => {
-                    matches!(
-                        expr.callee.without_parentheses(),
-                        Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
-                    )
+                    matches!(expr.callee.without_parentheses().kind(), ExpressionKind::TSNonNullExpression(expr) if expr.span == non_null_expr.span)
                 }
                 _ => false,
             },

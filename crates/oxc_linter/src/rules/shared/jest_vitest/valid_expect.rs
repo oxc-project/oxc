@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind, ExpressionTag},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
@@ -164,14 +167,15 @@ impl ValidExpectConfig {
             None => {}
         }
 
-        let Some(Expression::CallExpression(call_expr)) = jest_fn_call.head.parent else {
+        let Some(call_expr) = jest_fn_call.head.parent.and_then(Expression::as_call_expression)
+        else {
             return;
         };
 
         let allow_message_arg = self.allow_string_message_arg
             && call_expr.arguments.len() == 2
             && call_expr.arguments.get(1).and_then(|arg| arg.as_expression()).is_some_and(|expr| {
-                matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+                matches!(expr.tag(), ExpressionTag::StringLiteral | ExpressionTag::TemplateLiteral)
             });
 
         if (call_expr.arguments.len() as u32) > self.max_args && !allow_message_arg {
@@ -371,7 +375,7 @@ fn should_skip_parent_node(node: &AstNode, parent: &AstNode) -> bool {
         AstKind::CallExpression(call) => {
             // Don't skip arguments to Promise methods - they're semantically important for await detection
             if let Some(member_expr) = call.callee.as_member_expression()
-                && let Expression::Identifier(ident) = member_expr.object()
+                && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
                 && ident.name == "Promise"
             {
                 return false; // Never skip Promise method arguments
@@ -437,7 +441,7 @@ fn find_promise_call_expression_node<'a, 'b>(
 
     if let AstKind::CallExpression(call_expr) = parent.kind()
         && let Some(member_expr) = call_expr.callee.as_member_expression()
-        && let Expression::Identifier(ident) = member_expr.object()
+        && let ExpressionKind::Identifier(ident) = member_expr.object().kind()
         && matches!(ident.name.as_str(), "Promise")
         && !matches!(parent.kind(), AstKind::Program(_))
     {

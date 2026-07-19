@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingIdentifier, BindingPattern, BindingProperty,
-        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName,
+        AssignmentTarget, BindingIdentifier, BindingPattern, BindingProperty, CallExpression,
+        ExpressionKind, FormalParameters, JSXAttributeItem, JSXElementName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -296,7 +296,7 @@ fn is_argument_only_used_in_recursion<'a>(
             return false;
         };
 
-        if let Argument::Identifier(ident) = call_arg
+        if let Some(ident) = call_arg.as_expression().and_then(|e| e.as_identifier())
             && ident.name != arg.name
         {
             return false;
@@ -376,7 +376,7 @@ fn is_recursive_call(
     function_symbol_id: SymbolId,
     ctx: &LintContext,
 ) -> bool {
-    if let Expression::Identifier(identifier) = &call_expr.callee
+    if let ExpressionKind::Identifier(identifier) = call_expr.callee.kind()
         && let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
     {
         return symbol_id == function_symbol_id;

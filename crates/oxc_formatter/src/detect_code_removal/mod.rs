@@ -253,7 +253,7 @@ impl StatsCollector {
         // e.g. `<div>{" "}{' '}</div>` -> `<div> </div>`
         // = JSXExpressionContainer: 2 -> 0, StringLiteral: 1 -> 0, JSXText(" "): 0 -> 1
         if matches!(kind, AstKind::JSXExpressionContainer(c)
-            if matches!(&c.expression, ast::JSXExpression::StringLiteral(s) if s.value == " "))
+            if c.expression.as_expression().and_then(|e| e.as_string_literal()).is_some_and(|s| s.value == " "))
         {
             // Skip `JSXExpressionContainer` containing only `StringLiteral(" ")`
             return;
