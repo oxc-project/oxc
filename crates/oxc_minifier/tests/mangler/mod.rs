@@ -6,6 +6,8 @@ use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+mod property;
+
 fn mangle_with_source_type(
     source_text: &str,
     options: &MangleOptions,
