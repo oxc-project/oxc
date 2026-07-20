@@ -1,43 +1,44 @@
 use crate::peephole::PeepholeOptimizations;
-use oxc_ast::ast::{
-    BreakStatement, Expression, IfStatement, Statement, SwitchCase, TryStatement, WithStatement,
-};
+use oxc_ast::ast::{BreakStatement, Expression, Statement, SwitchCase};
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
 use crate::TraverseCtx;
 
 impl<'a> PeepholeOptimizations {
+    /// Check if a switch case can be inlined by verifying:
+    /// - The test expression has no side effects
+    /// - All statements can be safely inlined (no unlabeled breaks outside terminal position)
     pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>, ctx: &TraverseCtx<'a>) -> bool {
         if case.test.may_have_side_effects(ctx) {
             return false;
         }
 
-        // unlabeled top-level `break` is only valid as the terminal statement of the case body.
-        if case
-            .consequent
-            .iter()
-            .position(|stmt| matches!(stmt, Statement::BreakStatement(break_stmt) if break_stmt.label.is_none()))
-            .is_some_and(|pos| pos + 1 != case.consequent.len())
-        {
-            return false;
+        let mut break_finder = FindNestedBreak { found_unlabelled_break: false };
+        let last_idx = case.consequent.len() - 1;
+
+        // Iterate backwards through consequent statements
+        for (idx, stmt) in case.consequent.iter().enumerate().rev() {
+            // Skip terminal statement if it's an unlabeled break
+            if idx == last_idx
+                && matches!(stmt, Statement::BreakStatement(break_stmt) if break_stmt.label.is_none())
+            {
+                continue;
+            }
+
+            break_finder.visit_statement(stmt);
+
+            if break_finder.found_unlabelled_break {
+                return false;
+            }
         }
 
-        let mut break_finder = FindNestedBreak::new();
-        break_finder.visit_switch_case(case);
-        !break_finder.nested_unlabelled_break
+        true
     }
 }
 
 struct FindNestedBreak {
-    top_level: bool,
-    nested_unlabelled_break: bool,
-}
-
-impl FindNestedBreak {
-    pub fn new() -> Self {
-        Self { top_level: true, nested_unlabelled_break: false }
-    }
+    found_unlabelled_break: bool,
 }
 
 impl<'a> VisitJs<'a> for FindNestedBreak {
@@ -46,7 +47,7 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
     }
 
     fn visit_statement(&mut self, it: &Statement<'a>) {
-        if it.is_declaration() || it.is_iteration_statement() {
+        if self.found_unlabelled_break || it.is_declaration() || it.is_iteration_statement() {
             return;
         }
         match it {
@@ -59,30 +60,9 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
         }
     }
 
-    fn visit_if_statement(&mut self, it: &IfStatement<'a>) {
-        let was_top = self.top_level;
-        self.top_level = false;
-        walk_js::walk_if_statement(self, it);
-        self.top_level = was_top;
-    }
-
     fn visit_break_statement(&mut self, it: &BreakStatement<'a>) {
-        if !self.top_level && it.label.is_none() {
-            self.nested_unlabelled_break = true;
+        if it.label.is_none() {
+            self.found_unlabelled_break = true;
         }
-    }
-
-    fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
-        let was_top = self.top_level;
-        self.top_level = false;
-        walk_js::walk_with_statement(self, it);
-        self.top_level = was_top;
-    }
-
-    fn visit_try_statement(&mut self, it: &TryStatement<'a>) {
-        let was_top = self.top_level;
-        self.top_level = false;
-        walk_js::walk_try_statement(self, it);
-        self.top_level = was_top;
     }
 }
