@@ -51,6 +51,7 @@ mod keep_var;
 mod minifier_traverse;
 mod options;
 mod peephole;
+pub mod property;
 mod state;
 mod symbol_liveness;
 mod symbol_metadata;
@@ -70,6 +71,11 @@ use rustc_hash::FxHashMap;
 use crate::state::CompressionMode;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
+pub use property::{
+    InvalidManglePropertyCacheTarget, ManglePropertiesOptions, ManglePropertyCache,
+    PropertyKeyOrigin, PropertyKeyProvenance, PropertyMangler, PropertyMapping,
+    is_valid_property_mangle_cache_target,
+};
 
 pub(crate) use crate::generated::traverse::Traverse;
 #[doc(hidden)]
@@ -80,12 +86,17 @@ pub use crate::{compressor::Compressor, options::*};
 #[derive(Debug, Clone)]
 pub struct MinifierOptions {
     pub mangle: Option<MangleOptions>,
+    pub mangle_properties: Option<ManglePropertiesOptions>,
     pub compress: Option<CompressOptions>,
 }
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self { mangle: Some(MangleOptions::default()), compress: Some(CompressOptions::default()) }
+        Self {
+            mangle: Some(MangleOptions::default()),
+            mangle_properties: None,
+            compress: Some(CompressOptions::default()),
+        }
     }
 }
 
@@ -96,17 +107,28 @@ pub struct MinifierReturn {
     /// Each element is a mapping from original private member names to their mangled names.
     pub class_private_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
 
+    /// Updated property-name cache when property mangling ran.
+    pub property_mangle_cache: Option<ManglePropertyCache>,
+
     /// Total number of iterations ran. Useful for debugging performance issues.
     pub iterations: u8,
 }
 
 pub struct Minifier {
     options: MinifierOptions,
+    property_key_provenance: Option<PropertyKeyProvenance>,
 }
 
 impl<'a> Minifier {
     pub fn new(options: MinifierOptions) -> Self {
-        Self { options }
+        Self { options, property_key_provenance: None }
+    }
+
+    /// Attach property-key provenance produced by a transformer for this exact `Program`.
+    #[must_use]
+    pub fn with_property_key_provenance(mut self, provenance: PropertyKeyProvenance) -> Self {
+        self.property_key_provenance = Some(provenance);
+        self
     }
 
     pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
@@ -123,9 +145,20 @@ impl<'a> Minifier {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
     ) -> MinifierReturn {
-        let (stats, iterations) = self
-            .options
-            .compress
+        let Self { options, property_key_provenance } = self;
+        let MinifierOptions { mangle, mangle_properties, compress } = options;
+
+        // Rewrite property names before compression. Compression can erase quote boundaries and
+        // fold annotated literals, so collecting before and rewriting after it is not sound.
+        let property_mangle_cache = mangle_properties.map(|options| {
+            let mut mangler = PropertyMangler::new(options);
+            mangler.collect(program, property_key_provenance.as_ref());
+            mangler.assign();
+            mangler.rewrite(program, allocator, property_key_provenance.as_ref());
+            mangler.into_cache()
+        });
+
+        let (stats, iterations) = compress
             .map(|options| {
                 let semantic = SemanticBuilder::new().build(program).semantic;
                 let stats = semantic.stats();
@@ -144,9 +177,7 @@ impl<'a> Minifier {
                 (Some(stats), iterations)
             })
             .unwrap_or_default();
-        let (scoping, class_private_mappings) = self
-            .options
-            .mangle
+        let (scoping, class_private_mappings) = mangle
             .map(|options| {
                 let mut builder =
                     SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
@@ -160,6 +191,6 @@ impl<'a> Minifier {
                 (semantic.into_scoping(), class_private_mappings)
             })
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
-        MinifierReturn { scoping, class_private_mappings, iterations }
+        MinifierReturn { scoping, class_private_mappings, property_mangle_cache, iterations }
     }
 }
