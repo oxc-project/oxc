@@ -154,53 +154,61 @@ impl<'a> PeepholeOptimizations {
     /// Checks if an expression's reference may change due to mutation.
     ///
     /// Returns `true` if the expression references a symbol that may be mutated,
-    /// or if the expression is not a simple identifier/this reference.
+    /// is externally mutable through an ESM import or Script global, or is not a
+    /// simple identifier/this reference.
     pub fn is_expression_that_reference_may_change(
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::Identifier(id) => {
-                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                {
-                    Self::is_symbol_mutated(symbol_id, ctx)
-                } else {
-                    true
-                }
+                let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id();
+                symbol_id.is_none_or(|symbol_id| Self::symbol_value_may_change(symbol_id, ctx))
             }
             Expression::ThisExpression(_) => false,
             _ => true,
         }
     }
 
-    /// Check if a symbol is mutated, using the O(1) cached reference counts from
-    /// `SymbolValue` when available, falling back to the O(num_refs) scan in
-    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    /// Whether reading a resolved symbol again could produce a different value.
+    /// Imported bindings and Script-root globals can change externally.
+    ///
+    /// Uses the O(1) cached reference counts from `SymbolValue` when available,
+    /// falling back to the O(num_refs) scan in `Scoping::symbol_is_mutated` for
+    /// symbols without cached values.
     ///
     /// Only variable declarators have cached values (populated during
     /// `exit_variable_declarator` → `init_symbol_value`); function declarations
     /// and other binding kinds still take the fallback path.
-    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+    fn symbol_value_may_change(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if scoping.symbol_flags(symbol_id).is_import()
+            || (ctx.source_type().is_script()
+                && scoping.symbol_scope_id(symbol_id) == scoping.root_scope_id())
+        {
+            return true;
+        }
+
         if let Some(sv) = ctx.state.symbols.value(symbol_id) {
             sv.references.has_writes()
         } else {
-            ctx.scoping().symbol_is_mutated(symbol_id)
+            scoping.symbol_is_mutated(symbol_id)
         }
     }
 
-    /// True if the scope chain from `read_scope` up to (excluding) `body_scope`
+    /// True if the scope chain from `read_scope` up to (excluding) `stop_scope`
     /// crosses a function boundary — i.e. the read is in a closure relative to
-    /// `body_scope`. Async/generator/arrow scopes are all `Function`.
+    /// `stop_scope`. Async/generator/arrow scopes are all `Function`.
     fn read_crosses_function_boundary(
         read_scope: ScopeId,
-        body_scope: ScopeId,
+        stop_scope: ScopeId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         let scoping = ctx.scoping();
         scoping
             .scope_ancestors(read_scope)
-            .take_while(|&s| s != body_scope)
-            .any(|s| scoping.scope_flags(s).is_function())
+            .take_while(|&scope_id| scope_id != stop_scope)
+            .any(|scope_id| scoping.scope_flags(scope_id).is_function())
     }
 }
 

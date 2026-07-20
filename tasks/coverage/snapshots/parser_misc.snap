@@ -424,6 +424,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  5 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:6:1]
@@ -432,6 +433,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  7 │ let()[x] = 1;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:7:1]
@@ -440,6 +442,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  8 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:9:1]
@@ -448,6 +451,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  10 │ let?.y.z;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:10:1]
@@ -456,6 +460,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  11 │ let?.[0];
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:11:1]
@@ -464,6 +469,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  12 │ let?.method();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:12:1]
@@ -471,6 +477,7 @@ Negative Passed: 153/153 (100.00%)
  12 │ let?.method();
     · ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[misc/fail/minus-yield-100.js:1:27]
@@ -3604,6 +3611,7 @@ Negative Passed: 153/153 (100.00%)
     ·       ─────
  10 │ }
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
    ╭─[misc/fail/oxc-23170.ts:2:16]

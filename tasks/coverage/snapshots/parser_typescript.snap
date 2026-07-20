@@ -2759,6 +2759,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ──────
  3 │ class NonPublicClass {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/asiPublicPrivateProtected.ts:13:1]
@@ -2767,6 +2768,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     · ───────
  14 │ class NonPrivateClass {
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/asiPublicPrivateProtected.ts:24:1]
@@ -2775,6 +2777,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     · ─────────
  25 │ class NonProtectedClass {
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[typescript/tests/cases/compiler/asiReturn.ts:2:1]
@@ -5185,6 +5188,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  5 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/constructorStaticParamNameErrors.ts:4:18]
@@ -5193,6 +5197,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  5 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/compiler/constructorWithIncompleteTypeAnnotation.ts:11:19]
@@ -5277,6 +5282,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ──────────
  8 │ var interface = 0;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:8:5]
@@ -5285,6 +5291,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  9 │ var let = 0;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:9:5]
@@ -5293,6 +5300,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───
  10 │ var module = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:12:5]
@@ -5301,6 +5309,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  13 │ var private = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:13:5]
@@ -5309,6 +5318,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  14 │ var protected = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:14:5]
@@ -5317,6 +5327,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────────
  15 │ var public = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:15:5]
@@ -5325,6 +5336,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  16 │ var set = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:17:5]
@@ -5333,6 +5345,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  18 │ var string = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:20:5]
@@ -5341,6 +5354,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────
  21 │ var declare = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:25:5]
@@ -5349,6 +5363,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────────
  26 │     interface ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:26:5]
@@ -5357,6 +5372,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────────
  27 │     let,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:27:5]
@@ -5365,6 +5381,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───
  28 │     module ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:29:5]
@@ -5373,6 +5390,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  30 │     private ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:30:5]
@@ -5381,6 +5399,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  31 │     protected,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:31:5]
@@ -5389,6 +5408,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────────
  32 │     public ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:32:5]
@@ -5397,6 +5417,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  33 │     set ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:34:5]
@@ -5405,6 +5426,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  35 │     get ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:36:5]
@@ -5413,6 +5435,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────
  37 │     declare
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:41:8]
@@ -5421,6 +5444,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ──────────
  42 │     i2: interface ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:42:9]
@@ -5429,6 +5453,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  43 │     l: let,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:43:8]
@@ -5437,6 +5462,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ───
  44 │     m: module ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:46:8]
@@ -5445,6 +5471,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ───────
  47 │     p2: private ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:47:9]
@@ -5453,6 +5480,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ───────
  48 │     p3: protected,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:48:9]
@@ -5461,6 +5489,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  49 │     p4: public ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:49:9]
@@ -5469,6 +5498,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ──────
  50 │     s: set ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:51:9]
@@ -5477,6 +5507,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ──────
  52 │     s3: string,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:54:8]
@@ -5485,6 +5516,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ─────
  55 │     d: declare ) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:293:11]
@@ -5493,6 +5525,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ──────────
  294 │     class interface { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'interface' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:294:11]
@@ -5501,6 +5534,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ─────────
  295 │     class let { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:295:11]
@@ -5509,6 +5543,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ───
  296 │     class module { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'package' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:297:11]
@@ -5517,6 +5552,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ───────
  298 │     class private { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:298:11]
@@ -5525,6 +5561,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ───────
  299 │     class protected { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'protected' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:299:11]
@@ -5533,6 +5570,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ─────────
  300 │     class public { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:300:11]
@@ -5541,6 +5579,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ──────
  301 │     class set { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:302:11]
@@ -5549,6 +5588,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ──────
  303 │     class get { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:304:11]
@@ -5557,6 +5597,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ─────
  305 │     class declare { }
      ╰────
+  note: Classes are always strict mode code
 
   × TS(1490): File appears to be binary.
 
@@ -6895,6 +6936,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ─────
  2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
    ╰────
+  note: Modules are always strict mode code
 
   × Identifier `default` has already been declared
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
@@ -6928,6 +6970,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                     ─────
  5 │ import { default as default } from "somemodule"; // default as is ok, error of default binding name
    ╰────
+  note: Modules are always strict mode code
 
   × Identifier `default` has already been declared
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
@@ -7159,6 +7202,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ export function await(...args: any[]): any { }
    ·                 ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × TS(1319): A default export can only be used in an ECMAScript-style module.
    ╭─[typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts:2:5]
@@ -8226,6 +8270,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ───
  8 │ delete a; // error
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Delete of an unqualified identifier in strict mode.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationBindStrictModeErrors.ts:8:8]
@@ -8649,6 +8694,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ───
  3 │ var a = 10;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[typescript/tests/cases/compiler/letAsIdentifierInStrictMode.ts:4:1]
@@ -8657,6 +8703,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ───
  5 │ let
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `a` has already been declared
    ╭─[typescript/tests/cases/compiler/letAsIdentifierInStrictMode.ts:3:5]
@@ -12036,6 +12083,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ──────
  6 │     var static = "hi";
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:6:9]
@@ -12044,6 +12092,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ──────
  7 │     let let = "blah";
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:7:9]
@@ -12052,6 +12101,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───
  8 │     var package = "hello"
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:8:9]
@@ -12060,6 +12110,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───────
  9 │     function package() { }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `package` has already been declared
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:8:9]
@@ -12080,6 +12131,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·              ───────
  10 │     function bar(private, implements, let) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:10:18]
@@ -12088,6 +12140,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                  ───────
  11 │     function baz<implements, protected>() { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:10:27]
@@ -12096,6 +12149,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                           ──────────
  11 │     function baz<implements, protected>() { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:10:39]
@@ -12104,6 +12158,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                       ───
  11 │     function baz<implements, protected>() { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:11:18]
@@ -12112,6 +12167,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                  ──────────
  12 │     function barn(cb: (private, public, package) => void) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:11:30]
@@ -12120,6 +12176,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                              ─────────
  12 │     function barn(cb: (private, public, package) => void) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:12:24]
@@ -12128,6 +12185,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ───────
  13 │     barn((private, public, package) => { });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:12:33]
@@ -12136,6 +12194,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                 ──────
  13 │     barn((private, public, package) => { });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:12:41]
@@ -12144,6 +12203,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                         ───────
  13 │     barn((private, public, package) => { });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:13:11]
@@ -12152,6 +12212,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·           ───────
  14 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:13:20]
@@ -12160,6 +12221,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ──────
  14 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:13:28]
@@ -12168,6 +12230,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                            ───────
  14 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:15:25]
@@ -12176,6 +12239,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                         ───────
  16 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:15:41]
@@ -12184,6 +12248,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                         ──────
  16 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:17:12]
@@ -12192,6 +12257,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·            ──────
  18 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:19:21]
@@ -12200,6 +12266,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                     ───────
  20 │     function foo1(x: private.package.x) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:20:22]
@@ -12208,6 +12275,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                      ───────
  21 │     function foo2(x: private.package.protected) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:21:22]
@@ -12216,6 +12284,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                      ───────
  22 │     let b: interface.package.implements.B;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `b` has already been declared
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:17:9]
@@ -12240,6 +12309,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·            ─────────
  23 │     ublic();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:24:5]
@@ -12248,6 +12318,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  25 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:2:11]
@@ -12256,6 +12327,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
  3 │ interface implements {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:3:11]
@@ -12264,6 +12336,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────────
  4 │     foo(package, protected);
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:4:9]
@@ -12272,6 +12345,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───────
  5 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:4:18]
@@ -12280,6 +12354,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ─────────
  5 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:6:6]
@@ -12288,6 +12363,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ───────
  7 │ enum foo {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:13:12]
@@ -12296,6 +12372,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·            ───────
  14 │     public,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:4:17]
@@ -12304,6 +12381,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ───────
  5 │         private = public = static;
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:4:26]
@@ -12312,6 +12390,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                          ──────
  5 │         private = public = static;
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:4:34]
@@ -12320,6 +12399,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                                  ──────
  5 │         private = public = static;
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:5:9]
@@ -12328,6 +12408,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───────
  6 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:5:19]
@@ -12336,6 +12417,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                   ──────
  6 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:5:28]
@@ -12344,6 +12426,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                            ──────
  6 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:7:22]
@@ -12352,6 +12435,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                      ──────
  8 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:11:24]
@@ -12360,6 +12444,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ──────
  12 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:11:32]
@@ -12368,6 +12453,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                ───
  12 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:13:10]
@@ -12376,6 +12462,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·          ───────
  14 │         function let() { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:13:19]
@@ -12384,6 +12471,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                   ──────
  14 │         function let() { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:13:27]
@@ -12392,6 +12480,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                           ──────
  14 │         function let() { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:14:18]
@@ -12400,6 +12489,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                  ───
  15 │         var z = function let() { };
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:15:26]
@@ -12408,6 +12498,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                          ───
  16 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:21:9]
@@ -12416,6 +12507,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ──────
  22 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:21:17]
@@ -12424,6 +12516,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ───────
  22 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:23:20]
@@ -12432,6 +12525,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ──────
  24 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:25:20]
@@ -12440,6 +12534,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ──────
  26 │ class F1 implements public.private.implements { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:26:21]
@@ -12448,6 +12543,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                     ──────
  27 │ class G extends package { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:27:17]
@@ -12456,6 +12552,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ───────
  28 │ class H extends package.A { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:28:17]
@@ -12463,6 +12560,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  28 │ class H extends package.A { }
     ·                 ───────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:2:6]
@@ -12471,6 +12569,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  3 │ var { x: public } = { x: 1 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:3:10]
@@ -12479,6 +12578,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ──────
  4 │ var [[private]] = [["hello"]];
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:4:7]
@@ -12487,6 +12587,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ───────
  5 │ var { y: { s: static }, z: { o: { p: package } }} = { y: { s: 1 }, z: { o: { p: 'h' } } };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:5:15]
@@ -12495,6 +12596,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ──────
  6 │ var { public, protected } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:5:38]
@@ -12503,6 +12605,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                                      ───────
  6 │ var { public, protected } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:6:7]
@@ -12511,6 +12614,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ──────
  7 │ var { public: a, protected: b } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:6:15]
@@ -12519,6 +12623,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ─────────
  7 │ var { public: a, protected: b } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInImportEqualDeclaration.ts:2:8]
@@ -12526,6 +12631,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import public = require("1");
    ·        ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:11]
@@ -12534,6 +12640,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
  3 │ namespace private { }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:3:11]
@@ -12542,6 +12649,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ───────
  4 │ namespace public.whatever {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:4:11]
@@ -12550,6 +12658,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
  5 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:11]
@@ -12557,6 +12666,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ namespace private.public.foo { }
    ·           ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:19]
@@ -12564,6 +12674,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ namespace private.public.foo { }
    ·                   ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts:2:13]
@@ -12572,6 +12683,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ───────
  3 │ import {foo as private} from "./1"
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts:3:16]
@@ -12580,6 +12692,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                ───────
  4 │ import public from "./1"
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts:4:8]
@@ -12587,6 +12700,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ import public from "./1"
    ·        ──────
    ╰────
+  note: Modules are always strict mode code
 
   × Identifier `e` has already been declared
      ╭─[typescript/tests/cases/compiler/strictOptionalProperties1.ts:190:15]
@@ -18225,7 +18339,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ───
    ╰────
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionGrammarError.ts:5:8]
  4 │ var a = ["./0"];
  5 │ import(...["PathModule"]);
@@ -19529,6 +19643,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ for (var let of []) {}
    ·          ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration10_es6.ts:1:26]
@@ -19550,6 +19665,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────
  3 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration5_es6.ts:1:14]
@@ -19641,6 +19757,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1 │ import { set as yield } from "./t1";
    ·                 ─────
    ╰────
+  note: Modules are always strict mode code
 
   × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithUnderscores1.ts:5:5]
@@ -20186,6 +20303,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ yield(foo);
    · ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression20_es6.ts:3:8]
@@ -20225,34 +20343,34 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext1.ts:2:15]
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext1.ts:2:5]
  1 │ declare class C {
  2 │     *generator(): any;
-   ·               ────────
+   ·     ──────────────────
  3 │ }
    ╰────
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext2.ts:2:5]
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext2.ts:2:14]
  1 │ declare namespace M {
  2 │     function *generator(): any;
-   ·     ───────────────────────────
+   ·              ──────────────────
  3 │ }
    ╰────
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext3.d.ts:2:15]
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext3.d.ts:2:5]
  1 │ declare class C {
  2 │     *generator(): any;
-   ·               ────────
+   ·     ──────────────────
  3 │ }
    ╰────
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext4.d.ts:2:5]
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext4.d.ts:2:14]
  1 │ declare namespace M {
  2 │     function *generator(): any;
-   ·     ───────────────────────────
+   ·              ──────────────────
  3 │ }
    ╰────
 
@@ -20273,26 +20391,26 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:2:5]
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:2:13]
  1 │ declare namespace M {
  2 │     function* f(s: string): Iterable<any>;
-   ·     ──────────────────────────────────────
+   ·             ──────────────────────────────
  3 │     function* f(s: number): Iterable<any>;
    ╰────
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:3:5]
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:3:13]
  2 │     function* f(s: string): Iterable<any>;
  3 │     function* f(s: number): Iterable<any>;
-   ·     ──────────────────────────────────────
+   ·             ──────────────────────────────
  4 │     function* f(s: any): Iterable<any>;
    ╰────
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:4:5]
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:4:13]
  3 │     function* f(s: number): Iterable<any>;
  4 │     function* f(s: any): Iterable<any>;
-   ·     ───────────────────────────────────
+   ·             ───────────────────────────
  5 │ }
    ╰────
 
@@ -20327,6 +20445,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────
  3 │ function* g() {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck38.ts:5:19]
@@ -20335,6 +20454,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                   ─────
  6 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck39.ts:7:13]
@@ -23088,6 +23208,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import { await as await } from "./other";
    ·                   ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
@@ -23102,6 +23223,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ import await = foo.await;
    ·        ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
@@ -23116,6 +23238,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ var await = 1;
    ·     ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
@@ -23130,6 +23253,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ var {await} = {await:1};
    ·      ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
@@ -23144,6 +23268,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ var [await] = [1];
    ·      ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
@@ -23160,6 +23285,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·              ─────
  3 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.6.ts:2:17]
@@ -23176,6 +23302,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─────
  3 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
@@ -23183,6 +23310,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import * as await from "./other";
    ·             ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.8.ts:2:8]
@@ -23190,6 +23318,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import await from "./other";
    ·        ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Identifier expected. 'await' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.9.ts:2:10]
@@ -23204,6 +23333,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import { await } from "./other";
    ·          ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Expected `=` but found `;`
     ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_missingBraces.ts:11:16]
@@ -23522,6 +23652,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  4 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:10:1]
@@ -23530,6 +23661,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     · ─────────
  11 │ I           // This should be the identifier 'I'
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceExtendingOptionalChain.ts:5:22]
@@ -24671,6 +24803,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ─────
  3 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:2:29]
@@ -25755,6 +25888,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ───────
  8 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:2:10]
@@ -26794,6 +26928,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                     ──────
  4 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × Empty parenthesized expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser566700.ts:1:9]
@@ -26832,6 +26967,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  3 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser642331_1.ts:4:18]
@@ -26840,6 +26976,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  5 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser645086_1.ts:1:13]
@@ -27557,6 +27694,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ static();
    · ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode3.ts:2:1]
@@ -27684,6 +27822,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  17 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unterminated multiline comment
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/parserKeywordsAsIdentifierName2.ts:2:10]
@@ -27848,6 +27987,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  3 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName38.ts:2:6]
@@ -27856,6 +27996,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  3 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName39.ts:3:6]
@@ -27864,6 +28005,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  4 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName5.ts:1:11]
@@ -28072,6 +28214,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ─────
  4 │ const yield = 2
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'yield' is reserved
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:4:7]
@@ -28080,6 +28223,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ─────
  5 │ async function f() {
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:6:11]
@@ -28088,6 +28232,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ─────
  7 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:9:11]
@@ -28096,6 +28241,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·           ─────
  10 │ }
     ╰────
+  note: Modules are always strict mode code
 
   × Delete of an unqualified identifier in strict mode.
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:15:20]
@@ -28255,6 +28401,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  17 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral3.ts:1:3]
@@ -28352,6 +28499,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ──────────
  2 │ async function main() {
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'yield' is reserved
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword2.ts:6:5]
@@ -28360,6 +28508,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ──────────
  7 │ function *gen() {
    ╰────
+  note: Modules are always strict mode code
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts:5:12]

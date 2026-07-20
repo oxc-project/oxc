@@ -54,8 +54,31 @@ pub fn class_static_block_await_using(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn reserved_keyword(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1)
+pub fn reserved_keyword(x0: &str, span1: Span, context: ReservedKeywordContext) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1);
+    match context {
+        ReservedKeywordContext::StrictMode => {
+            diagnostic.with_note("This identifier is reserved in strict mode code")
+        }
+        ReservedKeywordContext::Class => {
+            diagnostic.with_note("Classes are always strict mode code")
+        }
+        ReservedKeywordContext::Module => {
+            diagnostic.with_note("Modules are always strict mode code")
+        }
+        ReservedKeywordContext::ModuleAwait => {
+            diagnostic.with_note("The identifier `await` is reserved in module code")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ReservedKeywordContext {
+    StrictMode,
+    Class,
+    Module,
+    ModuleAwait,
 }
 
 #[cold]

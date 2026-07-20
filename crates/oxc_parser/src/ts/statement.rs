@@ -287,12 +287,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 type_argument = self.try_parse_type_arguments();
             }
 
-            extends.push(TSInterfaceHeritage::new(
-                self.end_span(span),
-                extend,
-                type_argument,
-                self,
-            ));
+            let heritage =
+                TSInterfaceHeritage::new(self.end_span(span), extend, type_argument, self);
+            extends.push(heritage);
 
             if !self.eat(Kind::Comma) {
                 break;
@@ -691,9 +688,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
-        let generator = self.eat(Kind::Star);
+        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
         let func_kind = FunctionKind::TSDeclaration;
-        let id = self.parse_function_id(func_kind, r#async, generator);
+        let id = self.parse_function_id(func_kind, r#async, generator.is_some());
         self.parse_function(
             start_span,
             id,

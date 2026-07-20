@@ -449,9 +449,23 @@ impl<T: Debug> Debug for Vec<'_, T> {
 
 #[cfg(test)]
 mod test {
+    use std::cell::Cell;
+
+    use oxc_data_structures::types::implements;
+
     use crate::Allocator;
 
     use super::Vec;
+
+    // `Vec` must not be `Send` - 2 `Vec`s on different threads could then allocate into the same
+    // arena simultaneously, which would be undefined behavior. See `unsafe impl Sync for Vec`.
+    // `Vec` is `Sync` only if `T` is.
+    #[test]
+    fn vec_send_sync() {
+        assert!(implements!(Vec<u32>: !Send));
+        assert!(implements!(Vec<u32>: Sync));
+        assert!(implements!(Vec<Cell<u32>>: !Sync));
+    }
 
     #[test]
     fn vec_with_capacity() {

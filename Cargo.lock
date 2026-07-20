@@ -1788,7 +1788,7 @@ dependencies = [
  "phf",
  "proc-macro2",
  "quote",
- "syn 3.0.0",
+ "syn 3.0.1",
 ]
 
 [[package]]
@@ -1822,7 +1822,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
- "syn 3.0.0",
+ "syn 3.0.1",
  "toml",
 ]
 
@@ -1922,7 +1922,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
- "syn 3.0.0",
+ "syn 3.0.1",
 ]
 
 [[package]]
@@ -2240,7 +2240,7 @@ dependencies = [
  "project-root",
  "quote",
  "rustc-hash",
- "syn 3.0.0",
+ "syn 3.0.1",
 ]
 
 [[package]]
@@ -2251,7 +2251,7 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote",
- "syn 3.0.0",
+ "syn 3.0.1",
 ]
 
 [[package]]
@@ -2582,6 +2582,7 @@ dependencies = [
  "hashbrown 0.17.1",
  "oxc-schemars",
  "oxc_allocator",
+ "oxc_data_structures",
  "oxc_estree",
  "serde",
 ]
@@ -3068,7 +3069,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bfe0f4c752e450fc2faf62654f1c134747922825d5b04ca717b8874f41a40c0"
 dependencies = [
  "proc-macro2",
- "syn 3.0.0",
+ "syn 3.0.1",
 ]
 
 [[package]]
@@ -3249,7 +3250,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
- "syn 3.0.0",
+ "syn 3.0.1",
 ]
 
 [[package]]
@@ -3452,7 +3453,7 @@ checksum = "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.0",
+ "syn 3.0.1",
 ]
 
 [[package]]
@@ -3663,9 +3664,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2fac314a64dc9a36e61a9eb4261a5e9bbfbc922b27e518af97bc32b926cf967"
+checksum = "5edbec4ed188954a10c12c038215f8ce7606b2d5c973cd8dc43e8795065c5f2f"
 dependencies = [
  "proc-macro2",
  "quote",

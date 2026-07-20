@@ -262,7 +262,7 @@ impl<'a> Environment<'a> {
     }
 
     /// Allocate a new Type in the arena, returns its TypeId.
-    pub fn next_type_id(&mut self) -> TypeId {
+    fn next_type_id(&mut self) -> TypeId {
         let id = self.types.next_idx();
         self.types.push(Type::Var { id });
         id
@@ -527,7 +527,7 @@ impl<'a> Environment<'a> {
 
         let module_type = module_config.map(|config| {
             let mut type_errors: Vec<String> = Vec::new();
-            let ty = globals::install_type_config_with_errors(
+            let ty = globals::install_type_config(
                 &mut self.shapes,
                 &config,
                 module_name,

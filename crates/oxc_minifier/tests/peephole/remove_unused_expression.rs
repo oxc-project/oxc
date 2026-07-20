@@ -299,6 +299,10 @@ fn test_logical_expression() {
         "var x = { y: {} }; x.y.z != null || (x.y = {}, x.y.z = 3)",
         "var x = { y: {} }; x.y.z ?? (x.y = {}, x.y.z = 3)",
     );
+    test(
+        "import { x, mutate } from 'm'; x.y != null || (mutate(), x.y = 3)",
+        "import { x, mutate } from 'm'; x.y ?? (mutate(), x.y = 3)",
+    );
     // Safe to transform to ??= when base object is not mutated
     test("var x = {}; x.y != null || (foo(), x.y = 3)", "var x = {}; x.y ??= (foo(), 3)");
     test("var x = {}; x.y != null || (new Foo(), x.y = 3)", "var x = {}; x.y ??= (new Foo(), 3)");
