@@ -39,11 +39,12 @@ const COMMENT_TYPES: CommentType["type"][] = ["Block", "Block", "Block", "Block"
 COMMENT_TYPES[COMMENT_LINE_KIND] = "Line";
 COMMENT_TYPES[COMMENT_SHEBANG_KIND] = "Shebang";
 
-// Array of numbers to subtract from `end` when slicing source text to get `value` of a comment,
-// indexed by `CommentKind` discriminant.
-const COMMENT_END_SUBTRACTIONS: number[] = [2, 2, 2, 2];
-COMMENT_END_SUBTRACTIONS[COMMENT_LINE_KIND] = 0;
-COMMENT_END_SUBTRACTIONS[COMMENT_SHEBANG_KIND] = 0;
+// Bitmask with a bit set for each `CommentKind` discriminant which is a block comment, shifted left 1 bit.
+// `(BLOCK_COMMENT_KINDS_BITMAP >> kind) & 2` then yields the number of characters to subtract from `end`
+// when slicing source text to get `value` of a comment - 2 for block comments, 0 for line and hashbang comments.
+// Cheaper than a lookup table, which would involve a bounds check and load every time.
+const BLOCK_COMMENT_KINDS_BITMAP =
+  (0b1111 & ~(1 << COMMENT_LINE_KIND) & ~(1 << COMMENT_SHEBANG_KIND)) << 1;
 
 // Comments for the current file.
 // Created lazily only when needed.
@@ -273,8 +274,9 @@ class Comment implements Span {
       // Hashbang: `#! text` -> slice `start + 2..end`
       const pos32 = pos >> 2,
         start = commentsInt32[pos32],
-        end = commentsInt32[pos32 + 1];
-      return sourceText.slice(start + 2, end - COMMENT_END_SUBTRACTIONS[kind]);
+        end = commentsInt32[pos32 + 1],
+        endSubtract = (BLOCK_COMMENT_KINDS_BITMAP >> kind) & 2;
+      return sourceText.slice(start + 2, end - endSubtract);
     };
 
     setCommentPosTemp = function (comment: Comment, pos: number) {
