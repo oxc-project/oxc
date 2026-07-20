@@ -40,8 +40,11 @@ where
 }
 
 /// Create `IdentifierName` for `_`.
-pub(super) fn create_underscore_ident_name<'a>(ctx: &TraverseCtx<'a>) -> IdentifierName<'a> {
-    IdentifierName::new(SPAN, "_", ctx)
+pub(super) fn create_underscore_ident_name<'a>(
+    span: Span,
+    ctx: &TraverseCtx<'a>,
+) -> IdentifierName<'a> {
+    IdentifierName::new(span, "_", ctx)
 }
 
 /// Debug assert that an `Expression` is not `ParenthesizedExpression` or TS syntax

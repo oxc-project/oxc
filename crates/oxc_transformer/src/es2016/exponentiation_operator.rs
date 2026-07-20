@@ -41,7 +41,10 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
+    PropertyKeyOrigin,
+    common::var_declarations::VarDeclarationsStore,
+    context::{TraverseCtx, create_property_key_string},
+    state::TransformState,
 };
 
 pub struct ExponentiationOperator<'a> {
@@ -248,7 +251,8 @@ impl<'a> ExponentiationOperator<'a> {
         // ```
         let prop_span = member_expr.property.span;
         let prop_name = member_expr.property.name;
-        let prop = Expression::new_string_literal(prop_span, prop_name, None, ctx);
+        let prop =
+            create_property_key_string(prop_span, prop_name, PropertyKeyOrigin::Unquoted, ctx);
 
         // Complete 2nd member expression
         // ```
@@ -265,7 +269,7 @@ impl<'a> ExponentiationOperator<'a> {
         let replacement_left = AssignmentTarget::new_computed_member_expression(
             member_expr.span,
             member_expr.object.take_in(ctx),
-            Expression::new_string_literal(prop_span, prop_name, None, ctx),
+            create_property_key_string(prop_span, prop_name, PropertyKeyOrigin::Unquoted, ctx),
             false,
             ctx,
         );

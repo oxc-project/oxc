@@ -5,7 +5,7 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/compiler/transformer.ts>
 
-use std::path::Path;
+use std::{mem, path::Path};
 
 use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
@@ -15,7 +15,7 @@ use oxc_react_compiler::{PluginOptions, compile as react_compiler_compile};
 use oxc_semantic::Scoping;
 #[cfg(feature = "react_compiler")]
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 // Core
@@ -86,6 +86,13 @@ pub use crate::{
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
+pub use oxc_syntax::property::PropertyKeyOrigin;
+
+/// Transformer provenance for strings derived from property keys.
+///
+/// Spans are only meaningful within the `Program` that produced them. Callers must not carry
+/// this map across a print-and-reparse boundary.
+pub type PropertyKeyProvenance = FxHashMap<Span, PropertyKeyOrigin>;
 
 /// Result of running [`Transformer::build_with_scoping`].
 #[non_exhaustive]
@@ -94,6 +101,8 @@ pub struct TransformerReturn {
     pub diagnostics: Diagnostics,
     /// Updated semantic scoping after all transforms have run.
     pub scoping: Scoping,
+    /// Syntactic classes for property keys that transforms lowered into strings.
+    pub property_key_provenance: PropertyKeyProvenance,
     /// Helpers used by this transform.
     #[deprecated = "Internal usage only"]
     pub helpers_used: FxHashMap<Helper, String>,
@@ -155,6 +164,7 @@ impl<'a> Transformer<'a> {
             return TransformerReturn {
                 diagnostics: react_compiler_diagnostics,
                 scoping,
+                property_key_provenance: PropertyKeyProvenance::default(),
                 helpers_used: FxHashMap::default(),
             };
         }
@@ -212,11 +222,12 @@ impl<'a> Transformer<'a> {
         let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
+        let property_key_provenance = mem::take(&mut state.property_key_provenance);
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
         let mut diagnostics = react_compiler_diagnostics;
         diagnostics.extend(state.take_errors());
         #[expect(deprecated)]
-        TransformerReturn { diagnostics, scoping, helpers_used }
+        TransformerReturn { diagnostics, scoping, property_key_provenance, helpers_used }
     }
 
     #[cfg(feature = "react_compiler")]

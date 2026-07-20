@@ -6,7 +6,9 @@ use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::Diagnostics;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
-use oxc_minifier::{CompressOptions, Compressor};
+use oxc_minifier::{
+    CompressOptions, Compressor, ManglePropertiesOptions, ManglePropertyCache, PropertyMangler,
+};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
 use oxc_span::SourceType;
@@ -86,6 +88,10 @@ pub trait CompilerInterface {
         None
     }
 
+    fn mangle_properties_options(&self) -> Option<ManglePropertiesOptions> {
+        None
+    }
+
     fn codegen_options(&self) -> Option<CodegenOptions> {
         Some(CodegenOptions::default())
     }
@@ -121,6 +127,8 @@ pub trait CompilerInterface {
     ) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
+
+    fn after_property_mangle(&mut self, _cache: ManglePropertyCache) {}
 
     fn after_codegen(&mut self, _ret: CodegenReturn<'_>) {}
 
@@ -160,6 +168,7 @@ pub trait CompilerInterface {
 
         /* Transform */
 
+        let mut property_key_provenance = None;
         if let Some(options) = self.transform_options() {
             let mut transformer_return =
                 self.transform(options, &allocator, &mut program, source_path, scoping);
@@ -177,6 +186,8 @@ pub trait CompilerInterface {
                 return;
             }
 
+            property_key_provenance =
+                Some(mem::take(&mut transformer_return.property_key_provenance));
             scoping = transformer_return.scoping;
         }
 
@@ -206,6 +217,18 @@ pub trait CompilerInterface {
             let ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
             scoping = ret.scoping;
             scoping_dirty |= ret.changed;
+        }
+
+        /* Property mangler */
+
+        if let Some(options) = self.mangle_properties_options() {
+            let mut mangler = PropertyMangler::new(options);
+            mangler.collect(&program, property_key_provenance.as_ref());
+            mangler.assign();
+            mangler.rewrite(&mut program, &allocator, property_key_provenance.as_ref());
+            self.after_property_mangle(mangler.into_cache());
+            // Property rewriting preserves every symbol, scope, and reference ID, so it does
+            // not invalidate scoping.
         }
 
         /* Compress / DCE */

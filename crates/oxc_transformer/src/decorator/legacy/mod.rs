@@ -63,12 +63,12 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_
 use rustc_hash::FxHashMap;
 
 use crate::{
-    Helper,
+    Helper, PropertyKeyOrigin,
     common::{
         duplicate::duplicate_expression, helper_loader::helper_call_expr,
         var_declarations::VarDeclarationsStore,
     },
-    context::TraverseCtx,
+    context::{TraverseCtx, create_property_key_string, record_property_key_origin},
     decorator::DecoratorOptions,
     state::TransformState,
     utils::ast_builder::{create_assignment, create_class_method, create_prototype_member},
@@ -1368,7 +1368,7 @@ impl<'a> LegacyDecorator<'a> {
     ) -> Expression<'a> {
         match key {
             PropertyKey::StaticIdentifier(ident) => {
-                Expression::new_string_literal(SPAN, ident.name, None, ctx)
+                create_property_key_string(ident.span, ident.name, PropertyKeyOrigin::Unquoted, ctx)
             }
             // Legacy decorators do not support private key
             PropertyKey::PrivateIdentifier(_) => {
@@ -1379,6 +1379,7 @@ impl<'a> LegacyDecorator<'a> {
                 Expression::NumericLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::StringLiteral(literal) => {
+                record_property_key_origin(literal.span, PropertyKeyOrigin::Quoted, ctx);
                 Expression::StringLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {

@@ -7,9 +7,9 @@ use oxc_span::SPAN;
 use oxc_traverse::ast_operations::get_var_name_from_node;
 
 use crate::{
-    Helper,
+    Helper, PropertyKeyOrigin,
     common::{helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore},
-    context::TraverseCtx,
+    context::{TraverseCtx, create_property_key_string},
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
 
@@ -65,7 +65,12 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let property = &member.property;
-        let property = Expression::new_string_literal(property.span, property.name, None, ctx);
+        let property = create_property_key_string(
+            property.span,
+            property.name,
+            PropertyKeyOrigin::Unquoted,
+            ctx,
+        );
         self.create_super_prop_get(member.span, property, is_callee, ctx)
     }
 
@@ -212,10 +217,10 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
             let AssignmentExpression { span, operator, right: value, left, .. } =
                 assign_expr.unbox();
             let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
-            let property = Expression::new_string_literal(
+            let property = create_property_key_string(
                 member.property.span,
                 member.property.name,
-                None,
+                PropertyKeyOrigin::Unquoted,
                 ctx,
             );
             self.transform_super_assignment_expression_impl(span, operator, property, value, ctx)
@@ -383,10 +388,10 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
 
             let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-            let property = Expression::new_string_literal(
+            let property = create_property_key_string(
                 member.property.span,
                 member.property.name,
-                None,
+                PropertyKeyOrigin::Unquoted,
                 ctx,
             );
 

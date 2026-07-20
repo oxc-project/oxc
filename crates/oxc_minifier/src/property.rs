@@ -14,6 +14,8 @@ use oxc_str::{CompactStr, Ident, Str};
 use oxc_syntax::{identifier::is_identifier_name, number::ToJsString};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+pub use oxc_syntax::property::PropertyKeyOrigin;
+
 /// A property-mangle cache. `Some(name)` pins the output name and `None` keeps the property.
 ///
 /// Pinned output names are authoritative and may intentionally be shared by multiple input
@@ -85,15 +87,6 @@ impl std::error::Error for InvalidManglePropertyCacheTarget {}
 
 /// A mapping from original property names to their final names.
 pub type PropertyMapping = FxHashMap<CompactStr, CompactStr>;
-
-/// The syntactic class of a property key before a transform converted it into a string.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PropertyKeyOrigin {
-    /// The string came from an identifier-like key such as `obj.foo`.
-    Unquoted,
-    /// The string came from a quoted key such as `obj["foo"]`.
-    Quoted,
-}
 
 /// Transformer provenance for strings derived from property keys.
 ///
@@ -439,7 +432,6 @@ struct PropertyRewriter<'a, 'm> {
     mangle_quoted: bool,
     provenance: Option<&'m PropertyKeyProvenance>,
     key_annotated: &'m FxHashSet<u32>,
-    rewritten: FxHashSet<Span>,
     ast: AstBuilder<'a>,
 }
 
@@ -459,24 +451,18 @@ impl<'a> PropertyRewriter<'a, '_> {
         self.mapping.get(original)
     }
 
-    fn rename_string_literal(&mut self, literal: &mut StringLiteral<'a>, quoted: bool) {
-        if self.rewritten.contains(&literal.span)
-            || !self.should_rewrite_literal(literal.span, quoted)
-        {
+    fn rename_string_literal(&self, literal: &mut StringLiteral<'a>, quoted: bool) {
+        if !self.should_rewrite_literal(literal.span, quoted) {
             return;
         }
         if let Some(target) = self.target(literal.value.as_str()) {
             literal.value = Str::from_str_in(target.as_str(), &self.ast);
             literal.raw = None;
-            self.rewritten.insert(literal.span);
         }
     }
 
-    fn rename_template_literal(&mut self, template: &mut TemplateLiteral<'a>, quoted: bool) {
-        if self.rewritten.contains(&template.span)
-            || !self.should_rewrite_literal(template.span, quoted)
-            || !template.expressions.is_empty()
-        {
+    fn rename_template_literal(&self, template: &mut TemplateLiteral<'a>, quoted: bool) {
+        if !self.should_rewrite_literal(template.span, quoted) || !template.expressions.is_empty() {
             return;
         }
         if let [quasi] = template.quasis.as_mut_slice()
@@ -486,20 +472,18 @@ impl<'a> PropertyRewriter<'a, '_> {
             let target = Str::from_str_in(target.as_str(), &self.ast);
             quasi.value.cooked = Some(target);
             quasi.value.raw = target;
-            self.rewritten.insert(template.span);
         }
     }
 
     fn rename_key_expression(&mut self, expression: &mut Expression<'a>) {
         match expression.get_inner_expression_mut() {
-            Expression::StringLiteral(literal) => self.rename_string_literal(literal, true),
-            Expression::TemplateLiteral(template)
-                if self.key_annotated.contains(&template.span.start)
-                    || self
+            Expression::StringLiteral(literal)
+                if !self.key_annotated.contains(&literal.span.start)
+                    && !self
                         .provenance
-                        .is_some_and(|origins| origins.contains_key(&template.span)) =>
+                        .is_some_and(|origins| origins.contains_key(&literal.span)) =>
             {
-                self.rename_template_literal(template, true);
+                self.rename_string_literal(literal, true);
             }
             Expression::ConditionalExpression(expression) => {
                 self.rename_key_expression(&mut expression.consequent);
@@ -538,7 +522,6 @@ impl<'a> PropertyRewriter<'a, '_> {
                 &self.ast,
             ));
             *computed = false;
-            self.rewritten.insert(span);
             return;
         }
         if *computed && let Some(expression) = key.as_expression_mut() {
@@ -546,13 +529,11 @@ impl<'a> PropertyRewriter<'a, '_> {
         }
     }
 
-    fn rename_static_key(&mut self, key: &mut PropertyKey<'a>) {
+    fn rename_static_key(&self, key: &mut PropertyKey<'a>) {
         if let PropertyKey::StaticIdentifier(identifier) = key
-            && !self.rewritten.contains(&identifier.span)
             && let Some(target) = self.target(identifier.name.as_str())
         {
             identifier.name = Ident::from_str_in(target.as_str(), &self.ast);
-            self.rewritten.insert(identifier.span);
         }
     }
 }
@@ -561,11 +542,8 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     fn visit_static_member_expression(&mut self, expression: &mut StaticMemberExpression<'a>) {
         let original = CompactStr::from(expression.property.name.as_str());
         walk_mut::walk_static_member_expression(self, expression);
-        if !self.rewritten.contains(&expression.property.span)
-            && let Some(target) = self.target(original.as_str())
-        {
+        if let Some(target) = self.target(original.as_str()) {
             expression.property.name = Ident::from_str_in(target.as_str(), &self.ast);
-            self.rewritten.insert(expression.property.span);
         }
     }
 
@@ -591,7 +569,6 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
                     &self.ast,
                 );
                 *expression = Expression::StaticMemberExpression(replacement);
-                self.rewritten.insert(property_span);
                 if let Expression::StaticMemberExpression(member) = expression {
                     self.visit_expression(&mut member.object);
                 }
@@ -687,7 +664,6 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
                 *property = AssignmentTargetProperty::new_assignment_target_property_property(
                     span, name, binding, false, &self.ast,
                 );
-                self.rewritten.insert(binding_span);
             }
             return;
         }
@@ -819,7 +795,6 @@ impl PropertyMangler {
             mangle_quoted: self.options.mangle_quoted,
             provenance,
             key_annotated: &key_annotated,
-            rewritten: FxHashSet::default(),
             ast: AstBuilder::new(allocator),
         };
         rewriter.visit_program(program);

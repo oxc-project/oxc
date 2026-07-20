@@ -8,8 +8,9 @@ use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
+    PropertyKeyOrigin,
     common::helper_loader::{Helper, helper_call_expr},
-    context::TraverseCtx,
+    context::{TraverseCtx, create_property_key_string},
     utils::ast_builder::create_assignment,
 };
 
@@ -212,7 +213,10 @@ impl<'a> ClassProperties<'a> {
         let property = ObjectPropertyKind::new_object_property(
             SPAN,
             PropertyKind::Init,
-            PropertyKey::StaticIdentifier(ArenaBox::new_in(create_underscore_ident_name(ctx), ctx)),
+            PropertyKey::StaticIdentifier(ArenaBox::new_in(
+                create_underscore_ident_name(SPAN, ctx),
+                ctx,
+            )),
             value,
             false,
             false,
@@ -326,7 +330,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let key = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                Expression::new_string_literal(ident.span, ident.name, None, ctx)
+                create_property_key_string(ident.span, ident.name, PropertyKeyOrigin::Unquoted, ctx)
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();

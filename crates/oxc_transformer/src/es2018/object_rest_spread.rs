@@ -40,8 +40,9 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
 use crate::{
+    PropertyKeyOrigin,
     common::helper_loader::{Helper, helper_call, helper_call_expr, helper_load},
-    context::TraverseCtx,
+    context::{TraverseCtx, create_property_key_string},
     state::TransformState,
 };
 
@@ -320,7 +321,12 @@ impl<'a> ObjectRestSpread<'a> {
             object_assignment_target.properties.iter_mut().filter_map(|e| match e {
                 AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                     let name = ident.binding.name;
-                    let expr = Expression::new_string_literal(SPAN, name, None, ctx);
+                    let expr = create_property_key_string(
+                        ident.binding.span,
+                        name,
+                        PropertyKeyOrigin::Unquoted,
+                        ctx,
+                    );
                     Some(ArrayExpressionElement::from(expr))
                 }
                 AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
@@ -1031,14 +1037,16 @@ impl<'a> ObjectRestSpread<'a> {
             // `let { a, ... rest }`
             PropertyKey::StaticIdentifier(ident) => {
                 let name = ident.name;
-                let expr = Expression::new_string_literal(ident.span, name, None, ctx);
+                let expr =
+                    create_property_key_string(ident.span, name, PropertyKeyOrigin::Unquoted, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { 'a', ... rest }`
             // `let { ['a'], ... rest }`
             PropertyKey::StringLiteral(lit) => {
                 let name = lit.value;
-                let expr = Expression::new_string_literal(lit.span, name, None, ctx);
+                let expr =
+                    create_property_key_string(lit.span, name, PropertyKeyOrigin::Quoted, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { [`a`], ... rest }`

@@ -1,6 +1,7 @@
 mod enum_eval;
 mod es_target;
 mod helper_call;
+mod property_key_provenance;
 #[cfg(feature = "react_compiler")]
 mod react_compiler;
 mod targets;

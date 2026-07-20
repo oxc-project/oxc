@@ -661,9 +661,10 @@ impl<'a> ClassProperties<'a> {
             }
         } else {
             // Substitute left side of assignment with `_prop._`, and get owned `object` from old left side
+            let field_expr_span = field_expr.span;
             let assignee = Self::create_underscore_member_expr_target(
                 prop_binding.create_read_expression(ctx),
-                SPAN,
+                field_expr_span,
                 ctx,
             );
             let old_assignee = mem::replace(&mut assign_expr.left, assignee);
@@ -701,7 +702,7 @@ impl<'a> ClassProperties<'a> {
                         class_ident,
                         object2,
                         prop_ident,
-                        SPAN,
+                        field_expr_span,
                         ctx,
                     );
                     // `_assertClassBrand(Class, object, _prop)._ + value`
@@ -2150,7 +2151,7 @@ impl<'a> ClassProperties<'a> {
         MemberExpression::new_static_member_expression(
             span,
             object,
-            create_underscore_ident_name(ctx),
+            create_underscore_ident_name(span, ctx),
             false,
             ctx,
         )

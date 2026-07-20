@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
 use crate::{
-    CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
+    CompilerAssumptions, HelperLoaderOptions, Module, PropertyKeyProvenance, TransformOptions,
     common::{
         helper_loader::HelperLoaderStore, module_imports::ModuleImportsStore,
         statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
@@ -47,6 +47,9 @@ pub struct TransformState<'a> {
     // State for multiple plugins interacting
     /// `true` if class properties plugin is enabled
     pub is_class_properties_plugin_enabled: bool,
+
+    /// Syntactic classes for property keys that transforms lowered into strings.
+    pub property_key_provenance: PropertyKeyProvenance,
 }
 
 impl Default for TransformState<'_> {
@@ -65,6 +68,7 @@ impl Default for TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: false,
+            property_key_provenance: PropertyKeyProvenance::default(),
         }
     }
 }
@@ -89,6 +93,7 @@ impl TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
+            property_key_provenance: PropertyKeyProvenance::default(),
         }
     }
 

@@ -169,6 +169,18 @@ fn cache_is_authoritative_and_duplicate_targets_are_allowed() {
 }
 
 #[test]
+fn each_occurrence_is_rewritten_once_when_cache_targets_are_source_names() {
+    let mut options = options("^_");
+    options.cache.insert("_first".into(), Some("_second".into())).unwrap();
+    options.cache.insert("_second".into(), Some("_third".into())).unwrap();
+    test(
+        "obj._first; obj._second; helper(/* @__KEY__ */ '_first'); helper(/* #__KEY__ */ `_first`);",
+        "obj._second; obj._third; helper(/* @__KEY__ */ '_second'); helper(/* #__KEY__ */ `_second`);",
+        options,
+    );
+}
+
+#[test]
 fn non_matching_cache_entries_are_inert_and_preserved() {
     let mut options = options("^_");
     options.cache.insert("public".into(), Some("A".into())).unwrap();

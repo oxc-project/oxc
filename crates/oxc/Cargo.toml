@@ -25,6 +25,10 @@ name = "compiler"
 path = "examples/compiler.rs"
 required-features = ["full"]
 
+[[test]]
+name = "property_mangle_compiler"
+required-features = ["full"]
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }

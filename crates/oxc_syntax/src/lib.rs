@@ -15,6 +15,7 @@ pub mod node;
 pub mod number;
 pub mod operator;
 pub mod precedence;
+pub mod property;
 pub mod reference;
 pub mod scope;
 pub mod semantic_id;
