@@ -279,10 +279,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(kind) || has_leading_operator {
             let mut types = ArenaVec::from_value_in(ty, self);
             while self.eat(kind) {
-                types.push(
+                let ty =
                     /*parseFunctionOrConstructorTypeToError(isUnionType) || */
-                    parse_constituent_type(self),
-                );
+                    parse_constituent_type(self);
+                types.push(ty);
             }
             let span = self.end_span(span);
             ty = match kind {
@@ -1281,7 +1281,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
-                properties.push(ObjectPropertyKind::new_object_property(
+                let property = ObjectPropertyKind::new_object_property(
                     self.end_span(prop_span),
                     PropertyKind::Init,
                     key,
@@ -1290,7 +1290,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     false,
                     true, /* computed */
                     self,
-                ));
+                );
+                properties.push(property);
                 continue;
             }
 
@@ -1306,7 +1307,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::Colon);
             let value = self.parse_assignment_expression_or_higher();
 
-            properties.push(ObjectPropertyKind::new_object_property(
+            let property = ObjectPropertyKind::new_object_property(
                 self.end_span(prop_span),
                 PropertyKind::Init,
                 key,
@@ -1315,7 +1316,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 false,
                 false,
                 self,
-            ));
+            );
+            properties.push(property);
         }
 
         self.expect(Kind::RCurly);

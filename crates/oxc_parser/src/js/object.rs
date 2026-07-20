@@ -59,12 +59,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_method_getter_setter(span, PropertyKind::Set, &modifiers);
         }
 
-        let asterisk_token = self.eat(Kind::Star);
+        let asterisk_token = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
         let token_is_identifier =
             self.cur_kind().is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await());
         let (key, computed) = self.parse_property_name();
 
-        if asterisk_token || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
+        if asterisk_token.is_some() || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 &modifiers,
                 ModifierKinds::new([ModifierKind::Async]),
@@ -216,7 +216,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, ObjectProperty<'a>> {
         let (key, computed) = self.parse_property_name();
-        let function = self.parse_method(false, false, FunctionKind::ObjectMethod);
+        let function = self.parse_method(false, None, FunctionKind::ObjectMethod);
         match kind {
             PropertyKind::Get => self.check_getter(&function),
             PropertyKind::Set => self.check_setter(&function),

@@ -471,7 +471,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let (name, computed) = self.parse_class_element_name(modifiers);
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
-            false,
+            None,
             FunctionKind::ClassMethod,
         );
         let method_definition = MethodDefinition::boxed(
@@ -512,7 +512,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
-            false,
+            None,
             FunctionKind::Constructor,
         );
         let method_definition = MethodDefinition::boxed(
@@ -555,7 +555,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        let generator = self.eat(Kind::Star);
+        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
         let (name, computed) = self.parse_class_element_name(modifiers);
 
         let cur_token = self.cur_token();
@@ -567,7 +567,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let optional = optional_span.is_some();
 
-        if generator || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
+        if generator.is_some() || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 modifiers,
                 ModifierKinds::all_except([ModifierKind::Declare, ModifierKind::Readonly]),
@@ -636,7 +636,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         r#type: MethodDefinitionType,
-        generator: bool,
+        generator: Option<u32>,
         name: PropertyKey<'a>,
         computed: bool,
         optional: bool,

@@ -9,6 +9,7 @@ Negative Passed: 153/153 (100.00%)
    ·          ─────────
  2 │ function eval() {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:2:10]
@@ -17,6 +18,7 @@ Negative Passed: 153/153 (100.00%)
    ·          ────
  3 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:4:16]
@@ -25,6 +27,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ─────────
  5 │ function foo2([arguments]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:5:16]
@@ -33,6 +36,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ─────────
  6 │ function foo3({ eval }) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:6:17]
@@ -41,6 +45,7 @@ Negative Passed: 153/153 (100.00%)
    ·                 ────
  7 │ function foo4([eval]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:7:16]
@@ -49,6 +54,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ────
  8 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
@@ -424,6 +430,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  5 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:6:1]
@@ -432,6 +439,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  7 │ let()[x] = 1;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:7:1]
@@ -440,6 +448,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  8 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:9:1]
@@ -448,6 +457,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  10 │ let?.y.z;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:10:1]
@@ -456,6 +466,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  11 │ let?.[0];
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:11:1]
@@ -464,6 +475,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  12 │ let?.method();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:12:1]
@@ -471,6 +483,7 @@ Negative Passed: 153/153 (100.00%)
  12 │ let?.method();
     · ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[misc/fail/minus-yield-100.js:1:27]
@@ -3604,6 +3617,7 @@ Negative Passed: 153/153 (100.00%)
     ·       ─────
  10 │ }
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
    ╭─[misc/fail/oxc-23170.ts:2:16]

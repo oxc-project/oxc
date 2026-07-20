@@ -587,6 +587,37 @@ jobs:
           cargo minsize
           git diff --exit-code
 
+      # Write a human-readable diff of the minified output vs the base branch
+      # to the job summary for review (same flow as `just minifier-diff`).
+      - name: Diff minify output
+        if: ${{ !cancelled() && steps.filter.outputs.changed == 'true' && github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          cargo minsize --compress-only pr
+          git fetch --depth 1 origin "$BASE_REF"
+          git checkout -f FETCH_HEAD
+          cargo minsize --compress-only main
+
+          echo '# Minify Output Diff' >> "$GITHUB_STEP_SUMMARY"
+          changed=false
+          for pr_file in target/minifier/pr/*.js; do
+            name=$(basename "$pr_file")
+            if ! diff -uN "target/minifier/main/$name" "$pr_file" > /tmp/minify.diff; then
+              changed=true
+              {
+                echo "## $name"
+                echo '```diff'
+                head -n 200 /tmp/minify.diff
+                if [ "$(wc -l < /tmp/minify.diff)" -gt 200 ]; then echo '... (truncated)'; fi
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          if [ "$changed" = false ]; then
+            echo 'No difference in compress-only output compared to the base branch.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   allocs:
     name: Allocations
     runs-on: namespace-profile-linux-x64-default

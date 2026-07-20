@@ -130,7 +130,6 @@ enum InferredDependency<'a> {
     Local {
         identifier: IdentifierId,
         path: Vec<DependencyPathEntry<'a>>,
-        #[allow(dead_code)]
         context: bool,
         span: Option<Span>,
     },

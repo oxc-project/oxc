@@ -864,6 +864,15 @@ fn dce_recursive_unused_functions() {
 }
 
 #[test]
+fn dce_remove_unused_class_identifier_heritage_under_assumptions() {
+    // ASSUMPTIONS.md excludes TDZ violations and side effects from extending a class.
+    test(
+        "export var Base = class {}; export var Keep = class extends Base {}; var REMOVE = class extends Base {};",
+        "export var Base = class {}; export var Keep = class extends Base {};",
+    );
+}
+
+#[test]
 #[ignore = "TODO: extend recursive reachability to mutual declarators and classes"]
 fn dce_recursive_unused_mutual_declarators_and_classes() {
     test("const a = () => b(); const b = () => a();", "");

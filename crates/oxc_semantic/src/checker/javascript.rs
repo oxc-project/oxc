@@ -160,7 +160,11 @@ pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
 
             // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
             if ctx.source_type.is_module() {
-                ctx.error(diagnostics::reserved_keyword(name, span));
+                ctx.error(diagnostics::reserved_keyword(
+                    name,
+                    span,
+                    diagnostics::ReservedKeywordContext::ModuleAwait,
+                ));
             }
             // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
             else if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
@@ -173,9 +177,29 @@ pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
                 return;
             }
             // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
-            ctx.error(diagnostics::reserved_keyword(name, span));
+            let context =
+                if ctx.ancestry().ancestor_kinds().any(|kind| matches!(kind, AstKind::Class(_))) {
+                    diagnostics::ReservedKeywordContext::Class
+                } else if ctx.source_type.is_module() {
+                    diagnostics::ReservedKeywordContext::Module
+                } else {
+                    diagnostics::ReservedKeywordContext::StrictMode
+                };
+            ctx.error(diagnostics::reserved_keyword(name, span, context));
         }
         _ => {}
+    }
+}
+
+fn unexpected_identifier_assign_context(
+    ctx: &SemanticBuilder<'_>,
+) -> diagnostics::UnexpectedIdentifierAssignContext {
+    if ctx.ancestry().ancestor_kinds().any(|kind| matches!(kind, AstKind::Class(_))) {
+        diagnostics::UnexpectedIdentifierAssignContext::Class
+    } else if ctx.source_type.is_module() {
+        diagnostics::UnexpectedIdentifierAssignContext::Module
+    } else {
+        diagnostics::UnexpectedIdentifierAssignContext::StrictMode
     }
 }
 
@@ -219,7 +243,11 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             };
 
             if !is_ok {
-                ctx.error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
+                ctx.error(diagnostics::unexpected_identifier_assign(
+                    &ident.name,
+                    ident.span,
+                    unexpected_identifier_assign_context(ctx),
+                ));
             }
         }
         "let" if !ctx.strict_mode() => {
@@ -261,8 +289,11 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx
-                        .error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
+                    return ctx.error(diagnostics::unexpected_identifier_assign(
+                        &ident.name,
+                        ident.span,
+                        unexpected_identifier_assign_context(ctx),
+                    ));
                 }
                 AstKind::AssignmentExpression(assign_expr) => {
                     // only throw error if arguments or eval are being assigned to
@@ -273,6 +304,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                         return ctx.error(diagnostics::unexpected_identifier_assign(
                             &ident.name,
                             ident.span,
+                            unexpected_identifier_assign_context(ctx),
                         ));
                     }
                 }
