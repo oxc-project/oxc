@@ -1,12 +1,11 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
-        CodeActionContext, CodeActionOrCommand, Diagnostic, Pattern, Range, ServerCapabilities,
-        TextEdit, Uri, WorkspaceEdit,
+        CodeActionOrCommand, Diagnostic, Pattern, ServerCapabilities, TextEdit, Uri, WorkspaceEdit,
     },
 };
 
-use crate::{TextDocument, capabilities::Capabilities};
+use crate::{CodeActionParams, TextDocument, capabilities::Capabilities};
 
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
@@ -73,16 +72,11 @@ pub trait Tool: Send + Sync {
         Err(ErrorCode::InvalidParams)
     }
 
-    /// Get code actions or commands provided by this tool for the given URI and range.
-    /// The tool should filter the code actions based on the provided range.
+    /// Get code actions or commands provided by this tool.
+    /// The tool should filter the code actions based on the requested range.
     /// The context can be used to further filter the code actions,
     /// for example by the `only` field which indicates that only code actions of certain kinds are requested.
-    fn get_code_actions_or_commands(
-        &self,
-        _uri: &Uri,
-        _range: &Range,
-        _context: &CodeActionContext,
-    ) -> Vec<CodeActionOrCommand> {
+    fn get_code_actions_or_commands(&self, _params: &CodeActionParams) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
 

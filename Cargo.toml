@@ -182,7 +182,7 @@ quote = "1" # Quasi-quoting for macros
 rustc-hash = "2" # Fast hash algorithm
 serde = "1" # Serialization framework
 serde_json = "1" # JSON serialization
-syn = { version = "2", default-features = false } # Rust parser for macros
+syn = { version = "3", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
 unicode-segmentation = "1.13.3" # Unicode grapheme segmentation
 
@@ -201,7 +201,7 @@ oxc-graphql-parser = "0.0.7" # GraphQL parser (direct AST; apollo-parser 0.8.6 f
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
 bpaf = "0.9.26" # CLI parser
-compact_str = "0.9.1" # Compact string type
+compact_str = "0.10.0" # Compact string type
 console = "0.16.4" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation
 convert_case = "0.11.0" # Case conversion
@@ -239,7 +239,7 @@ petgraph = { version = "0.8.3", default-features = false } # Graph data structur
 phf = "0.14.0" # Perfect hash function
 phf_codegen = "0.14.0" # PHF codegen
 pico-args = "0.5.0" # Minimal argument parser
-prettyplease = "0.2.37" # Rust code formatting
+prettyplease = "0.3.0" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
 oxc-css-parser = "0.0.7" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
