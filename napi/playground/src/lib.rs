@@ -347,7 +347,10 @@ impl Oxc {
         } else {
             None
         };
-        Some(Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program))
+        Some(
+            Minifier::new(MinifierOptions { mangle, mangle_properties: None, compress })
+                .minify(allocator, program),
+        )
     }
 
     fn finalize_output<'a>(

@@ -142,6 +142,7 @@ pub fn run() -> Result<(), io::Error> {
     let parse_options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
     let minifier_options = MinifierOptions {
         mangle: Some(MangleOptions::default()),
+        mangle_properties: None,
         compress: Some(CompressOptions::smallest()),
     };
 

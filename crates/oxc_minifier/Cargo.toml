@@ -39,6 +39,7 @@ oxc_traverse = { workspace = true }
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
 itoa = { workspace = true }
+lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
