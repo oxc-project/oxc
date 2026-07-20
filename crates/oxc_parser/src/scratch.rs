@@ -1,6 +1,6 @@
 //! Reusable parser-owned storage for AST lists under construction.
 
-use std::{marker::PhantomData, mem::needs_drop, ptr};
+use std::marker::PhantomData;
 
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
@@ -30,8 +30,6 @@ pub struct ScratchMark<T> {
 pub trait ScratchElement<'a>: Sized {
     /// Preserve the old arena vector's geometric spare capacity when downstream passes grow it.
     const PRESERVE_CAPACITY_HEADROOM: bool = false;
-
-    const ASSERT_NO_DROP: () = assert!(!needs_drop::<Self>());
 
     fn stack<'s>(scratch: &'s mut ParserScratch<'a>) -> &'s mut ScratchStack<Self>;
 }
@@ -113,7 +111,6 @@ define_parser_scratch! {
 impl<'a> ParserScratch<'a> {
     #[inline]
     fn begin<T: ScratchElement<'a>>(&mut self) -> ScratchMark<T> {
-        let () = T::ASSERT_NO_DROP;
         let start = T::stack(self).items.len();
 
         #[cfg(debug_assertions)]
@@ -162,16 +159,7 @@ impl<'a> ParserScratch<'a> {
         let capacity =
             if preserve_capacity_headroom && len > 0 { len.next_power_of_two() } else { len };
         let mut list = ArenaVec::with_capacity_in(capacity, &allocator);
-
-        // Safe element-wise moves regress small-file parsing, so move the initialized tail in bulk.
-        // SAFETY: The typed scratch tail contains `len` initialized `T`s, and the arena vector has
-        // capacity for all of them. `T` cannot require drop, the allocations cannot overlap, and
-        // the scratch length is rewound immediately after the bulk move.
-        unsafe {
-            ptr::copy_nonoverlapping(items.as_ptr().add(mark.start), list.as_mut_ptr(), len);
-            list.set_len(len);
-            items.set_len(mark.start);
-        }
+        list.extend(items.drain(mark.start..));
 
         self.finish_mark(&mark);
         list
