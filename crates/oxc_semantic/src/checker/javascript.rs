@@ -191,6 +191,18 @@ pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
     }
 }
 
+fn unexpected_identifier_assign_context(
+    ctx: &SemanticBuilder<'_>,
+) -> diagnostics::UnexpectedIdentifierAssignContext {
+    if ctx.ancestry().ancestor_kinds().any(|kind| matches!(kind, AstKind::Class(_))) {
+        diagnostics::UnexpectedIdentifierAssignContext::Class
+    } else if ctx.source_type.is_module() {
+        diagnostics::UnexpectedIdentifierAssignContext::Module
+    } else {
+        diagnostics::UnexpectedIdentifierAssignContext::StrictMode
+    }
+}
+
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
     // `.d.ts` files are allowed to use `eval` and `arguments` as binding identifiers
     if ctx.source_type.is_typescript_definition() {
@@ -231,7 +243,11 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             };
 
             if !is_ok {
-                ctx.error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
+                ctx.error(diagnostics::unexpected_identifier_assign(
+                    &ident.name,
+                    ident.span,
+                    unexpected_identifier_assign_context(ctx),
+                ));
             }
         }
         "let" if !ctx.strict_mode() => {
@@ -273,8 +289,11 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx
-                        .error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
+                    return ctx.error(diagnostics::unexpected_identifier_assign(
+                        &ident.name,
+                        ident.span,
+                        unexpected_identifier_assign_context(ctx),
+                    ));
                 }
                 AstKind::AssignmentExpression(assign_expr) => {
                     // only throw error if arguments or eval are being assigned to
@@ -285,6 +304,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                         return ctx.error(diagnostics::unexpected_identifier_assign(
                             &ident.name,
                             ident.span,
+                            unexpected_identifier_assign_context(ctx),
                         ));
                     }
                 }

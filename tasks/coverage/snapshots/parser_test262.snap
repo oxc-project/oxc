@@ -1609,6 +1609,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ─────────
  19 │ }
     ╰────
+  note: This is strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/asi/S7.9.2_A1_T1.js:17:4]
@@ -3102,6 +3103,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ eval = 42;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/directive-prologue/14.1-5gs.js:19:1]
@@ -3109,6 +3111,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval = 42;
     · ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/directive-prologue/func-decl-inside-func-decl-parse.js:22:9]
@@ -3768,6 +3771,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ var af = arguments => 1;
     ·          ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-eval.js:21:10]
@@ -3775,6 +3779,7 @@ Negative Passed: 4651/4651 (100.00%)
  21 │ var af = eval => 1;
     ·          ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-yield.js:21:10]
@@ -3797,6 +3802,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var af = (arguments) => 1;
     ·           ─────────
     ╰────
+  note: This is strict mode code
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-1.js:26:11]
@@ -3903,6 +3909,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var af = (eval) => 1;
     ·           ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-yield.js:20:11]
@@ -4006,6 +4013,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, [arguments] = [];
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/array-elem-target-yield-invalid.js:24:8]
@@ -4121,6 +4129,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { eval = 0 } = {};
     ·      ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/obj-id-init-yield-ident-invalid.js:24:10]
@@ -4136,6 +4145,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { eval } = {};
     ·      ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-yield-ident-invalid.js:24:13]
@@ -4574,6 +4584,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ (arguments) = 20;
     ·  ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/assignment/id-eval-strict.js:17:2]
@@ -4581,6 +4592,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ (eval) = 20;
     ·  ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/non-simple-target.js:19:1]
@@ -5049,6 +5061,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ arguments = 1;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-identifierreference-eval-strict.js:17:1]
@@ -5056,6 +5069,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ eval = 1;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Unexpected import.meta expression
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-import.meta.js:21:1]
@@ -6182,6 +6196,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ (arguments) = 1;
     ·  ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-identifierreference-eval-strict.js:20:2]
@@ -6189,6 +6204,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ (eval) = 1;
     ·  ────
     ╰────
+  note: This is strict mode code
 
   × Unexpected import.meta expression
     ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-import.meta.js:24:2]
@@ -7063,6 +7079,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────────
  18 │ 
     ╰────
+  note: This is strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:17]
@@ -7108,6 +7125,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ async(eval) => {  }
     ·       ────
     ╰────
+  note: This is strict mode code
 
   × Identifier `bar` has already been declared
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-formals-body-duplicate.js:16:7]
@@ -7253,6 +7271,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────────
  18 │ 
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-binding-identifier-eval.js:17:17]
@@ -7260,6 +7279,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ (async function eval () { })
     ·                 ────
     ╰────
+  note: This is strict mode code
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-body-contains-super-call.js:16:29]
@@ -7282,6 +7302,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ (async function foo (eval) {  })
     ·                      ────
     ╰────
+  note: This is strict mode code
 
   × Identifier `bar` has already been declared
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-formals-body-duplicate.js:16:22]
@@ -7789,6 +7810,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ (async function*(arguments) { });
     ·                  ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js:18:18]
@@ -7803,6 +7825,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ (async function* arguments() { });
     ·                  ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-binding-identifier-eval.js:20:18]
@@ -7810,6 +7833,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ (async function* eval() { });
     ·                  ────
     ╰────
+  note: This is strict mode code
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-body-contains-super-call.js:18:22]
@@ -7831,6 +7855,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ (async function*(eval) { });
     ·                  ────
     ╰────
+  note: This is strict mode code
 
   × Identifier `a` has already been declared
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-formals-body-duplicate-const.js:22:18]
@@ -14592,6 +14617,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ eval *= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/add-arguments-strict.js:20:1]
@@ -14599,6 +14625,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments += 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/add-eval-strict.js:19:1]
@@ -14606,6 +14633,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval += 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/compound-assignment/add-non-simple.js:18:1]
@@ -14620,6 +14648,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments &= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/and-eval-strict.js:19:1]
@@ -14627,6 +14656,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval &= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/compound-assignment/btws-and-non-simple.js:18:1]
@@ -14655,6 +14685,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments /= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/div-eval-strict.js:19:1]
@@ -14662,6 +14693,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval /= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/compound-assignment/div-non-simple.js:18:1]
@@ -14683,6 +14715,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments <<= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/lshift-eval-strict.js:20:1]
@@ -14690,6 +14723,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ eval <<= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/mod-arguments-strict.js:20:1]
@@ -14697,6 +14731,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments %= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/compound-assignment/mod-div-non-simple.js:18:1]
@@ -14711,6 +14746,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval %= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/mult-arguments-strict.js:20:1]
@@ -14718,6 +14754,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments *= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/mult-eval-strict.js:19:1]
@@ -14725,6 +14762,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval *= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/compound-assignment/mult-non-simple.js:18:1]
@@ -14739,6 +14777,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments |= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/or-eval-strict.js:19:1]
@@ -14746,6 +14785,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval |= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/compound-assignment/right-shift-non-simple.js:18:1]
@@ -14760,6 +14800,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments >>= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/srshift-eval-strict.js:20:1]
@@ -14767,6 +14808,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ eval >>= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/sub-arguments-strict.js:20:1]
@@ -14774,6 +14816,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments -= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/sub-eval-strict.js:19:1]
@@ -14781,6 +14824,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval -= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/compound-assignment/subtract-non-simple.js:18:1]
@@ -14802,6 +14846,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments >>>= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/urshift-eval-strict.js:20:1]
@@ -14809,6 +14854,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ eval >>>= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/xor-arguments-strict.js:20:1]
@@ -14816,6 +14862,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ arguments ^= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/compound-assignment/xor-eval-strict.js:19:1]
@@ -14823,6 +14870,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ eval ^= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/conditional/in-branch-2.js:23:6]
@@ -18193,6 +18241,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ (function arguments() {'use strict';});
     ·           ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/function/name-arguments-strict.js:18:11]
@@ -18200,6 +18249,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ (function arguments() {});
     ·           ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/function/name-eval-strict-body.js:18:11]
@@ -18207,6 +18257,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ (function eval() {'use strict';});
     ·           ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/function/name-eval-strict.js:18:11]
@@ -18214,6 +18265,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ (function eval() {});
     ·           ────
     ╰────
+  note: This is strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/function/object-destructuring-param-strict-body.js:132:3]
@@ -18311,6 +18363,7 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ (function (eval) { 'use strict'; });
     ·            ────
     ╰────
+  note: This is strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/function/rest-param-strict-body.js:132:3]
@@ -18965,6 +19018,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ arguments &&= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/logical-assignment/lgcl-and-assignment-operator-non-simple-lhs.js:20:1]
@@ -18979,6 +19033,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ eval &&= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/logical-assignment/lgcl-and-non-simple.js:18:1]
@@ -18993,6 +19048,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ arguments ??= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/logical-assignment/lgcl-nullish-assignment-operator-non-simple-lhs.js:20:1]
@@ -19007,6 +19063,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ eval ??= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/logical-assignment/lgcl-nullish-non-simple.js:18:1]
@@ -19021,6 +19078,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ arguments ||= 20;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/logical-assignment/lgcl-or-assignment-operator-non-simple-lhs.js:20:1]
@@ -19035,6 +19093,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ eval ||= 20;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/logical-assignment/lgcl-or-non-simple.js:18:1]
@@ -19065,6 +19124,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var obj = { set _11_1_5_1_fun(eval) {}};
     ·                               ────
     ╰────
+  note: This is strict mode code
 
   × Identifier `__proto__` has already been declared
     ╭─[test262/test/language/expressions/object/__proto__-duplicate.js:21:3]
@@ -19897,6 +19957,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·              ─────────
  19 │ })
     ╰────
+  note: This is strict mode code
 
   × Expected `,` or `}` but found `Identifier`
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-async-lineterminator.js:22:3]
@@ -19952,6 +20013,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ────
  19 │ })
     ╰────
+  note: This is strict mode code
 
   × 'async' modifier cannot be used here.
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-formals-body-duplicate.js:18:3]
@@ -20611,6 +20673,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────────
  19 │     "use strict";
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/object/setter-param-arguments-strict-outside.js:19:9]
@@ -20619,6 +20682,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────────
  20 │ };
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/object/setter-param-eval-strict-inside.js:18:9]
@@ -20627,6 +20691,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ────
  19 │     "use strict";
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/object/setter-param-eval-strict-outside.js:19:9]
@@ -20635,6 +20700,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ────
  20 │ };
     ╰────
+  note: This is strict mode code
 
   × 'super' can only be referenced in a derived class.
     ╭─[test262/test/language/expressions/optional-chaining/call-expression-super-no-base.js:20:1]
@@ -20732,6 +20798,7 @@ Negative Passed: 4651/4651 (100.00%)
  27 │ arguments--;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/postfix-decrement/eval.js:27:1]
@@ -20739,6 +20806,7 @@ Negative Passed: 4651/4651 (100.00%)
  27 │ eval--;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/postfix-decrement/line-terminator-carriage-return.js:18:3]
@@ -20808,6 +20876,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ arguments++;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/postfix-increment/arguments.js:23:1]
@@ -20815,6 +20884,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ arguments++;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/postfix-increment/eval.js:23:1]
@@ -20822,6 +20892,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ eval++;
     · ────
     ╰────
+  note: This is strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/postfix-increment/line-terminator-carriage-return.js:18:3]
@@ -20891,6 +20962,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ --arguments;
     ·   ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/prefix-decrement/arguments.js:27:3]
@@ -20898,6 +20970,7 @@ Negative Passed: 4651/4651 (100.00%)
  27 │ --arguments;
     ·   ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/prefix-decrement/eval.js:27:3]
@@ -20905,6 +20978,7 @@ Negative Passed: 4651/4651 (100.00%)
  27 │ --eval;
     ·   ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/prefix-decrement/target-cover-newtarget.js:31:6]
@@ -20943,6 +21017,7 @@ Negative Passed: 4651/4651 (100.00%)
  27 │ ++arguments;
     ·   ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/prefix-increment/eval.js:28:3]
@@ -20950,6 +21025,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ ++eval;
     ·   ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/prefix-increment/target-cover-newtarget.js:31:6]
@@ -25551,6 +25627,7 @@ Negative Passed: 4651/4651 (100.00%)
  35 │ import { arguments } from './early-import-arguments.js';
     ·          ─────────
     ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/module-code/early-import-as-arguments.js:35:15]
@@ -25558,6 +25635,7 @@ Negative Passed: 4651/4651 (100.00%)
  35 │ import { x as arguments } from './early-import-as-arguments.js';
     ·               ─────────
     ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/module-code/early-import-as-eval.js:35:15]
@@ -25565,6 +25643,7 @@ Negative Passed: 4651/4651 (100.00%)
  35 │ import { x as eval } from './early-import-as-eval.js';
     ·               ────
     ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/module-code/early-import-eval.js:35:10]
@@ -25572,6 +25651,7 @@ Negative Passed: 4651/4651 (100.00%)
  35 │ import { eval } from './early-import-eval.js';
     ·          ────
     ╰────
+  note: Modules are always strict mode code
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/module-code/early-lex-and-var.js:17:5]
@@ -27081,6 +27161,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────────
  18 │ 
     ╰────
+  note: This is strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-await-in-formals-default.js:15:30]
@@ -27103,6 +27184,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                ─────────
  18 │ 
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-binding-identifier-eval.js:17:16]
@@ -27110,6 +27192,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ async function eval () {  }
     ·                ────
     ╰────
+  note: This is strict mode code
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-body-contains-super-call.js:16:28]
@@ -27140,6 +27223,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ async function foo (eval) {  }
     ·                     ────
     ╰────
+  note: This is strict mode code
 
   × Identifier `bar` has already been declared
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-formals-body-duplicate.js:16:21]
@@ -28878,6 +28962,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·              ─────────
  17 │ }
     ╰────
+  note: Classes are always strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-await-in-formals-default.js:16:23]
@@ -28920,6 +29005,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ────
  17 │ }
     ╰────
+  note: Classes are always strict mode code
 
   × Expected `;` but found `Identifier`
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-formals-body-duplicate.js:18:18]
@@ -35733,6 +35819,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────────
  35 │ }
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-target-yield-invalid.js:34:18]
@@ -36572,6 +36659,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([arguments] in [[]]) ;
     ·       ─────────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-in/dstr/array-elem-target-yield-invalid.js:33:10]
@@ -36687,6 +36775,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ eval = 0 } in [{}]) ;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-in/dstr/obj-id-init-yield-ident-invalid.js:33:12]
@@ -36702,6 +36791,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ eval } in [{}]) ;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-in/dstr/obj-prop-elem-init-yield-ident-invalid.js:33:15]
@@ -36905,6 +36995,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·            ─────────
  20 │ }
     ╰────
+  note: This is strict mode code
 
   × for-in loop variable declaration may not have an initializer
     ╭─[test262/test/language/statements/for-in/var-arguments-fn-strict-init.js:19:8]
@@ -36921,6 +37012,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·            ─────────
  20 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/for-in/var-arguments-strict-init.js:18:10]
@@ -36928,6 +37020,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ for (var arguments = 42 in null) {}
     ·          ─────────
     ╰────
+  note: This is strict mode code
 
   × for-in loop variable declaration may not have an initializer
     ╭─[test262/test/language/statements/for-in/var-arguments-strict-init.js:18:6]
@@ -36942,6 +37035,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ for (var arguments in null) {}
     ·          ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/for-in/var-eval-strict-init.js:16:10]
@@ -36949,6 +37043,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ for (var eval = 42 in null) {}
     ·          ────
     ╰────
+  note: This is strict mode code
 
   × for-in loop variable declaration may not have an initializer
     ╭─[test262/test/language/statements/for-in/var-eval-strict-init.js:16:6]
@@ -36963,6 +37058,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ for (var eval in null) {}
     ·          ────
     ╰────
+  note: This is strict mode code
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[test262/test/language/statements/for-of/decl-async-fun.js:21:19]
@@ -37102,6 +37198,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([arguments] of [[]]) ;
     ·       ─────────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-of/dstr/array-elem-target-yield-invalid.js:33:10]
@@ -37341,6 +37438,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ eval = 0 } of [{}]) ;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-of/dstr/obj-id-init-yield-ident-invalid.js:33:12]
@@ -37356,6 +37454,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ eval } of [{}]) ;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-of/dstr/obj-prop-elem-init-yield-ident-invalid.js:33:15]
@@ -37745,6 +37844,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ function _13_0_4_5_fun() { eval = 42; };
     ·                            ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/function/13.1-13gs.js:18:10]
@@ -37752,6 +37852,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ function arguments() { };
     ·          ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/function/13.1-1gs.js:19:22]
@@ -37759,6 +37860,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ function _13_1_1_fun(eval) { }
     ·                      ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/function/13.1-4gs.js:19:29]
@@ -37766,6 +37868,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var _13_1_4_fun = function (arguments) { };
     ·                             ─────────
     ╰────
+  note: This is strict mode code
 
   × Identifier `param` has already been declared
     ╭─[test262/test/language/statements/function/13.1-5gs.js:18:22]
@@ -37994,6 +38097,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ────
  25 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/function/enable-strict-via-outer-body.js:24:9]
@@ -38002,6 +38106,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ────
  25 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/function/enable-strict-via-outer-script.js:24:9]
@@ -38010,6 +38115,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ────
  25 │     }
     ╰────
+  note: This is strict mode code
 
   × Expected `(` but found `,`
     ╭─[test262/test/language/statements/function/invalid-2-names.js:17:11]
@@ -38070,6 +38176,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ function arguments() { 'use strict'; }
     ·          ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/function/name-arguments-strict.js:18:10]
@@ -38077,6 +38184,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ function arguments() { }
     ·          ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/function/name-eval-strict-body.js:18:10]
@@ -38084,6 +38192,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ function eval() { 'use strict'; }
     ·          ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/function/name-eval-strict.js:18:10]
@@ -38091,6 +38200,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ function eval() { }
     ·          ────
     ╰────
+  note: This is strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/function/object-destructuring-param-strict-body.js:133:3]
@@ -38107,6 +38217,7 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ function _13_1_20_fun(arguments) { 'use strict'; }
     ·                       ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/function/param-arguments-strict.js:23:22]
@@ -38114,6 +38225,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ function _13_1_3_fun(arguments) { }
     ·                      ─────────
     ╰────
+  note: This is strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/function/param-dflt-yield-strict.js:23:18]
@@ -38202,6 +38314,7 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ function _13_1_16_fun(eval) { 'use strict'; }
     ·                       ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/function/param-eval-strict.js:23:22]
@@ -38209,6 +38322,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ function _13_1_1_fun(eval) { }
     ·                      ────
     ╰────
+  note: This is strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/function/rest-param-strict-body.js:133:3]
@@ -40269,6 +40383,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ try { } catch (arguments) { }
     ·                ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/try/catch-parameter-boundnames-restriction-eval-negative-early.js:17:16]
@@ -40276,6 +40391,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ try { } catch (eval) { }
     ·                ────
     ╰────
+  note: This is strict mode code
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/try/dstr/ary-ptrn-rest-init-ary.js:33:14]
@@ -40727,6 +40843,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ for (var eval in arrObj) { }
     ·          ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/12.2.1-4gs.js:18:5]
@@ -40734,6 +40851,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ var arguments;
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/variable/S12.2_A8_T1.js:18:6]
@@ -40813,6 +40931,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-final.js:20:15]
@@ -40821,6 +40940,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-first-init.js:19:7]
@@ -40829,6 +40949,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────────
  20 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-first.js:20:7]
@@ -40837,6 +40958,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-middle-init.js:19:10]
@@ -40845,6 +40967,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────────
  20 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-middle.js:20:10]
@@ -40853,6 +40976,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-repeated.js:20:7]
@@ -40861,6 +40985,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-repeated.js:20:18]
@@ -40869,6 +40994,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                  ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-single-init.js:20:7]
@@ -40877,6 +41003,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-single.js:20:7]
@@ -40885,6 +41012,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────────
  21 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-final-init.js:19:8]
@@ -40892,6 +41020,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var a, arguments = 42;
     ·        ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-final.js:17:13]
@@ -40899,6 +41028,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var a = 42, arguments;
     ·             ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-first-init.js:16:5]
@@ -40906,6 +41036,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ var arguments = 42, a;
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-first.js:17:5]
@@ -40913,6 +41044,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var arguments, a;
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-middle-init.js:16:8]
@@ -40920,6 +41052,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ var a, arguments = 42, b;
     ·        ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-middle.js:17:8]
@@ -40927,6 +41060,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var a, arguments, b;
     ·        ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-repeated.js:19:5]
@@ -40934,6 +41068,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var arguments, arguments = 42;
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-list-repeated.js:19:16]
@@ -40941,6 +41076,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var arguments, arguments = 42;
     ·                ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-single-init.js:19:5]
@@ -40948,6 +41084,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var arguments = 42;
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-strict-single.js:17:5]
@@ -40955,6 +41092,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var arguments;
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js:25:10]
@@ -41042,6 +41180,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ var a, eval = 42;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-list-final.js:17:8]
@@ -41049,6 +41188,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var a, eval;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-list-first-init.js:19:5]
@@ -41056,6 +41196,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var eval = 42, a;
     ·     ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-list-first.js:17:5]
@@ -41063,6 +41204,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var eval, a = 42;
     ·     ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-list-middle-init.js:16:8]
@@ -41070,6 +41212,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ var a, eval = 42, b;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-list-middle.js:16:8]
@@ -41077,6 +41220,7 @@ Negative Passed: 4651/4651 (100.00%)
  16 │ var a, eval, b;
     ·        ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-list-repeated.js:19:5]
@@ -41084,6 +41228,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var eval, eval;
     ·     ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-list-repeated.js:19:11]
@@ -41091,6 +41236,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var eval, eval;
     ·           ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-single-init.js:19:5]
@@ -41098,6 +41244,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var eval = 42;
     ·     ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/eval-strict-single.js:19:5]
@@ -41105,6 +41252,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ var eval;
     ·     ────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/id-arguments-strict.js:17:5]
@@ -41112,6 +41260,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var arguments;
     ·     ─────────
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/id-eval-strict.js:17:5]
@@ -41119,6 +41268,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var eval;
     ·     ────
     ╰────
+  note: This is strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/variable/static-init-await-binding-invalid.js:25:9]

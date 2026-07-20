@@ -9,6 +9,7 @@ Negative Passed: 153/153 (100.00%)
    ·          ─────────
  2 │ function eval() {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:2:10]
@@ -17,6 +18,7 @@ Negative Passed: 153/153 (100.00%)
    ·          ────
  3 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:4:16]
@@ -25,6 +27,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ─────────
  5 │ function foo2([arguments]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:5:16]
@@ -33,6 +36,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ─────────
  6 │ function foo3({ eval }) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:6:17]
@@ -41,6 +45,7 @@ Negative Passed: 153/153 (100.00%)
    ·                 ────
  7 │ function foo4([eval]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:7:16]
@@ -49,6 +54,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ────
  8 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
