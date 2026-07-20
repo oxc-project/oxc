@@ -174,8 +174,9 @@ impl<'alloc, T> Vec<'alloc, T> {
 
         let allocator = allocator.allocator();
         let boxed = Box::new_in(value, &allocator);
-        let ptr = Box::into_non_null(boxed).as_ptr();
-        // SAFETY: `ptr` contains a valid `T`.
+        let ptr = Box::into_non_null(boxed);
+
+        // SAFETY: `ptr` contains a valid `T`, allocated in `allocator`'s arena.
         // A `Vec` with length 1, capacity 1 can own the same allocation.
         let vec = unsafe { InnerVec::from_raw_parts_in(ptr, 1, 1, allocator.arena()) };
         Self(vec)
@@ -210,7 +211,8 @@ impl<'alloc, T> Vec<'alloc, T> {
 
         let allocator = allocator.allocator();
         let boxed = Box::new_in(array, &allocator);
-        let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
+        let ptr = Box::into_non_null(boxed).cast::<T>();
+
         // SAFETY: `ptr` has correct alignment - it was just allocated as `[T; N]`.
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
