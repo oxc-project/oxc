@@ -33,6 +33,17 @@ impl<'a> AccessorAnnotation<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
+    /// Check whether two accessor keys refer to the same property.
+    ///
+    /// Accessor pairing follows JavaScript property-key semantics, so an identifier,
+    /// string literal, numeric literal, or no-substitution template literal with the
+    /// same static name identifies the same property. Keep structural equality as a
+    /// fallback for supported non-static keys such as `Symbol.iterator`.
+    fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
+        left.static_name().zip(right.static_name()).is_some_and(|(left, right)| left == right)
+            || left.content_eq(right)
+    }
+
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
         match key {
             PropertyKey::StringLiteral(_) | PropertyKey::NumericLiteral(_) => true,
@@ -382,7 +393,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         {
                             if let Some(entry) = method_annotations
                                 .iter_mut()
-                                .find(|(key, _)| method.key.content_eq(key))
+                                .find(|(key, _)| Self::accessor_keys_match(&method.key, key))
                             {
                                 entry.1.setter = Some(annotation);
                             } else {
@@ -408,7 +419,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         if let Some(annotation) = annotation {
                             if let Some(entry) = method_annotations
                                 .iter_mut()
-                                .find(|(key, _)| method.key.content_eq(key))
+                                .find(|(key, _)| Self::accessor_keys_match(&method.key, key))
                             {
                                 entry.1.getter = Some(annotation);
                             } else {
@@ -494,7 +505,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 if let Some(param) = params.items.first_mut()
                                     && let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
-                                            if method.key.content_eq(key) {
+                                            if Self::accessor_keys_match(&method.key, key) {
                                                 Some(
                                                     annotation
                                                         .get_setter_annotation(self.allocator()),
@@ -555,7 +566,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         MethodDefinitionKind::Get => {
                             let rt = accessor_annotations.iter().find_map(|(key, annotation)| {
-                                if method.key.content_eq(key) {
+                                if Self::accessor_keys_match(&method.key, key) {
                                     // No explicit return type for getter, should infer it from the first parameter of setter, if not exists,
                                     // use the inferred return type of getter.
                                     if method.value.return_type.is_none() {
