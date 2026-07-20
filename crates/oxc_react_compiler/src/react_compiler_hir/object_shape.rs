@@ -165,7 +165,7 @@ impl<'a> ShapeRegistry<'a> {
     }
 
     pub fn get(&self, key: &str) -> Option<&ObjectShape<'a>> {
-        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key).map(shrink_shape)))
+        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key)))
     }
 
     pub fn insert(&mut self, key: Ident<'a>, value: ObjectShape<'a>) {
@@ -201,11 +201,6 @@ impl<'a> ShapeRegistry<'a> {
             None => Ident::from(&*format!("<generated_{id}>").leak()),
         }
     }
-}
-
-/// Coerce a static shape reference to the arena lifetime (covariant).
-fn shrink_shape<'a, 'b>(shape: &'b ObjectShape<'static>) -> &'b ObjectShape<'a> {
-    shape
 }
 
 impl Default for ShapeRegistry<'_> {
