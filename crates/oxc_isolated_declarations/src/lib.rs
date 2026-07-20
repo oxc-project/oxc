@@ -28,6 +28,7 @@ mod r#enum;
 mod formal_parameter_binding_pattern;
 mod function;
 mod inferrer;
+mod json;
 mod literal;
 mod module;
 mod return_type;
@@ -105,6 +106,66 @@ impl<'a> IsolatedDeclarations<'a> {
                 program.comments.iter().filter(|c| c.is_jsdoc()).copied(),
                 &self,
             ),
+            None,
+            [],
+            stmts,
+            &self,
+        );
+        IsolatedDeclarationsReturn { program, diagnostics: self.take_errors() }
+    }
+
+    /// Build isolated declarations for a JSON module from its parsed value expression.
+    ///
+    /// Matches TypeScript's behavior of treating a `.json` file as a module whose
+    /// default export is the (widened) type of the JSON value:
+    ///
+    /// ```ts
+    /// declare const _default: {
+    ///     name: string;
+    /// };
+    /// export default _default;
+    /// ```
+    pub fn build_json(
+        self,
+        expression: &Expression<'a>,
+        source_text: &'a str,
+    ) -> IsolatedDeclarationsReturn<'a> {
+        let ts_type = self.transform_json_expression_to_ts_type(expression);
+        let name = self.create_unique_name("_default");
+
+        // `declare const _default: <type>;`
+        let id = BindingPattern::new_binding_identifier(SPAN, name, &self);
+        let type_annotation = TSTypeAnnotation::new(SPAN, ts_type, &self);
+        let declarator = VariableDeclarator::new(
+            SPAN,
+            VariableDeclarationKind::Const,
+            id,
+            Some(type_annotation),
+            None,
+            false,
+            &self,
+        );
+        let const_declaration = Statement::new_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Const,
+            [declarator],
+            true,
+            &self,
+        );
+
+        // `export default _default;`
+        let export_default = Statement::new_export_default_declaration(
+            SPAN,
+            ExportDefaultDeclarationKind::from(Expression::new_identifier(SPAN, name, &self)),
+            &self,
+        );
+
+        let stmts = ArenaVec::from_iter_in([const_declaration, export_default], &self);
+        let program = Program::new(
+            SPAN,
+            SourceType::d_ts(),
+            source_text,
+            ArenaVec::new_in(&self),
             None,
             [],
             stmts,
