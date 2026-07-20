@@ -10,6 +10,8 @@
 
 use std::mem::take;
 
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
+
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -59,7 +61,7 @@ pub fn merge_reactive_scopes_that_invalidate_together<'a>(
         last_usage,
         temporaries: IndexVec::from_vec(vec![None; num_identifiers]),
     };
-    let mut state: Option<Vec<ReactiveScopeDependency>> = None;
+    let mut state = None;
     transform_reactive_function(func, &mut transform, &mut state)
 }
 
@@ -100,7 +102,7 @@ struct MergeTransform<'a, 'e> {
 }
 
 impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
-    type State = Option<Vec<ReactiveScopeDependency<'a>>>;
+    type State = Option<ArenaVec<'a, ReactiveScopeDependency<'a>>>;
 
     fn env(&self) -> &Environment<'a> {
         self.env
@@ -112,10 +114,10 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
-        let scope_deps = self.env.scopes[scope.scope].dependencies.clone();
+        let scope_deps = self.env.scopes[scope.scope].dependencies.clone_in(self.env.allocator);
         // Save parent state and recurse with this scope's deps as state
         let parent_state = state.take();
-        *state = Some(scope_deps.clone());
+        *state = Some(scope_deps.clone_in(self.env.allocator));
         self.visit_scope(scope, state)?;
         // Restore parent state
         *state = parent_state;
@@ -277,7 +279,11 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                 current_range_end.max(next_range_end);
 
                             // Merge declarations from next into current
-                            let next_decls = self.env.scopes[next_scope_id].declarations.clone();
+                            let next_decls = self.env.scopes[next_scope_id]
+                                .declarations
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>();
                             for (key, value) in next_decls {
                                 let current_decls =
                                     &mut self.env.scopes[current_scope_id].declarations;
@@ -456,7 +462,7 @@ fn can_merge_scopes<'a>(
         .map(|(_key, decl)| ReactiveScopeDependency {
             identifier: decl.identifier,
             reactive: true,
-            path: Vec::new(),
+            path: ArenaVec::new_in(&env.allocator),
             span: None,
         })
         .collect();

@@ -11,6 +11,7 @@ pub mod visitors;
 
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::OrderedSet;
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, Str};
@@ -1176,44 +1177,76 @@ pub enum PropertyNameKind<'a> {
 // ReactiveScope
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ReactiveScope<'a> {
     pub id: ScopeId,
     pub range: MutableRange,
 
     /// The inputs to this reactive scope (populated by later passes)
-    pub dependencies: Vec<ReactiveScopeDependency<'a>>,
+    pub dependencies: ArenaVec<'a, ReactiveScopeDependency<'a>>,
 
     /// The set of values produced by this scope (populated by later passes)
-    pub declarations: Vec<(IdentifierId, ReactiveScopeDeclaration)>,
+    pub declarations: ArenaVec<'a, (IdentifierId, ReactiveScopeDeclaration)>,
 
     /// Identifiers which are reassigned by this scope (populated by later passes)
-    pub reassignments: Vec<IdentifierId>,
+    pub reassignments: ArenaVec<'a, IdentifierId>,
 
     /// If the scope contains an early return, this stores info about it (populated by later passes)
     pub early_return_value: Option<ReactiveScopeEarlyReturn>,
 
     /// Scopes that were merged into this one (populated by later passes)
-    pub merged: Vec<ScopeId>,
+    pub merged: ArenaVec<'a, ScopeId>,
 
     /// Source location spanning the scope
     pub span: Option<Span>,
 }
 
 /// A dependency of a reactive scope.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ReactiveScopeDependency<'a> {
     pub identifier: IdentifierId,
     pub reactive: bool,
-    pub path: Vec<DependencyPathEntry<'a>>,
+    pub path: ArenaVec<'a, DependencyPathEntry<'a>>,
     pub span: Option<Span>,
 }
 
 /// A declaration produced by a reactive scope.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ReactiveScopeDeclaration {
     pub identifier: IdentifierId,
     pub scope: ScopeId,
+}
+
+// --- Arena `CloneIn` for the `ReactiveScope` subtree ------------------------
+// Arena `Vec` is not `Clone`. HIR clones are same-arena and `Ident`/leaves borrow
+// the source AST, so `Copy` ids/leaves clone via `*self` and only the arena `Vec`s
+// recurse. Construction (`new_in`/`from_iter_in`) takes `&alloc`; `clone_in` takes
+// `alloc`.
+
+/// Trivial `CloneIn` for `Copy` HIR leaves/ids used inside arena `Vec`s.
+macro_rules! impl_trivial_clone_in {
+    ($($ty:ty),+ $(,)?) => {
+        $(impl<'a> CloneIn<'a> for $ty {
+            type Cloned = $ty;
+            #[inline(always)]
+            fn clone_in_impl(&self, _: CloneInSemanticIds, _: &'a Allocator) -> $ty {
+                *self
+            }
+        })+
+    };
+}
+impl_trivial_clone_in!(DependencyPathEntry<'a>);
+
+impl<'a> CloneIn<'a> for ReactiveScopeDependency<'a> {
+    type Cloned = ReactiveScopeDependency<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ReactiveScopeDependency {
+            identifier: self.identifier,
+            reactive: self.reactive,
+            path: self.path.clone_in_impl(sem, alloc),
+            span: self.span,
+        }
+    }
 }
 
 /// Early return value info for a reactive scope.

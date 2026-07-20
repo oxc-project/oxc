@@ -663,9 +663,10 @@ fn ox_codegen_reactive_scope<'a>(
     scope_id: ScopeId,
     block: &ReactiveBlock<'a>,
 ) -> Result<(), OxcDiagnostic> {
-    let scope_deps = cx.env.scopes[scope_id].dependencies.clone();
-    let scope_decls = cx.env.scopes[scope_id].declarations.clone();
-    let scope_reassignments = cx.env.scopes[scope_id].reassignments.clone();
+    let scope_deps = cx.env.scopes[scope_id].dependencies.clone_in(cx.env.allocator);
+    let scope_decls = cx.env.scopes[scope_id].declarations.iter().copied().collect::<Vec<_>>();
+    let scope_reassignments =
+        cx.env.scopes[scope_id].reassignments.iter().copied().collect::<Vec<_>>();
 
     let mut cache_store_stmts: oxc_allocator::Vec<'a, oxc::Statement<'a>> =
         oxc_allocator::ArenaVec::new_in(&cx.ast);

@@ -123,7 +123,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 // Propagate always-invalidating and unmemoized to declarations/reassignments
                 let decl_ids: Vec<IdentifierId> =
                     scope_data.declarations.iter().map(|(_, decl)| decl.identifier).collect();
-                let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.clone();
+                let reassign_ids: Vec<IdentifierId> =
+                    scope_data.reassignments.iter().copied().collect();
 
                 for id in &decl_ids {
                     if self.always_invalidating_values.contains(id) {
