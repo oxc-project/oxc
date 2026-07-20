@@ -3350,7 +3350,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9900,7 +9917,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vitest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -17225,6 +17259,42 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, allows bitwise expressions in enum member initializers.\nThis includes bitwise NOT (`~`), AND (`&`), OR (`|`), XOR (`^`), and shift operators (`<<`, `>>`, `>>>`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferLowercaseTitleConfig": {
+      "type": "object",
+      "properties": {
+        "allowedPrefixes": {
+          "description": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with. This can be useful when writing tests for API endpoints, where\nyou'd like to prefix with the HTTP method.\nBy default, nothing is allowed (the equivalent of `{ \"allowedPrefixes\": [] }`).\n\nExample of **correct** code for the `{ \"allowedPrefixes\": [\"GET\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"allowedPrefixes\": [\"GET\"] }] */\ndescribe('GET /live');\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with. This can be useful when writing tests for API endpoints, where\nyou'd like to prefix with the HTTP method.\nBy default, nothing is allowed (the equivalent of `{ \"allowedPrefixes\": [] }`).\n\nExample of **correct** code for the `{ \"allowedPrefixes\": [\"GET\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"allowedPrefixes\": [\"GET\"] }] */\ndescribe('GET /live');\n```"
+        },
+        "ignore": {
+          "description": "This array option controls which Jest or Vitest functions are checked by this rule. There\nare four possible values:\n- `\"describe\"`\n- `\"test\"`\n- `\"it\"`\n- `\"bench\"`\n\nBy default, none of these options are enabled (the equivalent of\n`{ \"ignore\": [] }`).\n\nExample of **correct** code for the `{ \"ignore\": [\"describe\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"describe\"] }] */\ndescribe('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"test\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"test\"] }] */\ntest('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"it\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"it\"] }] */\nit('Uppercase description');\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option controls which Jest or Vitest functions are checked by this rule. There\nare four possible values:\n- `\"describe\"`\n- `\"test\"`\n- `\"it\"`\n- `\"bench\"`\n\nBy default, none of these options are enabled (the equivalent of\n`{ \"ignore\": [] }`).\n\nExample of **correct** code for the `{ \"ignore\": [\"describe\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"describe\"] }] */\ndescribe('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"test\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"test\"] }] */\ntest('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"it\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"it\"] }] */\nit('Uppercase description');\n```"
+        },
+        "ignoreTopLevelDescribe": {
+          "description": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.\n\nExample of **correct** code for the `{ \"ignoreTopLevelDescribe\": true }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignoreTopLevelDescribe\": true }] */\ndescribe('MyClass', () => {\ndescribe('#myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.\n\nExample of **correct** code for the `{ \"ignoreTopLevelDescribe\": true }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignoreTopLevelDescribe\": true }] */\ndescribe('MyClass', () => {\ndescribe('#myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```"
+        },
+        "lowercaseFirstCharacterOnly": {
+          "description": "This option can be set to only validate that the first character of a test name is lowercased.\n\nExample of **correct** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('myClass', () => {\ndescribe('myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```\n\nExample of **incorrect** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('MyClass', () => {\ndescribe('MyMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to only validate that the first character of a test name is lowercased.\n\nExample of **correct** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('myClass', () => {\ndescribe('myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```\n\nExample of **incorrect** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('MyClass', () => {\ndescribe('MyMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```"
         }
       },
       "additionalProperties": false
