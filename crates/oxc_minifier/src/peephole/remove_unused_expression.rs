@@ -10,9 +10,8 @@ use oxc_ecmascript::{
     ToPrimitive,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
-use oxc_semantic::Scoping;
 use oxc_span::GetSpan;
-use oxc_syntax::symbol::{SymbolFlags, SymbolId};
+use oxc_syntax::symbol::SymbolId;
 
 use super::PeepholeOptimizations;
 use super::fold_constants::is_cjs_module_exports_hint;
@@ -1010,7 +1009,7 @@ impl<'a> PeepholeOptimizations {
         c: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<ArenaVec<'a, Expression<'a>>> {
-        match Self::classify_class_removability(c, &*ctx, ctx.scoping()) {
+        match Self::classify_class_removability(c, &*ctx) {
             ClassRemovability::Keep => return None,
             // Nothing to extract by construction: `RemovesClean` means pure
             // heritage, no present static values, pure computed keys — so
@@ -1077,7 +1076,6 @@ impl<'a> PeepholeOptimizations {
     pub(crate) fn classify_class_removability(
         c: &Class<'a>,
         ctx: &impl MayHaveSideEffectsContext<'a>,
-        scoping: &Scoping,
     ) -> ClassRemovability {
         // Don't remove classes with decorators - they may have side effects.
         if !c.decorators.is_empty() {
@@ -1092,15 +1090,10 @@ impl<'a> PeepholeOptimizations {
                 let Some(last) = seq.expressions.last() else { break };
                 e = last.get_inner_expression();
             }
-            match e {
-                // TypeError `class C extends (() => {}) {}`.
-                Expression::ArrowFunctionExpression(_) => return ClassRemovability::Keep,
-                Expression::Identifier(ident)
-                    if Self::heritage_may_be_uninitialized(ident, scoping) =>
-                {
-                    return ClassRemovability::Keep;
-                }
-                _ => {}
+            // Keep the existing statically-provable TypeError for literal
+            // arrow heritage: `class C extends (() => {}) {}`.
+            if matches!(e, Expression::ArrowFunctionExpression(_)) {
+                return ClassRemovability::Keep;
             }
         }
         let mut extracts = false;
@@ -1142,29 +1135,6 @@ impl<'a> PeepholeOptimizations {
             extracts = true;
         }
         if extracts { ClassRemovability::Extracts } else { ClassRemovability::RemovesClean }
-    }
-
-    /// A heritage identifier can throw at class-evaluation time regardless
-    /// of expression purity: the class's own name and any lexical binding
-    /// declared later are in their TDZ (ReferenceError — test262
-    /// class/name-binding/in-extends-expression.js), and a
-    /// hoisted-but-unassigned `var` or missing parameter evaluates to
-    /// `undefined` (TypeError: not a constructor). Reference order cannot be
-    /// proven mid-minification (transforms copy and move spans), so any
-    /// heritage resolving to a class, lexical, or `var` binding is
-    /// conservatively unremovable. Hoisted plain function declarations and
-    /// import bindings are initialized before evaluation and stay removable;
-    /// unresolved identifiers keep flowing through the global side-effect
-    /// machinery. The deeper fix — modeling potentially-uninitialized
-    /// identifier reads — belongs in `oxc_ecmascript`'s side-effect layer,
-    /// which currently treats every resolved identifier read as pure.
-    fn heritage_may_be_uninitialized(ident: &IdentifierReference<'_>, scoping: &Scoping) -> bool {
-        const UNINIT_RISK: SymbolFlags = SymbolFlags::Variable.union(SymbolFlags::Class);
-        ident
-            .reference_id
-            .get()
-            .and_then(|reference_id| scoping.get_reference(reference_id).symbol_id())
-            .is_some_and(|symbol_id| scoping.symbol_flags(symbol_id).intersects(UNINIT_RISK))
     }
 
     /// Expression kinds the `remove_unused_expression` dispatch above sends

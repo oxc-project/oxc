@@ -545,41 +545,27 @@ fn keep_recursive_cycle_with_side_effectful_evaluation() {
 // ---- Class heritage classification ----
 
 #[test]
+fn remove_unused_class_identifier_heritage_under_assumptions() {
+    // ASSUMPTIONS.md excludes TDZ violations and side effects from extending a class.
+    test_smallest("var A = class {}; var B = class extends A {}; var C = class extends B {};", "");
+    test_smallest("(class extends g() {});", "g();");
+}
+
+#[test]
 fn keep_class_cycle_with_wrapped_arrow_heritage() {
-    // The heritage wrapper folds to a literal arrow, but extending an arrow is
-    // a guaranteed TypeError, so count-based class removal must still keep the
-    // declaration and its cycle.
-    test_smallest(
-        "class A extends (0, () => {}) { m() { new B() } } class B { m() { new A() } } console.log(1);",
-        "class A extends (() => {}) {\n\tm() {\n\t\tnew B();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}\nconsole.log(1);",
-    );
-    // The single, fully-unused class is kept for the same reason a literal
-    // arrow heritage is kept: evaluating it is a guaranteed TypeError.
+    // The arrow check sees through a sequence wrapper.
     test_smallest("class C extends (0, () => {}) {}", "class C extends (() => {}) {}");
 }
 
 #[test]
-fn keep_class_with_tdz_or_undefined_heritage() {
-    // test262 language/statements/class/name-binding/in-extends-expression.js:
-    // the class's own name is in its TDZ while the heritage evaluates, so the
-    // declaration is a guaranteed ReferenceError that must survive.
+fn keep_referenced_classes_with_identifier_heritage() {
+    // Ordinary references keep these classes live independently of heritage errors.
     test_same_smallest("class C extends C {}");
-    // The test262 shape: the class lives in a callback whose call is live.
-    // (A NAMED function wrapper additionally hits a pre-existing hole in the
-    // pure-function model — `may_have_side_effects` does not model heritage
-    // TDZ throws, so `f` reads as pure and the call is dropped on `main`
-    // too; that is a separate `oxc_ecmascript` issue, not covered here.)
     test_same_smallest("g(function() {\n\tclass C extends C {}\n});");
-    // The wrapped variant classifies through the same heritage unwrap.
     test_smallest("class C extends (0, C) {}", "class C extends C {}");
-    // A forward lexical heritage also evaluates in its TDZ; reference order
-    // cannot be proven mid-minification (transforms copy and move spans), so
-    // any class/lexical/`var` heritage keeps the class.
     test_same_smallest(
         "class A extends B {\n\tm() {\n\t\tnew A();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}",
     );
-    // `var` heritage: a hoisted-but-unassigned binding is `undefined`, and
-    // `extends undefined` is a TypeError.
     test_same_smallest("var B = class {};\nclass A extends B {\n\tm() {\n\t\tnew A();\n\t}\n}");
 }
 
@@ -589,12 +575,12 @@ fn keep_class_cycle_with_hoisted_function_heritage() {
     test_same_smallest("function F() {}\nclass A extends F {\n\tm() {\n\t\tnew A();\n\t}\n}");
 }
 
-// Classes remain count-managed. A logical fold (`0 || Y` -> `Y`) may surface
-// risky heritage mid-pass, but it must not make the surrounding class cycle
-// removable. Everything is kept; only the fold itself changes the output.
+// Classes remain count-managed. A logical fold (`0 || Y` -> `Y`) may change
+// heritage structure mid-pass, but it must not make the surrounding class
+// cycle removable. Everything is kept; only the fold itself changes output.
 #[test]
 fn keep_class_cycle_with_fold_unstable_heritage() {
-    // Risky identifier (initialized var) inside a foldable wrapper.
+    // Identifier heritage inside a foldable wrapper.
     test_smallest(
         "class B { m() { new A() } } var Y = class {}; class A extends (0 || Y) { [B]() {} }",
         "class B {\n\tm() {\n\t\tnew A();\n\t}\n}\nvar Y = class {};\nclass A extends Y {\n\t[B]() {}\n}",
