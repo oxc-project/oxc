@@ -25,7 +25,8 @@ impl<'a> PeepholeOptimizations {
         for (idx, stmt) in case.consequent.iter().enumerate().rev() {
             // Skip terminal statement if it's an unlabeled break
             if idx == last_idx
-                && matches!(stmt, Statement::BreakStatement(break_stmt) if break_stmt.label.is_none())
+                && let Statement::BreakStatement(break_stmt) = stmt
+                && break_stmt.label.is_none()
             {
                 continue;
             }

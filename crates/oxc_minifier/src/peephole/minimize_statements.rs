@@ -1768,9 +1768,9 @@ impl<'a> PeepholeOptimizations {
                         AssignmentTarget::ComputedMemberExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
                                 || Self::computed_key_blocks_reorder(
-                                &member_expr.expression,
-                                ctx,
-                            )
+                                    &member_expr.expression,
+                                    ctx,
+                                )
                         }
                         AssignmentTarget::PrivateFieldExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
