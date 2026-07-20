@@ -14919,7 +14919,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-rest-param.js:39:28]
  38 │ 
  39 │ let f = () => import.defer(...['./empty_FIXTURE.js']);
@@ -14950,7 +14950,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-source-no-rest-param.js:43:29]
  42 │ 
  43 │ let f = () => import.source(...['<module source>']);
@@ -14973,7 +14973,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-no-rest-param.js:42:22]
  41 │ 
  42 │ let f = () => import(...['']);
@@ -15047,7 +15047,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-rest-param.js:40:16]
  39 │ let f = () => {
  40 │   import.defer(...['./empty_FIXTURE.js']);
@@ -15081,7 +15081,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-source-no-rest-param.js:44:17]
  43 │ let f = () => {
  44 │   import.source(...['<module source>']);
@@ -15107,7 +15107,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-no-rest-param.js:43:10]
  42 │ let f = () => {
  43 │   import(...['']);
@@ -15191,7 +15191,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-rest-param.js:40:22]
  39 │ (async () => {
  40 │   await import.defer(...['./empty_FIXTURE.js'])
@@ -15225,7 +15225,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-source-no-rest-param.js:44:23]
  43 │ (async () => {
  44 │   await import.source(...['<module source>'])
@@ -15251,7 +15251,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-no-rest-param.js:43:16]
  42 │ (async () => {
  43 │   await import(...[''])
@@ -15333,7 +15333,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-rest-param.js:39:33]
  38 │ 
  39 │ (async () => await import.defer(...['./empty_FIXTURE.js']))
@@ -15364,7 +15364,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-source-no-rest-param.js:43:34]
  42 │ 
  43 │ (async () => await import.source(...['<module source>']))
@@ -15387,7 +15387,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-no-rest-param.js:42:27]
  41 │ 
  42 │ (async () => await import(...['']))
@@ -15477,7 +15477,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-rest-param.js:40:22]
  39 │ async function f() {
  40 │   await import.defer(...['./empty_FIXTURE.js']);
@@ -15511,7 +15511,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-source-no-rest-param.js:44:23]
  43 │ async function f() {
  44 │   await import.source(...['<module source>']);
@@ -15537,7 +15537,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-no-rest-param.js:43:16]
  42 │ async function f() {
  43 │   await import(...['']);
@@ -15613,7 +15613,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-rest-param.js:40:16]
  39 │ async function f() {
  40 │   import.defer(...['./empty_FIXTURE.js']);
@@ -15647,7 +15647,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-source-no-rest-param.js:44:17]
  43 │ async function f() {
  44 │   import.source(...['<module source>']);
@@ -15673,7 +15673,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-no-rest-param.js:43:10]
  42 │ async function f() {
  43 │   import(...['']);
@@ -15731,7 +15731,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-rest-param.js:40:29]
  39 │ async function f() {
  40 │   return await import.defer(...['./empty_FIXTURE.js']);
@@ -15765,7 +15765,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-source-no-rest-param.js:44:30]
  43 │ async function f() {
  44 │   return await import.source(...['<module source>']);
@@ -15791,7 +15791,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-no-rest-param.js:43:23]
  42 │ async function f() {
  43 │   return await import(...['']);
@@ -15901,7 +15901,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-rest-param.js:40:22]
  39 │ async function * f() {
  40 │   await import.defer(...['./empty_FIXTURE.js'])
@@ -15935,7 +15935,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-source-no-rest-param.js:44:23]
  43 │ async function * f() {
  44 │   await import.source(...['<module source>'])
@@ -15961,7 +15961,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-no-rest-param.js:43:16]
  42 │ async function * f() {
  43 │   await import(...[''])
@@ -16045,7 +16045,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-rest-param.js:40:16]
  39 │ {
  40 │   import.defer(...['./empty_FIXTURE.js']);
@@ -16079,7 +16079,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-source-no-rest-param.js:44:17]
  43 │ {
  44 │   import.source(...['<module source>']);
@@ -16129,7 +16129,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-rest-param.js:40:16]
  39 │ label: {
  40 │   import.defer(...['./empty_FIXTURE.js']);
@@ -16163,7 +16163,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-source-no-rest-param.js:44:17]
  43 │ label: {
  44 │   import.source(...['<module source>']);
@@ -16189,7 +16189,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-no-rest-param.js:43:10]
  42 │ label: {
  43 │   import(...['']);
@@ -16249,7 +16249,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-no-rest-param.js:43:10]
  42 │ {
  43 │   import(...['']);
@@ -16333,7 +16333,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-rest-param.js:40:16]
  39 │ do {
  40 │   import.defer(...['./empty_FIXTURE.js']);
@@ -16367,7 +16367,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-source-no-rest-param.js:44:17]
  43 │ do {
  44 │   import.source(...['<module source>']);
@@ -16393,7 +16393,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-no-rest-param.js:43:10]
  42 │ do {
  43 │   import(...['']);
@@ -16483,7 +16483,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-rest-param.js:41:21]
  40 │ 
  41 │ } else import.defer(...['./empty_FIXTURE.js']);
@@ -16514,7 +16514,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-source-no-rest-param.js:45:22]
  44 │ 
  45 │ } else import.source(...['<module source>']);
@@ -16537,7 +16537,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-no-rest-param.js:44:15]
  43 │ 
  44 │ } else import(...['']);
@@ -16611,7 +16611,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-rest-param.js:42:16]
  41 │ } else {
  42 │   import.defer(...['./empty_FIXTURE.js']);
@@ -16645,7 +16645,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-source-no-rest-param.js:46:17]
  45 │ } else {
  46 │   import.source(...['<module source>']);
@@ -16671,7 +16671,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-no-rest-param.js:45:10]
  44 │ } else {
  45 │   import(...['']);
@@ -16755,7 +16755,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-rest-param.js:40:16]
  39 │ function fn() {
  40 │   import.defer(...['./empty_FIXTURE.js']);
@@ -16789,7 +16789,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-source-no-rest-param.js:44:17]
  43 │ function fn() {
  44 │   import.source(...['<module source>']);
@@ -16815,7 +16815,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-no-rest-param.js:43:10]
  42 │ function fn() {
  43 │   import(...['']);
@@ -16873,7 +16873,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-rest-param.js:40:23]
  39 │ function fn() {
  40 │   return import.defer(...['./empty_FIXTURE.js']);
@@ -16907,7 +16907,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-source-no-rest-param.js:44:24]
  43 │ function fn() {
  44 │   return import.source(...['<module source>']);
@@ -16933,7 +16933,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-no-rest-param.js:43:17]
  42 │ function fn() {
  43 │   return import(...['']);
@@ -17049,7 +17049,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-rest-param.js:39:24]
  38 │ 
  39 │ if (true) import.defer(...['./empty_FIXTURE.js']);
@@ -17080,7 +17080,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-source-no-rest-param.js:43:25]
  42 │ 
  43 │ if (true) import.source(...['<module source>']);
@@ -17103,7 +17103,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-no-rest-param.js:42:18]
  41 │ 
  42 │ if (true) import(...['']);
@@ -17177,7 +17177,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-rest-param.js:40:16]
  39 │ if (true) {
  40 │   import.defer(...['./empty_FIXTURE.js']);
@@ -17211,7 +17211,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-source-no-rest-param.js:44:17]
  43 │ if (true) {
  44 │   import.source(...['<module source>']);
@@ -17237,7 +17237,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-no-rest-param.js:43:10]
  42 │ if (true) {
  43 │   import(...['']);
@@ -17321,7 +17321,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-rest-param.js:42:16]
  41 │   x++;
  42 │   import.defer(...['./empty_FIXTURE.js']);
@@ -17355,7 +17355,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-source-no-rest-param.js:46:17]
  45 │   x++;
  46 │   import.source(...['<module source>']);
@@ -17381,7 +17381,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-no-rest-param.js:45:10]
  44 │   x++;
  45 │   import(...['']);
@@ -17471,7 +17471,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-rest-param.js:38:20]
  37 │ 
  38 │ with (import.defer(...['./empty_FIXTURE.js'])) {}
@@ -17502,7 +17502,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-source-no-rest-param.js:42:21]
  41 │ 
  42 │ with (import.source(...['<module source>'])) {}
@@ -17525,7 +17525,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-no-rest-param.js:41:14]
  40 │ 
  41 │ with (import(...[''])) {}
@@ -17599,7 +17599,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-rest-param.js:39:16]
  38 │ with ({}) {
  39 │   import.defer(...['./empty_FIXTURE.js']);
@@ -17633,7 +17633,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-source-no-rest-param.js:43:17]
  42 │ with ({}) {
  43 │   import.source(...['<module source>']);
@@ -17659,7 +17659,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-no-rest-param.js:42:10]
  41 │ with ({}) {
  42 │   import(...['']);
@@ -17741,7 +17741,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-rest-param.js:29:14]
  28 │ 
  29 │ import.defer(...['./empty_FIXTURE.js']);
@@ -17772,7 +17772,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-source-no-rest-param.js:33:15]
  32 │ 
  33 │ import.source(...['<module source>']);
@@ -17795,7 +17795,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this with parenthesis
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-no-rest-param.js:32:8]
  31 │ 
  32 │ import(...['']);

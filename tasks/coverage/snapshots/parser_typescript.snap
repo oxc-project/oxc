@@ -18225,7 +18225,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ───
    ╰────
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionGrammarError.ts:5:8]
  4 │ var a = ["./0"];
  5 │ import(...["PathModule"]);

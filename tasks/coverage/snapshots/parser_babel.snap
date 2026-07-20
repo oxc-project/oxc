@@ -5850,7 +5850,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-arguments-spread/input.js:1:8]
  1 │ import(...[1])
    ·        ───
@@ -5889,7 +5889,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/invalid-arguments-spread/input.js:1:8]
  1 │ import(...[1])
    ·        ───
@@ -8537,7 +8537,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-spread-element-import-call/input.js:1:22]
  1 │ import("./foo.json", ...[]);
    ·                      ───

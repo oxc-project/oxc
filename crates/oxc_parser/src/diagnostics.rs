@@ -833,6 +833,10 @@ parser_diagnostics! {
         OxcDiagnostic::error("Dynamic imports can only accept a module specifier and an optional set of attributes as arguments").with_label(span)
     };
 
+    dynamic_import_argument_spread(span: Span) => {
+        ts_error("1325", "Argument of dynamic import cannot be a spread element.").with_label(span)
+    };
+
     rest_element_property_name(span: Span) => {
         ts_error("2566", "A rest element cannot have a property name.").with_label(span)
     };

@@ -41,9 +41,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let has_in = self.ctx.has_in();
         self.ctx = self.ctx.and_in(true);
-        let expression = self.parse_assignment_expression_or_higher();
+        let expression = self.parse_import_argument();
         let arguments = if self.eat(Kind::Comma) && !self.at(Kind::RParen) {
-            Some(self.parse_assignment_expression_or_higher())
+            Some(self.parse_import_argument())
         } else {
             None
         };
@@ -57,6 +57,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let expr = ImportExpression::boxed(self.end_span(span), expression, arguments, phase, self);
         self.module_record_builder.visit_import_expression(&expr);
         Expression::ImportExpression(expr)
+    }
+
+    /// An argument of `ImportCall`. Spread elements are not allowed.
+    fn parse_import_argument(&mut self) -> Expression<'a> {
+        if self.at(Kind::Dot3) {
+            let error = diagnostics::dynamic_import_argument_spread(self.cur_token().span());
+            return self.fatal_error(error);
+        }
+        self.parse_assignment_expression_or_higher()
     }
 
     /// Section 16.2.2 Import Declaration
