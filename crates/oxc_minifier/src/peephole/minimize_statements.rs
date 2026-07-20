@@ -737,7 +737,7 @@ impl<'a> PeepholeOptimizations {
         is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
     }
 
-    fn create_block_from_switch_case(
+    fn wrap_in_block_stmt_if_needed(
         vec: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -750,6 +750,15 @@ impl<'a> PeepholeOptimizations {
                 ctx.create_child_scope_of_current(ScopeFlags::empty()),
                 ctx,
             )
+        }
+    }
+
+    fn try_to_drop_last_break(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(Statement::BreakStatement(last_break)) = stmts.last()
+            && last_break.label.is_none()
+        {
+            let dropped = stmts.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
     }
 
@@ -829,65 +838,54 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        match switch_stmt.cases.len() {
-            0 => {
-                result.push(Statement::new_expression_statement(
+        if switch_stmt.cases.is_empty() {
+            result.push(Statement::new_expression_statement(
+                switch_stmt.span,
+                switch_stmt.discriminant.take_in(ctx),
+                ctx,
+            ));
+            return;
+        } else if let Some(last_case) = switch_stmt.cases.last_mut() {
+            Self::try_to_drop_last_break(&mut last_case.consequent, ctx);
+        }
+
+        if !ctx.is_tree_shake_only()
+            && switch_stmt.cases.len() == 1
+            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0], ctx)
+            && let Some(mut case) = switch_stmt.cases.pop()
+        {
+            ctx.notice_change();
+
+            Self::try_to_drop_last_break(&mut case.consequent, ctx);
+            let block_stmt = Self::wrap_in_block_stmt_if_needed(&mut case.consequent, ctx);
+
+            if let Some(test) = case.test {
+                result.push(Statement::new_if_statement(
                     switch_stmt.span,
+                    Expression::new_binary_expression(
+                        SPAN,
+                        switch_stmt.discriminant.take_in(ctx),
+                        BinaryOperator::StrictEquality,
+                        test,
+                        ctx,
+                    ),
+                    block_stmt,
+                    None,
+                    ctx,
+                ));
+                return;
+            }
+
+            if !switch_stmt.discriminant.is_literal() {
+                result.push(Statement::new_expression_statement(
+                    switch_stmt.discriminant.span(),
                     switch_stmt.discriminant.take_in(ctx),
                     ctx,
                 ));
-                ctx.notice_change();
-                return;
             }
-            1 if !ctx.is_tree_shake_only()
-                && Self::can_switch_case_be_inlined(&switch_stmt.cases[0], ctx) =>
-            {
-                ctx.notice_change();
 
-                let mut case = switch_stmt.cases.pop().unwrap();
-
-                if let Some(Statement::BreakStatement(break_stmt)) = case.consequent.last()
-                    && break_stmt.label.is_none()
-                {
-                    case.consequent.pop();
-                }
-
-                if let Some(test) = case.test {
-                    result.push(Statement::new_if_statement(
-                        switch_stmt.span,
-                        Expression::new_binary_expression(
-                            SPAN,
-                            switch_stmt.discriminant.take_in(ctx),
-                            BinaryOperator::StrictEquality,
-                            test,
-                            ctx,
-                        ),
-                        Self::create_block_from_switch_case(&mut case.consequent, ctx),
-                        None,
-                        ctx,
-                    ));
-                    return;
-                }
-
-                if !switch_stmt.discriminant.is_literal() {
-                    result.push(Statement::new_expression_statement(
-                        switch_stmt.discriminant.span(),
-                        switch_stmt.discriminant.take_in(ctx),
-                        ctx,
-                    ));
-                }
-
-                result.push(Self::create_block_from_switch_case(&mut case.consequent, ctx));
-                return;
-            }
-            _ => {}
-        }
-        if let Some(last_case) = switch_stmt.cases.last_mut()
-            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
-            && last_break.label.is_none()
-        {
-            let dropped = last_case.consequent.pop().unwrap();
-            ctx.drop_statement(&dropped);
+            result.push(block_stmt);
+            return;
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));

@@ -14,6 +14,10 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
+        if case.consequent.is_empty() {
+            return true;
+        }
+
         let mut break_finder = FindNestedBreak { found_unlabelled_break: false };
         let last_idx = case.consequent.len() - 1;
 
