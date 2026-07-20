@@ -271,7 +271,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_interface_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {
         self.bump_any(); // bump `extends`
 
-        let mut extends = ArenaVec::with_capacity_in(1, self);
+        let mark = self.start_scratch();
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
@@ -289,14 +289,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let heritage =
                 TSInterfaceHeritage::new(self.end_span(span), extend, type_argument, self);
-            extends.push(heritage);
+            self.scratch_push(&mark, heritage);
 
             if !self.eat(Kind::Comma) {
                 break;
             }
         }
 
-        extends
+        self.finish_scratch(mark)
     }
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {

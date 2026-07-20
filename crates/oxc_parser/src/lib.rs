@@ -72,6 +72,7 @@ mod cursor;
 mod error_handler;
 mod modifiers;
 mod module_record;
+mod scratch;
 mod state;
 
 mod js;
@@ -640,6 +641,9 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// Ast builder for creating AST nodes
     ast: AstBuilder<'a>,
 
+    /// Reusable heap storage for AST lists under construction.
+    scratch: scratch::ParserScratch<'a>,
+
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
 
@@ -675,6 +679,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
+            scratch: scratch::ParserScratch::default(),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
@@ -687,6 +692,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
         let mut program = self.parse_program();
+        self.scratch.debug_assert_empty();
         let mut panicked = false;
 
         if let Some(fatal_error) = self.fatal_error.take() {
@@ -774,6 +780,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
+        self.scratch.debug_assert_empty();
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
             return Err(error.into_diagnostic().into());
         }

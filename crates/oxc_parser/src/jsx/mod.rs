@@ -243,16 +243,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_jsx_child: bool,
     ) -> (ArenaVec<'a, JSXChild<'a>>, JSXClosing<'a>) {
-        let mut children = ArenaVec::new_in(self);
-        let closing = self.parse_jsx_children_and_closing_into(&mut children, in_jsx_child);
+        let mark = self.start_scratch();
+        let closing = self.parse_jsx_children_and_closing_into_scratch(&mark, in_jsx_child);
+        let children = self.finish_scratch(mark);
         (children, closing)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_jsx_children_and_closing_into(
+    fn parse_jsx_children_and_closing_into_scratch(
         &mut self,
-        children: &mut ArenaVec<'a, JSXChild<'a>>,
+        mark: &crate::scratch::ScratchMark<JSXChild<'a>>,
         in_jsx_child: bool,
     ) -> JSXClosing<'a> {
         loop {
@@ -271,14 +272,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // <> open nested fragment
                     if kind == Kind::RAngle {
                         let child = JSXChild::Fragment(self.parse_jsx_fragment(span, true));
-                        children.push(child);
+                        self.scratch_push(mark, child);
                         continue;
                     }
 
                     // <ident open nested element
                     if kind == Kind::Ident || kind.is_any_keyword() {
                         let child = JSXChild::Element(self.parse_jsx_element(span, true));
-                        children.push(child);
+                        self.scratch_push(mark, child);
                         continue;
                     }
 
@@ -298,7 +299,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // {...expr}
                     if self.eat(Kind::Dot3) {
                         let child = JSXChild::Spread(self.parse_jsx_spread_child(span_start));
-                        children.push(child);
+                        self.scratch_push(mark, child);
                         continue;
                     }
                     // {expr}
@@ -306,12 +307,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         JSXChild::ExpressionContainer(self.parse_jsx_expression_container(
                             span_start, /* in_jsx_child */ true,
                         ));
-                    children.push(child);
+                    self.scratch_push(mark, child);
                 }
                 // text
                 Kind::JSXText => {
                     let child = JSXChild::Text(self.parse_jsx_text());
-                    children.push(child);
+                    self.scratch_push(mark, child);
                 }
                 _ => {
                     // Unexpected token in JSX children
@@ -405,7 +406,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   `JSXSpreadAttribute` `JSXAttributes_opt`
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> ArenaVec<'a, JSXAttributeItem<'a>> {
-        let mut attributes = ArenaVec::new_in(self);
+        let mark = self.start_scratch();
         loop {
             let kind = self.cur_kind();
             if matches!(kind, Kind::LAngle | Kind::RAngle | Kind::Slash)
@@ -419,9 +420,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 _ => JSXAttributeItem::Attribute(self.parse_jsx_attribute()),
             };
-            attributes.push(attribute);
+            self.scratch_push(&mark, attribute);
         }
-        attributes
+        self.finish_scratch(mark)
     }
 
     /// `JSXAttribute` :

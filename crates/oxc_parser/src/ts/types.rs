@@ -277,13 +277,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         /* hasLeadingOperator && parseFunctionOrConstructorTypeToError(isUnionType) ||*/
         let mut ty = parse_constituent_type(self);
         if self.at(kind) || has_leading_operator {
-            let mut types = ArenaVec::from_value_in(ty, self);
+            let mark = self.start_scratch();
+            self.scratch_push(&mark, ty);
             while self.eat(kind) {
                 let ty =
                     /*parseFunctionOrConstructorTypeToError(isUnionType) || */
                     parse_constituent_type(self);
-                types.push(ty);
+                self.scratch_push(&mark, ty);
             }
+            let types = self.finish_scratch(mark);
             let span = self.end_span(span);
             ty = match kind {
                 Kind::Pipe => TSType::new_ts_union_type(span, types, self),
@@ -943,19 +945,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let opening_span = self.cur_token().span();
         self.expect(Kind::LAngle);
-        let (params, _) =
-            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
+        let params_mark = self.start_scratch::<TSType<'a>>();
+        self.parse_delimited_list_into_scratch(
+            &params_mark,
+            Kind::RAngle,
+            Kind::Comma,
+            opening_span,
+            Self::parse_ts_type,
+        );
         // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
         if matches!(self.re_lex_right_angle(), Kind::GtEq) {
+            self.cancel_scratch(params_mark);
             self.rewind(checkpoint);
             return None;
         }
         self.re_lex_ts_r_angle();
         self.expect(Kind::RAngle);
         if self.fatal_error.is_some() || !self.can_follow_type_arguments_in_expr() {
+            self.cancel_scratch(params_mark);
             self.rewind(checkpoint);
             return None;
         }
+        let params = self.finish_scratch(params_mark);
         let span = self.end_span(span);
         if params.is_empty() {
             self.error(diagnostics::ts_empty_type_argument_list(span));
@@ -1246,7 +1257,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
 
-        let mut properties = ArenaVec::new_in(self);
+        let mark = self.start_scratch();
         let mut first = true;
         while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
             if first {
@@ -1291,7 +1302,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     true, /* computed */
                     self,
                 );
-                properties.push(property);
+                self.scratch_push(&mark, property);
                 continue;
             }
 
@@ -1317,10 +1328,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 false,
                 self,
             );
-            properties.push(property);
+            self.scratch_push(&mark, property);
         }
 
         self.expect(Kind::RCurly);
+        let properties = self.finish_scratch(mark);
         ObjectExpression::boxed(self.end_span(span), properties, self)
     }
 

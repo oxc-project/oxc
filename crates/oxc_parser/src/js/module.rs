@@ -8,6 +8,7 @@ use crate::{
     ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierKind, Modifiers},
+    scratch::ScratchMark,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -266,13 +267,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         default_specifier: Option<BindingIdentifier<'a>>,
         import_kind: ImportOrExportKind,
     ) -> ArenaVec<'a, ImportDeclarationSpecifier<'a>> {
-        // If there is a default specifier, create a Vec with the default specifier in it,
-        // otherwise, create an empty Vec.
-        let mut specifiers = if default_specifier.is_some() {
-            ArenaVec::with_capacity_in(1, self)
-        } else {
-            ArenaVec::new_in(self)
-        };
+        let mark = self.start_scratch();
 
         if let Some(default_specifier) = default_specifier {
             let default_span = default_specifier.span;
@@ -281,7 +276,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 default_specifier,
                 self,
             );
-            specifiers.push(specifier);
+            self.scratch_push(&mark, specifier);
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
@@ -292,7 +287,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             ));
                         }
                         let specifier = self.parse_import_namespace_specifier();
-                        specifiers.push(specifier);
+                        self.scratch_push(&mark, specifier);
                     }
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
@@ -301,33 +296,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        self.parse_import_specifiers_into(&mut specifiers, import_kind);
+                        self.parse_import_specifiers_into(&mark, import_kind);
                     }
-                    _ => return self.unexpected(),
+                    _ => {
+                        self.cancel_scratch(mark);
+                        return self.unexpected();
+                    }
                 }
             }
 
             // If the default specifiers name was `type`, and it was not a type import
             // then skip the `from` specifier expect. This is specifically to support an import
             // like: `import type from 'source'`
-            if self.is_ts
-                && import_kind == ImportOrExportKind::Value
-                && specifiers.len() == 1
-                && specifiers[0].name() == "type"
-            {
-                return specifiers;
+            let is_import_type_as_default = {
+                let is_ts = self.is_ts;
+                let specifiers = self.scratch_slice(&mark);
+                is_ts
+                    && import_kind == ImportOrExportKind::Value
+                    && specifiers.len() == 1
+                    && specifiers[0].name() == "type"
+            };
+            if is_import_type_as_default {
+                return self.finish_scratch(mark);
             }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
             let specifier = self.parse_import_namespace_specifier();
-            specifiers.push(specifier);
+            self.scratch_push(&mark, specifier);
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
-            self.parse_import_specifiers_into(&mut specifiers, import_kind);
+            self.parse_import_specifiers_into(&mark, import_kind);
         }
 
         self.expect(Kind::From);
-        specifiers
+        self.finish_scratch(mark)
     }
 
     // import * as name from "module-name"
@@ -343,14 +345,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers_into(
         &mut self,
-        specifiers: &mut ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
+        mark: &ScratchMark<ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
     ) {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         self.context_remove(self.ctx, |p| {
-            let _ = p.parse_delimited_list_into(
-                specifiers,
+            let _ = p.parse_delimited_list_into_scratch(
+                mark,
                 Kind::RCurly,
                 Kind::Comma,
                 opening_span,

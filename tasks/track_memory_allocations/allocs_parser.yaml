@@ -1,77 +1,77 @@
 checker.ts:
   file size: 2922154 # 2.92 MB
-  sys allocs: 23
-  sys reallocs: 10
-  sys deallocs: 23
-  sys alloc bytes: 4820 # 4.82 kB
-  sys peak growth: 2432 # 2.43 kB
-  arena allocs: 264366
-  arena reallocs: 22858
-  arena size: 12985152 # 12.99 MB
+  sys allocs: 41
+  sys reallocs: 60
+  sys deallocs: 41
+  sys alloc bytes: 124788 # 124.79 kB
+  sys peak growth: 121360 # 121.36 kB
+  arena allocs: 264054
+  arena reallocs: 135
+  arena size: 11835184 # 11.84 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
-  sys allocs: 23
-  sys reallocs: 13
-  sys deallocs: 23
-  sys alloc bytes: 38116 # 38.12 kB
-  sys peak growth: 26404 # 26.40 kB
-  arena allocs: 44464
-  arena reallocs: 3537
-  arena size: 2244408 # 2.24 MB
+  sys allocs: 42
+  sys reallocs: 52
+  sys deallocs: 42
+  sys alloc bytes: 56356 # 56.36 kB
+  sys peak growth: 43684 # 43.68 kB
+  arena allocs: 44444
+  arena reallocs: 81
+  arena size: 2095184 # 2.10 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
-  sys allocs: 1
-  sys reallocs: 0
-  sys deallocs: 1
+  sys allocs: 8
+  sys reallocs: 5
+  sys deallocs: 8
   sys alloc bytes: 108 # 108 B
   sys peak growth: 108 # 108 B
   arena allocs: 367
-  arena reallocs: 66
-  arena size: 21200 # 21.20 kB
+  arena reallocs: 4
+  arena size: 18960 # 18.96 kB
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
-  sys allocs: 67
-  sys reallocs: 67
-  sys deallocs: 67
-  sys alloc bytes: 24020 # 24.02 kB
-  sys peak growth: 12140 # 12.14 kB
+  sys allocs: 79
+  sys reallocs: 103
+  sys deallocs: 79
+  sys alloc bytes: 47060 # 47.06 kB
+  sys peak growth: 26348 # 26.35 kB
   arena allocs: 90583
-  arena reallocs: 8136
-  arena size: 4559872 # 4.56 MB
+  arena reallocs: 218
+  arena size: 4153800 # 4.15 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
-  sys allocs: 190
-  sys reallocs: 221
-  sys deallocs: 190
-  sys alloc bytes: 109952 # 109.95 kB
-  sys peak growth: 48264 # 48.26 kB
+  sys allocs: 200
+  sys reallocs: 261
+  sys deallocs: 200
+  sys alloc bytes: 206080 # 206.08 kB
+  sys peak growth: 143752 # 143.75 kB
   arena allocs: 528577
-  arena reallocs: 55355
-  arena size: 29421920 # 29.42 MB
+  arena reallocs: 1285
+  arena size: 26226448 # 26.23 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
-  sys allocs: 1
-  sys reallocs: 0
-  sys deallocs: 1
-  sys alloc bytes: 3016 # 3.02 kB
-  sys peak growth: 251 # 251 B
-  arena allocs: 16620
-  arena reallocs: 1476
-  arena size: 917416 # 917.42 kB
+  sys allocs: 15
+  sys reallocs: 25
+  sys deallocs: 15
+  sys alloc bytes: 22252 # 22.25 kB
+  sys peak growth: 22252 # 22.25 kB
+  arena allocs: 16608
+  arena reallocs: 24
+  arena size: 815560 # 815.56 kB
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
-  sys allocs: 190
-  sys reallocs: 160
-  sys deallocs: 190
-  sys alloc bytes: 51381 # 51.38 kB
-  sys peak growth: 14644 # 14.64 kB
-  arena allocs: 138059
-  arena reallocs: 11898
-  arena size: 6495776 # 6.50 MB
+  sys allocs: 213
+  sys reallocs: 212
+  sys deallocs: 213
+  sys alloc bytes: 136149 # 136.15 kB
+  sys peak growth: 95632 # 95.63 kB
+  arena allocs: 137773
+  arena reallocs: 658
+  arena size: 5977416 # 5.98 MB
 

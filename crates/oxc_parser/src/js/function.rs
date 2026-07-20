@@ -70,16 +70,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut list = ArenaVec::new_in(self);
-        let rest = self.parse_formal_parameters_list_into(&mut list, func_kind, opening_span);
+        let mark = self.start_scratch();
+        let rest = self.parse_formal_parameters_list_into_scratch(&mark, func_kind, opening_span);
+        let list = self.finish_scratch(mark);
         (list, rest)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_formal_parameters_list_into(
+    fn parse_formal_parameters_list_into_scratch(
         &mut self,
-        list: &mut ArenaVec<'a, FormalParameter<'a>>,
+        mark: &crate::scratch::ScratchMark<FormalParameter<'a>>,
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> Option<ArenaBox<'a, FormalParameterRest<'a>>> {
@@ -165,7 +166,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         param.span,
                     ));
                 }
-                list.push(param);
+                self.scratch_push(mark, param);
             }
         }
 

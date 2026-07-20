@@ -34,8 +34,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
-        let mut directives = ArenaVec::new_in(self);
-        let mut statements = ArenaVec::new_in(self);
+        // Statements are the outer list so directives can be completed before the first
+        // statement is appended, preserving the scratch stack's LIFO discipline.
+        let statements_mark = self.start_scratch::<Statement<'a>>();
+        let mut directives_mark = Some(self.start_scratch::<Directive<'a>>());
+        let mut directives = None;
+        let mut statements_len = 0;
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
@@ -62,7 +66,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     None
                 } else {
                     self.state.encountered_await_identifier = false;
-                    Some((statements.len(), self.checkpoint()))
+                    Some((statements_len, self.checkpoint()))
                 }
             } else {
                 None
@@ -95,11 +99,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let string = string.unbox();
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
+                        let directive = Directive::new(span, string, Str::from(src), self);
+                        self.scratch_push(directives_mark.as_ref().unwrap(), directive);
                         continue;
                     }
                     stmt => {
                         expecting_directives = false;
+                        directives = Some(self.finish_scratch(directives_mark.take().unwrap()));
                         stmt
                     }
                 }
@@ -119,9 +125,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::statement_in_ambient_context(stmt.span()));
                 reported_ambient_statement = true;
             }
-            statements.push(stmt);
+            self.scratch_push(&statements_mark, stmt);
+            statements_len += 1;
         }
 
+        let directives =
+            directives.unwrap_or_else(|| self.finish_scratch(directives_mark.take().unwrap()));
+        let statements = if is_top_level {
+            self.finish_scratch_with_capacity_headroom(statements_mark)
+        } else {
+            self.finish_scratch(statements_mark)
+        };
         (directives, statements)
     }
 
@@ -738,7 +752,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = ArenaVec::new_in(self);
+        let mark = self.start_scratch();
         loop {
             let kind = self.cur_kind();
             if matches!(
@@ -752,14 +766,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if let Statement::VariableDeclaration(var_decl) = &stmt
                 && var_decl.kind.is_using()
             {
-                // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
+                // `using` declarations cannot appear directly in a switch clause.
                 self.error(diagnostics::using_declaration_not_allowed_in_switch_bare_case(
                     stmt.span(),
                 ));
             }
-            consequent.push(stmt);
+            self.scratch_push(&mark, stmt);
         }
+        let consequent = self.finish_scratch(mark);
         SwitchCase::new(self.end_span(span), test, consequent, self)
     }
 
