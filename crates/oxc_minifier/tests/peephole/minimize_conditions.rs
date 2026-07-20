@@ -1136,6 +1136,8 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test_same("var x = {}; x.y || (a, x = {}, x.y = 3)");
     test_same("var x = {}; x.y || (foo(x = {}), x.y = 3)");
     test_same("var x = { y: {} }; x.y.z || (x.y = {}, x.y.z = 3)");
+    // ESM imports are live bindings and can be updated by `mutate`.
+    test_same("import { x, mutate } from 'm'; x.y || (mutate(), x.y = 3)");
     test("x || (a, x = 3)", "x ||= (a, 3)");
     test("var x = {}; x.y || (foo(), x.y = 3)", "var x = {}; x.y ||= (foo(), 3)");
     test("var x = {}; x.y || (new Foo(), x.y = 3)", "var x = {}; x.y ||= (new Foo(), 3)");

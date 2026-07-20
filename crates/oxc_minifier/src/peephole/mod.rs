@@ -153,7 +153,8 @@ impl<'a> PeepholeOptimizations {
     /// Checks if an expression's reference may change due to mutation.
     ///
     /// Returns `true` if the expression references a symbol that may be mutated,
-    /// or if the expression is not a simple identifier/this reference.
+    /// is externally mutable through an ESM import or Script global, or is not a
+    /// simple identifier/this reference.
     pub fn is_expression_that_reference_may_change(
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
@@ -169,6 +170,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Whether reading a resolved symbol again could produce a different value.
+    /// Imported bindings and Script-root globals can change externally.
+    ///
     /// Uses the O(1) cached reference counts from `SymbolValue` when available,
     /// falling back to the O(num_refs) scan in `Scoping::symbol_is_mutated` for
     /// symbols without cached values.
@@ -177,10 +180,18 @@ impl<'a> PeepholeOptimizations {
     /// `exit_variable_declarator` → `init_symbol_value`); function declarations
     /// and other binding kinds still take the fallback path.
     fn symbol_value_may_change(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if scoping.symbol_flags(symbol_id).is_import()
+            || (ctx.source_type().is_script()
+                && scoping.symbol_scope_id(symbol_id) == scoping.root_scope_id())
+        {
+            return true;
+        }
+
         if let Some(sv) = ctx.state.symbols.value(symbol_id) {
             sv.references.has_writes()
         } else {
-            ctx.scoping().symbol_is_mutated(symbol_id)
+            scoping.symbol_is_mutated(symbol_id)
         }
     }
 

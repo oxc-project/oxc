@@ -1521,13 +1521,25 @@ impl<'a> PeepholeOptimizations {
 
     /// Whether evaluating a member assignment-target part earlier could observe
     /// a different binding value. This includes ordinary mutation and closed-over
-    /// lexicals that could still be in their TDZ (e.g. `v.x = await f()`).
+    /// lexicals that could still be in their TDZ (e.g. `v.x = await f()` or
+    /// `obj[v] = await f()`).
     fn member_part_blocks_reorder(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match expr {
             Expression::Identifier(id) => Self::identifier_read_blocks_reorder(id, ctx),
             Expression::ThisExpression(_) => false,
             _ => true,
         }
+    }
+
+    /// Whether evaluating a computed member key before a side-effecting
+    /// replacement could observe a different value.
+    ///
+    /// The key expression and `GetValue` move before the assignment RHS, but
+    /// `ToPropertyKey` still happens afterward. A scope-independent literal or
+    /// a stable simple reference is therefore safe regardless of its value type.
+    /// <https://tc39.es/ecma262/#sec-evaluate-property-access-with-expression-key>
+    fn computed_key_blocks_reorder(key: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        !key.is_literal_value(false, ctx) && Self::member_part_blocks_reorder(key, ctx)
     }
 
     /// Returns Some(true) when the expression is successfully replaced.
@@ -1558,6 +1570,8 @@ impl<'a> PeepholeOptimizations {
                 }
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
+                // Imported names are live bindings, so local read-only status is
+                // insufficient for them.
                 //
                 // But a lexical binding that is closed over from an enclosing
                 // function/module scope may still be in its Temporal Dead Zone
@@ -1693,6 +1707,10 @@ impl<'a> PeepholeOptimizations {
                         AssignmentTarget::AssignmentTargetIdentifier(_) => false,
                         AssignmentTarget::ComputedMemberExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
+                                || Self::computed_key_blocks_reorder(
+                                    &member_expr.expression,
+                                    ctx,
+                                )
                         }
                         AssignmentTarget::PrivateFieldExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
