@@ -30,5 +30,8 @@ pub mod slice_iter;
 #[cfg(feature = "stack")]
 pub mod stack;
 
+#[cfg(feature = "str")]
+pub mod str;
+
 #[cfg(feature = "string_ext")]
 pub mod string_ext;
