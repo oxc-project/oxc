@@ -617,6 +617,7 @@ mod test {
     use std::hash::BuildHasher;
 
     use oxc_allocator::Allocator;
+    use oxc_data_structures::types::implements;
 
     use super::*;
 
@@ -630,16 +631,13 @@ mod test {
 
     #[test]
     fn ident_send_sync() {
-        fn assert_send<T: Send>() {}
-        fn assert_sync<T: Sync>() {}
-        assert_send::<Ident<'_>>();
-        assert_sync::<Ident<'_>>();
+        assert!(implements!(Ident: Send));
+        assert!(implements!(Ident: Sync));
     }
 
     #[test]
     fn ident_copy() {
-        fn assert_copy<T: Copy>() {}
-        assert_copy::<Ident<'_>>();
+        assert!(implements!(Ident: Copy));
     }
 
     #[test]

@@ -36,5 +36,10 @@ pub mod str;
 #[cfg(feature = "string_ext")]
 pub mod string_ext;
 
-#[cfg(feature = "types")]
+// Gated on `any(test, ...)` because `implements!` is used in unit tests for `non_null` and `stack`,
+// and unit tests cannot enable features.
+// This enables:
+// * `cargo test -p oxc_data_structures --features non_null`
+// * `cargo test -p oxc_data_structures --features stack`
+#[cfg(any(test, feature = "types"))]
 pub mod types;

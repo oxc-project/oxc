@@ -29,6 +29,9 @@ hashbrown = { workspace = true, default-features = false, features = ["inline-mo
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
+[dev-dependencies]
+oxc_data_structures = { workspace = true, features = ["types"] }
+
 [features]
 default = []
 serialize = ["compact_str/serde", "dep:serde", "oxc_estree/serialize"]
