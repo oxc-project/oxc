@@ -9,7 +9,7 @@
 
 use std::mem::replace;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::react_compiler_hir::visitors::{
@@ -578,7 +578,8 @@ pub trait ReactiveFunctionTransform<'a> {
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), OxcDiagnostic> {
-        let mut next_block: Option<Vec<ReactiveStatement<'a>>> = None;
+        let alloc = self.env().allocator;
+        let mut next_block: Option<ArenaVec<'a, ReactiveStatement<'a>>> = None;
         let len = block.len();
         for i in 0..len {
             // Take the statement out temporarily
@@ -615,24 +616,27 @@ pub trait ReactiveFunctionTransform<'a> {
                 }
                 Transformed::Remove => {
                     if next_block.is_none() {
-                        next_block = Some(
-                            block[..i].iter().map(|s| s.clone_in(self.env().allocator)).collect(),
-                        );
+                        next_block = Some(ArenaVec::from_iter_in(
+                            block[..i].iter().map(|s| s.clone_in(alloc)),
+                            &alloc,
+                        ));
                     }
                 }
                 Transformed::Replace(replacement) => {
                     if next_block.is_none() {
-                        next_block = Some(
-                            block[..i].iter().map(|s| s.clone_in(self.env().allocator)).collect(),
-                        );
+                        next_block = Some(ArenaVec::from_iter_in(
+                            block[..i].iter().map(|s| s.clone_in(alloc)),
+                            &alloc,
+                        ));
                     }
                     next_block.as_mut().unwrap().push(replacement);
                 }
                 Transformed::ReplaceMany(replacements) => {
                     if next_block.is_none() {
-                        next_block = Some(
-                            block[..i].iter().map(|s| s.clone_in(self.env().allocator)).collect(),
-                        );
+                        next_block = Some(ArenaVec::from_iter_in(
+                            block[..i].iter().map(|s| s.clone_in(alloc)),
+                            &alloc,
+                        ));
                     }
                     next_block.as_mut().unwrap().extend(replacements);
                 }
