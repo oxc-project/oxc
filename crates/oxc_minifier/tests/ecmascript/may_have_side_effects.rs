@@ -800,6 +800,7 @@ fn test_property_access() {
     test("[].length", false);
     test("[]['length']", false);
     test("[][`length`]", false);
+    test("[][`length${foo()}`]", true);
     test("(foo() + '').length", true);
 
     test("a[0]", true);
