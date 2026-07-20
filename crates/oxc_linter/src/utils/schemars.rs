@@ -16,7 +16,6 @@ const NO_VERIFIED_VALID_SCHEMA: [&str; 6] = [
     "vitest/prefer-lowercase-title", // has options from other rule #23186
     "vitest/valid-title",            // has options from other rule #23186
     "unicorn/filename-case",         // missing options #23248
-    "eslint/no-restricted-globals",  // missing options #23617
 ];
 
 /// Should this rule be skipped for config schema generation?
