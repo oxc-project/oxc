@@ -390,7 +390,7 @@ fn generate_for_function_id<'a>(
     allocator: &'a Allocator,
 ) -> Result<(), OxcDiagnostic> {
     // Take the function out temporarily to avoid borrow conflicts
-    let inner = replace(&mut functions[func_id], placeholder_function());
+    let inner = replace(&mut functions[func_id], placeholder_function(allocator));
 
     // Process params for component inner functions
     if inner.fn_type == ReactFunctionType::Component {

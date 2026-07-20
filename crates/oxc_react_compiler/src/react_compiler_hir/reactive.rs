@@ -20,6 +20,7 @@ use oxc_str::{Ident, Str};
 use crate::react_compiler_hir::{
     BlockId, EvaluationOrder, InstructionValue, ParamPattern, Place, ScopeId,
 };
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 use oxc_ast::ast::LogicalOperator;
 use oxc_span::Span;
 
@@ -29,7 +30,7 @@ use oxc_span::Span;
 
 /// Tree representation of a compiled function, converted from the CFG-based HIR.
 /// TS: ReactiveFunction in HIR.ts
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ReactiveFunction<'a> {
     pub span: Option<Span>,
     pub id: Option<Ident<'a>>,
@@ -50,7 +51,7 @@ pub struct ReactiveFunction<'a> {
 pub type ReactiveBlock<'a> = Vec<ReactiveStatement<'a>>;
 
 /// TS: ReactiveStatement (discriminated union with 'kind' field)
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum ReactiveStatement<'a> {
     Instruction(ReactiveInstruction<'a>),
     Terminal(Box<ReactiveTerminalStatement<'a>>),
@@ -63,7 +64,7 @@ pub enum ReactiveStatement<'a> {
 // =============================================================================
 
 /// TS: ReactiveInstruction
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ReactiveInstruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Option<Place>,
@@ -74,7 +75,7 @@ pub struct ReactiveInstruction<'a> {
 /// Extends InstructionValue with compound expression types that were
 /// separate blocks+terminals in HIR but become nested expressions here.
 /// TS: ReactiveValue = InstructionValue | ReactiveLogicalValue | ...
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum ReactiveValue<'a> {
     /// All ~35 base instruction value kinds
     Instruction(InstructionValue<'a>),
@@ -108,7 +109,7 @@ pub enum ReactiveValue<'a> {
 // Terminals
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ReactiveTerminalStatement<'a> {
     pub terminal: ReactiveTerminal<'a>,
     pub label: Option<ReactiveLabel>,
@@ -137,7 +138,7 @@ impl Display for ReactiveTerminalTargetKind {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum ReactiveTerminal<'a> {
     Break {
         target: BlockId,
@@ -210,7 +211,7 @@ pub enum ReactiveTerminal<'a> {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ReactiveSwitchCase<'a> {
     pub test: Option<Place>,
     pub block: Option<ReactiveBlock<'a>>,
@@ -220,14 +221,247 @@ pub struct ReactiveSwitchCase<'a> {
 // Scope Blocks
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ReactiveScopeBlock<'a> {
     pub scope: ScopeId,
     pub instructions: ReactiveBlock<'a>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct PrunedReactiveScopeBlock<'a> {
     pub scope: ScopeId,
     pub instructions: ReactiveBlock<'a>,
+}
+
+// =============================================================================
+// Arena `CloneIn` for the reactive subtree
+//
+// The reactive tree is std-`Vec`/`Box` based, but it embeds `InstructionValue`,
+// which is arena-backed and no longer `Clone`. So the reactive types drop
+// `derive(Clone)` and provide same-arena `CloneIn` instead (`Cloned = Self`).
+// The std `Vec`/`Box` fields are cloned by recursing manually; only the embedded
+// `InstructionValue` needs the allocator.
+// =============================================================================
+
+fn clone_reactive_block_in<'a>(
+    block: &[ReactiveStatement<'a>],
+    sem: CloneInSemanticIds,
+    alloc: &'a Allocator,
+) -> Vec<ReactiveStatement<'a>> {
+    block.iter().map(|stmt| stmt.clone_in_impl(sem, alloc)).collect()
+}
+
+fn clone_reactive_instructions_in<'a>(
+    instructions: &[ReactiveInstruction<'a>],
+    sem: CloneInSemanticIds,
+    alloc: &'a Allocator,
+) -> Vec<ReactiveInstruction<'a>> {
+    instructions.iter().map(|instr| instr.clone_in_impl(sem, alloc)).collect()
+}
+
+impl<'a> CloneIn<'a> for ReactiveFunction<'a> {
+    type Cloned = ReactiveFunction<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ReactiveFunction {
+            span: self.span,
+            id: self.id,
+            name_hint: self.name_hint,
+            params: self.params.clone(),
+            generator: self.generator,
+            is_async: self.is_async,
+            body: clone_reactive_block_in(&self.body, sem, alloc),
+            directives: self.directives.clone(),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ReactiveStatement<'a> {
+    type Cloned = ReactiveStatement<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        match self {
+            ReactiveStatement::Instruction(instr) => {
+                ReactiveStatement::Instruction(instr.clone_in_impl(sem, alloc))
+            }
+            ReactiveStatement::Terminal(terminal) => {
+                ReactiveStatement::Terminal(Box::new(terminal.as_ref().clone_in_impl(sem, alloc)))
+            }
+            ReactiveStatement::Scope(scope) => {
+                ReactiveStatement::Scope(scope.clone_in_impl(sem, alloc))
+            }
+            ReactiveStatement::PrunedScope(scope) => {
+                ReactiveStatement::PrunedScope(scope.clone_in_impl(sem, alloc))
+            }
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ReactiveInstruction<'a> {
+    type Cloned = ReactiveInstruction<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ReactiveInstruction {
+            id: self.id,
+            lvalue: self.lvalue,
+            value: self.value.clone_in_impl(sem, alloc),
+            span: self.span,
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ReactiveValue<'a> {
+    type Cloned = ReactiveValue<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        match self {
+            ReactiveValue::Instruction(value) => {
+                ReactiveValue::Instruction(value.clone_in_impl(sem, alloc))
+            }
+            ReactiveValue::LogicalExpression { operator, left, right } => {
+                ReactiveValue::LogicalExpression {
+                    operator: *operator,
+                    left: Box::new(left.as_ref().clone_in_impl(sem, alloc)),
+                    right: Box::new(right.as_ref().clone_in_impl(sem, alloc)),
+                }
+            }
+            ReactiveValue::ConditionalExpression { test, consequent, alternate } => {
+                ReactiveValue::ConditionalExpression {
+                    test: Box::new(test.as_ref().clone_in_impl(sem, alloc)),
+                    consequent: Box::new(consequent.as_ref().clone_in_impl(sem, alloc)),
+                    alternate: Box::new(alternate.as_ref().clone_in_impl(sem, alloc)),
+                }
+            }
+            ReactiveValue::SequenceExpression { instructions, id, value } => {
+                ReactiveValue::SequenceExpression {
+                    instructions: clone_reactive_instructions_in(instructions, sem, alloc),
+                    id: *id,
+                    value: Box::new(value.as_ref().clone_in_impl(sem, alloc)),
+                }
+            }
+            ReactiveValue::OptionalExpression { value, optional } => {
+                ReactiveValue::OptionalExpression {
+                    value: Box::new(value.as_ref().clone_in_impl(sem, alloc)),
+                    optional: *optional,
+                }
+            }
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ReactiveTerminalStatement<'a> {
+    type Cloned = ReactiveTerminalStatement<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ReactiveTerminalStatement {
+            terminal: self.terminal.clone_in_impl(sem, alloc),
+            label: self.label.clone(),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ReactiveTerminal<'a> {
+    type Cloned = ReactiveTerminal<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        match self {
+            ReactiveTerminal::Break { target, id, target_kind } => ReactiveTerminal::Break {
+                target: *target,
+                id: *id,
+                target_kind: target_kind.clone(),
+            },
+            ReactiveTerminal::Continue { target, id, target_kind } => ReactiveTerminal::Continue {
+                target: *target,
+                id: *id,
+                target_kind: target_kind.clone(),
+            },
+            ReactiveTerminal::Return { value, id } => {
+                ReactiveTerminal::Return { value: *value, id: *id }
+            }
+            ReactiveTerminal::Throw { value, id } => {
+                ReactiveTerminal::Throw { value: *value, id: *id }
+            }
+            ReactiveTerminal::Switch { test, cases, id } => ReactiveTerminal::Switch {
+                test: *test,
+                cases: cases.iter().map(|case| case.clone_in_impl(sem, alloc)).collect(),
+                id: *id,
+            },
+            ReactiveTerminal::DoWhile { loop_block, test, id } => ReactiveTerminal::DoWhile {
+                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                test: test.clone_in_impl(sem, alloc),
+                id: *id,
+            },
+            ReactiveTerminal::While { test, loop_block, id } => ReactiveTerminal::While {
+                test: test.clone_in_impl(sem, alloc),
+                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                id: *id,
+            },
+            ReactiveTerminal::For { init, test, update, loop_block, id } => ReactiveTerminal::For {
+                init: init.clone_in_impl(sem, alloc),
+                test: test.clone_in_impl(sem, alloc),
+                update: update.as_ref().map(|value| value.clone_in_impl(sem, alloc)),
+                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                id: *id,
+            },
+            ReactiveTerminal::ForOf { init, test, loop_block, id, span } => {
+                ReactiveTerminal::ForOf {
+                    init: init.clone_in_impl(sem, alloc),
+                    test: test.clone_in_impl(sem, alloc),
+                    loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                    id: *id,
+                    span: *span,
+                }
+            }
+            ReactiveTerminal::ForIn { init, loop_block, id, span } => ReactiveTerminal::ForIn {
+                init: init.clone_in_impl(sem, alloc),
+                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                id: *id,
+                span: *span,
+            },
+            ReactiveTerminal::If { test, consequent, alternate, id } => ReactiveTerminal::If {
+                test: *test,
+                consequent: clone_reactive_block_in(consequent, sem, alloc),
+                alternate: alternate
+                    .as_ref()
+                    .map(|block| clone_reactive_block_in(block, sem, alloc)),
+                id: *id,
+            },
+            ReactiveTerminal::Label { block, id } => ReactiveTerminal::Label {
+                block: clone_reactive_block_in(block, sem, alloc),
+                id: *id,
+            },
+            ReactiveTerminal::Try { block, handler_binding, handler, id } => {
+                ReactiveTerminal::Try {
+                    block: clone_reactive_block_in(block, sem, alloc),
+                    handler_binding: *handler_binding,
+                    handler: clone_reactive_block_in(handler, sem, alloc),
+                    id: *id,
+                }
+            }
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ReactiveSwitchCase<'a> {
+    type Cloned = ReactiveSwitchCase<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ReactiveSwitchCase {
+            test: self.test,
+            block: self.block.as_ref().map(|block| clone_reactive_block_in(block, sem, alloc)),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ReactiveScopeBlock<'a> {
+    type Cloned = ReactiveScopeBlock<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ReactiveScopeBlock {
+            scope: self.scope,
+            instructions: clone_reactive_block_in(&self.instructions, sem, alloc),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for PrunedReactiveScopeBlock<'a> {
+    type Cloned = PrunedReactiveScopeBlock<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        PrunedReactiveScopeBlock {
+            scope: self.scope,
+            instructions: clone_reactive_block_in(&self.instructions, sem, alloc),
+        }
+    }
 }

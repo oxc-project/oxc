@@ -1843,8 +1843,9 @@ fn visit_inner_function_blocks<'a>(
 ) {
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
-    let inner_instrs: Vec<Instruction> = env.functions[func_id].instructions.clone();
-    type InnerBlockSnapshot = (BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal);
+    let inner_instrs = env.functions[func_id].instructions.clone_in(env.allocator);
+    type InnerBlockSnapshot<'a> =
+        (BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal<'a>);
     let inner_blocks: Vec<InnerBlockSnapshot> = env.functions[func_id]
         .body
         .blocks
@@ -1855,7 +1856,12 @@ fn visit_inner_function_blocks<'a>(
                 .iter()
                 .flat_map(|phi| phi.operands.iter().map(|(pred, place)| (*pred, place.identifier)))
                 .collect();
-            (*bid, blk.instructions.clone(), phi_ops, blk.terminal.clone())
+            (
+                *bid,
+                blk.instructions.iter().copied().collect(),
+                phi_ops,
+                blk.terminal.clone_in(env.allocator),
+            )
         })
         .collect();
 

@@ -129,7 +129,7 @@ pub struct Environment<'a> {
 
 /// An outlined function entry, stored on Environment during compilation.
 /// Corresponds to TS `{ fn: HIRFunction, type: ReactFunctionType | null }`.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct OutlinedFunctionEntry<'a> {
     pub func: HirFunction<'a>,
     pub fn_type: Option<ReactFunctionType>,

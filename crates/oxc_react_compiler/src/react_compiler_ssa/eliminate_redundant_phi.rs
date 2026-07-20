@@ -116,7 +116,7 @@ fn eliminate_redundant_phi_impl(
 
             // Rewrite instructions
             let instruction_ids: Vec<InstructionId> =
-                ir.blocks.get(&block_id).unwrap().instructions.clone();
+                ir.blocks.get(&block_id).unwrap().instructions.iter().copied().collect();
 
             for instr_id in &instruction_ids {
                 let instr_idx = instr_id.index();
@@ -154,7 +154,8 @@ fn eliminate_redundant_phi_impl(
                     }
 
                     // Take inner function out, process it, put it back
-                    let mut inner_func = replace(&mut env.functions[fid], placeholder_function());
+                    let mut inner_func =
+                        replace(&mut env.functions[fid], placeholder_function(env.allocator));
 
                     eliminate_redundant_phi_impl(&mut inner_func, env, rewrites);
 

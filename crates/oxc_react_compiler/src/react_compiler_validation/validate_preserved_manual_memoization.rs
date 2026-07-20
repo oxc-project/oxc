@@ -9,7 +9,7 @@
 //! accurately preserved, and that no originally memoized values became
 //! unmemoized in the output.
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics::ErrorCategory;
@@ -36,7 +36,7 @@ struct ManualMemoBlockState<'h> {
     /// Declarations produced within this manual memo block.
     decls: FxHashSet<DeclarationId>,
     /// Normalized deps from source (useMemo/useCallback dep array).
-    deps_from_source: Option<Vec<ManualMemoDependency<'h>>>,
+    deps_from_source: Option<ArenaVec<'h, ManualMemoDependency<'h>>>,
     /// Manual memo id from StartMemoize.
     manual_memo_id: u32,
 }
@@ -142,12 +142,14 @@ fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorStat
     if let Some(ref memo_state) = state.manual_memo_state
         && let Some(ref deps_from_source) = memo_state.deps_from_source
     {
+        let alloc = state.env.allocator;
         let scope = &state.env.scopes[scope_block.scope];
-        let deps = scope.dependencies.clone_in(state.env.allocator);
+        let deps = scope.dependencies.clone_in(alloc);
         let memo_span = memo_state.span;
         let decls = memo_state.decls.clone();
-        let deps_from_source = deps_from_source.clone();
-        let temporaries = state.temporaries.clone();
+        let deps_from_source = deps_from_source.clone_in(alloc);
+        let temporaries: FxHashMap<IdentifierId, ManualMemoDependency> =
+            state.temporaries.iter().map(|(k, v)| (*k, v.clone_in(alloc))).collect();
         for dep in &deps {
             validate_inferred_dep(
                 dep.identifier,
@@ -196,7 +198,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
                 return;
             }
 
-            let deps_from_source = deps.clone();
+            let deps_from_source = deps.as_ref().map(|v| v.clone_in(state.env.allocator));
 
             state.manual_memo_state = Some(ManualMemoBlockState {
                 span: instr.span,
@@ -316,6 +318,7 @@ fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
 /// Record temporaries from an instruction.
 /// TS: `recordTemporaries`
 fn record_temporaries<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorState<'_, 'h>) {
+    let alloc = state.env.allocator;
     let lvalue = &instr.lvalue;
     let lv_id = lvalue.as_ref().map(|lv| lv.identifier);
     if let Some(id) = lv_id
@@ -342,7 +345,7 @@ fn record_temporaries<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSt
             lvalue.identifier,
             ManualMemoDependency {
                 root: ManualMemoDependencyRoot::NamedLocal { value: *lvalue, constant: false },
-                path: Vec::new(),
+                path: ArenaVec::new_in(&alloc),
                 span: lvalue.span,
             },
         );
@@ -352,6 +355,7 @@ fn record_temporaries<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSt
 /// Record dependencies from a reactive value.
 /// TS: `recordDepsInValue`
 fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<'_, 'h>) {
+    let alloc = state.env.allocator;
     match value {
         ReactiveValue::SequenceExpression { instructions, value, .. } => {
             for instr in instructions {
@@ -395,7 +399,7 @@ fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<
                                         value: lvalue.place,
                                         constant: false,
                                     },
-                                    path: Vec::new(),
+                                    path: ArenaVec::new_in(&alloc),
                                     span: lvalue.place.span,
                                 },
                             );
@@ -415,7 +419,7 @@ fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<
                                             value: *place,
                                             constant: false,
                                         },
-                                        path: Vec::new(),
+                                        path: ArenaVec::new_in(&alloc),
                                         span: place.span,
                                     },
                                 );
@@ -430,7 +434,7 @@ fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<
 }
 
 /// Get operand places from a StartMemoize instruction's deps.
-fn start_memoize_operands(deps: &Option<Vec<ManualMemoDependency>>) -> Vec<Place> {
+fn start_memoize_operands(deps: &Option<ArenaVec<'_, ManualMemoDependency<'_>>>) -> Vec<Place> {
     let mut result = Vec::new();
     if let Some(deps) = deps {
         for dep in deps {
@@ -620,12 +624,13 @@ fn validate_inferred_dep<'h>(
     temporaries: &FxHashMap<IdentifierId, ManualMemoDependency<'h>>,
     decls_within_memo_block: &FxHashSet<DeclarationId>,
     valid_deps_in_memo_block: &[ManualMemoDependency<'h>],
-    env: &mut Environment,
+    env: &mut Environment<'h>,
     memo_location: Option<Span>,
 ) {
+    let alloc = env.allocator;
     // Normalize the dependency through temporaries
     let normalized_dep = if let Some(temp) = temporaries.get(&dep_id) {
-        let mut path = temp.path.clone();
+        let mut path = temp.path.clone_in(alloc);
         path.extend_from_slice(dep_path);
         ManualMemoDependency { root: temp.root, path, span: temp.span }
     } else {
@@ -644,7 +649,7 @@ fn validate_inferred_dep<'h>(
                 },
                 constant: false,
             },
-            path: dep_path.to_vec(),
+            path: ArenaVec::from_iter_in(dep_path.iter().copied(), &alloc),
             span: ident.span,
         }
     };

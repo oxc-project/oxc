@@ -169,7 +169,7 @@ fn run_pipeline<'a>(
         return Ok(Ok(None));
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -180,7 +180,7 @@ fn run_pipeline<'a>(
 
     inline_immediately_invoked_function_expressions(&mut hir, &mut env);
 
-    merge_consecutive_blocks(&mut hir, &mut env.functions);
+    merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator);
 
     // TODO: port assertConsistentIdentifiers
     // TODO: port assertTerminalSuccessorsExist
@@ -221,7 +221,7 @@ fn run_pipeline<'a>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 

@@ -12,6 +12,7 @@
 
 use std::mem::take;
 
+use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_str::{Ident, format_ident};
 
@@ -278,12 +279,15 @@ fn apply_early_return_to_scope<'a>(
                     reactive: false,
                     span: None, // GeneratedSource
                 },
-                args: vec![PlaceOrSpread::Place(Place {
-                    identifier: arg_temp,
-                    effect: Effect::Unknown,
-                    reactive: false,
-                    span: None, // GeneratedSource
-                })],
+                args: ArenaVec::from_array_in(
+                    [PlaceOrSpread::Place(Place {
+                        identifier: arg_temp,
+                        effect: Effect::Unknown,
+                        reactive: false,
+                        span: None, // GeneratedSource
+                    })],
+                    &env.allocator,
+                ),
                 span,
             }),
             span,
