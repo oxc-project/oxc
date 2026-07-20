@@ -820,6 +820,12 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             ));
             return;
+        } else if let Some(last_case) = switch_stmt.cases.last_mut()
+            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
+            && last_break.label.is_none()
+        {
+            let dropped = last_case.consequent.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));
