@@ -20,7 +20,6 @@ use crate::react_compiler_hir::object_shape::*;
 use crate::react_compiler_hir::type_config::AliasingEffectConfig;
 use crate::react_compiler_hir::type_config::AliasingSignatureConfig;
 use crate::react_compiler_hir::type_config::ApplyArgConfig;
-use crate::react_compiler_hir::type_config::ApplyArgHoleKind;
 use crate::react_compiler_hir::type_config::BuiltInTypeRef;
 use crate::react_compiler_hir::type_config::TypeConfig;
 use crate::react_compiler_hir::type_config::TypeReferenceConfig;
@@ -81,7 +80,7 @@ impl<'a> GlobalRegistry<'a> {
 
     /// Consume the registry and return the inner map.
     /// Only valid in builder mode (no base).
-    pub fn into_inner(self) -> IdentHashMap<'a, Global<'a>> {
+    fn into_inner(self) -> IdentHashMap<'a, Global<'a>> {
         debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode GlobalRegistry");
         self.entries
     }
@@ -513,7 +512,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
                                 mutates_function: false,
                                 args: &[
                                     ApplyArgConfig::Place("@item"),
-                                    ApplyArgConfig::Hole { kind: ApplyArgHoleKind::Hole },
+                                    ApplyArgConfig::Hole,
                                     ApplyArgConfig::Place("@receiver"),
                                 ],
                                 into: "@callbackReturn",

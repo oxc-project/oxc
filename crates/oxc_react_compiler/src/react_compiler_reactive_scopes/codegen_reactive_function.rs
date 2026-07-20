@@ -62,7 +62,7 @@ use crate::react_compiler_reactive_scopes::visitors::visit_reactive_function;
 // Public API
 // =============================================================================
 
-pub const MEMO_CACHE_SENTINEL: &str = "react.memo_cache_sentinel";
+const MEMO_CACHE_SENTINEL: &str = "react.memo_cache_sentinel";
 pub const EARLY_RETURN_SENTINEL: &str = "react.early_return_sentinel";
 
 /// FBT tags whose children get special codegen treatment.
@@ -266,7 +266,6 @@ struct OxcContext<'a, 'env> {
     temp: OxcTemporaries<'a>,
     object_methods: FxHashMap<IdentifierId, (InstructionValue<'a>, Option<Span>)>,
     unique_identifiers: IdentHashSet<'a>,
-    #[allow(dead_code)]
     fbt_operands: FxHashSet<IdentifierId>,
     synthesized_names: IdentHashMap<'a, Ident<'a>>,
 }
@@ -323,7 +322,6 @@ impl<'a, 'env> OxcContext<'a, 'env> {
         validated
     }
 
-    #[allow(dead_code)]
     fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
         self.env.record_error(diagnostic)
     }

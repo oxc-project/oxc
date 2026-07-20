@@ -174,7 +174,7 @@ impl<'a> ShapeRegistry<'a> {
 
     /// Consume the registry and return the inner map.
     /// Only valid in builder mode (no base).
-    pub fn into_inner(self) -> IdentHashMap<'a, ObjectShape<'a>> {
+    pub(crate) fn into_inner(self) -> IdentHashMap<'a, ObjectShape<'a>> {
         debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode ShapeRegistry");
         self.entries
     }
