@@ -12820,10 +12820,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:13]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:11]
  6 │   readonly *e() {}
  7 │   declare *f() {}
-   ·             ─────
+   ·           ───────
  8 │   protected *g() {}
    ╰────
 
@@ -13189,10 +13189,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:14]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:11]
  3 │   readonly *e?() { }
  4 │   declare *f?() { }
-   ·              ──────
+   ·           ─────────
  5 │ }
    ╰────
 
@@ -13231,10 +13231,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1221): Generators are not allowed in an ambient context.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:19]
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:11]
   9 │   readonly *[e?.e]?() { }
  10 │   declare *[f?.f]?() { }
-    ·                   ──────
+    ·           ──────────────
  11 │ }
     ╰────
 
