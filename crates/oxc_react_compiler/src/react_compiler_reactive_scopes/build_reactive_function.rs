@@ -280,7 +280,6 @@ impl<'a, 'h> Context<'a, 'h> {
 struct Driver<'a, 'b, 'h> {
     cx: &'b mut Context<'a, 'h>,
     hir: &'h HirFunction<'a>,
-    #[allow(dead_code)]
     env: &'h Environment<'a>,
 }
 

@@ -262,7 +262,7 @@ impl<'a> Environment<'a> {
     }
 
     /// Allocate a new Type in the arena, returns its TypeId.
-    pub fn next_type_id(&mut self) -> TypeId {
+    fn next_type_id(&mut self) -> TypeId {
         let id = self.types.next_idx();
         self.types.push(Type::Var { id });
         id

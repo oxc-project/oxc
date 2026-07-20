@@ -364,7 +364,7 @@ fn collect_temporaries<'a>(
 
 /// Collect loads from named variables and property reads into `maybe_deps`.
 /// Returns the variable + property reads represented by the instruction value.
-pub fn collect_maybe_memo_dependencies<'a>(
+fn collect_maybe_memo_dependencies<'a>(
     value: &InstructionValue<'a>,
     maybe_deps: &FxHashMap<IdentifierId, ManualMemoDependency<'a>>,
     optional: bool,

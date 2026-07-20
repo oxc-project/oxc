@@ -490,7 +490,7 @@ fn can_merge_scopes<'a>(
 }
 
 /// Check if a type is always invalidating (guaranteed to change when inputs change).
-pub fn is_always_invalidating_type(ty: &Type) -> bool {
+fn is_always_invalidating_type(ty: &Type) -> bool {
     match ty {
         Type::Object { shape_id: Some(id) } => matches!(
             id.as_str(),

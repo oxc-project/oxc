@@ -2770,7 +2770,7 @@ fn compute_effects_for_aliasing_signature_config(
                     let mut apply_args: Vec<PlaceOrSpreadOrHole> = Vec::new();
                     for arg in *a {
                         match arg {
-                            ApplyArgConfig::Hole { .. } => {
+                            ApplyArgConfig::Hole => {
                                 apply_args.push(PlaceOrSpreadOrHole::Hole);
                             }
                             ApplyArgConfig::Place(name) => {
@@ -2778,15 +2778,6 @@ fn compute_effects_for_aliasing_signature_config(
                                     && let Some(p) = places.first()
                                 {
                                     apply_args.push(PlaceOrSpreadOrHole::Place(*p));
-                                }
-                            }
-                            ApplyArgConfig::Spread { place: name, .. } => {
-                                if let Some(places) = substitutions.get(*name)
-                                    && let Some(p) = places.first()
-                                {
-                                    apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
-                                        place: *p,
-                                    }));
                                 }
                             }
                         }
