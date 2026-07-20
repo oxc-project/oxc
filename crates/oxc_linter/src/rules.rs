@@ -898,6 +898,7 @@ pub(crate) mod vue {
     pub mod require_render_return;
     pub mod require_slots_as_functions;
     pub mod require_typed_ref;
+    pub mod require_valid_default_prop;
     pub mod return_in_computed_property;
     pub mod return_in_emits_validator;
     pub mod valid_define_emits;
