@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🐛 Bug Fixes
+
+- e750a82 ecmascript: Fix false negative for may_have_side_effects on dynamic property access (#24709) (sapphi-red)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features
