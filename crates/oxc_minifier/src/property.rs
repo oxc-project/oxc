@@ -129,6 +129,15 @@ impl ManglePropertiesOptions {
             cache: ManglePropertyCache::default(),
         }
     }
+
+    /// Compile an `include` pattern using Rust's regex syntax.
+    ///
+    /// # Errors
+    ///
+    /// Returns the regex parser's message when `include` is invalid.
+    pub fn from_pattern(include: &str) -> Result<Self, String> {
+        lazy_regex::Regex::new(include).map(Self::new).map_err(|error| error.to_string())
+    }
 }
 
 /// Returns whether a user-provided cache target can be emitted in every property position.

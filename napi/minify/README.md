@@ -67,6 +67,38 @@ console.log(result.code);
 console.log(result.map);
 ```
 
+### Property-name mangling
+
+Property mangling is opt-in and independent from identifier mangling. `include` is a
+[Rust regex](https://docs.rs/regex/latest/regex/#syntax) source string and is required when
+`mangleProps` is present.
+
+```javascript
+const result = minifySync("component.js", source, {
+  mangle: false,
+  mangleProps: {
+    include: "^_",
+    exclude: "^__public",
+    reserved: ["_externalApi"],
+    quoted: false,
+    cache: previousResult?.mangleCache,
+  },
+});
+
+saveCache(result.mangleCache);
+```
+
+The returned `mangleCache` contains the input cache plus newly assigned names when parsing
+finishes without errors. A `false` cache value keeps that property unchanged. Cache keys and
+targets are never used for automatically generated names, so the returned cache is safe to feed
+back under the same options. Custom target names may be shared deliberately, but must be valid
+JavaScript `IdentifierName` values and cannot be `__proto__`.
+
+With `quoted: false`, quoting is handled per occurrence: `obj._field` is eligible while
+`obj["_field"]` is not. Property mangling assumes matching properties are never accessed through
+arbitrary dynamic strings. Use `/* @__KEY__ */ "_field"` for a string that semantically names a
+property, such as a reflective API argument.
+
 ## Assumptions
 
 `oxc-minify` makes some assumptions about the source code.
