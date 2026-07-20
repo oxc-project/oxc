@@ -287,12 +287,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 type_argument = self.try_parse_type_arguments();
             }
 
-            extends.push(TSInterfaceHeritage::new(
-                self.end_span(span),
-                extend,
-                type_argument,
-                self,
-            ));
+            let heritage =
+                TSInterfaceHeritage::new(self.end_span(span), extend, type_argument, self);
+            extends.push(heritage);
 
             if !self.eat(Kind::Comma) {
                 break;
