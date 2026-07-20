@@ -3078,6 +3078,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/directive-prologue/10.1.1-5gs.js:17:5]
@@ -3085,6 +3086,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/directive-prologue/10.1.1-8gs.js:18:5]
@@ -3092,6 +3094,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/directive-prologue/14.1-4gs.js:17:1]
@@ -3114,6 +3117,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────
  23 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/directive-prologue/func-decl-no-semi-parse.js:20:7]
@@ -3122,6 +3126,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────
  21 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/directive-prologue/func-decl-parse.js:20:7]
@@ -3130,6 +3135,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────
  21 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/directive-prologue/func-expr-inside-func-decl-parse.js:21:7]
@@ -3138,6 +3144,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────
  22 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/directive-prologue/func-expr-no-semi-parse.js:21:7]
@@ -3146,6 +3153,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────
  22 │ });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/directive-prologue/func-expr-parse.js:21:7]
@@ -3154,6 +3162,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────
  22 │ });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/export/escaped-as-export-specifier.js:25:11]
@@ -3484,6 +3493,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ \u0069mplements }) => {};
     ·            ───────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-import-escaped.js:41:24]
@@ -3515,6 +3525,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ interf\u0061ce }) => {};
     ·            ──────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-let-escaped.js:41:12]
@@ -3522,6 +3533,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ l\u0065t }) => {};
     ·            ────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-new-escaped.js:41:21]
@@ -3537,6 +3549,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ p\u0061ckage }) => {};
     ·            ────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-private-escaped.js:41:12]
@@ -3544,6 +3557,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ privat\u0065 }) => {};
     ·            ────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-protected-escaped.js:41:12]
@@ -3551,6 +3565,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ prot\u0065cted }) => {};
     ·            ──────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-public-escaped.js:41:12]
@@ -3558,6 +3573,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ pu\u0062lic }) => {};
     ·            ───────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-return-escaped.js:41:24]
@@ -3573,6 +3589,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = ({ st\u0061tic }) => {};
     ·            ───────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-super-escaped.js:41:23]
@@ -3678,6 +3695,7 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ (x = yield) => {};
     ·      ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `a` has already been declared
     ╭─[test262/test/language/expressions/arrow-function/params-duplicate.js:34:5]
@@ -3735,6 +3753,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ var af = package => 1;
     ·          ───────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-identifier.js:25:10]
@@ -3763,6 +3782,7 @@ Negative Passed: 4651/4651 (100.00%)
  21 │ var af = yield => 1;
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-rest.js:17:10]
@@ -3890,6 +3910,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ var af = (yield) => 1;
     ·           ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Line terminator not permitted before arrow
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/asi-restriction-invalid-parenless-parameters-expression-body.js:17:1]
@@ -3930,6 +3951,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, [ x = yield ] = [];
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/array-elem-nested-array-invalid.js:24:7]
@@ -3944,6 +3966,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, [[x[yield]]] = [[]];
     ·        ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/array-elem-nested-memberexpr-optchain-prop-ref-init.js:57:5]
@@ -3965,6 +3988,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, [{ x = yield }] = [{}];
     ·           ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/array-elem-put-obj-literal-optchain-prop-ref-init.js:56:5]
@@ -3989,6 +4013,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, [ x[yield] ] = [];
     ·        ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Spread must be last element
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-before-element.js:24:5]
@@ -4048,6 +4073,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, [...[x[yield]]] = [];
     ·           ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-invalid.js:24:15]
@@ -4062,6 +4088,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, [...{ x = yield }] = [{}];
     ·              ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-yield-ident-invalid.js:25:10]
@@ -4069,6 +4096,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ 0, [...x[yield]] = [];
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/obj-id-identifier-yield-expr.js:24:12]
@@ -4085,6 +4113,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { yield } = {};
     ·      ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/assignment/dstr/obj-id-init-simple-strict.js:24:6]
@@ -4099,6 +4128,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { x = yield } = {};
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/expressions/assignment/dstr/obj-id-simple-strict.js:24:6]
@@ -4113,6 +4143,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { x: x = yield } = {};
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/obj-prop-elem-target-memberexpr-optchain-prop-ref-init.js:57:9]
@@ -4137,6 +4168,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { x: x[yield] } = {};
     ·           ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/obj-prop-nested-array-invalid.js:24:11]
@@ -4151,6 +4183,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { x: [x = yield] } = { x: [] };
     ·              ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/obj-prop-nested-obj-invalid.js:24:16]
@@ -4165,6 +4198,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 0, { x: { x = yield } } = { x: {} };
     ·               ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Spread must be last element
     ╭─[test262/test/language/expressions/assignment/dstr/obj-rest-not-last-element-invalid.js:25:5]
@@ -4356,6 +4390,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { \u0069mplements } = { implements: 42 };
     ·           ───────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-import-escaped.js:41:23]
@@ -4387,6 +4422,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { interf\u0061ce } = { interface: 42 };
     ·           ──────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-let-escaped.js:41:11]
@@ -4394,6 +4430,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { l\u0065t } = { let: 42 };
     ·           ────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-new-escaped.js:41:20]
@@ -4409,6 +4446,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { p\u0061ckage } = { package: 42 };
     ·           ────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-private-escaped.js:41:11]
@@ -4416,6 +4454,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { privat\u0065 } = { private: 42 };
     ·           ────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-protected-escaped.js:41:11]
@@ -4423,6 +4462,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { prot\u0065cted } = { protected: 42 };
     ·           ──────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-public-escaped.js:41:11]
@@ -4430,6 +4470,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { pu\u0062lic } = { public: 42 };
     ·           ───────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-return-escaped.js:41:23]
@@ -4445,6 +4486,7 @@ Negative Passed: 4651/4651 (100.00%)
  41 │ var x = { st\u0061tic } = { static: 42 };
     ·           ───────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-super-escaped.js:41:22]
@@ -7858,6 +7900,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ (async function*(yield) { });
     ·                  ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-label-name-await.js:24:8]
@@ -7896,6 +7939,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ (async function* yield() { });
     ·                  ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-yield-star-after-newline.js:20:3]
@@ -8045,6 +8089,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-binding-identifier.js:31:7]
@@ -8061,6 +8106,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-identifier-reference-escaped.js:31:8]
@@ -8077,6 +8123,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ──────────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-identifier-reference.js:31:8]
@@ -8093,6 +8140,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-label-identifier-escaped.js:31:3]
@@ -8127,6 +8175,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  38 │           throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/async-generator/named-yield-identifier-strict.js:29:11]
@@ -8135,6 +8184,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────
  30 │       throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-generator/object-destructuring-param-strict-body.js:112:3]
@@ -8178,6 +8228,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/yield-as-binding-identifier.js:31:7]
@@ -8194,6 +8245,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/yield-as-identifier-reference-escaped.js:31:8]
@@ -8210,6 +8262,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ──────────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/yield-as-identifier-reference.js:31:8]
@@ -8226,6 +8279,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
  32 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/async-generator/yield-as-label-identifier-escaped.js:31:3]
@@ -8260,6 +8314,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  38 │           throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/async-generator/yield-identifier-strict.js:29:11]
@@ -8268,6 +8323,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────
  30 │       throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/await/await-BindingIdentifier-nested.js:18:12]
@@ -8433,6 +8489,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-binding-identifier.js:36:9]
@@ -8449,6 +8506,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-identifier-reference-escaped.js:36:10]
@@ -8465,6 +8523,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-identifier-reference.js:36:10]
@@ -8481,6 +8540,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-label-identifier-escaped.js:36:5]
@@ -8515,6 +8575,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  43 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-identifier-strict.js:34:13]
@@ -8523,6 +8584,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  35 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js:136:5]
@@ -8657,6 +8719,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:36:9]
@@ -8673,6 +8736,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:36:10]
@@ -8689,6 +8753,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:36:10]
@@ -8705,6 +8770,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-as-label-identifier-escaped.js:36:5]
@@ -8739,6 +8805,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  43 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-identifier-strict.js:34:13]
@@ -8747,6 +8814,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  35 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-method/array-destructuring-param-strict-body.js:134:5]
@@ -8997,6 +9065,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ var C = class aw\u0061it {};
     ·               ──────────
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/class-name-ident-await-module.js:22:15]
@@ -9011,6 +9080,7 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ var C = class await {};
     ·               ─────
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/expressions/class/class-name-ident-let-escaped.js:28:15]
@@ -9018,6 +9088,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ var C = class l\u0065t {};
     ·               ────────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/expressions/class/class-name-ident-let.js:28:15]
@@ -9025,6 +9096,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ var C = class let {};
     ·               ───
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/expressions/class/class-name-ident-static-escaped.js:28:15]
@@ -9032,6 +9104,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ var C = class st\u0061tic {};
     ·               ───────────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/expressions/class/class-name-ident-static.js:28:15]
@@ -9039,6 +9112,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ var C = class static {};
     ·               ──────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/class-name-ident-yield-escaped.js:28:15]
@@ -9046,6 +9120,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ var C = class yi\u0065ld {};
     ·               ──────────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/class-name-ident-yield.js:26:15]
@@ -9053,6 +9128,7 @@ Negative Passed: 4651/4651 (100.00%)
  26 │ var C = class yield {};
     ·               ─────
     ╰────
+  note: Classes are always strict mode code
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:58:21]
@@ -10302,6 +10378,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier.js:36:9]
@@ -10318,6 +10395,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:36:10]
@@ -10334,6 +10412,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference.js:36:10]
@@ -10350,6 +10429,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method/yield-as-label-identifier-escaped.js:36:5]
@@ -10384,6 +10464,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  44 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method/yield-identifier-strict.js:35:17]
@@ -10392,6 +10473,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  36 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:36:9]
@@ -10472,6 +10554,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:36:9]
@@ -10488,6 +10571,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:36:10]
@@ -10504,6 +10588,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:36:10]
@@ -10520,6 +10605,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:36:5]
@@ -10554,6 +10640,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  44 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-identifier-strict.js:35:17]
@@ -10562,6 +10649,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  36 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/elements/async-private-method/await-as-binding-identifier-escaped.js:37:9]
@@ -10837,6 +10925,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/gen-private-method/yield-as-binding-identifier.js:35:9]
@@ -10853,6 +10942,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:35:10]
@@ -10869,6 +10959,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/gen-private-method/yield-as-identifier-reference.js:35:10]
@@ -10885,6 +10976,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/elements/gen-private-method/yield-as-label-identifier-escaped.js:35:5]
@@ -10919,6 +11011,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  43 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/gen-private-method/yield-identifier-strict.js:34:17]
@@ -10927,6 +11020,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  35 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:35:9]
@@ -10943,6 +11037,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:35:9]
@@ -10959,6 +11054,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:35:10]
@@ -10975,6 +11071,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:35:10]
@@ -10991,6 +11088,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:35:5]
@@ -11025,6 +11123,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  43 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-identifier-strict.js:34:17]
@@ -11033,6 +11132,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  35 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × 'arguments' is not allowed in class field initializer
     ╭─[test262/test/language/expressions/class/elements/literal-name-init-err-contains-arguments.js:34:7]
@@ -14031,6 +14131,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-binding-identifier.js:35:9]
@@ -14047,6 +14148,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:35:10]
@@ -14063,6 +14165,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-identifier-reference.js:35:10]
@@ -14079,6 +14182,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-label-identifier-escaped.js:35:5]
@@ -14113,6 +14217,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  42 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/gen-method/yield-identifier-strict.js:33:13]
@@ -14121,6 +14226,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  34 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × yield expression not allowed in formal parameter
     ╭─[test262/test/language/expressions/class/gen-method-param-dflt-yield.js:27:10]
@@ -14200,6 +14306,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-as-binding-identifier.js:35:9]
@@ -14216,6 +14323,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-as-identifier-reference-escaped.js:35:10]
@@ -14232,6 +14340,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-as-identifier-reference.js:35:10]
@@ -14248,6 +14357,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }};
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-as-label-identifier-escaped.js:35:5]
@@ -14282,6 +14392,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  42 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-identifier-strict.js:33:13]
@@ -14290,6 +14401,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  34 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × A 'get' accessor must not have any formal parameters.
     ╭─[test262/test/language/expressions/class/getter-param-dflt.js:24:17]
@@ -14360,6 +14472,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  23 │ };
     ╰────
+  note: Classes are always strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/method-static/array-destructuring-param-strict-body.js:153:5]
@@ -14439,6 +14552,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                ─────
  23 │ };
     ╰────
+  note: Classes are always strict mode code
 
   × Logical expressions and coalesce expressions cannot be mixed
     ╭─[test262/test/language/expressions/coalesce/cannot-chain-head-with-logical-and.js:32:1]
@@ -14751,6 +14865,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ import('./empty_FIXTURE.js', yield);
     ·                              ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/invalid-assignmenttargettype-syntax-error-1-update-expression.js:47:1]
@@ -18116,6 +18231,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                   ─────
  24 │     paramValue = x;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `param` has already been declared
     ╭─[test262/test/language/expressions/function/param-duplicated-strict-1.js:23:12]
@@ -18361,6 +18477,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/generators/named-yield-as-binding-identifier.js:29:7]
@@ -18377,6 +18494,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/generators/named-yield-as-identifier-reference-escaped.js:29:8]
@@ -18393,6 +18511,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ──────────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/generators/named-yield-as-identifier-reference.js:29:8]
@@ -18409,6 +18528,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/generators/named-yield-as-label-identifier-escaped.js:29:3]
@@ -18443,6 +18563,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  36 │           throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/generators/named-yield-identifier-strict.js:27:11]
@@ -18451,6 +18572,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────
  28 │       throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/generators/object-destructuring-param-strict-body.js:133:3]
@@ -18511,6 +18633,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/generators/yield-as-binding-identifier.js:29:7]
@@ -18527,6 +18650,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/generators/yield-as-generator-expression-binding-identifier.js:17:19]
@@ -18550,6 +18674,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ──────────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/generators/yield-as-identifier-reference.js:29:8]
@@ -18566,6 +18691,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
  30 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/generators/yield-as-label-identifier-escaped.js:29:3]
@@ -18614,6 +18740,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ var g = function*(yield) {};
     ·                   ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/generators/yield-identifier-spread-strict.js:35:15]
@@ -18622,6 +18749,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  36 │           throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/generators/yield-identifier-strict.js:27:11]
@@ -18630,6 +18758,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────
  28 │       throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/generators/yield-star-after-newline.js:19:3]
@@ -18820,6 +18949,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  33 │   }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/in/rhs-yield-absent-strict.js:21:8]
@@ -18827,6 +18957,7 @@ Negative Passed: 4651/4651 (100.00%)
  21 │ '' in (yield);
     ·        ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/logical-assignment/lgcl-and-arguments-strict.js:19:1]
@@ -19251,6 +19382,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ──────
  21 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/expressions/object/getter-body-strict-outside.js:19:5]
@@ -19259,6 +19391,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ──────
  20 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × A 'get' accessor must not have any formal parameters.
     ╭─[test262/test/language/expressions/object/getter-param-dflt.js:24:11]
@@ -19275,6 +19408,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ──────────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[test262/test/language/expressions/object/identifier-shorthand-interface-invalid-strict-mode.js:31:5]
@@ -19283,6 +19417,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ─────────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/object/identifier-shorthand-invalid-computed-name.js:30:6]
@@ -19307,6 +19442,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ───
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[test262/test/language/expressions/object/identifier-shorthand-package-invalid-strict-mode.js:31:5]
@@ -19315,6 +19451,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ───────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[test262/test/language/expressions/object/identifier-shorthand-private-invalid-strict-mode.js:31:5]
@@ -19323,6 +19460,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ───────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[test262/test/language/expressions/object/identifier-shorthand-protected-invalid-strict-mode.js:31:5]
@@ -19331,6 +19469,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ─────────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/expressions/object/identifier-shorthand-public-invalid-strict-mode.js:31:5]
@@ -19339,6 +19478,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ──────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/object/identifier-shorthand-static-init-await-invalid.js:24:14]
@@ -19356,6 +19496,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ──────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/object/identifier-shorthand-yield-invalid-strict-mode.js:31:5]
@@ -19364,6 +19505,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ─────
  32 │   });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/object/method-definition/async-await-as-binding-identifier-escaped.js:31:9]
@@ -19570,6 +19712,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-binding-identifier.js:30:9]
@@ -19586,6 +19729,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-identifier-reference-escaped.js:30:10]
@@ -19602,6 +19746,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-identifier-reference.js:30:10]
@@ -19618,6 +19763,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-label-identifier-escaped.js:30:5]
@@ -19652,6 +19798,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  37 │             throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-identifier-strict.js:28:13]
@@ -19660,6 +19807,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  29 │         throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/object/method-definition/async-meth-array-destructuring-param-strict-body.js:110:5]
@@ -19964,6 +20112,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-as-binding-identifier.js:30:9]
@@ -19980,6 +20129,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-as-identifier-reference-escaped.js:30:10]
@@ -19996,6 +20146,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-as-identifier-reference.js:30:10]
@@ -20012,6 +20163,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  31 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-as-label-identifier-escaped.js:30:5]
@@ -20046,6 +20198,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  37 │             throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-identifier-strict.js:28:13]
@@ -20054,6 +20207,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  29 │         throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/generator-param-id-yield.js:19:11]
@@ -20388,6 +20542,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·      ─────
  20 │ };
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/expressions/object/method-definition/yield-star-after-newline.js:20:5]
@@ -20438,6 +20593,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ──────
  21 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/expressions/object/setter-body-strict-outside.js:19:5]
@@ -20446,6 +20602,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ──────
  20 │   }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/object/setter-param-arguments-strict-inside.js:18:9]
@@ -21023,6 +21180,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var \u0069mplements = 123;
     ·     ───────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[test262/test/language/future-reserved-words/implements-strict.js:24:5]
@@ -21030,6 +21188,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var implements = 1;
     ·     ──────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier expected. 'import' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/import.js:21:5]
@@ -21044,6 +21203,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var inte\u0072face = 123;
     ·     ──────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[test262/test/language/future-reserved-words/interface-strict.js:24:5]
@@ -21051,6 +21211,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var interface = 1;
     ·     ─────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/future-reserved-words/let-strict-escaped.js:25:5]
@@ -21058,6 +21219,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var l\u0065t = 123;
     ·     ────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/future-reserved-words/let-strict.js:24:5]
@@ -21065,6 +21227,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var let = 1;
     ·     ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[test262/test/language/future-reserved-words/package-strict-escaped.js:25:5]
@@ -21072,6 +21235,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var packag\u0065 = 123;
     ·     ────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[test262/test/language/future-reserved-words/package-strict.js:24:5]
@@ -21079,6 +21243,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var package = 1;
     ·     ───────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[test262/test/language/future-reserved-words/private-strict-escaped.js:25:5]
@@ -21086,6 +21251,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var privat\u0065 = 123;
     ·     ────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[test262/test/language/future-reserved-words/private-strict.js:24:5]
@@ -21093,6 +21259,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var private = 1;
     ·     ───────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[test262/test/language/future-reserved-words/protected-strict-escaped.js:26:5]
@@ -21100,6 +21267,7 @@ Negative Passed: 4651/4651 (100.00%)
  26 │ var \u0070\u0072\u006f\u0074\u0065\u0063\u0074\u0065\u0064 = 123;
     ·     ──────────────────────────────────────────────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[test262/test/language/future-reserved-words/protected-strict.js:24:5]
@@ -21107,6 +21275,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var protected = 1;
     ·     ─────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/future-reserved-words/public-strict-escaped.js:25:5]
@@ -21114,6 +21283,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var \u0070\u0075\u0062\u006c\u0069\u0063 = 123;
     ·     ────────────────────────────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/future-reserved-words/public-strict.js:24:5]
@@ -21121,6 +21291,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/future-reserved-words/static-strict-escaped.js:25:5]
@@ -21128,6 +21299,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var \u0073\u0074\u0061\u0074\u0069\u0063 = 123;
     ·     ────────────────────────────────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/future-reserved-words/static-strict.js:24:5]
@@ -21135,6 +21307,7 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ var static = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier expected. 'super' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/super.js:21:5]
@@ -21149,6 +21322,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │ var \u0079ield = 123;
     ·     ──────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/future-reserved-words/yield-strict.js:23:5]
@@ -21156,6 +21330,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ var yield = 1;
     ·     ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use export statement outside a module
     ╭─[test262/test/language/global-code/export.js:22:1]
@@ -21259,6 +21434,7 @@ Negative Passed: 4651/4651 (100.00%)
  26 │ yield;
     · ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/identifier-resolution/static-init-invalid-await.js:24:10]
@@ -22058,6 +22234,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ var yield = 13;
     ·     ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Invalid Character `ⸯ`
     ╭─[test262/test/language/identifiers/vertical-tilde-continue-escaped.js:17:12]
@@ -25421,6 +25598,7 @@ Negative Passed: 4651/4651 (100.00%)
  15 │ var public;
     ·     ──────
     ╰────
+  note: Modules are always strict mode code
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[test262/test/language/module-code/early-super.js:15:1]
@@ -26350,6 +26528,7 @@ Negative Passed: 4651/4651 (100.00%)
  32 │ yield;
     · ─────
     ╰────
+  note: Modules are always strict mode code
 
   × Private identifier '#f' is not allowed outside class bodies
     ╭─[test262/test/language/module-code/private-identifiers-not-empty.js:18:3]
@@ -26439,6 +26618,7 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ new await;
     ·     ─────
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × Unexpected token
     ╭─[test262/test/language/module-code/top-level-await/no-operand.js:17:6]
@@ -26651,6 +26831,7 @@ Negative Passed: 4651/4651 (100.00%)
  15 │ var await;
     ·     ─────
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/reserved-words/ident-reference-false-escaped.js:21:1]
@@ -27270,6 +27451,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────────
  32 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/async-generator/yield-as-binding-identifier.js:31:7]
@@ -27286,6 +27468,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  32 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/async-generator/yield-as-identifier-reference-escaped.js:31:8]
@@ -27302,6 +27485,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ──────────
  32 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/async-generator/yield-as-identifier-reference.js:31:8]
@@ -27318,6 +27502,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
  32 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/async-generator/yield-as-label-identifier-escaped.js:31:3]
@@ -27352,6 +27537,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  38 │           throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/async-generator/yield-identifier-strict.js:29:11]
@@ -27360,6 +27546,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────
  30 │       throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/await-using/redeclaration-error-from-within-strict-mode-function-await-using.js:16:49]
@@ -28016,6 +28203,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-binding-identifier.js:36:9]
@@ -28032,6 +28220,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-identifier-reference-escaped.js:36:10]
@@ -28048,6 +28237,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-identifier-reference.js:36:10]
@@ -28064,6 +28254,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-label-identifier-escaped.js:36:5]
@@ -28098,6 +28289,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  43 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/async-gen-method/yield-identifier-strict.js:34:13]
@@ -28106,6 +28298,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  35 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js:136:5]
@@ -28240,6 +28433,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:36:9]
@@ -28256,6 +28450,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:36:10]
@@ -28272,6 +28467,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:36:10]
@@ -28288,6 +28484,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-as-label-identifier-escaped.js:36:5]
@@ -28322,6 +28519,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  43 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-identifier-strict.js:34:13]
@@ -28330,6 +28528,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  35 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/async-meth-escaped-async.js:26:5]
@@ -28588,6 +28787,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ class aw\u0061it {}
     ·       ──────────
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/class-name-ident-await-module.js:22:7]
@@ -28602,6 +28802,7 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ class await {}
     ·       ─────
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/statements/class/class-name-ident-let-escaped.js:28:7]
@@ -28609,6 +28810,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ class l\u0065t {}
     ·       ────────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/statements/class/class-name-ident-let.js:28:7]
@@ -28616,6 +28818,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ class let {}
     ·       ───
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/statements/class/class-name-ident-static-escaped.js:28:7]
@@ -28623,6 +28826,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ class st\u0061tic {}
     ·       ───────────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
     ╭─[test262/test/language/statements/class/class-name-ident-static.js:28:7]
@@ -28630,6 +28834,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ class static {}
     ·       ──────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/class-name-ident-yield-escaped.js:28:7]
@@ -28637,6 +28842,7 @@ Negative Passed: 4651/4651 (100.00%)
  28 │ class yi\u0065ld {}
     ·       ──────────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/class-name-ident-yield.js:26:7]
@@ -28644,6 +28850,7 @@ Negative Passed: 4651/4651 (100.00%)
  26 │ class yield {}
     ·       ─────
     ╰────
+  note: Classes are always strict mode code
 
   × Identifier `a` has already been declared
     ╭─[test262/test/language/statements/class/definition/early-errors-class-async-method-duplicate-parameters.js:29:13]
@@ -28738,6 +28945,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  21 │   }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/definition/methods-gen-yield-as-identifier-in-nested-function.js:21:7]
@@ -28746,6 +28954,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  22 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/statements/class/definition/methods-gen-yield-as-logical-or-expression.js:19:11]
@@ -28770,6 +28979,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·      ─────
  20 │ }
     ╰────
+  note: Classes are always strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/statements/class/definition/methods-gen-yield-star-after-newline.js:20:5]
@@ -30045,6 +30255,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier.js:36:9]
@@ -30061,6 +30272,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:36:10]
@@ -30077,6 +30289,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference.js:36:10]
@@ -30093,6 +30306,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method/yield-as-label-identifier-escaped.js:36:5]
@@ -30127,6 +30341,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  44 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method/yield-identifier-strict.js:35:17]
@@ -30135,6 +30350,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  36 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:36:9]
@@ -30215,6 +30431,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:36:9]
@@ -30231,6 +30448,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:36:10]
@@ -30247,6 +30465,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:36:10]
@@ -30263,6 +30482,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  37 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:36:5]
@@ -30297,6 +30517,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  44 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/yield-identifier-strict.js:35:17]
@@ -30305,6 +30526,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  36 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/elements/async-private-method/await-as-binding-identifier-escaped.js:37:9]
@@ -30580,6 +30802,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/gen-private-method/yield-as-binding-identifier.js:35:9]
@@ -30596,6 +30819,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:35:10]
@@ -30612,6 +30836,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/gen-private-method/yield-as-identifier-reference.js:35:10]
@@ -30628,6 +30853,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/elements/gen-private-method/yield-as-label-identifier-escaped.js:35:5]
@@ -30662,6 +30888,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  43 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/gen-private-method/yield-identifier-strict.js:34:17]
@@ -30670,6 +30897,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  35 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:35:9]
@@ -30686,6 +30914,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:35:9]
@@ -30702,6 +30931,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:35:10]
@@ -30718,6 +30948,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:35:10]
@@ -30734,6 +30965,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:35:5]
@@ -30768,6 +31000,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  43 │                 throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-identifier-strict.js:34:17]
@@ -30776,6 +31009,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  35 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × 'arguments' is not allowed in class field initializer
     ╭─[test262/test/language/statements/class/elements/literal-name-init-err-contains-arguments.js:34:7]
@@ -33835,6 +34069,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method/yield-as-binding-identifier.js:35:9]
@@ -33851,6 +34086,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:35:10]
@@ -33867,6 +34103,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method/yield-as-identifier-reference.js:35:10]
@@ -33883,6 +34120,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/gen-method/yield-as-label-identifier-escaped.js:35:5]
@@ -33917,6 +34155,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  42 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/gen-method/yield-identifier-strict.js:33:13]
@@ -33925,6 +34164,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  34 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × yield expression not allowed in formal parameter
     ╭─[test262/test/language/statements/class/gen-method-param-dflt-yield.js:27:10]
@@ -34004,6 +34244,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method-static/yield-as-binding-identifier.js:35:9]
@@ -34020,6 +34261,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method-static/yield-as-identifier-reference-escaped.js:35:10]
@@ -34036,6 +34278,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ──────────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method-static/yield-as-identifier-reference.js:35:10]
@@ -34052,6 +34295,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ─────
  36 │ }}
     ╰────
+  note: Classes are always strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/class/gen-method-static/yield-as-label-identifier-escaped.js:35:5]
@@ -34086,6 +34330,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
  42 │             throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/gen-method-static/yield-identifier-strict.js:33:13]
@@ -34094,6 +34339,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·             ─────
  34 │         throw new Test262Error();
     ╰────
+  note: Classes are always strict mode code
 
   × A 'get' accessor must not have any formal parameters.
     ╭─[test262/test/language/statements/class/getter-param-dflt.js:24:16]
@@ -34164,6 +34410,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─────
  23 │ }
     ╰────
+  note: Classes are always strict mode code
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/method-static/array-destructuring-param-strict-body.js:152:5]
@@ -34374,6 +34621,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  26 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/static-method-param-yield.js:22:16]
@@ -34382,6 +34630,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                ─────
  23 │ }
     ╰────
+  note: Classes are always strict mode code
 
   × 'with' statements are not allowed
     ╭─[test262/test/language/statements/class/strict-mode/with.js:15:33]
@@ -34529,6 +34778,7 @@ Negative Passed: 4651/4651 (100.00%)
  20 │ let = "irrelevant initializer";
     · ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/const/syntax/with-initializer-do-statement-while-expression.js:15:4]
@@ -35440,6 +35690,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                    ─────
  35 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-invalid.js:34:17]
@@ -35456,6 +35707,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                  ─────
  35 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-invalid.js:34:22]
@@ -35472,6 +35724,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                     ─────
  35 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-target-simple-strict.js:34:15]
@@ -35488,6 +35741,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                  ─────
  35 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js:53:24]
@@ -36263,6 +36517,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([ x = yield ] in [[]]) ;
     ·            ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-array-invalid.js:33:9]
@@ -36277,6 +36532,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([[x[yield]]] in [[[]]]) ;
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-memberexpr-optchain-prop-ref-init.js:66:7]
@@ -36298,6 +36554,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([{ x = yield }] in [[{}]]) ;
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/array-elem-put-obj-literal-optchain-prop-ref-init.js:65:7]
@@ -36322,6 +36579,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([ x[yield] ] in [[]]) ;
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-element.js:33:7]
@@ -36381,6 +36639,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([...[x[yield]]] in [[]]) ;
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-obj-invalid.js:33:17]
@@ -36395,6 +36654,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([...{ x = yield }] in [[{}]]) ;
     ·                ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-yield-ident-invalid.js:34:12]
@@ -36402,6 +36662,7 @@ Negative Passed: 4651/4651 (100.00%)
  34 │ for ([...x[yield]] in [[]]) ;
     ·            ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/statements/for-in/dstr/obj-id-identifier-yield-expr.js:33:14]
@@ -36418,6 +36679,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ yield } in [{}]) ;
     ·        ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/for-in/dstr/obj-id-init-simple-strict.js:33:8]
@@ -36432,6 +36694,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x = yield } in [{}]) ;
     ·            ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/for-in/dstr/obj-id-simple-strict.js:33:8]
@@ -36446,6 +36709,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: x = yield } in [{}]) ;
     ·               ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/obj-prop-elem-target-memberexpr-optchain-prop-ref-init.js:66:11]
@@ -36470,6 +36734,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: x[yield] } in [{}]) ;
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-array-invalid.js:33:13]
@@ -36484,6 +36749,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: [x = yield] } in [{ x: [] }]) ;
     ·                ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-obj-invalid.js:33:18]
@@ -36498,6 +36764,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: { x = yield } } in [{ x: {} }]) ;
     ·                 ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-in/dstr/obj-rest-not-last-element-invalid.js:34:7]
@@ -36780,6 +37047,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([ x = yield ] of [[]]) ;
     ·            ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-array-invalid.js:33:9]
@@ -36794,6 +37062,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([[x[yield]]] of [[[]]]) ;
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-memberexpr-optchain-prop-ref-init.js:66:7]
@@ -36815,6 +37084,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([{ x = yield }] of [[{}]]) ;
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/array-elem-put-obj-literal-optchain-prop-ref-init.js:65:7]
@@ -36839,6 +37109,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([ x[yield] ] of [[]]) ;
     ·          ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-element.js:33:7]
@@ -36898,6 +37169,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([...[x[yield]]] of [[]]) ;
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-obj-invalid.js:33:17]
@@ -36912,6 +37184,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ([...{ x = yield }] of [[{}]]) ;
     ·                ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-yield-ident-invalid.js:34:12]
@@ -36919,6 +37192,7 @@ Negative Passed: 4651/4651 (100.00%)
  34 │ for ([...x[yield]] of [[]]) ;
     ·            ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × for-of loop variable declaration may not have an initializer
     ╭─[test262/test/language/statements/for-of/dstr/const-ary-ptrn-init-err.js:18:6]
@@ -37059,6 +37333,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ yield } of [{}]) ;
     ·        ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/for-of/dstr/obj-id-init-simple-strict.js:33:8]
@@ -37073,6 +37348,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x = yield } of [{}]) ;
     ·            ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/for-of/dstr/obj-id-simple-strict.js:33:8]
@@ -37087,6 +37363,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: x = yield } of [{}]) ;
     ·               ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/obj-prop-elem-target-memberexpr-optchain-prop-ref-init.js:66:11]
@@ -37111,6 +37388,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: x[yield] } of [{}]) ;
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-array-invalid.js:33:13]
@@ -37125,6 +37403,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: [x = yield] } of [{ x: [] }]) ;
     ·                ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-obj-invalid.js:33:18]
@@ -37139,6 +37418,7 @@ Negative Passed: 4651/4651 (100.00%)
  33 │ for ({ x: { x = yield } } of [{ x: {} }]) ;
     ·                 ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-of/dstr/obj-rest-not-last-element-invalid.js:34:7]
@@ -37842,6 +38122,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·                  ─────
  24 │     paramValue = x;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `param` has already been declared
     ╭─[test262/test/language/statements/function/param-duplicated-strict-1.js:23:22]
@@ -38146,6 +38427,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ──────────
  30 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/generators/yield-as-binding-identifier.js:29:7]
@@ -38162,6 +38444,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ─────
  30 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/generators/yield-as-identifier-reference-escaped.js:29:8]
@@ -38178,6 +38461,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ──────────
  30 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/generators/yield-as-identifier-reference.js:29:8]
@@ -38194,6 +38478,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
  30 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/statements/generators/yield-as-label-identifier-escaped.js:29:3]
@@ -38242,6 +38527,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ function* g(yield) {}
     ·             ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/generators/yield-identifier-spread-strict.js:35:15]
@@ -38250,6 +38536,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
  36 │           throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/generators/yield-identifier-strict.js:27:11]
@@ -38258,6 +38545,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────
  28 │       throw new Test262Error();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
     ╭─[test262/test/language/statements/generators/yield-star-after-newline.js:19:3]
@@ -38900,6 +39188,7 @@ Negative Passed: 4651/4651 (100.00%)
  23 │ yi\u0065ld: 1;
     · ──────────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/labeled/value-yield-strict.js:18:1]
@@ -38907,6 +39196,7 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ yield: 1;
     · ─────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/let/dstr/ary-ptrn-rest-init-ary.js:31:9]
@@ -38989,6 +39279,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·      ───
  18 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/statements/let/syntax/identifier-let-disallowed-as-boundname.js:14:10]
@@ -38997,6 +39288,7 @@ Negative Passed: 4651/4651 (100.00%)
     ·          ───
  15 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/statements/let/syntax/let-let-declaration-split-across-two-lines.js:34:1]
@@ -39004,6 +39296,7 @@ Negative Passed: 4651/4651 (100.00%)
  34 │ let;
     · ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/statements/let/syntax/let-let-declaration-with-initializer-split-across-two-lines.js:34:1]
@@ -39011,6 +39304,7 @@ Negative Passed: 4651/4651 (100.00%)
  34 │ let = "irrelevant initializer";
     · ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/let-newline-await-in-normal-function.js:24:10]
