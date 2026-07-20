@@ -333,17 +333,15 @@ fn test_inline_read_before_await_tdz() {
     // declaration's initializer (`let p = init(), v = ...`), before `v` is
     // initialized, so `v` is in its TDZ when `init` runs.
     test_same(
-        "import { bar } from 'x'; let p = init(), v = ext(); async function init() { let num = await foo(); bar(v, num) } export { p }",
+        "import { bar } from 'x'; let p = init(bar), v = ext(); async function init(fn) { let num = await foo(); fn(v, num) } export { p }",
     );
     test_same(
-        "import { bar } from 'x'; let v = ext(); export async function init() { let num = await foo(); bar(v, num) }",
+        "let v = ext(); export async function init(fn) { let num = await foo(); fn(v, num) }",
     );
     test_same(
-        "import { bar } from 'x'; const v = ext(); export async function init() { let num = await foo(); bar(v, num) }",
+        "const v = ext(); export async function init(fn) { let num = await foo(); fn(v, num) }",
     );
-    test_same(
-        "import { bar } from 'x'; export async function init() { let num = await foo(); bar(C, num) } class C {}",
-    );
+    test_same("export async function init(fn) { let num = await foo(); fn(C, num) } class C {}");
     // A member assignment target reads the object before the await, so a
     // closed-over lexical object must not be reordered either.
     test_same("let v = ext(); export async function init() { let num = await foo(); v.x = num }");
@@ -351,12 +349,12 @@ fn test_inline_read_before_await_tdz() {
     // `var` / parameter bindings are not TDZ-subject, so reordering the read
     // past the await is safe and still merges.
     test(
-        "import { bar } from 'x'; export async function init(v) { let num = await foo(); bar(v, num) }",
-        "import { bar } from 'x'; export async function init(v) { bar(v, await foo()) }",
+        "export async function init(fn, v) { let num = await foo(); fn(v, num) }",
+        "export async function init(fn, v) { fn(v, await foo()) }",
     );
     test(
-        "import { bar } from 'x'; export async function init() { var v = ext(); let num = await foo(); bar(v, num) }",
-        "import { bar } from 'x'; export async function init() { bar(ext(), await foo()) }",
+        "export async function init(fn) { var v = ext(); let num = await foo(); fn(v, num) }",
+        "export async function init(fn) { fn(ext(), await foo()) }",
     );
     test(
         "export async function init(v) { let num = await foo(); v.x = num }",
@@ -364,20 +362,18 @@ fn test_inline_read_before_await_tdz() {
     );
     // Same-function lexical is always initialized at the read, so it still merges.
     test(
-        "import { bar } from 'x'; export function outer() { const v = ext(); return bar(v, ext2()) }",
-        "import { bar } from 'x'; export function outer() { return bar(ext(), ext2()) }",
+        "export function outer(fn) { const v = ext(); return fn(v, ext2()) }",
+        "export function outer(fn) { return fn(ext(), ext2()) }",
     );
     // `using` is block-scoped too.
     test_same(
-        "import { bar } from 'x'; using v = ext(); export async function init() { let num = await foo(); bar(v, num) }",
+        "using v = ext(); export async function init(fn) { let num = await foo(); fn(v, num) }",
     );
     // `yield` is a suspension point like `await`.
-    test_same(
-        "import { bar } from 'x'; let v = ext(); export function* init() { let num = yield foo(); bar(v, num) }",
-    );
+    test_same("let v = ext(); export function* init(fn) { let num = yield foo(); fn(v, num) }");
     // Closed over across two function boundaries.
     test_same(
-        "import { bar } from 'x'; let v = ext(); export function outer() { return async function () { let num = await foo(); bar(v, num) } }",
+        "let v = ext(); export function outer(fn) { return async function () { let num = await foo(); fn(v, num) } }",
     );
 }
 
