@@ -171,9 +171,9 @@ oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform v
 oxlint = { path = "apps/oxlint" } # Linter CLI
 
 # Relaxed version so the user can decide which version to use.
-napi = { version = "3" } # Node.js native bindings
+napi = { version = ">=3.12.0-alpha.0, <4" } # Node.js native bindings
 napi-build = "2" # NAPI build tool
-napi-derive = "3" # NAPI proc macros
+napi-derive = ">=3.7.0-alpha.0, <4" # NAPI proc macros
 
 # Relaxed version so the user can decide which version to use.
 indexmap = "2" # Ordered hash map
