@@ -13,6 +13,7 @@
 //! - `src/HIR/DeriveMinimalDependenciesHIR.ts`
 
 use crate::react_compiler_utils::FxIndexMap;
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
@@ -58,8 +59,10 @@ pub fn propagate_scope_dependencies_hir<'a>(func: &mut HirFunction<'a>, env: &mu
             if let Terminal::Scope { scope, block: inner_block, .. } = &block.terminal
                 && let Some(node_indices) = working.get(inner_block)
             {
-                let deps: Vec<ReactiveScopeDependency> =
-                    node_indices.iter().map(|&idx| registry.nodes[idx].full_path.clone()).collect();
+                let deps: Vec<ReactiveScopeDependency> = node_indices
+                    .iter()
+                    .map(|&idx| registry.nodes[idx].full_path.clone_in(env.allocator))
+                    .collect();
                 keyed.insert(*scope, deps);
             }
         }
@@ -90,11 +93,11 @@ pub fn propagate_scope_dependencies_hir<'a>(func: &mut HirFunction<'a>, env: &mu
         // Step 2: Calculate hoistable dependencies using the tree.
         let mut tree = ReactiveScopeDependencyTreeHIR::new(hoistables.iter());
         for dep in deps {
-            tree.add_dependency(dep.clone());
+            tree.add_dependency(dep.clone_in(env.allocator));
         }
 
         // Step 3: Reduce dependencies to a minimal set.
-        let candidates = tree.derive_minimal_dependencies();
+        let candidates = tree.derive_minimal_dependencies(env.allocator);
         let scope = &mut env.scopes[*scope_id];
         for candidate_dep in candidates {
             let already_exists = scope.dependencies.iter().any(|existing_dep| {
@@ -222,7 +225,7 @@ fn collect_temporaries_sidemap<'a>(
     env: &Environment<'a>,
     used_outside_declaring_scope: &FxHashSet<DeclarationId>,
 ) -> TemporariesMap<'a> {
-    let mut temporaries = IndexVec::from_vec(vec![None; env.identifiers.len()]);
+    let mut temporaries = IndexVec::from_vec((0..env.identifiers.len()).map(|_| None).collect());
     collect_temporaries_sidemap_impl(
         func,
         env,
@@ -277,7 +280,14 @@ fn collect_temporaries_sidemap_impl<'a>(
             match &instr.value {
                 InstructionValue::PropertyLoad { object, property, span, .. } if !used_outside => {
                     if inner_fn_context.is_none() || temporaries[object.identifier].is_some() {
-                        let prop = get_property(object, property, false, *span, temporaries);
+                        let prop = get_property(
+                            object,
+                            property,
+                            false,
+                            *span,
+                            temporaries,
+                            env.allocator,
+                        );
                         temporaries[instr.lvalue.identifier] = Some(prop);
                     }
                 }
@@ -292,7 +302,7 @@ fn collect_temporaries_sidemap_impl<'a>(
                         temporaries[instr.lvalue.identifier] = Some(ReactiveScopeDependency {
                             identifier: place.identifier,
                             reactive: place.reactive,
-                            path: vec![],
+                            path: ArenaVec::new_in(&env.allocator),
                             span: *span,
                         });
                     }
@@ -309,7 +319,7 @@ fn collect_temporaries_sidemap_impl<'a>(
                         temporaries[instr.lvalue.identifier] = Some(ReactiveScopeDependency {
                             identifier: place.identifier,
                             reactive: place.reactive,
-                            path: vec![],
+                            path: ArenaVec::new_in(&env.allocator),
                             span: *span,
                         });
                     }
@@ -339,10 +349,11 @@ fn get_property<'a>(
     optional: bool,
     span: Option<Span>,
     temporaries: &TemporariesMap<'a>,
+    alloc: &'a Allocator,
 ) -> ReactiveScopeDependency<'a> {
     let resolved = temporaries[object.identifier].as_ref();
     if let Some(resolved) = resolved {
-        let mut path = resolved.path.clone();
+        let mut path = resolved.path.clone_in(alloc);
         path.push(DependencyPathEntry { property: *property_name, optional, span });
         ReactiveScopeDependency {
             identifier: resolved.identifier,
@@ -354,7 +365,10 @@ fn get_property<'a>(
         ReactiveScopeDependency {
             identifier: object.identifier,
             reactive: object.reactive,
-            path: vec![DependencyPathEntry { property: *property_name, optional, span }],
+            path: ArenaVec::from_array_in(
+                [DependencyPathEntry { property: *property_name, optional, span }],
+                &alloc,
+            ),
             span,
         }
     }
@@ -388,8 +402,11 @@ fn collect_optional_chain_sidemap<'a>(
     let mut ctx = OptionalTraversalContext {
         seen_optionals: FxHashSet::default(),
         processed_instrs_in_optional: FxHashSet::default(),
-        temporaries_read_in_optional: IndexVec::from_vec(vec![None; env.identifiers.len()]),
+        temporaries_read_in_optional: IndexVec::from_vec(
+            (0..env.identifiers.len()).map(|_| None).collect(),
+        ),
         hoistable_objects: FxHashMap::default(),
+        alloc: env.allocator,
     };
 
     traverse_function_optional(func, env, &mut ctx);
@@ -406,6 +423,7 @@ struct OptionalTraversalContext<'a> {
     processed_instrs_in_optional: FxHashSet<ProcessedInstr>,
     temporaries_read_in_optional: TemporariesMap<'a>,
     hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
+    alloc: &'a Allocator,
 }
 
 fn traverse_function_optional<'a>(
@@ -538,7 +556,7 @@ fn traverse_optional_block<'a>(
                 return None;
             }
 
-            let mut path: Vec<DependencyPathEntry> = Vec::new();
+            let mut path = ArenaVec::new_in(&ctx.alloc);
             for i in 1..maybe_test_block.instructions.len() {
                 let curr_instr = &func.instructions[maybe_test_block.instructions[i].index()];
                 let prev_instr = &func.instructions[maybe_test_block.instructions[i - 1].index()];
@@ -609,12 +627,14 @@ fn traverse_optional_block<'a>(
             if !is_optional {
                 // Non-optional load: record that PropertyLoads from inner optional are hoistable
                 if let Some(inner_dep) = &ctx.temporaries_read_in_optional[inner_optional_id] {
-                    let inner_dep = inner_dep.clone();
+                    let inner_dep = inner_dep.clone_in(ctx.alloc);
                     ctx.hoistable_objects.insert(optional_block.id, inner_dep);
                 }
             }
 
-            let base = ctx.temporaries_read_in_optional[inner_optional_id].clone()?;
+            let base = ctx.temporaries_read_in_optional[inner_optional_id]
+                .as_ref()
+                .map(|d| d.clone_in(ctx.alloc))?;
             (&test_block.terminal, base)
         }
         _ => return None,
@@ -702,7 +722,7 @@ fn traverse_optional_block<'a>(
         }
         _ => BlockId::from_usize(0),
     }));
-    ctx.temporaries_read_in_optional[match_result.consequent_id] = Some(load.clone());
+    ctx.temporaries_read_in_optional[match_result.consequent_id] = Some(load.clone_in(ctx.alloc));
     ctx.temporaries_read_in_optional[match_result.property_id] = Some(load);
 
     Some(match_result.consequent_id)
@@ -712,7 +732,7 @@ fn traverse_optional_block<'a>(
 // CollectHoistablePropertyLoads
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct PropertyPathNode<'a> {
     properties: FxHashMap<PropertyLiteral<'a>, usize>, // index into registry
     optional_properties: FxHashMap<PropertyLiteral<'a>, usize>, // index into registry
@@ -723,11 +743,12 @@ struct PropertyPathNode<'a> {
 struct PropertyPathRegistry<'a> {
     nodes: Vec<PropertyPathNode<'a>>,
     roots: FxHashMap<IdentifierId, usize>,
+    alloc: &'a Allocator,
 }
 
 impl<'a> PropertyPathRegistry<'a> {
-    fn new() -> Self {
-        Self { nodes: Vec::new(), roots: FxHashMap::default() }
+    fn new(alloc: &'a Allocator) -> Self {
+        Self { nodes: Vec::new(), roots: FxHashMap::default(), alloc }
     }
 
     fn get_or_create_identifier(
@@ -746,7 +767,7 @@ impl<'a> PropertyPathRegistry<'a> {
             full_path: ReactiveScopeDependency {
                 identifier: identifier_id,
                 reactive,
-                path: vec![],
+                path: ArenaVec::new_in(&self.alloc),
                 span,
             },
             has_optional: false,
@@ -769,17 +790,23 @@ impl<'a> PropertyPathRegistry<'a> {
         if let Some(idx) = existing {
             return idx;
         }
-        let parent_full_path = self.nodes[parent_idx].full_path.clone();
-        let parent_has_optional = self.nodes[parent_idx].has_optional;
+        let parent = &self.nodes[parent_idx];
+        let parent_has_optional = parent.has_optional;
+        // `identifier`/`reactive` are `Copy`, and `path` is the only field that
+        // owns an arena allocation — clone it exactly once. Cloning the whole
+        // parent `full_path` first (as `clone_in`) would strand a duplicate path
+        // in the compilation arena that is never reclaimed.
+        let identifier = parent.full_path.identifier;
+        let reactive = parent.full_path.reactive;
+        let mut new_path = parent.full_path.path.clone_in(self.alloc);
         let idx = self.nodes.len();
-        let mut new_path = parent_full_path.path.clone();
         new_path.push(*entry);
         self.nodes.push(PropertyPathNode {
             properties: FxHashMap::default(),
             optional_properties: FxHashMap::default(),
             full_path: ReactiveScopeDependency {
-                identifier: parent_full_path.identifier,
-                reactive: parent_full_path.reactive,
+                identifier,
+                reactive,
                 path: new_path,
                 span: entry.span,
             },
@@ -826,7 +853,7 @@ fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut Prop
         let to_process: Vec<usize> = optional_chain_nodes.iter().copied().collect();
 
         for original_idx in to_process {
-            let full_path = registry.nodes[original_idx].full_path.clone();
+            let full_path = registry.nodes[original_idx].full_path.clone_in(registry.alloc);
 
             let mut curr_node = registry.get_or_create_identifier(
                 full_path.identifier,
@@ -901,20 +928,25 @@ fn in_range(id: EvaluationOrder, range: &MutableRange) -> bool {
 fn get_maybe_non_null_in_instruction<'a>(
     value: &InstructionValue<'a>,
     temporaries: &TemporariesMap<'a>,
+    alloc: &'a Allocator,
 ) -> Option<ReactiveScopeDependency<'a>> {
     match value {
         InstructionValue::PropertyLoad { object, .. } => {
-            Some(temporaries[object.identifier].clone().unwrap_or_else(|| {
-                ReactiveScopeDependency {
+            Some(temporaries[object.identifier].as_ref().map(|d| d.clone_in(alloc)).unwrap_or_else(
+                || ReactiveScopeDependency {
                     identifier: object.identifier,
                     reactive: object.reactive,
-                    path: vec![],
+                    path: ArenaVec::new_in(&alloc),
                     span: object.span,
-                }
-            }))
+                },
+            ))
         }
-        InstructionValue::Destructure { value: val, .. } => temporaries[val.identifier].clone(),
-        InstructionValue::ComputedLoad { object, .. } => temporaries[object.identifier].clone(),
+        InstructionValue::Destructure { value: val, .. } => {
+            temporaries[val.identifier].as_ref().map(|d| d.clone_in(alloc))
+        }
+        InstructionValue::ComputedLoad { object, .. } => {
+            temporaries[object.identifier].as_ref().map(|d| d.clone_in(alloc))
+        }
         _ => None,
     }
 }
@@ -1086,7 +1118,9 @@ fn collect_non_nulls_in_blocks<'a>(
 
         for &instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
-            if let Some(path) = get_maybe_non_null_in_instruction(&instr.value, ctx.temporaries) {
+            if let Some(path) =
+                get_maybe_non_null_in_instruction(&instr.value, ctx.temporaries, env.allocator)
+            {
                 let path_ident = path.identifier;
                 if is_immutable_at_instr(path_ident, instr.id, env, ctx) {
                     let node_idx = registry.get_or_create_property(&path);
@@ -1110,7 +1144,10 @@ fn collect_non_nulls_in_blocks<'a>(
                             let sub_dep = ReactiveScopeDependency {
                                 identifier: val.identifier,
                                 reactive: val.reactive,
-                                path: dep.path[..i].to_vec(),
+                                path: ArenaVec::from_iter_in(
+                                    dep.path[..i].iter().copied(),
+                                    &env.allocator,
+                                ),
                                 span: dep.span,
                             };
                             let node_idx = registry.get_or_create_property(&sub_dep);
@@ -1326,7 +1363,7 @@ fn collect_hoistable_and_propagate<'a>(
     temporaries: &TemporariesMap<'a>,
     hoistable_from_optionals: &FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
 ) -> (FxHashMap<BlockId, BTreeSet<usize>>, PropertyPathRegistry<'a>) {
-    let mut registry = PropertyPathRegistry::new();
+    let mut registry = PropertyPathRegistry::new(env.allocator);
     let assumed_invoked_fns = get_assumed_invoked_functions(func, env);
     let known_immutable_identifiers: FxHashSet<IdentifierId> = if func.fn_type
         == ReactFunctionType::Component
@@ -1519,10 +1556,20 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
             merge_access(dep_cursor.access_type, PropertyAccessType::OptionalDependency);
     }
 
-    fn derive_minimal_dependencies(&self) -> Vec<ReactiveScopeDependency<'a>> {
+    fn derive_minimal_dependencies(
+        &self,
+        alloc: &'a Allocator,
+    ) -> Vec<ReactiveScopeDependency<'a>> {
         let mut results = Vec::new();
         for (&root_id, (root_node, reactive)) in &self.dep_roots {
-            collect_minimal_deps_in_subtree(root_node, *reactive, root_id, &[], &mut results);
+            collect_minimal_deps_in_subtree(
+                root_node,
+                *reactive,
+                root_id,
+                &[],
+                &mut results,
+                alloc,
+            );
         }
         results
     }
@@ -1534,12 +1581,13 @@ fn collect_minimal_deps_in_subtree<'a>(
     root_id: IdentifierId,
     path: &[DependencyPathEntry<'a>],
     results: &mut Vec<ReactiveScopeDependency<'a>>,
+    alloc: &'a Allocator,
 ) {
     if is_dependency_access(node.access_type) {
         results.push(ReactiveScopeDependency {
             identifier: root_id,
             reactive,
-            path: path.to_vec(),
+            path: ArenaVec::from_iter_in(path.iter().copied(), &alloc),
             span: node.span,
         });
     } else {
@@ -1556,6 +1604,7 @@ fn collect_minimal_deps_in_subtree<'a>(
                 root_id,
                 &new_path,
                 results,
+                alloc,
             );
         }
     }
@@ -1610,7 +1659,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         self.scope_stack.push(scope_id);
     }
 
-    fn exit_scope(&mut self, scope_id: ScopeId, pruned: bool, env: &mut Environment) {
+    fn exit_scope(&mut self, scope_id: ScopeId, pruned: bool, env: &mut Environment<'a>) {
         let scoped_deps =
             self.dep_stack.pop().expect("[PropagateScopeDeps]: Unexpected scope mismatch");
         self.scope_stack.pop();
@@ -1620,7 +1669,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
             if self.check_valid_dependency(dep, env)
                 && let Some(top) = self.dep_stack.last_mut()
             {
-                top.push(dep.clone());
+                top.push(dep.clone_in(env.allocator));
             }
         }
 
@@ -1675,12 +1724,14 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         false
     }
 
-    fn visit_operand(&mut self, place: &Place, env: &mut Environment) {
-        let dep =
-            self.temporaries[place.identifier].clone().unwrap_or_else(|| ReactiveScopeDependency {
+    fn visit_operand(&mut self, place: &Place, env: &mut Environment<'a>) {
+        let dep = self.temporaries[place.identifier]
+            .as_ref()
+            .map(|d| d.clone_in(env.allocator))
+            .unwrap_or_else(|| ReactiveScopeDependency {
                 identifier: place.identifier,
                 reactive: place.reactive,
-                path: vec![],
+                path: ArenaVec::new_in(&env.allocator),
                 span: place.span,
             });
         self.visit_dependency(dep, env);
@@ -1692,13 +1743,13 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         property: &PropertyLiteral<'a>,
         optional: bool,
         span: Option<Span>,
-        env: &mut Environment,
+        env: &mut Environment<'a>,
     ) {
-        let dep = get_property(object, property, optional, span, self.temporaries);
+        let dep = get_property(object, property, optional, span, self.temporaries, env.allocator);
         self.visit_dependency(dep, env);
     }
 
-    fn visit_dependency(&mut self, dep: ReactiveScopeDependency<'a>, env: &mut Environment) {
+    fn visit_dependency(&mut self, dep: ReactiveScopeDependency<'a>, env: &mut Environment<'a>) {
         let ident = &env.identifiers[dep.identifier];
         let decl_id = ident.declaration_id;
 
@@ -1734,7 +1785,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
             ReactiveScopeDependency {
                 identifier: dep.identifier,
                 reactive: dep.reactive,
-                path: vec![],
+                path: ArenaVec::new_in(&env.allocator),
                 span: dep.span,
             }
         } else {
@@ -1748,7 +1799,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         }
     }
 
-    fn visit_reassignment(&mut self, place: &Place, env: &mut Environment) {
+    fn visit_reassignment(&mut self, place: &Place, env: &mut Environment<'a>) {
         if let Some(current_scope) = self.current_scope() {
             let scope = &env.scopes[current_scope];
             let already = scope.reassignments.iter().any(|id| {
@@ -1760,7 +1811,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
                     &ReactiveScopeDependency {
                         identifier: place.identifier,
                         reactive: place.reactive,
-                        path: vec![],
+                        path: ArenaVec::new_in(&env.allocator),
                         span: place.span,
                     },
                     env,
@@ -1811,7 +1862,7 @@ fn visit_inner_function_blocks<'a>(
     for (inner_bid, inner_instr_ids, inner_phis, inner_terminal) in &inner_blocks {
         for &(_pred_id, op_id) in inner_phis {
             if let Some(maybe_optional) = &ctx.temporaries[op_id] {
-                let maybe_optional = maybe_optional.clone();
+                let maybe_optional = maybe_optional.clone_in(env.allocator);
                 ctx.visit_dependency(maybe_optional, env);
             }
         }
@@ -1981,7 +2032,7 @@ fn handle_function_deps<'a>(
         for phi in &block.phis {
             for (_pred_id, operand) in &phi.operands {
                 if let Some(maybe_optional_chain) = &ctx.temporaries[operand.identifier] {
-                    let maybe_optional_chain = maybe_optional_chain.clone();
+                    let maybe_optional_chain = maybe_optional_chain.clone_in(env.allocator);
                     ctx.visit_dependency(maybe_optional_chain, env);
                 }
             }

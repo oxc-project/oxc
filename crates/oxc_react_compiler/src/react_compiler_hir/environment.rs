@@ -6,7 +6,7 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, GetAllocator};
+use oxc_allocator::{Allocator, GetAllocator, Vec as ArenaVec};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_index::IndexVec;
 use oxc_span::Span;
@@ -267,11 +267,11 @@ impl<'a> Environment<'a> {
         self.scopes.push(ReactiveScope {
             id,
             range,
-            dependencies: Vec::new(),
-            declarations: Vec::new(),
-            reassignments: Vec::new(),
+            dependencies: ArenaVec::new_in(&self.allocator),
+            declarations: ArenaVec::new_in(&self.allocator),
+            reassignments: ArenaVec::new_in(&self.allocator),
             early_return_value: None,
-            merged: Vec::new(),
+            merged: ArenaVec::new_in(&self.allocator),
             span: None,
         });
         id

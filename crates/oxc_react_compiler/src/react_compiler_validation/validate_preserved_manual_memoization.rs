@@ -9,6 +9,7 @@
 //! accurately preserved, and that no originally memoized values became
 //! unmemoized in the output.
 
+use oxc_allocator::CloneIn;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics::ErrorCategory;
@@ -142,7 +143,7 @@ fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorStat
         && let Some(ref deps_from_source) = memo_state.deps_from_source
     {
         let scope = &state.env.scopes[scope_block.scope];
-        let deps = scope.dependencies.clone();
+        let deps = scope.dependencies.clone_in(state.env.allocator);
         let memo_span = memo_state.span;
         let decls = memo_state.decls.clone();
         let deps_from_source = deps_from_source.clone();
@@ -162,7 +163,7 @@ fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorStat
 
     // Mark scope and merged scopes as completed
     let scope = &state.env.scopes[scope_block.scope];
-    let merged = scope.merged.clone();
+    let merged = scope.merged.iter().copied().collect::<Vec<_>>();
     state.scopes.insert(scope_block.scope);
     for merged_id in merged {
         state.scopes.insert(merged_id);
