@@ -88,15 +88,18 @@ pub struct MinifierState<'a> {
     pub private_member_usage: PrivateMemberUsageStack<'a>,
 
     /// One frame per enclosing function body (program root at the bottom).
-    /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
-    /// `var x = <literal>;` whose declarator sits at `body_scope` is safe to
-    /// inline despite hoisting. A preceding non-declarative statement sets it;
-    /// the program root additionally starts unsafe when the module has any
-    /// loader (`import` / `export … from` / `export * from`), since a cyclic
+    /// `(body_scope, body_unsafe, this_initialized_at)`. While `body_unsafe` is
+    /// false, the next `var x = <literal>;` whose declarator sits at `body_scope`
+    /// is safe to inline despite hoisting. A preceding non-declarative statement
+    /// sets it; the program root additionally starts unsafe when the module has
+    /// any loader (`import` / `export … from` / `export * from`), since a cyclic
     /// importer could observe a not-yet-assigned binding our exports close over.
     /// Pushed by `enter_function_body`, popped by `exit_function_body`. See
-    /// `init_symbol_value`.
-    pub body_unsafe_stack: NonEmptyStack<(ScopeId, bool)>,
+    /// `init_symbol_value`. `this_initialized_at` is the source offset after the
+    /// first unconditional top-level `super()` call, allowing reorder checks to
+    /// distinguish an uninitialized derived-constructor `this` from `this`
+    /// accesses after `super()`.
+    pub body_unsafe_stack: NonEmptyStack<(ScopeId, bool, Option<u32>)>,
 
     /// Per-pass change accumulator populated by typed mutation helpers and
     /// consumed by `compression_pass` after Normalize and every peephole pass.
@@ -120,7 +123,7 @@ impl<'a> MinifierState<'a> {
             config: CompressionConfig { source_type, options, mode },
             symbols,
             private_member_usage: PrivateMemberUsageStack::new(),
-            body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
+            body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false, None)),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
         }

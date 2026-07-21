@@ -16,8 +16,8 @@ catalogs:
       specifier: 1.11.2
       version: 1.11.2
     '@napi-rs/cli':
-      specifier: 3.7.3
-      version: 3.7.3
+      specifier: 3.7.4
+      version: 3.7.4
     '@napi-rs/wasm-runtime':
       specifier: 1.1.6
       version: 1.1.6
@@ -40,8 +40,8 @@ catalogs:
       specifier: 0.3.21
       version: 0.3.21
     tsdown:
-      specifier: 0.22.11
-      version: 0.22.11
+      specifier: 0.22.12
+      version: 0.22.12
     vite-plus:
       specifier: 0.2.5
       version: 0.2.5
@@ -59,16 +59,16 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@25.0.2)
+        version: 3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@25.0.2)
       oxfmt:
         specifier: ^0.59.0
         version: 0.59.0(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite-plus@0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1)))
       oxlint:
         specifier: ^1.66.0
-        version: 1.74.0(oxlint-tsgolint@0.25.0)(vite-plus@0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1)))
+        version: 1.74.0(oxlint-tsgolint@7.0.2001)(vite-plus@0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1)))
       oxlint-tsgolint:
-        specifier: 0.25.0
-        version: 0.25.0
+        specifier: 7.0.2001
+        version: 7.0.2001
 
   apps/oxfmt:
     dependencies:
@@ -90,7 +90,7 @@ importers:
         version: 0.18.5
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
+        version: 3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
       '@oxapps/shared':
         specifier: workspace:*
         version: link:../shared
@@ -114,7 +114,7 @@ importers:
         version: 5.56.6(@typescript-eslint/types@8.64.0)
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.11(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.1)(typescript@5.6.1-rc)
+        version: 0.22.12(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.1)(typescript@5.6.1-rc)
       vite-plus:
         specifier: 'catalog:'
         version: 0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@24.1.0)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1))
@@ -138,7 +138,7 @@ importers:
         version: 8.0.0
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
+        version: 3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
       '@oxapps/shared':
         specifier: workspace:*
         version: link:../shared
@@ -210,7 +210,7 @@ importers:
         version: 7.0.7
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.11(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.1)(typescript@5.6.1-rc)
+        version: 0.22.12(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.1)(typescript@5.6.1-rc)
       tsx:
         specifier: ^4.21.0
         version: 4.23.1
@@ -252,7 +252,7 @@ importers:
         version: 1.11.2
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
+        version: 3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
@@ -280,7 +280,7 @@ importers:
         version: 1.11.2
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
+        version: 3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
       '@napi-rs/wasm-runtime':
         specifier: 'catalog:'
         version: 1.1.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
@@ -326,7 +326,7 @@ importers:
         version: 1.11.2
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@25.0.2)
+        version: 3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@25.0.2)
       publint:
         specifier: 'catalog:'
         version: 0.3.21
@@ -341,7 +341,7 @@ importers:
         version: 1.11.2
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
+        version: 3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
@@ -369,8 +369,8 @@ importers:
   npm/oxlint:
     dependencies:
       oxlint-tsgolint:
-        specifier: '>=0.24.0'
-        version: 0.25.0
+        specifier: '>=7.0.2001'
+        version: 7.0.2001
       vite-plus:
         specifier: '*'
         version: 0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1))
@@ -1432,8 +1432,8 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
-  '@napi-rs/cli@3.7.3':
-    resolution: {integrity: sha512-iu5BOoYjYVixp5jwE7JniHvg72XuKWXUfXteu+6Gt/XY4/mslsS+Qbipleg1+3CAUGHkWc+ebaMJj7Pc93BXSQ==}
+  '@napi-rs/cli@3.7.4':
+    resolution: {integrity: sha512-idELIUceJ9zPgx/shcMt1fSSsteFG68v56RIXi4qUm7OYuJOt7CoMj2KnHVmbOqXgUHWQU1lCULrtQdZDG4F5A==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
@@ -2282,8 +2282,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@oxlint-tsgolint/darwin-arm64@0.25.0':
-    resolution: {integrity: sha512-87opKlwFP8qS9WHAeETV+kA0fC9Oyj4sg7OxWdI4xQY0WC7zlN6BgG66uE5mvtN5mahkt/gL0i/AVEnX6POq2Q==}
+  '@oxlint-tsgolint/darwin-arm64@7.0.2001':
+    resolution: {integrity: sha512-CUJEdbSZ54+Xy9OXqOhWLTKZKV0BBiV7C2i/ygyVmXtkUNXx5YCzN8DpSSshTAKktoL7S+tnQ/ftFG/i7X896w==}
     cpu: [arm64]
     os: [darwin]
 
@@ -2292,8 +2292,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@oxlint-tsgolint/darwin-x64@0.25.0':
-    resolution: {integrity: sha512-HJmuZexsrhqp4WmETn+Soq7Ogt5F0jirv+cYRSniIPe+d/x5beQzLX69xOLhQRE+8FLGETe7FahWMVP8x0dW4g==}
+  '@oxlint-tsgolint/darwin-x64@7.0.2001':
+    resolution: {integrity: sha512-pXfBb5BqONCcgrXQNUZWXgiYmRSWJzd97S8i41VVOh6ut0tyo+cJ5FKFpczDHxiVNfj/3e7c9B4MtztNdpIVCw==}
     cpu: [x64]
     os: [darwin]
 
@@ -2302,8 +2302,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@oxlint-tsgolint/linux-arm64@0.25.0':
-    resolution: {integrity: sha512-aNyYsPREvCJi3qjfBA0sQB7DhT3y/W5Ac2JI2D8IJynoTOAhVZj401Si6901oDajlBWyqJqqojudn0VgHB6+7A==}
+  '@oxlint-tsgolint/linux-arm64@7.0.2001':
+    resolution: {integrity: sha512-roP7zujb/QDPzDwEKsFFpzNHHy91/Y7oX9vQXk78ekyZtcQj1QXDIMH33gjDdHBfRl4K9pZ36xhRgrP4Zr+R8A==}
     cpu: [arm64]
     os: [linux]
 
@@ -2312,8 +2312,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@oxlint-tsgolint/linux-x64@0.25.0':
-    resolution: {integrity: sha512-+60+VjK9Mch3uA5WlTdNHuAm5+WA7wPPjuWdPWlU0F6JJpYpGZXUpO1RPKuFEWsBpNbLcLeJ0LbCJ1doWu58NA==}
+  '@oxlint-tsgolint/linux-x64@7.0.2001':
+    resolution: {integrity: sha512-UDezNqdECVmngu2TPnjaS1YoAmcTaBoI5lV9vk3VahBxoi+I5r9k3iJTT7qZoYWOXTD/7T7bNcwRgrocR6BscQ==}
     cpu: [x64]
     os: [linux]
 
@@ -2322,8 +2322,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@oxlint-tsgolint/win32-arm64@0.25.0':
-    resolution: {integrity: sha512-r53TO+eHp/t53nnUkQJfrYYXODPAxmtf3RUFQG5XsE2hD21IunliOaAdZXP2UwzCx+r/fbNaEelqTaAHcDr57w==}
+  '@oxlint-tsgolint/win32-arm64@7.0.2001':
+    resolution: {integrity: sha512-uJZhqB6pdXLuN+AD1F5082byyQti/NPmJA77GtcFlmT2HzRelqbNls3SaIqxpjdFgvSBF9g0yOKGBkGFg7kX8Q==}
     cpu: [arm64]
     os: [win32]
 
@@ -2332,8 +2332,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@oxlint-tsgolint/win32-x64@0.25.0':
-    resolution: {integrity: sha512-vqe66B+gL9HarhyHemdlfC2VWT7eoA+o/ufZ7zT6AGHv64boyDZIJS3U+rpZo+ey4O7wZtiS/vYR2fWqDoFeBw==}
+  '@oxlint-tsgolint/win32-x64@7.0.2001':
+    resolution: {integrity: sha512-FkDRm8hx9OwzGQqyWG1tO5QrTLRApff9DzSgpz9QZau37BR8d1VYKOxMLGf6shPZntJFoTwIIJYT68VndYDCog==}
     cpu: [x64]
     os: [win32]
 
@@ -4910,8 +4910,8 @@ packages:
     resolution: {integrity: sha512-giCk5sEvG02d5tzPmFMX3hem8ndzEEu1xvGYS5OwNfO2WGl6ZVxt5LjE0yiMDoz94INI7XkXwgFAQiydPvVHDw==}
     hasBin: true
 
-  oxlint-tsgolint@0.25.0:
-    resolution: {integrity: sha512-7DBpqyLZCfyoXiivyfzt9Xmju/K1RcN+Y1W7buEwrgRCWWF11v9alypPqWGZBmh2erDkKL/kVyhKUH2Px+t13A==}
+  oxlint-tsgolint@7.0.2001:
+    resolution: {integrity: sha512-KjK/XLcXr1DSyonKhsuFqJRiuKqcyG9j3LJ8nkOsrLzGvodBPqzHOKauy10asLMDI0sUpvb+1sxlzff3udZvfg==}
     hasBin: true
 
   oxlint@1.73.0:
@@ -5415,14 +5415,14 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  tsdown@0.22.11:
-    resolution: {integrity: sha512-BERdQpqAltv3vYGC0pE4n+mRGPIN91T/on+Ud73bYRkbptknelFm27tJgBBUz4RJ5d3VNeVH90HfjBo1Ouj8yQ==}
+  tsdown@0.22.12:
+    resolution: {integrity: sha512-IzGRfGwSsufXJWOcQ0tmECKMG/dbxhUwDOySTS7JE1AM8pkB9+bpcTPs8bTxxSNrSvGocSczrBlOh97tZObq9Q==}
     engines: {node: ^22.18.0 || >=24.11.0}
     hasBin: true
     peerDependencies:
       '@arethetypeswrong/core': ^0.18.1
-      '@tsdown/css': 0.22.11
-      '@tsdown/exe': 0.22.11
+      '@tsdown/css': 0.22.12
+      '@tsdown/exe': 0.22.12
       '@vitejs/devtools': '*'
       publint: ^0.3.8
       tsx: '*'
@@ -5538,6 +5538,10 @@ packages:
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
+
+  verkit@0.1.0:
+    resolution: {integrity: sha512-hot+EjuRuW/QsivBRTVKlL5FUVPIGpnjJv0fzuyYyD9Bqaj3Kx2KoSw1WVIoCTOhFkmNJZ0fhl66JdsXjWXztw==}
+    engines: {node: ^22.18.0 || ^24.11.0 || >=26.0.0}
 
   vite-plus@0.2.5:
     resolution: {integrity: sha512-QNJ0FnN8rfs5u8lZKZ1uR2Tegjg3VkT0AGTxSLGHg4fYmGxRNfAV0YX1parZrVa4VybSI56SWCoo7wQ6D7pMew==}
@@ -6596,7 +6600,7 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@napi-rs/cli@3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)':
+  '@napi-rs/cli@3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@24.1.0)':
     dependencies:
       '@inquirer/prompts': 8.5.2(@types/node@24.1.0)
       '@napi-rs/cross-toolchain': 1.0.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
@@ -6628,7 +6632,7 @@ snapshots:
       - node-addon-api
       - supports-color
 
-  '@napi-rs/cli@3.7.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@25.0.2)':
+  '@napi-rs/cli@3.7.4(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@25.0.2)':
     dependencies:
       '@inquirer/prompts': 8.5.2(@types/node@25.0.2)
       '@napi-rs/cross-toolchain': 1.0.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
@@ -7194,37 +7198,37 @@ snapshots:
   '@oxlint-tsgolint/darwin-arm64@0.24.0':
     optional: true
 
-  '@oxlint-tsgolint/darwin-arm64@0.25.0':
+  '@oxlint-tsgolint/darwin-arm64@7.0.2001':
     optional: true
 
   '@oxlint-tsgolint/darwin-x64@0.24.0':
     optional: true
 
-  '@oxlint-tsgolint/darwin-x64@0.25.0':
+  '@oxlint-tsgolint/darwin-x64@7.0.2001':
     optional: true
 
   '@oxlint-tsgolint/linux-arm64@0.24.0':
     optional: true
 
-  '@oxlint-tsgolint/linux-arm64@0.25.0':
+  '@oxlint-tsgolint/linux-arm64@7.0.2001':
     optional: true
 
   '@oxlint-tsgolint/linux-x64@0.24.0':
     optional: true
 
-  '@oxlint-tsgolint/linux-x64@0.25.0':
+  '@oxlint-tsgolint/linux-x64@7.0.2001':
     optional: true
 
   '@oxlint-tsgolint/win32-arm64@0.24.0':
     optional: true
 
-  '@oxlint-tsgolint/win32-arm64@0.25.0':
+  '@oxlint-tsgolint/win32-arm64@7.0.2001':
     optional: true
 
   '@oxlint-tsgolint/win32-x64@0.24.0':
     optional: true
 
-  '@oxlint-tsgolint/win32-x64@0.25.0':
+  '@oxlint-tsgolint/win32-x64@7.0.2001':
     optional: true
 
   '@oxlint/binding-android-arm-eabi@1.73.0':
@@ -9720,14 +9724,14 @@ snapshots:
       '@oxlint-tsgolint/win32-arm64': 0.24.0
       '@oxlint-tsgolint/win32-x64': 0.24.0
 
-  oxlint-tsgolint@0.25.0:
+  oxlint-tsgolint@7.0.2001:
     optionalDependencies:
-      '@oxlint-tsgolint/darwin-arm64': 0.25.0
-      '@oxlint-tsgolint/darwin-x64': 0.25.0
-      '@oxlint-tsgolint/linux-arm64': 0.25.0
-      '@oxlint-tsgolint/linux-x64': 0.25.0
-      '@oxlint-tsgolint/win32-arm64': 0.25.0
-      '@oxlint-tsgolint/win32-x64': 0.25.0
+      '@oxlint-tsgolint/darwin-arm64': 7.0.2001
+      '@oxlint-tsgolint/darwin-x64': 7.0.2001
+      '@oxlint-tsgolint/linux-arm64': 7.0.2001
+      '@oxlint-tsgolint/linux-x64': 7.0.2001
+      '@oxlint-tsgolint/win32-arm64': 7.0.2001
+      '@oxlint-tsgolint/win32-x64': 7.0.2001
 
   oxlint@1.73.0(oxlint-tsgolint@0.24.0)(vite-plus@0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@24.1.0)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1))):
     optionalDependencies:
@@ -9801,7 +9805,7 @@ snapshots:
       oxlint-tsgolint: 0.24.0
       vite-plus: 0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1))
 
-  oxlint@1.74.0(oxlint-tsgolint@0.25.0)(vite-plus@0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1))):
+  oxlint@1.74.0(oxlint-tsgolint@7.0.2001)(vite-plus@0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1))):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.74.0
       '@oxlint/binding-android-arm64': 1.74.0
@@ -9822,7 +9826,7 @@ snapshots:
       '@oxlint/binding-win32-arm64-msvc': 1.74.0
       '@oxlint/binding-win32-ia32-msvc': 1.74.0
       '@oxlint/binding-win32-x64-msvc': 1.74.0
-      oxlint-tsgolint: 0.25.0
+      oxlint-tsgolint: 7.0.2001
       vite-plus: 0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1))
 
   p-limit@3.1.0:
@@ -10274,7 +10278,7 @@ snapshots:
     dependencies:
       typescript: 5.6.1-rc
 
-  tsdown@0.22.11(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.1)(typescript@5.6.1-rc):
+  tsdown@0.22.12(@arethetypeswrong/core@0.18.5)(publint@0.3.21)(tsx@4.23.1)(typescript@5.6.1-rc):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0
@@ -10286,11 +10290,11 @@ snapshots:
       picomatch: 4.0.5
       rolldown: 1.2.0
       rolldown-plugin-dts: 0.27.9(rolldown@1.2.0)(typescript@5.6.1-rc)
-      semver: 7.8.5
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
+      verkit: 0.1.0
     optionalDependencies:
       '@arethetypeswrong/core': 0.18.5
       publint: 0.3.21
@@ -10375,6 +10379,8 @@ snapshots:
   validate-npm-package-name@5.0.1: {}
 
   vary@1.1.2: {}
+
+  verkit@0.1.0: {}
 
   vite-plus@0.2.5(@arethetypeswrong/core@0.18.5)(@types/node@24.1.0)(@vitest/browser-playwright@4.1.10)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.6(@typescript-eslint/types@8.64.0))(terser@5.44.1)(tsx@4.23.1)(typescript@5.6.1-rc)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.23.1)):
     dependencies:

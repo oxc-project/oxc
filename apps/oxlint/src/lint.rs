@@ -1855,6 +1855,13 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_invalid_glob_in_override() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_glob_in_override".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_missing_rule_in_override() {
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_missing_rule_in_override".into())

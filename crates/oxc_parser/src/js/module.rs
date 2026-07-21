@@ -276,11 +276,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if let Some(default_specifier) = default_specifier {
             let default_span = default_specifier.span;
-            specifiers.push(ImportDeclarationSpecifier::new_import_default_specifier(
+            let specifier = ImportDeclarationSpecifier::new_import_default_specifier(
                 default_specifier.span,
                 default_specifier,
                 self,
-            ));
+            );
+            specifiers.push(specifier);
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
@@ -290,7 +291,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        specifiers.push(self.parse_import_namespace_specifier());
+                        let specifier = self.parse_import_namespace_specifier();
+                        specifiers.push(specifier);
                     }
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
@@ -317,7 +319,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
-            specifiers.push(self.parse_import_namespace_specifier());
+            let specifier = self.parse_import_namespace_specifier();
+            specifiers.push(specifier);
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
             self.parse_import_specifiers_into(&mut specifiers, import_kind);

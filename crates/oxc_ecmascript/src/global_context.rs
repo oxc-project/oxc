@@ -1,7 +1,7 @@
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_syntax::reference::ReferenceId;
 
-use crate::constant_evaluation::{ConstantValue, ValueType};
+use crate::{ConstantValue, ValueType};
 
 pub trait GlobalContext<'a>: Sized {
     /// Whether the reference is a global reference.

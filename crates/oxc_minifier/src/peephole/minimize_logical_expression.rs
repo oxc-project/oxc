@@ -203,6 +203,26 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// Returns `true` if `read_expr <op> (target = value)` can be compressed to
+    /// `target <op>= value`, where `<op>` is `||`, `&&`, or `??`.
+    ///
+    /// On top of [`Self::has_no_side_effect_for_evaluation_same_target`], this
+    /// requires that `target`'s object binding cannot be mutated. Unlike the
+    /// `a = a + b` -> `a += b` compression (where the target is captured *before*
+    /// the right-hand side runs), the logical form reads `target` first and only
+    /// then evaluates the write target, so `<op>=` — which captures the object
+    /// once — would write to a different object if reading `target` reassigns its
+    /// object (e.g. `x.y || (x.y = 3)` where the getter of `x.y` sets `x`).
+    /// <https://github.com/oxc-project/oxc/issues/16647>
+    pub fn can_compress_to_logical_assignment(
+        assignment_target: &AssignmentTarget<'a>,
+        read_expr: &Expression,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        Self::has_no_side_effect_for_evaluation_same_target(assignment_target, read_expr, ctx)
+            && !Self::member_object_may_be_mutated(assignment_target, ctx)
+    }
+
     /// Compress `a || (a = b)` to `a ||= b`
     ///
     /// Also `a || (foo, bar, a = b)` to `a ||= (foo, bar, b)`
@@ -223,18 +243,7 @@ impl<'a> PeepholeOptimizations {
             if assignment_expr.operator != AssignmentOperator::Assign {
                 return;
             }
-            if !Self::has_no_side_effect_for_evaluation_same_target(
-                &assignment_expr.left,
-                &e.left,
-                ctx,
-            ) {
-                return;
-            }
-
-            // Don't transform `x.y || (x = {}, x.y = 3)` to `x.y ||= (x = {}, 3)` because
-            // `||=` evaluates `x.y` (capturing `x`) before the RHS reassigns `x`.
-            // https://github.com/oxc-project/oxc/issues/16647
-            if Self::member_object_may_be_mutated(&assignment_expr.left, ctx) {
+            if !Self::can_compress_to_logical_assignment(&assignment_expr.left, &e.left, ctx) {
                 return;
             }
 
@@ -267,8 +276,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let new_op = e.operator.to_assignment_operator();
-        if !Self::has_no_side_effect_for_evaluation_same_target(&assignment_expr.left, &e.left, ctx)
-        {
+        if !Self::can_compress_to_logical_assignment(&assignment_expr.left, &e.left, ctx) {
             return;
         }
 

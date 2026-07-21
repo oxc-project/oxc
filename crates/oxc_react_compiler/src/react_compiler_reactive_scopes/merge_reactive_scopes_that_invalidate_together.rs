@@ -8,7 +8,9 @@
 //!
 //! Corresponds to `src/ReactiveScopes/MergeReactiveScopesThatInvalidateTogether.ts`.
 
-use std::mem::take;
+use std::mem::replace;
+
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 
 use rustc_hash::FxHashSet;
 
@@ -59,7 +61,7 @@ pub fn merge_reactive_scopes_that_invalidate_together<'a>(
         last_usage,
         temporaries: IndexVec::from_vec(vec![None; num_identifiers]),
     };
-    let mut state: Option<Vec<ReactiveScopeDependency>> = None;
+    let mut state = None;
     transform_reactive_function(func, &mut transform, &mut state)
 }
 
@@ -100,7 +102,7 @@ struct MergeTransform<'a, 'e> {
 }
 
 impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
-    type State = Option<Vec<ReactiveScopeDependency<'a>>>;
+    type State = Option<ArenaVec<'a, ReactiveScopeDependency<'a>>>;
 
     fn env(&self) -> &Environment<'a> {
         self.env
@@ -112,10 +114,10 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
-        let scope_deps = self.env.scopes[scope.scope].dependencies.clone();
+        let scope_deps = self.env.scopes[scope.scope].dependencies.clone_in(self.env.allocator);
         // Save parent state and recurse with this scope's deps as state
         let parent_state = state.take();
-        *state = Some(scope_deps.clone());
+        *state = Some(scope_deps.clone_in(self.env.allocator));
         self.visit_scope(scope, state)?;
         // Restore parent state
         *state = parent_state;
@@ -124,7 +126,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         if let Some(parent_deps) = state.as_ref()
             && are_equal_dependencies(parent_deps, &scope_deps, self.env)
         {
-            let instructions = take(&mut scope.instructions);
+            // ReplaceMany keeps a std `Vec`; drain the arena block into one.
+            let instructions = scope.instructions.drain(..).collect::<Vec<_>>();
             return Ok(Transformed::ReplaceMany(instructions));
         }
         Ok(Transformed::Keep)
@@ -277,7 +280,11 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                 current_range_end.max(next_range_end);
 
                             // Merge declarations from next into current
-                            let next_decls = self.env.scopes[next_scope_id].declarations.clone();
+                            let next_decls = self.env.scopes[next_scope_id]
+                                .declarations
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>();
                             for (key, value) in next_decls {
                                 let current_decls =
                                     &mut self.env.scopes[current_scope_id].declarations;
@@ -344,19 +351,24 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             return Ok(());
         }
 
-        let mut next_instructions: Vec<ReactiveStatement<'a>> = Vec::new();
+        let alloc = self.env.allocator;
+        let all_stmts = replace(block, ArenaVec::new_in(&alloc));
+        let mut next_instructions: ArenaVec<'a, ReactiveStatement<'a>> =
+            ArenaVec::with_capacity_in(all_stmts.len(), &alloc);
+        // `all_stmts` was moved out of `block`, so move (not clone) its
+        // statements into the merged result.
+        let mut stmts = all_stmts.into_iter();
         let mut index = 0;
-        let all_stmts: Vec<ReactiveStatement> = take(block);
 
         for entry in &merged {
-            // Push everything before the merge range
+            // Move everything before the merge range
             while index < entry.from {
-                next_instructions.push(all_stmts[index].clone());
+                next_instructions.push(stmts.next().unwrap());
                 index += 1;
             }
             // The first item in the merge range must be a scope
-            let mut merged_scope = match &all_stmts[entry.from] {
-                ReactiveStatement::Scope(s) => s.clone(),
+            let mut merged_scope = match stmts.next().unwrap() {
+                ReactiveStatement::Scope(s) => s,
                 _ => {
                     return Err(ErrorCategory::Invariant
                         .diagnostic("MergeConsecutiveScopes: Expected scope at starting index"));
@@ -364,25 +376,23 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             };
             index += 1;
             while index < entry.to {
-                let stmt = &all_stmts[index];
+                let stmt = stmts.next().unwrap();
                 index += 1;
                 match stmt {
                     ReactiveStatement::Scope(inner_scope) => {
-                        merged_scope.instructions.extend(inner_scope.instructions.clone());
-                        self.env.scopes[merged_scope.scope].merged.push(inner_scope.scope);
+                        let inner_scope_id = inner_scope.scope;
+                        merged_scope.instructions.extend(inner_scope.instructions);
+                        self.env.scopes[merged_scope.scope].merged.push(inner_scope_id);
                     }
-                    _ => {
-                        merged_scope.instructions.push(stmt.clone());
+                    stmt => {
+                        merged_scope.instructions.push(stmt);
                     }
                 }
             }
             next_instructions.push(ReactiveStatement::Scope(merged_scope));
         }
-        // Push remaining
-        while index < all_stmts.len() {
-            next_instructions.push(all_stmts[index].clone());
-            index += 1;
-        }
+        // Move the remaining statements
+        next_instructions.extend(stmts);
 
         *block = next_instructions;
         Ok(())
@@ -456,7 +466,7 @@ fn can_merge_scopes<'a>(
         .map(|(_key, decl)| ReactiveScopeDependency {
             identifier: decl.identifier,
             reactive: true,
-            path: Vec::new(),
+            path: ArenaVec::new_in(&env.allocator),
             span: None,
         })
         .collect();

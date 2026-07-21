@@ -4,6 +4,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
+use oxc_compat::EngineTargets;
 use oxc_ecmascript::{
     GlobalContext,
     side_effects::{
@@ -20,6 +21,7 @@ struct Ctx {
     property_read_side_effects: PropertyReadSideEffects,
     property_write_side_effects: bool,
     unknown_global_side_effects: bool,
+    target: Option<EngineTargets>,
 }
 
 impl Default for Ctx {
@@ -35,6 +37,7 @@ impl Default for Ctx {
             property_read_side_effects: PropertyReadSideEffects::All,
             property_write_side_effects: true,
             unknown_global_side_effects: true,
+            target: None,
         }
     }
 }
@@ -46,6 +49,10 @@ impl<'a> GlobalContext<'a> for Ctx {
 }
 
 impl MayHaveSideEffectsContext<'_> for Ctx {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        self.target.as_ref()
+    }
+
     fn annotations(&self) -> bool {
         self.annotation
     }
@@ -97,6 +104,13 @@ fn test_with_global_variables(
         global_variable_names: global_variable_names.iter().copied().collect(),
         ..Default::default()
     };
+    test_with_ctx(source_text, &ctx, expected);
+}
+
+#[track_caller]
+fn test_with_target(source_text: &str, target: &str, expected: bool) {
+    let target = EngineTargets::from_target(target).unwrap();
+    let ctx = Ctx { target: Some(target), ..Default::default() };
     test_with_ctx(source_text, &ctx, expected);
 }
 
@@ -227,14 +241,39 @@ fn closure_compiler_tests() {
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
     test("tempFunc = templateFunction`template`", true);
-    // RegExp is validated using the regex parser to determine if it's pure.
-    // Valid patterns are pure, invalid patterns have side effects (throw SyntaxError).
+    // RegExp is validated using the regex parser to determine if it's pure. Only portable valid
+    // patterns are pure; invalid or post-ES5 patterns may throw a SyntaxError at runtime.
     // https://github.com/oxc-project/oxc/issues/18050
     test("new RegExp('foobar', 'i')", false); // Valid pattern and flags
     test("new RegExp('foobar', 2)", true); // Non-string flags, can't validate
     test("new RegExp(SomethingWacky(), 'i')", true); // Non-literal pattern, can't validate
     test("new RegExp('[')", true); // Invalid pattern
     test("new RegExp('a', 'xyz')", true); // Invalid flags
+    // Valid post-ES5 syntax and flags may throw on older engines, so feature-detection calls
+    // must remain observable.
+    test(r"new RegExp('\\p{Ll}', 'u')", true);
+    test("new RegExp('(?<name>a)')", true);
+    test("new RegExp('(?<=a)b')", true);
+    test("new RegExp('(?s:a)')", true);
+    test("new RegExp('a', 'u')", true);
+    test("new RegExp('a', 'y')", true);
+    test("new RegExp('a', 's')", true);
+    test("new RegExp('a', 'd')", true);
+    test("new RegExp('a', 'v')", true);
+    test("new RegExp('a', 'gim')", false);
+    test("new RegExp(/a/)", false);
+    test("new RegExp(/a/, 'i')", true);
+    test_with_target("new RegExp(/a/, 'i')", "es2015", false);
+    test_with_target("new RegExp(/a/, 'u')", "es2015", false);
+    test_with_target("new RegExp(/a/, '!')", "esnext", true);
+    test_with_target("new RegExp(/a/, 'uv')", "esnext", true);
+    test_with_target(r"new RegExp('\\p{Ll}', 'u')", "es2018", false);
+    test_with_target("new RegExp('(?<name>a)')", "es2025", false);
+    test(r"new RegExp('[\uD801-\uD800]')", true);
+    test(r"RegExp('\\p{Ll}', 'u')", true);
+    test("RegExp('a', 'gim')", false);
+    test("RegExp(/a/, 'i')", true);
+    test_with_target("RegExp(/a/, 'i')", "es2015", false);
     // test("new Array()", false);
     // test("new Array", false);
     // test("new Array(4)", false);

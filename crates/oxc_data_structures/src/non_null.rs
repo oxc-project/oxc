@@ -1725,4 +1725,20 @@ mod tests {
         let mut_ptr = NonNullMut::from_mut(&mut x);
         assert_eq!(hash_of(&const_ptr), hash_of(&mut_ptr));
     }
+
+    // ---------------------------------------------------------------------------------
+    // Send / Sync
+    // ---------------------------------------------------------------------------------
+
+    /// Both types wrap `NonNull`, so inherit its `!Send` / `!Sync`.
+    /// Types containing them have to opt in to `Send` / `Sync` explicitly.
+    #[test]
+    fn not_send_or_sync() {
+        use crate::types::implements;
+
+        assert!(implements!(NonNullConst<u32>: !Send));
+        assert!(implements!(NonNullConst<u32>: !Sync));
+        assert!(implements!(NonNullMut<u32>: !Send));
+        assert!(implements!(NonNullMut<u32>: !Sync));
+    }
 }

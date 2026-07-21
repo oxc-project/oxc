@@ -12,7 +12,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_hir::{
-    DeclarationId, EvaluationOrder, Place, ReactiveFunction, ReactiveInstruction,
+    DeclarationId, EvaluationOrder, Place, ReactiveBlock, ReactiveFunction, ReactiveInstruction,
     ReactiveStatement, ReactiveTerminal, ReactiveValue, environment::Environment,
 };
 
@@ -85,7 +85,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
 /// Phase 2: Walk the tree and null out lvalues whose DeclarationId is unused.
 /// This is necessary because Rust's visitor takes immutable references.
 fn null_unused_lvalues<'a>(
-    block: &mut Vec<ReactiveStatement<'a>>,
+    block: &mut ReactiveBlock<'a>,
     env: &Environment<'a>,
     unused: &FxHashSet<DeclarationId>,
 ) {
