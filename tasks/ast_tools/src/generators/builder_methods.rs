@@ -1,8 +1,7 @@
 //! Generator for builder methods defined directly on AST types.
 //!
-//! These are an alternative to the methods on `AstBuilder`. Instead of `ast.binding_rest_element(span, argument)`,
-//! the node can be built with `BindingRestElement::new(span, argument, builder)`, where `builder` is anything
-//! which implements `GetAstBuilder` (e.g. an `AstBuilder`, or a parser/traversal context).
+//! A node is built with `BindingRestElement::new(span, argument, builder)`, where `builder` is
+//! anything which implements `GetAstBuilder` (e.g. an `AstBuilder`, or a parser/traversal context).
 
 use itertools::Itertools;
 use proc_macro2::TokenStream;
@@ -10,7 +9,7 @@ use quote::{format_ident, quote};
 use syn::Ident;
 
 use crate::{
-    AST_CRATE_PATH, Codegen, Generator,
+    AST_CRATE_PATH, Codegen, Generator, Result,
     output::{Output, output_path},
     schema::{
         Def, EnumDef, FieldDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId, VariantDef,
@@ -18,16 +17,44 @@ use crate::{
     utils::article_for,
 };
 
-use super::define_generator;
+use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Generator for builder methods defined directly on AST types.
 pub struct BuilderMethodsGenerator;
 
 define_generator!(BuilderMethodsGenerator);
 
-/// Note: This generator reads the `#[builder]` attribute data populated by `AstBuilderGenerator`,
-/// so does not register any attributes of its own.
 impl Generator for BuilderMethodsGenerator {
+    /// Register that accept `#[builder]` attr on structs, enums, or struct fields.
+    fn attrs(&self) -> &[(&'static str, AttrPositions)] {
+        &[("builder", attr_positions!(Struct | Enum | StructField))]
+    }
+
+    /// Parse `#[builder(default)]` on struct, enum, or struct field,
+    /// and `#[builder(skip)]` on struct or enum.
+    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
+        // No need to check attr name is `builder`, because that's the only attribute that
+        // this generator handles.
+        match part {
+            AttrPart::Tag("default") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.builder.is_default = true,
+                AttrLocation::Enum(enum_def) => enum_def.builder.is_default = true,
+                AttrLocation::StructField(struct_def, field_index) => {
+                    struct_def.fields[field_index].builder.is_default = true;
+                }
+                _ => return Err(()),
+            },
+            AttrPart::Tag("skip") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.builder.skip = true,
+                AttrLocation::Enum(enum_def) => enum_def.builder.skip = true,
+                _ => return Err(()),
+            },
+            _ => return Err(()),
+        }
+
+        Ok(())
+    }
+
     /// Generate builder methods on AST types.
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
         let node_id_cell_type_id =

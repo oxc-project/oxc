@@ -24,7 +24,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true, features = ["disable_old_builder"] }
+oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }

@@ -28,7 +28,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
-oxc_ast = { workspace = true, features = ["disable_old_builder"] }
+oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_config = { workspace = true }
 oxc_diagnostics = { workspace = true }

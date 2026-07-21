@@ -261,7 +261,6 @@ const DERIVES: &[&(dyn Derive + Sync)] = &[
 const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AssertLayoutsGenerator,
     &generators::AstKindGenerator,
-    &generators::AstBuilderGenerator,
     &generators::BuilderMethodsGenerator,
     &generators::GetIdGenerator,
     &generators::InheritVariantsGenerator,

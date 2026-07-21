@@ -55,11 +55,6 @@ oxc_parser = { workspace = true }
 insta = { workspace = true, features = ["glob"] }
 convert_case = { workspace = true }
 
-# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
-# If we enabled `disable_old_builder` feature in main dependency, feature unification would
-# cause it to be activated for `oxc_ast` for the user too.
-oxc_ast = { workspace = true, features = ["disable_old_builder"] }
-
 # The `src/` conversion modules are vendored close to upstream `react_compiler_oxc`
 # (kept near byte-for-byte to ease re-syncing). Defining `[lints.clippy]` means this
 # crate does not inherit `[lints] workspace = true`, which keeps the in-house

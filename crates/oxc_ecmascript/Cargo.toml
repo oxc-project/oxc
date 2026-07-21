@@ -36,12 +36,3 @@ cow-utils = { workspace = true, optional = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 smallvec = { workspace = true, optional = true }
-
-[dev-dependencies]
-# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
-# If we enabled `disable_old_builder` feature in main dependency, feature unification would
-# cause it to be activated for `oxc_ast` for the user too.
-oxc_ast = { workspace = true, features = ["disable_old_builder"] }
-
-[package.metadata.docs.rs]
-all-features = true
