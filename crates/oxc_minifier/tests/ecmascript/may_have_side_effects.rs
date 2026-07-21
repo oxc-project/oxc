@@ -1477,6 +1477,8 @@ fn test_property_read_side_effects_support() {
     test_with_ctx("foo[bar()]", &none_ctx, true); // bar() itself has side effects
     test_with_ctx("foo.#bar", &all_ctx, true);
     test_with_ctx("foo.#bar", &none_ctx, false);
+    test_with_ctx("foo().#bar", &all_ctx, true);
+    test_with_ctx("foo().#bar", &none_ctx, true); // foo() itself has side effects
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
 

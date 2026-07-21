@@ -408,8 +408,9 @@ impl<'a> MayHaveSideEffects<'a> for MemberExpression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(e) => e.may_have_side_effects(ctx),
             MemberExpression::StaticMemberExpression(e) => e.may_have_side_effects(ctx),
-            MemberExpression::PrivateFieldExpression(_) => {
+            MemberExpression::PrivateFieldExpression(e) => {
                 ctx.property_read_side_effects() != PropertyReadSideEffects::None
+                    || e.object.may_have_side_effects(ctx)
             }
         }
     }
