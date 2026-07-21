@@ -2866,23 +2866,16 @@ pub fn compile_program<'a>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    let eslint_rules: Option<Vec<String>> =
-        if options.environment.validate_exhaustive_memoization_dependencies
-            && options.environment.validate_hooks_usage
-        {
-            // Don't check for ESLint suppressions if both validations are enabled
-            None
-        } else {
-            Some(options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
-            }))
-        };
+    let eslint_rules = options
+        .eslint_suppression_rules
+        .clone()
+        .unwrap_or_else(|| DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect());
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
         &program.comments,
         program.source_text,
-        eslint_rules.as_deref(),
+        Some(&eslint_rules),
         options.flow_suppressions,
     );
 
