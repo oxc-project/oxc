@@ -1,16 +1,13 @@
 use crate::peephole::PeepholeOptimizations;
 use oxc_ast::ast::{Expression, Statement, SwitchCase};
 use oxc_ast_visit::{VisitJs, walk_js};
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
-
-use crate::TraverseCtx;
 
 impl<'a> PeepholeOptimizations {
     /// Check if a switch case can be inlined by verifying:
     /// - The test expression has no side effects
     /// - All statements can be safely inlined (no unlabeled breaks)
-    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        if case.test.may_have_side_effects(ctx) {
+    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
+        if !case.test.as_ref().is_none_or(Expression::is_literal) {
             return false;
         }
 

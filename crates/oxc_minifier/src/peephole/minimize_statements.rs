@@ -833,7 +833,7 @@ impl<'a> PeepholeOptimizations {
 
         if !ctx.is_tree_shake_only()
             && switch_stmt.cases.len() == 1
-            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0], ctx)
+            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
             && let Some(mut case) = switch_stmt.cases.pop()
         {
             ctx.notice_change();
