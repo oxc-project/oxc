@@ -35,6 +35,7 @@ use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PrimitiveValue;
 use crate::react_compiler_hir::PropertyLiteral;
+use crate::react_compiler_hir::ResourceDeclarationKind;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::TypeCast;
 use crate::react_compiler_hir::environment::{Environment, OutputMode};
@@ -1403,7 +1404,19 @@ fn ox_emit_store<'a>(
                 ));
             }
             let lval = ox_codegen_lvalue(cx, lvalue)?;
-            Ok(Some(ox_make_var_decl(cx, oxc::VariableDeclarationKind::Const, lval, value)))
+            let declaration_kind = match lvalue {
+                LvalueRef::Place(place) => {
+                    match cx.env.resource_declaration_kind(place.identifier) {
+                        Some(ResourceDeclarationKind::Sync) => oxc::VariableDeclarationKind::Using,
+                        Some(ResourceDeclarationKind::Async) => {
+                            oxc::VariableDeclarationKind::AwaitUsing
+                        }
+                        None => oxc::VariableDeclarationKind::Const,
+                    }
+                }
+                LvalueRef::Pattern(_) => oxc::VariableDeclarationKind::Const,
+            };
+            Ok(Some(ox_make_var_decl(cx, declaration_kind, lval, value)))
         }
         InstructionKind::Function => {
             let lval = ox_codegen_lvalue(cx, lvalue)?;

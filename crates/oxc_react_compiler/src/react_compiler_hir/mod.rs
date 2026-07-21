@@ -497,6 +497,16 @@ pub enum InstructionKind {
     Function,
 }
 
+/// Disposal mode for an explicit resource-management declaration.
+///
+/// The core HIR treats the binding itself like a `const`, while this metadata
+/// preserves the declaration's runtime disposal semantics for codegen.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ResourceDeclarationKind {
+    Sync,
+    Async,
+}
+
 #[derive(Debug, Clone)]
 pub struct LValue {
     pub place: Place,

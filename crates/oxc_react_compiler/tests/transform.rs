@@ -289,21 +289,46 @@ function Component(props) {\n\
 }
 
 #[test]
-fn resource_management_declarations_bail_out() {
+fn resource_management_declarations_preserve_their_kind() {
     let cases = [
-        "\
+        (
+            "\
 function Component(props) {\n  using x = sideEffect();\n  return <div>{props.text}</div>;\n}\n",
-        "\
-async function Component(props) {\n  await using x = sideEffect();\n  return <div>{props.text}</div>;\n}\n",
+            "using x = sideEffect();",
+        ),
+        (
+            "\
+async function Component(props) {\n  await using x = await sideEffect();\n  return <div>{props.text}</div>;\n}\n",
+            "await using x = await sideEffect();",
+        ),
     ];
 
-    for source in cases {
+    for (source, expected_declaration) in cases {
         let allocator = Allocator::default();
-        let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+        let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
 
-        assert!(!result.changed, "resource management should skip React Compiler");
+        assert!(result.changed, "resource management should compile");
         assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+        let output = Codegen::new().build(&program).code;
+        assert!(
+            output.contains(expected_declaration),
+            "resource declaration kind was not preserved:\n{output}"
+        );
+        assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
     }
+}
+
+#[test]
+fn for_using_declarations_bail_out() {
+    let source = "\
+function Component(props) {\n  for (using x of props.resources) {\n    x.use();\n  }\n  return <div>{props.text}</div>;\n}\n";
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(!result.changed, "for-using disposal is not represented by HIR yet");
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("for (using x of props.resources)"), "for-using changed:\n{output}");
 }
 
 #[test]

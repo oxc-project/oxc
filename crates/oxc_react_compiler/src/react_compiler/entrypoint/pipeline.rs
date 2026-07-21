@@ -162,9 +162,8 @@ fn run_pipeline<'a>(
         return Ok(Err(env.take_invariant_errors()));
     }
 
-    // Lowering flags this when the function uses `using`/`await using`, whose disposal
-    // semantics aren't preserved yet. Skip compiling it silently — no diagnostic — so
-    // other functions in the file still compile.
+    // Lowering flags unsupported runtime declarations. Skip compiling the function
+    // silently — no diagnostic — so other functions in the file still compile.
     if env.skip_compilation {
         return Ok(Ok(None));
     }

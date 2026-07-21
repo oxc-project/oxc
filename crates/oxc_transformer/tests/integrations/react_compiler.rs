@@ -26,6 +26,28 @@ fn memoizes_component_through_transformer() {
     assert!(code.contains("_c("), "component was not memoized:\n{code}");
 }
 
+#[test]
+fn preserves_resource_disposal_through_transformer() {
+    let allocator = Allocator::default();
+    let source = "class Disposer { [Symbol.dispose]() {} }\n\
+        export function Page() {\n  using resource = new Disposer();\n  return <p>hello world</p>;\n}\n";
+    let mut program = Parser::new(&allocator, source, SourceType::tsx()).parse().program;
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+
+    let options =
+        TransformOptions { react_compiler: Some(PluginOptions::default()), ..Default::default() };
+    let ret = Transformer::new(&allocator, Path::new("page.tsx"), &options)
+        .build_with_scoping(scoping, &mut program);
+    assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+
+    let code = Codegen::new().build(&program).code;
+    assert!(code.contains("_c(1)"), "component was not memoized:\n{code}");
+    assert!(
+        code.contains("using resource = new Disposer()"),
+        "resource disposal was not preserved:\n{code}"
+    );
+}
+
 /// An import referenced only through a computed key (`{ [NAME]: … }`) inside a
 /// memoized block must survive. The compiler hoists the object into a cache slot;
 /// the computed key has to stay an identifier *reference* so semantic analysis

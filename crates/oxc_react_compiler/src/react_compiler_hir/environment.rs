@@ -59,10 +59,14 @@ pub struct Environment<'a> {
     pub errors: Diagnostics,
 
     // Set during lowering when the function uses syntax the compiler can't handle
-    // yet (currently `using`/`await using`, whose disposal semantics aren't
-    // preserved). Signals the pipeline to skip compiling this function silently —
-    // no diagnostic — while other functions in the file still compile.
+    // yet. Signals the pipeline to skip compiling this function silently — no
+    // diagnostic — while other functions in the file still compile.
     pub skip_compilation: bool,
+
+    /// Resource-management bindings keyed by their stable declaration ID.
+    /// SSA versions retain the declaration ID, allowing codegen and DCE to
+    /// preserve `using` / `await using` after the normal `const`-like analysis.
+    resource_declarations: FxHashMap<DeclarationId, ResourceDeclarationKind>,
 
     // Function type classification (Component, Hook, Other)
     pub fn_type: ReactFunctionType,
@@ -181,6 +185,7 @@ impl<'a> Environment<'a> {
             functions: IndexVec::new(),
             errors: Diagnostics::new(),
             skip_compilation: false,
+            resource_declarations: FxHashMap::default(),
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
             instrument_fn_name: None,
@@ -241,6 +246,30 @@ impl<'a> Environment<'a> {
             span: None,
         });
         id
+    }
+
+    pub fn register_resource_declaration(
+        &mut self,
+        declaration_id: DeclarationId,
+        kind: ResourceDeclarationKind,
+    ) {
+        self.resource_declarations.insert(declaration_id, kind);
+    }
+
+    pub fn has_resource_declarations(&self) -> bool {
+        !self.resource_declarations.is_empty()
+    }
+
+    pub fn resource_declaration_kind(
+        &self,
+        identifier_id: IdentifierId,
+    ) -> Option<ResourceDeclarationKind> {
+        let declaration_id = self.identifiers[identifier_id].declaration_id;
+        self.resource_declarations.get(&declaration_id).copied()
+    }
+
+    pub fn is_resource_declaration(&self, identifier_id: IdentifierId) -> bool {
+        self.has_resource_declarations() && self.resource_declaration_kind(identifier_id).is_some()
     }
 
     /// Allocate a new ReactiveScope in the arena, returns its ScopeId.

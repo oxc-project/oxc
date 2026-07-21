@@ -3,12 +3,28 @@ source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/using-declaration-skips-only-that-function.tsx
 ---
 import { c as _c } from "react/compiler-runtime";
-// `using`/`await using` disposal semantics aren't preserved yet, so `WithUsing` is
-// skipped and emitted unchanged, while the structurally identical `Clean` component
-// in the same file is still compiled.
+// A resource declaration is preserved while the component's memoizable work is compiled.
 function WithUsing(props) {
+	const $ = _c(5);
 	using resource = props.acquire();
-	return <div onClick={() => props.onClick()}>{props.text}</div>;
+	let t0;
+	if ($[0] !== props) {
+		t0 = () => props.onClick();
+		$[0] = props;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	let t1;
+	if ($[2] !== props.text || $[3] !== t0) {
+		t1 = <div onClick={t0}>{props.text}</div>;
+		$[2] = props.text;
+		$[3] = t0;
+		$[4] = t1;
+	} else {
+		t1 = $[4];
+	}
+	return t1;
 }
 function Clean(props) {
 	const $ = _c(5);

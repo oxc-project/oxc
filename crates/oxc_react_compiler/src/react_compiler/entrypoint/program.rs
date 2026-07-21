@@ -1139,8 +1139,8 @@ fn process_fn<'a>(
             }
             Ok(None)
         }
-        // Lowering silently declined to compile this function (e.g. it uses
-        // `using`/`await using`); nothing to emit, and no diagnostic.
+        // Lowering silently declined to compile this function; nothing to emit,
+        // and no diagnostic.
         Ok(None) => Ok(None),
         Ok(Some(codegen_fn)) => {
             // Functions opted out via directive are skipped; nothing to emit.
