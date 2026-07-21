@@ -1274,8 +1274,8 @@ fn get_declarator_name<'ast>(decl: &VariableDeclarator<'ast>) -> Option<&'ast st
 /// - `loop_expression_depth` for loop test/right positions (while.test,
 ///   do-while.test, for-in.right, for-of.right), which Babel treats as
 ///   non-program-scope in 'all' mode;
-/// - parent context: `current_declarator_name` for `const Foo = () => {}` and
-///   `parent_callee_stack` for forwardRef/memo wrappers;
+/// - parent context: `current_declarator_name` for direct `const Foo = () => {}`
+///   initializers and `parent_callee_stack` for forwardRef/memo wrappers;
 /// - in 'all' mode, rejects functions whose scope depth `> 2` (program +
 ///   function) or that sit in a loop expression position.
 ///
@@ -1496,14 +1496,14 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
 
     fn walk_variable_declaration(&mut self, decl: &'b VariableDeclaration<'ast>) {
         for declarator in &decl.declarations {
-            // Only infer the declarator name when the init is a direct function
-            // expression, arrow, or call expression (for forwardRef/memo wrappers).
+            // Babel's `getFunctionName` infers a declarator name only when the
+            // initializer is the function itself. In particular, the callback in
+            // `const Foo = forwardRef(() => {})` is unnamed and is classified from
+            // its `forwardRef` parent instead.
             if let Some(init) = &declarator.init {
                 if matches!(
                     init,
-                    Expression::FunctionExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::CallExpression(_)
+                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
                 ) {
                     self.current_declarator_name = get_declarator_name(declarator);
                 }
@@ -1637,20 +1637,15 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             }
             Expression::CallExpression(node) => {
                 let callee_name = get_callee_name_if_react_api(&node.callee);
-                // The declarator name only flows through forwardRef/memo calls; for
-                // any other call, clear it so nested functions don't inherit it.
-                if callee_name.is_none() {
-                    self.current_declarator_name = None;
-                }
+                // Call arguments are never direct variable initializers, so a
+                // nested function must not inherit the surrounding declarator name.
+                self.current_declarator_name = None;
                 self.parent_callee_stack.push(callee_name);
                 self.walk_expression(&node.callee);
                 for arg in &node.arguments {
                     self.walk_argument(arg);
                 }
-                let was_react_api = self.parent_callee_stack.pop().flatten().is_some();
-                if was_react_api {
-                    self.current_declarator_name = None;
-                }
+                self.parent_callee_stack.pop();
             }
             Expression::ChainExpression(node) => self.walk_chain_element(&node.expression),
             Expression::StaticMemberExpression(node) => self.walk_expression(&node.object),
