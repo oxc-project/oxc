@@ -4,8 +4,9 @@ use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
-use crate::react_compiler_utils::FxIndexSet;
 use crate::react_compiler_utils::IdentIndexMap;
+use crate::react_compiler_utils::OrderedMap;
+use crate::react_compiler_utils::OrderedSet;
 use crate::scope::DeclKind;
 use crate::scope::ImportBindingKind;
 use crate::scope::ScopeId;
@@ -124,7 +125,7 @@ fn new_block(id: BlockId, kind: BlockKind) -> WipBlock {
 // ---------------------------------------------------------------------------
 
 pub struct HirBuilder<'a, 'b> {
-    completed: FxIndexMap<BlockId, BasicBlock>,
+    completed: OrderedMap<BlockId, BasicBlock>,
     current: WipBlock,
     entry: BlockId,
     scopes: Vec<Scope<'a>>,
@@ -185,7 +186,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let entry = env.next_block_id();
         let kind = entry_block_kind.unwrap_or(BlockKind::Block);
         HirBuilder {
-            completed: FxIndexMap::default(),
+            completed: OrderedMap::default(),
             current: new_block(entry, kind),
             entry,
             scopes: Vec::new(),
@@ -345,7 +346,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 id: wip.id,
                 instructions: wip.instructions,
                 terminal,
-                preds: FxIndexSet::default(),
+                preds: OrderedSet::default(),
                 phis: Vec::new(),
             },
         );
@@ -890,7 +891,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 /// Blocks not reachable through successors are removed. Blocks that are
 /// only reachable as fallthroughs (not through real successor edges) are
 /// replaced with empty blocks that have an Unreachable terminal.
-pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlock> {
+pub fn get_reverse_postordered_blocks(hir: &HIR) -> OrderedMap<BlockId, BasicBlock> {
     let mut visited: FxHashSet<BlockId> = FxHashSet::default();
     let mut used: FxHashSet<BlockId> = FxHashSet::default();
     let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
@@ -946,7 +947,7 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
 
     visit(hir, hir.entry, true, &mut visited, &mut used, &mut used_fallthroughs, &mut postorder);
 
-    let mut blocks = FxIndexMap::default();
+    let mut blocks = OrderedMap::default();
     for block_id in postorder.into_iter().rev() {
         let block = hir.blocks.get(&block_id).unwrap();
         if used.contains(&block_id) {

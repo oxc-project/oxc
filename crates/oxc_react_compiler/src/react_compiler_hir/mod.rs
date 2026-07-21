@@ -9,8 +9,8 @@ pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
-use crate::react_compiler_utils::FxIndexMap;
-use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::OrderedMap;
+use crate::react_compiler_utils::OrderedSet;
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, Str};
@@ -179,7 +179,7 @@ pub enum ParamPattern {
 #[allow(clippy::upper_case_acronyms)]
 pub struct HIR {
     pub entry: BlockId,
-    pub blocks: FxIndexMap<BlockId, BasicBlock>,
+    pub blocks: OrderedMap<BlockId, BasicBlock>,
 }
 
 /// Block kinds
@@ -211,7 +211,7 @@ pub struct BasicBlock {
     pub id: BlockId,
     pub instructions: Vec<InstructionId>,
     pub terminal: Terminal,
-    pub preds: FxIndexSet<BlockId>,
+    pub preds: OrderedSet<BlockId>,
     pub phis: Vec<Phi>,
 }
 
@@ -219,7 +219,7 @@ pub struct BasicBlock {
 #[derive(Debug, Clone)]
 pub struct Phi {
     pub place: Place,
-    pub operands: FxIndexMap<BlockId, Place>,
+    pub operands: OrderedMap<BlockId, Place>,
 }
 
 // =============================================================================

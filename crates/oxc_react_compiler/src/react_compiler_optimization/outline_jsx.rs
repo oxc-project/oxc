@@ -8,7 +8,8 @@
 //! Outlines JSX expressions in callbacks into separate component functions.
 //! This pass is conditional on `env.config.enable_jsx_outlining` (defaults to false).
 
-use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::OrderedMap;
+use crate::react_compiler_utils::OrderedSet;
 use oxc_index::IndexVec;
 use oxc_str::{Ident, IdentHashSet, format_ident};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -422,7 +423,7 @@ fn emit_outlined_fn<'a>(
         kind: BlockKind::Block,
         id: BlockId::ENTRY,
         instructions: instr_ids,
-        preds: FxIndexSet::default(),
+        preds: OrderedSet::default(),
         terminal: Terminal::Return {
             value: last_lvalue,
             return_variant: ReturnVariant::Explicit,
@@ -433,7 +434,7 @@ fn emit_outlined_fn<'a>(
         phis: Vec::new(),
     };
 
-    let mut blocks = FxIndexMap::default();
+    let mut blocks = OrderedMap::default();
     blocks.insert(BlockId::ENTRY, block);
 
     let outlined_fn = HirFunction {

@@ -21,7 +21,7 @@ use crate::react_compiler_inference::infer_mutation_aliasing_ranges::infer_mutat
 use crate::react_compiler_inference::infer_reactive_scope_variables::infer_reactive_scope_variables;
 use crate::react_compiler_optimization::dead_code_elimination;
 use crate::react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment;
-use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::OrderedMap;
 use rustc_hash::FxHashSet;
 use std::mem::replace;
 
@@ -206,7 +206,7 @@ fn placeholder_function<'a>() -> HirFunction<'a> {
             span: None,
         },
         context: Vec::new(),
-        body: HIR { entry: BlockId::ENTRY, blocks: FxIndexMap::default() },
+        body: HIR { entry: BlockId::ENTRY, blocks: OrderedMap::default() },
         instructions: Vec::new(),
         generator: false,
         is_async: false,
