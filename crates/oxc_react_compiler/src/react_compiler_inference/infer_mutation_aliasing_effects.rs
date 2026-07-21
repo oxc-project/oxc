@@ -712,8 +712,28 @@ struct Context<'a> {
 
 impl<'a> Context<'a> {
     fn intern_effect(&mut self, effect: AliasingEffect<'a>) -> AliasingEffect<'a> {
+        let incoming_diagnostic = match &effect {
+            AliasingEffect::MutateFrozen { error, .. }
+            | AliasingEffect::MutateGlobal { error, .. }
+            | AliasingEffect::Impure { error, .. } => Some(*error),
+            _ => None,
+        };
         let key = effect_key(&effect);
-        self.interned_effects.entry(key).or_insert(effect).clone_in(self.alloc)
+        let mut interned = self.interned_effects.entry(key).or_insert(effect).clone_in(self.alloc);
+
+        // Diagnostics carry source-specific instances that are not part of effect
+        // identity. Keep the canonical analysis effect, but preserve the instance
+        // from this occurrence for later emission.
+        if let Some(incoming_diagnostic) = incoming_diagnostic {
+            match &mut interned {
+                AliasingEffect::MutateFrozen { error, .. }
+                | AliasingEffect::MutateGlobal { error, .. }
+                | AliasingEffect::Impure { error, .. } => *error = incoming_diagnostic,
+                _ => unreachable!(),
+            }
+        }
+
+        interned
     }
 
     /// Get or create a stable ValueId for a given effect, ensuring fixpoint convergence.
