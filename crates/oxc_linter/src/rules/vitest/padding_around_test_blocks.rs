@@ -16,7 +16,7 @@ declare_oxc_lint!(
     style,
     fix,
     docs = DOCUMENTATION,
-    version = "next",
+    version = "1.75.0",
     short_description =
         "This rule enforces a line of padding before and after 1 or more `test`/`it` statements.",
 );

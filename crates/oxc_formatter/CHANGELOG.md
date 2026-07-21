@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.60.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 6fe866a oxfmt: Keep tailwind classes glued to template expr with `preserveWhitespace` (#24609) (leaysgur)
+
 ## [0.59.0] - 2026-07-13
 
 ### 🚀 Features
