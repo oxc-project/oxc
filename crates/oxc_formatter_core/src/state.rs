@@ -11,7 +11,9 @@ use crate::{
 thread_local! {
     /// Cache of heap staging vectors, keeping their high-water capacity alive across format runs on the same thread.
     /// Once a thread is warm, staging performs no heap allocation at all.
-    /// A stack because format runs nest (embedded-language formatting creates a child [`FormatState`] on the same thread).
+    /// Holds several because checkouts overlap (a run's shared scratch and spare slot,
+    /// accumulators, and embedded-language child [`FormatState`]s on the same thread);
+    /// [`ScratchBuffer::checkout`] picks by capacity, not order.
     static SCRATCH_CACHE: RefCell<Vec<Vec<FormatElement<'static>>>> =
         const { RefCell::new(Vec::new()) };
 }
@@ -30,7 +32,23 @@ pub struct ScratchBuffer<'ast>(Vec<FormatElement<'ast>>);
 
 impl<'ast> ScratchBuffer<'ast> {
     pub fn checkout() -> Self {
-        let vec = SCRATCH_CACHE.with_borrow_mut(Vec::pop).unwrap_or_default();
+        // Take the roomiest vector, not the most recently returned one:
+        // capacities differ wildly between users (a run's shared scratch grows to the
+        // deepest staging stack, an assignment accumulator to one left hand side),
+        // and a blind LIFO pop depends on the order buffers happen to be returned in —
+        // get it wrong and the run scratch re-grows from nothing every run while the
+        // grown-out vector idles in a small role. The cache stays a handful of entries,
+        // so the scan is cheap.
+        let vec = SCRATCH_CACHE
+            .with_borrow_mut(|cache| {
+                let index = cache
+                    .iter()
+                    .enumerate()
+                    .max_by_key(|(_, vec)| vec.capacity())
+                    .map(|(index, _)| index);
+                index.map(|index| cache.swap_remove(index))
+            })
+            .unwrap_or_default();
         // SAFETY: cached vectors are always empty (checkin clears them);
         // an empty vector holds no values, so re-branding its element lifetime is sound.
         Self(unsafe {
@@ -106,6 +124,9 @@ pub struct FormatState<'ast, C> {
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
     /// Heap staging vector for [`crate::HeapVecBuffer`]; see [`ScratchBuffer`].
     scratch: ScratchBuffer<'ast>,
+    /// Spare staging vector slot for per-node accumulators on hot paths;
+    /// see [`FormatState::take_spare_scratch`].
+    spare_scratch: ScratchBuffer<'ast>,
 }
 
 impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
@@ -123,7 +144,32 @@ impl<'ast, C> FormatState<'ast, C> {
             group_id_builder: UniqueGroupIdBuilder::default(),
             printed_interned_elements: FxHashMap::default(),
             scratch: ScratchBuffer::checkout(),
+            spare_scratch: ScratchBuffer::empty(),
         }
+    }
+
+    /// Takes the spare staging vector for a short-lived accumulator
+    /// (staging that must release the state between being written and being consumed,
+    /// see [`crate::AccumulatorBuffer`]).
+    ///
+    /// This is a per-run slot, not a checkout from the thread-local cache:
+    /// on hot paths (e.g. every assignment-like left hand side) the thread-local
+    /// round-trip of [`ScratchBuffer::checkout`] is measurable, a field swap is not.
+    /// Return it with [`FormatState::return_spare_scratch`] once drained.
+    ///
+    /// When the slot has no capacity to offer — first take of the run, or a nested
+    /// take while the slot is already out — it falls back to a pooled checkout,
+    /// so repeated takes always reuse grown capacity from somewhere.
+    /// On a nested take, whichever buffer is returned last wins the slot
+    /// (the loser drops back to the thread-local cache).
+    pub fn take_spare_scratch(&mut self) -> ScratchBuffer<'ast> {
+        let taken = mem::replace(&mut self.spare_scratch, ScratchBuffer::empty());
+        if taken.capacity() == 0 { ScratchBuffer::checkout() } else { taken }
+    }
+
+    /// Puts the spare staging vector back into its slot; see [`FormatState::take_spare_scratch`].
+    pub fn return_spare_scratch(&mut self, scratch: ScratchBuffer<'ast>) {
+        self.spare_scratch = scratch;
     }
 
     /// The heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run.

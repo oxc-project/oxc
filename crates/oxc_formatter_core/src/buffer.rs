@@ -248,7 +248,8 @@ impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
 /// Those can't stage in the arena (every growth would strand the grown-out-of allocation, see [`HeapVecBuffer`])
 /// nor share the format run's scratch vector (suspended or interleaved use breaks its LIFO discipline).
 ///
-/// Instead the caller checks its own [`crate::ScratchBuffer`] out of the thread-local cache
+/// Instead the caller brings its own [`crate::ScratchBuffer`] — checked out of the thread-local
+/// cache, or taken from the state's spare slot on hot paths ([`crate::FormatState::take_spare_scratch`]) —
 /// and writes through this adapter (constructed via [`crate::ScratchBuffer::writer`]);
 /// the arena receives one exactly-sized copy when the finished result is interned ([`crate::Formatter::intern_elements`]),
 /// or nothing at all when the elements are re-emitted into a downstream buffer.

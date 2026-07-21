@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, JsFormatter, ScratchBuffer,
+        Buffer, BufferExtensions, Format, JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
@@ -831,18 +831,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             // can can be known only when it's formatted (it can incur in some transformation,
             // like removing some escapes, etc.).
             //
-            // 1. we check a scratch vector out as a temporary heap buffer
-            //    (see `AccumulatorBuffer` for why neither the arena nor the shared scratch fits)
+            // 1. we take the state's spare scratch vector as a temporary heap buffer
+            //    (see `AccumulatorBuffer` for why neither the arena nor the shared scratch fits;
+            //    assignments are frequent enough that a thread-local checkout is measurable here)
             // 2. we write the left hand side into the buffer and retrieve the `is_left_short` info
             //    which is computed only when we format it
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
-            let mut formatted_left = ScratchBuffer::checkout();
+            let mut formatted_left = f.state_mut().take_spare_scratch();
             let is_left_short =
                 self.write_left(&mut Formatter::new(&mut formatted_left.writer(f.state_mut())));
             let left_may_break = formatted_left.may_directly_break();
 
-            let left = format_once(move |f| f.write_elements(formatted_left.drain(..)));
+            let left = format_once(move |f| {
+                f.write_elements(formatted_left.drain(..));
+                f.state_mut().return_spare_scratch(formatted_left);
+            });
 
             // Compare name only if we are in a position of computing it.
             // If not (for example, left is not an identifier), then let's fallback to false,
