@@ -23,9 +23,10 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, ScopeId,
-    Span, is_primitive_type,
+    is_primitive_type,
 };
 use crate::react_compiler_utils::DisjointSet;
+use oxc_span::Span;
 
 // =============================================================================
 // Public API
@@ -49,28 +50,28 @@ pub fn infer_reactive_scope_variables(
     let mut scopes: FxHashMap<IdentifierId, ScopeState> = FxHashMap::default();
 
     scope_identifiers.for_each(|identifier_id, group_id| {
-        let ident_range = env.identifiers[identifier_id.0 as usize].mutable_range.clone();
-        let ident_span = env.identifiers[identifier_id.0 as usize].span;
+        let ident_range = env.identifiers[identifier_id].mutable_range;
+        let ident_span = env.identifiers[identifier_id].span;
 
         let state = scopes.entry(group_id).or_insert_with(|| {
             let scope_id = env.next_scope_id();
             // Initialize scope range from the first member
-            let scope = &mut env.scopes[scope_id.0 as usize];
-            scope.range = ident_range.clone();
+            let scope = &mut env.scopes[scope_id];
+            scope.range = ident_range;
             ScopeState { scope_id, span: ident_span }
         });
 
         // Update scope range
-        let scope = &mut env.scopes[state.scope_id.0 as usize];
+        let scope = &mut env.scopes[state.scope_id];
 
         // If this is not the first identifier (scope was already created), merge ranges
         if scope.range.start != ident_range.start || scope.range.end != ident_range.end {
-            if scope.range.start == EvaluationOrder(0) {
+            if scope.range.start == EvaluationOrder::UNSET {
                 scope.range.start = ident_range.start;
-            } else if ident_range.start != EvaluationOrder(0) {
-                scope.range.start = EvaluationOrder(scope.range.start.0.min(ident_range.start.0));
+            } else if ident_range.start != EvaluationOrder::UNSET {
+                scope.range.start = scope.range.start.min(ident_range.start);
             }
-            scope.range.end = EvaluationOrder(scope.range.end.0.max(ident_range.end.0));
+            scope.range.end = scope.range.end.max(ident_range.end);
         }
 
         // Merge location
@@ -78,50 +79,49 @@ pub fn infer_reactive_scope_variables(
 
         // Assign the scope to this identifier
         let scope_id = state.scope_id;
-        env.identifiers[identifier_id.0 as usize].scope = Some(scope_id);
+        env.identifiers[identifier_id].scope = Some(scope_id);
     });
 
     // Set span on each scope
     for state in scopes.values() {
-        env.scopes[state.scope_id.0 as usize].span = state.span;
+        env.scopes[state.scope_id].span = state.span;
     }
 
     // Update each identifier's mutable_range to match its scope's range
     for (&_identifier_id, state) in &scopes {
-        let scope_range = env.scopes[state.scope_id.0 as usize].range.clone();
+        let scope_range = env.scopes[state.scope_id].range;
         // Find all identifiers with this scope and update their mutable_range
         // We iterate through all identifiers and check their scope
         for ident in &mut env.identifiers {
             if ident.scope == Some(state.scope_id) {
-                ident.mutable_range = scope_range.clone();
+                ident.mutable_range = scope_range;
             }
         }
     }
 
     // Validate scope ranges
-    let mut max_instruction = EvaluationOrder(0);
+    let mut max_instruction = EvaluationOrder::UNSET;
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
-            max_instruction = EvaluationOrder(max_instruction.0.max(instr.id.0));
+            let instr = &func.instructions[instr_id.index()];
+            max_instruction = max_instruction.max(instr.id);
         }
-        max_instruction =
-            EvaluationOrder(max_instruction.0.max(block.terminal.evaluation_order().0));
+        max_instruction = max_instruction.max(block.terminal.evaluation_order());
     }
 
     for state in scopes.values() {
-        let scope = &env.scopes[state.scope_id.0 as usize];
-        if scope.range.start == EvaluationOrder(0)
-            || scope.range.end == EvaluationOrder(0)
-            || max_instruction == EvaluationOrder(0)
-            || scope.range.end.0 > max_instruction.0 + 1
+        let scope = &env.scopes[state.scope_id];
+        if scope.range.start == EvaluationOrder::UNSET
+            || scope.range.end == EvaluationOrder::UNSET
+            || max_instruction == EvaluationOrder::UNSET
+            || scope.range.end > max_instruction + 1
         {
             return Err(ErrorCategory::Invariant.diagnostic(format!(
                 "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
-                scope.id.0,
-                scope.range.start.0,
-                scope.range.end.0,
-                max_instruction.0 + 1,
+                scope.id.index(),
+                scope.range.start.index(),
+                scope.range.end.index(),
+                max_instruction.index() + 1,
             )));
         }
     }
@@ -241,17 +241,17 @@ pub(crate) fn find_disjoint_mutable_values(
         // Handle phi nodes
         for phi in &block.phis {
             let phi_id = phi.place.identifier;
-            let phi_range = &env.identifiers[phi_id.0 as usize].mutable_range;
-            let phi_decl_id = env.identifiers[phi_id.0 as usize].declaration_id;
+            let phi_range = &env.identifiers[phi_id].mutable_range;
+            let phi_decl_id = env.identifiers[phi_id].declaration_id;
 
             let first_instr_id = block
                 .instructions
                 .first()
-                .map(|iid| func.instructions[iid.0 as usize].id)
+                .map(|iid| func.instructions[iid.index()].id)
                 .unwrap_or(block.terminal.evaluation_order());
 
             let is_phi_mutated_after_creation =
-                phi_range.start.0 + 1 != phi_range.end.0 && phi_range.end > first_instr_id;
+                phi_range.start + 1 != phi_range.end && phi_range.end > first_instr_id;
             // A phi operand defined at or after the phi's block is a loop
             // back-edge: the variable is reassigned within the loop (eg a
             // counter `a++` or `a = a + 1`). The reassignment must count as
@@ -264,8 +264,7 @@ pub(crate) fn find_disjoint_mutable_values(
             // compared at the top of the scope).
             let is_loop_carried_reassignment = !is_phi_mutated_after_creation
                 && phi.operands.iter().any(|(_pred_id, operand)| {
-                    env.identifiers[operand.identifier.0 as usize].mutable_range.start
-                        >= first_instr_id
+                    env.identifiers[operand.identifier].mutable_range.start >= first_instr_id
                 });
             if is_phi_mutated_after_creation || is_loop_carried_reassignment {
                 let mut operands = vec![phi_id];
@@ -285,15 +284,15 @@ pub(crate) fn find_disjoint_mutable_values(
 
         // Handle instructions
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let mut operands: Vec<IdentifierId> = Vec::new();
 
             let lvalue_id = instr.lvalue.identifier;
-            let lvalue_range = &env.identifiers[lvalue_id.0 as usize].mutable_range;
-            let lvalue_type = &env.types[env.identifiers[lvalue_id.0 as usize].type_.0 as usize];
+            let lvalue_range = &env.identifiers[lvalue_id].mutable_range;
+            let lvalue_type = &env.types[env.identifiers[lvalue_id].type_];
             let lvalue_type_is_primitive = is_primitive_type(lvalue_type);
 
-            if lvalue_range.end.0 > lvalue_range.start.0 + 1
+            if lvalue_range.end > lvalue_range.start + 1
                 || may_allocate(&instr.value, lvalue_type_is_primitive)
             {
                 operands.push(lvalue_id);
@@ -303,39 +302,39 @@ pub(crate) fn find_disjoint_mutable_values(
                 InstructionValue::DeclareLocal { lvalue, .. }
                 | InstructionValue::DeclareContext { lvalue, .. } => {
                     let place_id = lvalue.place.identifier;
-                    let decl_id = env.identifiers[place_id.0 as usize].declaration_id;
+                    let decl_id = env.identifiers[place_id].declaration_id;
                     declarations.entry(decl_id).or_insert(place_id);
                 }
                 InstructionValue::StoreLocal { lvalue, value, .. }
                 | InstructionValue::StoreContext { lvalue, value, .. } => {
                     let place_id = lvalue.place.identifier;
-                    let decl_id = env.identifiers[place_id.0 as usize].declaration_id;
+                    let decl_id = env.identifiers[place_id].declaration_id;
                     declarations.entry(decl_id).or_insert(place_id);
 
-                    let place_range = &env.identifiers[place_id.0 as usize].mutable_range;
-                    if place_range.end.0 > place_range.start.0 + 1 {
+                    let place_range = &env.identifiers[place_id].mutable_range;
+                    if place_range.end > place_range.start + 1 {
                         operands.push(place_id);
                     }
 
-                    let value_range = &env.identifiers[value.identifier.0 as usize].mutable_range;
-                    if value_range.contains(instr.id) && value_range.start.0 > 0 {
+                    let value_range = &env.identifiers[value.identifier].mutable_range;
+                    if value_range.contains(instr.id) && value_range.start > 0 {
                         operands.push(value.identifier);
                     }
                 }
                 InstructionValue::Destructure { lvalue, value, .. } => {
                     let pattern_places = each_pattern_operand(&lvalue.pattern);
                     for place_id in &pattern_places {
-                        let decl_id = env.identifiers[place_id.0 as usize].declaration_id;
+                        let decl_id = env.identifiers[*place_id].declaration_id;
                         declarations.entry(decl_id).or_insert(*place_id);
 
-                        let place_range = &env.identifiers[place_id.0 as usize].mutable_range;
-                        if place_range.end.0 > place_range.start.0 + 1 {
+                        let place_range = &env.identifiers[*place_id].mutable_range;
+                        if place_range.end > place_range.start + 1 {
                             operands.push(*place_id);
                         }
                     }
 
-                    let value_range = &env.identifiers[value.identifier.0 as usize].mutable_range;
-                    if value_range.contains(instr.id) && value_range.start.0 > 0 {
+                    let value_range = &env.identifiers[value.identifier].mutable_range;
+                    if value_range.contains(instr.id) && value_range.start > 0 {
                         operands.push(value.identifier);
                     }
                 }
@@ -343,8 +342,8 @@ pub(crate) fn find_disjoint_mutable_values(
                     // For MethodCall: include all mutable operands plus the computed property
                     let all_operands = each_instruction_value_operand(&instr.value, env);
                     for op_id in &all_operands {
-                        let op_range = &env.identifiers[op_id.0 as usize].mutable_range;
-                        if op_range.contains(instr.id) && op_range.start.0 > 0 {
+                        let op_range = &env.identifiers[*op_id].mutable_range;
+                        if op_range.contains(instr.id) && op_range.start > 0 {
                             operands.push(*op_id);
                         }
                     }
@@ -355,8 +354,8 @@ pub(crate) fn find_disjoint_mutable_values(
                     // For all other instructions: include mutable operands
                     let all_operands = each_instruction_value_operand(&instr.value, env);
                     for op_id in &all_operands {
-                        let op_range = &env.identifiers[op_id.0 as usize].mutable_range;
-                        if op_range.contains(instr.id) && op_range.start.0 > 0 {
+                        let op_range = &env.identifiers[*op_id].mutable_range;
+                        if op_range.contains(instr.id) && op_range.start > 0 {
                             operands.push(*op_id);
                         }
                     }

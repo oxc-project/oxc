@@ -1,0 +1,45 @@
+// The ignored range of a suppressed statement excludes a (possibly distant)
+// trailing `;` — even one owned by a nested single-statement body — and the
+// formatter prints its own terminator only when one was stripped, never
+// doubling it (a doubled `;` would re-parse as an extra EmptyStatement).
+
+// oxfmt-ignore
+debugger
+
+;[].sort()
+
+// oxfmt-ignore
+while   (   1)   foo (   )
+
+;[].sort()
+
+// oxfmt-ignore
+if (   1) ; else    foo
+
+;[].sort()
+
+// oxfmt-ignore
+label: for (   a of   b) while   (   1)   foo (   )
+
+;[].sort()
+
+function f() {
+  // oxfmt-ignore
+  return
+
+  ;[].sort()
+}
+
+function g() {
+  // oxfmt-ignore
+  throw    err
+
+  ;[].sort()
+}
+
+// No source `;` at the end — nothing is stripped, nothing is added.
+// oxfmt-ignore
+while   (   1)   { foo (   ) }
+
+// oxfmt-ignore
+with   (   1)   ;

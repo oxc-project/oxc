@@ -87,17 +87,6 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
     }
-
-    let mut has_optional = false;
-
-    for param in &params.items {
-        // function a(optional?: number, required: number) { }
-        if param.optional {
-            has_optional = true;
-        } else if has_optional && param.initializer.is_none() {
-            ctx.error(diagnostics::required_parameter_after_optional_parameter(param.span));
-        }
-    }
 }
 
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
@@ -217,19 +206,6 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     let is_abstract = method.r#type.is_abstract();
-
-    if is_abstract {
-        // constructors cannot be abstract, no matter what
-        if method.kind.is_constructor() {
-            ctx.error(diagnostics::illegal_abstract_modifier(method.key.span()));
-        }
-        // abstract cannot be used with private identifiers
-        if method.key.is_private_identifier() {
-            ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(
-                method.key.span(),
-            ));
-        }
-    }
 
     let is_empty_body = method.value.r#type == FunctionType::TSEmptyBodyFunctionExpression;
     // Illegal to have `constructor(public foo);`

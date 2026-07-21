@@ -44,7 +44,8 @@ pub enum AstNodes<'a> {
     PrivateFieldExpression(&'a AstNode<'a, PrivateFieldExpression<'a>>),
     CallExpression(&'a AstNode<'a, CallExpression<'a>>),
     NewExpression(&'a AstNode<'a, NewExpression<'a>>),
-    MetaProperty(&'a AstNode<'a, MetaProperty<'a>>),
+    ImportMeta(&'a AstNode<'a, ImportMeta>),
+    NewTarget(&'a AstNode<'a, NewTarget>),
     SpreadElement(&'a AstNode<'a, SpreadElement<'a>>),
     UpdateExpression(&'a AstNode<'a, UpdateExpression<'a>>),
     UnaryExpression(&'a AstNode<'a, UnaryExpression<'a>>),
@@ -243,7 +244,8 @@ impl AstNodes<'_> {
             Self::PrivateFieldExpression(n) => n.span(),
             Self::CallExpression(n) => n.span(),
             Self::NewExpression(n) => n.span(),
-            Self::MetaProperty(n) => n.span(),
+            Self::ImportMeta(n) => n.span(),
+            Self::NewTarget(n) => n.span(),
             Self::SpreadElement(n) => n.span(),
             Self::UpdateExpression(n) => n.span(),
             Self::UnaryExpression(n) => n.span(),
@@ -442,7 +444,8 @@ impl AstNodes<'_> {
             Self::PrivateFieldExpression(n) => n.parent(),
             Self::CallExpression(n) => n.parent(),
             Self::NewExpression(n) => n.parent(),
-            Self::MetaProperty(n) => n.parent(),
+            Self::ImportMeta(n) => n.parent(),
+            Self::NewTarget(n) => n.parent(),
             Self::SpreadElement(n) => n.parent(),
             Self::UpdateExpression(n) => n.parent(),
             Self::UnaryExpression(n) => n.parent(),
@@ -636,7 +639,8 @@ impl AstNodes<'_> {
             Self::PrivateFieldExpression(_) => "PrivateFieldExpression",
             Self::CallExpression(_) => "CallExpression",
             Self::NewExpression(_) => "NewExpression",
-            Self::MetaProperty(_) => "MetaProperty",
+            Self::ImportMeta(_) => "ImportMeta",
+            Self::NewTarget(_) => "NewTarget",
             Self::SpreadElement(_) => "SpreadElement",
             Self::UpdateExpression(_) => "UpdateExpression",
             Self::UnaryExpression(_) => "UnaryExpression",
@@ -956,12 +960,6 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            Expression::MetaProperty(s) => AstNodes::MetaProperty(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
             Expression::Super(s) => AstNodes::Super(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -1142,6 +1140,18 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
+            Expression::ImportMeta(s) => AstNodes::ImportMeta(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+                following_span_start: self.following_span_start,
+            })),
+            Expression::NewTarget(s) => AstNodes::NewTarget(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+                following_span_start: self.following_span_start,
+            })),
             Expression::JSXElement(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -1984,32 +1994,26 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, MetaProperty<'a>> {
+impl<'a> AstNode<'a, ImportMeta> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
-    #[inline]
-    pub fn meta(&self) -> &AstNode<'a, IdentifierName<'a>> {
-        let following_span_start = self.inner.property.span().start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.meta,
-            allocator: self.allocator,
-            parent: AstNodes::MetaProperty(transmute_self(self)),
-            following_span_start,
-        })
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
     }
 
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, NewTarget> {
     #[inline]
-    pub fn property(&self) -> &AstNode<'a, IdentifierName<'a>> {
-        let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.property,
-            allocator: self.allocator,
-            parent: AstNodes::MetaProperty(transmute_self(self)),
-            following_span_start,
-        })
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

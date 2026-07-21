@@ -8,14 +8,17 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
+use smallvec::smallvec;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
-    each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
+    PlaceList, each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    Effect, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue, Place, Type,
+    Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue,
+    Place,
 };
 
 /// Validates that local variables cannot be reassigned after render.
@@ -28,7 +31,6 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
     let reassignment = get_context_reassignment(
         func,
         &env.identifiers,
-        &env.types,
         &env.functions,
         env,
         &mut context_variables,
@@ -62,8 +64,11 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
 
 /// Format a variable name for error messages. Uses the named identifier if
 /// available, otherwise falls back to "variable".
-fn format_variable_name(place: &Place, identifiers: &[Identifier]) -> String {
-    let identifier = &identifiers[place.identifier.0 as usize];
+fn format_variable_name(
+    place: &Place,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> String {
+    let identifier = &identifiers[place.identifier];
     match &identifier.name {
         Some(IdentifierName::Named(name)) => format!("`{}`", name),
         _ => "variable".to_string(),
@@ -74,12 +79,11 @@ fn format_variable_name(place: &Place, identifiers: &[Identifier]) -> String {
 /// context variable. Returns the reassigned place if found, or None.
 ///
 /// Side effects: accumulates async-function reassignment diagnostics into `diagnostics`.
-#[allow(clippy::only_used_in_recursion, clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 fn get_context_reassignment(
     func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     env: &Environment,
     context_variables: &mut FxHashSet<IdentifierId>,
     is_function_expression: bool,
@@ -91,19 +95,18 @@ fn get_context_reassignment(
 
     for (_block_id, block) in &func.body.blocks {
         for &instruction_id in &block.instructions {
-            let instr = &func.instructions[instruction_id.0 as usize];
+            let instr = &func.instructions[instruction_id.index()];
 
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_function = &functions[lowered_func.func.0 as usize];
+                    let inner_function = &functions[lowered_func.func];
                     let inner_is_async = is_async || inner_function.is_async;
 
                     // Recursively check the inner function
                     let mut reassignment = get_context_reassignment(
                         inner_function,
                         identifiers,
-                        types,
                         functions,
                         env,
                         context_variables,
@@ -119,7 +122,7 @@ fn get_context_reassignment(
                             if let Some(reassignment_place) =
                                 reassigning_functions.get(&context_place.identifier)
                             {
-                                reassignment = Some(reassignment_place.clone());
+                                reassignment = Some(*reassignment_place);
                                 break;
                             }
                         }
@@ -148,24 +151,22 @@ fn get_context_reassignment(
                         } else {
                             // Propagate reassignment info on the lvalue
                             reassigning_functions
-                                .insert(instr.lvalue.identifier, reassignment_place.clone());
+                                .insert(instr.lvalue.identifier, *reassignment_place);
                         }
                     }
                 }
 
                 InstructionValue::StoreLocal { lvalue, value, .. } => {
                     if let Some(reassignment_place) = reassigning_functions.get(&value.identifier) {
-                        let reassignment_place = reassignment_place.clone();
-                        reassigning_functions
-                            .insert(lvalue.place.identifier, reassignment_place.clone());
+                        let reassignment_place = *reassignment_place;
+                        reassigning_functions.insert(lvalue.place.identifier, reassignment_place);
                         reassigning_functions.insert(instr.lvalue.identifier, reassignment_place);
                     }
                 }
 
                 InstructionValue::LoadLocal { place, .. } => {
                     if let Some(reassignment_place) = reassigning_functions.get(&place.identifier) {
-                        reassigning_functions
-                            .insert(instr.lvalue.identifier, reassignment_place.clone());
+                        reassigning_functions.insert(instr.lvalue.identifier, *reassignment_place);
                     }
                 }
 
@@ -181,7 +182,7 @@ fn get_context_reassignment(
                     if is_function_expression
                         && context_variables.contains(&lvalue.place.identifier)
                     {
-                        return Some(lvalue.place.clone());
+                        return Some(lvalue.place);
                     }
 
                     // In the outer function, track context variables
@@ -191,9 +192,8 @@ fn get_context_reassignment(
 
                     // Propagate reassigning function info through StoreContext
                     if let Some(reassignment_place) = reassigning_functions.get(&value.identifier) {
-                        let reassignment_place = reassignment_place.clone();
-                        reassigning_functions
-                            .insert(lvalue.place.identifier, reassignment_place.clone());
+                        let reassignment_place = *reassignment_place;
+                        reassigning_functions.insert(lvalue.place.identifier, reassignment_place);
                         reassigning_functions.insert(instr.lvalue.identifier, reassignment_place);
                     }
                 }
@@ -202,24 +202,24 @@ fn get_context_reassignment(
                     // For calls with noAlias signatures, only check the callee/receiver
                     // (not args) to avoid false positives from callbacks that reassign
                     // context variables.
-                    let operands: Vec<Place> = match &instr.value {
+                    let operands: PlaceList = match &instr.value {
                         InstructionValue::CallExpression { callee, .. } => {
                             if env.has_no_alias_signature(callee.identifier) {
-                                vec![callee.clone()]
+                                smallvec![*callee]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
                         }
                         InstructionValue::MethodCall { receiver, property, .. } => {
                             if env.has_no_alias_signature(property.identifier) {
-                                vec![receiver.clone(), property.clone()]
+                                smallvec![*receiver, *property]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
                         }
                         InstructionValue::TaggedTemplateExpression { tag, .. } => {
                             if env.has_no_alias_signature(tag.identifier) {
-                                vec![tag.clone()]
+                                smallvec![*tag]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
@@ -246,8 +246,7 @@ fn get_context_reassignment(
                                 // If the operand is not frozen but does reassign, then the
                                 // lvalues of the instruction could also be reassigning
                                 for lvalue_id in each_instruction_lvalue_ids(instr) {
-                                    reassigning_functions
-                                        .insert(lvalue_id, reassignment_place.clone());
+                                    reassigning_functions.insert(lvalue_id, reassignment_place);
                                 }
                             }
                         }
@@ -259,7 +258,7 @@ fn get_context_reassignment(
         // Check terminal operands for reassigning functions
         for operand in each_terminal_operand(&block.terminal) {
             if let Some(reassignment_place) = reassigning_functions.get(&operand.identifier) {
-                return Some(reassignment_place.clone());
+                return Some(*reassignment_place);
             }
         }
     }

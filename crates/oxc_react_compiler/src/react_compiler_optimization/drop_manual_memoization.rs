@@ -18,6 +18,9 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::Allocator;
+use oxc_allocator::CloneIn;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics::ErrorCategory;
@@ -37,11 +40,11 @@ use crate::react_compiler_hir::NonLocalBinding;
 use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PropertyLiteral;
-use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_lowering::create_temporary_place;
 use crate::react_compiler_lowering::mark_instruction_ids;
+use oxc_span::Span;
 
 // =============================================================================
 // Types
@@ -122,11 +125,11 @@ pub fn drop_manual_memoization<'a>(
     // Collect all block instruction lists up front to avoid borrowing func immutably
     // while needing to mutate it
     let all_block_instructions: Vec<Vec<InstructionId>> =
-        func.body.blocks.values().map(|block| block.instructions.clone()).collect();
+        func.body.blocks.values().map(|block| block.instructions.to_vec()).collect();
 
     for block_instructions in &all_block_instructions {
         for &instr_id in block_instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Extract the identifier we need to look up, and whether it's a call/method
             let lookup_id = match &instr.value {
@@ -156,19 +159,23 @@ pub fn drop_manual_memoization<'a>(
 
     // Phase 2: Insert manual memoization markers as needed
     if !queued_inserts.is_empty() {
+        let alloc = env.allocator;
         let mut has_changes = false;
         for block in func.body.blocks.values_mut() {
-            let mut next_instructions: Option<Vec<InstructionId>> = None;
+            let mut next_instructions: Option<ArenaVec<'a, InstructionId>> = None;
             for i in 0..block.instructions.len() {
                 let instr_id = block.instructions[i];
                 if let Some(insert_instr) = queued_inserts.remove(&instr_id) {
                     if next_instructions.is_none() {
-                        next_instructions = Some(block.instructions[..i].to_vec());
+                        next_instructions = Some(ArenaVec::from_iter_in(
+                            block.instructions[..i].iter().copied(),
+                            &alloc,
+                        ));
                     }
                     let ni = next_instructions.as_mut().unwrap();
                     ni.push(instr_id);
                     // Add the new instruction to the flat table and get its InstructionId
-                    let new_instr_id = InstructionId(func.instructions.len() as u32);
+                    let new_instr_id = InstructionId::from_usize(func.instructions.len());
                     func.instructions.push(insert_instr);
                     ni.push(new_instr_id);
                 } else if let Some(ni) = next_instructions.as_mut() {
@@ -204,7 +211,7 @@ fn process_manual_memo_call<'a>(
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
 ) {
-    let instr = &func.instructions[instr_id.0 as usize];
+    let instr = &func.instructions[instr_id.index()];
 
     let memo_details = extract_manual_memoization_args(instr, manual_memo.kind, sidemap, env);
 
@@ -214,11 +221,12 @@ fn process_manual_memo_call<'a>(
 
     let ExtractedMemoArgs { fn_place, deps_list, deps_span } = memo_details;
 
-    let span = func.instructions[instr_id.0 as usize].value.span().cloned();
+    let span = func.instructions[instr_id.index()].value.span().cloned();
 
     // Replace the instruction value with the memoization replacement
-    let replacement = get_manual_memoization_replacement(&fn_place, span, manual_memo.kind);
-    func.instructions[instr_id.0 as usize].value = replacement;
+    let replacement =
+        get_manual_memoization_replacement(&fn_place, span, manual_memo.kind, env.allocator);
+    func.instructions[instr_id.index()].value = replacement;
 
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
@@ -239,7 +247,7 @@ fn process_manual_memo_call<'a>(
         }
 
         let memo_decl: Place = if manual_memo.kind == ManualMemoKind::UseMemo {
-            func.instructions[instr_id.0 as usize].lvalue.clone()
+            func.instructions[instr_id.index()].lvalue
         } else {
             Place {
                 identifier: fn_place.identifier,
@@ -272,7 +280,7 @@ fn collect_temporaries<'a>(
     instr_id: InstructionId,
     sidemap: &mut IdentifierSidemap<'a>,
 ) {
-    let instr = &func.instructions[instr_id.0 as usize];
+    let instr = &func.instructions[instr_id.index()];
     let lvalue_id = instr.lvalue.identifier;
 
     match &instr.value {
@@ -305,25 +313,22 @@ fn collect_temporaries<'a>(
             }
         }
         InstructionValue::PropertyLoad { object, property, .. } => {
-            if sidemap.react.contains(&object.identifier) {
-                if let PropertyLiteral::String(prop_name) = property {
-                    if prop_name == "useMemo" {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseMemo,
-                                load_instr_id: instr_id,
-                            },
-                        );
-                    } else if prop_name == "useCallback" {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseCallback,
-                                load_instr_id: instr_id,
-                            },
-                        );
-                    }
+            if sidemap.react.contains(&object.identifier)
+                && let PropertyLiteral::String(prop_name) = property
+            {
+                if prop_name == "useMemo" {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee { kind: ManualMemoKind::UseMemo, load_instr_id: instr_id },
+                    );
+                } else if prop_name == "useCallback" {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee {
+                            kind: ManualMemoKind::UseCallback,
+                            load_instr_id: instr_id,
+                        },
+                    );
                 }
             }
         }
@@ -332,7 +337,7 @@ fn collect_temporaries<'a>(
             let all_places: Option<Vec<Place>> = elements
                 .iter()
                 .map(|e| match e {
-                    ArrayElement::Place(p) => Some(p.clone()),
+                    ArrayElement::Place(p) => Some(*p),
                     _ => None,
                 })
                 .collect();
@@ -355,7 +360,7 @@ fn collect_temporaries<'a>(
         // matching the TS behavior where collectMaybeMemoDependencies inserts into
         // maybeDeps directly for StoreLocal's target variable.
         if let InstructionValue::StoreLocal { lvalue, .. } = &instr.value {
-            sidemap.maybe_deps.insert(lvalue.place.identifier, dep.clone());
+            sidemap.maybe_deps.insert(lvalue.place.identifier, dep.clone_in(env.allocator));
         }
         sidemap.maybe_deps.insert(lvalue_id, dep);
     }
@@ -367,7 +372,7 @@ fn collect_temporaries<'a>(
 
 /// Collect loads from named variables and property reads into `maybe_deps`.
 /// Returns the variable + property reads represented by the instruction value.
-pub fn collect_maybe_memo_dependencies<'a>(
+fn collect_maybe_memo_dependencies<'a>(
     value: &InstructionValue<'a>,
     maybe_deps: &FxHashMap<IdentifierId, ManualMemoDependency<'a>>,
     optional: bool,
@@ -376,14 +381,14 @@ pub fn collect_maybe_memo_dependencies<'a>(
     match value {
         InstructionValue::LoadGlobal { binding, span, .. } => Some(ManualMemoDependency {
             root: ManualMemoDependencyRoot::Global { identifier_name: binding.name() },
-            path: vec![],
+            path: ArenaVec::new_in(&env.allocator),
             span: *span,
         }),
         InstructionValue::PropertyLoad { object, property, span, .. } => {
             maybe_deps.get(&object.identifier).map(|object_dep| ManualMemoDependency {
-                root: object_dep.root.clone(),
+                root: object_dep.root,
                 path: {
-                    let mut path = object_dep.path.clone();
+                    let mut path = object_dep.path.clone_in(env.allocator);
                     path.push(DependencyPathEntry { property: *property, optional, span: *span });
                     path
                 },
@@ -392,17 +397,14 @@ pub fn collect_maybe_memo_dependencies<'a>(
         }
         InstructionValue::LoadLocal { place, .. } | InstructionValue::LoadContext { place, .. } => {
             if let Some(source) = maybe_deps.get(&place.identifier) {
-                Some(source.clone())
+                Some(source.clone_in(env.allocator))
             } else if matches!(
-                &env.identifiers[place.identifier.0 as usize].name,
+                &env.identifiers[place.identifier].name,
                 Some(IdentifierName::Named(_))
             ) {
                 Some(ManualMemoDependency {
-                    root: ManualMemoDependencyRoot::NamedLocal {
-                        value: place.clone(),
-                        constant: false,
-                    },
-                    path: vec![],
+                    root: ManualMemoDependencyRoot::NamedLocal { value: *place, constant: false },
+                    path: ArenaVec::new_in(&env.allocator),
                     span: place.span,
                 })
             } else {
@@ -416,11 +418,11 @@ pub fn collect_maybe_memo_dependencies<'a>(
             let lvalue_id = lvalue.place.identifier;
             let rvalue_id = val.identifier;
             if let Some(aliased) = maybe_deps.get(&rvalue_id) {
-                let lvalue_name = &env.identifiers[lvalue_id.0 as usize].name;
+                let lvalue_name = &env.identifiers[lvalue_id].name;
                 if !matches!(lvalue_name, Some(IdentifierName::Named(_))) {
                     // Note: we can't insert into maybe_deps here since we only have
                     // a shared reference. The caller handles insertion.
-                    return Some(aliased.clone());
+                    return Some(aliased.clone_in(env.allocator));
                 }
             }
             None
@@ -437,10 +439,11 @@ fn get_manual_memoization_replacement<'a>(
     fn_place: &Place,
     span: Option<Span>,
     kind: ManualMemoKind,
+    alloc: &'a Allocator,
 ) -> InstructionValue<'a> {
     if kind == ManualMemoKind::UseMemo {
         // Replace with Call fn() - invoke the memo function directly
-        InstructionValue::CallExpression { callee: fn_place.clone(), args: vec![], span }
+        InstructionValue::CallExpression { callee: *fn_place, args: ArenaVec::new_in(&alloc), span }
     } else {
         // Replace with LoadLocal fn - just reference the function
         InstructionValue::LoadLocal {
@@ -464,11 +467,11 @@ fn make_manual_memoization_markers<'a>(
     manual_memo_id: u32,
 ) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::StartMemoize {
             manual_memo_id,
-            deps: deps_list,
+            deps: deps_list.map(|v| ArenaVec::from_iter_in(v, &env.allocator)),
             deps_span: Some(deps_span),
             has_invalid_deps: false,
             span: fn_expr.span,
@@ -477,11 +480,11 @@ fn make_manual_memoization_markers<'a>(
         effects: None,
     };
     let finish = Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
-            decl: memo_decl.clone(),
+            decl: *memo_decl,
             pruned: false,
             span: fn_expr.span,
         },
@@ -495,7 +498,7 @@ fn extract_manual_memoization_args<'a>(
     instr: &Instruction,
     kind: ManualMemoKind,
     sidemap: &IdentifierSidemap<'a>,
-    env: &mut Environment,
+    env: &mut Environment<'a>,
 ) -> Option<ExtractedMemoArgs<'a>> {
     let args: &[PlaceOrSpread] = match &instr.value {
         InstructionValue::CallExpression { args, .. } => args,
@@ -510,7 +513,7 @@ fn extract_manual_memoization_args<'a>(
 
     // Get the first arg (fn)
     let fn_place = match args.first() {
-        Some(PlaceOrSpread::Place(p)) => p.clone(),
+        Some(PlaceOrSpread::Place(p)) => *p,
         _ => {
             let span = instr.value.span().cloned();
             env.record_diagnostic(
@@ -573,7 +576,7 @@ fn extract_manual_memoization_args<'a>(
     for dep in &deps_info.deps {
         let maybe_dep = sidemap.maybe_deps.get(&dep.identifier);
         if let Some(d) = maybe_dep {
-            deps_list.push(d.clone());
+            deps_list.push(d.clone_in(env.allocator));
         } else {
             env.record_diagnostic(
                 ErrorCategory::UseMemo
@@ -607,7 +610,7 @@ fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, O
                             // Found it
                             let consequent_block = &func.body.blocks[consequent];
                             if let Some(&last_instr_id) = consequent_block.instructions.last() {
-                                let last_instr = &func.instructions[last_instr_id.0 as usize];
+                                let last_instr = &func.instructions[last_instr_id.index()];
                                 if let InstructionValue::StoreLocal { value, .. } =
                                     &last_instr.value
                                 {

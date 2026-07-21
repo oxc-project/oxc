@@ -17,8 +17,8 @@ use oxc_ast::{
     match_expression,
 };
 use oxc_ast_visit::{
-    Visit,
-    walk::{walk_call_expression, walk_declaration},
+    VisitJs,
+    walk_js::{walk_call_expression, walk_declaration},
 };
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
@@ -58,14 +58,9 @@ impl<'a> RefreshIdentifierResolver<'a> {
             ));
         };
 
-        if first_part == "import" {
+        if first_part == "import" && second_part == "meta" {
             // Handle `import.meta.$RefreshReg$` expression
-            let mut expr = Expression::new_meta_property(
-                SPAN,
-                IdentifierName::new(SPAN, "import", ast),
-                IdentifierName::new(SPAN, Str::from_str_in(second_part, ast), ast),
-                ast,
-            );
+            let mut expr = Expression::new_import_meta(SPAN, ast);
             if let Some(property) = parts.next() {
                 expr = Expression::new_static_member_expression(
                     SPAN,
@@ -175,7 +170,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::new_in(ctx), // This is replaced at the end
+            [], // This is replaced at the end
             false,
             ctx,
         );
@@ -194,13 +189,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             ));
 
             let callee = self.refresh_reg.to_expression(ctx);
-            let arguments = ArenaVec::from_array_in(
-                [
-                    Argument::from(binding.create_read_expression(ctx)),
-                    Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
-                ],
-                ctx,
-            );
+            let arguments = [
+                Argument::from(binding.create_read_expression(ctx)),
+                Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
+            ];
             Statement::new_expression_statement(
                 SPAN,
                 Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
@@ -217,74 +209,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         var_decl.declarations = variable_declarator_items;
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let signature = match expr {
-            Expression::FunctionExpression(func) => self.create_signature_call_expression(
-                func.scope_id(),
-                func.body.as_mut().unwrap(),
-                ctx,
-            ),
-            Expression::ArrowFunctionExpression(arrow) => {
-                let call_fn =
-                    self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
-
-                // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
-                if call_fn.is_some() {
-                    Self::transform_arrow_function_to_block(arrow, ctx);
-                }
-                call_fn
-            }
-            // hoc(_c = function() { })
-            Expression::AssignmentExpression(_) => return,
-            // hoc1(hoc2(...))
-            Expression::CallExpression(_) => self.last_signature.take(),
-            _ => None,
-        };
-
-        let Some((binding_identifier, mut arguments)) = signature else {
-            return;
-        };
-        let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
-
-        if !matches!(expr, Expression::CallExpression(_)) {
-            // Try to get binding from parent VariableDeclarator
-            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent()
-                && let Some(ident) = declarator.id().get_binding_identifier()
-            {
-                let id_binding = BoundIdentifier::from_binding_ident(ident);
-                self.handle_function_in_variable_declarator(&id_binding, &binding, arguments, ctx);
-                return;
-            }
+        if matches!(
+            expr,
+            Expression::FunctionExpression(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::CallExpression(_)
+        ) {
+            self.exit_expression_impl(expr, ctx);
         }
-
-        let mut found_call_expression = false;
-        for ancestor in ctx.ancestors() {
-            if ancestor.is_assignment_expression() {
-                continue;
-            }
-            if ancestor.is_call_expression() {
-                found_call_expression = true;
-            }
-            break;
-        }
-
-        if found_call_expression {
-            self.last_signature =
-                Some((binding_identifier.clone(), arguments.clone_in(ctx.allocator())));
-        }
-
-        let span = expr.span();
-        expr.replace_with(|expr| {
-            arguments.insert(0, Argument::from(expr));
-            Expression::new_call_expression(
-                span,
-                binding.create_read_expression(ctx),
-                NONE,
-                arguments,
-                false,
-                ctx,
-            )
-        });
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -464,6 +398,75 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
 // Internal Methods
 impl<'a> ReactRefresh<'a> {
+    #[inline(never)]
+    fn exit_expression_impl(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let signature = match expr {
+            Expression::FunctionExpression(func) => self.create_signature_call_expression(
+                func.scope_id(),
+                func.body.as_mut().unwrap(),
+                ctx,
+            ),
+            Expression::ArrowFunctionExpression(arrow) => {
+                let call_fn =
+                    self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
+
+                // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
+                if call_fn.is_some() {
+                    Self::transform_arrow_function_to_block(arrow, ctx);
+                }
+                call_fn
+            }
+            // hoc1(hoc2(...))
+            Expression::CallExpression(_) => self.last_signature.take(),
+            _ => unreachable!(),
+        };
+
+        let Some((binding_identifier, mut arguments)) = signature else {
+            return;
+        };
+        let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
+
+        if !matches!(expr, Expression::CallExpression(_)) {
+            // Try to get binding from parent VariableDeclarator
+            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent()
+                && let Some(ident) = declarator.id().get_binding_identifier()
+            {
+                let id_binding = BoundIdentifier::from_binding_ident(ident);
+                self.handle_function_in_variable_declarator(&id_binding, &binding, arguments, ctx);
+                return;
+            }
+        }
+
+        let mut found_call_expression = false;
+        for ancestor in ctx.ancestors() {
+            if ancestor.is_assignment_expression() {
+                continue;
+            }
+            if ancestor.is_call_expression() {
+                found_call_expression = true;
+            }
+            break;
+        }
+
+        if found_call_expression {
+            self.last_signature =
+                Some((binding_identifier.clone(), arguments.clone_in(ctx.allocator())));
+        }
+
+        let span = expr.span();
+        expr.replace_with(|expr| {
+            arguments.insert(0, Argument::from(expr));
+            Expression::new_call_expression(
+                span,
+                binding.create_read_expression(ctx),
+                NONE,
+                arguments,
+                false,
+                ctx,
+            )
+        });
+    }
+
     fn create_registration(
         &mut self,
         persistent_id: Str<'a>,
@@ -649,24 +652,16 @@ impl<'a> ReactRefresh<'a> {
 
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
-            let formal_parameters = FormalParameters::new(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ArenaVec::new_in(ctx),
-                NONE,
-                ctx,
-            );
+            let formal_parameters =
+                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
             let function_body = FunctionBody::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
-                ArenaVec::from_value_in(
-                    Statement::new_return_statement(
-                        SPAN,
-                        Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
-                        ctx,
-                    ),
+                [],
+                [Statement::new_return_statement(
+                    SPAN,
+                    Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
                     ctx,
-                ),
+                )],
                 ctx,
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
@@ -695,7 +690,7 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             self.refresh_sig.to_expression(ctx),
             NONE,
-            ArenaVec::new_in(ctx),
+            [],
             false,
             ctx,
         );
@@ -708,7 +703,7 @@ impl<'a> ReactRefresh<'a> {
                 SPAN,
                 binding.create_read_expression(ctx),
                 NONE,
-                ArenaVec::new_in(ctx),
+                [],
                 false,
                 ctx,
             ),
@@ -997,7 +992,7 @@ impl<'a, 'b> UsedInJSXBindingsCollector<'a, 'b> {
     }
 }
 
-impl<'a> Visit<'a> for UsedInJSXBindingsCollector<'a, '_> {
+impl<'a> VisitJs<'a> for UsedInJSXBindingsCollector<'a, '_> {
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         walk_call_expression(self, it);
 
@@ -1025,11 +1020,6 @@ impl<'a> Visit<'a> for UsedInJSXBindingsCollector<'a, '_> {
         {
             self.bindings.insert(symbol_id);
         }
-    }
-
-    #[inline]
-    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {
-        // Skip type annotations because it definitely doesn't have any JSX bindings
     }
 
     #[inline]

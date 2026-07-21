@@ -86,7 +86,7 @@ export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
-export type Mode = "prefer-top-level" | "prefer-inline";
+export type Mode = "prefer-top-level" | "prefer-inline" | "prefer-top-level-if-only-type-imports";
 /**
  * Extension rule configuration; Copy to avoid extra indirection.
  */
@@ -147,6 +147,7 @@ export type AllowKind =
  */
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
+export type Namespaces = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
 export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
 export type PossiblePaths = string | RestrictedPath;
@@ -214,6 +215,10 @@ export type ForbidItem2 =
        */
       message?: string;
     };
+export type NamedComponents = NamedComponentStyle | NamedComponentStyle[];
+export type NamedComponentStyle = "function-declaration" | "arrow-function" | "function-expression";
+export type UnnamedComponents = UnnamedComponentStyle | UnnamedComponentStyle[];
+export type UnnamedComponentStyle = "arrow-function" | "function-expression";
 export type EnforceBooleanAttribute = "always" | "never";
 export type JsxCurlyBracePresenceConfig = JsxCurlyBracePresenceMode | JsxCurlyBracePresence;
 export type JsxCurlyBracePresenceMode = "always" | "never" | "ignore";
@@ -1006,7 +1011,7 @@ export interface DummyRuleMap {
   "jsdoc/empty-tags"?: RuleNoConfig | [AllowWarnDeny, EmptyTagsConfig];
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
-  "jsdoc/require-param"?: DummyRule;
+  "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
   "jsdoc/require-param-type"?: RuleNoConfig | [AllowWarnDeny, RequireParamTypeConfig];
@@ -1229,6 +1234,7 @@ export interface DummyRuleMap {
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
   "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
+  "node/no-top-level-await"?: RuleNoConfig | [AllowWarnDeny, NoTopLevelAwaitConfig];
   "object-shorthand"?:
     RuleNoConfig | [AllowWarnDeny, ShorthandType] | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
@@ -1263,7 +1269,7 @@ export interface DummyRuleMap {
   "prefer-destructuring"?:
     | RuleNoConfig
     | [AllowWarnDeny, PreferDestructuringOption]
-    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringRenamedPropertiesConfig];
+    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringEnforcementConfig];
   "prefer-exponentiation-operator"?: RuleNoConfig;
   "prefer-named-capture-group"?: RuleNoConfig;
   "prefer-numeric-literals"?: RuleNoConfig;
@@ -1304,6 +1310,7 @@ export interface DummyRuleMap {
   "react/forbid-dom-props"?: RuleNoConfig | [AllowWarnDeny, ForbidDomPropsConfig];
   "react/forbid-elements"?: RuleNoConfig | [AllowWarnDeny, ForbidElementsConfig];
   "react/forward-ref-uses-ref"?: RuleNoConfig;
+  "react/function-component-definition"?: RuleNoConfig | [AllowWarnDeny, FunctionComponentDefinitionConfig];
   "react/hook-use-state"?: RuleNoConfig | [AllowWarnDeny, HookUseStateConfig];
   "react/iframe-missing-sandbox"?: RuleNoConfig;
   "react/jsx-boolean-value"?:
@@ -1658,6 +1665,7 @@ export interface DummyRuleMap {
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "vitest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-test-blocks"?: RuleNoConfig;
   "vitest/prefer-called-exactly-once-with"?: RuleNoConfig;
   "vitest/prefer-called-once"?: RuleNoConfig;
   "vitest/prefer-called-times"?: RuleNoConfig;
@@ -2453,6 +2461,56 @@ export interface NoDefaultsConfig {
    */
   noOptionalParamNames?: boolean;
 }
+export interface RequireParamConfig {
+  /**
+   * Whether to check constructor methods.
+   */
+  checkConstructors?: boolean;
+  /**
+   * Whether to check destructured parameters.
+   */
+  checkDestructured?: boolean;
+  /**
+   * Whether to check destructured parameters when you have code like
+   * `function doSomething({ a, b }) { ... }`. Because there is no named
+   * parameter in this example, when this option is `true` you must
+   * have a `@param` tag that corresponds to `{a, b}`.
+   */
+  checkDestructuredRoots?: boolean;
+  /**
+   * Whether to check getter methods.
+   */
+  checkGetters?: boolean;
+  /**
+   * Whether to check rest properties.
+   */
+  checkRestProperty?: boolean;
+  /**
+   * Whether to check setter methods.
+   */
+  checkSetters?: boolean;
+  /**
+   * Regex pattern to match types that exempt parameters from checking.
+   */
+  checkTypesPattern?: string;
+  /**
+   * List of JSDoc tags that exempt functions from `@param` checking.
+   */
+  exemptedBy?: string[];
+  /**
+   * Set to `true` to ignore reporting when all params are missing. Defaults to `false`.
+   */
+  ignoreWhenAllParamsMissing?: boolean;
+  /**
+   * Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.
+   * Will check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.
+   */
+  interfaceExemptsParamsCheck?: boolean;
+  /**
+   * Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.
+   */
+  useDefaultObjectProperties?: boolean;
+}
 export interface RequireParamDescriptionConfig {
   /**
    * The description string to set by default for destructured roots. Defaults to "The root object".
@@ -3132,6 +3190,10 @@ export interface NoInnerDeclarationsOptions {
    * Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
    */
   blockScopedFunctions?: BlockScopedFunctions;
+  /**
+   * Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.
+   */
+  namespaces?: Namespaces;
 }
 export interface NoInvalidRegexpConfig {
   /**
@@ -3985,6 +4047,14 @@ export interface NoSyncConfig {
    */
   ignores?: string[];
 }
+export interface NoTopLevelAwaitConfig {
+  /**
+   * If `true`, top-level `await` is allowed in files that start with a
+   * hashbang (`#!`), which marks them as executable scripts rather than
+   * importable modules.
+   */
+  ignoreBin?: boolean;
+}
 export interface ObjectShorthandOptions {
   avoidExplicitReturnArrows?: boolean;
   avoidQuotes?: boolean;
@@ -4087,7 +4157,8 @@ export interface PreferDestructuringAssignmentConfig {
   AssignmentExpression?: PreferDestructuringTargetOption;
   VariableDeclarator?: PreferDestructuringTargetOption;
 }
-export interface PreferDestructuringRenamedPropertiesConfig {
+export interface PreferDestructuringEnforcementConfig {
+  enforceForDeclarationWithTypeAnnotation?: boolean;
   enforceForRenamedProperties?: boolean;
 }
 export interface PreferPromiseRejectErrors {
@@ -4452,6 +4523,10 @@ export interface ForbidElementsConfig {
    * - `["error, { "forbid": [{ "element": "input" }] }]`
    */
   forbid?: ForbidItem2[];
+}
+export interface FunctionComponentDefinitionConfig {
+  namedComponents?: NamedComponents;
+  unnamedComponents?: UnnamedComponents;
 }
 export interface HookUseStateConfig {
   /**
@@ -6441,6 +6516,9 @@ export interface NoReservedPropsConfig {
   vueVersion?: number;
 }
 export interface Options {
+  /**
+   * Prop names to ignore, as regular expression patterns.
+   */
   ignoreProps?: string[];
 }
 export interface RequireDirectExport {

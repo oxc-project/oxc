@@ -417,6 +417,7 @@ pub(crate) mod react {
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
+    pub mod function_component_definition;
     pub mod hook_use_state;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
@@ -796,6 +797,7 @@ pub(crate) mod vitest {
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
     pub mod padding_around_after_all_blocks;
+    pub mod padding_around_test_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;
@@ -851,6 +853,7 @@ pub(crate) mod node {
     pub mod no_path_concat;
     pub mod no_process_env;
     pub mod no_sync;
+    pub mod no_top_level_await;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>

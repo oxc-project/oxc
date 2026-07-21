@@ -1,11 +1,15 @@
+use std::borrow::Cow;
+use std::cell::RefCell;
 use std::mem::take;
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, GetAllocator};
+use oxc_allocator::{Allocator, GetAllocator, Vec as ArenaVec};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_index::IndexVec;
+use oxc_span::Span;
 use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 use oxc_syntax::reference::ReferenceId;
 use oxc_syntax::symbol::SymbolId;
@@ -36,6 +40,57 @@ pub enum OutputMode {
     Lint,
 }
 
+/// Analysis identity for an aliasing-effect diagnostic, matching the effect
+/// interning key granularity so identical errors collapse.
+type AliasingDiagnosticKey = (IdentifierId, Cow<'static, str>, Option<Cow<'static, str>>);
+
+/// Dedup key for the source-specific diagnostic payload. Keeping this separate
+/// from [`AliasingDiagnosticKey`] lets effect interning collapse equivalent
+/// errors without discarding the location selected for the retained effect.
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct AliasingDiagnosticInstanceKey {
+    identity: DiagnosticId,
+    note: Option<Cow<'static, str>>,
+    severity: u8,
+    code_scope: Option<Cow<'static, str>>,
+    code_number: Option<Cow<'static, str>>,
+    url: Option<Cow<'static, str>>,
+    labels: Vec<AliasingDiagnosticLabelKey>,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct AliasingDiagnosticLabelKey {
+    offset: u32,
+    len: u32,
+    primary: bool,
+    text: Option<String>,
+}
+
+impl AliasingDiagnosticInstanceKey {
+    fn new(identity: DiagnosticId, diagnostic: &OxcDiagnostic) -> Self {
+        let labels = diagnostic
+            .labels
+            .iter()
+            .map(|label| AliasingDiagnosticLabelKey {
+                offset: label.offset(),
+                len: label.len(),
+                primary: label.primary(),
+                text: label.label().map(str::to_owned),
+            })
+            .collect();
+
+        Self {
+            identity,
+            note: diagnostic.note.clone(),
+            severity: diagnostic.severity as u8,
+            code_scope: diagnostic.code.scope.clone(),
+            code_number: diagnostic.code.number.clone(),
+            url: diagnostic.url.clone(),
+            labels,
+        }
+    }
+}
+
 pub struct Environment<'a> {
     // Arena allocator for the compilation unit. HIR strings (identifier names,
     // shape ids, property keys) live here so they can be borrowed from the
@@ -48,13 +103,22 @@ pub struct Environment<'a> {
     next_mutable_range_id_counter: u32,
 
     // Arenas (use direct field access for sliced borrows)
-    pub identifiers: Vec<Identifier<'a>>,
-    pub types: Vec<Type<'a>>,
-    pub scopes: Vec<ReactiveScope<'a>>,
-    pub functions: Vec<HirFunction<'a>>,
+    pub identifiers: IndexVec<IdentifierId, Identifier<'a>>,
+    pub types: IndexVec<TypeId, Type<'a>>,
+    pub scopes: IndexVec<ScopeId, ReactiveScope<'a>>,
+    pub functions: IndexVec<FunctionId, HirFunction<'a>>,
 
     // Error accumulation
     pub errors: Diagnostics,
+
+    // Interned diagnostics for aliasing-effect errors (MutateFrozen/MutateGlobal/
+    // Impure). Analysis identity is deduplicated separately from source-specific
+    // diagnostic instances so effects stay `Copy` without losing their locations.
+    // `RefCell` is needed because some effect-building passes hold `&Environment`.
+    aliasing_diagnostic_dedup: RefCell<FxHashMap<AliasingDiagnosticKey, DiagnosticId>>,
+    aliasing_diagnostic_instances: RefCell<IndexVec<DiagnosticInstanceId, OxcDiagnostic>>,
+    aliasing_diagnostic_instance_dedup:
+        RefCell<FxHashMap<AliasingDiagnosticInstanceKey, DiagnosticInstanceId>>,
 
     // Set during lowering when the function uses syntax the compiler can't handle
     // yet (currently `using`/`await using`, whose disposal semantics aren't
@@ -113,7 +177,7 @@ pub struct Environment<'a> {
 
 /// An outlined function entry, stored on Environment during compilation.
 /// Corresponds to TS `{ fn: HIRFunction, type: ReactFunctionType | null }`.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct OutlinedFunctionEntry<'a> {
     pub func: HirFunction<'a>,
     pub fn_type: Option<ReactFunctionType>,
@@ -173,11 +237,14 @@ impl<'a> Environment<'a> {
             next_block_id_counter: 0,
             next_scope_id_counter: 0,
             next_mutable_range_id_counter: 0,
-            identifiers: Vec::new(),
-            types: Vec::new(),
-            scopes: Vec::new(),
-            functions: Vec::new(),
+            identifiers: IndexVec::new(),
+            types: IndexVec::new(),
+            scopes: IndexVec::new(),
+            functions: IndexVec::new(),
             errors: Diagnostics::new(),
+            aliasing_diagnostic_dedup: RefCell::new(FxHashMap::default()),
+            aliasing_diagnostic_instances: RefCell::new(IndexVec::new()),
+            aliasing_diagnostic_instance_dedup: RefCell::new(FxHashMap::default()),
             skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
@@ -205,7 +272,7 @@ impl<'a> Environment<'a> {
     }
 
     pub fn next_block_id(&mut self) -> BlockId {
-        let id = BlockId(self.next_block_id_counter);
+        let id = BlockId::from_usize(self.next_block_id_counter as usize);
         self.next_block_id_counter += 1;
         id
     }
@@ -218,7 +285,7 @@ impl<'a> Environment<'a> {
         start: EvaluationOrder,
         end: EvaluationOrder,
     ) -> MutableRange {
-        let id = MutableRangeId(self.next_mutable_range_id_counter);
+        let id = MutableRangeId::from_usize(self.next_mutable_range_id_counter as usize);
         self.next_mutable_range_id_counter += 1;
         MutableRange { id, start, end }
     }
@@ -226,12 +293,12 @@ impl<'a> Environment<'a> {
     /// Allocate a new Identifier in the arena with default values,
     /// returns its IdentifierId.
     pub fn next_identifier_id(&mut self) -> IdentifierId {
-        let id = IdentifierId(self.identifiers.len() as u32);
+        let id = self.identifiers.next_idx();
         let type_id = self.make_type();
-        let mutable_range = self.new_mutable_range(EvaluationOrder(0), EvaluationOrder(0));
+        let mutable_range = self.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
         self.identifiers.push(Identifier {
             id,
-            declaration_id: DeclarationId(id.0),
+            declaration_id: DeclarationId::from_usize(id.index()),
             name: None,
             mutable_range,
             scope: None,
@@ -243,26 +310,26 @@ impl<'a> Environment<'a> {
 
     /// Allocate a new ReactiveScope in the arena, returns its ScopeId.
     pub fn next_scope_id(&mut self) -> ScopeId {
-        let id = ScopeId(self.next_scope_id_counter);
+        let id = ScopeId::from_usize(self.next_scope_id_counter as usize);
         self.next_scope_id_counter += 1;
-        let range = self.new_mutable_range(EvaluationOrder(0), EvaluationOrder(0));
+        let range = self.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
         self.scopes.push(ReactiveScope {
             id,
             range,
-            dependencies: Vec::new(),
-            declarations: Vec::new(),
-            reassignments: Vec::new(),
+            dependencies: ArenaVec::new_in(&self.allocator),
+            declarations: ArenaVec::new_in(&self.allocator),
+            reassignments: ArenaVec::new_in(&self.allocator),
             early_return_value: None,
-            merged: Vec::new(),
+            merged: ArenaVec::new_in(&self.allocator),
             span: None,
         });
         id
     }
 
     /// Allocate a new Type in the arena, returns its TypeId.
-    pub fn next_type_id(&mut self) -> TypeId {
-        let id = TypeId(self.types.len() as u32);
-        self.types.push(Type::TypeVar { id });
+    fn next_type_id(&mut self) -> TypeId {
+        let id = self.types.next_idx();
+        self.types.push(Type::Var { id });
         id
     }
 
@@ -272,7 +339,7 @@ impl<'a> Environment<'a> {
     }
 
     pub fn add_function(&mut self, func: HirFunction<'a>) -> FunctionId {
-        let id = FunctionId(self.functions.len() as u32);
+        let id = self.functions.next_idx();
         self.functions.push(func);
         id
     }
@@ -288,6 +355,48 @@ impl<'a> Environment<'a> {
 
     pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
         self.errors.push(diagnostic);
+    }
+
+    /// Intern an aliasing-effect diagnostic into the environment-owned side tables.
+    /// Analysis-equivalent diagnostics share an identity, while source-specific
+    /// instances retain their own labels. Takes `&self` (interior mutability)
+    /// because some effect-building passes only hold `&Environment`.
+    pub fn intern_aliasing_diagnostic(
+        &self,
+        place: IdentifierId,
+        diagnostic: OxcDiagnostic,
+    ) -> AliasingDiagnostic {
+        let key = (place, diagnostic.message.clone(), diagnostic.help.clone());
+        let identity = {
+            let mut dedup = self.aliasing_diagnostic_dedup.borrow_mut();
+            if let Some(&id) = dedup.get(&key) {
+                id
+            } else {
+                let id = DiagnosticId::from_usize(dedup.len());
+                dedup.insert(key, id);
+                id
+            }
+        };
+
+        let key = AliasingDiagnosticInstanceKey::new(identity, &diagnostic);
+        let instance = {
+            let mut dedup = self.aliasing_diagnostic_instance_dedup.borrow_mut();
+            if let Some(&id) = dedup.get(&key) {
+                id
+            } else {
+                let id = self.aliasing_diagnostic_instances.borrow().next_idx();
+                self.aliasing_diagnostic_instances.borrow_mut().push(diagnostic);
+                dedup.insert(key, id);
+                id
+            }
+        };
+
+        AliasingDiagnostic::new(identity, instance)
+    }
+
+    /// Clone the source-specific aliasing-effect diagnostic for emission.
+    pub fn aliasing_diagnostic(&self, diagnostic: AliasingDiagnostic) -> OxcDiagnostic {
+        self.aliasing_diagnostic_instances.borrow()[diagnostic.instance()].clone()
     }
 
     pub fn has_errors(&self) -> bool {
@@ -369,23 +478,22 @@ impl<'a> Environment<'a> {
                 let module_type = self.resolve_module_type(module);
 
                 // Check for module type validation errors (hook-name vs hook-type mismatches)
-                if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
-                    if let Some(first_error) = errors.into_iter().next() {
-                        self.record_error(
-                            ErrorCategory::Config
-                                .diagnostic("Invalid type configuration for module")
-                                .with_help(first_error)
-                                .with_labels(span),
-                        )?;
-                    }
+                if let Some(errors) = self.module_type_errors.remove(module.as_str())
+                    && let Some(first_error) = errors.into_iter().next()
+                {
+                    self.record_error(
+                        ErrorCategory::Config
+                            .diagnostic("Invalid type configuration for module")
+                            .with_help(first_error)
+                            .with_labels(span),
+                    )?;
                 }
 
-                if let Some(module_type) = module_type {
-                    if let Some(imported_type) =
+                if let Some(module_type) = module_type
+                    && let Some(imported_type) =
                         Self::get_property_type_from_shapes(&self.shapes, &module_type, imported)
-                    {
-                        return Ok(Some(imported_type));
-                    }
+                {
+                    return Ok(Some(imported_type));
                 }
 
                 if is_hook_name(imported) || is_hook_name(name) {
@@ -411,15 +519,15 @@ impl<'a> Environment<'a> {
                 let module_type = self.resolve_module_type(module);
 
                 // Check for module type validation errors (hook-name vs hook-type mismatches)
-                if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
-                    if let Some(first_error) = errors.into_iter().next() {
-                        self.record_error(
-                            ErrorCategory::Config
-                                .diagnostic("Invalid type configuration for module")
-                                .with_help(first_error)
-                                .with_labels(span),
-                        )?;
-                    }
+                if let Some(errors) = self.module_type_errors.remove(module.as_str())
+                    && let Some(first_error) = errors.into_iter().next()
+                {
+                    self.record_error(
+                        ErrorCategory::Config
+                            .diagnostic("Invalid type configuration for module")
+                            .with_help(first_error)
+                            .with_labels(span),
+                    )?;
                 }
 
                 if let Some(module_type) = module_type {
@@ -526,7 +634,7 @@ impl<'a> Environment<'a> {
 
         let module_type = module_config.map(|config| {
             let mut type_errors: Vec<String> = Vec::new();
-            let ty = globals::install_type_config_with_errors(
+            let ty = globals::install_type_config(
                 &mut self.shapes,
                 &config,
                 module_name,
@@ -709,7 +817,7 @@ impl<'a> Environment<'a> {
     /// Check whether the function type for an identifier has a noAlias signature.
     /// Looks up the identifier's type and checks its function signature.
     pub fn has_no_alias_signature(&self, identifier_id: IdentifierId) -> bool {
-        let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
+        let ty = &self.types[self.identifiers[identifier_id].type_];
         self.get_function_signature(ty).ok().flatten().is_some_and(|sig| sig.no_alias)
     }
 
@@ -719,7 +827,7 @@ impl<'a> Environment<'a> {
         &self,
         identifier_id: IdentifierId,
     ) -> Result<Option<&HookKind>, OxcDiagnostic> {
-        let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
+        let ty = &self.types[self.identifiers[identifier_id].type_];
         self.get_hook_kind_for_type(ty)
     }
 }

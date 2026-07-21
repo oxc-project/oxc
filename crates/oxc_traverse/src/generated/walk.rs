@@ -108,9 +108,6 @@ unsafe fn walk_expression<'a, State, Tr: Traverse<'a, State>>(
         Expression::Identifier(node) => {
             walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
         }
-        Expression::MetaProperty(node) => {
-            walk_meta_property(traverser, (&mut **node) as *mut _, ctx)
-        }
         Expression::Super(node) => walk_super(traverser, (&mut **node) as *mut _, ctx),
         Expression::ArrayExpression(node) => {
             walk_array_expression(traverser, (&mut **node) as *mut _, ctx)
@@ -176,6 +173,8 @@ unsafe fn walk_expression<'a, State, Tr: Traverse<'a, State>>(
         Expression::PrivateInExpression(node) => {
             walk_private_in_expression(traverser, (&mut **node) as *mut _, ctx)
         }
+        Expression::ImportMeta(node) => walk_import_meta(traverser, (&mut **node) as *mut _, ctx),
+        Expression::NewTarget(node) => walk_new_target(traverser, (&mut **node) as *mut _, ctx),
         Expression::JSXElement(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
         Expression::JSXFragment(node) => walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx),
         Expression::TSAsExpression(node) => {
@@ -289,7 +288,6 @@ unsafe fn walk_array_expression_element<'a, State, Tr: Traverse<'a, State>>(
         | ArrayExpressionElement::StringLiteral(_)
         | ArrayExpressionElement::TemplateLiteral(_)
         | ArrayExpressionElement::Identifier(_)
-        | ArrayExpressionElement::MetaProperty(_)
         | ArrayExpressionElement::Super(_)
         | ArrayExpressionElement::ArrayExpression(_)
         | ArrayExpressionElement::ArrowFunctionExpression(_)
@@ -313,6 +311,8 @@ unsafe fn walk_array_expression_element<'a, State, Tr: Traverse<'a, State>>(
         | ArrayExpressionElement::UpdateExpression(_)
         | ArrayExpressionElement::YieldExpression(_)
         | ArrayExpressionElement::PrivateInExpression(_)
+        | ArrayExpressionElement::ImportMeta(_)
+        | ArrayExpressionElement::NewTarget(_)
         | ArrayExpressionElement::JSXElement(_)
         | ArrayExpressionElement::JSXFragment(_)
         | ArrayExpressionElement::TSAsExpression(_)
@@ -419,7 +419,6 @@ unsafe fn walk_property_key<'a, State, Tr: Traverse<'a, State>>(
         | PropertyKey::StringLiteral(_)
         | PropertyKey::TemplateLiteral(_)
         | PropertyKey::Identifier(_)
-        | PropertyKey::MetaProperty(_)
         | PropertyKey::Super(_)
         | PropertyKey::ArrayExpression(_)
         | PropertyKey::ArrowFunctionExpression(_)
@@ -443,6 +442,8 @@ unsafe fn walk_property_key<'a, State, Tr: Traverse<'a, State>>(
         | PropertyKey::UpdateExpression(_)
         | PropertyKey::YieldExpression(_)
         | PropertyKey::PrivateInExpression(_)
+        | PropertyKey::ImportMeta(_)
+        | PropertyKey::NewTarget(_)
         | PropertyKey::JSXElement(_)
         | PropertyKey::JSXFragment(_)
         | PropertyKey::TSAsExpression(_)
@@ -681,29 +682,22 @@ unsafe fn walk_new_expression<'a, State, Tr: Traverse<'a, State>>(
     traverser.exit_new_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_meta_property<'a, State, Tr: Traverse<'a, State>>(
+unsafe fn walk_import_meta<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
-    node: *mut MetaProperty<'a>,
+    node: *mut ImportMeta,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
-    traverser.enter_meta_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::MetaPropertyMeta(ancestor::MetaPropertyWithoutMeta(
-        node,
-        PhantomData,
-    )));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_META_PROPERTY_META) as *mut IdentifierName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::MetaPropertyProperty);
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_META_PROPERTY_PROPERTY) as *mut IdentifierName,
-        ctx,
-    );
-    ctx.pop_stack(pop_token);
-    traverser.exit_meta_property(&mut *node, ctx);
+    traverser.enter_import_meta(&mut *node, ctx);
+    traverser.exit_import_meta(&mut *node, ctx);
+}
+
+unsafe fn walk_new_target<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut NewTarget,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_new_target(&mut *node, ctx);
+    traverser.exit_new_target(&mut *node, ctx);
 }
 
 unsafe fn walk_spread_element<'a, State, Tr: Traverse<'a, State>>(
@@ -742,7 +736,6 @@ unsafe fn walk_argument<'a, State, Tr: Traverse<'a, State>>(
         | Argument::StringLiteral(_)
         | Argument::TemplateLiteral(_)
         | Argument::Identifier(_)
-        | Argument::MetaProperty(_)
         | Argument::Super(_)
         | Argument::ArrayExpression(_)
         | Argument::ArrowFunctionExpression(_)
@@ -766,6 +759,8 @@ unsafe fn walk_argument<'a, State, Tr: Traverse<'a, State>>(
         | Argument::UpdateExpression(_)
         | Argument::YieldExpression(_)
         | Argument::PrivateInExpression(_)
+        | Argument::ImportMeta(_)
+        | Argument::NewTarget(_)
         | Argument::JSXElement(_)
         | Argument::JSXFragment(_)
         | Argument::TSAsExpression(_)
@@ -1702,7 +1697,6 @@ unsafe fn walk_for_statement_init<'a, State, Tr: Traverse<'a, State>>(
         | ForStatementInit::StringLiteral(_)
         | ForStatementInit::TemplateLiteral(_)
         | ForStatementInit::Identifier(_)
-        | ForStatementInit::MetaProperty(_)
         | ForStatementInit::Super(_)
         | ForStatementInit::ArrayExpression(_)
         | ForStatementInit::ArrowFunctionExpression(_)
@@ -1726,6 +1720,8 @@ unsafe fn walk_for_statement_init<'a, State, Tr: Traverse<'a, State>>(
         | ForStatementInit::UpdateExpression(_)
         | ForStatementInit::YieldExpression(_)
         | ForStatementInit::PrivateInExpression(_)
+        | ForStatementInit::ImportMeta(_)
+        | ForStatementInit::NewTarget(_)
         | ForStatementInit::JSXElement(_)
         | ForStatementInit::JSXFragment(_)
         | ForStatementInit::TSAsExpression(_)
@@ -3127,7 +3123,6 @@ unsafe fn walk_export_default_declaration_kind<'a, State, Tr: Traverse<'a, State
         | ExportDefaultDeclarationKind::StringLiteral(_)
         | ExportDefaultDeclarationKind::TemplateLiteral(_)
         | ExportDefaultDeclarationKind::Identifier(_)
-        | ExportDefaultDeclarationKind::MetaProperty(_)
         | ExportDefaultDeclarationKind::Super(_)
         | ExportDefaultDeclarationKind::ArrayExpression(_)
         | ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
@@ -3151,6 +3146,8 @@ unsafe fn walk_export_default_declaration_kind<'a, State, Tr: Traverse<'a, State
         | ExportDefaultDeclarationKind::UpdateExpression(_)
         | ExportDefaultDeclarationKind::YieldExpression(_)
         | ExportDefaultDeclarationKind::PrivateInExpression(_)
+        | ExportDefaultDeclarationKind::ImportMeta(_)
+        | ExportDefaultDeclarationKind::NewTarget(_)
         | ExportDefaultDeclarationKind::JSXElement(_)
         | ExportDefaultDeclarationKind::JSXFragment(_)
         | ExportDefaultDeclarationKind::TSAsExpression(_)
@@ -3529,7 +3526,6 @@ unsafe fn walk_jsx_expression<'a, State, Tr: Traverse<'a, State>>(
         | JSXExpression::StringLiteral(_)
         | JSXExpression::TemplateLiteral(_)
         | JSXExpression::Identifier(_)
-        | JSXExpression::MetaProperty(_)
         | JSXExpression::Super(_)
         | JSXExpression::ArrayExpression(_)
         | JSXExpression::ArrowFunctionExpression(_)
@@ -3553,6 +3549,8 @@ unsafe fn walk_jsx_expression<'a, State, Tr: Traverse<'a, State>>(
         | JSXExpression::UpdateExpression(_)
         | JSXExpression::YieldExpression(_)
         | JSXExpression::PrivateInExpression(_)
+        | JSXExpression::ImportMeta(_)
+        | JSXExpression::NewTarget(_)
         | JSXExpression::JSXElement(_)
         | JSXExpression::JSXFragment(_)
         | JSXExpression::TSAsExpression(_)

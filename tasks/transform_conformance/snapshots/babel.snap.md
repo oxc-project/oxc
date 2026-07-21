@@ -1,6 +1,6 @@
-commit: 1fb0b771
+commit: c86e9e4b
 
-Passed: 766/1165
+Passed: 771/1164
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -10,7 +10,7 @@ Passed: 766/1165
 * babel-plugin-transform-react-display-name
 
 
-# babel-preset-env (33/85)
+# babel-preset-env (38/85)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -33,9 +33,6 @@ x Output mismatch
 x Output mismatch
 
 * modules/auto-cjs/input.mjs
-x Output mismatch
-
-* modules/auto-unknown/input.mjs
 x Output mismatch
 
 * modules/modules-cjs/input.mjs
@@ -98,12 +95,6 @@ x Output mismatch
 * preset-options/browserslist-config-ignore-package-with-false/input.mjs
 x Output mismatch
 
-* preset-options/browserslist-defaults/input.mjs
-x Output mismatch
-
-* preset-options/browserslist-defaults-not-ie/input.mjs
-x Output mismatch
-
 * preset-options/deno-1_0/input.mjs
 x Output mismatch
 
@@ -113,9 +104,6 @@ x Output mismatch
 * preset-options/duplicate-named-capturing-groups-regex-chrome-123/input.js
 x Output mismatch
 
-* preset-options/empty-options/input.mjs
-x Output mismatch
-
 * preset-options/include/input.mjs
 x Output mismatch
 
@@ -123,9 +111,6 @@ x Output mismatch
 x Output mismatch
 
 * preset-options/ios-6/input.mjs
-x Output mismatch
-
-* preset-options/no-options/input.mjs
 x Output mismatch
 
 * preset-options/regexp-modifiers-chrome-121/input.js
@@ -894,7 +879,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (30/40)
+# babel-plugin-transform-object-rest-spread (29/39)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -1070,7 +1055,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (114/157)
+# babel-plugin-transform-typescript (115/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1127,18 +1112,6 @@ x Output mismatch
 * class/private-method-override-transform-private/input.ts
 x Output mismatch
 
-* class/uninitialized-definite/input.ts
-
-  x TS(1264): Declarations with definite assignment assertions must also have
-  | type annotations.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/uninitialized-definite/input.ts:2:4]
- 1 | class A {
- 2 |   x!;
-   :    ^
- 3 | }
-   `----
-
-
 * declarations/const-enum/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["E"]
@@ -1146,7 +1119,7 @@ rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "E", "M", "N", "f", "x"]
+after transform: ScopeId(0): ["C", "E", "N", "f", "x"]
 rebuilt        : ScopeId(0): []
 
 * declarations/export-declare-enum/input.ts
@@ -1295,9 +1268,6 @@ rebuilt        : ScopeId(3): ["_WithTypes", "d"]
 Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
 rebuilt        : ScopeId(4): ["_d"]
-Symbol reference IDs mismatch for "a":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 
 * namespace/export-type-only/input.ts
 Bindings mismatch:

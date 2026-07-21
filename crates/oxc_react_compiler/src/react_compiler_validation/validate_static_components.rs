@@ -14,7 +14,8 @@ use rustc_hash::FxHashMap;
 use oxc_diagnostics::Diagnostics;
 
 use crate::diagnostics::ErrorCategory;
-use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag, Span};
+use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
+use oxc_span::Span;
 
 /// Validates that components used in JSX are not dynamically created during render.
 ///
@@ -37,7 +38,7 @@ pub fn validate_static_components(func: &HirFunction) -> Diagnostics {
 
         // Process instructions
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
             let value = &instr.value;
 

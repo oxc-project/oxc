@@ -10,6 +10,7 @@
 
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::CloneIn;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_str::format_ident;
 
@@ -40,7 +41,7 @@ pub fn extract_scope_declarations_from_destructuring<'a>(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let identifier = &env.identifiers[place.identifier.0 as usize];
+        let identifier = &env.identifiers[place.identifier];
         declared.insert(identifier.declaration_id);
     }
     let mut transform = Transform { env };
@@ -68,12 +69,12 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut ExtractState,
     ) -> Result<(), OxcDiagnostic> {
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope];
         let decl_ids: Vec<DeclarationId> = scope_data
             .declarations
             .iter()
             .map(|(_, d)| {
-                let identifier = &self.env.identifiers[d.identifier.0 as usize];
+                let identifier = &self.env.identifiers[d.identifier];
                 identifier.declaration_id
             })
             .collect();
@@ -103,7 +104,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
             let mut has_declaration = false;
 
             for place in visitors::each_pattern_operand(&lvalue.pattern) {
-                let identifier = &self.env.identifiers[place.identifier.0 as usize];
+                let identifier = &self.env.identifiers[place.identifier];
                 if state.declared.contains(&identifier.declaration_id) {
                     reassigned.insert(place.identifier);
                 } else {
@@ -127,17 +128,19 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                     }
                     // Create a temporary place (matches TS clonePlaceToTemporary)
                     let temp_id = env.next_identifier_id();
-                    let decl_id = env.identifiers[temp_id.0 as usize].declaration_id;
+                    let decl_id = env.identifiers[temp_id].declaration_id;
                     // Copy type from original identifier to temporary
-                    let original_type = env.identifiers[place.identifier.0 as usize].type_;
-                    env.identifiers[temp_id.0 as usize].type_ = original_type;
+                    let original_type = env.identifiers[place.identifier].type_;
+                    env.identifiers[temp_id].type_ = original_type;
                     // Set identifier span to the place's source location
                     // (matches TS makeTemporaryIdentifier which receives place.span)
-                    env.identifiers[temp_id.0 as usize].span = place.span;
+                    env.identifiers[temp_id].span = place.span;
                     // Promote the temporary
-                    env.identifiers[temp_id.0 as usize].name = Some(IdentifierName::Promoted(
-                        format_ident!(env.allocator, "#t{}", decl_id.0),
-                    ));
+                    env.identifiers[temp_id].name = Some(IdentifierName::Promoted(format_ident!(
+                        env.allocator,
+                        "#t{}",
+                        decl_id.index()
+                    )));
                     let temporary = Place {
                         identifier: temp_id,
                         effect: place.effect,
@@ -145,7 +148,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         span: None, // GeneratedSource — matches TS createTemporaryPlace
                     };
                     let original = place;
-                    renamed.push((original, temporary.clone()));
+                    renamed.push((original, temporary));
                     temporary
                 });
 
@@ -182,7 +185,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         if let Some(extras) = extra_instructions {
             // Clone the original instruction and build the replacement list
             let mut all_instructions = Vec::new();
-            all_instructions.push(ReactiveStatement::Instruction(instruction.clone()));
+            all_instructions
+                .push(ReactiveStatement::Instruction(instruction.clone_in(self.env.allocator)));
             for extra in extras {
                 all_instructions.push(ReactiveStatement::Instruction(extra));
             }
@@ -205,7 +209,7 @@ fn update_declared_from_instruction<'a>(
             | InstructionValue::DeclareLocal { lvalue, .. }
             | InstructionValue::StoreLocal { lvalue, .. } => {
                 if lvalue.kind != InstructionKind::Reassign {
-                    let identifier = &env.identifiers[lvalue.place.identifier.0 as usize];
+                    let identifier = &env.identifiers[lvalue.place.identifier];
                     state.declared.insert(identifier.declaration_id);
                 }
             }
@@ -213,7 +217,7 @@ fn update_declared_from_instruction<'a>(
                 if lvalue.kind != InstructionKind::Reassign =>
             {
                 for place in visitors::each_pattern_operand(&lvalue.pattern) {
-                    let identifier = &env.identifiers[place.identifier.0 as usize];
+                    let identifier = &env.identifiers[place.identifier];
                     state.declared.insert(identifier.declaration_id);
                 }
             }

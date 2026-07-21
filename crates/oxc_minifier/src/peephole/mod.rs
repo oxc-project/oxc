@@ -17,33 +17,21 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::{Visit, walk::walk_call_expression};
-use oxc_semantic::Scoping;
-use oxc_syntax::{
-    scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
-};
-use rustc_hash::FxHashSet;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
-use oxc_allocator::{ArenaVec, BitSet, GetAllocator};
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
-use crate::{
-    ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    traverse_context::as_direct_eval_call,
-};
+use crate::{Traverse, TraverseCtx};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
-/// Stateless peephole optimizer. The `dce` flag, the `mutated` signal, and
-/// the per-pass `PassDirty` accumulator all live on `MinifierState`.
+/// Stateless peephole optimizer. Configuration and the per-pass
+/// `PassChanges` accumulator live on `MinifierState`.
 pub struct PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn run_once(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
         pair: (&'x A, &'x A),
         check_a: F,
@@ -166,295 +154,123 @@ impl<'a> PeepholeOptimizations {
     /// Checks if an expression's reference may change due to mutation.
     ///
     /// Returns `true` if the expression references a symbol that may be mutated,
-    /// or if the expression is not a simple identifier/this reference.
+    /// is externally mutable through an ESM import or Script global, or is not a
+    /// simple identifier/this reference.
     pub fn is_expression_that_reference_may_change(
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::Identifier(id) => {
-                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                {
-                    Self::is_symbol_mutated(symbol_id, ctx)
-                } else {
-                    true
-                }
+                let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id();
+                symbol_id.is_none_or(|symbol_id| Self::symbol_value_may_change(symbol_id, ctx))
             }
             Expression::ThisExpression(_) => false,
             _ => true,
         }
     }
 
-    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
-    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
-    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    /// Whether reading a resolved symbol again could produce a different value.
+    /// Imported bindings and Script-root globals can change externally.
+    ///
+    /// Uses the O(1) cached reference counts from `SymbolValue` when available,
+    /// falling back to the O(num_refs) scan in `Scoping::symbol_is_mutated` for
+    /// symbols without cached values.
     ///
     /// Only variable declarators have cached values (populated during
     /// `exit_variable_declarator` → `init_symbol_value`); function declarations
     /// and other binding kinds still take the fallback path.
-    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
-            sv.write_references_count > 0
+    fn symbol_value_may_change(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if scoping.symbol_flags(symbol_id).is_import()
+            || (ctx.source_type().is_script()
+                && scoping.symbol_scope_id(symbol_id) == scoping.root_scope_id())
+        {
+            return true;
+        }
+
+        if let Some(sv) = ctx.state.symbols.value(symbol_id) {
+            sv.references.has_writes()
         } else {
-            ctx.scoping().symbol_is_mutated(symbol_id)
+            scoping.symbol_is_mutated(symbol_id)
         }
     }
 
-    /// True if the scope chain from `read_scope` up to (excluding) `body_scope`
+    /// Whether the current read closes over a block-scoped binding.
+    ///
+    /// This is a structural test, not proof that the binding is currently in its
+    /// Temporal Dead Zone. Moving such a read before an `await`/`yield` can expose
+    /// the TDZ while outer code is still initializing the binding. A same-function
+    /// binding cannot be initialized mid-suspension, so it stays inlinable.
+    ///
+    /// <https://github.com/rolldown/rolldown/issues/9959>
+    fn is_closed_over_block_scoped_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if !scoping.symbol_flags(symbol_id).is_block_scoped() {
+            return false;
+        }
+
+        let binding_scope = scoping.symbol_scope_id(symbol_id);
+        Self::read_crosses_function_boundary(ctx.current_scope_id(), binding_scope, ctx)
+    }
+
+    /// Whether moving this identifier read earlier could observe a different
+    /// value or enter a closed-over lexical's TDZ.
+    fn identifier_read_blocks_reorder(id: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id();
+        symbol_id.is_none_or(|symbol_id| {
+            Self::symbol_value_may_change(symbol_id, ctx)
+                || Self::is_closed_over_block_scoped_read(symbol_id, ctx)
+        })
+    }
+
+    /// Whether evaluating a member assignment-target part earlier could observe
+    /// a different binding value. This includes ordinary mutation and closed-over
+    /// lexicals that could still be in their TDZ (e.g. `v.x = await f()` or
+    /// `obj[v] = await f()`).
+    fn member_part_blocks_reorder(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match expr {
+            Expression::Identifier(id) => Self::identifier_read_blocks_reorder(id, ctx),
+            Expression::ThisExpression(_) => false,
+            _ => true,
+        }
+    }
+
+    /// Whether evaluating a computed member key before a side-effecting
+    /// replacement could observe a different value.
+    ///
+    /// The key expression and `GetValue` move before the assignment RHS, but
+    /// `ToPropertyKey` still happens afterward. A scope-independent literal or
+    /// a stable simple reference is therefore safe regardless of its value type.
+    /// <https://tc39.es/ecma262/#sec-evaluate-property-access-with-expression-key>
+    fn computed_key_blocks_reorder(key: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        !key.is_literal_value(false, ctx) && Self::member_part_blocks_reorder(key, ctx)
+    }
+
+    /// True if the scope chain from `read_scope` up to (excluding) `stop_scope`
     /// crosses a function boundary — i.e. the read is in a closure relative to
-    /// `body_scope`. Async/generator/arrow scopes are all `Function`.
+    /// `stop_scope`. Async/generator/arrow scopes are all `Function`.
     fn read_crosses_function_boundary(
         read_scope: ScopeId,
-        body_scope: ScopeId,
+        stop_scope: ScopeId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         let scoping = ctx.scoping();
         scoping
             .scope_ancestors(read_scope)
-            .take_while(|&s| s != body_scope)
-            .any(|s| scoping.scope_flags(s).is_function())
-    }
-
-    /// Refresh `ScopeFlags::DirectEval` from live direct-eval call sites.
-    ///
-    /// `direct_eval_scopes` lists scopes that still contain a direct `eval(...)` call.
-    /// Clears `DirectEval` from every scope, then re-propagates from each scope in the
-    /// set up to the root.
-    ///
-    /// Skipping this leaves `DirectEval` set on scopes whose only eval call was just
-    /// DCE'd, which keeps unused-declaration removal conservative until reparse.
-    fn refresh_direct_eval_flags(scoping: &mut Scoping, direct_eval_scopes: &FxHashSet<ScopeId>) {
-        // Semantic propagates `DirectEval` to the root, so an empty live set plus a
-        // clean root means no scope has the flag — nothing to clear or set.
-        if direct_eval_scopes.is_empty() && !scoping.root_scope_flags().contains_direct_eval() {
-            return;
-        }
-
-        for index in 0..scoping.scopes_len() {
-            scoping.scope_flags_mut(ScopeId::from_usize(index)).remove(ScopeFlags::DirectEval);
-        }
-
-        for &scope_id in direct_eval_scopes {
-            let mut ancestor = Some(scope_id);
-            while let Some(scope_id) = ancestor {
-                let flags = scoping.scope_flags_mut(scope_id);
-                // An earlier iteration already flagged this chain; stop walking up.
-                if flags.contains_direct_eval() {
-                    break;
-                }
-                flags.insert(ScopeFlags::DirectEval);
-                ancestor = scoping.scope_parent_id(scope_id);
-            }
-        }
-    }
-
-    /// Debug-only guard for the incremental scoping refresh: every reference
-    /// marked dead in `dead_refs` (see [`crate::state::PassDirty::dead_refs`]) must really
-    /// be gone from the live program — pruning a still-live reference is the
-    /// unsafe direction that produces incorrect output.
-    ///
-    /// Walks the live program once per dirty pass in debug builds only, so
-    /// the entire unit-test and `cargo coverage -- minifier` corpus doubles
-    /// as an over-prune detector at zero release cost.
-    #[cfg(debug_assertions)]
-    fn debug_assert_no_over_prune(program: &Program<'a>, dead_refs: &BitSet<'_>) {
-        struct OverPruneCheck<'b, 'c> {
-            dead_refs: &'b BitSet<'c>,
-        }
-        impl<'a> Visit<'a> for OverPruneCheck<'_, '_> {
-            fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-                let Some(reference_id) = it.reference_id.get() else { return };
-                let idx = reference_id.index();
-                // `contains` is false past capacity — the capacity guard
-                // (see `PassDirty::dead_refs`).
-                assert!(
-                    !self.dead_refs.contains(idx),
-                    "incremental scoping over-prune: reference {idx} is marked dead but still \
-                     appears in the live program",
-                );
-            }
-        }
-        OverPruneCheck { dead_refs }.visit_program(program);
-    }
-
-    /// Debug-only converse of [`Self::debug_assert_no_over_prune`], run once
-    /// by the `Compressor` driver after the fixed-point loop: every reference
-    /// that existed when the loop began and is still in a symbol's
-    /// resolved-references list must appear in the live program. A violation
-    /// means a site discarded a subtree without routing it through a
-    /// `drop_*` / `replace_*` helper (the leak direction: stale references
-    /// silently block optimizations), or the caller passed a `scoping`
-    /// already inconsistent with `program` (see the precondition on
-    /// `Compressor::build_with_scoping`).
-    ///
-    /// References minted during the loop (`idx >= initial_references_len`)
-    /// are exempt: the capacity guard deliberately leaves a same-pass
-    /// mint-then-drop unmarked (see `PassDirty::dead_refs`).
-    ///
-    /// Together with the over-prune guard this closes both failure
-    /// directions of the drop-helper convention across the whole unit-test
-    /// and conformance corpus, at zero release cost.
-    #[cfg(debug_assertions)]
-    pub(crate) fn debug_assert_no_under_prune(
-        program: &Program<'a>,
-        ctx: &TraverseCtx<'a>,
-        initial_references_len: usize,
-    ) {
-        struct LiveRefCollector<'b, 'c> {
-            live: &'b mut BitSet<'c>,
-        }
-        impl<'a> Visit<'a> for LiveRefCollector<'_, '_> {
-            fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-                if let Some(reference_id) = it.reference_id.get() {
-                    let idx = reference_id.index();
-                    if idx < self.live.capacity() {
-                        self.live.set_bit(idx);
-                    }
-                }
-            }
-        }
-        let mut live = BitSet::new_in(initial_references_len, ctx.allocator());
-        LiveRefCollector { live: &mut live }.visit_program(program);
-        for reference_ids in ctx.scoping().resolved_references() {
-            for reference_id in reference_ids {
-                let idx = reference_id.index();
-                assert!(
-                    idx >= initial_references_len || live.has_bit(idx),
-                    "incremental scoping under-prune: reference {idx} is still in a symbol's \
-                     resolved-references list but its node is gone from the program — a drop \
-                     site bypassed the `drop_*` / `replace_*` helpers, or the caller passed a \
-                     `scoping` inconsistent with `program`",
-                );
-            }
-        }
-    }
-
-    /// Debug-only guard for the gated direct-eval refresh: every live direct
-    /// `eval(...)` call must already have `ScopeFlags::DirectEval` on its
-    /// reference's recorded scope and every ancestor (the exact postcondition
-    /// of [`Self::refresh_direct_eval_flags`]). The gate
-    /// (`PassDirty::eval_dropped`) only re-derives flags when an eval call is
-    /// *dropped*, so it is sound only while no pass *forms* a new direct eval
-    /// call (e.g. by moving `eval` into callee position). Stale-SET flags are
-    /// merely conservative and not checked; only the missing direction is
-    /// unsafe.
-    ///
-    /// Locally-bound `eval` callees are exempt: `remove_sequence_expression`
-    /// deliberately forms them (`var eval; (0, eval)()` -> `var eval; eval()`
-    /// — `should_keep_indirect_access` only protects the *global* `eval`),
-    /// banking on a local binding named `eval` not holding the real `eval`.
-    /// Under that same assumption the missing flag is inert; a later refresh
-    /// may still set it (the name-based collector), which is the allowed
-    /// conservative direction.
-    ///
-    /// Allocation-free by design: asserts inline per call during the walk so
-    /// the allocation-tracking task (debug assertions on) sees no sys-allocs.
-    /// The walk itself is skipped when the program has no unresolved `eval`
-    /// at all: the check only fires on unresolved (global) callees, and every
-    /// live unresolved reference's name is a key in
-    /// `root_unresolved_references` (populated at build, appended on in-loop
-    /// mints, deliberately never pruned in-loop) — a conservative superset
-    /// that can never skip a checkable call.
-    #[cfg(debug_assertions)]
-    fn debug_assert_no_stale_direct_eval(program: &Program<'a>, scoping: &Scoping) {
-        struct DirectEvalFlagCheck<'s> {
-            scoping: &'s Scoping,
-        }
-        impl<'a> Visit<'a> for DirectEvalFlagCheck<'_> {
-            fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
-                if let Some(ident) = as_direct_eval_call(it)
-                    && let Some(reference_id) = ident.reference_id.get()
-                {
-                    let reference = self.scoping.get_reference(reference_id);
-                    // No symbol = unresolved = the global `eval` (see above).
-                    if reference.symbol_id().is_none() {
-                        // Same scope derivation as `LiveDirectEvalCollector` —
-                        // producer, consumer, and this check must agree.
-                        for scope_id in self.scoping.scope_ancestors(reference.scope_id()) {
-                            assert!(
-                                self.scoping.scope_flags(scope_id).contains_direct_eval(),
-                                "stale direct-eval flags: scope {scope_id:?} is missing \
-                                 `ScopeFlags::DirectEval` for a live direct `eval(...)` call — a \
-                                 pass formed a new direct eval call without dropping one — see \
-                                 `PassDirty::eval_dropped`",
-                            );
-                        }
-                    }
-                }
-                walk_call_expression(self, it);
-            }
-        }
-        if !scoping.root_unresolved_references().contains_key("eval") {
-            return;
-        }
-        DirectEvalFlagCheck { scoping }.visit_program(program);
-    }
-
-    /// Consume the `PassDirty` accumulator: batch-prune the dead resolved
-    /// references from scoping, refresh direct-eval flags if an `eval(...)`
-    /// call was dropped, and re-initialize the accumulator.
-    ///
-    /// The `Compressor` driver calls this after `Normalize` (so the
-    /// fixed-point loop starts against already-pruned scoping and
-    /// Normalize's drops cost no extra peephole pass) and after every
-    /// peephole pass.
-    pub(crate) fn flush_pass_dirty(program: &Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        let had_dead = !ctx.state.dirty.dead_refs.is_empty();
-
-        // (1) Resolved references — direct consumption, no walk.
-        //     Dirty data is built by `replace_*` / `drop_*` helpers as
-        //     subtrees are removed and is consumed here in one batch.
-        if had_dead {
-            // Debug-only guard: every reference we are about to prune must
-            // really be gone from the live program (see the helper).
-            #[cfg(debug_assertions)]
-            Self::debug_assert_no_over_prune(program, &ctx.state.dirty.dead_refs);
-
-            // Disjoint-field borrows: `state.dirty` and `scoping` don't overlap.
-            ctx.scoping
-                .scoping_mut()
-                .retain_resolved_references_excluding(&ctx.state.dirty.dead_refs);
-        }
-
-        // (2) Direct-eval — gated full walk only when an eval was dropped.
-        if ctx.state.dirty.eval_dropped {
-            let scoping = ctx.scoping();
-            let mut live = LiveDirectEvalCollector::new(scoping);
-            live.visit_program(program);
-            let scopes = live.scopes;
-            Self::refresh_direct_eval_flags(ctx.scoping_mut(), &scopes);
-        }
-        // Debug-only converse of the gate: no pass may have FORMED a new
-        // direct eval call without dropping one (see the helper).
-        #[cfg(debug_assertions)]
-        Self::debug_assert_no_stale_direct_eval(program, ctx.scoping());
-
-        // (3) Reset the accumulator for the next pass. `references_len` only
-        //     grows (helpers mint, never delete, references), so the bitset
-        //     is re-allocated only when refs were minted this pass; otherwise
-        //     a memset reuses the warm allocation (a bump arena never
-        //     reclaims the old one).
-        let refs_len = ctx.scoping().references_len();
-        if ctx.state.dirty.dead_refs.capacity() == refs_len {
-            if had_dead {
-                ctx.state.dirty.dead_refs.clear();
-            }
-        } else {
-            ctx.state.dirty.dead_refs = BitSet::new_in(refs_len, ctx.allocator());
-        }
-        ctx.state.dirty.eval_dropped = false;
+            .take_while(|&scope_id| scope_id != stop_scope)
+            .any(|scope_id| scoping.scope_flags(scope_id).is_function())
     }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.symbol_values.reset();
         // Any module loader (`import`, `export * from`, `export … from`) can, on a
         // cycle, evaluate a foreign module that observes a not-yet-assigned binding
         // our exports close over. So the program root starts its prelude "unsafe"
         // when the body has any loader — bailing every program-scope var inline.
-        // Loaders are hoisted, so scan the whole body (an import may follow a
-        // leading var); the result never changes across passes.
+        // Loaders are hoisted, so scan the whole current body each pass (an
+        // import may follow a leading var, or an earlier pass may remove one).
         let module_has_loaders = program
             .body
             .iter()
@@ -464,8 +280,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // than reallocating (matching the `reset`/`clear` above).
         *ctx.state.body_unsafe_stack.last_mut() =
             (ctx.scoping().root_scope_id(), module_has_loaders);
-        // `PassDirty` is managed by the `Compressor` driver via
-        // `flush_pass_dirty`, not reset per traversal.
+        // `PassChanges` is managed by pass completion, not reset per
+        // traversal.
     }
 
     fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -477,8 +293,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Only check class_symbols_stack in full optimization mode (not DCE mode)
-        debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
+        // Private member usage is collected only in full optimization mode.
+        debug_assert!(ctx.is_tree_shake_only() || ctx.state.private_member_usage.is_at_root());
     }
 
     fn exit_statements(
@@ -494,7 +310,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
                 Statement::IfStatement(_) => Self::try_fold_if(stmt, ctx),
@@ -563,7 +379,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_for_statement(stmt, ctx);
@@ -571,7 +387,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_return_statement(stmt, ctx);
@@ -582,7 +398,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_variable_declaration(decl, ctx);
@@ -610,9 +426,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // folds stay on because the removal passes don't evaluate compound
         // conditions themselves: `if ('production' === 'production')` must fold
         // to `true` before the dead branch can be dropped. Passes that only
-        // shrink code (`substitute_*`, `minimize_*`) are left out. See the `dce`
-        // docs in `state.rs`.
-        if ctx.state.dce {
+        // shrink code (`substitute_*`, `minimize_*`) are left out.
+        if ctx.is_tree_shake_only() {
             match expr {
                 Expression::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
@@ -658,6 +473,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_swap_binary_expressions(e);
                     Self::fold_binary_expr(expr, ctx);
                     Self::fold_binary_typeof_comparison(expr, ctx);
+                    Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_loose_boolean(expr, ctx);
                     Self::minimize_binary(expr, ctx);
                     Self::substitute_loose_equals_undefined(expr, ctx);
@@ -668,6 +484,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::fold_unary_expr(expr, ctx);
                     Self::minimize_unary(expr, ctx);
                     Self::substitute_unary_plus(expr, ctx);
+                    Self::fold_sequence_expression(expr, ctx);
+                }
+                Expression::YieldExpression(_) | Expression::AwaitExpression(_) => {
+                    Self::fold_sequence_expression(expr, ctx);
                 }
                 Expression::StaticMemberExpression(_) => {
                     Self::fold_static_member_expr(expr, ctx);
@@ -679,6 +499,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Expression::LogicalExpression(_) => {
                     Self::fold_logical_expr(expr, ctx);
+                    Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_logical_expression(expr, ctx);
                     Self::substitute_is_object_and_not_null(expr, ctx);
                     Self::substitute_rotate_logical_expression(expr, ctx);
@@ -731,7 +552,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         if expr.operator.is_not() {
@@ -740,7 +561,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.dce {
+        if !ctx.is_tree_shake_only() {
             Self::substitute_call_expression(e, ctx);
             Self::remove_empty_spread_arguments(&mut e.arguments);
         }
@@ -750,7 +571,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.state.dce {
+        if !ctx.is_tree_shake_only() {
             Self::substitute_new_expression(e, ctx);
             Self::remove_empty_spread_arguments(&mut e.arguments);
         }
@@ -758,7 +579,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_object_property(prop, ctx);
@@ -769,7 +590,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_assignment_target_property(node, ctx);
@@ -780,14 +601,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_assignment_target_property_property(prop, ctx);
     }
 
     fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_binding_property(prop, ctx);
@@ -798,7 +619,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_method_definition(prop, ctx);
@@ -809,7 +630,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_property_definition(prop, ctx);
@@ -820,7 +641,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_accessor_property(prop, ctx);
@@ -831,30 +652,30 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::convert_to_dotted_properties(expr, ctx);
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.class_symbols_stack.push_class_scope();
+        ctx.state.private_member_usage.enter_class();
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::remove_dead_code_exit_class_body(body, ctx);
         Self::remove_unused_private_members(body, ctx);
-        ctx.state.class_symbols_stack.pop_class_scope(Self::get_declared_private_symbols(body));
+        ctx.state.private_member_usage.exit_class(Self::declared_private_member_names(body));
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_catch_clause(catch, ctx);
@@ -865,10 +686,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name.into());
+        ctx.state.private_member_usage.record_use(node.field.name.into());
     }
 
     fn exit_private_in_expression(
@@ -876,36 +697,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut PrivateInExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name.into());
-    }
-}
-
-/// Walks the live program to find scopes containing direct `eval(...)` calls.
-/// Used by `flush_pass_dirty` only when at least one direct eval call was
-/// dropped this pass (gated via `PassDirty::eval_dropped`).
-struct LiveDirectEvalCollector<'s> {
-    scoping: &'s Scoping,
-    scopes: FxHashSet<ScopeId>,
-}
-
-impl<'s> LiveDirectEvalCollector<'s> {
-    fn new(scoping: &'s Scoping) -> Self {
-        Self { scoping, scopes: FxHashSet::default() }
-    }
-}
-
-impl<'a> Visit<'a> for LiveDirectEvalCollector<'_> {
-    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
-        if let Some(ident) = as_direct_eval_call(it)
-            && let Some(reference_id) = ident.reference_id.get()
-        {
-            let scope_id = self.scoping.get_reference(reference_id).scope_id();
-            self.scopes.insert(scope_id);
-        }
-        // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
-        walk_call_expression(self, it);
+        ctx.state.private_member_usage.record_use(node.left.name.into());
     }
 }

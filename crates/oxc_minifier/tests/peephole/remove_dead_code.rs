@@ -1,6 +1,8 @@
+use oxc_span::SourceType;
+
 use crate::{
-    CompressOptions, CompressOptionsUnused, default_options, test, test_options, test_same,
-    test_same_options,
+    CompressOptions, CompressOptionsUnused, default_options, test, test_options,
+    test_options_source_type, test_same, test_same_options, test_same_options_source_type,
 };
 
 #[track_caller]
@@ -120,7 +122,7 @@ fn test_fold_try_statement() {
     test_same("try { foo() } catch { bar() } finally { baz() }");
 
     // Leak regression: when the empty `try` drops, the catch arm's write-ref
-    // to `x` must be walked into `PassDirty`, else the stale write blocks
+    // to `x` must be walked into `PassChanges`, else the stale write blocks
     // constant inlining of `x`.
     let options = CompressOptions::smallest();
     test_options(
@@ -182,6 +184,32 @@ fn remove_unreachable() {
     // after `return` is preserved under `unused: Keep`.
     test("function f() { return; var a }", "function f() { return; var a }");
     test_unused("(function () { return; var a })()", "");
+
+    // https://github.com/rolldown/rolldown/issues/10184
+    // A statement that never completes normally also terminates the list:
+    // a block pinned by its lexical declaration, or a try/catch where both
+    // blocks jump.
+    test(
+        "function f() { { const a = g(); a.x = a; return a; } h(); }",
+        "function f() { { let a = g(); return a.x = a, a; } }",
+    );
+    test(
+        "function f() { try { return g(); } catch { return h(); } i(); }",
+        "function f() { try { return g(); } catch { return h(); } }",
+    );
+    // Negative: the block can complete normally, so the tail stays.
+    test_same("function f(c) { { let a = g(); if (c) return a; } return foo(); }");
+    // Hoisting survivors trailing the jump inside the block — a kept
+    // `function` declaration or a `var` stub re-emitted by `KeepVar` — don't
+    // hide that the block terminates.
+    test(
+        "function f() { { const a = g(); a.x = a; return a; function g() { return {} } } h(); }",
+        "function f() { { let a = g(); return a.x = a, a; function g() { return {} } } }",
+    );
+    test(
+        "function f() { use(() => x); { let a = g(); use(a); return a; var x = h(); } tail(); }",
+        "function f() { use(() => x); { let a = g(); return use(a), a; var x; } }",
+    );
 }
 
 #[test]
@@ -260,4 +288,65 @@ fn remove_empty_function() {
 
     test_same_options("function* foo({}) {} foo()", &options);
     test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
+}
+
+#[test]
+fn redeclared_pure_function_is_not_folded_var() {
+    test_same("var foo = (u) => {}; if (g) var foo = (a) => { console.log(a); }; foo('x');");
+}
+
+#[test]
+fn redeclared_pure_function_is_not_folded_function_declaration() {
+    test_same_options_source_type(
+        "function foo(u) {} function foo(a) { console.log(a); } foo('x');",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
+fn direct_eval_rebound_function_is_not_folded() {
+    test(
+        "function foo() {} eval(\"foo = () => side_effect()\"); foo();",
+        "function foo() {} eval(\"foo = () => side_effect()\"), foo();",
+    );
+}
+
+#[test]
+fn nested_direct_eval_rebound_function_is_not_folded() {
+    test(
+        "function foo() {} function g() { eval(\"foo = () => side_effect()\") } g(); foo();",
+        "function foo() {} function g() { eval(\"foo = () => side_effect()\") } g(), foo();",
+    );
+}
+
+#[test]
+fn removed_direct_eval_reenables_pure_function_folding() {
+    test_options_source_type(
+        "function foo() {} if (0) eval(\"foo = () => side_effect()\"); foo();",
+        "",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn script_root_rebound_function_is_not_folded() {
+    test_options_source_type(
+        "function foo() {} globalThis.foo = () => side_effect(); foo();",
+        "function foo() {} globalThis.foo = () => side_effect(), foo();",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
+fn non_redeclared_pure_function_still_folds() {
+    test("const foo = (u) => {}; foo(1)", "const foo = (u) => {};");
+    test_options_source_type(
+        "function foo() {} foo()",
+        "function foo() {}",
+        SourceType::cjs(),
+        &default_options(),
+    );
 }

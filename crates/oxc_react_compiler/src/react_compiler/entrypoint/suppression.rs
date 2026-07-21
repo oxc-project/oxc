@@ -101,14 +101,13 @@ pub fn find_program_suppressions(
         let value = comment_value(comment, source_text);
 
         // Check for eslint-disable-next-line (only if not already within a block)
-        if disable_comment.is_none() {
-            if let Some(names) = rule_names {
-                if matches_eslint_disable_next_line(value, names) {
-                    disable_comment = Some(comment);
-                    enable_comment = Some(comment);
-                    source = Some(SuppressionSource::Eslint);
-                }
-            }
+        if disable_comment.is_none()
+            && let Some(names) = rule_names
+            && matches_eslint_disable_next_line(value, names)
+        {
+            disable_comment = Some(comment);
+            enable_comment = Some(comment);
+            source = Some(SuppressionSource::Eslint);
         }
 
         // Check for Flow suppression (only if not already within a block)

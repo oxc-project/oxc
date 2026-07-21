@@ -453,9 +453,6 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
                 write_complex_selector(&selector.complex_selector, f);
             }
         }
-        PseudoClassSelectorArgKind::CompoundSelector(compound) => {
-            write_compound_selector(compound, f);
-        }
         PseudoClassSelectorArgKind::CompoundSelectorList(list) => {
             write_compound_selector_list(list, f);
         }
@@ -591,6 +588,15 @@ fn write_pseudo_element<'a>(pseudo: &PseudoElementSelector<'a>, f: &mut CssForma
                 write_compound_selector_list(list, f);
             }
             PseudoElementSelectorArgKind::Ident(ident) => write_interpolable_ident(ident, f),
+            // CSS Shadow Parts allows `::part(tab active)`: idents joined by one space
+            PseudoElementSelectorArgKind::IdentList(list) => {
+                for (i, ident) in list.idents.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, " ");
+                    }
+                    write_interpolable_ident(ident, f);
+                }
+            }
             PseudoElementSelectorArgKind::TokenSeq(seq) => {
                 let span = to_span(seq.span());
                 write!(f, text(source.text_for(&span)));
@@ -631,6 +637,14 @@ pub(super) fn write_keyframe_selector<'a>(
         },
         KeyframeSelector::Percentage(percentage) => {
             value::write_number(&percentage.value, f);
+            write!(f, "%");
+        }
+        // Scroll-driven animations: `entry 0%` etc.
+        // The range name keeps its case: from/to lowercasing applies only to the bare-`Ident` arm above.
+        KeyframeSelector::TimelineRange(range) => {
+            write_interpolable_ident(&range.name, f);
+            write!(f, " ");
+            value::write_number(&range.percentage.value, f);
             write!(f, "%");
         }
     }

@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- a3a39f9 react_compiler: Implement enableEmitHookGuards codegen (#24329) (Boshen)
+
+### ⚡ Performance
+
+- dce0f29 react_compiler: Replace all compiled functions in a single AST walk (#24403) (Boshen)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🐛 Bug Fixes

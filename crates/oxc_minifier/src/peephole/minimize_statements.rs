@@ -1,9 +1,10 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
+use crate::{TraverseCtx, keep_var::KeepVar};
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, HashSet, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
     BoundNames,
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
@@ -12,8 +13,6 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 use oxc_syntax::symbol::SymbolId;
-
-use crate::{TraverseCtx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
@@ -75,17 +74,17 @@ impl<'a> PeepholeOptimizations {
                 }
                 continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
-            if Self::minimize_statement(
-                stmt,
-                i,
-                &mut old_stmts,
-                stmts,
-                &mut is_control_flow_dead,
-                ctx,
-            )
-            .is_break()
-            {
+            if Self::minimize_statement(stmt, i, &mut old_stmts, stmts, ctx).is_break() {
                 break;
+            }
+            // A statement that never completes normally — a direct jump, a
+            // kept block ending in a jump, an if/else or try/catch where
+            // every branch jumps — makes the rest of the list unreachable.
+            // https://github.com/rolldown/rolldown/issues/10184
+            if !is_control_flow_dead
+                && stmts.last().is_some_and(Self::statement_never_completes_normally)
+            {
+                is_control_flow_dead = true;
             }
         }
         if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
@@ -365,22 +364,10 @@ impl<'a> PeepholeOptimizations {
         i: usize,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
-
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
-            Statement::BreakStatement(s) => {
-                // Local `&mut bool` flag, not an AST slot.
-                *is_control_flow_dead = true;
-                result.push(Statement::BreakStatement(s));
-            }
-            Statement::ContinueStatement(s) => {
-                // Local `&mut bool` flag, not an AST slot.
-                *is_control_flow_dead = true;
-                result.push(Statement::ContinueStatement(s));
-            }
             Statement::VariableDeclaration(var_decl) => {
                 Self::handle_variable_declaration(var_decl, result, ctx);
             }
@@ -396,10 +383,10 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Statement::ReturnStatement(ret_stmt) => {
-                Self::handle_return_statement(ret_stmt, result, is_control_flow_dead, ctx);
+                Self::handle_return_statement(ret_stmt, result, ctx);
             }
             Statement::ThrowStatement(throw_stmt) => {
-                Self::handle_throw_statement(throw_stmt, result, is_control_flow_dead, ctx);
+                Self::handle_throw_statement(throw_stmt, result, ctx);
             }
             Statement::ForStatement(for_stmt) => {
                 Self::handle_for_statement(for_stmt, result, ctx);
@@ -444,6 +431,65 @@ impl<'a> PeepholeOptimizations {
             return left.content_eq(right);
         }
         false
+    }
+
+    /// Whether control never falls through to the statement after this one in
+    /// the same statement list (terser's `aborts`).
+    ///
+    /// Any abrupt completion qualifies, whatever its target: a `break` or
+    /// `continue` transfers control past the end of the enclosing statement
+    /// list, never to the next statement in it.
+    ///
+    /// Conservative on purpose:
+    /// - A labeled statement completes normally when its body breaks out of
+    ///   its own label (`a: { break a; }`), so it never counts.
+    /// - Loops and switches count as completing normally; `while (true)`
+    ///   without `break` is handled by loop-specific folds instead.
+    fn statement_never_completes_normally(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::ReturnStatement(_)
+            | Statement::ThrowStatement(_)
+            | Statement::BreakStatement(_)
+            | Statement::ContinueStatement(_) => true,
+            Statement::BlockStatement(block) => Self::block_never_completes_normally(block),
+            Statement::IfStatement(if_stmt) => {
+                if_stmt.alternate.as_ref().is_some_and(Self::statement_never_completes_normally)
+                    && Self::statement_never_completes_normally(&if_stmt.consequent)
+            }
+            Statement::TryStatement(try_stmt) => {
+                // A finalizer that aborts overrides however the other
+                // blocks complete. Otherwise the try block must abort, and
+                // so must the catch block when present (an exception
+                // thrown before the try block's jump lands there).
+                try_stmt.finalizer.as_ref().is_some_and(|f| Self::block_never_completes_normally(f))
+                    || (Self::block_never_completes_normally(&try_stmt.block)
+                        && try_stmt
+                            .handler
+                            .as_ref()
+                            .is_none_or(|h| Self::block_never_completes_normally(&h.body)))
+            }
+            _ => false,
+        }
+    }
+
+    fn block_never_completes_normally(block: &BlockStatement<'a>) -> bool {
+        // A minimized dead zone keeps only hoisting survivors after the jump:
+        // `function` declarations and the initializer-less `var` stub
+        // re-emitted by `KeepVar`. Their bindings initialize at scope entry
+        // and nothing after an aborting statement ever runs, so skip them
+        // from the back before testing how the block completes.
+        block
+            .body
+            .iter()
+            .rev()
+            .find(|stmt| match stmt {
+                Statement::FunctionDeclaration(_) => false,
+                Statement::VariableDeclaration(decl) => {
+                    !(decl.kind.is_var() && decl.declarations.iter().all(|d| d.init.is_none()))
+                }
+                _ => true,
+            })
+            .is_some_and(Self::statement_never_completes_normally)
     }
 
     /// For variable declarations:
@@ -507,8 +553,7 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let decls = ArenaVec::from_value_in(decl, ctx);
-                let new_decl = VariableDeclaration::boxed(span, kind, decls, declare, ctx);
+                let new_decl = VariableDeclaration::boxed(span, kind, [decl], declare, ctx);
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }
@@ -953,6 +998,22 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
+        let is_empty = if stmt.consequent.len() == 1 {
+            match stmt.consequent.last() {
+                Some(Statement::EmptyStatement(_)) => true,
+                Some(Statement::BreakStatement(break_stmt)) => {
+                    allow_break && break_stmt.label.is_none()
+                }
+                _ => false,
+            }
+        } else {
+            stmt.consequent.is_empty()
+        };
+
+        is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
+    }
+
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -976,34 +1037,72 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
 
-        // Prune empty case clauses before a trailing default
-        // e.g., `switch (x) { case 0: foo(); break; case 1: default: bar() }`
-        // => `switch (x) { case 0: foo(); break; default: bar() }`
+        // Remove empty case clauses that don't affect behavior.
+        // Handles fall-through semantics: remove empty cases before default or at end (if no default).
+        // e.g., `switch(x){ case 0: foo(); break; case 1: default: bar() }`
+        // => `switch(x){ case 0: foo(); break; default: bar() }`
         // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
-        if let Some(last_case) = switch_stmt.cases.last()
-            && last_case.test.is_none()
-        {
-            let default_idx = switch_stmt.cases.len() - 1;
-            let mut first_empty_idx = default_idx;
-            // Iterate backward through preceding cases
-            while first_empty_idx > 0 {
-                let case = &switch_stmt.cases[first_empty_idx - 1];
-                // Only remove empty cases with primitive literal tests
-                if case.consequent.is_empty()
-                    && case.test.as_ref().is_some_and(Expression::is_literal)
-                {
-                    first_empty_idx -= 1;
+        let case_count = switch_stmt.cases.len();
+        if case_count == 1 {
+            // Remove sole case if empty and has no side-effect test
+            if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
+                ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
+            }
+        } else if case_count > 1 {
+            // Determine the range [0, end] to check for removable cases.
+            // 1. default exists and is empty: check the full switch.
+            // 2. default exists and is non-removable and last: check only cases before that default.
+            // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
+            // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
+            let default_pos = switch_stmt.cases.iter().rposition(SwitchCase::is_default_case);
+            let (end, allow_break) = if let Some(default_pos) = default_pos {
+                if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true) {
+                    (case_count, true)
+                } else if default_pos == case_count - 1 {
+                    (default_pos, false)
                 } else {
-                    break;
+                    (0, false)
+                }
+            } else {
+                (case_count, true)
+            };
+
+            if end > 0 {
+                // Last non-removable case index in [0, end]. Returns None if all cases are removable.
+                let last_non_removable_case_before_end = switch_stmt.cases[..end]
+                    .iter()
+                    .rposition(|case| !Self::is_switch_case_removable(case, allow_break));
+
+                // Calculate the start of the removable suffix.
+                // 1. next case after last non-removable: remove from pos + 1
+                // 2. no non-removable case: all cases are removable, start from 0
+                let start = match last_non_removable_case_before_end {
+                    Some(pos) => pos + 1,
+                    None => 0,
+                };
+
+                // Remove the removable suffix if any
+                if start < end && default_pos.is_none_or(|pos| pos >= start) {
+                    for removed_case in switch_stmt.cases.drain(start..end) {
+                        ctx.drop_switch_case(&removed_case);
+                    }
                 }
             }
-            // If we found cases to remove, keep cases [0..first_empty_idx] + [default]
-            if first_empty_idx < default_idx {
-                let default_case = switch_stmt.cases.pop().unwrap();
-                switch_stmt.cases.truncate(first_empty_idx);
-                switch_stmt.cases.push(default_case);
-                ctx.notice_change();
-            }
+        }
+
+        if switch_stmt.cases.is_empty() {
+            result.push(Statement::new_expression_statement(
+                switch_stmt.span,
+                switch_stmt.discriminant.take_in(ctx),
+                ctx,
+            ));
+            return;
+        } else if let Some(last_case) = switch_stmt.cases.last_mut()
+            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
+            && last_break.label.is_none()
+        {
+            let dropped = last_case.consequent.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));
@@ -1163,7 +1262,6 @@ impl<'a> PeepholeOptimizations {
     fn handle_return_statement(
         mut ret_stmt: ArenaBox<'a, ReturnStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -1194,8 +1292,6 @@ impl<'a> PeepholeOptimizations {
                 ctx.drop_expression(&old);
             }
             result.push(Statement::ReturnStatement(ret_stmt));
-            // Local `&mut bool` flag, not an AST slot.
-            *is_control_flow_dead = true;
             return;
         }
 
@@ -1209,14 +1305,11 @@ impl<'a> PeepholeOptimizations {
             result.pop();
         }
         result.push(Statement::ReturnStatement(ret_stmt));
-        // Local `&mut bool` flag, not an AST slot.
-        *is_control_flow_dead = true;
     }
 
     fn handle_throw_statement(
         mut throw_stmt: ArenaBox<'a, ThrowStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -1237,8 +1330,6 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
         result.push(Statement::ThrowStatement(throw_stmt));
-        // Local `&mut bool` flag, not an AST slot.
-        *is_control_flow_dead = true;
     }
 
     fn handle_for_statement(
@@ -1286,7 +1377,7 @@ impl<'a> PeepholeOptimizations {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs
                     // (init and TS type annotation) need an explicit walk to
-                    // reach `PassDirty`.
+                    // reach `PassChanges`.
                     ctx.drop_variable_declarator(decl);
                 }
                 should_keep
@@ -1535,9 +1626,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
             return false;
         }
 
@@ -1579,7 +1668,7 @@ impl<'a> PeepholeOptimizations {
         declarations: &mut ArenaVec<'a, VariableDeclarator<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        if Self::keep_top_level_var_in_script_mode(ctx)
+        if Self::is_script_root_scope(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
             || kind.is_using()
         {
@@ -1644,16 +1733,17 @@ impl<'a> PeepholeOptimizations {
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
-            let Some(symbol_value) =
-                ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
-            else {
+            let Some(symbol_value) = ctx.state.symbols.value(prev_decl_id.symbol_id()) else {
                 return true;
             };
-            // we should check whether it's exported by `symbol_value.exported`
-            // because the variable might be exported with `export { foo }` rather than `export var foo`
-            if symbol_value.exported
-                || symbol_value.read_references_count > 1
-                || symbol_value.write_references_count > 0
+            // Implicitly observable bindings remain live independently of
+            // their resolved-reference count.
+            // An `export { foo }` specifier also contributes a reference, but
+            // consult the shared metadata explicitly for consistency with the
+            // other count-based consumers.
+            if ctx.state.symbols.is_implicitly_observable(prev_decl_id.symbol_id())
+                || symbol_value.references.has_multiple_reads()
+                || symbol_value.references.has_writes()
             {
                 return true;
             }
@@ -1676,40 +1766,6 @@ impl<'a> PeepholeOptimizations {
             None => 0,
             Some(last_non_inlined_index) => last_non_inlined_index + 1,
         }
-    }
-
-    /// Whether reordering this read before a side-effecting replacement could
-    /// observe `symbol_id` in its Temporal Dead Zone.
-    ///
-    /// The hazard is a block-scoped binding (`let`/`const`/`using`/`class`/`enum`)
-    /// closed over from an enclosing function: the function can suspend at an
-    /// `await`/`yield` while outer code initializes the binding, so the earlier
-    /// (reordered) read hits the TDZ where the original would not. A same-function
-    /// binding can't be initialized mid-suspension, so it stays inlinable.
-    ///
-    /// <https://github.com/rolldown/rolldown/issues/9959>
-    fn is_tdz_closed_over_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        ctx.scoping().symbol_flags(symbol_id).is_block_scoped()
-            && Self::read_crosses_function_boundary(
-                ctx.current_scope_id(),
-                ctx.scoping().symbol_scope_id(symbol_id),
-                ctx,
-            )
-    }
-
-    /// Whether reordering a side-effecting replacement past this member
-    /// assignment-target object is unsafe. The object is evaluated before the
-    /// replacement, so it is unsafe if its reference may change, or if it reads
-    /// a closed-over lexical that could be in its TDZ (e.g. `v.x = await f()`
-    /// reading `v` before the await). See [`Self::is_tdz_closed_over_read`].
-    fn member_object_blocks_reorder(object: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        Self::is_expression_that_reference_may_change(object, ctx)
-            || matches!(object, Expression::Identifier(id)
-                if ctx
-                    .scoping()
-                    .get_reference(id.reference_id())
-                    .symbol_id()
-                    .is_some_and(|symbol_id| Self::is_tdz_closed_over_read(symbol_id, ctx)))
     }
 
     /// Returns Some(true) when the expression is successfully replaced.
@@ -1740,6 +1796,8 @@ impl<'a> PeepholeOptimizations {
                 }
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
+                // Imported names are live bindings, so local read-only status is
+                // insufficient for them.
                 //
                 // But a lexical binding that is closed over from an enclosing
                 // function/module scope may still be in its Temporal Dead Zone
@@ -1748,10 +1806,7 @@ impl<'a> PeepholeOptimizations {
                 // in particular before a side-effecting replacement such as an
                 // `await` — can surface a `ReferenceError` that the original order
                 // avoids. https://github.com/rolldown/rolldown/issues/9959
-                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                    && !Self::is_symbol_mutated(symbol_id, ctx)
-                    && !Self::is_tdz_closed_over_read(symbol_id, ctx)
-                {
+                if !Self::identifier_read_blocks_reorder(id, ctx) {
                     return None;
                 }
             }
@@ -1877,13 +1932,17 @@ impl<'a> PeepholeOptimizations {
                     let may_depend_on_side_effect = match &assign_expr.left {
                         AssignmentTarget::AssignmentTargetIdentifier(_) => false,
                         AssignmentTarget::ComputedMemberExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
+                            Self::member_part_blocks_reorder(&member_expr.object, ctx)
+                                || Self::computed_key_blocks_reorder(
+                                    &member_expr.expression,
+                                    ctx,
+                                )
                         }
                         AssignmentTarget::PrivateFieldExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
+                            Self::member_part_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::StaticMemberExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
+                            Self::member_part_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::ArrayAssignmentTarget(_)
                         | AssignmentTarget::ObjectAssignmentTarget(_)

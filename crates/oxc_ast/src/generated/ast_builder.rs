@@ -312,27 +312,6 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build an [`Expression::MetaProperty`].
-    ///
-    /// This node contains a [`MetaProperty`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
-    #[deprecated(
-        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
-    )]
-    #[inline]
-    pub fn expression_meta_property(
-        self,
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-    ) -> Expression<'a> {
-        Expression::MetaProperty(self.alloc_meta_property(span, meta, property))
-    }
-
     /// Build an [`Expression::Super`].
     ///
     /// This node contains a [`Super`] that will be stored in the memory arena.
@@ -1166,6 +1145,34 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
     ) -> Expression<'a> {
         Expression::PrivateInExpression(self.alloc_private_in_expression(span, left, right))
+    }
+
+    /// Build an [`Expression::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_import_meta(self, span: Span) -> Expression<'a> {
+        Expression::ImportMeta(self.alloc_import_meta(span))
+    }
+
+    /// Build an [`Expression::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_new_target(self, span: Span) -> Expression<'a> {
+        Expression::NewTarget(self.alloc_new_target(span))
     }
 
     /// Build an [`Expression::JSXElement`].
@@ -2591,48 +2598,64 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`MetaProperty`].
+    /// Build an [`ImportMeta`].
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_meta_property`] instead.
+    /// use [`AstBuilder::alloc_import_meta`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
     #[deprecated(
         note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
     )]
     #[inline]
-    pub fn meta_property(
-        self,
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-    ) -> MetaProperty<'a> {
-        MetaProperty { node_id: Default::default(), span, meta, property }
+    pub fn import_meta(self, span: Span) -> ImportMeta {
+        ImportMeta { node_id: Default::default(), span }
     }
 
-    /// Build a [`MetaProperty`], and store it in the memory arena.
+    /// Build an [`ImportMeta`], and store it in the memory arena.
     ///
     /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::meta_property`] instead.
+    /// If you want a stack-allocated node, use [`AstBuilder::import_meta`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `meta`
-    /// * `property`
     #[deprecated(
         note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
     )]
     #[inline]
-    pub fn alloc_meta_property(
-        self,
-        span: Span,
-        meta: IdentifierName<'a>,
-        property: IdentifierName<'a>,
-    ) -> ArenaBox<'a, MetaProperty<'a>> {
-        ArenaBox::new_in(self.meta_property(span, meta, property), &self)
+    pub fn alloc_import_meta(self, span: Span) -> ArenaBox<'a, ImportMeta> {
+        ArenaBox::new_in(self.import_meta(span), &self)
+    }
+
+    /// Build a [`NewTarget`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_new_target`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn new_target(self, span: Span) -> NewTarget {
+        NewTarget { node_id: Default::default(), span }
+    }
+
+    /// Build a [`NewTarget`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::new_target`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_new_target(self, span: Span) -> ArenaBox<'a, NewTarget> {
+        ArenaBox::new_in(self.new_target(span), &self)
     }
 
     /// Build a [`SpreadElement`].

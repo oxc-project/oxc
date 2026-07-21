@@ -315,19 +315,14 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
-    fn enter_meta_property(
-        &mut self,
-        node: &mut MetaProperty<'a>,
-        ctx: &mut TraverseCtx<'a, State>,
-    ) {
-    }
+    fn enter_import_meta(&mut self, node: &mut ImportMeta, ctx: &mut TraverseCtx<'a, State>) {}
     #[inline]
-    fn exit_meta_property(
-        &mut self,
-        node: &mut MetaProperty<'a>,
-        ctx: &mut TraverseCtx<'a, State>,
-    ) {
-    }
+    fn exit_import_meta(&mut self, node: &mut ImportMeta, ctx: &mut TraverseCtx<'a, State>) {}
+
+    #[inline]
+    fn enter_new_target(&mut self, node: &mut NewTarget, ctx: &mut TraverseCtx<'a, State>) {}
+    #[inline]
+    fn exit_new_target(&mut self, node: &mut NewTarget, ctx: &mut TraverseCtx<'a, State>) {}
 
     #[inline]
     fn enter_spread_element(

@@ -3,7 +3,7 @@ use std::{env, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_regular_expression::{ConstructorParser as RegExpParser, Options as RegExpParserOptions};
 use oxc_span::SourceType;
@@ -43,7 +43,7 @@ struct RegularExpressionVisitor {
     source_text: Arc<str>,
 }
 
-impl<'a> Visit<'a> for RegularExpressionVisitor {
+impl<'a> VisitJs<'a> for RegularExpressionVisitor {
     fn visit_reg_exp_literal(&mut self, re: &RegExpLiteral<'a>) {
         println!("🍀 {}", re.span.source_text(self.source_text.as_ref()));
 

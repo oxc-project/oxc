@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Function, FunctionType, IdentifierReference, MetaProperty, Super, ThisExpression,
+        Argument, Function, FunctionType, IdentifierReference, NewTarget, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -377,10 +377,8 @@ impl<'a> Visit<'a> for ScopeScanner {
         self.sup = true;
     }
 
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        if it.meta.name == "new" && it.property.name == "target" {
-            self.meta = true;
-        }
+    fn visit_new_target(&mut self, _it: &NewTarget) {
+        self.meta = true;
     }
 
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {

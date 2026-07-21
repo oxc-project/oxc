@@ -1,30 +1,54 @@
-use oxc_ecmascript::constant_evaluation::ConstantValue;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::Str;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::scope::ScopeId;
 
-use crate::{CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_value::SymbolValues};
+use crate::{CompressOptions, symbol_state::SymbolState};
 
-/// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
-/// two consumption points. Live from `MinifierState::new` so the pre-loop
-/// `Normalize` pass records drops through the same typed helpers as the
-/// peephole loop; consumed and re-initialized by `flush_pass_dirty` in the
-/// `Compressor` driver after `Normalize` and after every peephole pass.
-pub struct PassDirty<'a> {
+/// Compression pipeline selected for this run.
+#[derive(Clone, Copy)]
+pub enum CompressionMode {
+    /// Remove dead code and apply size-reducing transformations.
+    Full,
+    /// Remove dead and unused code without otherwise shrinking the output.
+    /// This still runs the constant folds needed to expose removable branches,
+    /// but skips transforms whose only purpose is smaller syntax. Rolldown uses
+    /// this pipeline for tree-shaking with or without output minification.
+    TreeShakeOnly,
+}
+
+/// Immutable configuration shared by all compression passes in one run.
+struct CompressionConfig {
+    source_type: SourceType,
+    options: CompressOptions,
+    mode: CompressionMode,
+}
+
+/// Changes accumulated between two pass-completion boundaries. Live from
+/// `MinifierState::new` so the pre-loop `Normalize` pass records drops through
+/// the same typed helpers as the peephole loop; consumed and reset or resized
+/// by [`crate::compression_pass`] after Normalize and every peephole pass.
+pub struct PassChanges<'a> {
+    /// Whether the completed pass changed facts or AST shape in a way that
+    /// requires another peephole traversal. This signal does not itself force
+    /// liveness analysis; removed candidate references and dropped direct eval
+    /// calls continue to gate that work independently.
+    revisit_requested: bool,
+
     /// `ReferenceId`s whose AST node has been removed and not re-installed
     /// in any later mutation this pass.
     ///
     /// Arena-allocated bitset sized to the program's `references_len()` at
     /// construction / the previous flush. A `BitSet` (rather than an
-    /// `FxHashSet`) keeps the per-ident cost on the `DropDiff` hot path to
+    /// `FxHashSet`) keeps the per-ident cost on the
+    /// `DroppedSubtreeCollector` hot path to
     /// a direct array store instead of a hash + heap insert.
     ///
-    /// INVARIANT (the "capacity guard", relied on by `DropDiff`,
+    /// INVARIANT (the "capacity guard", relied on by `DroppedSubtreeCollector`,
     /// `Scoping::retain_resolved_references_excluding`, and the over-prune
     /// debug assert): references minted MID-pass have indices beyond the
     /// bitset's capacity and are treated as live everywhere — never marked,
@@ -32,54 +56,36 @@ pub struct PassDirty<'a> {
     /// list until callers rebuild scoping (a missed optimization, never a
     /// correctness issue). `Normalize` mints no references, so a capacity
     /// taken at construction is exact for the first pass.
-    pub(crate) dead_refs: BitSet<'a>,
+    pub(crate) removed_references: BitSet<'a>,
 
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at flush time.
-    pub(crate) eval_dropped: bool,
+    pub(crate) direct_eval_dropped: bool,
 }
 
-impl<'a> PassDirty<'a> {
+impl<'a> PassChanges<'a> {
     pub fn new(references_len: usize, allocator: &'a Allocator) -> Self {
-        Self { dead_refs: BitSet::new_in(references_len, allocator), eval_dropped: false }
+        Self {
+            revisit_requested: false,
+            removed_references: BitSet::new_in(references_len, allocator),
+            direct_eval_dropped: false,
+        }
     }
 }
 
 pub struct MinifierState<'a> {
-    pub source_type: SourceType,
+    /// Source semantics, compression options, and pipeline selection fixed for
+    /// the lifetime of this run.
+    config: CompressionConfig,
 
-    pub options: CompressOptions,
+    /// Dense per-pass values, sparse persistent metadata, and optional
+    /// reachability data indexed by semantic symbols.
+    pub(crate) symbols: SymbolState<'a>,
 
-    /// Two modes: tree-shaking only (`true`), or full minify (`false`).
-    /// `Compressor::dead_code_elimination` uses `true`; `Compressor::build`
-    /// uses `false`.
-    ///
-    /// "DCE" here does not mean "removes dead code" (full minify does that
-    /// too). It means tree-shaking: remove code that nothing imports, without
-    /// making the rest smaller. Rolldown runs this on every tree-shaking build,
-    /// with or without `minify`, so users can see this output directly.
-    ///
-    /// In this mode `exit_*` only runs the passes that remove code, plus the
-    /// constant folds those removals need. For example, `fold_binary_expr`
-    /// folds `'production' === 'production'` to `true` so the dead `else`
-    /// branch can be dropped (this is how `define` values remove branches). The
-    /// passes that only shrink code (`substitute_*`, `minimize_*`) are left
-    /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
-    pub dce: bool,
-
-    /// The return value of function declarations that are pure
-    pub pure_functions: FxHashMap<SymbolId, Option<ConstantValue<'a>>>,
-
-    pub symbol_values: SymbolValues<'a>,
-
-    /// Private member usage for classes
-    pub class_symbols_stack: ClassSymbolsStack<'a>,
-
-    /// Program-wide, monotone per-symbol facts. See
-    /// [`SymbolFact`](crate::symbol_facts::SymbolFact) for each bit and its
-    /// consumer, and [`PersistentSymbolFacts`] for the lifecycle contract
-    /// every fact obeys.
-    pub symbol_facts: PersistentSymbolFacts,
+    /// Private-name usage scoped by nested classes. This tracks `#name`
+    /// strings, not semantic `SymbolId`s, so it deliberately stays outside
+    /// `SymbolState`.
+    pub private_member_usage: PrivateMemberUsageStack<'a>,
 
     /// One frame per enclosing function body (program root at the bottom).
     /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
@@ -92,16 +98,9 @@ pub struct MinifierState<'a> {
     /// `init_symbol_value`.
     pub body_unsafe_stack: NonEmptyStack<(ScopeId, bool)>,
 
-    /// Set when a typed helper mutates the AST. Private by design: the only
-    /// writers are the helpers on `MinifierTraverseCtx`; the only reader is
-    /// the fixed-point loop driver via `take_mutated()`.
-    mutated: bool,
-
-    /// Per-pass dirty accumulator populated by `replace_*` / `drop_*` helpers
-    /// as subtrees are removed. Consumed by `flush_pass_dirty` in the
-    /// `Compressor` driver (pre-loop and after each mutated pass) to drive
-    /// the incremental scoping refresh.
-    pub(crate) dirty: PassDirty<'a>,
+    /// Per-pass change accumulator populated by typed mutation helpers and
+    /// consumed by `compression_pass` after Normalize and every peephole pass.
+    pub(crate) pass_changes: PassChanges<'a>,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
@@ -109,90 +108,111 @@ pub struct MinifierState<'a> {
 }
 
 impl<'a> MinifierState<'a> {
-    pub fn new(
+    pub(crate) fn new(
         source_type: SourceType,
         options: CompressOptions,
-        dce: bool,
+        mode: CompressionMode,
         scoping: &Scoping,
         allocator: &'a Allocator,
     ) -> Self {
+        let symbols = SymbolState::new(source_type, &options, scoping, allocator);
         Self {
-            source_type,
-            options,
-            dce,
-            pure_functions: FxHashMap::default(),
-            symbol_values: SymbolValues::new(scoping.symbols_len()),
-            class_symbols_stack: ClassSymbolsStack::new(),
-            symbol_facts: PersistentSymbolFacts::default(),
+            config: CompressionConfig { source_type, options, mode },
+            symbols,
+            private_member_usage: PrivateMemberUsageStack::new(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
-            mutated: false,
-            dirty: PassDirty::new(scoping.references_len(), allocator),
+            pass_changes: PassChanges::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
         }
     }
 
-    /// Whether `Normalize`'s member-write scan should seed `symbol_facts`,
+    /// Whether `Normalize`'s member-write scan should seed persistent metadata,
     /// i.e. whether any consumer is live in this configuration. In full
     /// minify the default-mode write-only property drop reads
-    /// `MEMBER_WRITE_HAZARD` and the shared drop predicate reads
-    /// `PROTO_WRITTEN`. In DCE mode the default path is disabled and only the
-    /// `property_write_side_effects: false` opt-in drop runs (reading
-    /// `PROTO_WRITTEN`), so with the knob left on nothing reads the facts and
+    /// hazardous-member state and the shared drop predicate reads possible
+    /// prototype mutation. In tree-shake-only mode the default path is disabled
+    /// and only the `property_write_side_effects: false` opt-in drop reads the
+    /// prototype state, so with the knob left on nothing reads the effects and
     /// seeding is skipped.
-    pub fn seeds_symbol_facts(&self) -> bool {
-        !self.dce || !self.options.treeshake.property_write_side_effects
+    pub(crate) fn should_track_member_write_effects(&self) -> bool {
+        !self.is_tree_shake_only() || !self.options().treeshake.property_write_side_effects
     }
 
-    /// Returns whether the AST was mutated since the last call, and resets.
-    /// Read and reset are one operation so the signal cannot be cleared
-    /// anywhere except at its single consumption point.
-    pub(crate) fn take_mutated(&mut self) -> bool {
-        std::mem::take(&mut self.mutated)
+    pub(crate) fn options(&self) -> &CompressOptions {
+        &self.config.options
     }
 
-    /// Record that a typed helper mutated the AST.
-    pub(crate) fn record_mutation(&mut self) {
-        self.mutated = true;
+    pub(crate) fn source_type(&self) -> SourceType {
+        self.config.source_type
+    }
+
+    pub(crate) fn is_tree_shake_only(&self) -> bool {
+        matches!(self.config.mode, CompressionMode::TreeShakeOnly)
+    }
+
+    /// Request another peephole traversal after the current pass completes.
+    ///
+    /// This is deliberately separate from [`Self::record_ast_change`] for
+    /// future fact-only callers such as #24060. Such a caller may enable more
+    /// transforms without changing the AST, resolved references, or direct-eval
+    /// scope flags.
+    pub(crate) fn request_revisit(&mut self) {
+        self.pass_changes.revisit_requested = true;
+    }
+
+    /// Record an AST change and schedule the traversal needed to consume it.
+    /// Typed mutation helpers use this as their AST-change entry point.
+    pub(crate) fn record_ast_change(&mut self) {
+        self.request_revisit();
+    }
+
+    /// Return whether the completed pass requested another traversal, then
+    /// reset the signal for the next pass.
+    pub(crate) fn take_revisit_requested(&mut self) -> bool {
+        std::mem::take(&mut self.pass_changes.revisit_requested)
+    }
+
+    /// Whether every per-pass change has been consumed.
+    pub(crate) fn pass_changes_are_clean(&self) -> bool {
+        !self.pass_changes.revisit_requested
+            && self.pass_changes.removed_references.is_empty()
+            && !self.pass_changes.direct_eval_dropped
     }
 }
 
-/// Stack to track class symbol information
-pub struct ClassSymbolsStack<'a> {
+/// Private member names used in each currently enclosing class.
+pub struct PrivateMemberUsageStack<'a> {
     stack: NonEmptyStack<FxHashSet<Str<'a>>>,
 }
 
-impl<'a> ClassSymbolsStack<'a> {
+impl<'a> PrivateMemberUsageStack<'a> {
     pub fn new() -> Self {
         Self { stack: NonEmptyStack::new(FxHashSet::default()) }
     }
 
-    /// Check if the stack is exhausted
-    pub fn is_exhausted(&self) -> bool {
+    /// Whether all class scopes have been exited.
+    pub fn is_at_root(&self) -> bool {
         self.stack.is_exhausted()
     }
 
-    /// Enter a new class scope
-    pub fn push_class_scope(&mut self) {
+    pub fn enter_class(&mut self) {
         self.stack.push(FxHashSet::default());
     }
 
-    /// Exit the current class scope
-    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Str<'a>>) {
-        let mut used_private_symbols = self.stack.pop();
-        declared_private_symbols.for_each(|name| {
-            used_private_symbols.remove(&name);
+    /// Exit a class and propagate uses of names declared by an outer class.
+    pub fn exit_class(&mut self, declared_private_members: impl Iterator<Item = Str<'a>>) {
+        let mut used_private_members = self.stack.pop();
+        declared_private_members.for_each(|name| {
+            used_private_members.remove(&name);
         });
-        // if the symbol was not declared in this class, that is declared in the class outside the current class
-        self.stack.last_mut().extend(used_private_symbols);
+        self.stack.last_mut().extend(used_private_members);
     }
 
-    /// Add a private member to the current class scope
-    pub fn push_private_member_to_current_class(&mut self, name: Str<'a>) {
+    pub fn record_use(&mut self, name: Str<'a>) {
         self.stack.last_mut().insert(name);
     }
 
-    /// Check if a private member is used in the current class scope
-    pub fn is_private_member_used_in_current_class(&self, name: &Str<'a>) -> bool {
+    pub fn is_used(&self, name: &Str<'a>) -> bool {
         self.stack.last().contains(name)
     }
 }

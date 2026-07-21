@@ -86,6 +86,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace top‐level import type with an inline type specifier.
 
+  ⚠ import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers when there are only type imports.
+   ╭─[consistent_type_specifier_style.tsx:1:1]
+ 1 │ import { type Foo } from 'Foo';
+   · ───────────────────────────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers when there are only type imports.
+   ╭─[consistent_type_specifier_style.tsx:1:1]
+ 1 │ import { type Foo as Bar } from 'Foo';
+   · ──────────────────────────────────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers when there are only type imports.
+   ╭─[consistent_type_specifier_style.tsx:1:1]
+ 1 │ import { type Foo, type Bar } from 'Foo';
+   · ─────────────────────────────────────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
   ⚠ import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
  1 │ import { type Foo } from './index.d.ts';
@@ -139,5 +160,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[consistent_type_specifier_style.tsx:1:10]
  1 │ import { type Foo } from './app.d.css.ts';
    ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:15]
+ 1 │ import { Foo, type Bar } from './index.d.ts';
+   ·               ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.

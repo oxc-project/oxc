@@ -3544,7 +3544,24 @@
           ]
         },
         "jsdoc/require-param": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-description": {
           "anyOf": [
@@ -5709,6 +5726,26 @@
             }
           ]
         },
+        "node/no-top-level-await": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoTopLevelAwaitConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "object-shorthand": {
           "anyOf": [
             {
@@ -5970,7 +6007,7 @@
                   "$ref": "#/definitions/PreferDestructuringOption"
                 },
                 {
-                  "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+                  "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
                 }
               ],
               "maxItems": 3,
@@ -6488,6 +6525,26 @@
         },
         "react/forward-ref-uses-ref": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/function-component-definition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/FunctionComponentDefinition"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/hook-use-state": {
           "anyOf": [
@@ -9760,6 +9817,9 @@
         "vitest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vitest/padding-around-test-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vitest/prefer-called-exactly-once-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -11189,6 +11249,31 @@
             }
           ],
           "markdownDescription": "Override the style specifically for named exports. Can be \"expression\", \"declaration\", or \"ignore\" (default)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FunctionComponentDefinition": {
+      "$ref": "#/definitions/FunctionComponentDefinitionConfig"
+    },
+    "FunctionComponentDefinitionConfig": {
+      "type": "object",
+      "properties": {
+        "namedComponents": {
+          "default": "function-declaration",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NamedComponents"
+            }
+          ]
+        },
+        "unnamedComponents": {
+          "default": "function-expression",
+          "allOf": [
+            {
+              "$ref": "#/definitions/UnnamedComponents"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -12886,6 +12971,14 @@
             "prefer-inline"
           ],
           "markdownDescription": "Prefer `import { type Foo } from 'foo'` for type imports."
+        },
+        {
+          "description": "Prefer `import type { Foo } from 'foo'` when all named imports are types, but allow\n`import { type Foo, bar } from 'foo'` when value imports are present.",
+          "type": "string",
+          "enum": [
+            "prefer-top-level-if-only-type-imports"
+          ],
+          "markdownDescription": "Prefer `import type { Foo } from 'foo'` when all named imports are types, but allow\n`import { type Foo, bar } from 'foo'` when value imports are present."
         }
       ]
     },
@@ -13016,6 +13109,27 @@
       ],
       "markdownDescription": "Name specifier that can be a single string or array of strings"
     },
+    "NamedComponentStyle": {
+      "type": "string",
+      "enum": [
+        "function-declaration",
+        "arrow-function",
+        "function-expression"
+      ]
+    },
+    "NamedComponents": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NamedComponentStyle"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NamedComponentStyle"
+          }
+        }
+      ]
+    },
     "NamedExports": {
       "type": "string",
       "enum": [
@@ -13035,6 +13149,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "Namespaces": {
+      "oneOf": [
+        {
+          "description": "Allow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow declarations directly inside TypeScript namespace or module bodies."
+        },
+        {
+          "description": "Disallow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "disallow"
+          ],
+          "markdownDescription": "Disallow declarations directly inside TypeScript namespace or module bodies."
+        }
+      ]
     },
     "NativeAllowList": {
       "anyOf": [
@@ -14116,6 +14250,16 @@
             }
           ],
           "markdownDescription": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior)."
+        },
+        "namespaces": {
+          "description": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/Namespaces"
+            }
+          ],
+          "markdownDescription": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed."
         }
       },
       "additionalProperties": false
@@ -14812,7 +14956,6 @@
       "properties": {
         "allow": {
           "description": "These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.\nA common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,\nso statically importing it would lead to root directory conflicts, especially with `resolveJsonModule` enabled.\nYou can also use it to allow importing any JSON if your environment doesn't support JSON modules, or use it for other cases where `import` statements cannot work.\n\nWith `{ allow: ['/package\\\\.json$'] }`:\n\nExamples of **correct** code for this rule:\n```ts\nconsole.log(require('../package.json').version);\n```",
-          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -15226,6 +15369,18 @@
           },
           "uniqueItems": true,
           "markdownDescription": "An array of variable names that are allowed to alias `this`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoTopLevelAwaitConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreBin": {
+          "description": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules."
         }
       },
       "additionalProperties": false
@@ -16249,11 +16404,12 @@
       "type": "object",
       "properties": {
         "ignoreProps": {
-          "default": [],
+          "description": "Prop names to ignore, as regular expression patterns.",
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "Prop names to ignore, as regular expression patterns."
         }
       },
       "additionalProperties": false
@@ -16892,11 +17048,25 @@
           "$ref": "#/definitions/PreferDestructuringOption"
         },
         {
-          "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+          "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
         }
       ],
       "maxItems": 2,
       "minItems": 2
+    },
+    "PreferDestructuringEnforcementConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForDeclarationWithTypeAnnotation": {
+          "default": false,
+          "type": "boolean"
+        },
+        "enforceForRenamedProperties": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     },
     "PreferDestructuringOption": {
       "anyOf": [
@@ -16907,16 +17077,6 @@
           "$ref": "#/definitions/PreferDestructuringAssignmentConfig"
         }
       ]
-    },
-    "PreferDestructuringRenamedPropertiesConfig": {
-      "type": "object",
-      "properties": {
-        "enforceForRenamedProperties": {
-          "default": false,
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
     },
     "PreferDestructuringTargetOption": {
       "type": "object",
@@ -17716,6 +17876,83 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamConfig": {
+      "type": "object",
+      "properties": {
+        "checkConstructors": {
+          "description": "Whether to check constructor methods.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check constructor methods."
+        },
+        "checkDestructured": {
+          "description": "Whether to check destructured parameters.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters."
+        },
+        "checkDestructuredRoots": {
+          "description": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`."
+        },
+        "checkGetters": {
+          "description": "Whether to check getter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check getter methods."
+        },
+        "checkRestProperty": {
+          "description": "Whether to check rest properties.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check rest properties."
+        },
+        "checkSetters": {
+          "description": "Whether to check setter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check setter methods."
+        },
+        "checkTypesPattern": {
+          "description": "Regex pattern to match types that exempt parameters from checking.",
+          "default": "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$",
+          "type": "string",
+          "markdownDescription": "Regex pattern to match types that exempt parameters from checking."
+        },
+        "exemptedBy": {
+          "description": "List of JSDoc tags that exempt functions from `@param` checking.",
+          "default": [
+            "inheritdoc"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of JSDoc tags that exempt functions from `@param` checking."
+        },
+        "ignoreWhenAllParamsMissing": {
+          "description": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`."
+        },
+        "interfaceExemptsParamsCheck": {
+          "description": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`."
+        },
+        "useDefaultObjectProperties": {
+          "description": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`."
         }
       },
       "additionalProperties": false
@@ -18681,6 +18918,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "UnnamedComponentStyle": {
+      "type": "string",
+      "enum": [
+        "arrow-function",
+        "function-expression"
+      ]
+    },
+    "UnnamedComponents": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/UnnamedComponentStyle"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UnnamedComponentStyle"
+          }
+        }
+      ]
     },
     "UseIsnan": {
       "type": "object",

@@ -6,7 +6,7 @@ use oxc_ast::{
         Program, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
@@ -187,7 +187,7 @@ struct AwaitDetector {
     found: bool,
 }
 
-impl<'a> Visit<'a> for AwaitDetector {
+impl<'a> VisitJs<'a> for AwaitDetector {
     fn visit_await_expression(&mut self, _: &AwaitExpression) {
         self.found = true;
     }
@@ -246,14 +246,14 @@ impl<'a> ExposeAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for ExposeAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for ExposeAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         self.found = true;
     }
 
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if !self.found {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
@@ -261,7 +261,7 @@ impl<'a> Visit<'a> for ExposeAfterAwaitVisitor<'a> {
             self.errors.push((call_expr.span, "expose".to_string()));
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

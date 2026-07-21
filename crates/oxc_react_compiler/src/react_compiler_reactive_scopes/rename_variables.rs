@@ -55,7 +55,7 @@ impl<'a> Scopes<'a> {
     }
 
     fn visit_identifier(&mut self, identifier_id: IdentifierId, env: &Environment<'a>) {
-        let identifier = &env.identifiers[identifier_id.0 as usize];
+        let identifier = &env.identifiers[identifier_id];
         let original_name = match &identifier.name {
             Some(name) => *name,
             None => return,
@@ -166,7 +166,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
 
     /// TS: `visitScope(scope, state) { for (const [_, decl] of scope.scope.declarations) state.visit(decl.identifier); this.traverseScope(scope, state) }`
     fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Scopes<'a>) {
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope];
         let decl_ids: Vec<IdentifierId> =
             scope_data.declarations.iter().map(|(_, d)| d.identifier).collect();
         for id in decl_ids {
@@ -199,38 +199,19 @@ pub fn rename_variables<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
 ) -> IdentHashSet<'a> {
-    rename_variables_with_parent(func, env, None)
-}
-
-fn rename_variables_with_parent<'a>(
-    func: &mut ReactiveFunction<'a>,
-    env: &mut Environment<'a>,
-    parent_names: Option<&IdentHashSet<'a>>,
-) -> IdentHashSet<'a> {
     let globals = collect_referenced_globals(&func.body, env);
 
     // Phase 1: Use ReactiveFunctionVisitor to compute the rename mapping.
     // This collects DeclarationId -> IdentifierName without mutating env.
     let mut scopes = Scopes::new(globals.clone());
-    // If parent names are provided (for outlined functions), pre-populate
-    // the scope stack so that parameter names don't collide with parent
-    // variables. In the TS compiler, outlined functions are placed in the
-    // parent function body and processed within the parent's scope context.
-    if let Some(parent) = parent_names {
-        scopes.enter();
-        for name in parent {
-            scopes.stack.last_mut().unwrap().insert(*name, DeclarationId(u32::MAX));
-            scopes.names.insert(*name);
-        }
-    }
     rename_variables_impl(func, &Visitor { env }, &mut scopes);
 
     // Phase 2: Apply the computed renames to all identifiers in env.
     for identifier in env.identifiers.iter_mut() {
-        if let Some(mapped_name) = scopes.seen.get(&identifier.declaration_id) {
-            if identifier.name.is_some() {
-                identifier.name = Some(*mapped_name);
-            }
+        if let Some(mapped_name) = scopes.seen.get(&identifier.declaration_id)
+            && identifier.name.is_some()
+        {
+            identifier.name = Some(*mapped_name);
         }
     }
 
@@ -341,13 +322,13 @@ fn collect_globals_hir_function<'a>(
     globals: &mut IdentHashSet<'a>,
     env: &Environment<'a>,
 ) {
-    let inner_func = &env.functions[func_id.0 as usize];
+    let inner_func = &env.functions[func_id];
     let block_ids: Vec<_> = inner_func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let inner_func = &env.functions[func_id.0 as usize];
+        let inner_func = &env.functions[func_id];
         let block = &inner_func.body.blocks[&block_id];
         for instr_id in &block.instructions {
-            let instr = &inner_func.instructions[instr_id.0 as usize];
+            let instr = &inner_func.instructions[instr_id.index()];
             if let InstructionValue::LoadGlobal { binding, .. } = &instr.value {
                 globals.insert(binding.name());
             }

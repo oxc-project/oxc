@@ -279,10 +279,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(kind) || has_leading_operator {
             let mut types = ArenaVec::from_value_in(ty, self);
             while self.eat(kind) {
-                types.push(
+                let ty =
                     /*parseFunctionOrConstructorTypeToError(isUnionType) || */
-                    parse_constituent_type(self),
-                );
+                    parse_constituent_type(self);
+                types.push(ty);
             }
             let span = self.end_span(span);
             ty = match kind {
@@ -1206,7 +1206,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::ts_import_type_options_expected_with(key_span));
         }
         // Use the actual string from the source (not a static string) to ensure it's in the arena
-        let key_name = self.cur_string();
+        let key_name = self.ident(self.cur_string());
         let with_key_span = self.start_span();
         self.bump_any();
         let with_key = IdentifierName::boxed(self.end_span(with_key_span), key_name, self);
@@ -1222,7 +1222,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
 
         // Create the outer `with: { ... }` property
-        let with_property = ObjectProperty::boxed(
+        let with_property = ObjectPropertyKind::new_object_property(
             self.end_span(with_key_span),
             PropertyKind::Init,
             PropertyKey::StaticIdentifier(with_key),
@@ -1233,14 +1233,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self,
         );
 
-        let outer_properties =
-            ArenaVec::from_value_in(ObjectPropertyKind::ObjectProperty(with_property), self);
-
         // Allow optional trailing comma: `{ with: { type: "json" }, }`
         let _ = self.eat(Kind::Comma);
 
         self.expect(Kind::RCurly);
-        ObjectExpression::boxed(self.end_span(span), outer_properties, self)
+        ObjectExpression::boxed(self.end_span(span), [with_property], self)
     }
 
     /// Parse TypeScript import type attributes object: `{ type: "json" }`
@@ -1284,7 +1281,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
-                properties.push(ObjectPropertyKind::new_object_property(
+                let property = ObjectPropertyKind::new_object_property(
                     self.end_span(prop_span),
                     PropertyKind::Init,
                     key,
@@ -1293,7 +1290,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     false,
                     true, /* computed */
                     self,
-                ));
+                );
+                properties.push(property);
                 continue;
             }
 
@@ -1309,7 +1307,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::Colon);
             let value = self.parse_assignment_expression_or_higher();
 
-            properties.push(ObjectPropertyKind::new_object_property(
+            let property = ObjectPropertyKind::new_object_property(
                 self.end_span(prop_span),
                 PropertyKind::Init,
                 key,
@@ -1318,7 +1316,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 false,
                 false,
                 self,
-            ));
+            );
+            properties.push(property);
         }
 
         self.expect(Kind::RCurly);

@@ -189,12 +189,16 @@ const _: () = {
     assert!(offset_of!(NewExpression, arguments) == 40);
 
     // Padding: 4 bytes
-    assert!(size_of::<MetaProperty>() == 80);
-    assert!(align_of::<MetaProperty>() == 8);
-    assert!(offset_of!(MetaProperty, span) == 0);
-    assert!(offset_of!(MetaProperty, node_id) == 8);
-    assert!(offset_of!(MetaProperty, meta) == 16);
-    assert!(offset_of!(MetaProperty, property) == 48);
+    assert!(size_of::<ImportMeta>() == 16);
+    assert!(align_of::<ImportMeta>() == 8);
+    assert!(offset_of!(ImportMeta, span) == 0);
+    assert!(offset_of!(ImportMeta, node_id) == 8);
+
+    // Padding: 4 bytes
+    assert!(size_of::<NewTarget>() == 16);
+    assert!(align_of::<NewTarget>() == 8);
+    assert!(offset_of!(NewTarget, span) == 0);
+    assert!(offset_of!(NewTarget, node_id) == 8);
 
     // Padding: 4 bytes
     assert!(size_of::<SpreadElement>() == 32);
@@ -2000,12 +2004,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(NewExpression, arguments) == 28);
 
     // Padding: 0 bytes
-    assert!(size_of::<MetaProperty>() == 60);
-    assert!(align_of::<MetaProperty>() == 4);
-    assert!(offset_of!(MetaProperty, span) == 0);
-    assert!(offset_of!(MetaProperty, node_id) == 8);
-    assert!(offset_of!(MetaProperty, meta) == 12);
-    assert!(offset_of!(MetaProperty, property) == 36);
+    assert!(size_of::<ImportMeta>() == 12);
+    assert!(align_of::<ImportMeta>() == 4);
+    assert!(offset_of!(ImportMeta, span) == 0);
+    assert!(offset_of!(ImportMeta, node_id) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<NewTarget>() == 12);
+    assert!(align_of::<NewTarget>() == 4);
+    assert!(offset_of!(NewTarget, span) == 0);
+    assert!(offset_of!(NewTarget, node_id) == 8);
 
     // Padding: 0 bytes
     assert!(size_of::<SpreadElement>() == 20);

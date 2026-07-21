@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
 use oxc_span::SPAN;
@@ -860,8 +860,7 @@ fn template_literal_escape_when_building_ast() {
         cooked: Some(Str::from_str_in(cooked, &ast)),
     };
     let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
-    let quasis = ArenaVec::from_value_in(element, &ast);
-    let template_literal = TemplateLiteral::new(SPAN, quasis, ArenaVec::new_in(&ast), &ast);
+    let template_literal = TemplateLiteral::new(SPAN, [element], [], &ast);
 
     let expr = Expression::new_template_literal(
         SPAN,
@@ -870,16 +869,7 @@ fn template_literal_escape_when_building_ast() {
         &ast,
     );
     let stmt = Statement::new_expression_statement(SPAN, expr, &ast);
-    let program = Program::new(
-        SPAN,
-        oxc_span::SourceType::mjs(),
-        "",
-        ArenaVec::new_in(&ast),
-        None,
-        ArenaVec::new_in(&ast),
-        ArenaVec::from_value_in(stmt, &ast),
-        &ast,
-    );
+    let program = Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
 
     let result = Codegen::new().build(&program).code;
     // The raw value should have been escaped by template_element with escape_raw: true

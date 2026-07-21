@@ -8,7 +8,7 @@ use miette::{LabeledSpan, SourceOffset, SourceSpan};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
-use oxc_allocator::{Allocator, CloneIn, Dummy};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
@@ -635,7 +635,7 @@ impl<'a> CloneIn<'a> for Span {
     type Cloned = Self;
 
     #[inline]
-    fn clone_in(&self, _: &'a Allocator) -> Self {
+    fn clone_in_impl(&self, _with_semantic_ids: CloneInSemanticIds, _: &'a Allocator) -> Self {
         *self
     }
 }

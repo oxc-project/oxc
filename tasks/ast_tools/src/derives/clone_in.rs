@@ -38,19 +38,23 @@ impl Derive for DeriveCloneIn {
         &[("clone_in", attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField))]
     }
 
-    /// Parse `#[clone_in(default)]` on struct, enum, or struct field.
+    /// Parse `#[clone_in(default)]` on struct, enum, or struct field,
+    /// or `#[clone_in(semantic_id)]` on struct.
     fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
         // No need to check attr name is `clone_in`, because that's the only attribute this derive handles.
-        if !matches!(part, AttrPart::Tag("default")) {
-            return Err(());
-        }
-
-        match location {
-            AttrLocation::Struct(struct_def) => struct_def.clone_in.is_default = true,
-            AttrLocation::Enum(enum_def) => enum_def.clone_in.is_default = true,
-            AttrLocation::StructField(struct_def, field_index) => {
-                struct_def.fields[field_index].clone_in.is_default = true;
-            }
+        match part {
+            AttrPart::Tag("default") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.clone_in.is_default = true,
+                AttrLocation::Enum(enum_def) => enum_def.clone_in.is_default = true,
+                AttrLocation::StructField(struct_def, field_index) => {
+                    struct_def.fields[field_index].clone_in.is_default = true;
+                }
+                _ => return Err(()),
+            },
+            AttrPart::Tag("semantic_id") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.clone_in.is_semantic_id = true,
+                _ => return Err(()),
+            },
             _ => return Err(()),
         }
 
@@ -65,7 +69,7 @@ impl Derive for DeriveCloneIn {
             use std::cell::Cell;
 
             ///@@line_break
-            use oxc_allocator::{Allocator, CloneIn};
+            use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
         }
     }
 
@@ -80,45 +84,35 @@ impl Derive for DeriveCloneIn {
 fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
     let type_ident = struct_def.ident();
 
-    let (clone_in_body, clone_in_with_semantic_ids_body) = if struct_def.clone_in.is_default {
-        let clone_in_body = quote!(Default::default());
-        (clone_in_body.clone(), clone_in_body)
+    let (body, body_uses_flag) = if struct_def.clone_in.is_default {
+        (quote!(Default::default()), false)
+    } else if struct_def.fields.is_empty() {
+        (quote!( #type_ident ), false)
     } else {
-        let has_fields = !struct_def.fields.is_empty();
-        let clone_in_body = if has_fields {
-            let fields = struct_def.fields.iter().map(|field| {
-                let field_ident = field.ident();
-                if struct_field_is_default(field, schema) {
-                    quote!( #field_ident: Default::default() )
-                } else {
-                    quote!( #field_ident: CloneIn::clone_in(&self.#field_ident, allocator) )
-                }
-            });
-            quote!( #type_ident { #(#fields),* } )
-        } else {
-            quote!( #type_ident )
-        };
-
-        let clone_in_with_semantic_ids_body = if has_fields {
-            let fields = struct_def.fields.iter().map(|field| {
-                let field_ident = field.ident();
-                quote!( #field_ident: CloneIn::clone_in_with_semantic_ids(&self.#field_ident, allocator) )
-            });
-            quote!( #type_ident { #(#fields),* } )
-        } else {
-            quote!( #type_ident )
-        };
-
-        (clone_in_body, clone_in_with_semantic_ids_body)
+        let fields = struct_def.fields.iter().map(|field| {
+            let field_ident = field.ident();
+            if struct_field_is_default(field, schema) {
+                // Fields (or fields whose type is) marked `#[clone_in(default)]` always reset to their default
+                quote!( #field_ident: Default::default() )
+            } else if struct_field_is_semantic_id_cell_option(field, schema) {
+                // `Cell<Option<Id>>` semantic ID fields (`scope_id`, `symbol_id`, `reference_id`)
+                // clone via `SemanticId::clone_cell_option_id`, which keeps the ID or resets it to `None`,
+                // depending on `with_semantic_ids`.
+                //
+                // The generic `Option<T>` / `Cell<T>` `CloneIn` impls can't produce that reset -
+                // `Option<T>`'s impl maps over `Some`, which would reset `Some(id)` to `Some(dummy)`, not `None`.
+                //
+                // `SemanticId` lives in `oxc_syntax`, so it's named by its full path here rather than
+                // imported in the prelude (which is shared with crates that don't depend on `oxc_syntax`).
+                quote!( #field_ident: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(&self.#field_ident, with_semantic_ids) )
+            } else {
+                quote!( #field_ident: CloneIn::clone_in_impl(&self.#field_ident, with_semantic_ids, allocator) )
+            }
+        });
+        (quote!( #type_ident { #(#fields),* } ), true)
     };
 
-    generate_impl(
-        &type_ident,
-        &clone_in_body,
-        &clone_in_with_semantic_ids_body,
-        struct_def.has_lifetime,
-        false,
-    )
+    generate_impl(&type_ident, &body, struct_def.has_lifetime, false, body_uses_flag)
 }
 
 /// Get if a struct field should be filled with default value when cloning.
@@ -139,36 +133,36 @@ fn struct_field_is_default(field: &FieldDef, schema: &Schema) -> bool {
     }
 }
 
+/// Get if a struct field is a `Cell<Option<Id>>`, where `Id` is a semantic ID type
+/// (marked `#[clone_in(semantic_id)]`).
+///
+/// Such fields are cloned with `SemanticId::clone_cell_option_id`.
+fn struct_field_is_semantic_id_cell_option(field: &FieldDef, schema: &Schema) -> bool {
+    let TypeDef::Cell(cell_def) = field.type_def(schema) else { return false };
+    let TypeDef::Option(option_def) = cell_def.inner_type(schema) else { return false };
+    let TypeDef::Struct(struct_def) = option_def.inner_type(schema) else { return false };
+    struct_def.clone_in.is_semantic_id
+}
+
 fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let type_ident = enum_def.ident();
 
-    let (clone_in_body, clone_in_with_semantic_ids_body) = if enum_def.clone_in.is_default {
-        let clone_in_body = quote!(Default::default());
-        (clone_in_body.clone(), clone_in_body)
+    let (body, body_uses_flag) = if enum_def.clone_in.is_default {
+        (quote!(Default::default()), false)
     } else if enum_def.is_fieldless() {
         // Fieldless enums are always `Copy`
-        let clone_in_body = quote!(*self);
-        (clone_in_body.clone(), clone_in_body)
+        (quote!(*self), false)
     } else {
-        (
-            derive_enum_body(enum_def, &type_ident, schema, false),
-            derive_enum_body(enum_def, &type_ident, schema, true),
-        )
+        (derive_enum_body(enum_def, &type_ident, schema), true)
     };
 
     // Add `#[inline(always)]` to methods for fieldless enums, because they're no-ops
     let inline_always = enum_def.is_fieldless();
 
-    generate_impl(
-        &type_ident,
-        &clone_in_body,
-        &clone_in_with_semantic_ids_body,
-        enum_def.has_lifetime,
-        inline_always,
-    )
+    generate_impl(&type_ident, &body, enum_def.has_lifetime, inline_always, body_uses_flag)
 }
 
-/// Generate the `match` body for an enum's `clone_in` / `clone_in_with_semantic_ids` method.
+/// Generate the `match` body for an enum's `clone_in_impl` method.
 ///
 /// Own variants are cloned arm-by-arm. Variants inherited via `INHERIT` are *not* expanded individually.
 /// Instead they are delegated to the inherited enum's own `CloneIn` impl, using `to_*` reference cast
@@ -177,21 +171,16 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 ///
 /// This avoids re-emitting the parent enum's variant arms (e.g. all of `Expression`'s ~30 variants)
 /// in every inheriting enum (`Argument`, `PropertyKey`, ...), which is a large source of binary bloat.
-fn derive_enum_body(
-    enum_def: &EnumDef,
-    type_ident: &Ident,
-    schema: &Schema,
-    with_semantic_ids: bool,
-) -> TokenStream {
-    let clone_method =
-        if with_semantic_ids { quote!(clone_in_with_semantic_ids) } else { quote!(clone_in) };
-
+///
+/// `with_semantic_ids` is threaded through as a runtime flag so a single traversal serves both
+/// `clone_in` and `clone_in_with_semantic_ids`.
+fn derive_enum_body(enum_def: &EnumDef, type_ident: &Ident, schema: &Schema) -> TokenStream {
     let own_arms = enum_def.variants.iter().map(|variant| {
         let ident = variant.ident();
         if variant.is_fieldless() {
             quote!( Self::#ident => #type_ident::#ident )
         } else {
-            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::#clone_method(it, allocator)) )
+            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_impl(it, with_semantic_ids, allocator)) )
         }
     });
 
@@ -206,7 +195,7 @@ fn derive_enum_body(
         let to_inherited = create_ident(&format!("to_{}", inherited.snake_name()));
         quote! {
             #(#patterns)|* => {
-                #type_ident::from(CloneIn::#clone_method(self.#to_inherited(), allocator))
+                #type_ident::from(CloneIn::clone_in_impl(self.#to_inherited(), with_semantic_ids, allocator))
             }
         }
     });
@@ -221,15 +210,20 @@ fn derive_enum_body(
 
 fn generate_impl(
     type_ident: &Ident,
-    clone_in_body: &TokenStream,
-    clone_in_with_semantic_ids_body: &TokenStream,
+    clone_in_impl_body: &TokenStream,
     has_lifetime: bool,
     inline_always: bool,
+    body_uses_flag: bool,
 ) -> TokenStream {
     let (from_lifetime, to_lifetime) =
         if has_lifetime { (quote!( <'_> ), quote!( <'new_alloc> )) } else { (quote!(), quote!()) };
 
     let inline = if inline_always { quote!( #[inline(always)] ) } else { quote!() };
+
+    // A single `clone_in_impl` traversal serves both public methods. Name the flag `_`-prefixed when
+    // the body ignores it (default structs, empty structs, fieldless enums) to avoid an unused warning.
+    let flag_param =
+        if body_uses_flag { quote!(with_semantic_ids) } else { quote!(_with_semantic_ids) };
 
     quote! {
         impl<'new_alloc> CloneIn<'new_alloc> for #type_ident #from_lifetime {
@@ -237,14 +231,12 @@ fn generate_impl(
 
             ///@@line_break
             #inline
-            fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-                #clone_in_body
-            }
-
-            ///@@line_break
-            #inline
-            fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-                #clone_in_with_semantic_ids_body
+            fn clone_in_impl(
+                &self,
+                #flag_param: CloneInSemanticIds,
+                allocator: &'new_alloc Allocator,
+            ) -> Self::Cloned {
+                #clone_in_impl_body
             }
         }
     }

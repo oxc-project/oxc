@@ -248,9 +248,14 @@ pub trait Traverse<'a> {
     fn exit_new_expression(&mut self, node: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
-    fn enter_meta_property(&mut self, node: &mut MetaProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    fn enter_import_meta(&mut self, node: &mut ImportMeta, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
-    fn exit_meta_property(&mut self, node: &mut MetaProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    fn exit_import_meta(&mut self, node: &mut ImportMeta, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_new_target(&mut self, node: &mut NewTarget, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_new_target(&mut self, node: &mut NewTarget, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_spread_element(&mut self, node: &mut SpreadElement<'a>, ctx: &mut TraverseCtx<'a>) {}

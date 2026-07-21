@@ -12,7 +12,6 @@
 //! Conditional on `env.config.enable_name_anonymous_functions`.
 
 use std::borrow::Cow;
-use std::mem::take;
 
 use rustc_hash::FxHashMap;
 
@@ -43,10 +42,11 @@ pub fn name_anonymous_functions<'a>(func: &mut HirFunction<'a>, env: &mut Enviro
         updates: &mut Vec<(FunctionId, Ident<'a>)>,
         allocator: &'a Allocator,
     ) {
-        if node.generated_name.is_some() && node.existing_name_hint.is_none() {
+        if let Some(generated_name) = &node.generated_name
+            && node.existing_name_hint.is_none()
+        {
             // Only add the prefix to anonymous functions regardless of nesting depth
-            let name =
-                format_ident!(allocator, "{}{}]", prefix, node.generated_name.as_ref().unwrap());
+            let name = format_ident!(allocator, "{}{}]", prefix, generated_name);
             updates.push((node.function_id, name));
         }
         // Whether or not we generated a name for the function at this node,
@@ -72,7 +72,7 @@ pub fn name_anonymous_functions<'a>(func: &mut HirFunction<'a>, env: &mut Enviro
 
     // Apply name updates to the inner HirFunction in the arena
     for (function_id, name) in &updates {
-        env.functions[function_id.0 as usize].name_hint = Some(*name);
+        env.functions[*function_id].name_hint = Some(*name);
     }
 
     // Update name_hint on FunctionExpression instruction values in the outer function
@@ -80,10 +80,8 @@ pub fn name_anonymous_functions<'a>(func: &mut HirFunction<'a>, env: &mut Enviro
 
     // Update name_hint on FunctionExpression instruction values in all arena functions
     for i in 0..env.functions.len() {
-        // We need to temporarily take the instructions to avoid borrow issues
-        let mut instructions = take(&mut env.functions[i].instructions);
-        apply_name_hints_to_instructions(&mut instructions, &update_map);
-        env.functions[i].instructions = instructions;
+        let func_id = FunctionId::from_usize(i);
+        apply_name_hints_to_instructions(&mut env.functions[func_id].instructions, &update_map);
     }
 }
 
@@ -95,10 +93,9 @@ fn apply_name_hints_to_instructions<'a>(
     for instr in instructions.iter_mut() {
         if let InstructionValue::FunctionExpression { lowered_func, name_hint, .. } =
             &mut instr.value
+            && let Some(new_name) = update_map.get(&lowered_func.func)
         {
-            if let Some(new_name) = update_map.get(&lowered_func.func) {
-                *name_hint = Some(*new_name);
-            }
+            *name_hint = Some(*new_name);
         }
     }
 }
@@ -129,7 +126,7 @@ fn name_anonymous_functions_impl<'a>(
 
     for block in func.body.blocks.values() {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
             match &instr.value {
                 InstructionValue::LoadGlobal { binding, .. } => {
@@ -137,7 +134,7 @@ fn name_anonymous_functions_impl<'a>(
                 }
                 InstructionValue::LoadContext { place, .. }
                 | InstructionValue::LoadLocal { place, .. } => {
-                    let ident = &env.identifiers[place.identifier.0 as usize];
+                    let ident = &env.identifiers[place.identifier];
                     if let Some(IdentifierName::Named(name)) = ident.name {
                         names.insert(lvalue_id, name);
                     }
@@ -153,7 +150,7 @@ fn name_anonymous_functions_impl<'a>(
                     }
                 }
                 InstructionValue::FunctionExpression { name, lowered_func, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.0 as usize];
+                    let inner_func = &env.functions[lowered_func.func];
                     let inner = name_anonymous_functions_impl(inner_func, env);
                     let node = Node {
                         function_id: lowered_func.func,
@@ -173,12 +170,12 @@ fn name_anonymous_functions_impl<'a>(
                 | InstructionValue::StoreLocal { lvalue: store_lvalue, value, .. } => {
                     if let Some(&node_idx) = functions.get(&value.identifier) {
                         let node = &mut nodes[node_idx];
-                        let var_ident = &env.identifiers[store_lvalue.place.identifier.0 as usize];
-                        if node.generated_name.is_none() {
-                            if let Some(IdentifierName::Named(var_name)) = var_ident.name {
-                                node.generated_name = Some(var_name);
-                                functions.remove(&value.identifier);
-                            }
+                        let var_ident = &env.identifiers[store_lvalue.place.identifier];
+                        if node.generated_name.is_none()
+                            && let Some(IdentifierName::Named(var_name)) = var_ident.name
+                        {
+                            node.generated_name = Some(var_name);
+                            functions.remove(&value.identifier);
                         }
                     }
                 }
@@ -236,8 +233,8 @@ fn handle_call<'a>(
     names: &FxHashMap<IdentifierId, Ident<'a>>,
     nodes: &mut [Node<'a>],
 ) {
-    let callee_ident = &env.identifiers[callee_id.0 as usize];
-    let callee_ty = &env.types[callee_ident.type_.0 as usize];
+    let callee_ident = &env.identifiers[callee_id];
+    let callee_ty = &env.types[callee_ident.type_];
     let hook_kind = env.get_hook_kind_for_type(callee_ty).ok().flatten();
 
     let callee_name: Cow<'_, str> = if let Some(hk) = hook_kind {
