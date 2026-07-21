@@ -574,6 +574,7 @@ impl<'a> PeepholeOptimizations {
     /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
     ///
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
+    /// - `x ? a.b = 0 : a.b = 1` -> `a.b = x ? 0 : 1`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -585,9 +586,7 @@ impl<'a> PeepholeOptimizations {
         else {
             return None;
         };
-        if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
-            return None;
-        }
+
         // NOTE: if the right hand side is an anonymous function, applying this compression will
         // set the `name` property of that function.
         // Since codes relying on the fact that function's name is undefined should be rare,
@@ -597,6 +596,35 @@ impl<'a> PeepholeOptimizations {
             || consequent.operator != alternate.operator
             || consequent.left.content_ne(&alternate.left)
         {
+            return None;
+        }
+
+        let is_safe_target = match &consequent.left {
+            AssignmentTarget::AssignmentTargetIdentifier(_) => true,
+            // For member expression targets, this transform moves the evaluation of the
+            // object (and the computed key) before `x`. That reordering is unobservable
+            // only when neither side can affect the other:
+            // - the object/key evaluation must be side-effect-free (`a` may mutate `x`)
+            //   and must not hit a TDZ that `x`'s evaluation would have resolved
+            //   (e.g. `(await p) ? a.b = 0 : a.b = 1` where a closed-over `let a`
+            //   is initialized during the suspension)
+            // - `x` must not be able to change the object/key values
+            //   (e.g. `f() ? a.b = 0 : a.b = 1` where `f` reassigns `a`)
+            // All hold when the object/key are `this`, literals, or identifiers that
+            // are never reassigned and cannot be read in their TDZ.
+            match_member_expression!(AssignmentTarget) => {
+                let member = consequent.left.to_member_expression();
+                !Self::member_part_blocks_reorder(member.object(), ctx)
+                    && match member {
+                        MemberExpression::ComputedMemberExpression(member) => {
+                            !Self::computed_key_blocks_reorder(&member.expression, ctx)
+                        }
+                        _ => true,
+                    }
+            }
+            _ => false,
+        };
+        if !is_safe_target {
             return None;
         }
         let cond_expr = Self::minimize_conditional(

@@ -1020,6 +1020,34 @@ fn test_negate_empty_if_stmt_consequent() {
 #[test]
 fn test_compress_conditional_expression_inside() {
     test("x ? a = 0 : a = 1", "a = +!x");
+    test("let a = {}; x ? a.b = 0 : a.b = 1", "let a = {}; a.b = +!x");
+    test(
+        "globalThis.x = 0
+        let a_
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } })
+        x ? a = 0 : a = 1,
+        console.log(x, a)",
+        "globalThis.x = 0
+        let a_;
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } }),
+        a = +!x,
+        console.log(x, a)",
+    ); // both outputs `0, 1`
+    test("let a = [], i = 0; x ? a[i] = 0 : a[i] = 1", "let a = [], i = 0; a[0] = +!x");
+    test("x ? this.b = 0 : this.b = 1", "this.b = +!x");
+    test(
+        "var a = {};
+        async function f(p) {
+            await p ? a.b = 0 : a.b = 1;
+        }
+        const promise = f();
+        await promise, console.log(a.b);",
+        "var a = {};
+        async function f(p) {
+            a.b = +!await p;
+        }
+        await f(), console.log(a.b);",
+    );
     test(
         "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
         "a = x ? function () { return 'a' } : function () { return 'b' }",
@@ -1027,6 +1055,57 @@ fn test_compress_conditional_expression_inside() {
 
     // a.b might have a side effect
     test_same("x ? a.b = 0 : a.b = 1");
+    // outputs `1, {b:1}`, but outputs `1, {b:0`} if merged
+    test_same(
+        "globalThis.x = 0
+        let a_ = {};
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } }),
+        x ? a.b = 0 : a.b = 1,
+        console.log(x, a)",
+    );
+    // outputs `1, {b:1}`, but outputs `1, {b:0`} if merged
+    test_same(
+        "globalThis.x = 0; let a = {}; x ? (x = 1, a).b = 0 : (x = 1, a).b = 1, console.log(x, a)",
+    );
+    // outputs `0 1`, but `1 0` if merged
+    test_same(
+        "let a = { b: 0 }, saved = a;
+        function f() {
+            return a = { b: 0 }, !0;
+        }
+        f() ? a.b = 1 : a.b = 2, console.log(saved.b, a.b);",
+    );
+    // outputs `[0,8]`, but `[8,0]` if merged
+    test_same(
+        "let a = [0, 0], i = 0;
+        function f() {
+            return i = 1, !0;
+        }
+        f() ? a[i] = 8 : a[i] = 9, console.log(a);",
+    );
+    // logs `x, g`, but `g, x` if merged
+    test_same("let a = []; x() ? a[g()] = 1 : a[g()] = 2, console.log(a)");
+    // outputs `1`, but throws a TDZ ReferenceError if merged
+    // (merging reads `a` before the `await` suspension during which `let a` is initialized)
+    test_same(
+        "async function f(p) {
+            await p ? a.b = 0 : a.b = 1;
+        }
+        const promise = f();
+        let a = {};
+        await promise, console.log(a.b);",
+    );
+    // outputs `{ x: 'f' }`, but throws a TDZ ReferenceError if merged
+    // (same hazard for a closed-over computed key)
+    test_same(
+        "var a = {};
+        async function f(p) {
+            await p ? a[k] = 't' : a[k] = 'f';
+        }
+        const promise = f();
+        let k = 'x';
+        await promise, console.log(a);",
+    );
     // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function, but we ignore that difference
     test("x ? a = () => 'a' : a = () => 'b'", "a = x ? () => 'a' : () => 'b'");
 
