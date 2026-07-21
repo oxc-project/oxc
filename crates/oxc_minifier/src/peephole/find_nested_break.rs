@@ -1,5 +1,5 @@
 use crate::peephole::PeepholeOptimizations;
-use oxc_ast::ast::{BreakStatement, Expression, Statement, SwitchCase};
+use oxc_ast::ast::{Expression, Statement, SwitchCase};
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
@@ -19,26 +19,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         let mut break_finder = FindNestedBreak { found_unlabelled_break: false };
-        let last_idx = case.consequent.len() - 1;
-
-        // Iterate backwards through consequent statements
-        for (idx, stmt) in case.consequent.iter().enumerate().rev() {
-            // Skip terminal statement if it's an unlabeled break
-            if idx == last_idx
-                && let Statement::BreakStatement(break_stmt) = stmt
-                && break_stmt.label.is_none()
-            {
-                continue;
-            }
-
-            break_finder.visit_statement(stmt);
-
-            if break_finder.found_unlabelled_break {
-                return false;
-            }
-        }
-
-        true
+        break_finder.visit_switch_case(case);
+        !break_finder.found_unlabelled_break
     }
 }
 
@@ -61,13 +43,10 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
             | Statement::ContinueStatement(_)
             | Statement::ReturnStatement(_)
             | Statement::ExpressionStatement(_) => {}
+            Statement::BreakStatement(it) if it.label.is_none() => {
+                self.found_unlabelled_break = true;
+            }
             _ => walk_js::walk_statement(self, it),
-        }
-    }
-
-    fn visit_break_statement(&mut self, it: &BreakStatement<'a>) {
-        if it.label.is_none() {
-            self.found_unlabelled_break = true;
         }
     }
 }

@@ -753,15 +753,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_to_drop_last_break(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(Statement::BreakStatement(last_break)) = stmts.last()
-            && last_break.label.is_none()
-        {
-            let dropped = stmts.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
-    }
-
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -845,8 +836,12 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             ));
             return;
-        } else if let Some(last_case) = switch_stmt.cases.last_mut() {
-            Self::try_to_drop_last_break(&mut last_case.consequent, ctx);
+        } else if let Some(last_case) = switch_stmt.cases.last_mut()
+            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
+            && last_break.label.is_none()
+        {
+            let dropped = last_case.consequent.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
 
         if !ctx.is_tree_shake_only()
@@ -856,7 +851,6 @@ impl<'a> PeepholeOptimizations {
         {
             ctx.notice_change();
 
-            Self::try_to_drop_last_break(&mut case.consequent, ctx);
             let block_stmt = Self::wrap_in_block_stmt_if_needed(&mut case.consequent, ctx);
 
             if let Some(test) = case.test {
