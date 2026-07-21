@@ -11,7 +11,7 @@
 
 [package]
 name = "oxc_react_compiler"
-version = "0.140.0"
+version = "0.141.0"
 publish = true
 authors.workspace = true
 categories.workspace = true
@@ -54,11 +54,6 @@ oxc_parser = { workspace = true }
 # Snapshot testing of the compiler over the upstream fixture corpus (tests/snapshot.rs).
 insta = { workspace = true, features = ["glob"] }
 convert_case = { workspace = true }
-
-# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
-# If we enabled `disable_old_builder` feature in main dependency, feature unification would
-# cause it to be activated for `oxc_ast` for the user too.
-oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 # The `src/` conversion modules are vendored close to upstream `react_compiler_oxc`
 # (kept near byte-for-byte to ease re-syncing). Defining `[lints.clippy]` means this

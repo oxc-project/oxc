@@ -1,8 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ToBigInt, ToIntegerIndex,
-    constant_evaluation::{DetermineValueType, ValueType},
+    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
     to_numeric::ToNumeric,
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
@@ -617,7 +616,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             }
             if is_pure_global_function(name)
                 || is_pure_callable_constructor(name)
-                || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
             {
                 if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
                     return true;
@@ -894,7 +893,7 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
                     });
                 }
                 _ if is_unconditionally_pure_constructor(name)
-                    || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                    || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
                     || is_pure_collection_constructor(name, &self.arguments, ctx) =>
                 {
                     return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));

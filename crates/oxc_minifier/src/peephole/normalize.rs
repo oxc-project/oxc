@@ -462,7 +462,7 @@ impl<'a> Normalize {
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
             // RegExp needs special validation using the regex parser
             "RegExp" => {
-                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments) {
+                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments, ctx) {
                     new_expr.pure = true;
                 }
                 return;

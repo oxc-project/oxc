@@ -63,7 +63,7 @@ declare_oxc_lint!(
     node,
     restriction,
     config = NoTopLevelAwaitConfig,
-    version = "next",
+    version = "1.75.0",
     short_description = "Disallow top-level `await` in modules.",
 );
 

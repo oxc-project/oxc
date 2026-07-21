@@ -1035,6 +1035,28 @@ fn test_compress_conditional_expression_inside() {
     ); // both outputs `0, 1`
     test("let a = [], i = 0; x ? a[i] = 0 : a[i] = 1", "let a = [], i = 0; a[0] = +!x");
     test("x ? this.b = 0 : this.b = 1", "this.b = +!x");
+    // The assignment target must not move before `super()` initializes `this`.
+    test_same(
+        "class B extends A {
+            constructor() {
+                super() ? this.b = 0 : this.b = 1;
+            }
+        }",
+    );
+    // An unconditional preceding `super()` makes moving the later `this` safe.
+    test(
+        "class B extends A {
+            constructor() {
+                super();
+                x ? this.b = 0 : this.b = 1;
+            }
+        }",
+        "class B extends A {
+            constructor() {
+                super(), this.b = +!x;
+            }
+        }",
+    );
     test(
         "var a = {};
         async function f(p) {

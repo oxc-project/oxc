@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.60.0] - 2026-07-20
+
+### 🐛 Bug Fixes
+
+- 6fe866a oxfmt: Keep tailwind classes glued to template expr with `preserveWhitespace` (#24609) (leaysgur)
+- 33e32d8 formatter_css: Use `line_suffix` for EOL line comment (#24580) (leaysgur)
+
 ## [0.59.0] - 2026-07-13
 
 ### 🚀 Features

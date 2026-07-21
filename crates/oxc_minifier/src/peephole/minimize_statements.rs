@@ -556,18 +556,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Whether an expression is or contains a `super()` call at the top level
-    /// (i.e., in a sequence expression, but not nested inside conditionals/functions).
-    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
-        match expr {
-            _ if expr.is_super_call_expression() => true,
-            Expression::SequenceExpression(seq) => {
-                seq.expressions.iter().any(Expression::is_super_call_expression)
-            }
-            _ => false,
-        }
-    }
-
     fn handle_expression_statement(
         mut expr_stmt: ArenaBox<'a, ExpressionStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
