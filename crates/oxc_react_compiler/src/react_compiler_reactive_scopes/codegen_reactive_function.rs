@@ -1194,10 +1194,12 @@ fn ox_codegen_for_init<'a>(
     init: &ReactiveValue<'a>,
 ) -> Result<Option<oxc::ForStatementInit<'a>>, OxcDiagnostic> {
     if let ReactiveValue::SequenceExpression { instructions, .. } = init {
-        let block_items: Vec<ReactiveStatement> = instructions
-            .iter()
-            .map(|i| ReactiveStatement::Instruction(i.clone_in(cx.env.allocator)))
-            .collect();
+        let block_items = oxc_allocator::Vec::from_iter_in(
+            instructions
+                .iter()
+                .map(|i| ReactiveStatement::Instruction(i.clone_in(cx.env.allocator))),
+            &cx.env.allocator,
+        );
         let body = ox_codegen_block(cx, &block_items)?;
         let mut declarators: oxc_allocator::Vec<'a, oxc::VariableDeclarator<'a>> =
             oxc_allocator::ArenaVec::new_in(&cx.ast);
@@ -1566,10 +1568,12 @@ fn ox_codegen_instruction_value<'a>(
             )))
         }
         ReactiveValue::SequenceExpression { instructions, value, .. } => {
-            let block_items: Vec<ReactiveStatement> = instructions
-                .iter()
-                .map(|i| ReactiveStatement::Instruction(i.clone_in(cx.env.allocator)))
-                .collect();
+            let block_items = oxc_allocator::Vec::from_iter_in(
+                instructions
+                    .iter()
+                    .map(|i| ReactiveStatement::Instruction(i.clone_in(cx.env.allocator))),
+                &cx.env.allocator,
+            );
             let body = ox_codegen_block_no_reset(cx, &block_items)?;
             let mut expressions: oxc_allocator::Vec<'a, oxc::Expression<'a>> =
                 oxc_allocator::ArenaVec::new_in(&cx.ast);

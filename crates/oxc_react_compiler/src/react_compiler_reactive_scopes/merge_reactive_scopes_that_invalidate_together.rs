@@ -8,7 +8,7 @@
 //!
 //! Corresponds to `src/ReactiveScopes/MergeReactiveScopesThatInvalidateTogether.ts`.
 
-use std::mem::take;
+use std::mem::replace;
 
 use oxc_allocator::{CloneIn, Vec as ArenaVec};
 
@@ -126,7 +126,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         if let Some(parent_deps) = state.as_ref()
             && are_equal_dependencies(parent_deps, &scope_deps, self.env)
         {
-            let instructions = take(&mut scope.instructions);
+            // ReplaceMany keeps a std `Vec`; drain the arena block into one.
+            let instructions = scope.instructions.drain(..).collect::<Vec<_>>();
             return Ok(Transformed::ReplaceMany(instructions));
         }
         Ok(Transformed::Keep)
@@ -350,10 +351,10 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             return Ok(());
         }
 
-        let mut next_instructions: Vec<ReactiveStatement<'a>> = Vec::new();
-        let mut index = 0;
-        let all_stmts: Vec<ReactiveStatement> = take(block);
         let alloc = self.env.allocator;
+        let mut next_instructions: ArenaVec<'a, ReactiveStatement<'a>> = ArenaVec::new_in(&alloc);
+        let mut index = 0;
+        let all_stmts = replace(block, ArenaVec::new_in(&alloc));
 
         for entry in &merged {
             // Push everything before the merge range

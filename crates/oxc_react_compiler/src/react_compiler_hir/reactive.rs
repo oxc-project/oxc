@@ -20,7 +20,7 @@ use oxc_str::{Ident, Str};
 use crate::react_compiler_hir::{
     BlockId, EvaluationOrder, InstructionValue, ParamPattern, Place, ScopeId,
 };
-use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
+use oxc_allocator::{Allocator, Box as ArenaBox, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::LogicalOperator;
 use oxc_span::Span;
 
@@ -48,13 +48,13 @@ pub struct ReactiveFunction<'a> {
 // =============================================================================
 
 /// TS: ReactiveBlock = Array<ReactiveStatement>
-pub type ReactiveBlock<'a> = Vec<ReactiveStatement<'a>>;
+pub type ReactiveBlock<'a> = oxc_allocator::Vec<'a, ReactiveStatement<'a>>;
 
 /// TS: ReactiveStatement (discriminated union with 'kind' field)
 #[derive(Debug)]
 pub enum ReactiveStatement<'a> {
     Instruction(ReactiveInstruction<'a>),
-    Terminal(Box<ReactiveTerminalStatement<'a>>),
+    Terminal(ArenaBox<'a, ReactiveTerminalStatement<'a>>),
     Scope(ReactiveScopeBlock<'a>),
     PrunedScope(PrunedReactiveScopeBlock<'a>),
 }
@@ -83,26 +83,26 @@ pub enum ReactiveValue<'a> {
     /// TS: ReactiveLogicalValue
     LogicalExpression {
         operator: LogicalOperator,
-        left: Box<ReactiveValue<'a>>,
-        right: Box<ReactiveValue<'a>>,
+        left: ArenaBox<'a, ReactiveValue<'a>>,
+        right: ArenaBox<'a, ReactiveValue<'a>>,
     },
 
     /// TS: ReactiveTernaryValue
     ConditionalExpression {
-        test: Box<ReactiveValue<'a>>,
-        consequent: Box<ReactiveValue<'a>>,
-        alternate: Box<ReactiveValue<'a>>,
+        test: ArenaBox<'a, ReactiveValue<'a>>,
+        consequent: ArenaBox<'a, ReactiveValue<'a>>,
+        alternate: ArenaBox<'a, ReactiveValue<'a>>,
     },
 
     /// TS: ReactiveSequenceValue
     SequenceExpression {
-        instructions: Vec<ReactiveInstruction<'a>>,
+        instructions: ArenaVec<'a, ReactiveInstruction<'a>>,
         id: EvaluationOrder,
-        value: Box<ReactiveValue<'a>>,
+        value: ArenaBox<'a, ReactiveValue<'a>>,
     },
 
     /// TS: ReactiveOptionalCallValue
-    OptionalExpression { value: Box<ReactiveValue<'a>>, optional: bool },
+    OptionalExpression { value: ArenaBox<'a, ReactiveValue<'a>>, optional: bool },
 }
 
 // =============================================================================
@@ -160,7 +160,7 @@ pub enum ReactiveTerminal<'a> {
     },
     Switch {
         test: Place,
-        cases: Vec<ReactiveSwitchCase<'a>>,
+        cases: ArenaVec<'a, ReactiveSwitchCase<'a>>,
         id: EvaluationOrder,
     },
     DoWhile {
@@ -247,16 +247,16 @@ fn clone_reactive_block_in<'a>(
     block: &[ReactiveStatement<'a>],
     sem: CloneInSemanticIds,
     alloc: &'a Allocator,
-) -> Vec<ReactiveStatement<'a>> {
-    block.iter().map(|stmt| stmt.clone_in_impl(sem, alloc)).collect()
+) -> ArenaVec<'a, ReactiveStatement<'a>> {
+    ArenaVec::from_iter_in(block.iter().map(|stmt| stmt.clone_in_impl(sem, alloc)), &alloc)
 }
 
 fn clone_reactive_instructions_in<'a>(
     instructions: &[ReactiveInstruction<'a>],
     sem: CloneInSemanticIds,
     alloc: &'a Allocator,
-) -> Vec<ReactiveInstruction<'a>> {
-    instructions.iter().map(|instr| instr.clone_in_impl(sem, alloc)).collect()
+) -> ArenaVec<'a, ReactiveInstruction<'a>> {
+    ArenaVec::from_iter_in(instructions.iter().map(|instr| instr.clone_in_impl(sem, alloc)), &alloc)
 }
 
 impl<'a> CloneIn<'a> for ReactiveFunction<'a> {
@@ -282,9 +282,10 @@ impl<'a> CloneIn<'a> for ReactiveStatement<'a> {
             ReactiveStatement::Instruction(instr) => {
                 ReactiveStatement::Instruction(instr.clone_in_impl(sem, alloc))
             }
-            ReactiveStatement::Terminal(terminal) => {
-                ReactiveStatement::Terminal(Box::new(terminal.as_ref().clone_in_impl(sem, alloc)))
-            }
+            ReactiveStatement::Terminal(terminal) => ReactiveStatement::Terminal(ArenaBox::new_in(
+                terminal.as_ref().clone_in_impl(sem, alloc),
+                &alloc,
+            )),
             ReactiveStatement::Scope(scope) => {
                 ReactiveStatement::Scope(scope.clone_in_impl(sem, alloc))
             }
@@ -317,27 +318,33 @@ impl<'a> CloneIn<'a> for ReactiveValue<'a> {
             ReactiveValue::LogicalExpression { operator, left, right } => {
                 ReactiveValue::LogicalExpression {
                     operator: *operator,
-                    left: Box::new(left.as_ref().clone_in_impl(sem, alloc)),
-                    right: Box::new(right.as_ref().clone_in_impl(sem, alloc)),
+                    left: ArenaBox::new_in(left.as_ref().clone_in_impl(sem, alloc), &alloc),
+                    right: ArenaBox::new_in(right.as_ref().clone_in_impl(sem, alloc), &alloc),
                 }
             }
             ReactiveValue::ConditionalExpression { test, consequent, alternate } => {
                 ReactiveValue::ConditionalExpression {
-                    test: Box::new(test.as_ref().clone_in_impl(sem, alloc)),
-                    consequent: Box::new(consequent.as_ref().clone_in_impl(sem, alloc)),
-                    alternate: Box::new(alternate.as_ref().clone_in_impl(sem, alloc)),
+                    test: ArenaBox::new_in(test.as_ref().clone_in_impl(sem, alloc), &alloc),
+                    consequent: ArenaBox::new_in(
+                        consequent.as_ref().clone_in_impl(sem, alloc),
+                        &alloc,
+                    ),
+                    alternate: ArenaBox::new_in(
+                        alternate.as_ref().clone_in_impl(sem, alloc),
+                        &alloc,
+                    ),
                 }
             }
             ReactiveValue::SequenceExpression { instructions, id, value } => {
                 ReactiveValue::SequenceExpression {
                     instructions: clone_reactive_instructions_in(instructions, sem, alloc),
                     id: *id,
-                    value: Box::new(value.as_ref().clone_in_impl(sem, alloc)),
+                    value: ArenaBox::new_in(value.as_ref().clone_in_impl(sem, alloc), &alloc),
                 }
             }
             ReactiveValue::OptionalExpression { value, optional } => {
                 ReactiveValue::OptionalExpression {
-                    value: Box::new(value.as_ref().clone_in_impl(sem, alloc)),
+                    value: ArenaBox::new_in(value.as_ref().clone_in_impl(sem, alloc), &alloc),
                     optional: *optional,
                 }
             }
@@ -377,7 +384,10 @@ impl<'a> CloneIn<'a> for ReactiveTerminal<'a> {
             }
             ReactiveTerminal::Switch { test, cases, id } => ReactiveTerminal::Switch {
                 test: *test,
-                cases: cases.iter().map(|case| case.clone_in_impl(sem, alloc)).collect(),
+                cases: ArenaVec::from_iter_in(
+                    cases.iter().map(|case| case.clone_in_impl(sem, alloc)),
+                    &alloc,
+                ),
                 id: *id,
             },
             ReactiveTerminal::DoWhile { loop_block, test, id } => ReactiveTerminal::DoWhile {

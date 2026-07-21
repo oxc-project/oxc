@@ -21,7 +21,7 @@ use crate::react_compiler_hir::{
     ReactiveSwitchCase, ReactiveTerminal, ReactiveTerminalStatement, ReactiveTerminalTargetKind,
     ReactiveValue, Terminal,
 };
-use oxc_allocator::CloneIn;
+use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_span::Span;
 
 /// Convert the HIR CFG into a tree-structured ReactiveFunction.
@@ -29,11 +29,12 @@ pub fn build_reactive_function<'a>(
     hir: &HirFunction<'a>,
     env: &Environment<'a>,
 ) -> Result<ReactiveFunction<'a>, OxcDiagnostic> {
+    let alloc = env.allocator;
     let mut ctx = Context::new(hir);
     let mut driver = Driver { cx: &mut ctx, hir, env };
 
     let entry_block_id = hir.body.entry;
-    let mut body = Vec::new();
+    let mut body = ArenaVec::new_in(&alloc);
     driver.visit_block(entry_block_id, &mut body)?;
 
     Ok(ReactiveFunction {
@@ -285,8 +286,14 @@ struct Driver<'a, 'b, 'h> {
 }
 
 impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
+    /// Allocate `value` into the arena and wrap it in an arena `Box`.
+    #[inline]
+    fn box_in<T>(&self, value: T) -> ArenaBox<'a, T> {
+        ArenaBox::new_in(value, &self.env.allocator)
+    }
+
     fn traverse_block(&mut self, block_id: BlockId) -> Result<ReactiveBlock<'a>, OxcDiagnostic> {
-        let mut block_value = Vec::new();
+        let mut block_value = ArenaVec::new_in(&self.env.allocator);
         self.visit_block(block_id, &mut block_value)?;
         Ok(block_value)
     }
@@ -366,7 +373,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::If {
                                 test: *test,
@@ -374,8 +381,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 alternate: alternate_block,
                                 id: *id,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -397,7 +404,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     // TS processes cases in reverse order, then reverses the result.
                     // This ensures that later cases are scheduled when earlier cases
                     // are traversed, matching fallthrough semantics.
-                    let mut reactive_cases = Vec::new();
+                    let mut reactive_cases = ArenaVec::new_in(&self.env.allocator);
                     for case in cases.iter().rev() {
                         let case_block_id = case.block;
 
@@ -419,15 +426,15 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     reactive_cases.reverse();
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Switch {
                                 test: *test,
                                 cases: reactive_cases,
                                 id: *id,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -460,15 +467,15 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let test_result = self.visit_value_block(*test, *span, None)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::DoWhile {
                                 loop_block: loop_body,
                                 test: test_result.value,
                                 id: *id,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -506,15 +513,15 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::While {
                                 test: test_result.value,
                                 loop_block: loop_body,
                                 id: *id,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -558,7 +565,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::For {
                                 init: init_value,
@@ -567,8 +574,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 loop_block: loop_body,
                                 id: *id,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -608,7 +615,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::ForOf {
                                 init: init_value,
@@ -617,8 +624,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 id: *id,
                                 span: *span,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -654,7 +661,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::ForIn {
                                 init: init_value,
@@ -662,8 +669,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 id: *id,
                                 span: *span,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -690,11 +697,11 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let label_body = self.traverse_block(*label_block)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Label { block: label_body, id: *id },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -776,7 +783,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let handler_body = self.traverse_block(*handler)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Try {
                                 block: try_body,
@@ -784,8 +791,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 handler: handler_body,
                                 id: *id,
                             },
-                            label: fallthrough_id
-                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            label:
+                                fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
                     )));
 
@@ -841,7 +848,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 }
 
                 Terminal::Return { value, id, .. } => {
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Return { value: *value, id: *id },
                             label: None,
@@ -850,7 +857,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 }
 
                 Terminal::Throw { value, id, .. } => {
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Throw { value: *value, id: *id },
                             label: None,
@@ -863,11 +870,12 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 }
 
                 Terminal::Branch { test, consequent, alternate, id, .. } => {
+                    let alloc = self.env.allocator;
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
                         if let Some(stmt) = self.visit_break(*consequent, *id)? {
-                            vec![stmt]
+                            ArenaVec::from_iter_in([stmt], &alloc)
                         } else {
-                            Vec::new()
+                            ArenaVec::new_in(&alloc)
                         }
                     } else {
                         self.traverse_block(*consequent)?
@@ -880,7 +888,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
                     let alternate_block = self.traverse_block(*alternate)?;
 
-                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                    block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::If {
                                 test: *test,
@@ -982,20 +990,19 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let final_result = self.visit_value_block(init_fallthrough, span, None)?;
 
                 // Combine block instructions + init instruction, then wrap
-                let mut all_instrs: Vec<ReactiveInstruction<'a>> = instructions
-                    .iter()
-                    .map(|iid| {
+                let alloc = self.env.allocator;
+                let mut all_instrs: ArenaVec<'a, ReactiveInstruction<'a>> = ArenaVec::from_iter_in(
+                    instructions.iter().map(|iid| {
                         let instr = &self.hir.instructions[iid.index()];
                         ReactiveInstruction {
                             id: instr.id,
                             lvalue: Some(instr.lvalue),
-                            value: ReactiveValue::Instruction(
-                                instr.value.clone_in(self.env.allocator),
-                            ),
+                            value: ReactiveValue::Instruction(instr.value.clone_in(alloc)),
                             span: instr.span,
                         }
-                    })
-                    .collect();
+                    }),
+                    &alloc,
+                );
                 all_instrs.push(init_instr);
 
                 if all_instrs.is_empty() {
@@ -1007,7 +1014,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         value: ReactiveValue::SequenceExpression {
                             instructions: all_instrs,
                             id: final_result.id,
-                            value: Box::new(final_result.value),
+                            value: self.box_in(final_result.value),
                         },
                         id: final_result.id,
                     })
@@ -1060,20 +1067,23 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let consequent =
                     self.visit_value_block(test_result.consequent, *span, Some(*fallthrough))?;
                 let call = ReactiveValue::SequenceExpression {
-                    instructions: vec![ReactiveInstruction {
-                        id: test_result.test.id,
-                        lvalue: Some(test_result.test.place),
-                        value: test_result.test.value,
-                        span: test_result.branch_span,
-                    }],
+                    instructions: ArenaVec::from_iter_in(
+                        [ReactiveInstruction {
+                            id: test_result.test.id,
+                            lvalue: Some(test_result.test.place),
+                            value: test_result.test.value,
+                            span: test_result.branch_span,
+                        }],
+                        &self.env.allocator,
+                    ),
                     id: consequent.id,
-                    value: Box::new(consequent.value),
+                    value: self.box_in(consequent.value),
                 };
                 Ok(ValueTerminalResult {
                     place: consequent.place,
                     value: ReactiveValue::OptionalExpression {
                         optional: *optional,
-                        value: Box::new(call),
+                        value: self.box_in(call),
                     },
                     fallthrough: *fallthrough,
                     id: *id,
@@ -1084,14 +1094,17 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let left_final =
                     self.visit_value_block(test_result.consequent, *span, Some(*fallthrough))?;
                 let left = ReactiveValue::SequenceExpression {
-                    instructions: vec![ReactiveInstruction {
-                        id: test_result.test.id,
-                        lvalue: Some(test_result.test.place),
-                        value: test_result.test.value,
-                        span: *span,
-                    }],
+                    instructions: ArenaVec::from_iter_in(
+                        [ReactiveInstruction {
+                            id: test_result.test.id,
+                            lvalue: Some(test_result.test.place),
+                            value: test_result.test.value,
+                            span: *span,
+                        }],
+                        &self.env.allocator,
+                    ),
                     id: left_final.id,
-                    value: Box::new(left_final.value),
+                    value: self.box_in(left_final.value),
                 };
                 let right =
                     self.visit_value_block(test_result.alternate, *span, Some(*fallthrough))?;
@@ -1099,8 +1112,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     place: left_final.place,
                     value: ReactiveValue::LogicalExpression {
                         operator: *operator,
-                        left: Box::new(left),
-                        right: Box::new(right.value),
+                        left: self.box_in(left),
+                        right: self.box_in(right.value),
                     },
                     fallthrough: *fallthrough,
                     id: *id,
@@ -1115,9 +1128,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 Ok(ValueTerminalResult {
                     place: consequent.place,
                     value: ReactiveValue::ConditionalExpression {
-                        test: Box::new(test_result.test.value),
-                        consequent: Box::new(consequent.value),
-                        alternate: Box::new(alternate.value),
+                        test: self.box_in(test_result.test.value),
+                        consequent: self.box_in(consequent.value),
+                        alternate: self.box_in(alternate.value),
                     },
                     fallthrough: *fallthrough,
                     id: *id,
@@ -1142,18 +1155,19 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         let last_id = instructions.last().expect("Expected non-empty instructions");
         let last_instr = &self.hir.instructions[last_id.index()];
 
-        let remaining: Vec<ReactiveInstruction<'a>> = instructions[..instructions.len() - 1]
-            .iter()
-            .map(|iid| {
+        let alloc = self.env.allocator;
+        let remaining: ArenaVec<'a, ReactiveInstruction<'a>> = ArenaVec::from_iter_in(
+            instructions[..instructions.len() - 1].iter().map(|iid| {
                 let instr = &self.hir.instructions[iid.index()];
                 ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue),
-                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env.allocator)),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(alloc)),
                     span: instr.span,
                 }
-            })
-            .collect();
+            }),
+            &alloc,
+        );
 
         // If the last instruction is a StoreLocal to a temporary (unnamed identifier),
         // convert it to a LoadLocal of the value being stored, matching the TS behavior.
@@ -1191,7 +1205,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 value: ReactiveValue::SequenceExpression {
                     instructions: remaining,
                     id,
-                    value: Box::new(value),
+                    value: self.box_in(value),
                 },
                 id,
             }
@@ -1207,18 +1221,19 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             return continuation;
         }
 
-        let reactive_instrs: Vec<ReactiveInstruction<'a>> = instructions
-            .iter()
-            .map(|iid| {
+        let alloc = self.env.allocator;
+        let reactive_instrs: ArenaVec<'a, ReactiveInstruction<'a>> = ArenaVec::from_iter_in(
+            instructions.iter().map(|iid| {
                 let instr = &self.hir.instructions[iid.index()];
                 ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue),
-                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env.allocator)),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(alloc)),
                     span: instr.span,
                 }
-            })
-            .collect();
+            }),
+            &alloc,
+        );
 
         ValueBlockResult {
             block: continuation.block,
@@ -1226,7 +1241,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             value: ReactiveValue::SequenceExpression {
                 instructions: reactive_instrs,
                 id: continuation.id,
-                value: Box::new(continuation.value),
+                value: self.box_in(continuation.value),
             },
             id: continuation.id,
         }
@@ -1246,7 +1261,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         span: Option<Span>,
     ) -> ReactiveValue<'a> {
         // Collect all instructions from potentially nested SequenceExpressions
-        let mut instructions: Vec<ReactiveInstruction<'a>> = Vec::new();
+        let mut instructions: ArenaVec<'a, ReactiveInstruction<'a>> =
+            ArenaVec::new_in(&self.env.allocator);
         let mut inner_value = result.value;
 
         // Flatten nested SequenceExpressions
@@ -1254,7 +1270,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             inner_value
         {
             instructions.extend(seq_instrs);
-            inner_value = *value;
+            inner_value = value.unbox();
         }
 
         // Only add the final instruction if the innermost value is not just a LoadLocal
@@ -1278,7 +1294,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         ReactiveValue::SequenceExpression {
             instructions,
             id: result.id,
-            value: Box::new(ReactiveValue::Instruction(InstructionValue::Primitive {
+            value: self.box_in(ReactiveValue::Instruction(InstructionValue::Primitive {
                 value: PrimitiveValue::Undefined,
                 span,
             })),
@@ -1298,7 +1314,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             }
             return Ok(None);
         }
-        Ok(Some(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
+        Ok(Some(ReactiveStatement::Terminal(self.box_in(ReactiveTerminalStatement {
             terminal: ReactiveTerminal::Break { target: target_block, id, target_kind },
             label: None,
         }))))
@@ -1319,7 +1335,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             }
         };
 
-        Ok(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
+        Ok(ReactiveStatement::Terminal(self.box_in(ReactiveTerminalStatement {
             terminal: ReactiveTerminal::Continue { target: target_block, id, target_kind },
             label: None,
         })))
