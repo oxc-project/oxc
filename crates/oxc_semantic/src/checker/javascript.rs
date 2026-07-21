@@ -204,7 +204,8 @@ fn unexpected_identifier_assign_context(
 }
 
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
-    // `.d.ts` files are allowed to use `eval` and `arguments` as binding identifiers
+    // `.d.ts` files do not generate runtime bindings, so TypeScript permits `eval` and
+    // `arguments` as binding identifiers even when the declaration file is a module.
     if ctx.source_type.is_typescript_definition() {
         return;
     }
@@ -223,24 +224,24 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             // interface Foo { bar(arguments: any[]): void; baz(...arguments: any[]): void; } // OK
             // declare function g({eval, arguments}: {eval: number, arguments: number}): number; // Error
             // declare function h([eval, arguments]: [number, number]): number; // Error
-            let is_declare_function = |kind: &AstKind| {
-                kind.as_function()
-                    .is_some_and(|func| matches!(func.r#type, FunctionType::TSDeclareFunction))
-            };
 
-            // Walk up the ancestor stack: `ancestors.next()` yields the parent,
-            // then the grandparent, and so on.
-            let mut ancestors = ctx.ancestry().ancestor_kinds();
-            let parent = ancestors.next().unwrap();
-            let is_ok = match parent {
-                AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
-                AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
-                    is_declare_function(&ancestors.next().unwrap())
-                }
-                // `nth(1)` skips the `FormalParameter*` grandparent to reach the function.
-                AstKind::BindingRestElement(_) => is_declare_function(&ancestors.nth(1).unwrap()),
-                _ => false,
-            };
+            let parent = ctx.ancestry().parent_kind();
+            // Direct rest parameters and destructuring rest elements share the same AST kind.
+            let is_direct_rest_parameter = matches!(parent, AstKind::BindingRestElement(_))
+                && matches!(
+                    ctx.ancestry().ancestor_kinds().nth(1),
+                    Some(AstKind::FormalParameterRest(_))
+                );
+            let is_ok = ctx.in_ambient_context()
+                && (is_direct_rest_parameter
+                    || !matches!(
+                        parent,
+                        AstKind::VariableDeclarator(_)
+                            | AstKind::BindingProperty(_)
+                            | AstKind::ArrayPattern(_)
+                            | AstKind::AssignmentPattern(_)
+                            | AstKind::BindingRestElement(_)
+                    ));
 
             if !is_ok {
                 ctx.error(diagnostics::unexpected_identifier_assign(
