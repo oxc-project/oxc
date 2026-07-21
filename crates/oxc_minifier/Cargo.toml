@@ -25,7 +25,7 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_compat = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["stack"] }
-oxc_ecmascript = { workspace = true }
+oxc_ecmascript = { workspace = true, features = ["constant_evaluation"] }
 oxc_index = { workspace = true }
 oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }

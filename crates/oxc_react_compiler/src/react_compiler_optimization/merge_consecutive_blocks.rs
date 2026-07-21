@@ -15,6 +15,7 @@
 
 use std::mem::replace;
 
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexSlice;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -27,9 +28,10 @@ use crate::react_compiler_lowering::mark_predecessors;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 /// Merge consecutive blocks in the function's CFG, including inner functions.
-pub fn merge_consecutive_blocks(
-    func: &mut HirFunction,
-    functions: &mut IndexSlice<FunctionId, [HirFunction]>,
+pub fn merge_consecutive_blocks<'a>(
+    func: &mut HirFunction<'a>,
+    functions: &mut IndexSlice<FunctionId, [HirFunction<'a>]>,
+    alloc: &'a Allocator,
 ) {
     // Collect inner function IDs for recursive processing
     let inner_func_ids: Vec<FunctionId> = func
@@ -51,8 +53,8 @@ pub fn merge_consecutive_blocks(
     for func_id in inner_func_ids {
         // Use std::mem::replace to temporarily take the inner function out,
         // process it, then put it back (standard borrow checker workaround)
-        let mut inner_func = replace(&mut functions[func_id], placeholder_function());
-        merge_consecutive_blocks(&mut inner_func, functions);
+        let mut inner_func = replace(&mut functions[func_id], placeholder_function(alloc));
+        merge_consecutive_blocks(&mut inner_func, functions, alloc);
         functions[func_id] = inner_func;
     }
 
@@ -115,8 +117,8 @@ pub fn merge_consecutive_blocks(
                 (phi.place.identifier, operand)
             })
             .collect();
-        let block_instr_ids = block.instructions.clone();
-        let block_terminal = block.terminal.clone();
+        let block_instr_ids = block.instructions.clone_in(alloc);
+        let block_terminal = block.terminal.clone_in(alloc);
 
         // Create phi instructions and add to instruction table
         let mut new_instr_ids = Vec::new();
@@ -132,7 +134,10 @@ pub fn merge_consecutive_blocks(
                 lvalue,
                 value: InstructionValue::LoadLocal { place: operand, span: GENERATED_SOURCE },
                 span: GENERATED_SOURCE,
-                effects: Some(vec![AliasingEffect::Alias { from: operand, into: lvalue }]),
+                effects: Some(ArenaVec::from_array_in(
+                    [AliasingEffect::Alias { from: operand, into: lvalue }],
+                    &alloc,
+                )),
             };
             let instr_id = InstructionId::from_usize(func.instructions.len());
             func.instructions.push(instr);

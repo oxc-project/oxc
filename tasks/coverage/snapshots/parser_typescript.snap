@@ -2430,6 +2430,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/alwaysStrictES6.ts:3:9]
@@ -2438,6 +2439,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/alwaysStrictModule.ts:4:13]
@@ -2446,6 +2448,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  5 │     }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/alwaysStrictModule2.ts:4:13]
@@ -2454,6 +2457,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  5 │     }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/alwaysStrictNoImplicitUseStrict.ts:4:13]
@@ -2462,6 +2466,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  5 │     }
    ╰────
+  note: This is strict mode code
 
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/compiler/ambientErrors1.ts:1:17]
@@ -2578,6 +2583,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  3 │ function foo(a) {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/argumentsBindsToFunctionScopeArgumentList.ts:4:5]
@@ -2586,6 +2592,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  5 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/argumentsReferenceInConstructor4_Js.ts:18:9]
@@ -2594,6 +2601,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·               ─────────
  19 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/argumentsReferenceInMethod4_Js.ts:16:9]
@@ -2602,6 +2610,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·               ─────────
  17 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/argumentsReferenceInObjectLiteral_Js.ts:22:11]
@@ -2610,6 +2619,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·           ─────────
  23 │     return {
     ╰────
+  note: This is strict mode code
 
   × 'arguments' is not allowed in class field initializer
    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:3:10]
@@ -2759,6 +2769,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ──────
  3 │ class NonPublicClass {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/asiPublicPrivateProtected.ts:13:1]
@@ -2767,6 +2778,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     · ───────
  14 │ class NonPrivateClass {
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/asiPublicPrivateProtected.ts:24:1]
@@ -2775,6 +2787,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     · ─────────
  25 │ class NonProtectedClass {
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[typescript/tests/cases/compiler/asiReturn.ts:2:1]
@@ -3521,6 +3534,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                         ─────────
  3 │     var arguments: any[]; // no error
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:3:9]
@@ -3529,6 +3543,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:5:12]
@@ -3537,6 +3552,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  6 │     var arguments = 10; // no error
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:6:9]
@@ -3545,6 +3561,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  7 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:8:18]
@@ -3553,6 +3570,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ─────────
  9 │     var arguments = 10; // no error
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:9:9]
@@ -3561,6 +3579,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  10 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:13:9]
@@ -3569,6 +3588,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  14 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:16:9]
@@ -3577,6 +3597,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  17 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:3:31]
@@ -3585,6 +3606,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                               ─────────
  4 │         var arguments: any[]; // no error
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:4:13]
@@ -3593,6 +3615,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  5 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:8:17]
@@ -3601,6 +3624,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─────────
  9 │         var arguments = 10; // no error
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:9:13]
@@ -3609,6 +3633,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  10 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:13:17]
@@ -3617,6 +3642,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  14 │         var arguments = 10; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:14:13]
@@ -3625,6 +3651,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  15 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:20:13]
@@ -3633,6 +3660,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  21 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:25:13]
@@ -3641,6 +3669,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  26 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:30:24]
@@ -3649,6 +3678,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  31 │         var arguments = 10; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:31:13]
@@ -3657,6 +3687,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  32 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:35:24]
@@ -3665,6 +3696,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  36 │         var arguments = 10; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:36:13]
@@ -3673,30 +3705,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  37 │     }
     ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:41:31]
- 40 │ declare class c4 {
- 41 │     constructor(i: number, ...arguments); // No error - no code gen
-    ·                               ─────────
- 42 │ }
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:44:17]
- 43 │ declare class c42 {
- 44 │     constructor(arguments: number, ...rest); // No error - no code gen
-    ·                 ─────────
- 45 │ }
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:47:17]
- 46 │ declare class c4NoError {
- 47 │     constructor(arguments: number);  // no error
-    ·                 ─────────
- 48 │ }
-    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:51:31]
@@ -3705,6 +3714,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                               ─────────
  52 │     constructor(i: string, ...arguments); // no codegen no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:52:31]
@@ -3713,6 +3723,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                               ─────────
  53 │     constructor(i: any, ...arguments) { // error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:53:28]
@@ -3721,6 +3732,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                            ─────────
  54 │         var arguments: any[]; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:54:13]
@@ -3729,6 +3741,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  55 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:59:17]
@@ -3737,6 +3750,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  60 │     constructor(arguments: string, ...rest); // no codegen no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:60:17]
@@ -3745,6 +3759,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  61 │     constructor(arguments: any, ...rest) { // error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:61:17]
@@ -3753,6 +3768,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  62 │         var arguments: any; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:62:13]
@@ -3761,6 +3777,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  63 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:67:17]
@@ -3769,6 +3786,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  68 │     constructor(arguments: string); // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:68:17]
@@ -3777,6 +3795,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  69 │     constructor(arguments: any) { // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:69:17]
@@ -3785,6 +3804,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  70 │         var arguments: any; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:70:13]
@@ -3793,54 +3813,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  71 │     }
     ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:75:31]
- 74 │ declare class c6 {
- 75 │     constructor(i: number, ...arguments); // no codegen no error
-    ·                               ─────────
- 76 │     constructor(i: string, ...arguments); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:76:31]
- 75 │     constructor(i: number, ...arguments); // no codegen no error
- 76 │     constructor(i: string, ...arguments); // no codegen no error
-    ·                               ─────────
- 77 │ }
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:79:17]
- 78 │ declare class c62 {
- 79 │     constructor(arguments: number, ...rest); // no codegen no error
-    ·                 ─────────
- 80 │     constructor(arguments: string, ...rest); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:80:17]
- 79 │     constructor(arguments: number, ...rest); // no codegen no error
- 80 │     constructor(arguments: string, ...rest); // no codegen no error
-    ·                 ─────────
- 81 │ }
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:84:17]
- 83 │ declare class c6NoError {
- 84 │     constructor(arguments: number); // no error
-    ·                 ─────────
- 85 │     constructor(arguments: string); // no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:85:17]
- 84 │     constructor(arguments: number); // no error
- 85 │     constructor(arguments: string); // no error
-    ·                 ─────────
- 86 │ }
-    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:2:30]
@@ -3849,6 +3822,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                              ─────────
  3 │         var arguments: any[]; // no error
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:3:13]
@@ -3857,6 +3831,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  4 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:5:17]
@@ -3865,6 +3840,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─────────
  6 │         var arguments = 10; // no error
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:6:13]
@@ -3873,6 +3849,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  7 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:8:23]
@@ -3881,6 +3858,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                       ─────────
  9 │         var arguments = 10; // no error
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:9:13]
@@ -3889,6 +3867,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  10 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:11:29]
@@ -3897,6 +3876,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                             ─────────
  12 │     public f4(i: string, ...arguments); // no codegen no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:12:29]
@@ -3905,6 +3885,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                             ─────────
  13 │     public f4(i: any, ...arguments) { // error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:13:26]
@@ -3913,6 +3894,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                          ─────────
  14 │         var arguments: any[]; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:14:13]
@@ -3921,6 +3903,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  15 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:16:16]
@@ -3929,6 +3912,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                ─────────
  17 │     public f41(arguments: string, ...rest); // no codegen no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:17:16]
@@ -3937,6 +3921,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                ─────────
  18 │     public f41(arguments: any, ...rest) { // error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:18:16]
@@ -3945,6 +3930,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                ─────────
  19 │         var arguments: any; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:19:13]
@@ -3953,6 +3939,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  20 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:21:22]
@@ -3961,6 +3948,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                      ─────────
  22 │     public f4NoError(arguments: string); // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:22:22]
@@ -3969,6 +3957,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                      ─────────
  23 │     public f4NoError(arguments: any) { // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:23:22]
@@ -3977,6 +3966,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                      ─────────
  24 │         var arguments: any; // no error
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:24:13]
@@ -3985,78 +3975,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  25 │     }
     ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:29:30]
- 28 │ declare class c2 {
- 29 │     public foo(i: number, ...arguments); // No error - no code gen
-    ·                              ─────────
- 30 │     public foo1(arguments: number, ...rest); // No error - no code gen
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:30:17]
- 29 │     public foo(i: number, ...arguments); // No error - no code gen
- 30 │     public foo1(arguments: number, ...rest); // No error - no code gen
-    ·                 ─────────
- 31 │     public fooNoError(arguments: number); // No error - no code gen
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:31:23]
- 30 │     public foo1(arguments: number, ...rest); // No error - no code gen
- 31 │     public fooNoError(arguments: number); // No error - no code gen
-    ·                       ─────────
- 32 │ 
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:33:29]
- 32 │ 
- 33 │     public f4(i: number, ...arguments); // no codegen no error
-    ·                             ─────────
- 34 │     public f4(i: string, ...arguments); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:34:29]
- 33 │     public f4(i: number, ...arguments); // no codegen no error
- 34 │     public f4(i: string, ...arguments); // no codegen no error
-    ·                             ─────────
- 35 │     public f41(arguments: number, ...rest); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:35:16]
- 34 │     public f4(i: string, ...arguments); // no codegen no error
- 35 │     public f41(arguments: number, ...rest); // no codegen no error
-    ·                ─────────
- 36 │     public f41(arguments: string, ...rest); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:36:16]
- 35 │     public f41(arguments: number, ...rest); // no codegen no error
- 36 │     public f41(arguments: string, ...rest); // no codegen no error
-    ·                ─────────
- 37 │     public f4NoError(arguments: number); // no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:37:22]
- 36 │     public f41(arguments: string, ...rest); // no codegen no error
- 37 │     public f4NoError(arguments: number); // no error
-    ·                      ─────────
- 38 │     public f4NoError(arguments: string); // no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:38:22]
- 37 │     public f4NoError(arguments: number); // no error
- 38 │     public f4NoError(arguments: string); // no error
-    ·                      ─────────
- 39 │ }
-    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:43:13]
@@ -4065,6 +3984,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  44 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:46:13]
@@ -4073,6 +3993,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  47 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:3:13]
@@ -4081,6 +4002,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  4 │     var arguments = 10; // no error
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:4:9]
@@ -4089,6 +4011,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  5 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:6:28]
@@ -4097,6 +4020,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                            ─────────
  7 │     var arguments: any[]; // no error
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:7:9]
@@ -4105,6 +4029,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  8 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:9:20]
@@ -4113,6 +4038,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ─────────
  10 │     var arguments = 10; // no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:10:9]
@@ -4121,30 +4047,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  11 │ }
     ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:13:35]
- 12 │ 
- 13 │ declare function f2(i: number, ...arguments); // no error - no code gen
-    ·                                   ─────────
- 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:14:22]
- 13 │ declare function f2(i: number, ...arguments); // no error - no code gen
- 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
-    ·                      ─────────
- 15 │ declare function f2NoError(arguments: number); // no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:15:28]
- 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
- 15 │ declare function f2NoError(arguments: number); // no error
-    ·                            ─────────
- 16 │ 
-    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:18:9]
@@ -4153,6 +4056,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  19 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:21:9]
@@ -4161,6 +4065,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  22 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:24:13]
@@ -4169,6 +4074,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  25 │ function f4(arguments: string, ...rest); // no codegen no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:25:13]
@@ -4177,6 +4083,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  26 │ function f4(arguments: any, ...rest) { // error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:26:13]
@@ -4185,6 +4092,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  27 │     var arguments: any; // No error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:27:9]
@@ -4193,6 +4101,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  28 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:29:28]
@@ -4201,6 +4110,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                            ─────────
  30 │ function f42(i: string, ...arguments); // no codegen no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:30:28]
@@ -4209,6 +4119,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                            ─────────
  31 │ function f42(i: any, ...arguments) { // error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:31:25]
@@ -4217,6 +4128,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                         ─────────
  32 │     var arguments: any[]; // No error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:32:9]
@@ -4225,6 +4137,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  33 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:34:20]
@@ -4233,6 +4146,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ─────────
  35 │ function f4NoError(arguments: string); // no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:35:20]
@@ -4241,6 +4155,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ─────────
  36 │ function f4NoError(arguments: any) { // no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:36:20]
@@ -4249,6 +4164,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ─────────
  37 │     var arguments: any; // No error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:37:9]
@@ -4257,53 +4173,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  38 │ }
     ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:40:21]
- 39 │ 
- 40 │ declare function f5(arguments: number, ...rest); // no codegen no error
-    ·                     ─────────
- 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:41:21]
- 40 │ declare function f5(arguments: number, ...rest); // no codegen no error
- 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
-    ·                     ─────────
- 42 │ declare function f52(i: number, ...arguments); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:42:36]
- 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
- 42 │ declare function f52(i: number, ...arguments); // no codegen no error
-    ·                                    ─────────
- 43 │ declare function f52(i: string, ...arguments); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:43:36]
- 42 │ declare function f52(i: number, ...arguments); // no codegen no error
- 43 │ declare function f52(i: string, ...arguments); // no codegen no error
-    ·                                    ─────────
- 44 │ declare function f6(arguments: number); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:44:21]
- 43 │ declare function f52(i: string, ...arguments); // no codegen no error
- 44 │ declare function f6(arguments: number); // no codegen no error
-    ·                     ─────────
- 45 │ declare function f6(arguments: string); // no codegen no error
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:45:21]
- 44 │ declare function f6(arguments: number); // no codegen no error
- 45 │ declare function f6(arguments: string); // no codegen no error
-    ·                     ─────────
-    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:3:17]
@@ -4312,6 +4182,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─────────
  4 │         var arguments = 10; // no error
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:4:13]
@@ -4320,6 +4191,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  5 │     }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:6:32]
@@ -4328,6 +4200,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                                ─────────
  7 │         var arguments: any[]; // no error
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:7:13]
@@ -4336,6 +4209,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  8 │     }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:9:24]
@@ -4344,6 +4218,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  10 │         var arguments = 10; // no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:10:13]
@@ -4352,6 +4227,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  11 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:14:13]
@@ -4360,6 +4236,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  15 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:17:13]
@@ -4368,6 +4245,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  18 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:20:17]
@@ -4376,6 +4254,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  21 │     function f4(arguments: string, ...rest); // no codegen no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:21:17]
@@ -4384,6 +4263,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  22 │     function f4(arguments: any, ...rest) { // error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:22:17]
@@ -4392,6 +4272,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ─────────
  23 │         var arguments: any; // No error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:23:13]
@@ -4400,6 +4281,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  24 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:25:32]
@@ -4408,6 +4290,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                ─────────
  26 │     function f42(i: string, ...arguments); // no codegen no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:26:32]
@@ -4416,6 +4299,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                ─────────
  27 │     function f42(i: any, ...arguments) { // error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:27:29]
@@ -4424,6 +4308,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                             ─────────
  28 │         var arguments: any[]; // No error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:28:13]
@@ -4432,6 +4317,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  29 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:30:24]
@@ -4440,6 +4326,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  31 │     function f4NoError(arguments: string); // no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:31:24]
@@ -4448,6 +4335,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  32 │     function f4NoError(arguments: any) { // no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:32:24]
@@ -4456,6 +4344,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  33 │         var arguments: any; // No error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:33:13]
@@ -4464,6 +4353,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  34 │     }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:2:24]
@@ -4472,6 +4362,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                        ─────────
  3 │ var v12: (arguments: number, ...restParameters) => void; // no error - no code gen
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:3:11]
@@ -4480,6 +4371,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ─────────
  4 │ var v2: {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:5:6]
@@ -4488,6 +4380,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ─────────
  6 │     new (arguments: number, ...restParameters); // no error - no code gen
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:6:10]
@@ -4496,6 +4389,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ─────────
  7 │     foo(arguments: number, ...restParameters); // no error - no code gen
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:7:9]
@@ -4504,6 +4398,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  8 │     prop: (arguments: number, ...restParameters) => void; // no error - no code gen
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:8:12]
@@ -4512,6 +4407,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  9 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:11:20]
@@ -4520,6 +4416,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ─────────
  12 │     new (i: number, ...arguments); // no error - no code gen
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:12:24]
@@ -4528,6 +4425,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  13 │     foo(i: number, ...arguments); // no error - no code gen
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:13:23]
@@ -4536,6 +4434,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                       ─────────
  14 │     prop: (i: number, ...arguments) => void; // no error - no code gen
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:14:26]
@@ -4544,6 +4443,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                          ─────────
  15 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:4:20]
@@ -4552,6 +4452,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                    ─────────
  5 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:7:6]
@@ -4560,6 +4461,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ─────────
  8 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:10:6]
@@ -4568,6 +4470,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·      ─────────
  11 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:15:24]
@@ -4576,6 +4479,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ─────────
  16 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:18:10]
@@ -4584,6 +4488,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·          ─────────
  19 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:21:10]
@@ -4592,6 +4497,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·          ─────────
  22 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:26:23]
@@ -4600,6 +4506,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                       ─────────
  27 │     foo1(arguments: number, ...rest); // no error - no code gen
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:27:10]
@@ -4608,6 +4515,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·          ─────────
  28 │     fooNoError(arguments: number);  // no error
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:28:16]
@@ -4616,6 +4524,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                ─────────
  29 │ }
     ╰────
+  note: This is strict mode code
 
   × Expected `=` but found `EOF`
    ╭─[typescript/tests/cases/compiler/commonJsExportTypeDeclarationError.ts:3:1]
@@ -5185,6 +5094,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  5 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/constructorStaticParamNameErrors.ts:4:18]
@@ -5193,6 +5103,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  5 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/compiler/constructorWithIncompleteTypeAnnotation.ts:11:19]
@@ -5277,6 +5188,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ──────────
  8 │ var interface = 0;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:8:5]
@@ -5285,6 +5197,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  9 │ var let = 0;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:9:5]
@@ -5293,6 +5206,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───
  10 │ var module = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:12:5]
@@ -5301,6 +5215,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  13 │ var private = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:13:5]
@@ -5309,6 +5224,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  14 │ var protected = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:14:5]
@@ -5317,6 +5233,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────────
  15 │ var public = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:15:5]
@@ -5325,6 +5242,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  16 │ var set = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:17:5]
@@ -5333,6 +5251,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  18 │ var string = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:20:5]
@@ -5341,6 +5260,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────
  21 │ var declare = 0;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:25:5]
@@ -5349,6 +5269,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────────
  26 │     interface ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:26:5]
@@ -5357,6 +5278,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────────
  27 │     let,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:27:5]
@@ -5365,6 +5287,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───
  28 │     module ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:29:5]
@@ -5373,6 +5296,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  30 │     private ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:30:5]
@@ -5381,6 +5305,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ───────
  31 │     protected,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:31:5]
@@ -5389,6 +5314,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────────
  32 │     public ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:32:5]
@@ -5397,6 +5323,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  33 │     set ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:34:5]
@@ -5405,6 +5332,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  35 │     get ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:36:5]
@@ -5413,6 +5341,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ─────
  37 │     declare
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:41:8]
@@ -5421,6 +5350,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ──────────
  42 │     i2: interface ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:42:9]
@@ -5429,6 +5359,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  43 │     l: let,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:43:8]
@@ -5437,6 +5368,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ───
  44 │     m: module ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:46:8]
@@ -5445,6 +5377,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ───────
  47 │     p2: private ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:47:9]
@@ -5453,6 +5386,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ───────
  48 │     p3: protected,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:48:9]
@@ -5461,6 +5395,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  49 │     p4: public ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:49:9]
@@ -5469,6 +5404,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ──────
  50 │     s: set ,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:51:9]
@@ -5477,6 +5413,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ──────
  52 │     s3: string,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:54:8]
@@ -5485,6 +5422,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·        ─────
  55 │     d: declare ) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:293:11]
@@ -5493,6 +5431,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ──────────
  294 │     class interface { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'interface' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:294:11]
@@ -5501,6 +5440,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ─────────
  295 │     class let { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:295:11]
@@ -5509,6 +5449,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ───
  296 │     class module { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'package' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:297:11]
@@ -5517,6 +5458,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ───────
  298 │     class private { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:298:11]
@@ -5525,6 +5467,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ───────
  299 │     class protected { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'protected' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:299:11]
@@ -5533,6 +5476,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ─────────
  300 │     class public { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:300:11]
@@ -5541,6 +5485,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ──────
  301 │     class set { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:302:11]
@@ -5549,6 +5494,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ──────
  303 │     class get { }
      ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'yield' is reserved
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:304:11]
@@ -5557,6 +5503,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
      ·           ─────
  305 │     class declare { }
      ╰────
+  note: Classes are always strict mode code
 
   × TS(1490): File appears to be binary.
 
@@ -6895,6 +6842,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ─────
  2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
    ╰────
+  note: Modules are always strict mode code
 
   × Identifier `default` has already been declared
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
@@ -6928,6 +6876,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                     ─────
  5 │ import { default as default } from "somemodule"; // default as is ok, error of default binding name
    ╰────
+  note: Modules are always strict mode code
 
   × Identifier `default` has already been declared
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
@@ -7159,6 +7108,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ export function await(...args: any[]): any { }
    ·                 ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × TS(1319): A default export can only be used in an ECMAScript-style module.
    ╭─[typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts:2:5]
@@ -8202,6 +8152,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ─────────
  12 │ }
     ╰────
+  note: This is strict mode code
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/jsFileCompilationBindMultipleDefaultExports.ts:3:16]
@@ -8226,6 +8177,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ───
  8 │ delete a; // error
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Delete of an unqualified identifier in strict mode.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationBindStrictModeErrors.ts:8:8]
@@ -8242,6 +8194,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·          ────
  11 │ }
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/jsFileCompilationBindStrictModeErrors.ts:12:10]
@@ -8250,6 +8203,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·          ─────────
  13 │ }
     ╰────
+  note: This is strict mode code
 
   × 'with' statements are not allowed
     ╭─[typescript/tests/cases/compiler/jsFileCompilationBindStrictModeErrors.ts:15:1]
@@ -8649,6 +8603,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ───
  3 │ var a = 10;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[typescript/tests/cases/compiler/letAsIdentifierInStrictMode.ts:4:1]
@@ -8657,6 +8612,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ───
  5 │ let
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `a` has already been declared
    ╭─[typescript/tests/cases/compiler/letAsIdentifierInStrictMode.ts:3:5]
@@ -11771,6 +11727,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·             ─────────
  24 │ }
     ╰────
+  note: Modules are always strict mode code
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/shadowingViaLocalValue.ts:2:9]
@@ -12036,6 +11993,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ──────
  6 │     var static = "hi";
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:6:9]
@@ -12044,6 +12002,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ──────
  7 │     let let = "blah";
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:7:9]
@@ -12052,6 +12011,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───
  8 │     var package = "hello"
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:8:9]
@@ -12060,6 +12020,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───────
  9 │     function package() { }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `package` has already been declared
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:8:9]
@@ -12080,6 +12041,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·              ───────
  10 │     function bar(private, implements, let) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:10:18]
@@ -12088,6 +12050,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                  ───────
  11 │     function baz<implements, protected>() { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:10:27]
@@ -12096,6 +12059,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                           ──────────
  11 │     function baz<implements, protected>() { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:10:39]
@@ -12104,6 +12068,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                       ───
  11 │     function baz<implements, protected>() { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:11:18]
@@ -12112,6 +12077,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                  ──────────
  12 │     function barn(cb: (private, public, package) => void) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:11:30]
@@ -12120,6 +12086,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                              ─────────
  12 │     function barn(cb: (private, public, package) => void) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:12:24]
@@ -12128,6 +12095,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ───────
  13 │     barn((private, public, package) => { });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:12:33]
@@ -12136,6 +12104,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                 ──────
  13 │     barn((private, public, package) => { });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:12:41]
@@ -12144,6 +12113,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                         ───────
  13 │     barn((private, public, package) => { });
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:13:11]
@@ -12152,6 +12122,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·           ───────
  14 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:13:20]
@@ -12160,6 +12131,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ──────
  14 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:13:28]
@@ -12168,6 +12140,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                            ───────
  14 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:15:25]
@@ -12176,6 +12149,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                         ───────
  16 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:15:41]
@@ -12184,6 +12158,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                         ──────
  16 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:17:12]
@@ -12192,6 +12167,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·            ──────
  18 │ 
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:19:21]
@@ -12200,6 +12176,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                     ───────
  20 │     function foo1(x: private.package.x) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:20:22]
@@ -12208,6 +12185,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                      ───────
  21 │     function foo2(x: private.package.protected) { }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:21:22]
@@ -12216,6 +12194,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                      ───────
  22 │     let b: interface.package.implements.B;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `b` has already been declared
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:17:9]
@@ -12240,6 +12219,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·            ─────────
  23 │     ublic();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:24:5]
@@ -12248,6 +12228,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·     ──────
  25 │ }
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:2:11]
@@ -12256,6 +12237,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
  3 │ interface implements {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'implements' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:3:11]
@@ -12264,6 +12246,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────────
  4 │     foo(package, protected);
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:4:9]
@@ -12272,6 +12255,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───────
  5 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:4:18]
@@ -12280,6 +12264,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ─────────
  5 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:6:6]
@@ -12288,6 +12273,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ───────
  7 │ enum foo {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord2.ts:13:12]
@@ -12296,6 +12282,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·            ───────
  14 │     public,
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:4:17]
@@ -12304,6 +12291,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ───────
  5 │         private = public = static;
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:4:26]
@@ -12312,6 +12300,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                          ──────
  5 │         private = public = static;
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:4:34]
@@ -12320,6 +12309,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                                  ──────
  5 │         private = public = static;
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:5:9]
@@ -12328,6 +12318,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ───────
  6 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:5:19]
@@ -12336,6 +12327,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                   ──────
  6 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:5:28]
@@ -12344,6 +12336,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                            ──────
  6 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:7:22]
@@ -12352,6 +12345,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                      ──────
  8 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:11:24]
@@ -12360,6 +12354,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                        ──────
  12 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:11:32]
@@ -12368,6 +12363,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                                ───
  12 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:13:10]
@@ -12376,6 +12372,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·          ───────
  14 │         function let() { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:13:19]
@@ -12384,6 +12381,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                   ──────
  14 │         function let() { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:13:27]
@@ -12392,6 +12390,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                           ──────
  14 │         function let() { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:14:18]
@@ -12400,6 +12399,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                  ───
  15 │         var z = function let() { };
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'let' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:15:26]
@@ -12408,6 +12408,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                          ───
  16 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:21:9]
@@ -12416,6 +12417,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·         ──────
  22 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'private' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:21:17]
@@ -12424,6 +12426,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ───────
  22 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:23:20]
@@ -12432,6 +12435,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ──────
  24 │ 
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:25:20]
@@ -12440,6 +12444,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                    ──────
  26 │ class F1 implements public.private.implements { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:26:21]
@@ -12448,6 +12453,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                     ──────
  27 │ class G extends package { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:27:17]
@@ -12456,6 +12462,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                 ───────
  28 │ class H extends package.A { }
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts:28:17]
@@ -12463,6 +12470,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  28 │ class H extends package.A { }
     ·                 ───────
     ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:2:6]
@@ -12471,6 +12479,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  3 │ var { x: public } = { x: 1 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:3:10]
@@ -12479,6 +12488,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ──────
  4 │ var [[private]] = [["hello"]];
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:4:7]
@@ -12487,6 +12497,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ───────
  5 │ var { y: { s: static }, z: { o: { p: package } }} = { y: { s: 1 }, z: { o: { p: 'h' } } };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:5:15]
@@ -12495,6 +12506,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ──────
  6 │ var { public, protected } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:5:38]
@@ -12503,6 +12515,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                                      ───────
  6 │ var { public, protected } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:6:7]
@@ -12511,6 +12524,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ──────
  7 │ var { public: a, protected: b } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInDestructuring.ts:6:15]
@@ -12519,6 +12533,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ─────────
  7 │ var { public: a, protected: b } = { public: 1, protected: 2 };
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInImportEqualDeclaration.ts:2:8]
@@ -12526,6 +12541,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import public = require("1");
    ·        ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:11]
@@ -12534,6 +12550,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
  3 │ namespace private { }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:3:11]
@@ -12542,6 +12559,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ───────
  4 │ namespace public.whatever {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:4:11]
@@ -12550,6 +12568,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
  5 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:11]
@@ -12557,6 +12576,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ namespace private.public.foo { }
    ·           ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:19]
@@ -12564,6 +12584,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ namespace private.public.foo { }
    ·                   ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts:2:13]
@@ -12572,6 +12593,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ───────
  3 │ import {foo as private} from "./1"
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'private' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts:3:16]
@@ -12580,6 +12602,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                ───────
  4 │ import public from "./1"
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts:4:8]
@@ -12587,6 +12610,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ import public from "./1"
    ·        ──────
    ╰────
+  note: Modules are always strict mode code
 
   × Identifier `e` has already been declared
      ╭─[typescript/tests/cases/compiler/strictOptionalProperties1.ts:190:15]
@@ -13525,6 +13549,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·   ────
  4 │ --eval;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:4:3]
@@ -13533,6 +13558,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·   ────
  5 │ ++arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:5:3]
@@ -13541,6 +13567,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·   ─────────
  6 │ --arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:6:3]
@@ -13549,6 +13576,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·   ─────────
  7 │ eval++;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:7:1]
@@ -13557,6 +13585,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ────
  8 │ eval--;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:8:1]
@@ -13565,6 +13594,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ────
  9 │ arguments++;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:9:1]
@@ -13573,6 +13603,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     · ─────────
  10 │ arguments--;
     ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:10:1]
@@ -13580,6 +13611,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │ arguments--;
     · ─────────
     ╰────
+  note: This is strict mode code
 
   × Empty parenthesized expression
    ╭─[typescript/tests/cases/compiler/uncaughtCompilerError2.ts:2:4]
@@ -13910,6 +13942,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ var eval;
    ·     ────
    ╰────
+  note: This is strict mode code
 
   × 'with' statements are not allowed
    ╭─[typescript/tests/cases/compiler/withStatement.ts:3:1]
@@ -18239,6 +18272,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ function arguments() { }
    ·          ─────────
    ╰────
+  note: This is strict mode code
 
   × Expected `from` but found `import`
    ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionIncorrect1.ts:2:1]
@@ -18539,6 +18573,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  3 │ var a = () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments03_ES6.ts:2:5]
@@ -18547,6 +18582,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  3 │ var a = () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments04.ts:3:9]
@@ -18555,6 +18591,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │     var a = () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments04_ES6.ts:3:9]
@@ -18563,6 +18600,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │     var a = () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments05.ts:2:12]
@@ -18571,6 +18609,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments05_ES6.ts:2:12]
@@ -18579,6 +18618,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments06.ts:2:12]
@@ -18587,6 +18627,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = () => () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments06_ES6.ts:2:12]
@@ -18595,6 +18636,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = () => () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07.ts:2:12]
@@ -18603,6 +18645,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = (arguments) => () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07.ts:3:14]
@@ -18611,6 +18654,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·              ─────────
  4 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07_ES6.ts:2:12]
@@ -18619,6 +18663,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = (arguments) => () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07_ES6.ts:3:14]
@@ -18627,6 +18672,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·              ─────────
  4 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08.ts:2:12]
@@ -18635,6 +18681,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = () => (arguments) => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08.ts:3:20]
@@ -18643,6 +18690,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                    ─────────
  4 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08_ES6.ts:2:12]
@@ -18651,6 +18699,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var a = () => (arguments) => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08_ES6.ts:3:20]
@@ -18659,6 +18708,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                    ─────────
  4 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments11.ts:2:12]
@@ -18667,6 +18717,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var _arguments = 10;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments11_ES6.ts:2:12]
@@ -18675,6 +18726,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────────
  3 │     var _arguments = 10;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments12.ts:2:7]
@@ -18683,6 +18735,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ─────────
  3 │         var a = () => arguments;
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments12_ES6.ts:2:7]
@@ -18691,6 +18744,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ─────────
  3 │         var a = () => arguments;
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments13.ts:4:14]
@@ -18699,6 +18753,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·              ─────────
  5 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments13_ES6.ts:4:14]
@@ -18707,6 +18762,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·              ─────────
  5 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments14.ts:4:15]
@@ -18715,6 +18771,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ─────────
  5 │         return () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments14_ES6.ts:4:13]
@@ -18723,6 +18780,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·             ─────────
  5 │         return () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15.ts:3:9]
@@ -18731,6 +18789,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │     if (Math.random()) {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15.ts:5:15]
@@ -18739,6 +18798,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ─────────
  6 │         return () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15_ES6.ts:3:9]
@@ -18747,6 +18807,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │     if (Math.random()) {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15_ES6.ts:5:15]
@@ -18755,6 +18816,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ─────────
  6 │         return () => arguments;
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16.ts:3:9]
@@ -18763,6 +18825,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │     if (Math.random()) {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16.ts:7:9]
@@ -18771,6 +18834,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  8 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16_ES6.ts:3:9]
@@ -18779,6 +18843,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  4 │     if (Math.random()) {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16_ES6.ts:7:9]
@@ -18787,6 +18852,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  8 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17.ts:3:11]
@@ -18795,6 +18861,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ─────────
  4 │     if (Math.random()) {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17.ts:7:9]
@@ -18803,6 +18870,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  8 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17_ES6.ts:3:11]
@@ -18811,6 +18879,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ─────────
  4 │     if (Math.random()) {
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17_ES6.ts:7:9]
@@ -18819,6 +18888,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  8 │ }
    ╰────
+  note: This is strict mode code
 
   × Invalid characters after number
    ╭─[typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteralError.ts:2:17]
@@ -18851,6 +18921,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                ─────────
  5 │     private bar(eval:any) {
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:5:17]
@@ -18859,6 +18930,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ────
  6 │         arguments = "hello";
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:6:9]
@@ -18867,6 +18939,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ─────────
  7 │     }
    ╰────
+  note: Classes are always strict mode code
 
   × 'super' can only be referenced in a derived class.
    ╭─[typescript/tests/cases/conformance/es6/classDeclaration/superCallFromClassThatHasNoBaseTypeButWithSameSymbolInterface.ts:3:1]
@@ -19529,6 +19602,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ for (var let of []) {}
    ·          ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration10_es6.ts:1:26]
@@ -19550,6 +19624,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ─────
  3 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration5_es6.ts:1:14]
@@ -19641,6 +19716,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1 │ import { set as yield } from "./t1";
    ·                 ─────
    ╰────
+  note: Modules are always strict mode code
 
   × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithUnderscores1.ts:5:5]
@@ -20186,6 +20262,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ yield(foo);
    · ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression20_es6.ts:3:8]
@@ -20327,6 +20404,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────
  3 │ function* g() {
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck38.ts:5:19]
@@ -20335,6 +20413,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                   ─────
  6 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck39.ts:7:13]
@@ -23088,6 +23167,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import { await as await } from "./other";
    ·                   ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
@@ -23102,6 +23182,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ import await = foo.await;
    ·        ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
@@ -23116,6 +23197,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ var await = 1;
    ·     ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
@@ -23130,6 +23212,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ var {await} = {await:1};
    ·      ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
@@ -23144,6 +23227,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ var [await] = [1];
    ·      ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
@@ -23160,6 +23244,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·              ─────
  3 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.6.ts:2:17]
@@ -23176,6 +23261,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─────
  3 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
@@ -23183,6 +23269,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import * as await from "./other";
    ·             ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.8.ts:2:8]
@@ -23190,6 +23277,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import await from "./other";
    ·        ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Identifier expected. 'await' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.9.ts:2:10]
@@ -23204,6 +23292,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ import { await } from "./other";
    ·          ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Expected `=` but found `;`
     ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_missingBraces.ts:11:16]
@@ -23522,6 +23611,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ─────────
  4 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
     ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:10:1]
@@ -23530,6 +23620,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     · ─────────
  11 │ I           // This should be the identifier 'I'
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceExtendingOptionalChain.ts:5:22]
@@ -24671,6 +24762,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ─────
  3 │ }
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:2:29]
@@ -25755,6 +25847,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ───────
  8 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:2:10]
@@ -26794,6 +26887,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                     ──────
  4 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × Empty parenthesized expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser566700.ts:1:9]
@@ -26832,6 +26926,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  3 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser642331_1.ts:4:18]
@@ -26840,6 +26935,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ──────
  5 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser645086_1.ts:1:13]
@@ -27512,6 +27608,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·            ────
  3 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode11.ts:2:20]
@@ -27520,6 +27617,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                    ────
  3 │ };
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode12.ts:2:19]
@@ -27527,6 +27625,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ var v = { set foo(eval) { } }
    ·                   ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode13.ts:4:7]
@@ -27535,6 +27634,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ────
  5 │ }
    ╰────
+  note: This is strict mode code
 
   × 'with' statements are not allowed
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode14.ts:2:1]
@@ -27557,6 +27657,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ static();
    · ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode3.ts:2:1]
@@ -27564,6 +27665,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ eval = 1;
    · ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode4.ts:2:1]
@@ -27571,6 +27673,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ arguments = 1;
    · ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode5.ts:2:1]
@@ -27578,6 +27681,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ eval += 1;
    · ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode6.ts:2:1]
@@ -27585,6 +27689,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ eval++;
    · ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode7.ts:2:3]
@@ -27592,6 +27697,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ ++eval;
    ·   ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode8.ts:2:10]
@@ -27600,6 +27706,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ────
  3 │ }
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode9.ts:2:18]
@@ -27608,6 +27715,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                  ────
  3 │ };
    ╰────
+  note: This is strict mode code
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:3:5]
@@ -27684,6 +27792,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  17 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unterminated multiline comment
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/parserKeywordsAsIdentifierName2.ts:2:10]
@@ -27848,6 +27957,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  3 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName38.ts:2:6]
@@ -27856,6 +27966,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  3 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName39.ts:3:6]
@@ -27864,6 +27975,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·      ──────
  4 │ }
    ╰────
+  note: Classes are always strict mode code
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName5.ts:1:11]
@@ -28072,6 +28184,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ─────
  4 │ const yield = 2
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'yield' is reserved
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:4:7]
@@ -28080,6 +28193,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ─────
  5 │ async function f() {
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:6:11]
@@ -28088,6 +28202,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ─────
  7 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'yield' is reserved
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:9:11]
@@ -28096,6 +28211,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·           ─────
  10 │ }
     ╰────
+  note: Modules are always strict mode code
 
   × Delete of an unqualified identifier in strict mode.
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:15:20]
@@ -28128,6 +28244,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·               ────
  23 │         const arguments = 8
     ╰────
+  note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:23:15]
@@ -28136,6 +28253,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·               ─────────
  24 │     }
     ╰────
+  note: Classes are always strict mode code
 
   × 'with' statements are not allowed
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:27:9]
@@ -28160,6 +28278,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·       ────
  40 │ const arguments = 10
     ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:40:7]
@@ -28167,6 +28286,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  40 │ const arguments = 10
     ·       ─────────
     ╰────
+  note: Modules are always strict mode code
 
   × Expected `in` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/salsa/plainJSGrammarErrors.ts:4:5]
@@ -28224,6 +28344,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ────
  3 │ const arguments = 2
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/salsa/plainJSReservedStrict.ts:3:7]
@@ -28231,6 +28352,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ const arguments = 2
    ·       ─────────
    ╰────
+  note: This is strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral3.ts:1:3]
@@ -28255,6 +28377,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  17 │ var public = 1;
     ·     ──────
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral3.ts:1:3]
@@ -28352,6 +28475,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ──────────
  2 │ async function main() {
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'yield' is reserved
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword2.ts:6:5]
@@ -28360,6 +28484,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·     ──────────
  7 │ function *gen() {
    ╰────
+  note: Modules are always strict mode code
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts:5:12]

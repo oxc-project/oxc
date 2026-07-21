@@ -75,17 +75,6 @@ pub const fn ident_hash(s: &[u8]) -> u32 {
     }
 }
 
-/// Pack length and hash into a single `u64`.
-///
-/// Lower 32 bits = length, upper 32 bits = hash.
-///
-/// This is used as compact precomputed data inside `Ident` and as the
-/// `Ident::hash()` payload passed into [`IdentHasher::write_u64`].
-#[inline]
-pub const fn pack_len_hash(len: u32, hash: u32) -> u64 {
-    (len as u64) | ((hash as u64) << 32)
-}
-
 /// Compose the final hash state used by hashbrown.
 ///
 /// Keep upper bits derived from `hash` (for tag/SIMD filtering), while ensuring
@@ -156,9 +145,12 @@ impl Hasher for IdentHasher {
 mod test {
     use std::hash::{BuildHasher, Hasher};
 
-    use super::{
-        IdentBuildHasher, IdentHasher, hashbrown_state, ident_hash, pack_len_hash, unpack_len_hash,
-    };
+    use super::{IdentBuildHasher, IdentHasher, hashbrown_state, ident_hash, unpack_len_hash};
+
+    /// Pack `len` and `hash` the way `Ident::hash()` does, for driving the `write_u64` path.
+    const fn pack_len_hash(len: u32, hash: u32) -> u64 {
+        (len as u64) | ((hash as u64) << 32)
+    }
 
     // ---- ident_hash quality tests ----
 
@@ -220,17 +212,6 @@ mod test {
             ident_hash(b"privateInterfaceWithPrivatePropertyTypes"),
             ident_hash(b"privateInterfaceWithPrivateParmeterTypes"), // spellchecker:disable-line
         );
-    }
-
-    // ---- pack_len_hash tests ----
-
-    #[test]
-    fn pack_round_trip() {
-        let len = 42u32;
-        let hash = 0xDEAD_BEEFu32;
-        let packed = pack_len_hash(len, hash);
-        assert_eq!((packed & 0xFFFF_FFFF) as u32, len);
-        assert_eq!((packed >> 32) as u32, hash);
     }
 
     // ---- IdentHasher tests ----

@@ -663,9 +663,10 @@ fn ox_codegen_reactive_scope<'a>(
     scope_id: ScopeId,
     block: &ReactiveBlock<'a>,
 ) -> Result<(), OxcDiagnostic> {
-    let scope_deps = cx.env.scopes[scope_id].dependencies.clone();
-    let scope_decls = cx.env.scopes[scope_id].declarations.clone();
-    let scope_reassignments = cx.env.scopes[scope_id].reassignments.clone();
+    let scope_deps = cx.env.scopes[scope_id].dependencies.clone_in(cx.env.allocator);
+    let scope_decls = cx.env.scopes[scope_id].declarations.iter().copied().collect::<Vec<_>>();
+    let scope_reassignments =
+        cx.env.scopes[scope_id].reassignments.iter().copied().collect::<Vec<_>>();
 
     let mut cache_store_stmts: oxc_allocator::Vec<'a, oxc::Statement<'a>> =
         oxc_allocator::ArenaVec::new_in(&cx.ast);
@@ -1193,8 +1194,12 @@ fn ox_codegen_for_init<'a>(
     init: &ReactiveValue<'a>,
 ) -> Result<Option<oxc::ForStatementInit<'a>>, OxcDiagnostic> {
     if let ReactiveValue::SequenceExpression { instructions, .. } = init {
-        let block_items: Vec<ReactiveStatement> =
-            instructions.iter().map(|i| ReactiveStatement::Instruction(i.clone())).collect();
+        let block_items = oxc_allocator::Vec::from_iter_in(
+            instructions
+                .iter()
+                .map(|i| ReactiveStatement::Instruction(i.clone_in(cx.env.allocator))),
+            &cx.env.allocator,
+        );
         let body = ox_codegen_block(cx, &block_items)?;
         let mut declarators: oxc_allocator::Vec<'a, oxc::VariableDeclarator<'a>> =
             oxc_allocator::ArenaVec::new_in(&cx.ast);
@@ -1308,7 +1313,8 @@ fn ox_codegen_instruction_nullable<'a>(
                     None,
                 )?;
                 let lvalue = instr.lvalue.as_ref().unwrap();
-                cx.object_methods.insert(lvalue.identifier, (value.clone(), *span));
+                cx.object_methods
+                    .insert(lvalue.identifier, (value.clone_in(cx.env.allocator), *span));
                 return Ok(None);
             }
             _ => {}
@@ -1562,8 +1568,12 @@ fn ox_codegen_instruction_value<'a>(
             )))
         }
         ReactiveValue::SequenceExpression { instructions, value, .. } => {
-            let block_items: Vec<ReactiveStatement> =
-                instructions.iter().map(|i| ReactiveStatement::Instruction(i.clone())).collect();
+            let block_items = oxc_allocator::Vec::from_iter_in(
+                instructions
+                    .iter()
+                    .map(|i| ReactiveStatement::Instruction(i.clone_in(cx.env.allocator))),
+                &cx.env.allocator,
+            );
             let body = ox_codegen_block_no_reset(cx, &block_items)?;
             let mut expressions: oxc_allocator::Vec<'a, oxc::Expression<'a>> =
                 oxc_allocator::ArenaVec::new_in(&cx.ast);
@@ -2498,8 +2508,7 @@ fn ox_codegen_function_expression<'a>(
     lowered_func: &crate::react_compiler_hir::LoweredFunction,
     expr_type: &FunctionExpressionType,
 ) -> Result<OxValue<'a>, OxcDiagnostic> {
-    let func = cx.env.functions[lowered_func.func].clone();
-    let mut reactive_fn = build_reactive_function(&func, cx.env)?;
+    let mut reactive_fn = build_reactive_function(&cx.env.functions[lowered_func.func], cx.env)?;
     prune_unused_labels(&mut reactive_fn, cx.env)?;
     prune_unused_lvalues(&mut reactive_fn, cx.env);
     prune_hoisted_contexts(&mut reactive_fn, cx.env)?;
@@ -2658,16 +2667,18 @@ fn ox_codegen_object_expression<'a>(
                         ));
                     }
                     ObjectPropertyType::Method => {
-                        let method_data =
-                            cx.object_methods.get(&obj_prop.place.identifier).cloned();
+                        let method_data = cx
+                            .object_methods
+                            .get(&obj_prop.place.identifier)
+                            .map(|(v, s)| (v.clone_in(cx.env.allocator), *s));
                         let Some((InstructionValue::ObjectMethod { lowered_func, .. }, _)) =
                             method_data
                         else {
                             return Err(invariant_err("Expected ObjectMethod instruction", None));
                         };
 
-                        let func = cx.env.functions[lowered_func.func].clone();
-                        let mut reactive_fn = build_reactive_function(&func, cx.env)?;
+                        let mut reactive_fn =
+                            build_reactive_function(&cx.env.functions[lowered_func.func], cx.env)?;
                         prune_unused_labels(&mut reactive_fn, cx.env)?;
                         prune_unused_lvalues(&mut reactive_fn, cx.env);
 
@@ -2725,7 +2736,7 @@ fn ox_codegen_jsx_expression<'a>(
     cx: &mut OxcContext<'a, '_>,
     tag: &JsxTag,
     props: &[JsxAttribute],
-    children: &Option<Vec<Place>>,
+    children: &Option<oxc_allocator::Vec<'a, Place>>,
 ) -> Result<OxValue<'a>, OxcDiagnostic> {
     let mut attributes: oxc_allocator::Vec<'a, oxc::JSXAttributeItem<'a>> =
         oxc_allocator::ArenaVec::new_in(&cx.ast);

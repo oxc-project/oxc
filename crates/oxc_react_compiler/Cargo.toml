@@ -25,7 +25,6 @@ description = "oxc integration for the Rust port of React Compiler"
 
 [lib]
 doctest = false
-test = false
 
 [dependencies]
 oxc_allocator = { workspace = true }

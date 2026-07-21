@@ -1,7 +1,24 @@
 parser_misc Summary:
-AST Parsed     : 72/72 (100.00%)
-Positive Passed: 72/72 (100.00%)
-Negative Passed: 153/153 (100.00%)
+AST Parsed     : 73/73 (100.00%)
+Positive Passed: 73/73 (100.00%)
+Negative Passed: 154/154 (100.00%)
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
+ 1 │ export {};
+ 2 │ declare var arguments: unknown;
+   ·             ─────────
+ 3 │ declare const eval: unknown;
+   ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval-ambient.ts:3:15]
+ 2 │ declare var arguments: unknown;
+ 3 │ declare const eval: unknown;
+   ·               ────
+   ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -9,6 +26,7 @@ Negative Passed: 153/153 (100.00%)
    ·          ─────────
  2 │ function eval() {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:2:10]
@@ -17,6 +35,7 @@ Negative Passed: 153/153 (100.00%)
    ·          ────
  3 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:4:16]
@@ -25,6 +44,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ─────────
  5 │ function foo2([arguments]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:5:16]
@@ -33,6 +53,7 @@ Negative Passed: 153/153 (100.00%)
    ·                ─────────
  6 │ function foo3({ eval }) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:6:17]
@@ -41,14 +62,79 @@ Negative Passed: 153/153 (100.00%)
    ·                 ────
  7 │ function foo4([eval]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:7:16]
  6 │ function foo3({ eval }) {}
  7 │ function foo4([eval]) {}
    ·                ────
- 8 │ 
+ 8 │ declare function foo5({ arguments }: { arguments: number }): void;
    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:8:25]
+ 7 │ function foo4([eval]) {}
+ 8 │ declare function foo5({ arguments }: { arguments: number }): void;
+   ·                         ─────────
+ 9 │ declare function foo6([eval]: [number]): void;
+   ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:9:24]
+  8 │ declare function foo5({ arguments }: { arguments: number }): void;
+  9 │ declare function foo6([eval]: [number]): void;
+    ·                        ────
+ 10 │ declare function foo7([arguments = 0]: [number?]): void;
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:10:24]
+  9 │ declare function foo6([eval]: [number]): void;
+ 10 │ declare function foo7([arguments = 0]: [number?]): void;
+    ·                        ─────────
+ 11 │ declare function foo8({ ...arguments }: object): void;
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:11:28]
+ 10 │ declare function foo7([arguments = 0]: [number?]): void;
+ 11 │ declare function foo8({ ...arguments }: object): void;
+    ·                            ─────────
+ 12 │ declare function foo9([...eval]: unknown[]): void;
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:12:27]
+ 11 │ declare function foo8({ ...arguments }: object): void;
+ 12 │ declare function foo9([...eval]: unknown[]): void;
+    ·                           ────
+ 13 │ declare class C {
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:14:12]
+ 13 │ declare class C {
+ 14 │   method({ eval }: { eval: number }): void;
+    ·            ────
+ 15 │   constructor([arguments]: [number]);
+    ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:15:16]
+ 14 │   method({ eval }: { eval: number }): void;
+ 15 │   constructor([arguments]: [number]);
+    ·                ─────────
+ 16 │ }
+    ╰────
+  note: Classes are always strict mode code
 
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
@@ -424,6 +510,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  5 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:6:1]
@@ -432,6 +519,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  7 │ let()[x] = 1;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:7:1]
@@ -440,6 +528,7 @@ Negative Passed: 153/153 (100.00%)
    · ───
  8 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:9:1]
@@ -448,6 +537,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  10 │ let?.y.z;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:10:1]
@@ -456,6 +546,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  11 │ let?.[0];
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:11:1]
@@ -464,6 +555,7 @@ Negative Passed: 153/153 (100.00%)
     · ───
  12 │ let?.method();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:12:1]
@@ -471,6 +563,7 @@ Negative Passed: 153/153 (100.00%)
  12 │ let?.method();
     · ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[misc/fail/minus-yield-100.js:1:27]
@@ -3604,6 +3697,7 @@ Negative Passed: 153/153 (100.00%)
     ·       ─────
  10 │ }
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
    ╭─[misc/fail/oxc-23170.ts:2:16]

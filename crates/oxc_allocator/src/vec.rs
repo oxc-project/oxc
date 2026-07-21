@@ -172,13 +172,12 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn from_value_in<A: GetAllocator<'alloc>>(value: T, allocator: &A) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        let allocator = allocator.allocator();
-        let boxed = Box::new_in(value, &allocator);
-        let ptr = Box::into_non_null(boxed).as_ptr();
-        // SAFETY: `ptr` contains a valid `T`.
+        let boxed = Box::new_in(value, allocator);
+        let ptr = Box::into_non_null(boxed);
+
+        // SAFETY: `ptr` contains a valid `T`, allocated in `allocator`'s arena.
         // A `Vec` with length 1, capacity 1 can own the same allocation.
-        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, 1, 1, allocator.arena()) };
-        Self(vec)
+        unsafe { Self::from_raw_parts_in(ptr, 1, 1, allocator) }
     }
 
     /// Create a new [`Vec`] from a fixed-size array, allocated in the given `allocator`.
@@ -208,14 +207,81 @@ impl<'alloc, T> Vec<'alloc, T> {
             return Vec::new_in(allocator);
         }
 
-        let allocator = allocator.allocator();
-        let boxed = Box::new_in(array, &allocator);
-        let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
+        let boxed = Box::new_in(array, allocator);
+        let ptr = Box::into_non_null(boxed).cast::<T>();
+
         // SAFETY: `ptr` has correct alignment - it was just allocated as `[T; N]`.
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
-        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.arena()) };
+        unsafe { Self::from_raw_parts_in(ptr, N, N, allocator) }
+    }
+
+    /// Create a [`Vec<T>`] directly from a pointer, a length, and a capacity, allocated in the given `allocator`.
+    ///
+    /// # SAFETY
+    ///
+    /// This is highly unsafe, due to the number of invariants that aren't checked:
+    ///
+    /// * `ptr` needs to have been previously allocated via [`Vec<T>`] in `allocator`'s arena
+    ///   (at least, it's highly likely to be incorrect if it wasn't).
+    /// * `ptr`'s `T` needs to have the same size and alignment as it was allocated with.
+    /// * `length` needs to be less than or equal to `capacity`.
+    /// * `capacity` needs to be the capacity that the pointer was allocated with.
+    /// * The memory must remain valid for the lifetime of the returned `Vec` -
+    ///   i.e. the `Vec`'s lifetime must not exceed `allocator`'s.
+    ///
+    /// Violating these may cause problems like corrupting the allocator's internal data structures.
+    /// For example it is **not** safe to build a `Vec<u8>` from a pointer to a C `char` array and
+    /// a `size_t`.
+    ///
+    /// The ownership of `ptr` is effectively transferred to the `Vec<T>`, which may then reallocate
+    /// or change the contents of the memory pointed to by the pointer at will.
+    /// Ensure that nothing else uses the pointer after calling this function.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    /// use std::{mem, ptr::{self, NonNull}};
+    ///
+    /// let allocator = Allocator::default();
+    /// let allocator = &allocator;
+    ///
+    /// let mut v = Vec::from_iter_in([1, 2, 3], &allocator);
+    ///
+    /// // Pull out the various important pieces of information about `v`
+    /// let p = NonNull::new(v.as_mut_ptr()).unwrap();
+    /// let len = v.len();
+    /// let cap = v.capacity();
+    ///
+    /// let rebuilt = unsafe {
+    ///     // Forget `v` so we are in complete control of the allocation to which `p` points.
+    ///     mem::forget(v);
+    ///
+    ///     // Overwrite memory with 4, 5, 6
+    ///     for i in 0..len {
+    ///         p.add(i).write(4 + i);
+    ///     }
+    ///
+    ///     // Put everything back together into a Vec
+    ///     Vec::from_raw_parts_in(p, len, cap, &allocator)
+    /// };
+    /// assert_eq!(rebuilt, [4, 5, 6]);
+    /// ```
+    #[inline(always)]
+    pub unsafe fn from_raw_parts_in<A: GetAllocator<'alloc>>(
+        ptr: NonNull<T>,
+        length: usize,
+        capacity: usize,
+        allocator: &A,
+    ) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        let arena = allocator.allocator().arena();
+
+        // SAFETY: Caller guarantees `from_raw_parts_in`'s requirements
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, length, capacity, arena) };
         Self(vec)
     }
 
@@ -449,9 +515,23 @@ impl<T: Debug> Debug for Vec<'_, T> {
 
 #[cfg(test)]
 mod test {
+    use std::cell::Cell;
+
+    use oxc_data_structures::types::implements;
+
     use crate::Allocator;
 
     use super::Vec;
+
+    // `Vec` must not be `Send` - 2 `Vec`s on different threads could then allocate into the same
+    // arena simultaneously, which would be undefined behavior. See `unsafe impl Sync for Vec`.
+    // `Vec` is `Sync` only if `T` is.
+    #[test]
+    fn vec_send_sync() {
+        assert!(implements!(Vec<u32>: !Send));
+        assert!(implements!(Vec<u32>: Sync));
+        assert!(implements!(Vec<Cell<u32>>: !Sync));
+    }
 
     #[test]
     fn vec_with_capacity() {

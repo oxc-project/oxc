@@ -1,6 +1,6 @@
 use oxc_allocator::GetAllocator;
 use oxc_ast::ast::*;
-use oxc_compat::ESFeature;
+use oxc_compat::{ESFeature, EngineTargets};
 use oxc_ecmascript::{
     GlobalContext,
     constant_evaluation::{
@@ -81,6 +81,10 @@ impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
 }
 
 impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        Some(&self.options().target)
+    }
+
     fn annotations(&self) -> bool {
         self.options().treeshake.annotations
     }
@@ -107,6 +111,10 @@ impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
 }
 
 impl<'a> MayHaveSideEffectsContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        MayHaveSideEffectsContext::engine_targets(*self)
+    }
+
     fn annotations(&self) -> bool {
         (*self).annotations()
     }
@@ -129,6 +137,10 @@ impl<'a> MayHaveSideEffectsContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
 }
 
 impl<'a> MayHaveSideEffectsContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        MayHaveSideEffectsContext::engine_targets(&**self)
+    }
+
     fn annotations(&self) -> bool {
         (**self).annotations()
     }
@@ -157,9 +169,10 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.options()
     }
 
-    /// Check if the target engines supports a feature.
+    /// Loosely check whether target engines support a feature for syntax generation.
     ///
-    /// Returns `true` if the feature is supported.
+    /// This follows [`oxc_compat::EngineTargets::has_feature`] semantics. Side-effect analysis uses
+    /// the stricter [`oxc_compat::EngineTargets::supports_es_feature`] capability query instead.
     pub fn supports_feature(&self, feature: ESFeature) -> bool {
         !self.options().target.has_feature(feature)
     }

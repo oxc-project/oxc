@@ -120,7 +120,7 @@ impl<'a> PeepholeOptimizations {
         // `body_unsafe` is set by a preceding non-declarative statement, and the
         // program root additionally starts unsafe when the module has loaders
         // (see `enter_program`) — so this one check covers the cyclic-import gate.
-        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
+        let &(body_scope, body_unsafe, _) = ctx.state.body_unsafe_stack.last();
         if body_unsafe || ctx.current_scope_id() != body_scope {
             return false;
         }

@@ -11,6 +11,7 @@
 //!
 //! Ported from TypeScript `src/Optimization/DeadCodeElimination.ts`.
 
+use oxc_allocator::Vec as ArenaVec;
 use oxc_index::IndexSlice;
 use oxc_str::IdentHashSet;
 use rustc_hash::FxHashSet;
@@ -189,11 +190,11 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
 }
 
 /// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).
-fn rewrite_instruction(
-    func: &mut HirFunction,
+fn rewrite_instruction<'a>(
+    func: &mut HirFunction<'a>,
     instr_id: InstructionId,
     state: &State,
-    env: &Environment,
+    env: &Environment<'a>,
 ) {
     let instr = &mut func.instructions[instr_id.index()];
 
@@ -245,7 +246,7 @@ fn rewrite_instruction(
                         }
                     }
                     if let Some(props) = next_properties {
-                        obj.properties = props;
+                        obj.properties = ArenaVec::from_iter_in(props, &env.allocator);
                     }
                 }
             }

@@ -12,7 +12,6 @@
 //! Conditional on `env.config.enable_name_anonymous_functions`.
 
 use std::borrow::Cow;
-use std::mem::take;
 
 use rustc_hash::FxHashMap;
 
@@ -81,11 +80,8 @@ pub fn name_anonymous_functions<'a>(func: &mut HirFunction<'a>, env: &mut Enviro
 
     // Update name_hint on FunctionExpression instruction values in all arena functions
     for i in 0..env.functions.len() {
-        // We need to temporarily take the instructions to avoid borrow issues
         let func_id = FunctionId::from_usize(i);
-        let mut instructions = take(&mut env.functions[func_id].instructions);
-        apply_name_hints_to_instructions(&mut instructions, &update_map);
-        env.functions[func_id].instructions = instructions;
+        apply_name_hints_to_instructions(&mut env.functions[func_id].instructions, &update_map);
     }
 }
 

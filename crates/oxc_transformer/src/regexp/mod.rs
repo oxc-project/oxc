@@ -103,6 +103,7 @@ impl RegExp {
             unsupported_patterns: RegexUnsupportedPatterns {
                 look_behind_assertions,
                 named_capture_groups,
+                duplicate_named_capture_groups: false,
                 unicode_property_escapes,
                 pattern_modifiers: false,
             },

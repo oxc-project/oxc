@@ -2,7 +2,7 @@ commit: 637d5746
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 3489/4720 (73.92%)
+Positive Passed: 3490/4720 (73.94%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
@@ -172,11 +172,23 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/acceptableAlias1.
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
 rebuilt        : ScopeId(1): ["X", "_M"]
+Reference symbol mismatch for "N":
+after transform: SymbolId(1) "N"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["N"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
 rebuilt        : ScopeId(1): ["X", "_M"]
+Reference symbol mismatch for "N":
+after transform: SymbolId(1) "N"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["N"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImportsCanPaintCrossModuleDeclaration.ts
 Bindings mismatch:
@@ -1097,9 +1109,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/classImplementsIm
 Bindings mismatch:
 after transform: ScopeId(0): ["M1", "M2"]
 rebuilt        : ScopeId(0): ["M2"]
-Unresolved references mismatch:
-after transform: ["M1"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classImplementsMethodWIthTupleArgs.ts
 Bindings mismatch:
@@ -3215,6 +3224,12 @@ rebuilt        : ScopeId(0): ["M", "v"]
 Bindings mismatch:
 after transform: ScopeId(3): ["C", "_M", "w"]
 rebuilt        : ScopeId(1): ["_M", "w"]
+Reference symbol mismatch for "C":
+after transform: SymbolId(0) "C"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["C"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOfFuncspace.ts
 Symbol flags mismatch for "ExpandoMerge":
@@ -4271,6 +4286,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportNonIn
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "x"]
 rebuilt        : ScopeId(0): ["B", "x"]
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["A"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
 Bindings mismatch:
@@ -5166,11 +5187,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierInAmbientContext.ts
-Unresolved references mismatch:
-after transform: ["x"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importElisionExportNonExportAndDefault.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -5896,38 +5912,41 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "c"]
 rebuilt        : ScopeId(0): ["c"]
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInterfaceInsideTopLevelModuleWithExport.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "b", "x"]
 rebuilt        : ScopeId(0): ["b", "x"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["a"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "c"]
 rebuilt        : ScopeId(0): ["c"]
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideLocalModuleWithExport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "c"]
 rebuilt        : ScopeId(0): ["c"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["a"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideLocalModuleWithoutExport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "c"]
 rebuilt        : ScopeId(0): ["c"]
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideTopLevelModuleWithoutExport.ts
 Bindings mismatch:
@@ -5954,9 +5973,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalImportUnI
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): ["B"]
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(3): [ReferenceId(0)]
-rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/intersectionOfMixinConstructorTypeAndNonConstructorType.ts
 Bindings mismatch:
@@ -9117,9 +9133,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/reservedNameOnMod
 Bindings mismatch:
 after transform: ScopeId(0): ["test"]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["mstring"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/resolveInterfaceNameWithSameLetDeclarationName1.ts
 Bindings mismatch:
@@ -17765,7 +17778,7 @@ Reference symbol mismatch for "mod2":
 after transform: SymbolId(7) "mod2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["mod1"]
+after transform: []
 rebuilt        : ["mod2", "pack2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/seeTag1.ts

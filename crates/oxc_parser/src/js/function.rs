@@ -71,6 +71,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
         let mut list = ArenaVec::new_in(self);
+        let rest = self.parse_formal_parameters_list_into(&mut list, func_kind, opening_span);
+        (list, rest)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn parse_formal_parameters_list_into(
+        &mut self,
+        list: &mut ArenaVec<'a, FormalParameter<'a>>,
+        func_kind: FunctionKind,
+        opening_span: Span,
+    ) -> Option<ArenaBox<'a, FormalParameterRest<'a>>> {
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
         let mut has_optional = false;
@@ -157,7 +169,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        (list, rest)
+        rest
     }
 
     fn parse_formal_parameter_with_decorators(
