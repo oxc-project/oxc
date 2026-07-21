@@ -219,7 +219,11 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                         fixer.source_range(property.key.span()),
                         property.computed,
                     );
-                    replacement.push_str("() { return ");
+                    replacement.push_str("()");
+                    if let Some(type_annotation) = &property.type_annotation {
+                        replacement.push_str(fixer.source_range(type_annotation.span));
+                    }
+                    replacement.push_str(" { return ");
                     replacement.push_str(fixer.source_range(value.span()));
                     replacement.push_str("; }");
 
@@ -763,6 +767,14 @@ fn test() {
         (
             "
             class Mx {
+              readonly n: 1 | 2 = 1;
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
               readonly p1 = `hello world`;
             }
                   ",
@@ -1013,6 +1025,19 @@ fn test() {
         (
             "
             class Mx {
+              readonly n: 1 | 2 = 1;
+            }
+                  ",
+            "
+            class Mx {
+              get n(): 1 | 2 { return 1; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
               readonly p1 = `hello world`;
             }
                   ",
@@ -1164,7 +1189,7 @@ fn test() {
                   ",
             "
             class A {
-              private get foo() { return 'bar'; }
+              private get foo(): string { return 'bar'; }
               constructor(foo: string) {
                 const bar = new (class {
                   private readonly foo: string = 'baz';
@@ -1198,7 +1223,7 @@ fn test() {
               private readonly ['foo']: string = 'bar';
               constructor(foo: string) {
                 const bar = new (class {
-                  private get foo() { return 'baz'; }
+                  private get foo(): string { return 'baz'; }
                   constructor() {}
                 })();
 
@@ -1223,7 +1248,7 @@ fn test() {
                   ",
             "
             class A {
-              private get foo() { return 'bar'; }
+              private get foo(): string { return 'bar'; }
               constructor(foo: string) {
                 function func() {
                   this.foo = 'aa';

@@ -77,6 +77,15 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
    ╭─[class_literal_property_style.tsx:3:24]
  2 │             class Mx {
+ 3 │               readonly n: 1 | 2 = 1;
+   ·                        ─
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:24]
+ 2 │             class Mx {
  3 │               readonly p1 = `hello world`;
    ·                        ──
  4 │             }
