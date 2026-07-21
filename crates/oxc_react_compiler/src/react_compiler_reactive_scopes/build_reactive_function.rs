@@ -21,6 +21,7 @@ use crate::react_compiler_hir::{
     ReactiveSwitchCase, ReactiveTerminal, ReactiveTerminalStatement, ReactiveTerminalTargetKind,
     ReactiveValue, Terminal,
 };
+use oxc_allocator::CloneIn;
 use oxc_span::Span;
 
 /// Convert the HIR CFG into a tree-structured ReactiveFunction.
@@ -39,11 +40,11 @@ pub fn build_reactive_function<'a>(
         span: hir.span,
         id: hir.id,
         name_hint: hir.name_hint,
-        params: hir.params.clone(),
+        params: hir.params.iter().copied().collect(),
         generator: hir.generator,
         is_async: hir.is_async,
         body,
-        directives: hir.directives.clone(),
+        directives: hir.directives.iter().copied().collect(),
     })
 }
 
@@ -125,7 +126,7 @@ impl<'a, 'h> Context<'a, 'h> {
         }
     }
 
-    fn block(&self, id: BlockId) -> &BasicBlock {
+    fn block(&self, id: BlockId) -> &BasicBlock<'_> {
         &self.ir.body.blocks[&id]
     }
 
@@ -302,8 +303,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             // Extract data from block before any mutable operations
             let block = &self.hir.body.blocks[&block_id];
             let block_id_val = block.id;
-            let instructions: Vec<_> = block.instructions.clone();
-            let terminal = block.terminal.clone();
+            let instructions: Vec<_> = block.instructions.iter().copied().collect();
+            let terminal = block.terminal.clone_in(self.env.allocator);
 
             if !self.cx.emitted.insert(block_id_val) {
                 return Err(ErrorCategory::Invariant
@@ -316,7 +317,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 block_value.push(ReactiveStatement::Instruction(ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue),
-                    value: ReactiveValue::Instruction(instr.value.clone()),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env.allocator)),
                     span: instr.span,
                 }));
             }
@@ -911,8 +912,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
     ) -> Result<ValueBlockResult<'a>, OxcDiagnostic> {
         let block = &self.hir.body.blocks[&block_id];
         let block_id_val = block.id;
-        let terminal = block.terminal.clone();
-        let instructions: Vec<_> = block.instructions.clone();
+        let terminal = block.terminal.clone_in(self.env.allocator);
+        let instructions: Vec<_> = block.instructions.iter().copied().collect();
 
         // If we've reached the fallthrough, stop
         if let Some(ft) = fallthrough
@@ -988,7 +989,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         ReactiveInstruction {
                             id: instr.id,
                             lvalue: Some(instr.lvalue),
-                            value: ReactiveValue::Instruction(instr.value.clone()),
+                            value: ReactiveValue::Instruction(
+                                instr.value.clone_in(self.env.allocator),
+                            ),
                             span: instr.span,
                         }
                     })
@@ -1146,7 +1149,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue),
-                    value: ReactiveValue::Instruction(instr.value.clone()),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env.allocator)),
                     span: instr.span,
                 }
             })
@@ -1166,10 +1169,16 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         lvalue.place,
                     )
                 } else {
-                    (ReactiveValue::Instruction(last_instr.value.clone()), last_instr.lvalue)
+                    (
+                        ReactiveValue::Instruction(last_instr.value.clone_in(self.env.allocator)),
+                        last_instr.lvalue,
+                    )
                 }
             }
-            _ => (ReactiveValue::Instruction(last_instr.value.clone()), last_instr.lvalue),
+            _ => (
+                ReactiveValue::Instruction(last_instr.value.clone_in(self.env.allocator)),
+                last_instr.lvalue,
+            ),
         };
         let id = last_instr.id;
 
@@ -1205,7 +1214,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue),
-                    value: ReactiveValue::Instruction(instr.value.clone()),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env.allocator)),
                     span: instr.span,
                 }
             })
@@ -1343,7 +1352,7 @@ struct ValueTerminalResult<'a> {
 }
 
 /// Helper to get span from a terminal
-fn terminal_span(terminal: &Terminal) -> &Option<Span> {
+fn terminal_span<'t>(terminal: &'t Terminal<'_>) -> &'t Option<Span> {
     match terminal {
         Terminal::If { span, .. }
         | Terminal::Branch { span, .. }

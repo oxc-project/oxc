@@ -15,6 +15,7 @@ use std::mem::replace;
 
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::CloneIn;
 use oxc_str::Ident;
 
 use crate::react_compiler_hir::environment::Environment;
@@ -83,14 +84,14 @@ pub fn outline_functions<'a>(
         match action {
             Action::Recurse(function_id) => {
                 let mut inner_func =
-                    replace(&mut env.functions[function_id], placeholder_function());
+                    replace(&mut env.functions[function_id], placeholder_function(env.allocator));
                 outline_functions(&mut inner_func, env, fbt_operands);
                 env.functions[function_id] = inner_func;
             }
             Action::RecurseAndOutline { instr_idx, function_id } => {
                 // First recurse into the inner function (depth-first)
                 let mut inner_func =
-                    replace(&mut env.functions[function_id], placeholder_function());
+                    replace(&mut env.functions[function_id], placeholder_function(env.allocator));
                 outline_functions(&mut inner_func, env, fbt_operands);
                 env.functions[function_id] = inner_func;
 
@@ -103,7 +104,7 @@ pub fn outline_functions<'a>(
                 env.functions[function_id].id = Some(generated_name);
 
                 // Outline the function
-                let outlined_func = env.functions[function_id].clone();
+                let outlined_func = env.functions[function_id].clone_in(env.allocator);
                 env.outline_function(outlined_func, None);
 
                 // Replace the instruction value with LoadGlobal

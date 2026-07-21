@@ -9,6 +9,7 @@
 
 use std::mem::replace;
 
+use oxc_allocator::CloneIn;
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::react_compiler_hir::visitors::{
@@ -62,7 +63,7 @@ pub trait ReactiveFunctionVisitor<'a> {
         for block_id in block_ids {
             let inner_func = &self.env().functions[func_id];
             let block = &inner_func.body.blocks[&block_id];
-            let instr_ids: Vec<_> = block.instructions.clone();
+            let instr_ids: Vec<_> = block.instructions.iter().copied().collect();
             let terminal_operands = each_terminal_operand(&block.terminal);
             let terminal_id = block.terminal.evaluation_order();
 
@@ -73,7 +74,7 @@ pub trait ReactiveFunctionVisitor<'a> {
                 let reactive_instr = ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue),
-                    value: ReactiveValue::Instruction(instr.value.clone()),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env().allocator)),
                     span: instr.span,
                 };
                 self.visit_instruction(&reactive_instr, state);
@@ -614,18 +615,24 @@ pub trait ReactiveFunctionTransform<'a> {
                 }
                 Transformed::Remove => {
                     if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
+                        next_block = Some(
+                            block[..i].iter().map(|s| s.clone_in(self.env().allocator)).collect(),
+                        );
                     }
                 }
                 Transformed::Replace(replacement) => {
                     if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
+                        next_block = Some(
+                            block[..i].iter().map(|s| s.clone_in(self.env().allocator)).collect(),
+                        );
                     }
                     next_block.as_mut().unwrap().push(replacement);
                 }
                 Transformed::ReplaceMany(replacements) => {
                     if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
+                        next_block = Some(
+                            block[..i].iter().map(|s| s.clone_in(self.env().allocator)).collect(),
+                        );
                     }
                     next_block.as_mut().unwrap().extend(replacements);
                 }

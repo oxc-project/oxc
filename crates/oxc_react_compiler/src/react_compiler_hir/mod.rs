@@ -10,7 +10,7 @@ pub mod type_config;
 pub mod visitors;
 
 use crate::react_compiler_utils::OrderedMap;
-use crate::react_compiler_utils::OrderedSet;
+use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
@@ -145,21 +145,21 @@ impl std::fmt::Display for FloatValue {
 // =============================================================================
 
 /// A function lowered to HIR form
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct HirFunction<'a> {
     pub span: Option<Span>,
     pub id: Option<Ident<'a>>,
     pub name_hint: Option<Ident<'a>>,
     pub fn_type: ReactFunctionType,
-    pub params: Vec<ParamPattern>,
+    pub params: ArenaVec<'a, ParamPattern>,
     pub returns: Place,
-    pub context: Vec<Place>,
-    pub body: HIR,
-    pub instructions: Vec<Instruction<'a>>,
+    pub context: ArenaVec<'a, Place>,
+    pub body: HIR<'a>,
+    pub instructions: ArenaVec<'a, Instruction<'a>>,
     pub generator: bool,
     pub is_async: bool,
-    pub directives: Vec<Str<'a>>,
-    pub aliasing_effects: Option<Vec<AliasingEffect>>,
+    pub directives: ArenaVec<'a, Str<'a>>,
+    pub aliasing_effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -176,11 +176,11 @@ pub enum ParamPattern {
 }
 
 /// The HIR control-flow graph
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
-pub struct HIR {
+pub struct HIR<'a> {
     pub entry: BlockId,
-    pub blocks: OrderedMap<BlockId, BasicBlock>,
+    pub blocks: OrderedMap<BlockId, BasicBlock<'a>>,
 }
 
 /// Block kinds
@@ -206,29 +206,29 @@ impl std::fmt::Display for BlockKind {
 }
 
 /// A basic block in the CFG
-#[derive(Debug, Clone)]
-pub struct BasicBlock {
+#[derive(Debug)]
+pub struct BasicBlock<'a> {
     pub kind: BlockKind,
     pub id: BlockId,
-    pub instructions: Vec<InstructionId>,
-    pub terminal: Terminal,
-    pub preds: OrderedSet<BlockId>,
-    pub phis: Vec<Phi>,
+    pub instructions: ArenaVec<'a, InstructionId>,
+    pub terminal: Terminal<'a>,
+    pub preds: ArenaOrderedSet<'a, BlockId>,
+    pub phis: ArenaVec<'a, Phi<'a>>,
 }
 
 /// Phi node for SSA
-#[derive(Debug, Clone)]
-pub struct Phi {
+#[derive(Debug)]
+pub struct Phi<'a> {
     pub place: Place,
-    pub operands: OrderedMap<BlockId, Place>,
+    pub operands: ArenaOrderedMap<'a, BlockId, Place>,
 }
 
 // =============================================================================
 // Terminal enum
 // =============================================================================
 
-#[derive(Debug, Clone)]
-pub enum Terminal {
+#[derive(Debug)]
+pub enum Terminal<'a> {
     Unreachable {
         id: EvaluationOrder,
         span: Option<Span>,
@@ -243,7 +243,7 @@ pub enum Terminal {
         return_variant: ReturnVariant,
         id: EvaluationOrder,
         span: Option<Span>,
-        effects: Option<Vec<AliasingEffect>>,
+        effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
     },
     Goto {
         block: BlockId,
@@ -269,7 +269,7 @@ pub enum Terminal {
     },
     Switch {
         test: Place,
-        cases: Vec<Case>,
+        cases: ArenaVec<'a, Case>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -349,7 +349,7 @@ pub enum Terminal {
         handler: Option<BlockId>,
         id: EvaluationOrder,
         span: Option<Span>,
-        effects: Option<Vec<AliasingEffect>>,
+        effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
     },
     Try {
         block: BlockId,
@@ -375,7 +375,7 @@ pub enum Terminal {
     },
 }
 
-impl Terminal {
+impl<'a> Terminal<'a> {
     /// Get the evaluation order of this terminal
     pub fn evaluation_order(&self) -> EvaluationOrder {
         match self {
@@ -482,13 +482,13 @@ pub struct Case {
 // Instruction types
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Instruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Place,
     pub value: InstructionValue<'a>,
     pub span: Option<Span>,
-    pub effects: Option<Vec<AliasingEffect>>,
+    pub effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -509,15 +509,15 @@ pub struct LValue {
     pub kind: InstructionKind,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct LValuePattern<'a> {
     pub pattern: Pattern<'a>,
     pub kind: InstructionKind,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Pattern<'a> {
-    Array(ArrayPattern),
+    Array(ArrayPattern<'a>),
     Object(ObjectPattern<'a>),
 }
 
@@ -525,7 +525,7 @@ pub enum Pattern<'a> {
 // InstructionValue enum
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum InstructionValue<'a> {
     LoadLocal {
         place: Place,
@@ -574,18 +574,18 @@ pub enum InstructionValue<'a> {
     },
     NewExpression {
         callee: Place,
-        args: Vec<PlaceOrSpread>,
+        args: ArenaVec<'a, PlaceOrSpread>,
         span: Option<Span>,
     },
     CallExpression {
         callee: Place,
-        args: Vec<PlaceOrSpread>,
+        args: ArenaVec<'a, PlaceOrSpread>,
         span: Option<Span>,
     },
     MethodCall {
         receiver: Place,
         property: Place,
-        args: Vec<PlaceOrSpread>,
+        args: ArenaVec<'a, PlaceOrSpread>,
         span: Option<Span>,
     },
     UnaryExpression {
@@ -600,14 +600,14 @@ pub enum InstructionValue<'a> {
     },
     JsxExpression {
         tag: JsxTag<'a>,
-        props: Vec<JsxAttribute<'a>>,
-        children: Option<Vec<Place>>,
+        props: ArenaVec<'a, JsxAttribute<'a>>,
+        children: Option<ArenaVec<'a, Place>>,
         span: Option<Span>,
         opening_span: Option<Span>,
         closing_span: Option<Span>,
     },
     ObjectExpression {
-        properties: Vec<ObjectPropertyOrSpread<'a>>,
+        properties: ArenaVec<'a, ObjectPropertyOrSpread<'a>>,
         span: Option<Span>,
     },
     ObjectMethod {
@@ -615,11 +615,11 @@ pub enum InstructionValue<'a> {
         lowered_func: LoweredFunction,
     },
     ArrayExpression {
-        elements: Vec<ArrayElement>,
+        elements: ArenaVec<'a, ArrayElement>,
         span: Option<Span>,
     },
     JsxFragment {
-        children: Vec<Place>,
+        children: ArenaVec<'a, Place>,
         span: Option<Span>,
     },
     RegExpLiteral {
@@ -686,13 +686,13 @@ pub enum InstructionValue<'a> {
         // Upstream's HIR models only a single quasi with no interpolation; the
         // oxc port extends it to support `tag`-ed templates with `${...}`
         // interpolations (a deliberate divergence from the TS reference).
-        quasis: Vec<TemplateQuasi<'a>>,
-        subexprs: Vec<Place>,
+        quasis: ArenaVec<'a, TemplateQuasi<'a>>,
+        subexprs: ArenaVec<'a, Place>,
         span: Option<Span>,
     },
     TemplateLiteral {
-        subexprs: Vec<Place>,
-        quasis: Vec<TemplateQuasi<'a>>,
+        subexprs: ArenaVec<'a, Place>,
+        quasis: ArenaVec<'a, TemplateQuasi<'a>>,
         span: Option<Span>,
     },
     Await {
@@ -729,7 +729,7 @@ pub enum InstructionValue<'a> {
     },
     StartMemoize {
         manual_memo_id: u32,
-        deps: Option<Vec<ManualMemoDependency<'a>>>,
+        deps: Option<ArenaVec<'a, ManualMemoDependency<'a>>>,
         deps_span: Option<Option<Span>>,
         has_invalid_deps: bool,
         span: Option<Span>,
@@ -851,10 +851,10 @@ pub struct TemplateQuasi<'a> {
     pub cooked: Option<Str<'a>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ManualMemoDependency<'a> {
     pub root: ManualMemoDependencyRoot<'a>,
-    pub path: Vec<DependencyPathEntry<'a>>,
+    pub path: ArenaVec<'a, DependencyPathEntry<'a>>,
     pub span: Option<Span>,
 }
 
@@ -981,9 +981,9 @@ pub struct SpreadPattern {
     pub place: Place,
 }
 
-#[derive(Debug, Clone)]
-pub struct ArrayPattern {
-    pub items: Vec<ArrayPatternElement>,
+#[derive(Debug)]
+pub struct ArrayPattern<'a> {
+    pub items: ArenaVec<'a, ArrayPatternElement>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -993,9 +993,9 @@ pub enum ArrayPatternElement {
     Hole,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ObjectPattern<'a> {
-    pub properties: Vec<ObjectPropertyOrSpread<'a>>,
+    pub properties: ArenaVec<'a, ObjectPropertyOrSpread<'a>>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1235,7 +1235,30 @@ macro_rules! impl_trivial_clone_in {
         })+
     };
 }
-impl_trivial_clone_in!(DependencyPathEntry<'a>);
+impl_trivial_clone_in!(
+    DependencyPathEntry<'a>,
+    IdentifierId,
+    ScopeId,
+    BlockId,
+    InstructionId,
+    EvaluationOrder,
+    TypeId,
+    FunctionId,
+    MutableRangeId,
+    DiagnosticId,
+    DeclarationId,
+    Place,
+    Case,
+    PlaceOrSpread,
+    PlaceOrSpreadOrHole,
+    ArrayElement,
+    ArrayPatternElement,
+    ObjectPropertyOrSpread<'a>,
+    JsxAttribute<'a>,
+    TemplateQuasi<'a>,
+    ParamPattern,
+    SpreadPattern,
+);
 
 impl<'a> CloneIn<'a> for ReactiveScopeDependency<'a> {
     type Cloned = ReactiveScopeDependency<'a>;
@@ -1265,15 +1288,15 @@ use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 
 /// Reason for a mutation, used for generating hints (e.g. rename to "Ref").
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MutationReason {
     AssignCurrentProperty,
 }
 
 /// Describes the aliasing/mutation/data-flow effects of an instruction or terminal.
 /// Ported from TS `AliasingEffect` in `AliasingEffects.ts`.
-#[derive(Debug, Clone)]
-pub enum AliasingEffect {
+#[derive(Debug)]
+pub enum AliasingEffect<'a> {
     /// Marks the given value and its direct aliases as frozen.
     Freeze { value: Place, reason: ValueReason },
     /// Mutate the value and any direct aliases.
@@ -1303,7 +1326,7 @@ pub enum AliasingEffect {
         receiver: Place,
         function: Place,
         mutates_function: bool,
-        args: Vec<PlaceOrSpreadOrHole>,
+        args: ArenaVec<'a, PlaceOrSpreadOrHole>,
         into: Place,
         /// Callee function `TypeId`, used to resolve the `FunctionSignature` from the
         /// environment on demand. Storing the id (rather than an `Rc<FunctionSignature>`)
@@ -1312,7 +1335,7 @@ pub enum AliasingEffect {
         span: Option<Span>,
     },
     /// Function expression creation with captures.
-    CreateFunction { captures: Vec<Place>, function_id: FunctionId, into: Place },
+    CreateFunction { captures: ArenaVec<'a, Place>, function_id: FunctionId, into: Place },
     /// Mutation of a value known to be frozen (error).
     ///
     /// `error` indexes the diagnostic interned on `Environment` (see
@@ -1328,7 +1351,7 @@ pub enum AliasingEffect {
 }
 
 /// Combined Place/Spread/Hole for Apply args.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum PlaceOrSpreadOrHole {
     Place(Place),
     Spread(SpreadPattern),
@@ -1337,14 +1360,614 @@ pub enum PlaceOrSpreadOrHole {
 
 /// Aliasing signature for function calls.
 /// Ported from TS `AliasingSignature` in `AliasingEffects.ts`.
-#[derive(Debug, Clone)]
-pub struct AliasingSignature {
+#[derive(Debug)]
+pub struct AliasingSignature<'a> {
     pub receiver: IdentifierId,
-    pub params: Vec<IdentifierId>,
+    pub params: ArenaVec<'a, IdentifierId>,
     pub rest: Option<IdentifierId>,
     pub returns: IdentifierId,
-    pub effects: Vec<AliasingEffect>,
-    pub temporaries: Vec<Place>,
+    pub effects: ArenaVec<'a, AliasingEffect<'a>>,
+    pub temporaries: ArenaVec<'a, Place>,
+}
+
+// =============================================================================
+// Arena `CloneIn` for the arena-carrying HIR types (same-arena, `Cloned = Self`)
+// =============================================================================
+// Copy leaves are copied by direct field assignment; only arena `Vec` /
+// `ArenaOrderedMap` / `ArenaOrderedSet` fields recurse via `clone_in_impl`.
+// `Option<ArenaVec<..>>` clones via `self.x.as_ref().map(|v| v.clone_in_impl(..))`.
+
+impl<'a> CloneIn<'a> for HirFunction<'a> {
+    type Cloned = HirFunction<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        HirFunction {
+            span: self.span,
+            id: self.id,
+            name_hint: self.name_hint,
+            fn_type: self.fn_type,
+            params: self.params.clone_in_impl(sem, alloc),
+            returns: self.returns,
+            context: self.context.clone_in_impl(sem, alloc),
+            body: self.body.clone_in_impl(sem, alloc),
+            instructions: self.instructions.clone_in_impl(sem, alloc),
+            generator: self.generator,
+            is_async: self.is_async,
+            directives: self.directives.clone_in_impl(sem, alloc),
+            aliasing_effects: self.aliasing_effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for HIR<'a> {
+    type Cloned = HIR<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        let mut blocks = OrderedMap::default();
+        for (id, block) in self.blocks.iter() {
+            blocks.insert(*id, block.clone_in_impl(sem, alloc));
+        }
+        HIR { entry: self.entry, blocks }
+    }
+}
+
+impl<'a> CloneIn<'a> for BasicBlock<'a> {
+    type Cloned = BasicBlock<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        BasicBlock {
+            kind: self.kind,
+            id: self.id,
+            instructions: self.instructions.clone_in_impl(sem, alloc),
+            terminal: self.terminal.clone_in_impl(sem, alloc),
+            preds: self.preds.clone_in_impl(sem, alloc),
+            phis: self.phis.clone_in_impl(sem, alloc),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for Phi<'a> {
+    type Cloned = Phi<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        Phi { place: self.place, operands: self.operands.clone_in_impl(sem, alloc) }
+    }
+}
+
+impl<'a> CloneIn<'a> for Terminal<'a> {
+    type Cloned = Terminal<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        match self {
+            Terminal::Unreachable { id, span } => Terminal::Unreachable { id: *id, span: *span },
+            Terminal::Throw { value, id, span } => {
+                Terminal::Throw { value: *value, id: *id, span: *span }
+            }
+            Terminal::Return { value, return_variant, id, span, effects } => Terminal::Return {
+                value: *value,
+                return_variant: *return_variant,
+                id: *id,
+                span: *span,
+                effects: effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+            },
+            Terminal::Goto { block, variant, id, span } => {
+                Terminal::Goto { block: *block, variant: *variant, id: *id, span: *span }
+            }
+            Terminal::If { test, consequent, alternate, fallthrough, id, span } => Terminal::If {
+                test: *test,
+                consequent: *consequent,
+                alternate: *alternate,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::Branch { test, consequent, alternate, fallthrough, id, span } => {
+                Terminal::Branch {
+                    test: *test,
+                    consequent: *consequent,
+                    alternate: *alternate,
+                    fallthrough: *fallthrough,
+                    id: *id,
+                    span: *span,
+                }
+            }
+            Terminal::Switch { test, cases, fallthrough, id, span } => Terminal::Switch {
+                test: *test,
+                cases: cases.clone_in_impl(sem, alloc),
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::DoWhile { loop_block, test, fallthrough, id, span } => Terminal::DoWhile {
+                loop_block: *loop_block,
+                test: *test,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::While { test, loop_block, fallthrough, id, span } => Terminal::While {
+                test: *test,
+                loop_block: *loop_block,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::For { init, test, update, loop_block, fallthrough, id, span } => {
+                Terminal::For {
+                    init: *init,
+                    test: *test,
+                    update: *update,
+                    loop_block: *loop_block,
+                    fallthrough: *fallthrough,
+                    id: *id,
+                    span: *span,
+                }
+            }
+            Terminal::ForOf { init, test, loop_block, fallthrough, id, span } => Terminal::ForOf {
+                init: *init,
+                test: *test,
+                loop_block: *loop_block,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::ForIn { init, loop_block, fallthrough, id, span } => Terminal::ForIn {
+                init: *init,
+                loop_block: *loop_block,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::Logical { operator, test, fallthrough, id, span } => Terminal::Logical {
+                operator: *operator,
+                test: *test,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::Ternary { test, fallthrough, id, span } => {
+                Terminal::Ternary { test: *test, fallthrough: *fallthrough, id: *id, span: *span }
+            }
+            Terminal::Optional { optional, test, fallthrough, id, span } => Terminal::Optional {
+                optional: *optional,
+                test: *test,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::Label { block, fallthrough, id, span } => {
+                Terminal::Label { block: *block, fallthrough: *fallthrough, id: *id, span: *span }
+            }
+            Terminal::Sequence { block, fallthrough, id, span } => Terminal::Sequence {
+                block: *block,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::MaybeThrow { continuation, handler, id, span, effects } => {
+                Terminal::MaybeThrow {
+                    continuation: *continuation,
+                    handler: *handler,
+                    id: *id,
+                    span: *span,
+                    effects: effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+                }
+            }
+            Terminal::Try { block, handler_binding, handler, fallthrough, id, span } => {
+                Terminal::Try {
+                    block: *block,
+                    handler_binding: *handler_binding,
+                    handler: *handler,
+                    fallthrough: *fallthrough,
+                    id: *id,
+                    span: *span,
+                }
+            }
+            Terminal::Scope { fallthrough, block, scope, id, span } => Terminal::Scope {
+                fallthrough: *fallthrough,
+                block: *block,
+                scope: *scope,
+                id: *id,
+                span: *span,
+            },
+            Terminal::PrunedScope { fallthrough, block, scope, id, span } => {
+                Terminal::PrunedScope {
+                    fallthrough: *fallthrough,
+                    block: *block,
+                    scope: *scope,
+                    id: *id,
+                    span: *span,
+                }
+            }
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for Instruction<'a> {
+    type Cloned = Instruction<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        Instruction {
+            id: self.id,
+            lvalue: self.lvalue,
+            value: self.value.clone_in_impl(sem, alloc),
+            span: self.span,
+            effects: self.effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for InstructionValue<'a> {
+    type Cloned = InstructionValue<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        match self {
+            // --- Copy-only variants: field-copy ---
+            InstructionValue::LoadLocal { place, span } => {
+                InstructionValue::LoadLocal { place: *place, span: *span }
+            }
+            InstructionValue::LoadContext { place, span } => {
+                InstructionValue::LoadContext { place: *place, span: *span }
+            }
+            InstructionValue::DeclareLocal { lvalue, span } => {
+                InstructionValue::DeclareLocal { lvalue: *lvalue, span: *span }
+            }
+            InstructionValue::DeclareContext { lvalue, span } => {
+                InstructionValue::DeclareContext { lvalue: *lvalue, span: *span }
+            }
+            InstructionValue::StoreLocal { lvalue, value, span } => {
+                InstructionValue::StoreLocal { lvalue: *lvalue, value: *value, span: *span }
+            }
+            InstructionValue::StoreContext { lvalue, value, span } => {
+                InstructionValue::StoreContext { lvalue: *lvalue, value: *value, span: *span }
+            }
+            InstructionValue::Primitive { value, span } => {
+                InstructionValue::Primitive { value: *value, span: *span }
+            }
+            InstructionValue::JSXText { value, span } => {
+                InstructionValue::JSXText { value: *value, span: *span }
+            }
+            InstructionValue::BinaryExpression { operator, left, right, span } => {
+                InstructionValue::BinaryExpression {
+                    operator: *operator,
+                    left: *left,
+                    right: *right,
+                    span: *span,
+                }
+            }
+            InstructionValue::UnaryExpression { operator, value, span } => {
+                InstructionValue::UnaryExpression {
+                    operator: *operator,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::TypeCastExpression { value, cast, span } => {
+                InstructionValue::TypeCastExpression { value: *value, cast: *cast, span: *span }
+            }
+            InstructionValue::ObjectMethod { span, lowered_func } => {
+                InstructionValue::ObjectMethod { span: *span, lowered_func: *lowered_func }
+            }
+            InstructionValue::RegExpLiteral { pattern, flags, span } => {
+                InstructionValue::RegExpLiteral { pattern: *pattern, flags: *flags, span: *span }
+            }
+            InstructionValue::MetaProperty { meta, property, span } => {
+                InstructionValue::MetaProperty { meta: *meta, property: *property, span: *span }
+            }
+            InstructionValue::PropertyStore { object, property, value, span } => {
+                InstructionValue::PropertyStore {
+                    object: *object,
+                    property: *property,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::PropertyLoad { object, property, span } => {
+                InstructionValue::PropertyLoad { object: *object, property: *property, span: *span }
+            }
+            InstructionValue::PropertyDelete { object, property, span } => {
+                InstructionValue::PropertyDelete {
+                    object: *object,
+                    property: *property,
+                    span: *span,
+                }
+            }
+            InstructionValue::ComputedStore { object, property, value, span } => {
+                InstructionValue::ComputedStore {
+                    object: *object,
+                    property: *property,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::ComputedLoad { object, property, span } => {
+                InstructionValue::ComputedLoad { object: *object, property: *property, span: *span }
+            }
+            InstructionValue::ComputedDelete { object, property, span } => {
+                InstructionValue::ComputedDelete {
+                    object: *object,
+                    property: *property,
+                    span: *span,
+                }
+            }
+            InstructionValue::LoadGlobal { binding, span } => {
+                InstructionValue::LoadGlobal { binding: *binding, span: *span }
+            }
+            InstructionValue::StoreGlobal { name, value, span } => {
+                InstructionValue::StoreGlobal { name: *name, value: *value, span: *span }
+            }
+            InstructionValue::FunctionExpression {
+                name,
+                name_hint,
+                lowered_func,
+                expr_type,
+                span,
+            } => InstructionValue::FunctionExpression {
+                name: *name,
+                name_hint: *name_hint,
+                lowered_func: *lowered_func,
+                expr_type: *expr_type,
+                span: *span,
+            },
+            InstructionValue::Await { value, span } => {
+                InstructionValue::Await { value: *value, span: *span }
+            }
+            InstructionValue::GetIterator { collection, span } => {
+                InstructionValue::GetIterator { collection: *collection, span: *span }
+            }
+            InstructionValue::IteratorNext { iterator, collection, span } => {
+                InstructionValue::IteratorNext {
+                    iterator: *iterator,
+                    collection: *collection,
+                    span: *span,
+                }
+            }
+            InstructionValue::NextPropertyOf { value, span } => {
+                InstructionValue::NextPropertyOf { value: *value, span: *span }
+            }
+            InstructionValue::PrefixUpdate { lvalue, operation, value, span } => {
+                InstructionValue::PrefixUpdate {
+                    lvalue: *lvalue,
+                    operation: *operation,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::PostfixUpdate { lvalue, operation, value, span } => {
+                InstructionValue::PostfixUpdate {
+                    lvalue: *lvalue,
+                    operation: *operation,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::Debugger { span } => InstructionValue::Debugger { span: *span },
+            InstructionValue::FinishMemoize { manual_memo_id, decl, pruned, span } => {
+                InstructionValue::FinishMemoize {
+                    manual_memo_id: *manual_memo_id,
+                    decl: *decl,
+                    pruned: *pruned,
+                    span: *span,
+                }
+            }
+            // --- Arena-carrying variants: recurse ---
+            InstructionValue::Destructure { lvalue, value, span } => {
+                InstructionValue::Destructure {
+                    lvalue: lvalue.clone_in_impl(sem, alloc),
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::NewExpression { callee, args, span } => {
+                InstructionValue::NewExpression {
+                    callee: *callee,
+                    args: args.clone_in_impl(sem, alloc),
+                    span: *span,
+                }
+            }
+            InstructionValue::CallExpression { callee, args, span } => {
+                InstructionValue::CallExpression {
+                    callee: *callee,
+                    args: args.clone_in_impl(sem, alloc),
+                    span: *span,
+                }
+            }
+            InstructionValue::MethodCall { receiver, property, args, span } => {
+                InstructionValue::MethodCall {
+                    receiver: *receiver,
+                    property: *property,
+                    args: args.clone_in_impl(sem, alloc),
+                    span: *span,
+                }
+            }
+            InstructionValue::JsxExpression {
+                tag,
+                props,
+                children,
+                span,
+                opening_span,
+                closing_span,
+            } => InstructionValue::JsxExpression {
+                tag: *tag,
+                props: props.clone_in_impl(sem, alloc),
+                children: children.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+                span: *span,
+                opening_span: *opening_span,
+                closing_span: *closing_span,
+            },
+            InstructionValue::ObjectExpression { properties, span } => {
+                InstructionValue::ObjectExpression {
+                    properties: properties.clone_in_impl(sem, alloc),
+                    span: *span,
+                }
+            }
+            InstructionValue::ArrayExpression { elements, span } => {
+                InstructionValue::ArrayExpression {
+                    elements: elements.clone_in_impl(sem, alloc),
+                    span: *span,
+                }
+            }
+            InstructionValue::JsxFragment { children, span } => InstructionValue::JsxFragment {
+                children: children.clone_in_impl(sem, alloc),
+                span: *span,
+            },
+            InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, span } => {
+                InstructionValue::TaggedTemplateExpression {
+                    tag: *tag,
+                    quasis: quasis.clone_in_impl(sem, alloc),
+                    subexprs: subexprs.clone_in_impl(sem, alloc),
+                    span: *span,
+                }
+            }
+            InstructionValue::TemplateLiteral { subexprs, quasis, span } => {
+                InstructionValue::TemplateLiteral {
+                    subexprs: subexprs.clone_in_impl(sem, alloc),
+                    quasis: quasis.clone_in_impl(sem, alloc),
+                    span: *span,
+                }
+            }
+            InstructionValue::StartMemoize {
+                manual_memo_id,
+                deps,
+                deps_span,
+                has_invalid_deps,
+                span,
+            } => InstructionValue::StartMemoize {
+                manual_memo_id: *manual_memo_id,
+                deps: deps.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+                deps_span: *deps_span,
+                has_invalid_deps: *has_invalid_deps,
+                span: *span,
+            },
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for LValuePattern<'a> {
+    type Cloned = LValuePattern<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        LValuePattern { pattern: self.pattern.clone_in_impl(sem, alloc), kind: self.kind }
+    }
+}
+
+impl<'a> CloneIn<'a> for Pattern<'a> {
+    type Cloned = Pattern<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        match self {
+            Pattern::Array(p) => Pattern::Array(p.clone_in_impl(sem, alloc)),
+            Pattern::Object(p) => Pattern::Object(p.clone_in_impl(sem, alloc)),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ArrayPattern<'a> {
+    type Cloned = ArrayPattern<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ArrayPattern { items: self.items.clone_in_impl(sem, alloc) }
+    }
+}
+
+impl<'a> CloneIn<'a> for ObjectPattern<'a> {
+    type Cloned = ObjectPattern<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ObjectPattern { properties: self.properties.clone_in_impl(sem, alloc) }
+    }
+}
+
+impl<'a> CloneIn<'a> for ManualMemoDependency<'a> {
+    type Cloned = ManualMemoDependency<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ManualMemoDependency {
+            root: self.root,
+            path: self.path.clone_in_impl(sem, alloc),
+            span: self.span,
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for AliasingEffect<'a> {
+    type Cloned = AliasingEffect<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        match self {
+            AliasingEffect::Freeze { value, reason } => {
+                AliasingEffect::Freeze { value: *value, reason: *reason }
+            }
+            AliasingEffect::Mutate { value, reason } => {
+                AliasingEffect::Mutate { value: *value, reason: *reason }
+            }
+            AliasingEffect::MutateConditionally { value } => {
+                AliasingEffect::MutateConditionally { value: *value }
+            }
+            AliasingEffect::MutateTransitive { value } => {
+                AliasingEffect::MutateTransitive { value: *value }
+            }
+            AliasingEffect::MutateTransitiveConditionally { value } => {
+                AliasingEffect::MutateTransitiveConditionally { value: *value }
+            }
+            AliasingEffect::Capture { from, into } => {
+                AliasingEffect::Capture { from: *from, into: *into }
+            }
+            AliasingEffect::Alias { from, into } => {
+                AliasingEffect::Alias { from: *from, into: *into }
+            }
+            AliasingEffect::MaybeAlias { from, into } => {
+                AliasingEffect::MaybeAlias { from: *from, into: *into }
+            }
+            AliasingEffect::Assign { from, into } => {
+                AliasingEffect::Assign { from: *from, into: *into }
+            }
+            AliasingEffect::Create { into, value, reason } => {
+                AliasingEffect::Create { into: *into, value: *value, reason: *reason }
+            }
+            AliasingEffect::CreateFrom { from, into } => {
+                AliasingEffect::CreateFrom { from: *from, into: *into }
+            }
+            AliasingEffect::ImmutableCapture { from, into } => {
+                AliasingEffect::ImmutableCapture { from: *from, into: *into }
+            }
+            AliasingEffect::Apply {
+                receiver,
+                function,
+                mutates_function,
+                args,
+                into,
+                signature,
+                span,
+            } => AliasingEffect::Apply {
+                receiver: *receiver,
+                function: *function,
+                mutates_function: *mutates_function,
+                args: args.clone_in_impl(sem, alloc),
+                into: *into,
+                signature: *signature,
+                span: *span,
+            },
+            AliasingEffect::CreateFunction { captures, function_id, into } => {
+                AliasingEffect::CreateFunction {
+                    captures: captures.clone_in_impl(sem, alloc),
+                    function_id: *function_id,
+                    into: *into,
+                }
+            }
+            AliasingEffect::MutateFrozen { place, error } => {
+                AliasingEffect::MutateFrozen { place: *place, error: *error }
+            }
+            AliasingEffect::MutateGlobal { place, error } => {
+                AliasingEffect::MutateGlobal { place: *place, error: *error }
+            }
+            AliasingEffect::Impure { place, error } => {
+                AliasingEffect::Impure { place: *place, error: *error }
+            }
+            AliasingEffect::Render { place } => AliasingEffect::Render { place: *place },
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for AliasingSignature<'a> {
+    type Cloned = AliasingSignature<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        AliasingSignature {
+            receiver: self.receiver,
+            params: self.params.clone_in_impl(sem, alloc),
+            rest: self.rest,
+            returns: self.returns,
+            effects: self.effects.clone_in_impl(sem, alloc),
+            temporaries: self.temporaries.clone_in_impl(sem, alloc),
+        }
+    }
 }
 
 // =============================================================================

@@ -353,16 +353,17 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
         let mut next_instructions: Vec<ReactiveStatement<'a>> = Vec::new();
         let mut index = 0;
         let all_stmts: Vec<ReactiveStatement> = take(block);
+        let alloc = self.env.allocator;
 
         for entry in &merged {
             // Push everything before the merge range
             while index < entry.from {
-                next_instructions.push(all_stmts[index].clone());
+                next_instructions.push(all_stmts[index].clone_in(alloc));
                 index += 1;
             }
             // The first item in the merge range must be a scope
             let mut merged_scope = match &all_stmts[entry.from] {
-                ReactiveStatement::Scope(s) => s.clone(),
+                ReactiveStatement::Scope(s) => s.clone_in(alloc),
                 _ => {
                     return Err(ErrorCategory::Invariant
                         .diagnostic("MergeConsecutiveScopes: Expected scope at starting index"));
@@ -374,11 +375,13 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                 index += 1;
                 match stmt {
                     ReactiveStatement::Scope(inner_scope) => {
-                        merged_scope.instructions.extend(inner_scope.instructions.clone());
+                        merged_scope
+                            .instructions
+                            .extend(inner_scope.instructions.iter().map(|s| s.clone_in(alloc)));
                         self.env.scopes[merged_scope.scope].merged.push(inner_scope.scope);
                     }
                     _ => {
-                        merged_scope.instructions.push(stmt.clone());
+                        merged_scope.instructions.push(stmt.clone_in(alloc));
                     }
                 }
             }
@@ -386,7 +389,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
         }
         // Push remaining
         while index < all_stmts.len() {
-            next_instructions.push(all_stmts[index].clone());
+            next_instructions.push(all_stmts[index].clone_in(alloc));
             index += 1;
         }
 
