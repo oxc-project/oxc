@@ -1,8 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ToBigInt, ToIntegerIndex,
-    constant_evaluation::{DetermineValueType, ValueType},
+    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
     to_numeric::ToNumeric,
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
