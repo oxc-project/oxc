@@ -66,9 +66,35 @@ define_nonmax_u32_index_type! {
 }
 
 define_nonmax_u32_index_type! {
-    /// Index into `Environment`'s interned aliasing-effect diagnostics
-    /// (`intern_aliasing_diagnostic` / `aliasing_diagnostic`).
+    /// Stable identity for an aliasing-effect diagnostic's analysis-relevant fields.
     pub struct DiagnosticId;
+}
+
+define_nonmax_u32_index_type! {
+    /// Index into `Environment`'s source-specific aliasing-effect diagnostics.
+    pub struct DiagnosticInstanceId;
+}
+
+/// Separates an aliasing diagnostic's analysis identity from its source-specific
+/// payload. Effect interning uses `identity`, while emission uses `instance`.
+#[derive(Debug, Clone, Copy)]
+pub struct AliasingDiagnostic {
+    identity: DiagnosticId,
+    instance: DiagnosticInstanceId,
+}
+
+impl AliasingDiagnostic {
+    pub(crate) fn new(identity: DiagnosticId, instance: DiagnosticInstanceId) -> Self {
+        Self { identity, instance }
+    }
+
+    pub(crate) fn identity(self) -> DiagnosticId {
+        self.identity
+    }
+
+    pub(crate) fn instance(self) -> DiagnosticInstanceId {
+        self.instance
+    }
 }
 
 impl BlockId {
@@ -1246,6 +1272,8 @@ impl_trivial_clone_in!(
     FunctionId,
     MutableRangeId,
     DiagnosticId,
+    DiagnosticInstanceId,
+    AliasingDiagnostic,
     DeclarationId,
     Place,
     Case,
@@ -1338,14 +1366,14 @@ pub enum AliasingEffect<'a> {
     CreateFunction { captures: ArenaVec<'a, Place>, function_id: FunctionId, into: Place },
     /// Mutation of a value known to be frozen (error).
     ///
-    /// `error` indexes the diagnostic interned on `Environment` (see
-    /// [`DiagnosticId`]); the `OxcDiagnostic` itself is held out-of-band so this
-    /// effect stays `Copy`/non-`Drop` and can be arena-allocated.
-    MutateFrozen { place: Place, error: DiagnosticId },
-    /// Mutation of a global value (error). `error` indexes the interned diagnostic.
-    MutateGlobal { place: Place, error: DiagnosticId },
-    /// Side-effect not safe during render. `error` indexes the interned diagnostic.
-    Impure { place: Place, error: DiagnosticId },
+    /// `error` references the diagnostic interned on `Environment`; the
+    /// `OxcDiagnostic` itself is held out-of-band so this effect stays
+    /// `Copy`/non-`Drop` and can be arena-allocated.
+    MutateFrozen { place: Place, error: AliasingDiagnostic },
+    /// Mutation of a global value (error).
+    MutateGlobal { place: Place, error: AliasingDiagnostic },
+    /// Side-effect not safe during render.
+    Impure { place: Place, error: AliasingDiagnostic },
     /// Value is accessed during render.
     Render { place: Place },
 }
