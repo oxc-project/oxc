@@ -1267,6 +1267,14 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test_same("var x = {}; x.y.z.w || (x.y = {}, x.y.z.w = 3)");
     // `x` is not mutated anywhere, and the preceding expression `x.y.z = {}` doesn't affect `x`
     test("var x = {}; x.y || (x.y.z = {}, x.y = 3)", "var x = {}; x.y ||= (x.y.z = {}, 3)");
+
+    // reading `x.y` reassigns `x` via the getter, so the original evaluates
+    // the write target `x.y` against the NEW object, while `x.y ||= 3`
+    // (which captures the object once) would write to the OLD one. Each case
+    // leaves `x.y === 3`; the merged form would leave `x.y === 9`.
+    test_same("var x = { get y() { return x = { y: 9 }, 0 } }; x.y || (x.y = 3)");
+    test_same("var x = { get y() { return x = { y: 9 }, 1 } }; x.y && (x.y = 3)");
+    test_same("var x = { get y() { x = { y: 9 } } }; x.y ?? (x.y = 3)");
 }
 
 #[test]
