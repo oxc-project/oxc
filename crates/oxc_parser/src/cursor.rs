@@ -9,6 +9,7 @@ use crate::{
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
+    scratch::{ScratchElement, ScratchMark},
 };
 
 #[derive(Clone)]
@@ -387,24 +388,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaVec<'a, T>
     where
         F: FnMut(&mut Self) -> T,
+        T: ScratchElement<'a>,
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = ArenaVec::new_in(self);
-        self.parse_normal_list_into(&mut list, close, f);
+        let mark = self.start_scratch();
+        self.parse_normal_list_into_scratch(&mark, close, f);
         self.expect_closing(close, opening_span);
-        list
+        self.finish_scratch(mark)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_normal_list_into<F, T>(
+    fn parse_normal_list_into_scratch<F, T>(
         &mut self,
-        list: &mut ArenaVec<'a, T>,
+        mark: &ScratchMark<T>,
         close: Kind,
         mut parse_element: F,
     ) where
         F: FnMut(&mut Self) -> T,
+        T: ScratchElement<'a>,
     {
         loop {
             let kind = self.cur_kind();
@@ -415,7 +418,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
             let element = parse_element(self);
-            list.push(element);
+            self.scratch_push(mark, element);
         }
     }
 
@@ -427,31 +430,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaVec<'a, T>
     where
         F: Fn(&mut Self) -> Option<T>,
+        T: ScratchElement<'a>,
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = ArenaVec::new_in(self);
-        self.parse_normal_list_breakable_into(&mut list, close, f);
+        let mark = self.start_scratch();
+        self.parse_normal_list_breakable_into_scratch(&mark, close, f);
         self.expect_closing(close, opening_span);
-        list
+        self.finish_scratch(mark)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_normal_list_breakable_into<F, T>(
+    fn parse_normal_list_breakable_into_scratch<F, T>(
         &mut self,
-        list: &mut ArenaVec<'a, T>,
+        mark: &ScratchMark<T>,
         close: Kind,
         parse_element: F,
     ) where
         F: Fn(&mut Self) -> Option<T>,
+        T: ScratchElement<'a>,
     {
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
             }
             if let Some(element) = parse_element(self) {
-                list.push(element);
+                self.scratch_push(mark, element);
             } else {
                 break;
             }
@@ -467,23 +472,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> (ArenaVec<'a, T>, Option<u32>)
     where
         F: FnMut(&mut Self) -> T,
+        T: ScratchElement<'a>,
     {
-        let mut list = ArenaVec::new_in(self);
-        let trailing_separator = self.parse_delimited_list_into(
-            &mut list,
+        let mark = self.start_scratch();
+        let trailing_separator = self.parse_delimited_list_into_scratch(
+            &mark,
             close,
             separator,
             opening_span,
             parse_element,
         );
+        let list = self.finish_scratch(mark);
         (list, trailing_separator)
     }
 
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub(crate) fn parse_delimited_list_into<F, T>(
+    #[inline]
+    pub(crate) fn parse_delimited_list_into_scratch<F, T>(
         &mut self,
-        list: &mut ArenaVec<'a, T>,
+        mark: &ScratchMark<T>,
         close: Kind,
         separator: Kind,
         opening_span: Span,
@@ -491,6 +497,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Option<u32>
     where
         F: FnMut(&mut Self) -> T,
+        T: ScratchElement<'a>,
     {
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
@@ -501,7 +508,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let element = parse_element(self);
-        list.push(element);
+        self.scratch_push(mark, element);
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -526,7 +533,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return Some(trailing_separator);
             }
             let element = parse_element(self);
-            list.push(element);
+            self.scratch_push(mark, element);
         }
     }
 
@@ -542,24 +549,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         E: Fn(&mut Self) -> A,
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> ParserDiagnostic<'a>,
+        A: ScratchElement<'a>,
     {
-        let mut list = ArenaVec::new_in(self);
-        let rest = self.parse_delimited_list_with_rest_into(
-            &mut list,
+        let mark = self.start_scratch();
+        let rest = self.parse_delimited_list_with_rest_into_scratch(
+            &mark,
             close,
             opening_span,
             parse_element,
             parse_rest,
             rest_last_diagnostic,
         );
+        let list = self.finish_scratch(mark);
         (list, rest)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_delimited_list_with_rest_into<E, A, R, D>(
+    fn parse_delimited_list_with_rest_into_scratch<E, A, R, D>(
         &mut self,
-        list: &mut ArenaVec<'a, A>,
+        mark: &ScratchMark<A>,
         close: Kind,
         opening_span: Span,
         parse_element: E,
@@ -570,6 +579,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         E: Fn(&mut Self) -> A,
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> ParserDiagnostic<'a>,
+        A: ScratchElement<'a>,
     {
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
@@ -618,7 +628,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 rest.replace(parse_rest(self));
             } else {
                 let element = parse_element(self);
-                list.push(element);
+                self.scratch_push(mark, element);
             }
         }
 

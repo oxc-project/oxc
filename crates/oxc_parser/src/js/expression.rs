@@ -1652,12 +1652,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         first_expression: Expression<'a>,
     ) -> Expression<'a> {
-        let mut expressions = ArenaVec::with_capacity_in(2, self);
-        expressions.push(first_expression);
+        let mark = self.start_scratch();
+        self.scratch_push(&mark, first_expression);
         while self.eat(Kind::Comma) {
             let expression = self.parse_assignment_expression_or_higher();
-            expressions.push(expression);
+            self.scratch_push(&mark, expression);
         }
+        let expressions = self.finish_scratch(mark);
         Expression::new_sequence_expression(self.end_span(span), expressions, self)
     }
 
