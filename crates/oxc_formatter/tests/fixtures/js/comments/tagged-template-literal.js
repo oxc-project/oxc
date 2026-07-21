@@ -1,0 +1,27 @@
+// Comments between a tagged template's tag and its quasi always attach to the
+// quasi as leading comments, regardless of the surrounding whitespace (prettier#19345).
+foo`` // comment 1
+;
+foo // comment 2
+``;
+foo // comment 3
+`x`;
+foo /* comment 4 */`
+`;
+foo /* comment 5 */
+`
+`;
+foo /* comment 6 */
+`x`;
+foo // comment 7
+`x`;
+foo
+/* comment 8 */
+`x`;
+foo
+// comment 9
+`x`;
+bar(foo // comment 10
+`x`);
+bar(foo /* comment 11 */
+`x`);
