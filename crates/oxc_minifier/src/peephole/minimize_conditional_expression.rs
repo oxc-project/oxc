@@ -575,6 +575,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
     /// - `x ? a.b = 0 : a.b = 1` -> `a.b = x ? 0 : 1`
+    /// - `x ? a += 0 : a += 1` -> `a += x ? 0 : 1`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -592,39 +593,59 @@ impl<'a> PeepholeOptimizations {
         // Since codes relying on the fact that function's name is undefined should be rare,
         // we do this compression even if `keep_names` is enabled.
 
-        if consequent.operator != AssignmentOperator::Assign
-            || consequent.operator != alternate.operator
-            || consequent.left.content_ne(&alternate.left)
+        if consequent.operator != alternate.operator || consequent.left.content_ne(&alternate.left)
         {
             return None;
         }
 
-        let is_safe_target = match &consequent.left {
-            AssignmentTarget::AssignmentTargetIdentifier(_) => true,
-            // For member expression targets, this transform moves the evaluation of the
-            // object (and the computed key) before `x`. That reordering is unobservable
-            // only when neither side can affect the other:
-            // - the object/key evaluation must be side-effect-free (`a` may mutate `x`)
-            //   and must not hit a TDZ that `x`'s evaluation would have resolved
-            //   (e.g. `(await p) ? a.b = 0 : a.b = 1` where a closed-over `let a`
-            //   is initialized during the suspension)
-            // - `x` must not be able to change the object/key values
-            //   (e.g. `f() ? a.b = 0 : a.b = 1` where `f` reassigns `a`)
-            // All hold when the object/key are `this`, literals, or identifiers that
-            // are never reassigned and cannot be read in their TDZ.
-            match_member_expression!(AssignmentTarget) => {
-                let member = consequent.left.to_member_expression();
-                !Self::member_part_blocks_reorder(member.object(), ctx)
-                    && match member {
-                        MemberExpression::ComputedMemberExpression(member) => {
-                            !Self::computed_key_blocks_reorder(&member.expression, ctx)
+        let is_safe = if consequent.operator == AssignmentOperator::Assign {
+            match &consequent.left {
+                AssignmentTarget::AssignmentTargetIdentifier(_) => true,
+                // For member expression targets, this transform moves the evaluation of the
+                // object (and the computed key) before `x`. That reordering is unobservable
+                // only when neither side can affect the other:
+                // - the object/key evaluation must be side-effect-free (`a` may mutate `x`)
+                //   and must not hit a TDZ that `x`'s evaluation would have resolved
+                //   (e.g. `(await p) ? a.b = 0 : a.b = 1` where a closed-over `let a`
+                //   is initialized during the suspension)
+                // - `x` must not be able to change the object/key values
+                //   (e.g. `f() ? a.b = 0 : a.b = 1` where `f` reassigns `a`)
+                // All hold when the object/key are `this`, literals, or identifiers that
+                // are never reassigned and cannot be read in their TDZ.
+                match_member_expression!(AssignmentTarget) => {
+                    let member = consequent.left.to_member_expression();
+                    !Self::member_part_blocks_reorder(member.object(), ctx)
+                        && match member {
+                            MemberExpression::ComputedMemberExpression(member) => {
+                                !Self::computed_key_blocks_reorder(&member.expression, ctx)
+                            }
+                            _ => true,
                         }
-                        _ => true,
-                    }
+                }
+                _ => false,
             }
-            _ => false,
+        } else {
+            // For the other operators, this transform additionally moves the read of the
+            // target's current value before `x` (`x ? a += 1 : a += 2` -> `a += x ? 1 : 2`
+            // reads `a` before evaluating `x`), and for logical operators (`a &&= b` etc.)
+            // the merged form skips evaluating `x` entirely when the assignment
+            // short-circuits. Both are unobservable only when evaluating `x` has no side
+            // effects (it then cannot change the target's value, throw, or suspend at an
+            // `await` that would alter TDZ state) and reading the target's value has none
+            // either (no globalThis getter for the identifier, no property getter and no
+            // side effects from the object/key evaluation for a member expression).
+            !expr.test.may_have_side_effects(ctx)
+                && match &consequent.left {
+                    AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                        !id.may_have_side_effects(ctx)
+                    }
+                    match_member_expression!(AssignmentTarget) => {
+                        !consequent.left.to_member_expression().may_have_side_effects(ctx)
+                    }
+                    _ => false,
+                }
         };
-        if !is_safe_target {
+        if !is_safe {
             return None;
         }
         let cond_expr = Self::minimize_conditional(

@@ -1109,11 +1109,49 @@ fn test_compress_conditional_expression_inside() {
     // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function, but we ignore that difference
     test("x ? a = () => 'a' : a = () => 'b'", "a = x ? () => 'a' : () => 'b'");
 
-    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
-    // so cannot be fold to `a += x ? 0 : 1`
+    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`,
+    // so the merged form reads the target's value before evaluating `x`;
+    // merging is allowed only when both evaluating `x` and reading the target are side-effect-free
+    test(
+        "let a = foo, x = bar; x ? a += 1 : a += 2, console.log(a, x)",
+        "let a = foo, x = bar; a += x ? 1 : 2, console.log(a, x)",
+    );
+    test(
+        "let a = foo, x = bar; x ? a ||= 1 : a ||= 2, console.log(a, x)",
+        "let a = foo, x = bar; a ||= x ? 1 : 2, console.log(a, x)",
+    );
+
+    // different operators cannot be merged
+    test_same("let a = foo, x = bar; x ? a += 1 : a -= 2, console.log(a, x)");
+    // `x` and `a` are global reads that may have side effects
     // example case: `(()=>{"use strict"; (console.log("log"), 1) ? a += 0 : a += 1; })()`
     test_same("x ? a += 0 : a += 1");
     test_same("x ? a &&= 0 : a &&= 1");
+    // outputs `3`, but outputs `1` if merged
+    test_same(
+        "let a = 0;
+        function f() {
+            return a = 2, !0;
+        }
+        f() ? a += 1 : a += 2, console.log(a);",
+    );
+    // outputs `1 3`, but outputs `1 2` if merged
+    test_same(
+        "let x = 0, a_ = 1;
+        Object.defineProperty(globalThis, 'a', { get: () => (x++, a_), set: (v) => { a_ = v } }),
+        x ? a += 1 : a += 2,
+        console.log(x, a_);",
+    );
+    // `a.b` may have a getter; the merged form calls it before evaluating `x`
+    test_same("let a = {}, x = bar; x ? a.b += 1 : a.b += 2, console.log(a, x)");
+    // logs `f called` and `1`, but only `1` if merged
+    test_same(
+        "let a = 1;
+        function f() {
+            return console.log('f called'), !0;
+        }
+        f() ? a ||= 1 : a ||= 2, console.log(a);",
+    );
 }
 
 #[test]
