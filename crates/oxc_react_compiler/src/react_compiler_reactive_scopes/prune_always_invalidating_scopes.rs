@@ -11,8 +11,9 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneAlwaysInvalidatingScopes.ts`.
 
-use std::mem::take;
+use std::mem::replace;
 
+use oxc_allocator::Vec as ArenaVec;
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -114,6 +115,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         let mut within_scope = true;
         self.visit_scope(scope, &mut within_scope)?;
 
+        let alloc = self.env.allocator;
         let scope_id = scope.scope;
         let scope_data = &self.env.scopes[scope_id];
 
@@ -123,7 +125,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 // Propagate always-invalidating and unmemoized to declarations/reassignments
                 let decl_ids: Vec<IdentifierId> =
                     scope_data.declarations.iter().map(|(_, decl)| decl.identifier).collect();
-                let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.clone();
+                let reassign_ids: Vec<IdentifierId> =
+                    scope_data.reassignments.iter().copied().collect();
 
                 for id in &decl_ids {
                     if self.always_invalidating_values.contains(id) {
@@ -139,7 +142,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 return Ok(Transformed::Replace(ReactiveStatement::PrunedScope(
                     PrunedReactiveScopeBlock {
                         scope: scope.scope,
-                        instructions: take(&mut scope.instructions),
+                        instructions: replace(&mut scope.instructions, ArenaVec::new_in(&alloc)),
                     },
                 )));
             }

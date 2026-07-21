@@ -244,11 +244,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_jsx_child: bool,
     ) -> (ArenaVec<'a, JSXChild<'a>>, JSXClosing<'a>) {
         let mut children = ArenaVec::new_in(self);
+        let closing = self.parse_jsx_children_and_closing_into(&mut children, in_jsx_child);
+        (children, closing)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn parse_jsx_children_and_closing_into(
+        &mut self,
+        children: &mut ArenaVec<'a, JSXChild<'a>>,
+        in_jsx_child: bool,
+    ) -> JSXClosing<'a> {
         loop {
             if self.fatal_error.is_some() {
                 // Return dummy closing fragment on fatal error
                 let closing = JSXClosingFragment::new(self.cur_token().span(), self);
-                return (children, JSXClosing::Fragment(closing));
+                return JSXClosing::Fragment(closing);
             }
 
             match self.cur_kind() {
@@ -259,25 +270,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                     // <> open nested fragment
                     if kind == Kind::RAngle {
-                        children.push(JSXChild::Fragment(self.parse_jsx_fragment(span, true)));
+                        let child = JSXChild::Fragment(self.parse_jsx_fragment(span, true));
+                        children.push(child);
                         continue;
                     }
 
                     // <ident open nested element
                     if kind == Kind::Ident || kind.is_any_keyword() {
-                        children.push(JSXChild::Element(self.parse_jsx_element(span, true)));
+                        let child = JSXChild::Element(self.parse_jsx_element(span, true));
+                        children.push(child);
                         continue;
                     }
 
                     // </ closing tag - parse it inline and return
                     if kind == Kind::Slash {
                         self.bump_any(); // bump `/`
-                        let closing = self.parse_jsx_closing_inline(span, in_jsx_child);
-                        return (children, closing);
+                        return self.parse_jsx_closing_inline(span, in_jsx_child);
                     }
 
                     // Unexpected token after `<`
-                    return (children, self.unexpected());
+                    return self.unexpected();
                 }
                 Kind::LCurly => {
                     let span_start = self.start_span();
@@ -285,23 +297,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                     // {...expr}
                     if self.eat(Kind::Dot3) {
-                        children.push(JSXChild::Spread(self.parse_jsx_spread_child(span_start)));
+                        let child = JSXChild::Spread(self.parse_jsx_spread_child(span_start));
+                        children.push(child);
                         continue;
                     }
                     // {expr}
-                    children.push(JSXChild::ExpressionContainer(
-                        self.parse_jsx_expression_container(
+                    let child =
+                        JSXChild::ExpressionContainer(self.parse_jsx_expression_container(
                             span_start, /* in_jsx_child */ true,
-                        ),
-                    ));
+                        ));
+                    children.push(child);
                 }
                 // text
                 Kind::JSXText => {
-                    children.push(JSXChild::Text(self.parse_jsx_text()));
+                    let child = JSXChild::Text(self.parse_jsx_text());
+                    children.push(child);
                 }
                 _ => {
                     // Unexpected token in JSX children
-                    return (children, self.unexpected());
+                    return self.unexpected();
                 }
             }
         }

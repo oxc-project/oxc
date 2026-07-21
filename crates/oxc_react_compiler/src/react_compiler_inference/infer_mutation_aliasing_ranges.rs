@@ -14,6 +14,7 @@
 //!   vars, aliasing between params/context-vars/return-value)
 //! - The legacy `Effect` to store on each Place
 
+use oxc_allocator::CloneIn;
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -264,7 +265,7 @@ impl AliasingState {
             };
 
             if node.mutation_reason.is_none() {
-                node.mutation_reason = reason.clone();
+                node.mutation_reason = reason;
             }
             node.last_mutated = node.last_mutated.max(index);
 
@@ -399,20 +400,23 @@ impl AliasingState {
 
 fn append_function_errors(env: &mut Environment, function_id: FunctionId) {
     let func = &env.functions[function_id];
-    if let Some(ref effects) = func.aliasing_effects {
-        // Collect errors first to avoid borrow conflict
-        let errors: Vec<_> = effects
+    // Collect diagnostic ids first to avoid borrow conflict, then resolve + record.
+    let ids: Vec<_> = if let Some(ref effects) = func.aliasing_effects {
+        effects
             .iter()
             .filter_map(|effect| match effect {
                 AliasingEffect::Impure { error, .. }
                 | AliasingEffect::MutateFrozen { error, .. }
-                | AliasingEffect::MutateGlobal { error, .. } => Some(error.clone()),
+                | AliasingEffect::MutateGlobal { error, .. } => Some(*error),
                 _ => None,
             })
-            .collect();
-        for error in errors {
-            env.record_diagnostic(error);
-        }
+            .collect()
+    } else {
+        Vec::new()
+    };
+    for id in ids {
+        let diagnostic = env.aliasing_diagnostic(id);
+        env.record_diagnostic(diagnostic);
     }
 }
 
@@ -426,12 +430,12 @@ fn append_function_errors(env: &mut Environment, function_id: FunctionId) {
 /// params/context-vars, aliasing between params/context-vars/return).
 ///
 /// Corresponds to TS `inferMutationAliasingRanges(fn, {isFunctionExpression})`.
-pub fn infer_mutation_aliasing_ranges(
-    func: &mut HirFunction,
-    env: &mut Environment,
+pub fn infer_mutation_aliasing_ranges<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     is_function_expression: bool,
-) -> Result<Vec<AliasingEffect>, OxcDiagnostic> {
-    let mut function_effects: Vec<AliasingEffect> = Vec::new();
+) -> Result<Vec<AliasingEffect<'a>>, OxcDiagnostic> {
+    let mut function_effects: Vec<AliasingEffect<'a>> = Vec::new();
 
     // =========================================================================
     // Part 1: Build data flow graph and infer mutable ranges
@@ -506,12 +510,12 @@ pub fn infer_mutation_aliasing_ranges(
         seen_blocks.insert(block_id);
 
         // Process instruction effects
-        let instr_ids: Vec<_> = block.instructions.clone();
+        let instr_ids: Vec<_> = block.instructions.iter().copied().collect();
         for instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.index()];
             let instr_eval_order = instr.id;
-            let effects = match &instr.effects {
-                Some(e) => e.clone(),
+            let effects = match instr.effects.as_ref() {
+                Some(e) => e.clone_in(env.allocator),
                 None => continue,
             };
             for effect in &effects {
@@ -569,7 +573,7 @@ pub fn infer_mutation_aliasing_ranges(
                             id: instr_eval_order,
                             transitive: false,
                             kind: MutationKind::Definite,
-                            reason: reason.clone(),
+                            reason: *reason,
                             place: *value,
                         });
                         index += 1;
@@ -593,17 +597,18 @@ pub fn infer_mutation_aliasing_ranges(
                                 AliasingEffect::MutateFrozen { error, .. }
                                 | AliasingEffect::MutateGlobal { error, .. }
                                 | AliasingEffect::Impure { error, .. } => {
-                                    env.record_diagnostic(error.clone());
+                                    let diagnostic = env.aliasing_diagnostic(*error);
+                                    env.record_diagnostic(diagnostic);
                                 }
                                 _ => unreachable!(),
                             }
                         }
-                        function_effects.push(effect.clone());
+                        function_effects.push(effect.clone_in(env.allocator));
                     }
                     AliasingEffect::Render { place } => {
                         renders.push(PendingRender { index, place: *place });
                         index += 1;
-                        function_effects.push(effect.clone());
+                        function_effects.push(effect.clone_in(env.allocator));
                     }
                     // Other effects (Freeze, ImmutableCapture, Apply) are no-ops here
                     _ => {}
@@ -629,7 +634,7 @@ pub fn infer_mutation_aliasing_ranges(
         // Handle terminal effects (MaybeThrow and Return)
         let terminal_effects = match terminal {
             Terminal::MaybeThrow { effects, .. } | Terminal::Return { effects, .. } => {
-                effects.clone()
+                effects.as_ref().map(|v| v.clone_in(env.allocator))
             }
             _ => None,
         };
@@ -661,7 +666,7 @@ pub fn infer_mutation_aliasing_ranges(
             mutation.transitive,
             mutation.kind,
             mutation.place.span,
-            mutation.reason.clone(),
+            mutation.reason,
             env,
             should_record_errors,
         );
@@ -782,7 +787,7 @@ pub fn infer_mutation_aliasing_ranges(
         }
 
         let block = &func.body.blocks[&block_id];
-        let instr_ids: Vec<_> = block.instructions.clone();
+        let instr_ids: Vec<_> = block.instructions.iter().copied().collect();
 
         for instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.index()];
@@ -838,7 +843,7 @@ pub fn infer_mutation_aliasing_ranges(
             }
 
             // Compute operand effects from instruction effects
-            let effects = instr.effects.as_ref().unwrap().clone();
+            let effects = instr.effects.as_ref().unwrap().clone_in(env.allocator);
             let mut operand_effects: FxHashMap<IdentifierId, Effect> = FxHashMap::default();
 
             for effect in &effects {
@@ -1052,10 +1057,10 @@ pub fn infer_mutation_aliasing_ranges(
 // Helper: collect param/context mutation effects
 // =============================================================================
 
-fn collect_param_effects(
+fn collect_param_effects<'a>(
     state: &AliasingState,
     place: &Place,
-    function_effects: &mut Vec<AliasingEffect>,
+    function_effects: &mut Vec<AliasingEffect<'a>>,
 ) {
     let node = match state.nodes.get(&place.identifier) {
         Some(n) => n,
@@ -1072,7 +1077,7 @@ fn collect_param_effects(
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::Mutate {
                     value: Place { span: local.span, ..*place },
-                    reason: node.mutation_reason.clone(),
+                    reason: node.mutation_reason,
                 });
             }
         }

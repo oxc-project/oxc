@@ -71,6 +71,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
         let mut list = ArenaVec::new_in(self);
+        let rest = self.parse_formal_parameters_list_into(&mut list, func_kind, opening_span);
+        (list, rest)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn parse_formal_parameters_list_into(
+        &mut self,
+        list: &mut ArenaVec<'a, FormalParameter<'a>>,
+        func_kind: FunctionKind,
+        opening_span: Span,
+    ) -> Option<ArenaBox<'a, FormalParameterRest<'a>>> {
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
         let mut has_optional = false;
@@ -157,7 +169,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        (list, rest)
+        rest
     }
 
     fn parse_formal_parameter_with_decorators(
@@ -257,7 +269,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         id: Option<BindingIdentifier<'a>>,
         r#async: bool,
-        generator: bool,
+        generator: Option<u32>,
         func_kind: FunctionKind,
         param_kind: FormalParameterKind,
         modifiers: &Modifiers,
@@ -265,8 +277,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let ctx = self.ctx;
         // `new.target` is allowed in a function's parameters and body (but not arrow
         // functions, which are parsed via `parse_function_body` directly).
-        self.ctx =
-            self.ctx.and_in(true).and_await(r#async).and_yield(generator).and_new_target(true);
+        self.ctx = self
+            .ctx
+            .and_in(true)
+            .and_await(r#async)
+            .and_yield(generator.is_some())
+            .and_new_target(true);
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
@@ -328,9 +344,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
 
-        if generator {
+        if let Some(generator) = generator {
             if ctx.has_ambient() {
-                self.error(diagnostics::generator_in_ambient_context(self.end_span(span)));
+                self.error(diagnostics::generator_in_ambient_context(self.end_span(generator)));
             } else if body.is_none() {
                 self.error(diagnostics::overload_signature_generator(self.end_span(span)));
             }
@@ -346,7 +362,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.end_span(span),
             function_type,
             id,
-            generator,
+            generator.is_some(),
             r#async,
             modifiers.contains_declare(),
             type_parameters,
@@ -392,8 +408,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
     ) -> ArenaBox<'a, Function<'a>> {
         self.expect(Kind::Function);
-        let generator = self.eat(Kind::Star);
-        let id = self.parse_function_id(func_kind, r#async, generator);
+        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
+        let id = self.parse_function_id(func_kind, r#async, generator.is_some());
         self.parse_function(
             span,
             id,
@@ -415,8 +431,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
-        let generator = self.eat(Kind::Star);
-        let id = self.parse_function_id(func_kind, r#async, generator);
+        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
+        let id = self.parse_function_id(func_kind, r#async, generator.is_some());
         self.parse_function(
             start_span,
             id,
@@ -433,8 +449,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let func_kind = FunctionKind::Expression;
         self.expect(Kind::Function);
 
-        let generator = self.eat(Kind::Star);
-        let id = self.parse_function_id(func_kind, r#async, generator);
+        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
+        let id = self.parse_function_id(func_kind, r#async, generator.is_some());
         let function = self.parse_function(
             span,
             id,
@@ -458,7 +474,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_method(
         &mut self,
         r#async: bool,
-        generator: bool,
+        generator: Option<u32>,
         func_kind: FunctionKind,
     ) -> ArenaBox<'a, Function<'a>> {
         let span = self.start_span();

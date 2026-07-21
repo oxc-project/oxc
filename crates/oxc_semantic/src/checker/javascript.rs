@@ -160,7 +160,11 @@ pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
 
             // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
             if ctx.source_type.is_module() {
-                ctx.error(diagnostics::reserved_keyword(name, span));
+                ctx.error(diagnostics::reserved_keyword(
+                    name,
+                    span,
+                    diagnostics::ReservedKeywordContext::ModuleAwait,
+                ));
             }
             // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
             else if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
@@ -173,14 +177,35 @@ pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
                 return;
             }
             // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
-            ctx.error(diagnostics::reserved_keyword(name, span));
+            let context =
+                if ctx.ancestry().ancestor_kinds().any(|kind| matches!(kind, AstKind::Class(_))) {
+                    diagnostics::ReservedKeywordContext::Class
+                } else if ctx.source_type.is_module() {
+                    diagnostics::ReservedKeywordContext::Module
+                } else {
+                    diagnostics::ReservedKeywordContext::StrictMode
+                };
+            ctx.error(diagnostics::reserved_keyword(name, span, context));
         }
         _ => {}
     }
 }
 
+fn unexpected_identifier_assign_context(
+    ctx: &SemanticBuilder<'_>,
+) -> diagnostics::UnexpectedIdentifierAssignContext {
+    if ctx.ancestry().ancestor_kinds().any(|kind| matches!(kind, AstKind::Class(_))) {
+        diagnostics::UnexpectedIdentifierAssignContext::Class
+    } else if ctx.source_type.is_module() {
+        diagnostics::UnexpectedIdentifierAssignContext::Module
+    } else {
+        diagnostics::UnexpectedIdentifierAssignContext::StrictMode
+    }
+}
+
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
-    // `.d.ts` files are allowed to use `eval` and `arguments` as binding identifiers
+    // `.d.ts` files do not generate runtime bindings, so TypeScript permits `eval` and
+    // `arguments` as binding identifiers even when the declaration file is a module.
     if ctx.source_type.is_typescript_definition() {
         return;
     }
@@ -199,27 +224,31 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             // interface Foo { bar(arguments: any[]): void; baz(...arguments: any[]): void; } // OK
             // declare function g({eval, arguments}: {eval: number, arguments: number}): number; // Error
             // declare function h([eval, arguments]: [number, number]): number; // Error
-            let is_declare_function = |kind: &AstKind| {
-                kind.as_function()
-                    .is_some_and(|func| matches!(func.r#type, FunctionType::TSDeclareFunction))
-            };
 
-            // Walk up the ancestor stack: `ancestors.next()` yields the parent,
-            // then the grandparent, and so on.
-            let mut ancestors = ctx.ancestry().ancestor_kinds();
-            let parent = ancestors.next().unwrap();
-            let is_ok = match parent {
-                AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
-                AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
-                    is_declare_function(&ancestors.next().unwrap())
-                }
-                // `nth(1)` skips the `FormalParameter*` grandparent to reach the function.
-                AstKind::BindingRestElement(_) => is_declare_function(&ancestors.nth(1).unwrap()),
-                _ => false,
-            };
+            let parent = ctx.ancestry().parent_kind();
+            // Direct rest parameters and destructuring rest elements share the same AST kind.
+            let is_direct_rest_parameter = matches!(parent, AstKind::BindingRestElement(_))
+                && matches!(
+                    ctx.ancestry().ancestor_kinds().nth(1),
+                    Some(AstKind::FormalParameterRest(_))
+                );
+            let is_ok = ctx.in_ambient_context()
+                && (is_direct_rest_parameter
+                    || !matches!(
+                        parent,
+                        AstKind::VariableDeclarator(_)
+                            | AstKind::BindingProperty(_)
+                            | AstKind::ArrayPattern(_)
+                            | AstKind::AssignmentPattern(_)
+                            | AstKind::BindingRestElement(_)
+                    ));
 
             if !is_ok {
-                ctx.error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
+                ctx.error(diagnostics::unexpected_identifier_assign(
+                    &ident.name,
+                    ident.span,
+                    unexpected_identifier_assign_context(ctx),
+                ));
             }
         }
         "let" if !ctx.strict_mode() => {
@@ -261,8 +290,11 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx
-                        .error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
+                    return ctx.error(diagnostics::unexpected_identifier_assign(
+                        &ident.name,
+                        ident.span,
+                        unexpected_identifier_assign_context(ctx),
+                    ));
                 }
                 AstKind::AssignmentExpression(assign_expr) => {
                     // only throw error if arguments or eval are being assigned to
@@ -273,6 +305,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                         return ctx.error(diagnostics::unexpected_identifier_assign(
                             &ident.name,
                             ident.span,
+                            unexpected_identifier_assign_context(ctx),
                         ));
                     }
                 }

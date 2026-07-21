@@ -333,30 +333,40 @@ fn test_inline_read_before_await_tdz() {
     // declaration's initializer (`let p = init(), v = ...`), before `v` is
     // initialized, so `v` is in its TDZ when `init` runs.
     test_same(
-        "import { bar } from 'x'; let p = init(), v = ext(); async function init() { let num = await foo(); bar(v, num) } export { p }",
+        "import { bar } from 'x'; let p = init(bar), v = ext(); async function init(fn) { let num = await foo(); fn(v, num) } export { p }",
     );
     test_same(
-        "import { bar } from 'x'; let v = ext(); export async function init() { let num = await foo(); bar(v, num) }",
+        "let v = ext(); export async function init(fn) { let num = await foo(); fn(v, num) }",
     );
     test_same(
-        "import { bar } from 'x'; const v = ext(); export async function init() { let num = await foo(); bar(v, num) }",
+        "const v = ext(); export async function init(fn) { let num = await foo(); fn(v, num) }",
     );
-    test_same(
-        "import { bar } from 'x'; export async function init() { let num = await foo(); bar(C, num) } class C {}",
-    );
+    test_same("export async function init(fn) { let num = await foo(); fn(C, num) } class C {}");
     // A member assignment target reads the object before the await, so a
     // closed-over lexical object must not be reordered either.
     test_same("let v = ext(); export async function init() { let num = await foo(); v.x = num }");
     test_same("let v = ext(); export async function init() { let num = await foo(); v[0] = num }");
+    // A computed member assignment target also evaluates its key before the
+    // right-hand side. Moving the key read before the await would observe its
+    // TDZ, while the original resumes after `key` has been initialized.
+    // `+ext()` gives the key a known primitive type, while the export keeps the
+    // binding read in place so this exercises the TDZ guard itself.
+    test_same(
+        "let p = init({}); export let key = +ext(); async function init(obj) { let num = await foo(); obj[key] = num } export { p }",
+    );
+    // A yielded value has the same ordering hazard.
+    test_same(
+        "let iter = init({}), first = iter.next(); export let key = +ext(); function* init(obj) { let num = yield foo(); obj[key] = num } iter.next(0); export { first }",
+    );
     // `var` / parameter bindings are not TDZ-subject, so reordering the read
     // past the await is safe and still merges.
     test(
-        "import { bar } from 'x'; export async function init(v) { let num = await foo(); bar(v, num) }",
-        "import { bar } from 'x'; export async function init(v) { bar(v, await foo()) }",
+        "export async function init(fn, v) { let num = await foo(); fn(v, num) }",
+        "export async function init(fn, v) { fn(v, await foo()) }",
     );
     test(
-        "import { bar } from 'x'; export async function init() { var v = ext(); let num = await foo(); bar(v, num) }",
-        "import { bar } from 'x'; export async function init() { bar(ext(), await foo()) }",
+        "export async function init(fn) { var v = ext(); let num = await foo(); fn(v, num) }",
+        "export async function init(fn) { fn(ext(), await foo()) }",
     );
     test(
         "export async function init(v) { let num = await foo(); v.x = num }",
@@ -364,20 +374,73 @@ fn test_inline_read_before_await_tdz() {
     );
     // Same-function lexical is always initialized at the read, so it still merges.
     test(
-        "import { bar } from 'x'; export function outer() { const v = ext(); return bar(v, ext2()) }",
-        "import { bar } from 'x'; export function outer() { return bar(ext(), ext2()) }",
+        "export function outer(fn) { const v = ext(); return fn(v, ext2()) }",
+        "export function outer(fn) { return fn(ext(), ext2()) }",
     );
     // `using` is block-scoped too.
     test_same(
-        "import { bar } from 'x'; using v = ext(); export async function init() { let num = await foo(); bar(v, num) }",
+        "using v = ext(); export async function init(fn) { let num = await foo(); fn(v, num) }",
     );
     // `yield` is a suspension point like `await`.
-    test_same(
-        "import { bar } from 'x'; let v = ext(); export function* init() { let num = yield foo(); bar(v, num) }",
-    );
+    test_same("let v = ext(); export function* init(fn) { let num = yield foo(); fn(v, num) }");
     // Closed over across two function boundaries.
     test_same(
-        "import { bar } from 'x'; let v = ext(); export function outer() { return async function () { let num = await foo(); bar(v, num) } }",
+        "let v = ext(); export function outer(fn) { return async function () { let num = await foo(); fn(v, num) } }",
+    );
+}
+
+#[test]
+fn test_inline_computed_key_before_side_effecting_replacement() {
+    // The RHS can reassign a computed-key binding, so the ordinary
+    // reference-stability guard applies too. This parameter has no TDZ.
+    test_same("export function init(obj, key) { let num = (key = 'y', foo()); obj[key] = num }");
+    // `ToPropertyKey` happens after the assignment RHS. A stable key binding
+    // remains safe to read earlier even if the referenced object is mutated
+    // while the async function is suspended.
+    test(
+        "export async function init(obj, key) { let num = await mutate(key); obj[key] = num }",
+        "export async function init(obj, key) { obj[key] = await mutate(key) }",
+    );
+    // A literal is scope-independent, so the existing optimization remains
+    // available too.
+    test(
+        "export async function init(obj) { let num = await foo(); obj[0] = num }",
+        "export async function init(obj) { obj[0] = await foo() }",
+    );
+    // Module bindings cannot be changed by another module, so the Script-root
+    // guard must not block this safe substitution.
+    test(
+        "var key = 'x'; export function init(obj) { let num = mutate(); obj[key] = num }",
+        "var key = 'x'; export function init(obj) { obj.x = mutate() }",
+    );
+    // Non-simple key expressions remain conservative because evaluating the
+    // expression itself moves before the replacement.
+    test_same(
+        "export function init(obj, key) { let num = (key = 1, value()); obj[key === 0] = num }",
+    );
+    // ESM imports are live bindings. A call in the replacement can update
+    // either assignment-target part even though this module never writes it.
+    test_same(
+        "import { key, mutate } from 'x'; export function init(obj) { let num = mutate(); obj[key] = num }",
+    );
+    test_same(
+        "import { target, mutate } from 'x'; export function init() { let num = mutate(); target.x = num }",
+    );
+    test_same(
+        "import { value, mutate } from 'x'; export function init(consume) { let num = mutate(); consume(value, num) }",
+    );
+    // A pure replacement can move without observing changes to imported
+    // bindings, so it bypasses the reorder-stability walk.
+    test(
+        "import { consume } from 'x'; export function init(value) { let result = !value; consume(result) }",
+        "import { consume } from 'x'; export function init(value) { consume(!value) }",
+    );
+    // A later script can likewise update any binding in this script's global
+    // scope while a call in the replacement runs.
+    test_script_same("var key = 'x'; function init(obj) { let num = mutate(); obj[key] = num }");
+    test_script_same("var target = {}; function init() { let num = mutate(); target.x = num }");
+    test_script_same(
+        "var value = 0; function init(consume) { let num = mutate(); consume(value, num) }",
     );
 }
 

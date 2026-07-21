@@ -210,7 +210,7 @@ criterion2 = { version = "3.0.4", default-features = false } # Benchmarking
 dragonbox_ecma = "0.1.12" # Fast float formatting
 encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
-fast-glob = "1.0.1" # Fast glob matching
+fast-glob = "1.1.0" # Fast glob matching
 flate2 = "1.1.9" # Compression
 futures = "0.3.32" # Async utilities
 handlebars = "6.4.2" # Template engine
@@ -242,7 +242,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.3.0" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
-oxc-css-parser = "0.0.7" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
+oxc-css-parser = "0.0.9" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
 rand = "0.10.2" # Random number generation
 rayon = "1.12.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure

@@ -667,3 +667,12 @@ fn test_annotation_comments_preserved_in_dynamic_import() {
         "export async function init() { let bar = 'some-url'; return await import(/* @vite-ignore */ /* webpackIgnore: true */ 'some-url'); }",
     );
 }
+
+#[test]
+fn test_exponentiation_negative_bigint_base() {
+    // `0n + -1n` folds to a negative BigInt literal. As the base of `**` it must stay
+    // parenthesized, otherwise the output `-1n ** 2n` is a SyntaxError.
+    test("x = (0n + -1n) ** 2n", "x = (-1n) ** 2n");
+    // A positive BigInt base needs no parentheses.
+    test_same("x = 2n ** 3n");
+}
