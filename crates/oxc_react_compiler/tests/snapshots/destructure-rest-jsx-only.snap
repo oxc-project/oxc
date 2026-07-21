@@ -1,0 +1,29 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/destructure-rest-jsx-only.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+function Component(t0) {
+	const $ = _c(6);
+	let rest;
+	let value;
+	if ($[0] !== t0) {
+		({value, ...rest} = t0);
+		$[0] = t0;
+		$[1] = rest;
+		$[2] = value;
+	} else {
+		rest = $[1];
+		value = $[2];
+	}
+	let t1;
+	if ($[3] !== rest || $[4] !== value) {
+		t1 = <Child {...rest} value={value} />;
+		$[3] = rest;
+		$[4] = value;
+		$[5] = t1;
+	} else {
+		t1 = $[5];
+	}
+	return t1;
+}

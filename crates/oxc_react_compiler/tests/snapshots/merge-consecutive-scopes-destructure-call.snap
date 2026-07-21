@@ -1,0 +1,64 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/merge-consecutive-scopes-destructure-call.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+declare function createContext(options: {
+	settings: unknown;
+	theme: unknown;
+}): {
+	Provider: React.ComponentType<{
+		children: React.ReactNode;
+	}>;
+};
+function Component(t0) {
+	const $ = _c(12);
+	let rest;
+	let t1;
+	let value;
+	if ($[0] !== t0) {
+		const { value: t2, settings, ...t3 } = t0;
+		value = t2;
+		rest = t3;
+		t1 = createContext({
+			settings,
+			theme: rest.theme
+		});
+		$[0] = t0;
+		$[1] = rest;
+		$[2] = t1;
+		$[3] = value;
+	} else {
+		rest = $[1];
+		t1 = $[2];
+		value = $[3];
+	}
+	const { Provider } = t1;
+	let t2;
+	if ($[4] !== value) {
+		t2 = <Child value={value} />;
+		$[4] = value;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	let t3;
+	if ($[6] !== Provider || $[7] !== t2) {
+		t3 = <Provider>{t2}</Provider>;
+		$[6] = Provider;
+		$[7] = t2;
+		$[8] = t3;
+	} else {
+		t3 = $[8];
+	}
+	let t4;
+	if ($[9] !== rest || $[10] !== t3) {
+		t4 = <Outer {...rest}>{t3}</Outer>;
+		$[9] = rest;
+		$[10] = t3;
+		$[11] = t4;
+	} else {
+		t4 = $[11];
+	}
+	return t4;
+}
