@@ -1,0 +1,137 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === "a" || value === "b" || value === "c";
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === undefined || value === "a" || value === "b";
+   · ─────────────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === null || value === undefined;
+   · ─────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === "a" || value === "b";
+   · ──────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ "a" === value || "b" === value;
+   · ──────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === "a" || "b" === value;
+   · ──────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === first || value === second;
+   · ───────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ args[0] === "-h" || args[0] === "--help";
+   · ────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ object.value === "a" || object.value === "b";
+   · ────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ object.foo === "a" || object["foo"] === "b";
+   · ───────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ object[key] === "a" || object[key] === "b";
+   · ──────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === object.a || value === object.b;
+   · ────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ (value === "a") || (value === "b");
+   · ──────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:2]
+ 1 │ (value === "a" || value === "b") && otherValue;
+   ·  ──────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value === "a" || value === "b" || value === "c";
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ value! === "a" || value! === "b" || value! === "c";
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ (value satisfies string) === "a" || (value satisfies string) === "b" || (value satisfies string) === "c";
+   · ────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ (value as {foo?: string}) === "a" || (value as {foo?: string}) === "b" || (value as {foo?: string}) === "c";
+   · ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.
+
+  ⚠ unicorn(prefer-includes-over-repeated-comparisons): Use `.includes()` instead of repeated equality checks.
+   ╭─[prefer_includes_over_repeated_comparisons.tsx:1:1]
+ 1 │ (object satisfies Foo).value === "a" || (object satisfies Foo).value === "b" || (object satisfies Foo).value === "c";
+   · ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Rewrite the repeated `===` comparisons as a single `.includes()` call.

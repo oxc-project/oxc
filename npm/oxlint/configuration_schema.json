@@ -9218,6 +9218,26 @@
         "unicorn/prefer-includes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-includes-over-repeated-comparisons": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferIncludesOverRepeatedComparisonsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/prefer-keyboard-event-key": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -17213,6 +17233,20 @@
             "$ref": "#/definitions/JestFnType"
           },
           "markdownDescription": "Jest function types to enforce importing for."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferIncludesOverRepeatedComparisonsConfig": {
+      "type": "object",
+      "properties": {
+        "minimumComparisons": {
+          "description": "The minimum number of equality comparisons before reporting.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of equality comparisons before reporting."
         }
       },
       "additionalProperties": false
