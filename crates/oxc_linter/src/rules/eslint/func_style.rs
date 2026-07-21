@@ -3,12 +3,15 @@ use crate::{
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
 };
-use oxc_ast::{AstKind, ast::FunctionType};
+use oxc_ast::{
+    AstKind,
+    ast::{ArrowFunctionExpression, Function, FunctionType, Super, ThisExpression},
+};
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId};
+use oxc_semantic::{AstNode, ScopeFlags};
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -216,132 +219,132 @@ impl Rule for FuncStyle {
         serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
-    fn run_once<'a>(&self, ctx: &LintContext) {
-        let FuncStyle(style, config) = self;
-        let semantic = ctx.semantic();
-        let is_decl_style = *style == Style::Declaration;
-
-        // step 1
-        // We can iterate over ctx.nodes() and process FunctionDeclaration and FunctionExpression,
-        // whereas for ArrowFunctionExpression we need to record this and super inside it
-
-        let mut arrow_func_nodes = Vec::new();
-        let mut arrow_func_ancestor_records = FxHashSet::<NodeId>::default();
-
-        for node in semantic.nodes() {
-            match node.kind() {
-                AstKind::Function(func) => {
-                    let parent = semantic.nodes().parent_node(node.id());
-                    match func.r#type {
-                        FunctionType::FunctionDeclaration => {
-                            if func.body.is_none()
-                                || func.id.as_ref().is_some_and(|id| {
-                                    !ctx.scoping().symbol_redeclarations(id.symbol_id()).is_empty()
-                                })
-                            {
-                                continue;
-                            }
-
-                            // There are two situations to diagnostic
-                            // 1) if style not equal to "declaration"
-                            // we need to consider whether the parent node is ExportDefaultDeclaration or ExportNamedDeclaration
-                            // "function foo() {}" should diagnostic
-                            // "export function foo() {}" with option ["expression"] should diagnostic
-                            //
-                            // 2) For cases where the parent node is ExportNamedDeclaration,
-                            // we just need to check if the self.named_exports value is expression
-                            if !is_decl_style {
-                                let should_diagnostic = match parent.kind() {
-                                    AstKind::ExportDefaultDeclaration(_) => false,
-                                    AstKind::ExportNamedDeclaration(_) => {
-                                        config.named_exports().is_none()
-                                    }
-                                    _ => true,
-                                };
-                                if should_diagnostic {
-                                    ctx.diagnostic(func_style_diagnostic(
-                                        func.span,
-                                        style.as_str(),
-                                    ));
-                                }
-                            }
-
-                            if config.named_exports() == Some(&NamedExports::Expression)
-                                && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
-                            {
-                                ctx.diagnostic(func_style_diagnostic(func.span, "expression"));
-                            }
-                        }
-                        FunctionType::FunctionExpression => {
-                            let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
-                            if let AstKind::VariableDeclarator(decl) = parent.kind() {
-                                let is_type_annotation =
-                                    config.allow_type_annotation && decl.type_annotation.is_some();
-                                if is_type_annotation {
-                                    continue;
-                                }
-                                if is_decl_style
-                                    && (config.named_exports().is_none() || !is_ancestor_export)
-                                {
-                                    ctx.diagnostic(func_style_diagnostic(
-                                        decl.span,
-                                        style.as_str(),
-                                    ));
-                                }
-
-                                if config.named_exports() == Some(&NamedExports::Declaration)
-                                    && is_ancestor_export
-                                {
-                                    ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                AstKind::ThisExpression(_) | AstKind::Super(_) if !config.allow_arrow_functions => {
-                    // We need to determine if the recent FunctionBody is an arrow function
-                    let arrow_func_ancestor = semantic
-                        .nodes()
-                        .ancestors(node.id())
-                        .find(|v| matches!(v.kind(), AstKind::FunctionBody(_)))
-                        .map(|el| semantic.nodes().parent_node(el.id()));
-                    if let Some(ret) = arrow_func_ancestor {
-                        arrow_func_ancestor_records.insert(ret.id());
-                    }
-                }
-                AstKind::ArrowFunctionExpression(_) if !config.allow_arrow_functions => {
-                    arrow_func_nodes.push(node);
-                }
-                _ => {}
-            }
-        }
-
-        // step 2
-        // We deal with arrow functions that do not contain this and super
-        for node in arrow_func_nodes {
-            if !arrow_func_ancestor_records.contains(&node.id()) {
-                let parent = semantic.nodes().parent_node(node.id());
-                if let AstKind::VariableDeclarator(decl) = parent.kind() {
-                    let is_type_annotation =
-                        config.allow_type_annotation && decl.type_annotation.is_some();
-                    if is_type_annotation {
-                        continue;
-                    }
-                    let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
-                    if is_decl_style && (config.named_exports().is_none() || !is_ancestor_export) {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
-                    }
-
-                    if config.named_exports() == Some(&NamedExports::Declaration)
-                        && is_ancestor_export
-                    {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
-                    }
-                }
-            }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::Function(func) => self.check_function(func, node, ctx),
+            AstKind::ArrowFunctionExpression(arrow) => self.check_arrow_function(arrow, node, ctx),
+            _ => {}
         }
     }
+}
+
+impl FuncStyle {
+    fn check_function<'a>(&self, func: &Function<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match func.r#type {
+            FunctionType::FunctionDeclaration => self.check_function_declaration(func, node, ctx),
+            FunctionType::FunctionExpression => self.check_function_expression(node, ctx),
+            _ => {}
+        }
+    }
+
+    fn check_function_declaration<'a>(
+        &self,
+        func: &Function<'a>,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let FuncStyle(style, config) = self;
+
+        if func.body.is_none()
+            || func
+                .id
+                .as_ref()
+                .is_some_and(|id| !ctx.scoping().symbol_redeclarations(id.symbol_id()).is_empty())
+        {
+            return;
+        }
+
+        let parent = ctx.nodes().parent_node(node.id());
+
+        if *style != Style::Declaration {
+            let should_diagnostic = match parent.kind() {
+                AstKind::ExportDefaultDeclaration(_) => false,
+                AstKind::ExportNamedDeclaration(_) => config.named_exports().is_none(),
+                _ => true,
+            };
+            if should_diagnostic {
+                ctx.diagnostic(func_style_diagnostic(func.span, style.as_str()));
+            }
+        }
+
+        if config.named_exports() == Some(&NamedExports::Expression)
+            && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
+        {
+            ctx.diagnostic(func_style_diagnostic(func.span, "expression"));
+        }
+    }
+
+    fn check_function_expression<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let parent = ctx.nodes().parent_node(node.id());
+        if let AstKind::VariableDeclarator(decl) = parent.kind() {
+            self.check_variable_declarator(decl.span, decl.type_annotation.is_some(), node, ctx);
+        }
+    }
+
+    fn check_arrow_function<'a>(
+        &self,
+        arrow: &ArrowFunctionExpression<'a>,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let FuncStyle(_, config) = self;
+        if config.allow_arrow_functions || arrow_contains_this_or_super(arrow) {
+            return;
+        }
+
+        let parent = ctx.nodes().parent_node(node.id());
+        if let AstKind::VariableDeclarator(decl) = parent.kind() {
+            self.check_variable_declarator(decl.span, decl.type_annotation.is_some(), node, ctx);
+        }
+    }
+
+    fn check_variable_declarator<'a>(
+        &self,
+        span: Span,
+        has_type_annotation: bool,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let FuncStyle(style, config) = self;
+
+        if config.allow_type_annotation && has_type_annotation {
+            return;
+        }
+
+        let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
+        if *style == Style::Declaration && (config.named_exports().is_none() || !is_ancestor_export)
+        {
+            ctx.diagnostic(func_style_diagnostic(span, style.as_str()));
+        }
+
+        if config.named_exports() == Some(&NamedExports::Declaration) && is_ancestor_export {
+            ctx.diagnostic(func_style_diagnostic(span, "declaration"));
+        }
+    }
+}
+
+fn arrow_contains_this_or_super(arrow: &ArrowFunctionExpression) -> bool {
+    let mut finder = ThisOrSuperFinder { found: false };
+    finder.visit_function_body(&arrow.body);
+    finder.found
+}
+
+struct ThisOrSuperFinder {
+    found: bool,
+}
+
+impl<'a> Visit<'a> for ThisOrSuperFinder {
+    fn visit_this_expression(&mut self, _it: &ThisExpression) {
+        self.found = true;
+    }
+
+    fn visit_super(&mut self, _it: &Super) {
+        self.found = true;
+    }
+
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]
