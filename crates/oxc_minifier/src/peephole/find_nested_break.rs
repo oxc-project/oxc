@@ -8,7 +8,7 @@ use crate::TraverseCtx;
 impl<'a> PeepholeOptimizations {
     /// Check if a switch case can be inlined by verifying:
     /// - The test expression has no side effects
-    /// - All statements can be safely inlined (no unlabeled breaks outside terminal position)
+    /// - All statements can be safely inlined (no unlabeled breaks)
     pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>, ctx: &TraverseCtx<'a>) -> bool {
         if case.test.may_have_side_effects(ctx) {
             return false;

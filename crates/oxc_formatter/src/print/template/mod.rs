@@ -55,20 +55,45 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Format the tag and type arguments
-        write!(f, [self.tag(), self.type_arguments()]);
+        // Format the tag and type arguments.
+        // Comments between the tag (or type arguments) and the quasi always belong to the quasi
+        // as leading comments; suppress the trailing-comment capture on the last node before the quasi
+        // so they reach `comments_before` below.
+        // ```js
+        // foo /* c */
+        // `x`;
+        // ```
+        // Without this, the newline after the comment would make it the tag's trailing comment (end-of-line rule),
+        // printing ``foo /* c */`x`;``.
+        // Unlike the no-newline form which attaches to the quasi, so formatting is not idempotent.
+        if let Some(type_arguments) = self.type_arguments() {
+            write!(f, [self.tag(), FormatNodeWithoutTrailingComments(type_arguments)]);
+        } else {
+            write!(f, [FormatNodeWithoutTrailingComments(self.tag())]);
+        }
 
         let quasi = self.quasi();
 
         let comments = f.context().comments().comments_before(quasi.span.start);
         if !comments.is_empty() {
-            write!(
-                f,
-                [group(&format_args!(
-                    soft_line_break_or_space(),
-                    FormatLeadingComments::Comments(comments)
-                ))]
-            );
+            // The separator before the first comment is a plain space when the comment starts on the same line,
+            // and a soft line break otherwise.
+            // ```js
+            // foo /* a */ `x`; // same line -> space
+            //
+            // foo
+            // /* b */
+            // `x`;             // own line  -> soft line break
+            // ```
+            // No `group` here:
+            // the line elements inside the comments must inherit the enclosing mode,
+            // so a comment followed by a newline in the source keeps its line break.
+            if comments[0].preceded_by_newline() {
+                write!(f, [soft_line_break()]);
+            } else {
+                write!(f, [space()]);
+            }
+            write!(f, [FormatLeadingComments::Comments(comments)]);
         }
 
         write!(f, [line_suffix_boundary()]);

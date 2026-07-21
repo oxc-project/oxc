@@ -1020,6 +1020,34 @@ fn test_negate_empty_if_stmt_consequent() {
 #[test]
 fn test_compress_conditional_expression_inside() {
     test("x ? a = 0 : a = 1", "a = +!x");
+    test("let a = {}; x ? a.b = 0 : a.b = 1", "let a = {}; a.b = +!x");
+    test(
+        "globalThis.x = 0
+        let a_
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } })
+        x ? a = 0 : a = 1,
+        console.log(x, a)",
+        "globalThis.x = 0
+        let a_;
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } }),
+        a = +!x,
+        console.log(x, a)",
+    ); // both outputs `0, 1`
+    test("let a = [], i = 0; x ? a[i] = 0 : a[i] = 1", "let a = [], i = 0; a[0] = +!x");
+    test("x ? this.b = 0 : this.b = 1", "this.b = +!x");
+    test(
+        "var a = {};
+        async function f(p) {
+            await p ? a.b = 0 : a.b = 1;
+        }
+        const promise = f();
+        await promise, console.log(a.b);",
+        "var a = {};
+        async function f(p) {
+            a.b = +!await p;
+        }
+        await f(), console.log(a.b);",
+    );
     test(
         "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
         "a = x ? function () { return 'a' } : function () { return 'b' }",
@@ -1027,14 +1055,103 @@ fn test_compress_conditional_expression_inside() {
 
     // a.b might have a side effect
     test_same("x ? a.b = 0 : a.b = 1");
+    // outputs `1, {b:1}`, but outputs `1, {b:0`} if merged
+    test_same(
+        "globalThis.x = 0
+        let a_ = {};
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } }),
+        x ? a.b = 0 : a.b = 1,
+        console.log(x, a)",
+    );
+    // outputs `1, {b:1}`, but outputs `1, {b:0`} if merged
+    test_same(
+        "globalThis.x = 0; let a = {}; x ? (x = 1, a).b = 0 : (x = 1, a).b = 1, console.log(x, a)",
+    );
+    // outputs `0 1`, but `1 0` if merged
+    test_same(
+        "let a = { b: 0 }, saved = a;
+        function f() {
+            return a = { b: 0 }, !0;
+        }
+        f() ? a.b = 1 : a.b = 2, console.log(saved.b, a.b);",
+    );
+    // outputs `[0,8]`, but `[8,0]` if merged
+    test_same(
+        "let a = [0, 0], i = 0;
+        function f() {
+            return i = 1, !0;
+        }
+        f() ? a[i] = 8 : a[i] = 9, console.log(a);",
+    );
+    // logs `x, g`, but `g, x` if merged
+    test_same("let a = []; x() ? a[g()] = 1 : a[g()] = 2, console.log(a)");
+    // outputs `1`, but throws a TDZ ReferenceError if merged
+    // (merging reads `a` before the `await` suspension during which `let a` is initialized)
+    test_same(
+        "async function f(p) {
+            await p ? a.b = 0 : a.b = 1;
+        }
+        const promise = f();
+        let a = {};
+        await promise, console.log(a.b);",
+    );
+    // outputs `{ x: 'f' }`, but throws a TDZ ReferenceError if merged
+    // (same hazard for a closed-over computed key)
+    test_same(
+        "var a = {};
+        async function f(p) {
+            await p ? a[k] = 't' : a[k] = 'f';
+        }
+        const promise = f();
+        let k = 'x';
+        await promise, console.log(a);",
+    );
     // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function, but we ignore that difference
     test("x ? a = () => 'a' : a = () => 'b'", "a = x ? () => 'a' : () => 'b'");
 
-    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
-    // so cannot be fold to `a += x ? 0 : 1`
+    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`,
+    // so the merged form reads the target's value before evaluating `x`;
+    // merging is allowed only when both evaluating `x` and reading the target are side-effect-free
+    test(
+        "let a = foo, x = bar; x ? a += 1 : a += 2, console.log(a, x)",
+        "let a = foo, x = bar; a += x ? 1 : 2, console.log(a, x)",
+    );
+    test(
+        "let a = foo, x = bar; x ? a ||= 1 : a ||= 2, console.log(a, x)",
+        "let a = foo, x = bar; a ||= x ? 1 : 2, console.log(a, x)",
+    );
+
+    // different operators cannot be merged
+    test_same("let a = foo, x = bar; x ? a += 1 : a -= 2, console.log(a, x)");
+    // `x` and `a` are global reads that may have side effects
     // example case: `(()=>{"use strict"; (console.log("log"), 1) ? a += 0 : a += 1; })()`
     test_same("x ? a += 0 : a += 1");
     test_same("x ? a &&= 0 : a &&= 1");
+    // outputs `3`, but outputs `1` if merged
+    test_same(
+        "let a = 0;
+        function f() {
+            return a = 2, !0;
+        }
+        f() ? a += 1 : a += 2, console.log(a);",
+    );
+    // outputs `1 3`, but outputs `1 2` if merged
+    test_same(
+        "let x = 0, a_ = 1;
+        Object.defineProperty(globalThis, 'a', { get: () => (x++, a_), set: (v) => { a_ = v } }),
+        x ? a += 1 : a += 2,
+        console.log(x, a_);",
+    );
+    // `a.b` may have a getter; the merged form calls it before evaluating `x`
+    test_same("let a = {}, x = bar; x ? a.b += 1 : a.b += 2, console.log(a, x)");
+    // logs `f called` and `1`, but only `1` if merged
+    test_same(
+        "let a = 1;
+        function f() {
+            return console.log('f called'), !0;
+        }
+        f() ? a ||= 1 : a ||= 2, console.log(a);",
+    );
 }
 
 #[test]
@@ -1150,6 +1267,14 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test_same("var x = {}; x.y.z.w || (x.y = {}, x.y.z.w = 3)");
     // `x` is not mutated anywhere, and the preceding expression `x.y.z = {}` doesn't affect `x`
     test("var x = {}; x.y || (x.y.z = {}, x.y = 3)", "var x = {}; x.y ||= (x.y.z = {}, 3)");
+
+    // reading `x.y` reassigns `x` via the getter, so the original evaluates
+    // the write target `x.y` against the NEW object, while `x.y ||= 3`
+    // (which captures the object once) would write to the OLD one. Each case
+    // leaves `x.y === 3`; the merged form would leave `x.y === 9`.
+    test_same("var x = { get y() { return x = { y: 9 }, 0 } }; x.y || (x.y = 3)");
+    test_same("var x = { get y() { return x = { y: 9 }, 1 } }; x.y && (x.y = 3)");
+    test_same("var x = { get y() { x = { y: 9 } } }; x.y ?? (x.y = 3)");
 }
 
 #[test]

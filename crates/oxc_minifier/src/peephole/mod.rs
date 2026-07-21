@@ -22,6 +22,7 @@ use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
 use crate::{Traverse, TraverseCtx};
 
@@ -194,6 +195,57 @@ impl<'a> PeepholeOptimizations {
         } else {
             scoping.symbol_is_mutated(symbol_id)
         }
+    }
+
+    /// Whether the current read closes over a block-scoped binding.
+    ///
+    /// This is a structural test, not proof that the binding is currently in its
+    /// Temporal Dead Zone. Moving such a read before an `await`/`yield` can expose
+    /// the TDZ while outer code is still initializing the binding. A same-function
+    /// binding cannot be initialized mid-suspension, so it stays inlinable.
+    ///
+    /// <https://github.com/rolldown/rolldown/issues/9959>
+    fn is_closed_over_block_scoped_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if !scoping.symbol_flags(symbol_id).is_block_scoped() {
+            return false;
+        }
+
+        let binding_scope = scoping.symbol_scope_id(symbol_id);
+        Self::read_crosses_function_boundary(ctx.current_scope_id(), binding_scope, ctx)
+    }
+
+    /// Whether moving this identifier read earlier could observe a different
+    /// value or enter a closed-over lexical's TDZ.
+    fn identifier_read_blocks_reorder(id: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id();
+        symbol_id.is_none_or(|symbol_id| {
+            Self::symbol_value_may_change(symbol_id, ctx)
+                || Self::is_closed_over_block_scoped_read(symbol_id, ctx)
+        })
+    }
+
+    /// Whether evaluating a member assignment-target part earlier could observe
+    /// a different binding value. This includes ordinary mutation and closed-over
+    /// lexicals that could still be in their TDZ (e.g. `v.x = await f()` or
+    /// `obj[v] = await f()`).
+    fn member_part_blocks_reorder(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match expr {
+            Expression::Identifier(id) => Self::identifier_read_blocks_reorder(id, ctx),
+            Expression::ThisExpression(_) => false,
+            _ => true,
+        }
+    }
+
+    /// Whether evaluating a computed member key before a side-effecting
+    /// replacement could observe a different value.
+    ///
+    /// The key expression and `GetValue` move before the assignment RHS, but
+    /// `ToPropertyKey` still happens afterward. A scope-independent literal or
+    /// a stable simple reference is therefore safe regardless of its value type.
+    /// <https://tc39.es/ecma262/#sec-evaluate-property-access-with-expression-key>
+    fn computed_key_blocks_reorder(key: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        !key.is_literal_value(false, ctx) && Self::member_part_blocks_reorder(key, ctx)
     }
 
     /// True if the scope chain from `read_scope` up to (excluding) `stop_scope`

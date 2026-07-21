@@ -1,10 +1,12 @@
+use std::borrow::Cow;
+use std::cell::RefCell;
 use std::mem::take;
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, GetAllocator};
+use oxc_allocator::{Allocator, GetAllocator, Vec as ArenaVec};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_index::IndexVec;
 use oxc_span::Span;
@@ -38,6 +40,57 @@ pub enum OutputMode {
     Lint,
 }
 
+/// Analysis identity for an aliasing-effect diagnostic, matching the effect
+/// interning key granularity so identical errors collapse.
+type AliasingDiagnosticKey = (IdentifierId, Cow<'static, str>, Option<Cow<'static, str>>);
+
+/// Dedup key for the source-specific diagnostic payload. Keeping this separate
+/// from [`AliasingDiagnosticKey`] lets effect interning collapse equivalent
+/// errors without discarding the location selected for the retained effect.
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct AliasingDiagnosticInstanceKey {
+    identity: DiagnosticId,
+    note: Option<Cow<'static, str>>,
+    severity: u8,
+    code_scope: Option<Cow<'static, str>>,
+    code_number: Option<Cow<'static, str>>,
+    url: Option<Cow<'static, str>>,
+    labels: Vec<AliasingDiagnosticLabelKey>,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct AliasingDiagnosticLabelKey {
+    offset: u32,
+    len: u32,
+    primary: bool,
+    text: Option<String>,
+}
+
+impl AliasingDiagnosticInstanceKey {
+    fn new(identity: DiagnosticId, diagnostic: &OxcDiagnostic) -> Self {
+        let labels = diagnostic
+            .labels
+            .iter()
+            .map(|label| AliasingDiagnosticLabelKey {
+                offset: label.offset(),
+                len: label.len(),
+                primary: label.primary(),
+                text: label.label().map(str::to_owned),
+            })
+            .collect();
+
+        Self {
+            identity,
+            note: diagnostic.note.clone(),
+            severity: diagnostic.severity as u8,
+            code_scope: diagnostic.code.scope.clone(),
+            code_number: diagnostic.code.number.clone(),
+            url: diagnostic.url.clone(),
+            labels,
+        }
+    }
+}
+
 pub struct Environment<'a> {
     // Arena allocator for the compilation unit. HIR strings (identifier names,
     // shape ids, property keys) live here so they can be borrowed from the
@@ -57,6 +110,15 @@ pub struct Environment<'a> {
 
     // Error accumulation
     pub errors: Diagnostics,
+
+    // Interned diagnostics for aliasing-effect errors (MutateFrozen/MutateGlobal/
+    // Impure). Analysis identity is deduplicated separately from source-specific
+    // diagnostic instances so effects stay `Copy` without losing their locations.
+    // `RefCell` is needed because some effect-building passes hold `&Environment`.
+    aliasing_diagnostic_dedup: RefCell<FxHashMap<AliasingDiagnosticKey, DiagnosticId>>,
+    aliasing_diagnostic_instances: RefCell<IndexVec<DiagnosticInstanceId, OxcDiagnostic>>,
+    aliasing_diagnostic_instance_dedup:
+        RefCell<FxHashMap<AliasingDiagnosticInstanceKey, DiagnosticInstanceId>>,
 
     // Set during lowering when the function uses syntax the compiler can't handle
     // yet (currently `using`/`await using`, whose disposal semantics aren't
@@ -115,7 +177,7 @@ pub struct Environment<'a> {
 
 /// An outlined function entry, stored on Environment during compilation.
 /// Corresponds to TS `{ fn: HIRFunction, type: ReactFunctionType | null }`.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct OutlinedFunctionEntry<'a> {
     pub func: HirFunction<'a>,
     pub fn_type: Option<ReactFunctionType>,
@@ -180,6 +242,9 @@ impl<'a> Environment<'a> {
             scopes: IndexVec::new(),
             functions: IndexVec::new(),
             errors: Diagnostics::new(),
+            aliasing_diagnostic_dedup: RefCell::new(FxHashMap::default()),
+            aliasing_diagnostic_instances: RefCell::new(IndexVec::new()),
+            aliasing_diagnostic_instance_dedup: RefCell::new(FxHashMap::default()),
             skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
@@ -251,11 +316,11 @@ impl<'a> Environment<'a> {
         self.scopes.push(ReactiveScope {
             id,
             range,
-            dependencies: Vec::new(),
-            declarations: Vec::new(),
-            reassignments: Vec::new(),
+            dependencies: ArenaVec::new_in(&self.allocator),
+            declarations: ArenaVec::new_in(&self.allocator),
+            reassignments: ArenaVec::new_in(&self.allocator),
             early_return_value: None,
-            merged: Vec::new(),
+            merged: ArenaVec::new_in(&self.allocator),
             span: None,
         });
         id
@@ -290,6 +355,48 @@ impl<'a> Environment<'a> {
 
     pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
         self.errors.push(diagnostic);
+    }
+
+    /// Intern an aliasing-effect diagnostic into the environment-owned side tables.
+    /// Analysis-equivalent diagnostics share an identity, while source-specific
+    /// instances retain their own labels. Takes `&self` (interior mutability)
+    /// because some effect-building passes only hold `&Environment`.
+    pub fn intern_aliasing_diagnostic(
+        &self,
+        place: IdentifierId,
+        diagnostic: OxcDiagnostic,
+    ) -> AliasingDiagnostic {
+        let key = (place, diagnostic.message.clone(), diagnostic.help.clone());
+        let identity = {
+            let mut dedup = self.aliasing_diagnostic_dedup.borrow_mut();
+            if let Some(&id) = dedup.get(&key) {
+                id
+            } else {
+                let id = DiagnosticId::from_usize(dedup.len());
+                dedup.insert(key, id);
+                id
+            }
+        };
+
+        let key = AliasingDiagnosticInstanceKey::new(identity, &diagnostic);
+        let instance = {
+            let mut dedup = self.aliasing_diagnostic_instance_dedup.borrow_mut();
+            if let Some(&id) = dedup.get(&key) {
+                id
+            } else {
+                let id = self.aliasing_diagnostic_instances.borrow().next_idx();
+                self.aliasing_diagnostic_instances.borrow_mut().push(diagnostic);
+                dedup.insert(key, id);
+                id
+            }
+        };
+
+        AliasingDiagnostic::new(identity, instance)
+    }
+
+    /// Clone the source-specific aliasing-effect diagnostic for emission.
+    pub fn aliasing_diagnostic(&self, diagnostic: AliasingDiagnostic) -> OxcDiagnostic {
+        self.aliasing_diagnostic_instances.borrow()[diagnostic.instance()].clone()
     }
 
     pub fn has_errors(&self) -> bool {

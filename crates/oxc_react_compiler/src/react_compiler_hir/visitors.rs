@@ -481,19 +481,15 @@ pub fn each_terminal_operand(terminal: &Terminal) -> PlaceList {
 pub fn map_pattern_operands(pattern: &mut Pattern, f: &mut impl FnMut(Place) -> Place) {
     match pattern {
         Pattern::Array(arr) => {
-            arr.items = arr
-                .items
-                .iter()
-                .map(|item| match item {
-                    ArrayPatternElement::Place(place) => ArrayPatternElement::Place(f(*place)),
+            for item in arr.items.iter_mut() {
+                match item {
+                    ArrayPatternElement::Place(place) => *place = f(*place),
                     ArrayPatternElement::Spread(spread) => {
-                        let mut spread = *spread;
                         spread.place = f(spread.place);
-                        ArrayPatternElement::Spread(spread)
                     }
-                    ArrayPatternElement::Hole => ArrayPatternElement::Hole,
-                })
-                .collect();
+                    ArrayPatternElement::Hole => {}
+                }
+            }
         }
         Pattern::Object(obj) => {
             for property in obj.properties.iter_mut() {

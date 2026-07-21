@@ -2,8 +2,10 @@ use indexmap::{IndexMap, IndexSet};
 use rustc_hash::FxBuildHasher;
 
 pub mod disjoint_set;
+pub mod ordered_map;
 
 pub use disjoint_set::DisjointSet;
+pub use ordered_map::OrderedMap;
 
 /// `IndexMap` keyed with the fast `FxHasher` (rustc-hash) instead of the default SipHash.
 pub type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;

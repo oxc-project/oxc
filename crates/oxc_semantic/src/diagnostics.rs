@@ -82,8 +82,31 @@ pub enum ReservedKeywordContext {
 }
 
 #[cold]
-pub fn unexpected_identifier_assign(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot assign to '{x0}' in strict mode")).with_label(span1)
+pub fn unexpected_identifier_assign(
+    x0: &str,
+    span1: Span,
+    context: UnexpectedIdentifierAssignContext,
+) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("Cannot assign to '{x0}' in strict mode")).with_label(span1);
+    match context {
+        UnexpectedIdentifierAssignContext::StrictMode => {
+            diagnostic.with_note("This is strict mode code")
+        }
+        UnexpectedIdentifierAssignContext::Class => {
+            diagnostic.with_note("Classes are always strict mode code")
+        }
+        UnexpectedIdentifierAssignContext::Module => {
+            diagnostic.with_note("Modules are always strict mode code")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnexpectedIdentifierAssignContext {
+    StrictMode,
+    Class,
+    Module,
 }
 
 #[cold]
