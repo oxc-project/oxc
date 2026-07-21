@@ -10,6 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::RuleFixer,
+    globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
     utils::{
         KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS, get_element_type,
@@ -134,6 +135,12 @@ impl Rule for InteractiveSupportsFocus {
         }
 
         let element_type = get_element_type(ctx, jsx_el);
+
+        // Do not test unresolved custom components because their rendered DOM element is unknown.
+        if !HTML_TAG.contains(element_type.as_ref()) {
+            return;
+        }
+
         if is_interactive_element(&element_type, jsx_el)
             || is_non_interactive_element(&element_type, jsx_el)
         {
@@ -215,6 +222,8 @@ fn test() {
         (r#"<a onClick={() => void 0} href="http://x.y.z" tabIndex={0} />"#, None, None),
         (r#"<a onClick={() => void 0} href="http://x.y.z" role="button" />"#, None, None),
         (r"<TestComponent onClick={doFoo} />", None, None),
+        (r#"<HigherLevelComponent role="button" onClick={() => void 0} />"#, None, None),
+        (r#"<Foo.Bar role="button" onClick={() => void 0} />"#, None, None),
         (r#"<input onClick={() => void 0} type="hidden" />;"#, None, None),
         (r"<span onClick='submitForm();'>Submit</span>", None, None),
         (r"<span onClick='submitForm();' tabIndex={undefined}>Submit</span>", None, None),
