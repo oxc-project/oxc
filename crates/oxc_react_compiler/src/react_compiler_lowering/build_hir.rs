@@ -6370,14 +6370,11 @@ fn lower_variable_declaration<'a>(
         )?;
         // Treat `var` as `let` so references to the variable don't break
     }
-    if matches!(var_decl.kind, VK::Using | VK::AwaitUsing) {
-        // `using`/`await using` disposal semantics aren't preserved yet. Flag the
-        // function to be skipped (silently, no diagnostic) once lowering finishes,
-        // rather than miscompiling it. It's still lowered as `const` below so the HIR
-        // stays valid until the pipeline checks the flag. Other functions in the file
-        // are unaffected.
-        builder.environment_mut().skip_compilation = true;
-    }
+    let resource_kind = match var_decl.kind {
+        VK::Using => Some(ResourceDeclarationKind::Sync),
+        VK::AwaitUsing => Some(ResourceDeclarationKind::Async),
+        _ => None,
+    };
     let kind = match var_decl.kind {
         VK::Let | VK::Var => InstructionKind::Let,
         VK::Const | VK::Using | VK::AwaitUsing => InstructionKind::Const,
@@ -6399,6 +6396,17 @@ fn lower_variable_declaration<'a>(
                 value,
                 assign_style,
             )?;
+            if let Some(resource_kind) = resource_kind
+                && let oxc::BindingPattern::BindingIdentifier(id) = &declarator.id
+                && let Some(symbol_id) = builder.scope().resolve_binding_identifier(id)
+            {
+                let identifier =
+                    builder.resolve_binding_with_span(id.name, symbol_id, Some(id.span))?;
+                let declaration_id = builder.environment().identifiers[identifier].declaration_id;
+                builder
+                    .environment_mut()
+                    .register_resource_declaration(declaration_id, resource_kind);
+            }
         } else if let oxc::BindingPattern::BindingIdentifier(id) = &declarator.id {
             // No init: emit DeclareLocal or DeclareContext
             let id_span = id.span;
@@ -6488,6 +6496,14 @@ fn lower_for_in_of_left<'a>(
 ) -> Result<Option<Place>, OxcDiagnostic> {
     match left {
         oxc::ForStatementLeft::VariableDeclaration(var_decl) => {
+            if matches!(
+                var_decl.kind,
+                oxc::VariableDeclarationKind::Using | oxc::VariableDeclarationKind::AwaitUsing
+            ) {
+                // A for-of resource binding is disposed after every iteration,
+                // which the HIR's generic loop assignment cannot represent yet.
+                builder.environment_mut().skip_compilation = true;
+            }
             if var_decl.declarations.len() != 1 {
                 builder.record_error(
                     ErrorCategory::Invariant

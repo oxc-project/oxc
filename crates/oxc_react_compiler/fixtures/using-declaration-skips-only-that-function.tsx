@@ -1,6 +1,4 @@
-// `using`/`await using` disposal semantics aren't preserved yet, so `WithUsing` is
-// skipped and emitted unchanged, while the structurally identical `Clean` component
-// in the same file is still compiled.
+// A resource declaration is preserved while the component's memoizable work is compiled.
 function WithUsing(props) {
   using resource = props.acquire();
   return <div onClick={() => props.onClick()}>{props.text}</div>;

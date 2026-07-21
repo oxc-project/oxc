@@ -24,7 +24,8 @@ use crate::react_compiler_hir::{
 };
 
 use crate::react_compiler_reactive_scopes::visitors::{
-    ReactiveFunctionTransform, Transformed, transform_reactive_function,
+    ReactiveFunctionTransform, ReactiveFunctionVisitor, Transformed, transform_reactive_function,
+    visit_reactive_function,
 };
 
 /// Prunes scopes that always invalidate because they depend on unmemoized
@@ -34,17 +35,49 @@ pub fn prune_always_invalidating_scopes<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &Environment<'a>,
 ) -> Result<(), OxcDiagnostic> {
+    let mut resource_initializers = FxHashSet::default();
+    if env.has_resource_declarations() {
+        visit_reactive_function(
+            func,
+            &ResourceInitializerCollector { env },
+            &mut resource_initializers,
+        );
+    }
     let mut transform = Transform {
         env,
-        always_invalidating_values: FxHashSet::default(),
-        unmemoized_values: FxHashSet::default(),
+        resource_initializer_values: resource_initializers.clone(),
+        always_invalidating_values: resource_initializers.clone(),
+        unmemoized_values: resource_initializers,
     };
     let mut state = false; // withinScope
     transform_reactive_function(func, &mut transform, &mut state)
 }
 
+struct ResourceInitializerCollector<'a, 'e> {
+    env: &'e Environment<'a>,
+}
+
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for ResourceInitializerCollector<'a, 'e> {
+    type State = FxHashSet<IdentifierId>;
+
+    fn env(&self) -> &Environment<'a> {
+        self.env
+    }
+
+    fn visit_instruction(&self, instruction: &ReactiveInstruction<'a>, state: &mut Self::State) {
+        if let ReactiveValue::Instruction(InstructionValue::StoreLocal { value, lvalue, .. }) =
+            &instruction.value
+            && self.env.is_resource_declaration(lvalue.place.identifier)
+        {
+            state.insert(value.identifier);
+        }
+        self.traverse_instruction(instruction, state);
+    }
+}
+
 struct Transform<'a, 'e> {
     env: &'e Environment<'a>,
+    resource_initializer_values: FxHashSet<IdentifierId>,
     always_invalidating_values: FxHashSet<IdentifierId>,
     unmemoized_values: FxHashSet<IdentifierId>,
 }
@@ -84,6 +117,15 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 lvalue: store_lvalue,
                 ..
             }) => {
+                if self.env.is_resource_declaration(store_lvalue.place.identifier) {
+                    // Resource acquisition and registration must happen on every
+                    // execution of the declaration. Mark both sides so a scope
+                    // producing the initializer cannot memoize it independently.
+                    self.always_invalidating_values.insert(store_value.identifier);
+                    self.always_invalidating_values.insert(store_lvalue.place.identifier);
+                    self.unmemoized_values.insert(store_value.identifier);
+                    self.unmemoized_values.insert(store_lvalue.place.identifier);
+                }
                 if self.always_invalidating_values.contains(&store_value.identifier) {
                     self.always_invalidating_values.insert(store_lvalue.place.identifier);
                 }
@@ -116,6 +158,17 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
 
         let scope_id = scope.scope;
         let scope_data = &self.env.scopes[scope_id];
+
+        if scope_data.declarations.iter().any(|(_, declaration)| {
+            self.resource_initializer_values.contains(&declaration.identifier)
+        }) {
+            return Ok(Transformed::Replace(ReactiveStatement::PrunedScope(
+                PrunedReactiveScopeBlock {
+                    scope: scope.scope,
+                    instructions: take(&mut scope.instructions),
+                },
+            )));
+        }
 
         for dep in &scope_data.dependencies {
             if self.unmemoized_values.contains(&dep.identifier) {

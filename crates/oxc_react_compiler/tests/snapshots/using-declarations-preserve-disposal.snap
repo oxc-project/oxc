@@ -1,0 +1,75 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/using-declarations-preserve-disposal.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+class Disposer {
+	[Symbol.dispose]() {}
+}
+class AsyncDisposer {
+	async [Symbol.asyncDispose]() {}
+}
+export function UnusedResource() {
+	const $ = _c(1);
+	using resource = new Disposer();
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = <p>hello world</p>;
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+}
+export async function AwaitUsingResource(props) {
+	const $ = _c(2);
+	await using resource = await props.acquire();
+	let t0;
+	if ($[0] !== props.text) {
+		t0 = <p>{props.text}</p>;
+		$[0] = props.text;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}
+export function UsedResource(props) {
+	const $ = _c(3);
+	using resource = props.resource;
+	const t0 = () => resource.use();
+	let t1;
+	if ($[0] !== props.text || $[1] !== t0) {
+		t1 = <button onClick={t0}>{props.text}</button>;
+		$[0] = props.text;
+		$[1] = t0;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	return t1;
+}
+export function BlockScopedResource(props) {
+	const $ = _c(2);
+	if (props.enabled) {
+		using resource = props.acquire();
+		if (props.early) {
+			return <p>{resource.value}</p>;
+		}
+	}
+	let t0;
+	if ($[0] !== props.text) {
+		t0 = <p>{props.text}</p>;
+		$[0] = props.text;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}
+export function ForUsingResource(props) {
+	for (using resource of props.resources) {
+		resource.use();
+	}
+	return <p>{props.text}</p>;
+}

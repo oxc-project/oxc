@@ -157,7 +157,8 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
                     if let InstructionValue::StoreLocal { lvalue, value, .. } = &instr.value {
                         // If this is a Let/Const declaration, mark the initializer as referenced
                         // only if the SSA'd lval is also referenced
-                        if lvalue.kind == InstructionKind::Reassign
+                        if env.is_resource_declaration(lvalue.place.identifier)
+                            || lvalue.kind == InstructionKind::Reassign
                             || is_id_used(&state, lvalue.place.identifier)
                         {
                             reference(&mut state, &env.identifiers, value.identifier);
@@ -252,6 +253,7 @@ fn rewrite_instruction(
         }
         InstructionValue::StoreLocal { lvalue, span, .. }
             if lvalue.kind != InstructionKind::Reassign
+                && !env.is_resource_declaration(lvalue.place.identifier)
                 && !is_id_used(state, lvalue.place.identifier) =>
         {
             // This is a const/let declaration where the variable is accessed later,
@@ -273,6 +275,9 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             !is_id_or_name_used(state, &env.identifiers, lvalue.place.identifier)
         }
         InstructionValue::StoreLocal { lvalue, .. } => {
+            if env.is_resource_declaration(lvalue.place.identifier) {
+                return false;
+            }
             if lvalue.kind == InstructionKind::Reassign {
                 // Reassignments can be pruned if the specific instance being assigned is never read
                 !is_id_used(state, lvalue.place.identifier)
