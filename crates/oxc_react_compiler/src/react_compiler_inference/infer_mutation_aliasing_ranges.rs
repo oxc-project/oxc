@@ -399,20 +399,23 @@ impl AliasingState {
 
 fn append_function_errors(env: &mut Environment, function_id: FunctionId) {
     let func = &env.functions[function_id];
-    if let Some(ref effects) = func.aliasing_effects {
-        // Collect errors first to avoid borrow conflict
-        let errors: Vec<_> = effects
+    // Collect diagnostic ids first to avoid borrow conflict, then resolve + record.
+    let ids: Vec<_> = if let Some(ref effects) = func.aliasing_effects {
+        effects
             .iter()
             .filter_map(|effect| match effect {
                 AliasingEffect::Impure { error, .. }
                 | AliasingEffect::MutateFrozen { error, .. }
-                | AliasingEffect::MutateGlobal { error, .. } => Some(error.clone()),
+                | AliasingEffect::MutateGlobal { error, .. } => Some(*error),
                 _ => None,
             })
-            .collect();
-        for error in errors {
-            env.record_diagnostic(error);
-        }
+            .collect()
+    } else {
+        Vec::new()
+    };
+    for id in ids {
+        let diagnostic = env.aliasing_diagnostic(id);
+        env.record_diagnostic(diagnostic);
     }
 }
 
@@ -593,7 +596,8 @@ pub fn infer_mutation_aliasing_ranges(
                                 AliasingEffect::MutateFrozen { error, .. }
                                 | AliasingEffect::MutateGlobal { error, .. }
                                 | AliasingEffect::Impure { error, .. } => {
-                                    env.record_diagnostic(error.clone());
+                                    let diagnostic = env.aliasing_diagnostic(*error);
+                                    env.record_diagnostic(diagnostic);
                                 }
                                 _ => unreachable!(),
                             }

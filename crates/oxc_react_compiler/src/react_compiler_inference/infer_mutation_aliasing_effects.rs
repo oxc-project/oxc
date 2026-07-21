@@ -26,6 +26,7 @@ use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::BlockId;
 use crate::react_compiler_hir::DeclarationId;
+use crate::react_compiler_hir::DiagnosticId;
 use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::FunctionId;
 use crate::react_compiler_hir::HirFunction;
@@ -780,13 +781,11 @@ enum EffectKey {
     },
     MutateFrozen {
         place: IdentifierId,
-        message: Cow<'static, str>,
-        help: Option<Cow<'static, str>>,
+        diag: DiagnosticId,
     },
     MutateGlobal {
         place: IdentifierId,
-        message: Cow<'static, str>,
-        help: Option<Cow<'static, str>>,
+        diag: DiagnosticId,
     },
     Mutate {
         value: IdentifierId,
@@ -875,16 +874,12 @@ fn effect_key(effect: &AliasingEffect) -> EffectKey {
         }
         AliasingEffect::Impure { place, .. } => EffectKey::Impure { place: place.identifier },
         AliasingEffect::Render { place } => EffectKey::Render { place: place.identifier },
-        AliasingEffect::MutateFrozen { place, error } => EffectKey::MutateFrozen {
-            place: place.identifier,
-            message: error.message.clone(),
-            help: error.help.clone(),
-        },
-        AliasingEffect::MutateGlobal { place, error } => EffectKey::MutateGlobal {
-            place: place.identifier,
-            message: error.message.clone(),
-            help: error.help.clone(),
-        },
+        AliasingEffect::MutateFrozen { place, error } => {
+            EffectKey::MutateFrozen { place: place.identifier, diag: *error }
+        }
+        AliasingEffect::MutateGlobal { place, error } => {
+            EffectKey::MutateGlobal { place: place.identifier, diag: *error }
+        }
         AliasingEffect::Mutate { value, .. } => EffectKey::Mutate { value: value.identifier },
         AliasingEffect::MutateConditionally { value } => {
             EffectKey::MutateConditionally { value: value.identifier }
@@ -1297,10 +1292,9 @@ fn apply_signature(
                                     .span
                                     .map(|s| s.label(format!("{} cannot be modified", variable))),
                             );
-                        effects.push(AliasingEffect::MutateFrozen {
-                            place: *mutate_value,
-                            error: diagnostic,
-                        });
+                        let error =
+                            env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
+                        effects.push(AliasingEffect::MutateFrozen { place: *mutate_value, error });
                     }
                 }
             }
@@ -1922,10 +1916,11 @@ fn apply_effect(
                             variable.as_deref().unwrap_or("variable")
                         ))
                     }));
+                    let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     apply_effect(
                         context,
                         state,
-                        AliasingEffect::MutateFrozen { place: *value, error: diagnostic },
+                        AliasingEffect::MutateFrozen { place: *value, error },
                         initialized,
                         effects,
                         env,
@@ -1945,10 +1940,11 @@ fn apply_effect(
                             value.span.map(|s| s.label(format!("{} cannot be modified", variable))),
                         );
 
+                    let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
-                        AliasingEffect::MutateFrozen { place: *value, error: diagnostic }
+                        AliasingEffect::MutateFrozen { place: *value, error }
                     } else {
-                        AliasingEffect::MutateGlobal { place: *value, error: diagnostic }
+                        AliasingEffect::MutateGlobal { place: *value, error }
                     };
                     apply_effect(context, state, error_kind, initialized, effects, env)?;
                 }
@@ -2317,7 +2313,8 @@ fn compute_signature_for_instruction(
                 .with_labels(
                     instr.span.map(|s| s.label(format!("{} cannot be reassigned", variable))),
                 );
-            effects.push(AliasingEffect::MutateGlobal { place: *sg_value, error: diagnostic });
+            let error = env.intern_aliasing_diagnostic(sg_value.identifier, diagnostic);
+            effects.push(AliasingEffect::MutateGlobal { place: *sg_value, error });
             effects.push(AliasingEffect::Assign { from: *sg_value, into: *lvalue });
         }
         InstructionValue::TypeCastExpression { value: tc_value, .. } => {
@@ -2403,7 +2400,8 @@ fn compute_effects_for_legacy_signature(
                 }
             ))
             .with_labels(span.copied().map(|s| s.label("Cannot call impure function")));
-        effects.push(AliasingEffect::Impure { place: *receiver, error: diagnostic });
+        let error = env.intern_aliasing_diagnostic(receiver.identifier, diagnostic);
+        effects.push(AliasingEffect::Impure { place: *receiver, error });
     }
 
     // TODO: check signature.known_incompatible and throw (TS line 2351-2370)
@@ -2738,10 +2736,11 @@ fn compute_effects_for_aliasing_signature_config(
             AliasingEffectConfig::Impure { place } => {
                 let values = substitutions.get(*place).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::Impure {
-                        place: v,
-                        error: ErrorCategory::Purity.diagnostic("Impure function call"),
-                    });
+                    let error = env.intern_aliasing_diagnostic(
+                        v.identifier,
+                        ErrorCategory::Purity.diagnostic("Impure function call"),
+                    );
+                    effects.push(AliasingEffect::Impure { place: v, error });
                 }
             }
             AliasingEffectConfig::Mutate { value } => {
@@ -2938,19 +2937,19 @@ fn compute_effects_for_aliasing_signature(
             AliasingEffect::Impure { place, error } => {
                 let values = substitutions.get(&place.identifier).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::Impure { place: v, error: error.clone() });
+                    effects.push(AliasingEffect::Impure { place: v, error: *error });
                 }
             }
             AliasingEffect::MutateFrozen { place, error } => {
                 let values = substitutions.get(&place.identifier).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::MutateFrozen { place: v, error: error.clone() });
+                    effects.push(AliasingEffect::MutateFrozen { place: v, error: *error });
                 }
             }
             AliasingEffect::MutateGlobal { place, error } => {
                 let values = substitutions.get(&place.identifier).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::MutateGlobal { place: v, error: error.clone() });
+                    effects.push(AliasingEffect::MutateGlobal { place: v, error: *error });
                 }
             }
             AliasingEffect::Render { place } => {

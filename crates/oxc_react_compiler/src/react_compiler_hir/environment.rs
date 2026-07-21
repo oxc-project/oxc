@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+use std::cell::RefCell;
 use std::mem::take;
 
 use cow_utils::CowUtils;
@@ -38,6 +40,10 @@ pub enum OutputMode {
     Lint,
 }
 
+/// Dedup key for interned aliasing-effect diagnostics: `(place, message, help)`,
+/// matching the effect interning key granularity so identical errors collapse.
+type AliasingDiagnosticKey = (IdentifierId, Cow<'static, str>, Option<Cow<'static, str>>);
+
 pub struct Environment<'a> {
     // Arena allocator for the compilation unit. HIR strings (identifier names,
     // shape ids, property keys) live here so they can be borrowed from the
@@ -57,6 +63,14 @@ pub struct Environment<'a> {
 
     // Error accumulation
     pub errors: Diagnostics,
+
+    // Interned diagnostics for aliasing-effect errors (MutateFrozen/MutateGlobal/
+    // Impure). Those effects store a `DiagnosticId` into this table instead of an
+    // owned `OxcDiagnostic`, so `AliasingEffect` stays `Copy`/non-`Drop` and can be
+    // arena-allocated. Deduplicated on (place, message, help) to mirror the effect
+    // interning key. `RefCell` because some effect-building passes hold `&Environment`.
+    aliasing_diagnostics: RefCell<IndexVec<DiagnosticId, OxcDiagnostic>>,
+    aliasing_diagnostic_dedup: RefCell<FxHashMap<AliasingDiagnosticKey, DiagnosticId>>,
 
     // Set during lowering when the function uses syntax the compiler can't handle
     // yet (currently `using`/`await using`, whose disposal semantics aren't
@@ -180,6 +194,8 @@ impl<'a> Environment<'a> {
             scopes: IndexVec::new(),
             functions: IndexVec::new(),
             errors: Diagnostics::new(),
+            aliasing_diagnostics: RefCell::new(IndexVec::new()),
+            aliasing_diagnostic_dedup: RefCell::new(FxHashMap::default()),
             skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
@@ -290,6 +306,32 @@ impl<'a> Environment<'a> {
 
     pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
         self.errors.push(diagnostic);
+    }
+
+    /// Intern an aliasing-effect diagnostic into the environment-owned side table,
+    /// returning a `Copy` [`DiagnosticId`]. Deduplicated on (place, message, help) so
+    /// identical errors collapse to one stored diagnostic, matching the effect
+    /// interning key. Takes `&self` (interior mutability) because some effect-building
+    /// passes only hold `&Environment`.
+    pub fn intern_aliasing_diagnostic(
+        &self,
+        place: IdentifierId,
+        diagnostic: OxcDiagnostic,
+    ) -> DiagnosticId {
+        let key = (place, diagnostic.message.clone(), diagnostic.help.clone());
+        let mut dedup = self.aliasing_diagnostic_dedup.borrow_mut();
+        if let Some(&id) = dedup.get(&key) {
+            return id;
+        }
+        let id = self.aliasing_diagnostics.borrow().next_idx();
+        self.aliasing_diagnostics.borrow_mut().push(diagnostic);
+        dedup.insert(key, id);
+        id
+    }
+
+    /// Clone the interned aliasing-effect diagnostic for `id`, for emission.
+    pub fn aliasing_diagnostic(&self, id: DiagnosticId) -> OxcDiagnostic {
+        self.aliasing_diagnostics.borrow()[id].clone()
     }
 
     pub fn has_errors(&self) -> bool {
