@@ -450,6 +450,12 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                 };
                 (lvalues, rvalues)
             }
+            InstructionValue::UnsupportedStatement { .. } => {
+                let lvalues = lvalue.map_or_else(Vec::new, |place_identifier| {
+                    vec![LValueMemoization { place_identifier, level: MemoizationLevel::Never }]
+                });
+                (lvalues, vec![])
+            }
             InstructionValue::NextPropertyOf { .. }
             | InstructionValue::StartMemoize { .. }
             | InstructionValue::FinishMemoize { .. }

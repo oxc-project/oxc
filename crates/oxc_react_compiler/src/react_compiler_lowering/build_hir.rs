@@ -5466,8 +5466,12 @@ fn is_reorderable_expression(
                 match builder.scope().resolve_reference(ident) {
                     None => true, // global
                     Some(symbol_id) => {
-                        // Module-scope bindings (ModuleLocal, imports) are safe to reorder
+                        // Module-scope bindings (ModuleLocal, imports) and opaque inline
+                        // enum bindings are safe to reorder. The latter are lowered as
+                        // globals because their declaration is preserved as an
+                        // UnsupportedStatement rather than represented in HIR.
                         builder.scope().symbol_scope(symbol_id) == builder.scope().program_scope()
+                            || builder.scope().decl_kind(symbol_id) == DeclKind::TSEnumDeclaration
                     }
                 }
             } else {
@@ -6337,11 +6341,14 @@ fn lower_statement<'a>(
             )?;
         }
         oxc::Statement::TSEnumDeclaration(_) => {
-            // Inline TS `enum` has runtime semantics but no HIR representation, and
-            // the compiled body is rebuilt from HIR. Flag the function to be skipped
-            // (silently, no diagnostic) once lowering finishes, rather than dropping
-            // the enum from the output. Other functions in the file are unaffected.
-            builder.environment_mut().skip_compilation = true;
+            // Inline enums have runtime semantics. Preserve the whole statement as an
+            // opaque HIR value, matching the reference compiler's `UnsupportedNode`.
+            let allocator = builder.environment().allocator;
+            let statement = allocator.alloc(stmt.clone_in_with_semantic_ids(allocator));
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::UnsupportedStatement { statement, span: Some(stmt.span()) },
+            )?;
         }
         _ => {
             // Remaining statements are skipped: bodyless FunctionDeclaration
