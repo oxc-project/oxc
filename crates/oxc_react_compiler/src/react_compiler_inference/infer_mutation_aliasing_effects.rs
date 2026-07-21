@@ -881,10 +881,10 @@ fn effect_key(effect: &AliasingEffect) -> EffectKey {
         AliasingEffect::Impure { place, .. } => EffectKey::Impure { place: place.identifier },
         AliasingEffect::Render { place } => EffectKey::Render { place: place.identifier },
         AliasingEffect::MutateFrozen { place, error } => {
-            EffectKey::MutateFrozen { place: place.identifier, diag: *error }
+            EffectKey::MutateFrozen { place: place.identifier, diag: error.identity() }
         }
         AliasingEffect::MutateGlobal { place, error } => {
-            EffectKey::MutateGlobal { place: place.identifier, diag: *error }
+            EffectKey::MutateGlobal { place: place.identifier, diag: error.identity() }
         }
         AliasingEffect::Mutate { value, .. } => EffectKey::Mutate { value: value.identifier },
         AliasingEffect::MutateConditionally { value } => {
