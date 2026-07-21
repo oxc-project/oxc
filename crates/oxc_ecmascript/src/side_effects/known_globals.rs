@@ -148,6 +148,9 @@ pub(super) fn is_error_constructor(name: &str) -> bool {
             | "SyntaxError" | "TypeError" | "URIError")
 }
 
+/// Whether the name matches any TypedArray constructor name.
+///
+/// See <https://tc39.es/ecma262/multipage/indexed-collections.html#sec-typedarray-objects> for the list of TypedArrays.
 #[rustfmt::skip]
 pub fn is_typed_array_constructor(name: &str) -> bool {
     matches!(name, "Int8Array" | "Uint8Array" | "Uint8ClampedArray"
