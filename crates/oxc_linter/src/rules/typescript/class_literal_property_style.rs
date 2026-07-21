@@ -125,7 +125,7 @@ declare_oxc_lint!(
     ClassLiteralPropertyStyle,
     typescript,
     style,
-    suggestion,
+    conditional_suggestion,
     config = ClassLiteralPropertyStyleOption,
     version = "1.47.0",
     short_description = "Enforces a consistent style for exposing literal values on classes.",
@@ -163,6 +163,11 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)
         {
+            if !method.decorators.is_empty() {
+                ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
+                continue;
+            }
+
             ctx.diagnostic_with_suggestion(
                 prefer_field_style_diagnostic(method.key.span()),
                 |fixer| {
@@ -206,6 +211,11 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             if let Some(name) = property.key.name()
                 && excluded_properties.contains(&*name)
             {
+                continue;
+            }
+
+            if !property.decorators.is_empty() {
+                ctx.diagnostic(prefer_getter_style_diagnostic(property.key.span()));
                 continue;
             }
 
