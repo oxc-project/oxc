@@ -1,17 +1,18 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
-use oxc_ast::ast::*;
+use crate::{TraverseCtx, keep_var::KeepVar};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, HashSet, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
+    BoundNames,
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut};
-
-use crate::{TraverseCtx, keep_var::KeepVar};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
+use oxc_syntax::symbol::SymbolId;
 
 use super::PeepholeOptimizations;
 
@@ -512,6 +513,8 @@ impl<'a> PeepholeOptimizations {
             ctx,
         );
 
+        Self::simplify_destructuring_assignment(&mut var_decl.declarations, ctx);
+
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
             && var_decl.declarations.iter().all(|d| !Self::should_remove_unused_declarator(d, ctx))
@@ -565,6 +568,281 @@ impl<'a> PeepholeOptimizations {
                 seq.expressions.iter().any(Expression::is_super_call_expression)
             }
             _ => false,
+        }
+    }
+
+    /// Determines whether an array destruction assignment can be simplified.
+    /// - `let [x, y] = [1, 2];` -> true
+    /// - `let [x, y] = [...arr];` -> false
+    fn can_simplify_array_to_array_destruction_assignment(
+        id_kind: &ArrayPattern<'a>,
+        init_expr: &ArrayExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        // if left side of assignment is empty do not process it
+        if id_kind.is_empty() {
+            return false;
+        }
+
+        let init_len = init_expr.elements.len();
+        // [???] = [] or [...rest] = [??]
+        if init_len == 0 || (id_kind.rest.is_some() && id_kind.elements.is_empty()) {
+            return true;
+        }
+
+        let first_init = init_expr.elements.first();
+
+        // check if the first init is not spread when rest is present without elements
+        // [] = [...rest] | [a, ...rest] = [...rest]
+        if first_init.is_some_and(ArrayExpressionElement::is_spread)
+            && id_kind.rest.is_none()
+            && !id_kind.elements.is_empty()
+        {
+            return false;
+        }
+
+        // check for `[a = b] = [c]`
+        if init_len == 1
+            && first_init.is_some_and(|expr| !expr.is_literal_value(false, ctx))
+            && id_kind
+                .elements
+                .first()
+                .is_some_and(|e| e.as_ref().is_none_or(BindingPattern::is_assignment_pattern))
+        {
+            return false;
+        }
+
+        if init_len > 1 {
+            // check if any symbol used in init is defined in binding identifiers of id
+            // `id = init`
+            // `[a, b] = [b, a]`
+            let mut binding_identifier_symbol_ids = HashSet::new_in(GetAllocator::allocator(ctx));
+            id_kind.bound_names(&mut |ident| {
+                binding_identifier_symbol_ids.insert(ident.symbol_id());
+            });
+
+            if !binding_identifier_symbol_ids.is_empty() {
+                return !binding_identifier_symbol_ids.iter().any(|symbol_id| {
+                    Self::array_elements_have_reference_to_symbol_id(
+                        &init_expr.elements,
+                        *symbol_id,
+                        ctx,
+                    )
+                });
+            }
+        }
+
+        true
+    }
+
+    /// Checks if any element within an array expression has a reference to a specific symbol ID.
+    ///
+    /// - If the element is a `SpreadElement`, it inspects the `argument` of the spread for references.
+    /// - For other elements, it checks if they can be resolved to an expression and then inspects those expressions.
+    ///
+    /// Returns true If its components contain a reference to the given symbol ID.
+    fn array_elements_have_reference_to_symbol_id(
+        elements: &ArenaVec<'a, ArrayExpressionElement<'a>>,
+        symbol_id: SymbolId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        elements.iter().any(|e| match e {
+            ArrayExpressionElement::SpreadElement(e) => {
+                Self::expression_has_reference_to_symbol_id(&e.argument, symbol_id, ctx)
+            }
+            ArrayExpressionElement::Elision(_) => false,
+            _ => e.as_expression().is_none_or(|expr| {
+                Self::expression_has_reference_to_symbol_id(expr, symbol_id, ctx)
+            }),
+        })
+    }
+
+    /// Determines if a given expression references the specified symbol ID.
+    ///
+    /// - If the expression is an array, it checks whether any of the elements in the
+    ///   array reference the symbol ID by delegating to the `array_elements_have_reference_to_symbol_id` method.
+    /// - If the expression is an identifier, it resolves the symbol ID associated with
+    ///   the identifier using the provided context (`ctx`). If the symbol ID matches,
+    ///   the function returns `true`.
+    /// - For other expression types, the function checks if the expression is a literal
+    ///   value. If so, it is considered not to reference the symbol ID.
+    ///
+    /// Returns true If the expression or its components contain a reference to the given symbol ID.
+    fn expression_has_reference_to_symbol_id(
+        e: &Expression<'a>,
+        symbol_id: SymbolId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        match e {
+            Expression::ArrayExpression(array_expr) => {
+                Self::array_elements_have_reference_to_symbol_id(
+                    &array_expr.elements,
+                    symbol_id,
+                    ctx,
+                )
+            }
+            Expression::Identifier(ident) => {
+                let Some(ref_symbol) =
+                    &ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                else {
+                    return false; // global reference
+                };
+                // check whatever id is present in init [a] = [b]
+                *ref_symbol == symbol_id
+            }
+            _ => !e.is_literal_value(false, ctx),
+        }
+    }
+
+    fn is_empty_array_destruction_assignment(decl: &VariableDeclarator<'a>) -> bool {
+        let BindingPattern::ArrayPattern(id_pattern) = &decl.id else {
+            return false;
+        };
+        let Some(Expression::ArrayExpression(array_expr)) = &decl.init else {
+            return false;
+        };
+        id_pattern.elements.is_empty()
+            && id_pattern.rest.is_none()
+            && array_expr.elements.is_empty()
+    }
+
+    fn simplify_array_destruction_assignment(
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<(Option<BindingPattern<'a>>, Option<Expression<'a>>)> {
+        let BindingPattern::ArrayPattern(id_pattern) = &mut decl.id else {
+            return None;
+        };
+        let Some(Expression::ArrayExpression(init_expr)) = &mut decl.init else {
+            return None;
+        };
+        if !Self::can_simplify_array_to_array_destruction_assignment(id_pattern, init_expr, ctx) {
+            return None;
+        }
+
+        if id_pattern.elements.is_empty() {
+            let Some(mut rest) = id_pattern.rest.take() else {
+                return None;
+            };
+            return Some((
+                Some(rest.argument.take_in(ctx)),
+                Some(Expression::ArrayExpression(init_expr.take_in_box(ctx))),
+            ));
+        }
+
+        let init_item = match init_expr.elements.first() {
+            None => Expression::new_void_0(SPAN, ctx),
+            Some(ArrayExpressionElement::Elision(_)) => {
+                init_expr.elements.remove(0);
+                Expression::new_void_0(SPAN, ctx)
+            }
+            Some(ArrayExpressionElement::SpreadElement(_)) => return None,
+            Some(_) => init_expr.elements.remove(0).into_expression(),
+        };
+        let id_item = id_pattern.elements.remove(0);
+
+        match id_item {
+            // `[a = b] = [??]`
+            Some(BindingPattern::AssignmentPattern(mut pattern)) => {
+                if init_item.is_literal_value(false, ctx) {
+                    // if value is determined, `[a = b] = [c]` => `a = c` or `a = b`
+                    if init_item.is_void() || init_item.is_undefined() {
+                        // `[a = b] = [undefined]` => `a = b`
+                        ctx.drop_expression(&init_item);
+                        Some((Some(pattern.left.take_in(ctx)), Some(pattern.right.take_in(ctx))))
+                    } else {
+                        // `[a = b] = [c]` => `a = c`
+                        ctx.drop_expression(&pattern.right);
+                        Some((Some(pattern.left.take_in(ctx)), Some(init_item)))
+                    }
+                } else {
+                    // `[a = b] = [c]` where c is undetermined => `[a = b] = [c]`
+                    Some((
+                        Some(BindingPattern::new_array_pattern(
+                            decl.span,
+                            ArenaVec::from_value_in(
+                                Some(BindingPattern::AssignmentPattern(pattern)),
+                                ctx,
+                            ),
+                            NONE,
+                            ctx,
+                        )),
+                        Some(Expression::new_array_expression(
+                            init_item.span(),
+                            ArenaVec::from_value_in(ArrayExpressionElement::from(init_item), ctx),
+                            ctx,
+                        )),
+                    ))
+                }
+            }
+            // `[a, b] = [c, d]` => `a = c, b = d`
+            Some(id) => Some((Some(id), Some(init_item))),
+            // `[] = [??]` => `[] = [??]`
+            None => {
+                if init_item.is_literal_value(false, ctx) {
+                    ctx.drop_expression(&init_item);
+                    Some((None, None))
+                } else {
+                    Some((
+                        Some(BindingPattern::new_array_pattern(
+                            decl.span,
+                            ArenaVec::new_in(ctx),
+                            NONE,
+                            ctx,
+                        )),
+                        Some(Expression::new_array_expression(
+                            init_item.span(),
+                            ArenaVec::from_value_in(ArrayExpressionElement::from(init_item), ctx),
+                            ctx,
+                        )),
+                    ))
+                }
+            }
+        }
+    }
+
+    /// Simplifies destructuring assignments by transforming array patterns into a sequence of
+    /// variable declarations, whenever possible. This function modifies the input declarations
+    /// and returns whether any changes were made.
+    fn simplify_destructuring_assignment(
+        declarations: &mut ArenaVec<'a, VariableDeclarator<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let mut i = declarations.len();
+        while i > 0 {
+            i -= 1;
+
+            let Some(last) = declarations.get_mut(i) else {
+                continue;
+            };
+            let Some((new_id, new_init)) = Self::simplify_array_destruction_assignment(last, ctx)
+            else {
+                continue;
+            };
+
+            if new_init.is_some()
+                && let Some(new_id) = new_id
+            {
+                let new_decl = VariableDeclarator::new(
+                    new_id.span(),
+                    last.kind,
+                    new_id,
+                    NONE,
+                    new_init,
+                    last.definite,
+                    ctx,
+                );
+                if Self::is_empty_array_destruction_assignment(last) {
+                    ctx.replace_variable_declarator(last, new_decl);
+                    i += 1;
+                } else {
+                    declarations.insert(i, new_decl);
+                    ctx.notice_change();
+                    i += 2;
+                }
+            } else if Self::is_empty_array_destruction_assignment(last) {
+                ctx.drop_variable_declarator(&declarations.remove(i));
+            }
         }
     }
 

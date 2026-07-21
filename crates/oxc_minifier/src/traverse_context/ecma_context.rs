@@ -479,6 +479,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.record_ast_change();
     }
 
+    /// Replace a `VariableDeclarator` slot. Same contract as `replace_expression`.
+    #[inline]
+    pub fn replace_variable_declarator(
+        &mut self,
+        slot: &mut VariableDeclarator<'a>,
+        new: VariableDeclarator<'a>,
+    ) {
+        self.dropped_subtree_collector().visit_variable_declarator(slot);
+        *slot = new;
+        self.state.record_ast_change();
+    }
+
     /// Mark the pass as having mutated the AST in place (operand swap, in-place
     /// field flip, collection element removal, etc.) where no slot replacement
     /// happened. Prefer the `replace_*` helpers when the mutation IS a slot
