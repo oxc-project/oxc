@@ -1327,6 +1327,9 @@ fn ox_codegen_instruction_nullable<'a>(
             InstructionValue::Debugger { .. } => {
                 return Ok(Some(oxc_ast::ast::Statement::new_debugger_statement(SPAN, &cx.ast)));
             }
+            InstructionValue::UnsupportedStatement { statement, .. } => {
+                return Ok(Some(statement.clone_in_with_semantic_ids(cx.ast.allocator())));
+            }
             InstructionValue::ObjectMethod { span, .. } => {
                 invariant(
                     instr.lvalue.is_some(),
@@ -2071,6 +2074,7 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::UnsupportedStatement { .. }
         | InstructionValue::DeclareLocal { .. }
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::Destructure { .. }

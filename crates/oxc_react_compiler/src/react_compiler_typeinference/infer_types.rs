@@ -814,6 +814,7 @@ fn generate_instruction_types<'a>(
         | InstructionValue::GetIterator { .. }
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::UnsupportedStatement { .. }
         | InstructionValue::FinishMemoize { .. } => {
             // No type equations for these
         }
@@ -1157,6 +1158,7 @@ fn apply_instruction_operands<'a>(
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
+        | InstructionValue::UnsupportedStatement { .. }
         | InstructionValue::Debugger { .. } => {
             // No operand places
         }

@@ -339,6 +339,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             false
         }
         InstructionValue::NewExpression { .. }
+        | InstructionValue::UnsupportedStatement { .. }
         | InstructionValue::TaggedTemplateExpression { .. } => {
             // Potentially safe to prune, but we conservatively keep them
             false

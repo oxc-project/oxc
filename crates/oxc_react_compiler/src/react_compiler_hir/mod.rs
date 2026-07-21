@@ -721,6 +721,13 @@ pub enum InstructionValue<'a> {
     Debugger {
         span: Option<Span>,
     },
+    /// A runtime statement that the HIR does not model, preserved verbatim through
+    /// the optimization pipeline. This mirrors the reference compiler's
+    /// `UnsupportedNode` value for inline TypeScript enums.
+    UnsupportedStatement {
+        statement: &'a oxc_ast::ast::Statement<'a>,
+        span: Option<Span>,
+    },
     StartMemoize {
         manual_memo_id: u32,
         deps: Option<Vec<ManualMemoDependency<'a>>>,
@@ -790,6 +797,7 @@ impl<'a> InstructionValue<'a> {
             | InstructionValue::PrefixUpdate { span, .. }
             | InstructionValue::PostfixUpdate { span, .. }
             | InstructionValue::Debugger { span, .. }
+            | InstructionValue::UnsupportedStatement { span, .. }
             | InstructionValue::StartMemoize { span, .. }
             | InstructionValue::FinishMemoize { span, .. } => span.as_ref(),
         }
