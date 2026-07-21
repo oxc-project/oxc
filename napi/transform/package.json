@@ -45,13 +45,16 @@
     "postbuild-dev": "node scripts/patch.js",
     "build-wasm": "pnpm run build-wasm-dev --release",
     "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "compare-react-compiler": "node scripts/compare-react-compiler.mjs",
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
     "@emnapi/core": "catalog:",
     "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
+    "babel-plugin-react-compiler": "1.0.0",
     "publint": "catalog:",
     "vitest": "catalog:"
   },
