@@ -7,19 +7,20 @@ import { identity, Stringify, useIdentity } from "shared-runtime";
 function Component(props) {
 	const $ = _c(6);
 	const t0 = useIdentity(props);
-	let rest;
 	let x;
+	let z;
 	if ($[0] !== t0) {
-		({x, ...rest} = t0);
+		const { x: t1, ...rest } = t0;
+		x = t1;
+		z = rest.z;
+		identity(z);
 		$[0] = t0;
-		$[1] = rest;
-		$[2] = x;
+		$[1] = x;
+		$[2] = z;
 	} else {
-		rest = $[1];
-		x = $[2];
+		x = $[1];
+		z = $[2];
 	}
-	const z = rest.z;
-	identity(z);
 	let t1;
 	if ($[3] !== x || $[4] !== z) {
 		t1 = <Stringify x={x} z={z} />;
