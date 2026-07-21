@@ -178,6 +178,9 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                         fixer.source_range(method.key.span()),
                         method.computed,
                     );
+                    if let Some(return_type) = &method.value.return_type {
+                        replacement.push_str(fixer.source_range(return_type.span));
+                    }
                     replacement.push_str(" = ");
                     replacement.push_str(fixer.source_range(argument.span()));
                     replacement.push(';');
@@ -741,6 +744,16 @@ fn test() {
         (
             "
             class Mx {
+              get foo(): string {
+                return 'x';
+              }
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
               public get [myValue]() {
                 return 'a literal value';
               }
@@ -972,6 +985,21 @@ fn test() {
             "
             class Mx {
               public static readonly foo = 1;
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              get foo(): string {
+                return 'x';
+              }
+            }
+                  ",
+            "
+            class Mx {
+              readonly foo: string = 'x';
             }
                   ",
             None,
