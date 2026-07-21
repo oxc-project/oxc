@@ -210,7 +210,7 @@ criterion2 = { version = "3.0.4", default-features = false } # Benchmarking
 dragonbox_ecma = "0.1.12" # Fast float formatting
 encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
-fast-glob = "1.0.1" # Fast glob matching
+fast-glob = "1.1.0" # Fast glob matching
 flate2 = "1.1.9" # Compression
 futures = "0.3.32" # Async utilities
 handlebars = "6.4.2" # Template engine

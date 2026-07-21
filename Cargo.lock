@@ -695,9 +695,9 @@ dependencies = [
 
 [[package]]
 name = "fast-glob"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b9e81515b0279bf618200fd15d132e7195d2048fb46eed6f0f3c10cbc068266"
+checksum = "3cc9868289ee02952b341465ce66e67adec151227afedacf9137c0adb1e53943"
 dependencies = [
  "arrayvec",
 ]
