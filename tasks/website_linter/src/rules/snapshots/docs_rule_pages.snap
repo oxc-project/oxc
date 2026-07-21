@@ -2099,7 +2099,7 @@ category: "Style"
 version: "1.47.0"
 default: false
 type_aware: false
-fix: "fixable_suggestion"
+fix: "conditional_suggestion"
 upstream: "https://typescript-eslint.io/rules/class-literal-property-style/"
 ---
 
