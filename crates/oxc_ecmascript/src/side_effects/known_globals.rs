@@ -5,28 +5,37 @@
 //! calling their methods is side-effect-free.
 
 use oxc_ast::ast::*;
+use oxc_compat::ESFeature;
+use oxc_regular_expression::{
+    LiteralParser, Options, RegexUnsupportedFlags, RegexUnsupportedPatterns,
+    has_unsupported_regular_expression_flags, has_unsupported_regular_expression_pattern,
+};
 
 use super::context::MayHaveSideEffectsContext;
 
-/// Validate a RegExp constructor call using the regex parser.
+/// Validate that a RegExp constructor call cannot throw on the target engines.
 ///
-/// Returns `true` if the pattern and flags are valid (pure/side-effect free),
-/// `false` if invalid or cannot be statically determined.
+/// Returns `true` if the pattern and flags are valid and supported by the target engines
+/// (pure/side-effect free), and `false` if invalid, unsupported, or not statically known.
 ///
-/// Invalid patterns like `RegExp("[")` or invalid flags like `RegExp("a", "xyz")` throw SyntaxError,
-/// so they are NOT pure.
+/// A modern parser accepting a pattern is not enough: constructor calls are commonly used for
+/// feature detection, and valid newer syntax can still throw a `SyntaxError` on an older engine.
 ///
 /// See <https://github.com/oxc-project/oxc/issues/18050>
-pub fn is_valid_regexp(args: &[Argument<'_>]) -> bool {
+pub fn is_valid_regexp<'a>(
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
     // Extract pattern from first argument
-    let pattern = match args.first() {
+    let (pattern, is_regexp_literal) = match args.first() {
         // No arguments: `RegExp()` is valid, returns /(?:)/
-        None => "",
+        None => ("", false),
         Some(arg) => match arg.as_expression() {
-            // RegExp literal argument: `RegExp(/foo/)` is always valid
-            Some(Expression::RegExpLiteral(_)) => return true,
+            // A RegExp literal is already known to contain a valid pattern. Replacement flags are
+            // validated below because support for that constructor form varies by target.
+            Some(Expression::RegExpLiteral(_)) => ("", true),
             // String literal: extract the pattern to validate
-            Some(Expression::StringLiteral(s)) => s.value.as_str(),
+            Some(Expression::StringLiteral(s)) if !s.lone_surrogates => (s.value.as_str(), false),
             // Non-literal argument: can't statically determine, assume side effects
             _ => return false,
         },
@@ -42,16 +51,55 @@ pub fn is_valid_regexp(args: &[Argument<'_>]) -> bool {
         },
     };
 
-    // Use the regex parser to validate the pattern and flags
+    if has_unsupported_regular_expression_flags(
+        flags.unwrap_or_default(),
+        &unsupported_regexp_flags(ctx),
+    ) {
+        return false;
+    }
+
+    if is_regexp_literal {
+        // ES5 throws whenever a RegExp object and flags are both supplied.
+        return flags.is_none()
+            || supports_es_feature(ctx, ESFeature::ES2015RegExpConstructorCanAlterFlags);
+    }
+
+    let unsupported_patterns = unsupported_regexp_patterns(ctx);
+
+    // The parser performs complete syntax validation beyond the compatibility checks above.
     let allocator = oxc_allocator::Allocator::default();
-    oxc_regular_expression::LiteralParser::new(
-        &allocator,
-        pattern,
-        flags,
-        oxc_regular_expression::Options::default(),
+    LiteralParser::new(&allocator, pattern, flags, Options::default()).parse().is_ok_and(
+        |pattern| !has_unsupported_regular_expression_pattern(&pattern, &unsupported_patterns),
     )
-    .parse()
-    .is_ok()
+}
+
+fn unsupported_regexp_flags<'a>(ctx: &impl MayHaveSideEffectsContext<'a>) -> RegexUnsupportedFlags {
+    RegexUnsupportedFlags {
+        sticky: !supports_es_feature(ctx, ESFeature::ES2015StickyRegex),
+        unicode: !supports_es_feature(ctx, ESFeature::ES2015UnicodeRegex),
+        dot_all: !supports_es_feature(ctx, ESFeature::ES2018DotallRegex),
+        match_indices: !supports_es_feature(ctx, ESFeature::ES2022MatchIndicesRegex),
+        unicode_sets: !supports_es_feature(ctx, ESFeature::ES2024UnicodeSetsRegex),
+    }
+}
+
+fn unsupported_regexp_patterns<'a>(
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> RegexUnsupportedPatterns {
+    RegexUnsupportedPatterns {
+        named_capture_groups: !supports_es_feature(ctx, ESFeature::ES2018NamedCapturingGroupsRegex),
+        duplicate_named_capture_groups: !supports_es_feature(
+            ctx,
+            ESFeature::ES2025DuplicateNamedCapturingGroupsRegex,
+        ),
+        unicode_property_escapes: !supports_es_feature(ctx, ESFeature::ES2018UnicodePropertyRegex),
+        look_behind_assertions: !supports_es_feature(ctx, ESFeature::ES2018LookbehindRegex),
+        pattern_modifiers: !supports_es_feature(ctx, ESFeature::ES2025RegexpModifiers),
+    }
+}
+
+fn supports_es_feature<'a>(ctx: &impl MayHaveSideEffectsContext<'a>, feature: ESFeature) -> bool {
+    ctx.engine_targets().is_some_and(|target| target.supports_es_feature(feature))
 }
 
 #[rustfmt::skip]

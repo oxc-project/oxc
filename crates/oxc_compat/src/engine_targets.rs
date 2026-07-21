@@ -187,7 +187,9 @@ fn test_displayed_value_is_parsable() {
 
 #[test]
 fn test_supports_es_feature() {
-    use crate::ESFeature::{ES2015ArrowFunctions, ES2020OptionalChaining};
+    use crate::ESFeature::{
+        ES2015ArrowFunctions, ES2015RegExpConstructorCanAlterFlags, ES2020OptionalChaining,
+    };
 
     assert!(!EngineTargets::default().supports_es_feature(ES2015ArrowFunctions));
 
@@ -213,6 +215,17 @@ fn test_supports_es_feature() {
     );
     assert!(
         EngineTargets::from_target("chrome91").unwrap().supports_es_feature(ES2020OptionalChaining)
+    );
+
+    assert!(
+        !EngineTargets::from_target("chrome48")
+            .unwrap()
+            .supports_es_feature(ES2015RegExpConstructorCanAlterFlags)
+    );
+    assert!(
+        EngineTargets::from_target("chrome49")
+            .unwrap()
+            .supports_es_feature(ES2015RegExpConstructorCanAlterFlags)
     );
 
     // Missing compatibility data is not proof of support.
