@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { transformSync } from "../index";
@@ -25,6 +27,11 @@ export function Component(props: Props) {
   );
 }
 `;
+
+const nonfatalBailoutFixture = readFileSync(
+  new URL("./fixtures/react-compiler/nonfatal-bailout.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("plugins.reactCompiler", () => {
   it("memoizes, composes with the TS + JSX transforms, and preserves comments", () => {
@@ -174,25 +181,28 @@ function Component() {
     expect(errors.some((error) => error.severity === "Error")).toBe(false);
   });
 
-  it("aborts the transform when React Compiler reports an error", () => {
-    const { code, errors } = transformSync(
-      "Component.jsx",
-      `
-function Component(props) {
-  if (props.cond) {
-    useState(0);
-  }
-  return <div>{props.text}</div>;
-}
-`,
-      {
-        plugins: { reactCompiler: true },
-        jsx: { runtime: "automatic" },
-      },
-    );
+  it("emits fully lowered code for a default nonfatal bailout", () => {
+    const { code, errors } = transformSync("Component.tsx", nonfatalBailoutFixture, {
+      plugins: { reactCompiler: true },
+      jsx: { runtime: "automatic" },
+    });
 
-    // A React Compiler error (Rules of Hooks violation) is fatal: it is surfaced
-    // at error severity and the transform stops, emitting no code.
+    // Upstream logs recoverable compiler errors at their original severity but
+    // does not throw with the default panicThreshold: "none".
+    expect(errors.some((error) => error.severity === "Error")).toBe(true);
+    expect(code).toContain("react/compiler-runtime");
+    expect(code).toContain("_c(");
+    expect(code).not.toContain("type Props");
+    expect(code).not.toContain(": JSX.Element");
+    expect(code).not.toContain("<main>");
+  });
+
+  it("aborts the transform when the panic threshold escalates an error", () => {
+    const { code, errors } = transformSync("Component.tsx", nonfatalBailoutFixture, {
+      plugins: { reactCompiler: { panicThreshold: "all_errors" } },
+      jsx: { runtime: "automatic" },
+    });
+
     expect(errors.some((error) => error.severity === "Error")).toBe(true);
     expect(code).toBe("");
   });

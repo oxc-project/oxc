@@ -11,7 +11,9 @@ use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
-use oxc_react_compiler::{PluginOptions, compile as react_compiler_compile};
+use oxc_react_compiler::{
+    CompileStatus, PluginOptions, compile_with_status as react_compiler_compile,
+};
 use oxc_semantic::Scoping;
 #[cfg(feature = "react_compiler")]
 use oxc_semantic::SemanticBuilder;
@@ -92,6 +94,12 @@ pub use crate::{
 pub struct TransformerReturn {
     /// Diagnostics produced during transformation.
     pub diagnostics: Diagnostics,
+    /// Whether transformation produced a diagnostic that must stop code generation.
+    ///
+    /// Error-severity React Compiler diagnostics are recoverable when its panic
+    /// threshold does not escalate them, so consumers must not infer fatality from
+    /// [`diagnostics`](Self::diagnostics) alone.
+    pub has_fatal_errors: bool,
     /// Updated semantic scoping after all transforms have run.
     pub scoping: Scoping,
     /// Helpers used by this transform.
@@ -145,15 +153,21 @@ impl<'a> Transformer<'a> {
         let allocator = self.allocator;
 
         #[cfg(feature = "react_compiler")]
-        let (scoping, react_compiler_diagnostics) = self.run_react_compiler(scoping, program);
+        let (scoping, react_compiler_diagnostics, react_compiler_fatal) =
+            self.run_react_compiler(scoping, program);
         #[cfg(not(feature = "react_compiler"))]
         let react_compiler_diagnostics = Diagnostics::new();
+        #[cfg(not(feature = "react_compiler"))]
+        let react_compiler_fatal = false;
 
-        // A React Compiler error is fatal: stop before the rest of the transform runs.
-        if react_compiler_diagnostics.has_errors() {
+        // Only errors escalated by React Compiler are fatal. With the default panic
+        // threshold, diagnostics can describe a skipped function while sibling
+        // functions and the remaining transform pipeline continue normally.
+        if react_compiler_fatal {
             #[expect(deprecated)]
             return TransformerReturn {
                 diagnostics: react_compiler_diagnostics,
+                has_fatal_errors: true,
                 scoping,
                 helpers_used: FxHashMap::default(),
             };
@@ -213,10 +227,12 @@ impl<'a> Transformer<'a> {
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
+        let transformer_diagnostics = Diagnostics::from(state.take_errors());
+        let has_fatal_errors = transformer_diagnostics.has_errors();
         let mut diagnostics = react_compiler_diagnostics;
-        diagnostics.extend(state.take_errors());
+        diagnostics.extend(transformer_diagnostics);
         #[expect(deprecated)]
-        TransformerReturn { diagnostics, scoping, helpers_used }
+        TransformerReturn { diagnostics, has_fatal_errors, scoping, helpers_used }
     }
 
     #[cfg(feature = "react_compiler")]
@@ -224,21 +240,21 @@ impl<'a> Transformer<'a> {
         &mut self,
         scoping: Scoping,
         program: &mut Program<'a>,
-    ) -> (Scoping, Diagnostics) {
+    ) -> (Scoping, Diagnostics, bool) {
         let Some(options) = self.react_compiler.take() else {
-            return (scoping, Diagnostics::new());
+            return (scoping, Diagnostics::new(), false);
         };
-        let (output, diagnostics) = {
+        let (output, diagnostics, status) = {
             let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
             react_compiler_compile(program, &semantic, self.allocator, options)
         };
         let Some(output) = output else {
-            return (scoping, diagnostics);
+            return (scoping, diagnostics, status == CompileStatus::Fatal);
         };
         output.transform(program);
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
-        (scoping, diagnostics)
+        (scoping, diagnostics, status == CompileStatus::Fatal)
     }
 }
 

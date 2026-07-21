@@ -15,7 +15,7 @@ mod react_compiler_typeinference;
 mod react_compiler_utils;
 mod react_compiler_validation;
 
-use crate::react_compiler::entrypoint::compile_result::CompileResult;
+use crate::react_compiler::entrypoint::compile_result::CompileResult as InternalCompileResult;
 use crate::react_compiler::entrypoint::imports::{
     get_react_compiler_runtime_module, has_memo_cache_function_import, validate_restricted_imports,
 };
@@ -48,6 +48,19 @@ pub struct LintResult {
     pub diagnostics: Diagnostics,
 }
 
+/// Whether the compiler completed normally or encountered an error that must abort
+/// the surrounding transform pipeline.
+///
+/// A successful compile can still contain diagnostics from functions that were
+/// individually skipped according to [`PluginOptions::panic_threshold`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CompileStatus {
+    /// Compilation completed, including when individual functions bailed out.
+    Success,
+    /// Compilation must abort because of a configuration error or panic threshold.
+    Fatal,
+}
+
 /// Run the React Compiler on a pre-parsed program.
 ///
 /// Returns the compiled output — `None` when the compiler has nothing to change
@@ -76,22 +89,41 @@ pub fn compile<'a>(
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> (Option<CompileOutput<'a>>, Diagnostics) {
+    let (output, diagnostics, _status) = compile_with_status(program, semantic, allocator, options);
+    (output, diagnostics)
+}
+
+/// Run the React Compiler and preserve whether its diagnostics represent a fatal
+/// whole-file error.
+///
+/// Integrations that run additional transforms after React Compiler should use this
+/// entry point instead of inferring fatality from diagnostic severity. With the
+/// default `panicThreshold: "none"`, a failed function is reported as an error but
+/// does not prevent sibling functions or later transform passes from running.
+pub fn compile_with_status<'a>(
+    program: &Program<'a>,
+    semantic: &Semantic<'_>,
+    allocator: &'a Allocator,
+    options: PluginOptions,
+) -> (Option<CompileOutput<'a>>, Diagnostics, CompileStatus) {
     // Check for existing runtime imports (file already compiled).
     if has_memo_cache_function_import(program, &get_react_compiler_runtime_module(&options.target))
     {
-        return (None, Diagnostics::default());
+        return (None, Diagnostics::default(), CompileStatus::Success);
     }
 
     // Blocklisted imports fail the whole file: report and bail without compiling.
     if let Some(diagnostics) =
         validate_restricted_imports(program, &options.environment.validate_blocklisted_imports)
     {
-        return (None, diagnostics);
+        return (None, diagnostics, CompileStatus::Fatal);
     }
 
     match compile_program(allocator, semantic, program, options) {
-        CompileResult::Success { output, diagnostics } => (output.map(|b| *b), diagnostics),
-        CompileResult::Error { diagnostics } => (None, diagnostics),
+        InternalCompileResult::Success { output, diagnostics } => {
+            (output.map(|b| *b), diagnostics, CompileStatus::Success)
+        }
+        InternalCompileResult::Error { diagnostics } => (None, diagnostics, CompileStatus::Fatal),
     }
 }
 

@@ -164,12 +164,13 @@ pub trait CompilerInterface {
             let mut transformer_return =
                 self.transform(options, &allocator, &mut program, source_path, scoping);
 
-            // Errors are fatal (e.g. a React Compiler error); warnings are reported
-            // but codegen still runs.
+            // Report all diagnostics, but only stop for diagnostics the transformer
+            // marked fatal. React Compiler can report Error-severity diagnostics for
+            // individual function bailouts without aborting the file.
+            let has_fatal_errors = transformer_return.has_fatal_errors;
             let diagnostics = mem::take(&mut transformer_return.diagnostics);
-            let has_errors = diagnostics.has_errors();
             self.handle_errors(diagnostics);
-            if has_errors {
+            if has_fatal_errors {
                 return;
             }
 
