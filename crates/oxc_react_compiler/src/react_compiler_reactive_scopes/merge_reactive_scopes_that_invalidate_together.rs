@@ -352,19 +352,23 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
         }
 
         let alloc = self.env.allocator;
-        let mut next_instructions: ArenaVec<'a, ReactiveStatement<'a>> = ArenaVec::new_in(&alloc);
-        let mut index = 0;
         let all_stmts = replace(block, ArenaVec::new_in(&alloc));
+        let mut next_instructions: ArenaVec<'a, ReactiveStatement<'a>> =
+            ArenaVec::with_capacity_in(all_stmts.len(), &alloc);
+        // `all_stmts` was moved out of `block`, so move (not clone) its
+        // statements into the merged result.
+        let mut stmts = all_stmts.into_iter();
+        let mut index = 0;
 
         for entry in &merged {
-            // Push everything before the merge range
+            // Move everything before the merge range
             while index < entry.from {
-                next_instructions.push(all_stmts[index].clone_in(alloc));
+                next_instructions.push(stmts.next().unwrap());
                 index += 1;
             }
             // The first item in the merge range must be a scope
-            let mut merged_scope = match &all_stmts[entry.from] {
-                ReactiveStatement::Scope(s) => s.clone_in(alloc),
+            let mut merged_scope = match stmts.next().unwrap() {
+                ReactiveStatement::Scope(s) => s,
                 _ => {
                     return Err(ErrorCategory::Invariant
                         .diagnostic("MergeConsecutiveScopes: Expected scope at starting index"));
@@ -372,27 +376,23 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             };
             index += 1;
             while index < entry.to {
-                let stmt = &all_stmts[index];
+                let stmt = stmts.next().unwrap();
                 index += 1;
                 match stmt {
                     ReactiveStatement::Scope(inner_scope) => {
-                        merged_scope
-                            .instructions
-                            .extend(inner_scope.instructions.iter().map(|s| s.clone_in(alloc)));
-                        self.env.scopes[merged_scope.scope].merged.push(inner_scope.scope);
+                        let inner_scope_id = inner_scope.scope;
+                        merged_scope.instructions.extend(inner_scope.instructions);
+                        self.env.scopes[merged_scope.scope].merged.push(inner_scope_id);
                     }
-                    _ => {
-                        merged_scope.instructions.push(stmt.clone_in(alloc));
+                    stmt => {
+                        merged_scope.instructions.push(stmt);
                     }
                 }
             }
             next_instructions.push(ReactiveStatement::Scope(merged_scope));
         }
-        // Push remaining
-        while index < all_stmts.len() {
-            next_instructions.push(all_stmts[index].clone_in(alloc));
-            index += 1;
-        }
+        // Move the remaining statements
+        next_instructions.extend(stmts);
 
         *block = next_instructions;
         Ok(())
