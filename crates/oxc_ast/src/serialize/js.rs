@@ -17,10 +17,6 @@ use super::{EmptyArray, Null};
 // Meta properties
 // ----------------------------------------
 
-fn serialize_meta_property_identifier<S: Serializer>(serializer: S, span: Span, name: Ident<'_>) {
-    IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name }.serialize(serializer);
-}
-
 #[ast_meta]
 #[estree(
     ts_type = "IdentifierName",
@@ -147,6 +143,10 @@ impl ESTree for NewTargetProperty<'_> {
 
         serialize_meta_property_identifier(serializer, span, static_ident!("target"));
     }
+}
+
+fn serialize_meta_property_identifier<S: Serializer>(serializer: S, span: Span, name: Ident<'_>) {
+    IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name }.serialize(serializer);
 }
 
 // ----------------------------------------
