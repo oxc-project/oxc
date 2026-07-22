@@ -1,10 +1,12 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    rules::shared::prefer_todo::{DOCUMENTATION, run},
-    utils::PossibleJestNode,
+    rules::shared::prefer_todo::{DOCUMENTATION, run as prefer_todo},
+    utils::run_on_possible_jest_call,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -13,12 +15,11 @@ pub struct PreferTodo;
 declare_oxc_lint!(PreferTodo, vitest, style, fix, docs = DOCUMENTATION, version = "0.0.16",);
 
 impl Rule for PreferTodo {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(possible_jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run_on_possible_jest_call(node, ctx, |possible_jest_node, ctx| {
+            prefer_todo(possible_jest_node, ctx);
+        });
     }
 }
 
@@ -46,10 +47,15 @@ fn tests() {
             ",
             None,
         ),
+        ("function test() {}; test('i need to write this test', () => {});", None),
     ];
 
     let fail = vec![
         ("test('i need to write this test');", None),
+        (
+            "import { test as aliasedTest } from 'vitest'; aliasedTest('i need to write this test', () => {});",
+            None,
+        ),
         ("test('i need to write this test',);", None),
         ("test(`i need to write this test`);", None),
         ("it('foo', function () {})", None),
