@@ -93,7 +93,7 @@ impl Generator for AstBuilderGenerator {
             #impls
         };
 
-        Output::Rust { path: output_path(AST_CRATE_PATH, "builder_methods.rs"), tokens: output }
+        Output::Rust { path: output_path(AST_CRATE_PATH, "ast_builder.rs"), tokens: output }
     }
 }
 
