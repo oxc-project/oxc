@@ -285,6 +285,38 @@ pub enum Transformed<T> {
     ReplaceMany(Vec<T>),
 }
 
+/// Keep the block-rebuilding tail out of each `ReactiveFunctionTransform` monomorphization.
+#[inline(never)]
+fn rebuild_block<'a>(
+    block: &mut ReactiveBlock<'a>,
+    i: usize,
+    first_change: Transformed<ReactiveStatement<'a>>,
+    transform_stmt: &mut dyn FnMut(
+        &mut ReactiveStatement<'a>,
+    )
+        -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic>,
+) -> Result<(), OxcDiagnostic> {
+    let mut tail = block.split_off(i).into_iter();
+    // The statement at `i` was already transformed into `first_change`; drop
+    // its now-superseded original.
+    tail.next();
+    match first_change {
+        Transformed::Remove => {}
+        Transformed::ReplaceMany(replacements) => block.extend(replacements),
+        // The fast-path loop only breaks on `Remove`/`ReplaceMany`.
+        Transformed::Keep | Transformed::Replace(_) => unreachable!(),
+    }
+    for mut stmt in tail {
+        match transform_stmt(&mut stmt)? {
+            Transformed::Keep => block.push(stmt),
+            Transformed::Remove => {}
+            Transformed::Replace(replacement) => block.push(replacement),
+            Transformed::ReplaceMany(replacements) => block.extend(replacements),
+        }
+    }
+    Ok(())
+}
+
 // =============================================================================
 // ReactiveFunctionTransform trait
 // =============================================================================
@@ -615,25 +647,7 @@ pub trait ReactiveFunctionTransform<'a> {
         // `block` — never cloning. A pass that removes or expands many statements
         // in one block therefore stays O(n) instead of the O(n²) of repeated
         // `remove`/`splice` suffix shifts.
-        let mut tail = block.split_off(i).into_iter();
-        // The statement at `i` was already transformed into `first_change`; drop
-        // its now-superseded original.
-        tail.next();
-        match first_change {
-            Transformed::Remove => {}
-            Transformed::ReplaceMany(replacements) => block.extend(replacements),
-            // The fast-path loop only breaks on `Remove`/`ReplaceMany`.
-            Transformed::Keep | Transformed::Replace(_) => unreachable!(),
-        }
-        for mut stmt in tail {
-            match self.transform_stmt(&mut stmt, state)? {
-                Transformed::Keep => block.push(stmt),
-                Transformed::Remove => {}
-                Transformed::Replace(replacement) => block.push(replacement),
-                Transformed::ReplaceMany(replacements) => block.extend(replacements),
-            }
-        }
-        Ok(())
+        rebuild_block(block, i, first_change, &mut |stmt| self.transform_stmt(stmt, state))
     }
 }
 
