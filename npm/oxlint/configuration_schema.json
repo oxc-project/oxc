@@ -2535,6 +2535,29 @@
         "guard-for-in": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "id-denylist": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "additionalItems": {
+                "type": "string"
+              },
+              "minItems": 2,
+              "uniqueItems": true
+            }
+          ]
+        },
         "id-length": {
           "anyOf": [
             {
@@ -11411,6 +11434,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "IdDenylist": {
+      "type": "array",
+      "additionalItems": {
+        "type": "string"
+      },
+      "uniqueItems": true
     },
     "IdLengthConfig": {
       "type": "object",

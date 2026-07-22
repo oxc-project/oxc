@@ -901,6 +901,7 @@ export interface DummyRuleMap {
   "grouped-accessor-pairs"?:
     RuleNoConfig | [AllowWarnDeny, PairOrder] | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
+  "id-denylist"?: RuleNoConfig | [AllowWarnDeny, string, ...string[]];
   "id-length"?: RuleNoConfig | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: RuleNoConfig | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
   "import/consistent-type-specifier-style"?: RuleNoConfig | [AllowWarnDeny, Mode];
