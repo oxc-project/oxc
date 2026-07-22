@@ -91,13 +91,7 @@ pub struct VecBuffer<'buf, 'ast, C> {
 
 impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
     pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
-        Self::new_with_vec(state, ArenaVec::new_in(state))
-    }
-
-    pub fn new_with_vec(
-        state: &'buf mut FormatState<'ast, C>,
-        elements: ArenaVec<'ast, FormatElement<'ast>>,
-    ) -> Self {
+        let elements = ArenaVec::new_in(state);
         Self { state, elements }
     }
 
@@ -196,16 +190,7 @@ impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
         let allocator = self.state.allocator();
         let watermark = self.watermark;
         let scratch = self.state.scratch_mut();
-        let tail = &scratch[watermark..];
-        let len = tail.len();
-        let mut vec = ArenaVec::with_capacity_in(len, &allocator);
-        // SAFETY: `vec` has capacity for `len` elements, and the heap and arena buffers cannot overlap.
-        // `FormatElement` is not `Drop` (`ArenaVec` const-asserts `!needs_drop` on construction),
-        // so the bitwise move duplicates no owning state and the `truncate()` below merely forgets the moved-out elements.
-        unsafe {
-            std::ptr::copy_nonoverlapping(tail.as_ptr(), vec.as_mut_ptr(), len);
-            vec.set_len(len);
-        }
+        let vec = move_elements_into_arena(allocator, &scratch[watermark..]);
         scratch.truncate(watermark);
         vec
     }
@@ -222,6 +207,27 @@ impl<C> Drop for HeapVecBuffer<'_, '_, C> {
         let watermark = self.watermark;
         self.state.scratch_mut().truncate(watermark);
     }
+}
+
+/// Bitwise-moves `elements` into an exactly-sized arena vector.
+///
+/// The caller must treat the source elements as moved-out and forget them
+/// (truncate the vector, or let it drop, `FormatElement` has no drop glue).
+pub(crate) fn move_elements_into_arena<'ast>(
+    allocator: &'ast Allocator,
+    elements: &[FormatElement<'ast>],
+) -> ArenaVec<'ast, FormatElement<'ast>> {
+    let len = elements.len();
+    let mut vec = ArenaVec::with_capacity_in(len, &allocator);
+    // SAFETY: `vec` has capacity for `len` elements,
+    // and the source (heap) and destination (arena) buffers cannot overlap.
+    // `FormatElement` is not `Drop` (`ArenaVec` const-asserts `!needs_drop` on construction),
+    // so the bitwise move duplicates no owning state and the caller forgetting the source elements merely drops the stale copies.
+    unsafe {
+        std::ptr::copy_nonoverlapping(elements.as_ptr(), vec.as_mut_ptr(), len);
+        vec.set_len(len);
+    }
+    vec
 }
 
 impl<'ast, C> Deref for HeapVecBuffer<'_, 'ast, C> {

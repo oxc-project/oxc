@@ -67,7 +67,7 @@ pub use options::{
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source_text::SourceText;
-pub use state::FormatState;
+pub use state::{FormatState, ScratchBuffer};
 pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};
 
