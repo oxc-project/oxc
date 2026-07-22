@@ -605,6 +605,13 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
+            AstKind::SequenceExpression(sequence)
+                if sequence.expressions.last().is_none_or(|expression| {
+                    !expression.span().contains_inclusive(node.span())
+                }) =>
+            {
+                return false;
+            }
             AstKind::ArrowFunctionExpression(func) if func.return_type.is_some() => {
                 return true;
             }
@@ -875,6 +882,11 @@ fn test() {
             export const buildRepo = (): Repo => ({
               count: async () => 0,
             });
+
+            export const buildRepoAfterSideEffect = (): Repo => (
+              sideEffect(),
+              { count: async () => 0 }
+            );
             ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
@@ -1666,6 +1678,17 @@ fn test() {
               const repo = { count: async () => 0 };
               return repo;
             };
+            ",
+            Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
+            None,
+            None,
+        ),
+        (
+            "
+            const buildRepo = (): Repo => (
+              { count: async () => 0 },
+              repo
+            );
             ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
