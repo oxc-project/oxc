@@ -620,7 +620,17 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             AstKind::ExpressionStatement(expr)
                 if !matches!(expr.expression, Expression::ArrowFunctionExpression(_)) =>
             {
-                return false;
+                let function_body = ctx.nodes().parent_node(ancestor.id());
+                if !matches!(function_body.kind(), AstKind::FunctionBody(_)) {
+                    return false;
+                }
+                let function = ctx.nodes().parent_node(function_body.id());
+                if !matches!(
+                    function.kind(),
+                    AstKind::ArrowFunctionExpression(func) if func.expression
+                ) {
+                    return false;
+                }
             }
             _ => {}
         }
@@ -851,6 +861,20 @@ fn test() {
             const x: Foo = {
               foo: { bar: () => {} },
             };
+            ",
+            Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
+            None,
+            None,
+        ),
+        (
+            "
+            interface Repo {
+              count: () => Promise<number>;
+            }
+
+            export const buildRepo = (): Repo => ({
+              count: async () => 0,
+            });
             ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
@@ -1632,6 +1656,17 @@ fn test() {
         ),
         (
             "var arrowFn = () => 'test';",
+            Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
+            None,
+            None,
+        ),
+        (
+            "
+            const buildRepo = (): Repo => {
+              const repo = { count: async () => 0 };
+              return repo;
+            };
+            ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
