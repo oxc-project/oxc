@@ -3,12 +3,25 @@ use std::{cell::RefCell, mem};
 use oxc_allocator::{Allocator, GetAllocator};
 use rustc_hash::FxHashMap;
 
-use crate::{FormatElement, GroupId, UniqueGroupIdBuilder, format_element::Interned};
+use crate::{
+    FormatElement, GroupId, UniqueGroupIdBuilder, buffer::AccumulatorBuffer,
+    format_element::Interned,
+};
 
 thread_local! {
     /// Cache of heap staging vectors, keeping their high-water capacity alive across format runs on the same thread.
-    /// once a thread is warm, staging performs no heap allocation at all.
+    /// Once a thread is warm, staging performs no heap allocation at all.
     /// A stack because format runs nest (embedded-language formatting creates a child [`FormatState`] on the same thread).
+    ///
+    /// INVARIANT: the blind LIFO pop hands each vector back to the role that grew it
+    /// only because returns and takes pair up in reverse order today:
+    /// a run's shared scratch, the largest vector by far on pathological inputs
+    /// (a bundled file can stage most of its document in one `intern`, tens of MB),
+    /// is returned last on [`FormatState`] drop and taken first by the next [`FormatState::new`],
+    /// while the accumulator-sized vectors cycle among themselves in between.
+    /// Anything that changes the return order (e.g. a second [`ScratchBuffer`] field on [`FormatState`] dropping after `scratch`)
+    /// silently mismatches sizes to roles and re-grows the big vector from nothing every run (only visible in the allocation snapshots).
+    /// If you need another long-lived holder, make [`ScratchBuffer::checkout`] pick by capacity instead of relying on this ordering.
     static SCRATCH_CACHE: RefCell<Vec<Vec<FormatElement<'static>>>> =
         const { RefCell::new(Vec::new()) };
 }
@@ -20,7 +33,7 @@ thread_local! {
 /// - [`FormatState`] holds one per format run, shared by all [`crate::HeapVecBuffer`]s like a stack via watermarks:
 ///   each buffer records the length at creation, pushes its elements, and drains its own tail on completion.
 ///   Sound because IR staging is strictly LIFO (an inner buffer always completes before its enclosing one resumes)
-/// - Accumulators that outlive a single staging scope (interleaved builders, see `ChildListBuffer` in `oxc_formatter`) check out their own.
+/// - Accumulators that outlive a single staging scope (interleaved or suspended use, written through [`crate::AccumulatorBuffer`]) check out their own.
 ///   The cache itself is an unordered pool with no LIFO requirement
 #[derive(Debug)]
 pub struct ScratchBuffer<'ast>(Vec<FormatElement<'ast>>);
@@ -33,6 +46,23 @@ impl<'ast> ScratchBuffer<'ast> {
         Self(unsafe {
             mem::transmute::<Vec<FormatElement<'static>>, Vec<FormatElement<'ast>>>(vec)
         })
+    }
+
+    /// An unpooled, empty scratch buffer, for accumulators that may never be written (e.g. a builder born disabled):
+    /// costs no thread-local access on creation, nor on drop while still empty.
+    pub const fn empty() -> Self {
+        Self(Vec::new())
+    }
+
+    /// Adapts this scratch vector into a [`Buffer`](crate::Buffer) writing into it.
+    ///
+    /// This is the only way to construct an [`AccumulatorBuffer`],
+    /// so an accumulator always writes into a pooled vector guarded by the drain-before-drop assertion below.
+    pub fn writer<'buf, C>(
+        &'buf mut self,
+        state: &'buf mut FormatState<'ast, C>,
+    ) -> AccumulatorBuffer<'buf, 'ast, C> {
+        AccumulatorBuffer::new(state, &mut self.0)
     }
 }
 

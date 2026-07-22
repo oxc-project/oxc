@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Buffer, Comments, FormatElement, FormatState, JsFormatContext, ScratchBuffer,
+        Buffer, Comments, FormatElement, JsFormatContext, ScratchBuffer,
         prelude::{tag::GroupMode, *},
     },
     utils::{
@@ -19,41 +19,6 @@ use crate::{
     write,
 };
 use std::cell::RefCell;
-
-/// Heap accumulator [`Buffer`] for the child-list builders.
-///
-/// The builders accumulate elements across separate `write()` calls while other content is formatted in between,
-/// so their buffers can't stage in the arena (every growth would strand the old allocation, see `HeapVecBuffer`)
-/// nor share the format run's scratch vector (the flat and multiline builders write alternately, breaking its LIFO discipline).
-///
-/// Instead each builder checks its own [`ScratchBuffer`] out of the thread-local cache and writes through this adapter;
-/// the arena receives one exactly-sized copy when the finished result is interned ([`Formatter::intern_elements`]).
-struct ChildListBuffer<'buf, 'a> {
-    state: &'buf mut FormatState<'a, JsFormatContext<'a>>,
-    elements: &'buf mut Vec<FormatElement<'a>>,
-}
-
-impl<'a> Buffer<'a, JsFormatContext<'a>> for ChildListBuffer<'_, 'a> {
-    fn write_element(&mut self, element: FormatElement<'a>) {
-        self.elements.push(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'a>] {
-        self.elements
-    }
-
-    fn state(&self) -> &FormatState<'a, JsFormatContext<'a>> {
-        self.state
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'a, JsFormatContext<'a>> {
-        self.state
-    }
-
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'a>]) {
-        self.elements.splice(start.., replacement.iter().cloned());
-    }
-}
 
 #[derive(Debug, Clone, Default)]
 pub struct FormatJsxChildList {
@@ -82,8 +47,6 @@ impl FormatJsxChildList {
         };
 
         let mut force_multiline = layout.is_multiline();
-        let mut flat = FlatBuilder::new(force_multiline);
-        let mut multiline = MultilineBuilder::new(multiline_layout);
 
         let mut children = jsx_split_children(children, f.context().comments());
 
@@ -98,6 +61,9 @@ impl FormatJsxChildList {
                 force_multiline,
             });
         }
+
+        let mut flat = FlatBuilder::new(force_multiline);
+        let mut multiline = MultilineBuilder::new(multiline_layout);
 
         let mut is_next_child_suppressed = false;
         let mut last: Option<&JsxChild> = None;
@@ -588,6 +554,8 @@ enum MultilineLayout {
 #[derive(Debug)]
 struct MultilineBuilder<'a> {
     layout: MultilineLayout,
+    /// Heap accumulator; the flat and multiline builders write alternately,
+    /// so each checks out its own (see [`ScratchBuffer::writer`]).
     result: ScratchBuffer<'a>,
 }
 
@@ -631,7 +599,7 @@ impl<'a> MultilineBuilder<'a> {
         separator: Option<&dyn Format<'a, JsFormatContext<'a>>>,
         f: &mut JsFormatter<'_, 'a>,
     ) {
-        let mut buffer = ChildListBuffer { state: f.state_mut(), elements: &mut self.result };
+        let mut buffer = self.result.writer(f.state_mut());
         match self.layout {
             MultilineLayout::Fill => {
                 // Make sure that the separator and content only ever write a single element
@@ -725,13 +693,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatMultilineChildren<'a> {
 
 #[derive(Debug)]
 struct FlatBuilder<'a> {
+    /// Heap accumulator; see [`MultilineBuilder::result`].
     result: ScratchBuffer<'a>,
     disabled: bool,
 }
 
 impl<'a> FlatBuilder<'a> {
     fn new(disabled: bool) -> Self {
-        Self { result: ScratchBuffer::checkout(), disabled }
+        // A builder born disabled never writes; skip the pool checkout
+        let result = if disabled { ScratchBuffer::empty() } else { ScratchBuffer::checkout() };
+        Self { result, disabled }
     }
 
     fn write(
@@ -743,7 +714,7 @@ impl<'a> FlatBuilder<'a> {
             return;
         }
 
-        let mut buffer = ChildListBuffer { state: f.state_mut(), elements: &mut self.result };
+        let mut buffer = self.result.writer(f.state_mut());
         write!(buffer, [content]);
     }
 
