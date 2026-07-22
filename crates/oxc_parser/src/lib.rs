@@ -985,10 +985,10 @@ mod test {
         let source_type = SourceType::default();
 
         let valid_sources = [
-            format!("{}0{}", "(".repeat(256), ")".repeat(256)),
-            format!("{}0{}", "[".repeat(256), "]".repeat(256)),
-            format!("{}0{}", "{a:".repeat(256), "}".repeat(256)),
-            format!("{}0{}", "f(".repeat(256), ")".repeat(256)),
+            format!("{}0{}", "(".repeat(255), ")".repeat(255)),
+            format!("{}0{}", "[".repeat(255), "]".repeat(255)),
+            format!("{}0{}", "{a:".repeat(255), "}".repeat(255)),
+            format!("{}0{}", "f(".repeat(255), ")".repeat(255)),
         ];
         for source in valid_sources {
             let result = Parser::new(&allocator, &source, source_type).parse_expression();
@@ -1000,6 +1000,13 @@ mod test {
             format!("{}0{}", "[".repeat(257), "]".repeat(257)),
             format!("{}0{}", "{a:".repeat(257), "}".repeat(257)),
             format!("{}0{}", "f(".repeat(257), ")".repeat(257)),
+            format!(
+                "{}() => {}0{}{}",
+                "(".repeat(200),
+                "(".repeat(200),
+                ")".repeat(200),
+                ")".repeat(200)
+            ),
         ];
         for source in excessive_sources {
             let diagnostics =
