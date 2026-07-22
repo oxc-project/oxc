@@ -104,6 +104,9 @@ pub struct SemanticBuilder<'a> {
     /// Tracks the start index in the flat unresolved references list.
     unresolved_references_checkpoint: usize,
 
+    /// Conditional scopes collecting pending `infer T` bindings while walking an `extends` type.
+    active_ts_conditional_scopes: SmallVec<[TsConditionalScope<'a>; 2]>,
+
     unused_labels: UnusedLabels<'a>,
     #[cfg(feature = "jsdoc")]
     jsdoc: JSDocBuilder<'a>,
@@ -128,6 +131,17 @@ pub struct SemanticBuilder<'a> {
 
     #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
+}
+
+#[derive(Clone, Copy)]
+struct TsInferBinding<'a> {
+    name: Ident<'a>,
+    symbol_id: SymbolId,
+}
+
+struct TsConditionalScope<'a> {
+    scope_id: ScopeId,
+    pending_infer_bindings: SmallVec<[TsInferBinding<'a>; 2]>,
 }
 
 /// Data returned by [`SemanticBuilder::build`].
@@ -164,6 +178,7 @@ impl<'a> SemanticBuilder<'a> {
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unresolved_references_checkpoint: 0,
+            active_ts_conditional_scopes: SmallVec::new(),
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "jsdoc")]
             jsdoc: JSDocBuilder::default(),
@@ -749,6 +764,72 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
         self.unresolved_references.truncate(write_idx);
+    }
+
+    fn resolve_references_for_current_scope_matching_name(&mut self, target_name: Ident<'a>) {
+        let checkpoint = self.unresolved_references_checkpoint;
+        let end = self.unresolved_references.len();
+        if end <= checkpoint {
+            return;
+        }
+        let mut write_idx = checkpoint;
+        for read_idx in checkpoint..end {
+            let (name, reference_id) = self.unresolved_references.get(read_idx);
+            if name == target_name && self.walk_up_resolve_reference(name, reference_id) {
+                continue;
+            }
+            if write_idx != read_idx {
+                self.unresolved_references.set(write_idx, name, reference_id);
+            }
+            write_idx += 1;
+        }
+        self.unresolved_references.truncate(write_idx);
+    }
+
+    pub(crate) fn active_ts_conditional_scope_id(&self) -> Option<ScopeId> {
+        self.active_ts_conditional_scopes.last().map(|scope| scope.scope_id)
+    }
+
+    pub(crate) fn declare_ts_infer_type_parameter(
+        &mut self,
+        span: Span,
+        name: Ident<'a>,
+    ) -> Option<SymbolId> {
+        let frame_index = self.active_ts_conditional_scopes.len().checked_sub(1)?;
+        let conditional_scope_id = self.active_ts_conditional_scopes[frame_index].scope_id;
+
+        if let Some(symbol_id) = self.active_ts_conditional_scopes[frame_index]
+            .pending_infer_bindings
+            .iter()
+            .find_map(|binding| (binding.name == name).then_some(binding.symbol_id))
+        {
+            self.add_redeclare_variable(symbol_id, SymbolFlags::TypeParameter, span);
+            self.scoping.union_symbol_flag(symbol_id, SymbolFlags::TypeParameter);
+            return Some(symbol_id);
+        }
+
+        if let Some(symbol_id) = self.check_redeclaration(
+            conditional_scope_id,
+            span,
+            name,
+            SymbolFlags::TypeParameterExcludes,
+        ) {
+            self.add_redeclare_variable(symbol_id, SymbolFlags::TypeParameter, span);
+            self.scoping.union_symbol_flag(symbol_id, SymbolFlags::TypeParameter);
+            return Some(symbol_id);
+        }
+
+        let symbol_id = self.scoping.create_symbol(
+            span,
+            name,
+            SymbolFlags::TypeParameter,
+            conditional_scope_id,
+            self.node_store.current_node_id,
+        );
+        self.active_ts_conditional_scopes[frame_index]
+            .pending_infer_bindings
+            .push(TsInferBinding { name, symbol_id });
+        Some(symbol_id)
     }
 
     pub(crate) fn add_redeclare_variable(
@@ -2709,6 +2790,63 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_ambient_context(decl.declare);
     }
 
+    fn visit_ts_conditional_type(&mut self, ty: &TSConditionalType<'a>) {
+        let kind = AstKind::TSConditionalType(self.alloc(ty));
+        self.enter_node(kind);
+        self.visit_span(&ty.span);
+        self.visit_ts_type(&ty.check_type);
+
+        let parent_scope_id = self.current_scope_id;
+        self.enter_scope(ScopeFlags::TsConditional, &ty.scope_id);
+        let conditional_scope_id = self.current_scope_id;
+
+        // `infer` declarations are owned by the conditional type node, but those locals become
+        // normal bindings only after `extends_type` has been walked.
+        //
+        // ```ts
+        // type C<T> = T extends (a: infer B) => B ? B : never;
+        // //                        ─┬─────     ┬   ┬   ─┬───
+        // //                         │          │   │    ╰ not visible
+        // //                         │          │   ╰ visible: true_type sees `infer B`
+        // //                         │          ╰ not visible: still inside extends_type
+        // //                         ╰ `B` declared here
+        // ```
+        //
+        // Operationally this means the conditional scope is created before `extends_type`, but
+        // its `infer` bindings stay pending until just before `true_type`:
+        //
+        // ```text
+        // parent scope
+        //   |- extends_type        references start here
+        //   |    \- infer B  --->  pending binding for conditional scope
+        //   |
+        //   \- conditional scope   true_type references start here
+        //        \- B
+        // ```
+        //
+        // Keeping the binding pending prevents sibling `infer` declarations from seeing each
+        // other in `extends_type`, while committing before `true_type` makes normal reference
+        // resolution find `infer B` there. `false_type` is visited after leaving the conditional
+        // scope, so it cannot see `B`.
+        self.current_scope_id = parent_scope_id;
+        self.active_ts_conditional_scopes.push(TsConditionalScope {
+            scope_id: conditional_scope_id,
+            pending_infer_bindings: SmallVec::new(),
+        });
+        self.visit_ts_type(&ty.extends_type);
+        let conditional_scope = self.active_ts_conditional_scopes.pop().unwrap();
+        debug_assert_eq!(conditional_scope.scope_id, conditional_scope_id);
+        for binding in conditional_scope.pending_infer_bindings {
+            self.scoping.add_binding(conditional_scope_id, binding.name, binding.symbol_id);
+        }
+
+        self.current_scope_id = conditional_scope_id;
+        self.visit_ts_type(&ty.true_type);
+        self.leave_scope();
+        self.visit_ts_type(&ty.false_type);
+        self.leave_node(kind);
+    }
+
     fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
         let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
         self.enter_node(kind);
@@ -2761,11 +2899,49 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         param.bind(self);
         self.visit_span(&param.span);
         self.visit_binding_identifier(&param.name);
+
+        // Conditional `infer` bindings stay pending while `extends_type` is walked. The current
+        // inferred type parameter's own constraint gets a temporary self-binding:
+        //
+        // `T extends infer U extends U ? U : never`
+        //            declared here ^         ^ true type sees conditional scope
+        //                    constraint ^ resolves only to this just-declared `U`
+        //
+        // Sibling inferred parameters are intentionally hidden from each other, matching TypeScript:
+        // `T extends [infer A, infer B extends A] ? B : never`
+        //                                  ^ unresolved; does not see sibling `A`
+        let infer_constraint_binding =
+            if matches!(self.ancestry().parent_kind(), AstKind::TSInferType(_))
+                && self.active_ts_conditional_scope_id().is_some()
+            {
+                param.name.symbol_id.get().map(|symbol_id| {
+                    let name = param.name.name;
+                    let displaced_symbol_id = self.scoping.get_binding(self.current_scope_id, name);
+                    self.scoping.add_binding(self.current_scope_id, name, symbol_id);
+                    (name, displaced_symbol_id)
+                })
+            } else {
+                None
+            };
+
+        let saved_checkpoint = self.unresolved_references_checkpoint;
+        if infer_constraint_binding.is_some() {
+            self.unresolved_references_checkpoint = self.unresolved_references.checkpoint();
+        }
         if let Some(constraint) = &param.constraint {
             self.visit_ts_type(constraint);
         }
         if let Some(default) = &param.default {
             self.visit_ts_type(default);
+        }
+        if let Some((name, displaced_symbol_id)) = infer_constraint_binding {
+            self.resolve_references_for_current_scope_matching_name(name);
+            self.unresolved_references_checkpoint = saved_checkpoint;
+            if let Some(displaced_symbol_id) = displaced_symbol_id {
+                self.scoping.add_binding(self.current_scope_id, name, displaced_symbol_id);
+            } else {
+                self.scoping.remove_binding(self.current_scope_id, name);
+            }
         }
         self.leave_node(kind);
     }

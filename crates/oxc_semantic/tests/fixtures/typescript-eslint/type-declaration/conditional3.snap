@@ -8,23 +8,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       {
         "children": [
           {
-            "children": [
-              {
-                "children": [],
-                "flags": "ScopeFlags(0x0)",
-                "id": 3,
-                "node": "TSFunctionType",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable)",
-                    "id": 2,
-                    "name": "k",
-                    "node": "FormalParameter(k)",
-                    "references": []
-                  }
-                ]
-              }
-            ],
+            "children": [],
             "flags": "ScopeFlags(TsConditional)",
             "id": 2,
             "node": "TSConditionalType",
@@ -43,6 +27,21 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "scope_id": 2
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 3,
+            "node": "TSFunctionType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "k",
+                "node": "FormalParameter(k)",
+                "references": []
               }
             ]
           }

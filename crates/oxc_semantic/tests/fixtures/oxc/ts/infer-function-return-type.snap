@@ -1,0 +1,273 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/infer-function-return-type.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(TsConditional)",
+            "id": 2,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 3,
+                "name": "B",
+                "node": "TSTypeParameter(B)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 3,
+            "node": "TSFunctionType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "a",
+                "node": "FormalParameter(a)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 8,
+                "scope_id": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(TsConditional)",
+            "id": 5,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 7,
+                "name": "B",
+                "node": "TSTypeParameter(B)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 6,
+            "node": "TSFunctionType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 6,
+                "name": "a",
+                "node": "FormalParameterRest",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 4,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 5,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 2,
+                "name": "T",
+                "node_id": 29,
+                "scope_id": 4
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 7,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(TsConditional)",
+            "id": 9,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 11,
+                "name": "U",
+                "node": "TSTypeParameter(U)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 5,
+                    "name": "U",
+                    "node_id": 59,
+                    "scope_id": 8
+                  },
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 6,
+                    "name": "U",
+                    "node_id": 61,
+                    "scope_id": 9
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 8,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 10,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 4,
+                "name": "T",
+                "node_id": 54,
+                "scope_id": 8
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(TsConditional)",
+            "id": 11,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 14,
+                "name": "A",
+                "node": "TSTypeParameter(A)",
+                "references": []
+              },
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 15,
+                "name": "B",
+                "node": "TSTypeParameter(B)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 9,
+                    "name": "B",
+                    "node_id": 81,
+                    "scope_id": 11
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 10,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 13,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 7,
+                "name": "T",
+                "node_id": 70,
+                "scope_id": 10
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "MyType",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 4,
+        "name": "MyType2",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 8,
+        "name": "U",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 9,
+        "name": "MyType3",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 12,
+        "name": "MyType4",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]
