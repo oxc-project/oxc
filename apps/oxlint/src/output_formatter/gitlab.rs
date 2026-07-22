@@ -11,7 +11,7 @@ use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 
-use crate::output_formatter::InternalFormatter;
+use crate::output_formatter::{InternalFormatter, get_repo_path_prefix};
 
 #[derive(Debug, Default)]
 pub struct GitlabOutputFormatter;
@@ -41,44 +41,6 @@ impl InternalFormatter for GitlabOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GitlabReporter::default())
     }
-}
-
-/// Find the git repository root by walking up from the current directory.
-/// Returns `None` if no `.git` directory is found.
-fn find_git_root() -> Option<PathBuf> {
-    let cwd = std::env::current_dir().ok()?;
-    find_git_root_from(&cwd)
-}
-
-/// Find the git repository root by walking up from the given path.
-fn find_git_root_from(start: &Path) -> Option<PathBuf> {
-    let mut current = start.to_path_buf();
-    loop {
-        if current.join(".git").exists() {
-            return Some(current);
-        }
-        if !current.pop() {
-            return None;
-        }
-    }
-}
-
-/// Get the path prefix from CWD to the git repository root.
-/// This prefix should be prepended to CWD-relative paths to make them repo-relative.
-///
-/// For example, if git root is `/repo` and CWD is `/repo/packages/foo`,
-/// this returns `Some("packages/foo")`.
-fn get_repo_path_prefix() -> Option<PathBuf> {
-    let cwd = std::env::current_dir().ok()?;
-    let git_root = find_git_root()?;
-
-    // Get the relative path from git root to CWD
-    let relative = cwd.strip_prefix(&git_root).ok()?;
-    if relative.as_os_str().is_empty() {
-        return None;
-    }
-
-    Some(relative.to_path_buf())
 }
 
 /// Renders reports as a Gitlab Code Quality Report
@@ -164,7 +126,7 @@ fn format_gitlab(diagnostics: &mut Vec<Error>, repo_path_prefix: Option<&Path>) 
 
 #[cfg(test)]
 mod test {
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
 
     use oxc_diagnostics::{
         Error, NamedSource, OxcDiagnostic,
@@ -172,7 +134,7 @@ mod test {
     };
     use oxc_span::Span;
 
-    use super::{GitlabReporter, find_git_root_from, format_gitlab};
+    use super::{GitlabReporter, format_gitlab};
 
     #[test]
     fn reporter() {
@@ -205,24 +167,6 @@ mod test {
         let lines = location["lines"].as_object().unwrap();
         assert_eq!(lines["begin"], 1);
         assert_eq!(lines["end"], 1);
-    }
-
-    #[test]
-    fn find_git_root_from_current_dir() {
-        // This test runs from within the oxc repo, so we should find a git root
-        let cwd = std::env::current_dir().unwrap();
-        let git_root = find_git_root_from(&cwd);
-        assert!(git_root.is_some());
-        assert!(git_root.unwrap().join(".git").exists());
-    }
-
-    #[test]
-    fn find_git_root_from_nonexistent() {
-        // A path that doesn't exist or has no git repo
-        let path = PathBuf::from("/");
-        let git_root = find_git_root_from(&path);
-        // Root directory typically doesn't have a .git folder
-        assert!(git_root.is_none() || *git_root.unwrap() == *"/");
     }
 
     #[test]
