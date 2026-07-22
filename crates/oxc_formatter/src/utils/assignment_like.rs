@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, JsFormatter, VecBuffer,
+        Buffer, BufferExtensions, Format, JsFormatter, ScratchBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
@@ -13,6 +13,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
+        typecast::classify_type_cast,
     },
     write,
 };
@@ -288,15 +289,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 if property.readonly {
                     write!(f, ["readonly", space()]);
                 }
-
-                // Write the property key
-                if property.computed {
-                    write!(f, ["[", property.key(), "]"]);
-                } else {
-                    format_property_key(property.key(), f);
-                }
-
-                // Write optional, definite, and type annotation
+                format_property_key(property.key(), property.computed, f);
                 if property.optional {
                     write!(f, "?");
                 }
@@ -325,15 +318,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     write!(f, ["override", space()]);
                 }
                 write!(f, ["accessor", space()]);
-
-                // Write the property key
-                if property.computed {
-                    write!(f, ["[", property.key(), "]"]);
-                } else {
-                    format_property_key(property.key(), f);
-                }
-
-                // Write definite and type annotation
+                format_property_key(property.key(), property.computed, f);
                 if property.definite {
                     write!(f, "!");
                 }
@@ -635,6 +620,7 @@ impl<'a> AssignmentLike<'a, '_> {
         if let Some(right_expression) = right_expression {
             should_break_after_operator(right_expression, is_left_short, f)
         } else if let AssignmentLike::TSTypeAliasDeclaration(decl) = self {
+            let annotation_start = decl.type_annotation.span().start;
             // For TSTypeAliasDeclaration, check if the type annotation is a union type with comments
             match &decl.type_annotation {
                 TSType::TSConditionalType(conditional_type) => {
@@ -649,7 +635,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     };
                     is_generic(&conditional_type.check_type)
                         || is_generic(&conditional_type.extends_type)
-                        || comments.has_comment_before(decl.type_annotation.span().start)
+                        || comments.has_leading_own_line_comment(annotation_start)
                 }
                 // `TSUnionType` has its own indentation logic
                 TSType::TSUnionType(_) => false,
@@ -666,8 +652,8 @@ impl<'a> AssignmentLike<'a, '_> {
                     )
                 }
                 _ => {
-                    // Check for leading comments on any other type
-                    comments.has_comment_before(decl.type_annotation.span().start)
+                    // Only comments on their own line force the break
+                    comments.has_leading_own_line_comment(annotation_start)
                 }
             }
         } else {
@@ -746,14 +732,26 @@ fn should_break_after_operator<'a>(
 
     let comments = f.context().comments();
     for comment in comments.comments_before_iter(right.span().start) {
-        if comment.has_newlines_around() {
+        // Like Prettier's `hasLeadingOwnLineComment` (the same rule as the type-alias arms):
+        // only a comment on its own line (followed by a newline) forces the break.
+        if comment.followed_by_newline() {
             return true;
         }
 
-        // Needs to wrap a parenthesis for the node, so it won't break.
+        // A tight type-cast comment hugs its parenthesized node,
+        // so it doesn't force the break itself,
+        // and the comments after it sit inside the cast's parentheses and belong to the inner node, stop scanning;
+        // the shape-based rules below still apply.
         if comments.is_type_cast_comment(comment) {
-            return false;
+            break;
         }
+    }
+
+    // Prettier keeps the `ParenthesizedExpression` node when it is a closure type cast target,
+    // which makes a fully cast RHS opaque to the shape checks below (`x = /** @type {T} */ (a || b);` stays inline).
+    // We have no paren nodes, so reproduce that with the cast classification.
+    if classify_type_cast(right.span(), f).is_target() {
+        return false;
     }
 
     match right.as_ref() {
@@ -766,6 +764,8 @@ fn should_break_after_operator<'a>(
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
         Expression::ConditionalExpression(conditional) => match &conditional.test {
+            // A cast-parenthesized test is opaque, same as the whole-RHS case above
+            test if classify_type_cast(test.span(), f).is_target() => false,
             Expression::BinaryExpression(_) => true,
             Expression::LogicalExpression(logical) => {
                 !BinaryLikeExpression::can_inline_logical_expr(logical)
@@ -831,17 +831,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             // can can be known only when it's formatted (it can incur in some transformation,
             // like removing some escapes, etc.).
             //
-            // 1. we crate a temporary buffer
+            // 1. we create a scratch accumulator as a temporary heap buffer
+            //    (see `AccumulatorBuffer` for why neither the arena nor the shared scratch fits)
             // 2. we write the left hand side into the buffer and retrieve the `is_left_short` info
-            // which is computed only when we format it
+            //    which is computed only when we format it
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
-            let mut buffer = VecBuffer::new(f.state_mut());
-            let is_left_short = self.write_left(&mut Formatter::new(&mut buffer));
-            let formatted_left = buffer.into_vec();
+            let mut formatted_left = ScratchBuffer::new();
+            let is_left_short =
+                self.write_left(&mut Formatter::new(&mut formatted_left.writer(f.state_mut())));
             let left_may_break = formatted_left.may_directly_break();
 
-            let left = format_once(|f| f.write_elements(formatted_left));
+            let left = format_once(move |f| f.write_elements(formatted_left.drain()));
 
             // Compare name only if we are in a position of computing it.
             // If not (for example, left is not an identifier), then let's fallback to false,

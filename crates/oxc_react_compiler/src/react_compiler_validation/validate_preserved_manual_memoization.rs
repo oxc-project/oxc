@@ -9,11 +9,10 @@
 //! accurately preserved, and that no originally memoized values became
 //! unmemoized in the output.
 
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
-};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     ArrayPatternElement, Effect, ObjectPropertyOrSpread, Pattern, PropertyLiteral,
@@ -25,17 +24,19 @@ use crate::react_compiler_hir::{
     ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveTerminal,
     ReactiveValue, ScopeId,
 };
+use oxc_index::IndexSlice;
+use oxc_span::Span;
 
 /// State tracked during manual memo validation within a StartMemoize..FinishMemoize range.
-struct ManualMemoBlockState {
+struct ManualMemoBlockState<'h> {
     /// Reassigned temporaries (declaration_id -> set of identifier ids that were reassigned to it).
     reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
     /// Source location of the StartMemoize instruction.
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
     /// Declarations produced within this manual memo block.
     decls: FxHashSet<DeclarationId>,
     /// Normalized deps from source (useMemo/useCallback dep array).
-    deps_from_source: Option<Vec<ManualMemoDependency>>,
+    deps_from_source: Option<ArenaVec<'h, ManualMemoDependency<'h>>>,
     /// Manual memo id from StartMemoize.
     manual_memo_id: u32,
 }
@@ -43,13 +44,13 @@ struct ManualMemoBlockState {
 /// Top-level visitor state.
 struct VisitorState<'a, 'h> {
     env: &'a mut Environment<'h>,
-    manual_memo_state: Option<ManualMemoBlockState>,
+    manual_memo_state: Option<ManualMemoBlockState<'h>>,
     /// Completed (non-pruned) scope IDs.
     scopes: FxHashSet<ScopeId>,
     /// Completed pruned scope IDs.
     pruned_scopes: FxHashSet<ScopeId>,
     /// Map from identifier ID to its normalized manual memo dependency.
-    temporaries: FxHashMap<IdentifierId, ManualMemoDependency>,
+    temporaries: FxHashMap<IdentifierId, ManualMemoDependency<'h>>,
 }
 
 /// Validate that manual memoization (useMemo/useCallback) is preserved.
@@ -59,9 +60,9 @@ struct VisitorState<'a, 'h> {
 /// 1. Dependencies' scopes have completed before the memo block starts
 /// 2. Memoized values are actually within scopes (not unmemoized)
 /// 3. Inferred scope dependencies match the source dependencies
-pub fn validate_preserved_manual_memoization(
-    func: &ReactiveFunction<'_>,
-    env: &mut Environment<'_>,
+pub fn validate_preserved_manual_memoization<'h>(
+    func: &ReactiveFunction<'h>,
+    env: &mut Environment<'h>,
 ) {
     let mut state = VisitorState {
         env,
@@ -77,13 +78,13 @@ fn is_named(ident: &Identifier) -> bool {
     matches!(ident.name, Some(IdentifierName::Named(_)))
 }
 
-fn visit_block(block: &ReactiveBlock, state: &mut VisitorState<'_, '_>) {
+fn visit_block<'h>(block: &ReactiveBlock<'h>, state: &mut VisitorState<'_, 'h>) {
     for stmt in block {
         visit_statement(stmt, state);
     }
 }
 
-fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState<'_, '_>) {
+fn visit_statement<'h>(stmt: &ReactiveStatement<'h>, state: &mut VisitorState<'_, 'h>) {
     match stmt {
         ReactiveStatement::Instruction(instr) => {
             visit_instruction(instr, state);
@@ -100,7 +101,7 @@ fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState<'_, '_>) {
     }
 }
 
-fn visit_terminal(terminal: &ReactiveTerminalStatement, state: &mut VisitorState) {
+fn visit_terminal<'h>(terminal: &ReactiveTerminalStatement<'h>, state: &mut VisitorState<'_, 'h>) {
     match &terminal.terminal {
         ReactiveTerminal::If { consequent, alternate, .. } => {
             visit_block(consequent, state);
@@ -133,48 +134,50 @@ fn visit_terminal(terminal: &ReactiveTerminalStatement, state: &mut VisitorState
     }
 }
 
-fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState<'_, '_>) {
+fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorState<'_, 'h>) {
     // Traverse the scope's instructions first
     visit_block(&scope_block.instructions, state);
 
     // After traversing, validate scope dependencies against manual memo deps
-    if let Some(ref memo_state) = state.manual_memo_state {
-        if let Some(ref deps_from_source) = memo_state.deps_from_source {
-            let scope = &state.env.scopes[scope_block.scope.0 as usize];
-            let deps = scope.dependencies.clone();
-            let memo_loc = memo_state.loc;
-            let decls = memo_state.decls.clone();
-            let deps_from_source = deps_from_source.clone();
-            let temporaries = state.temporaries.clone();
-            for dep in &deps {
-                validate_inferred_dep(
-                    dep.identifier,
-                    &dep.path,
-                    &temporaries,
-                    &decls,
-                    &deps_from_source,
-                    state.env,
-                    memo_loc,
-                );
-            }
+    if let Some(ref memo_state) = state.manual_memo_state
+        && let Some(ref deps_from_source) = memo_state.deps_from_source
+    {
+        let alloc = state.env.allocator;
+        let scope = &state.env.scopes[scope_block.scope];
+        let deps = scope.dependencies.clone_in(alloc);
+        let memo_span = memo_state.span;
+        let decls = memo_state.decls.clone();
+        let deps_from_source = deps_from_source.clone_in(alloc);
+        let temporaries: FxHashMap<IdentifierId, ManualMemoDependency> =
+            state.temporaries.iter().map(|(k, v)| (*k, v.clone_in(alloc))).collect();
+        for dep in &deps {
+            validate_inferred_dep(
+                dep.identifier,
+                &dep.path,
+                &temporaries,
+                &decls,
+                &deps_from_source,
+                state.env,
+                memo_span,
+            );
         }
     }
 
     // Mark scope and merged scopes as completed
-    let scope = &state.env.scopes[scope_block.scope.0 as usize];
-    let merged = scope.merged.clone();
+    let scope = &state.env.scopes[scope_block.scope];
+    let merged = scope.merged.iter().copied().collect::<Vec<_>>();
     state.scopes.insert(scope_block.scope);
     for merged_id in merged {
         state.scopes.insert(merged_id);
     }
 }
 
-fn visit_pruned_scope(pruned: &PrunedReactiveScopeBlock, state: &mut VisitorState) {
+fn visit_pruned_scope<'h>(pruned: &PrunedReactiveScopeBlock<'h>, state: &mut VisitorState<'_, 'h>) {
     visit_block(&pruned.instructions, state);
     state.pruned_scopes.insert(pruned.scope);
 }
 
-fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '_>) {
+fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorState<'_, 'h>) {
     // Record temporaries and deps in the instruction's value
     record_temporaries(instr, state);
 
@@ -185,7 +188,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
             has_invalid_deps,
             ..
         }) => {
-            // TS: CompilerError.invariant(state.manualMemoState == null, ...)
+            // TS: Diagnostics.invariant(state.manualMemoState == null, ...)
             if state.manual_memo_state.is_some() {
                 return;
             }
@@ -195,10 +198,10 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
                 return;
             }
 
-            let deps_from_source = deps.clone();
+            let deps_from_source = deps.as_ref().map(|v| v.clone_in(state.env.allocator));
 
             state.manual_memo_state = Some(ManualMemoBlockState {
-                loc: instr.loc,
+                span: instr.span,
                 decls: FxHashSet::default(),
                 deps_from_source,
                 manual_memo_id: *manual_memo_id,
@@ -206,29 +209,26 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
             });
 
             // Check that each dependency's scope has completed before the memo
-            // TS: for (const {identifier, loc} of eachInstructionValueOperand(value))
+            // TS: for (const {identifier, span} of eachInstructionValueOperand(value))
             let operand_places = start_memoize_operands(deps);
             for place in &operand_places {
-                let ident = &state.env.identifiers[place.identifier.0 as usize];
-                if let Some(scope_id) = ident.scope {
-                    if !state.scopes.contains(&scope_id) && !state.pruned_scopes.contains(&scope_id)
-                    {
-                        let diag = CompilerDiagnostic::new(
-                            ErrorCategory::PreserveManualMemo,
-                            "Existing memoization could not be preserved",
-                            Some(
+                let ident = &state.env.identifiers[place.identifier];
+                if let Some(scope_id) = ident.scope
+                    && !state.scopes.contains(&scope_id)
+                    && !state.pruned_scopes.contains(&scope_id)
+                {
+                    let diag = ErrorCategory::PreserveManualMemo
+                            .diagnostic("Existing memoization could not be preserved")
+                            .with_help(
                                 "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. \
-                                 This dependency may be mutated later, which could cause the value to change unexpectedly".to_string(),
-                            ),
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            loc: place.loc,
-                            message: Some(
-                                "This dependency may be modified later".to_string(),
-                            ),
-                        });
-                        state.env.record_diagnostic(diag);
-                    }
+                                 This dependency may be mutated later, which could cause the value to change unexpectedly",
+                            )
+                            .with_labels(
+                                place
+                                    .span
+                                    .map(|s| s.label("This dependency may be modified later")),
+                            );
+                    state.env.record_diagnostic(diag);
                 }
             }
         }
@@ -243,7 +243,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
                 return;
             }
 
-            // TS: CompilerError.invariant(state.manualMemoState.manualMemoId === value.manualMemoId, ...)
+            // TS: Diagnostics.invariant(state.manualMemoState.manualMemoId === value.manualMemoId, ...)
             if state.manual_memo_state.as_ref().is_none_or(|s| s.manual_memo_id != *manual_memo_id)
             {
                 state.manual_memo_state = None;
@@ -254,7 +254,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
 
             if !pruned {
                 // Check if the declared value is unmemoized
-                let decl_ident = &state.env.identifiers[decl.identifier.0 as usize];
+                let decl_ident = &state.env.identifiers[decl.identifier];
 
                 if decl_ident.scope.is_none() {
                     // If the manual memo was inlined (useMemo -> IIFE), check reassignments
@@ -266,43 +266,34 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
 
                     for id in decls_to_check {
                         if is_unmemoized(id, &state.scopes, &state.env.identifiers) {
-                            record_unmemoized_error(decl.loc, state.env);
+                            record_unmemoized_error(decl.span, state.env);
                         }
                     }
                 } else {
                     // Single identifier with scope
                     if is_unmemoized(decl.identifier, &state.scopes, &state.env.identifiers) {
-                        record_unmemoized_error(decl.loc, state.env);
+                        record_unmemoized_error(decl.span, state.env);
                     }
                 }
             }
         }
         ReactiveValue::Instruction(InstructionValue::StoreLocal { lvalue, value, .. }) => {
             // Track reassignments from inlining of manual memo
-            if state.manual_memo_state.is_some() && lvalue.kind == InstructionKind::Reassign {
-                let decl_id =
-                    state.env.identifiers[lvalue.place.identifier.0 as usize].declaration_id;
-                state
-                    .manual_memo_state
-                    .as_mut()
-                    .unwrap()
-                    .reassignments
-                    .entry(decl_id)
-                    .or_default()
-                    .insert(value.identifier);
+            if let Some(memo_state) = &mut state.manual_memo_state
+                && lvalue.kind == InstructionKind::Reassign
+            {
+                let decl_id = state.env.identifiers[lvalue.place.identifier].declaration_id;
+                memo_state.reassignments.entry(decl_id).or_default().insert(value.identifier);
             }
         }
         ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. })
-            if state.manual_memo_state.is_some() =>
+            if let Some(memo_state) = &mut state.manual_memo_state =>
         {
-            let place_ident = &state.env.identifiers[place.identifier.0 as usize];
+            let place_ident = &state.env.identifiers[place.identifier];
             if let Some(ref lvalue) = instr.lvalue {
-                let lvalue_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
+                let lvalue_ident = &state.env.identifiers[lvalue.identifier];
                 if place_ident.scope.is_some() && lvalue_ident.scope.is_none() {
-                    state
-                        .manual_memo_state
-                        .as_mut()
-                        .unwrap()
+                    memo_state
                         .reassignments
                         .entry(lvalue_ident.declaration_id)
                         .or_default()
@@ -314,36 +305,34 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
     }
 }
 
-fn record_unmemoized_error(loc: Option<SourceLocation>, env: &mut Environment) {
-    let diag = CompilerDiagnostic::new(
-        ErrorCategory::PreserveManualMemo,
-        "Existing memoization could not be preserved",
-        Some(
-            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output".to_string(),
-        ),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        loc,
-        message: Some("Could not preserve existing memoization".to_string()),
-    });
+fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
+    let diag = ErrorCategory::PreserveManualMemo
+        .diagnostic("Existing memoization could not be preserved")
+        .with_help(
+            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output",
+        )
+        .with_labels(span.map(|s| s.label("Could not preserve existing memoization")));
     env.record_diagnostic(diag);
 }
 
 /// Record temporaries from an instruction.
 /// TS: `recordTemporaries`
-fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '_>) {
+fn record_temporaries<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorState<'_, 'h>) {
+    let alloc = state.env.allocator;
     let lvalue = &instr.lvalue;
     let lv_id = lvalue.as_ref().map(|lv| lv.identifier);
-    if let Some(id) = lv_id {
-        if state.temporaries.contains_key(&id) {
-            return;
-        }
+    if let Some(id) = lv_id
+        && state.temporaries.contains_key(&id)
+    {
+        return;
     }
 
     if let Some(ref lvalue) = instr.lvalue {
-        let lv_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
-        if is_named(lv_ident) && state.manual_memo_state.is_some() {
-            state.manual_memo_state.as_mut().unwrap().decls.insert(lv_ident.declaration_id);
+        let lv_ident = &state.env.identifiers[lvalue.identifier];
+        if is_named(lv_ident)
+            && let Some(manual_memo_state) = state.manual_memo_state.as_mut()
+        {
+            manual_memo_state.decls.insert(lv_ident.declaration_id);
         }
     }
 
@@ -355,12 +344,9 @@ fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState<'_, 
         state.temporaries.insert(
             lvalue.identifier,
             ManualMemoDependency {
-                root: ManualMemoDependencyRoot::NamedLocal {
-                    value: lvalue.clone(),
-                    constant: false,
-                },
-                path: Vec::new(),
-                loc: lvalue.loc,
+                root: ManualMemoDependencyRoot::NamedLocal { value: *lvalue, constant: false },
+                path: ArenaVec::new_in(&alloc),
+                span: lvalue.span,
             },
         );
     }
@@ -368,7 +354,8 @@ fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState<'_, 
 
 /// Record dependencies from a reactive value.
 /// TS: `recordDepsInValue`
-fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>) {
+fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<'_, 'h>) {
+    let alloc = state.env.allocator;
     match value {
         ReactiveValue::SequenceExpression { instructions, value, .. } => {
             for instr in instructions {
@@ -402,18 +389,18 @@ fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>)
                 InstructionValue::StoreLocal { lvalue, .. }
                 | InstructionValue::StoreContext { lvalue, .. } => {
                     if let Some(ref mut memo_state) = state.manual_memo_state {
-                        let ident = &state.env.identifiers[lvalue.place.identifier.0 as usize];
+                        let ident = &state.env.identifiers[lvalue.place.identifier];
                         memo_state.decls.insert(ident.declaration_id);
                         if is_named(ident) {
                             state.temporaries.insert(
                                 lvalue.place.identifier,
                                 ManualMemoDependency {
                                     root: ManualMemoDependencyRoot::NamedLocal {
-                                        value: lvalue.place.clone(),
+                                        value: lvalue.place,
                                         constant: false,
                                     },
-                                    path: Vec::new(),
-                                    loc: lvalue.place.loc,
+                                    path: ArenaVec::new_in(&alloc),
+                                    span: lvalue.place.span,
                                 },
                             );
                         }
@@ -422,18 +409,18 @@ fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>)
                 InstructionValue::Destructure { lvalue, .. } => {
                     if let Some(ref mut memo_state) = state.manual_memo_state {
                         for place in destructure_lvalue_places(&lvalue.pattern) {
-                            let ident = &state.env.identifiers[place.identifier.0 as usize];
+                            let ident = &state.env.identifiers[place.identifier];
                             memo_state.decls.insert(ident.declaration_id);
                             if is_named(ident) {
                                 state.temporaries.insert(
                                     place.identifier,
                                     ManualMemoDependency {
                                         root: ManualMemoDependencyRoot::NamedLocal {
-                                            value: place.clone(),
+                                            value: *place,
                                             constant: false,
                                         },
-                                        path: Vec::new(),
-                                        loc: place.loc,
+                                        path: ArenaVec::new_in(&alloc),
+                                        span: place.span,
                                     },
                                 );
                             }
@@ -447,12 +434,12 @@ fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>)
 }
 
 /// Get operand places from a StartMemoize instruction's deps.
-fn start_memoize_operands(deps: &Option<Vec<ManualMemoDependency>>) -> Vec<Place> {
+fn start_memoize_operands(deps: &Option<ArenaVec<'_, ManualMemoDependency<'_>>>) -> Vec<Place> {
     let mut result = Vec::new();
     if let Some(deps) = deps {
         for dep in deps {
             if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &dep.root {
-                result.push(value.clone());
+                result.push(*value);
             }
         }
     }
@@ -460,7 +447,7 @@ fn start_memoize_operands(deps: &Option<Vec<ManualMemoDependency>>) -> Vec<Place
 }
 
 /// Get lvalue places from a Destructure pattern.
-fn destructure_lvalue_places(pattern: &Pattern) -> Vec<&Place> {
+fn destructure_lvalue_places<'p>(pattern: &'p Pattern<'_>) -> Vec<&'p Place> {
     let mut result = Vec::new();
     match pattern {
         Pattern::Array(arr) => {
@@ -496,9 +483,9 @@ fn destructure_lvalue_places(pattern: &Pattern) -> Vec<&Place> {
 fn is_unmemoized(
     id: IdentifierId,
     completed_scopes: &FxHashSet<ScopeId>,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
 ) -> bool {
-    let ident = &identifiers[id.0 as usize];
+    let ident = &identifiers[id];
     if let Some(scope_id) = ident.scope { !completed_scopes.contains(&scope_id) } else { false }
 }
 
@@ -568,9 +555,9 @@ fn compare_deps(
 fn pretty_print_scope_dependency(
     dep_id: IdentifierId,
     dep_path: &[DependencyPathEntry],
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
 ) -> String {
-    let ident = &identifiers[dep_id.0 as usize];
+    let ident = &identifiers[dep_id];
     let root_str = match &ident.name {
         Some(IdentifierName::Named(n) | IdentifierName::Promoted(n)) => n.as_str(),
         None => "[unnamed]",
@@ -591,12 +578,12 @@ fn pretty_print_scope_dependency(
 /// Pretty-print a manual memo dependency for error messages.
 fn print_manual_memo_dependency(
     dep: &ManualMemoDependency,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     with_optional: bool,
 ) -> String {
     let root_str = match &dep.root {
         ManualMemoDependencyRoot::NamedLocal { value, .. } => {
-            let ident = &identifiers[value.identifier.0 as usize];
+            let ident = &identifiers[value.identifier];
             match &ident.name {
                 Some(IdentifierName::Named(n) | IdentifierName::Promoted(n)) => n.as_str(),
                 None => "[unnamed]",
@@ -631,23 +618,24 @@ fn get_compare_dependency_result_description(result: CompareDependencyResult) ->
 
 /// Validate that an inferred dependency matches a source dependency or was produced
 /// within the manual memo block.
-fn validate_inferred_dep(
+fn validate_inferred_dep<'h>(
     dep_id: IdentifierId,
-    dep_path: &[DependencyPathEntry],
-    temporaries: &FxHashMap<IdentifierId, ManualMemoDependency>,
+    dep_path: &[DependencyPathEntry<'h>],
+    temporaries: &FxHashMap<IdentifierId, ManualMemoDependency<'h>>,
     decls_within_memo_block: &FxHashSet<DeclarationId>,
-    valid_deps_in_memo_block: &[ManualMemoDependency],
-    env: &mut Environment,
-    memo_location: Option<SourceLocation>,
+    valid_deps_in_memo_block: &[ManualMemoDependency<'h>],
+    env: &mut Environment<'h>,
+    memo_location: Option<Span>,
 ) {
+    let alloc = env.allocator;
     // Normalize the dependency through temporaries
     let normalized_dep = if let Some(temp) = temporaries.get(&dep_id) {
-        let mut path = temp.path.clone();
+        let mut path = temp.path.clone_in(alloc);
         path.extend_from_slice(dep_path);
-        ManualMemoDependency { root: temp.root.clone(), path, loc: temp.loc }
+        ManualMemoDependency { root: temp.root, path, span: temp.span }
     } else {
-        let ident = &env.identifiers[dep_id.0 as usize];
-        // TS: CompilerError.invariant(dep.identifier.name?.kind === 'named', ...)
+        let ident = &env.identifiers[dep_id];
+        // TS: Diagnostics.invariant(dep.identifier.name?.kind === 'named', ...)
         if !is_named(ident) {
             return;
         }
@@ -657,18 +645,18 @@ fn validate_inferred_dep(
                     identifier: dep_id,
                     effect: Effect::Read,
                     reactive: false,
-                    loc: ident.loc,
+                    span: ident.span,
                 },
                 constant: false,
             },
-            path: dep_path.to_vec(),
-            loc: ident.loc,
+            path: ArenaVec::from_iter_in(dep_path.iter().copied(), &alloc),
+            span: ident.span,
         }
     };
 
     // Check if the dep was declared within the memo block
     if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &normalized_dep.root {
-        let ident = &env.identifiers[value.identifier.0 as usize];
+        let ident = &env.identifiers[value.identifier];
         if decls_within_memo_block.contains(&ident.declaration_id) {
             return;
         }
@@ -687,7 +675,7 @@ fn validate_inferred_dep(
         });
     }
 
-    let ident = &env.identifiers[dep_id.0 as usize];
+    let ident = &env.identifiers[dep_id];
 
     let extra = if is_named(ident) {
         // Use the original dep_id/dep_path (matching TS prettyPrintScopeDependency(dep))
@@ -714,14 +702,11 @@ fn validate_inferred_dep(
         extra.as_deref().unwrap_or_default()
     );
 
-    let diag = CompilerDiagnostic::new(
-        ErrorCategory::PreserveManualMemo,
-        "Existing memoization could not be preserved",
-        Some(description.trim().to_string()),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        loc: memo_location,
-        message: Some("Could not preserve existing manual memoization".to_string()),
-    });
+    let diag = ErrorCategory::PreserveManualMemo
+        .diagnostic("Existing memoization could not be preserved")
+        .with_help(description.trim().to_string())
+        .with_labels(
+            memo_location.map(|s| s.label("Could not preserve existing manual memoization")),
+        );
     env.record_diagnostic(diag);
 }

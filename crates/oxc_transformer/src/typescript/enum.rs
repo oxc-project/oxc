@@ -187,23 +187,11 @@ impl<'a> TypeScriptEnum {
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let params = FormalParameter::new(
-            SPAN,
-            ArenaVec::new_in(ctx),
-            id,
-            NONE,
-            NONE,
-            false,
-            None,
-            false,
-            false,
-            ctx,
-        );
-        let params = ArenaVec::from_value_in(params, ctx);
+        let param = FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
-            params,
+            [param],
             NONE,
             ctx,
         );
@@ -222,7 +210,7 @@ impl<'a> TypeScriptEnum {
             ctx,
         );
         let span = decl.span;
-        let body = FunctionBody::boxed(span, ArenaVec::new_in(ctx), statements, ctx);
+        let body = FunctionBody::boxed(span, [], statements, ctx);
         let callee = Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             span,
             FunctionType::FunctionExpression,
@@ -250,8 +238,8 @@ impl<'a> TypeScriptEnum {
 
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
-            let object_arg = Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
-            ArenaVec::from_value_in(object_arg, ctx)
+            let object_arg = Argument::new_object_expression(SPAN, [], ctx);
+            [object_arg]
         } else {
             // }(Foo || {});
             let op = LogicalOperator::Or;
@@ -261,9 +249,9 @@ impl<'a> TypeScriptEnum {
                 enum_symbol_id,
                 ReferenceFlags::Read,
             );
-            let right = Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+            let right = Expression::new_object_expression(SPAN, [], ctx);
             let argument = Argument::new_logical_expression(span, left, op, right, ctx);
-            ArenaVec::from_value_in(argument, ctx)
+            [argument]
         };
 
         let call_expression = Expression::new_call_expression_with_pure(
@@ -277,6 +265,10 @@ impl<'a> TypeScriptEnum {
         );
 
         if is_already_declared {
+            // The lowered output assigns to the existing runtime binding — drop only the
+            // enum bits and keep the flags describing that binding. Updating flags
+            // mid-traversal doesn't break member inlining — see `resolve_enum_member`.
+            *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) -= SymbolFlags::Enum;
             let op = AssignmentOperator::Assign;
             let left = ctx.create_bound_ident_reference(
                 decl.id.span,
@@ -289,11 +281,13 @@ impl<'a> TypeScriptEnum {
             return Some(Statement::new_expression_statement(span, expr, ctx));
         }
 
-        let kind = if is_export || is_not_top_scope {
-            VariableDeclarationKind::Let
+        let (kind, flags) = if is_export || is_not_top_scope {
+            (VariableDeclarationKind::Let, SymbolFlags::BlockScopedVariable)
         } else {
-            VariableDeclarationKind::Var
+            (VariableDeclarationKind::Var, SymbolFlags::FunctionScopedVariable)
         };
+        // The symbol flags now describe the emitted `var`/`let` binding.
+        *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) = flags;
         let decls = {
             let binding = BindingPattern::new_binding_identifier_with_symbol_id(
                 decl.id.span,
@@ -310,7 +304,7 @@ impl<'a> TypeScriptEnum {
                 false,
                 ctx,
             );
-            ArenaVec::from_value_in(decl, ctx)
+            [decl]
         };
         let variable_declaration =
             Declaration::new_variable_declaration(span, kind, decls, false, ctx);
@@ -565,14 +559,19 @@ impl<'a> TypeScriptEnum {
         let ref_id = ident.reference_id.get()?;
         let symbol_id = ctx.scoping().get_reference(ref_id).symbol_id()?;
 
-        let flags = ctx.scoping().symbol_flags(symbol_id);
-        let is_const_enum = flags.is_const_enum() && self.optimize_const_enums;
-        let is_regular_enum = flags.contains(SymbolFlags::RegularEnum) && self.optimize_enums;
-        if !is_const_enum && !is_regular_enum {
+        // `SymbolFlags` can't identify enums here: once a declaration is lowered, its
+        // flags describe the emitted `var`/`let` binding, but references visited after
+        // it must still inline. The enum data in `Scoping` stays valid throughout.
+        let body_scopes = ctx.scoping().get_enum_body_scopes(symbol_id)?;
+        let optimize = if ctx.scoping().is_const_enum(symbol_id) {
+            self.optimize_const_enums
+        } else {
+            self.optimize_enums
+        };
+        if !optimize {
             return None;
         }
 
-        let body_scopes = ctx.scoping().get_enum_body_scopes(symbol_id)?;
         for &body_scope_id in body_scopes {
             if let Some(member_symbol_id) =
                 ctx.scoping().get_binding(body_scope_id, property_name.into())

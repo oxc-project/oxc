@@ -575,12 +575,38 @@ fn could_be_error_impl(
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
-                    if let Some(init) = &decl.init {
-                        could_be_error_impl(ctx, init, visited)
-                    } else {
-                        // TODO: warn about throwing undefined
-                        false
+                    if decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| could_be_error_impl(ctx, init, visited))
+                    {
+                        return true;
                     }
+
+                    ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
+                        if !reference.is_write() {
+                            return false;
+                        }
+
+                        let reference_node = ctx.nodes().get_node(reference.node_id());
+                        if reference_node.span().end > ident.span.start {
+                            return false;
+                        }
+
+                        let AstKind::AssignmentExpression(assignment) =
+                            ctx.nodes().parent_kind(reference.node_id())
+                        else {
+                            return false;
+                        };
+
+                        assignment.operator == AssignmentOperator::Assign
+                            && matches!(
+                                &assignment.left,
+                                AssignmentTarget::AssignmentTargetIdentifier(target)
+                                    if target.span == reference_node.span()
+                            )
+                            && could_be_error_impl(ctx, &assignment.right, visited)
+                    })
                 }
                 AstKind::Function(_)
                 | AstKind::Class(_)
@@ -858,10 +884,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
 
 /// Gets the name and kind of the given function node.
 /// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
-pub fn get_function_name_with_kind<'a>(
-    node: &AstNode<'a>,
-    parent_node: &AstNode<'a>,
-) -> Cow<'a, str> {
+pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode<'a>) -> String {
     let (name, is_async, is_generator) = match node.kind() {
         AstKind::Function(func) => (func.name(), func.r#async, func.generator),
         AstKind::ArrowFunctionExpression(arrow_func) => (None, arrow_func.r#async, false),
@@ -947,7 +970,7 @@ pub fn get_function_name_with_kind<'a>(
         tokens.push(Cow::Owned(format!("`{method_name}`")));
     }
 
-    Cow::Owned(tokens.join(" "))
+    tokens.join(" ")
 }
 
 // get the top iterator

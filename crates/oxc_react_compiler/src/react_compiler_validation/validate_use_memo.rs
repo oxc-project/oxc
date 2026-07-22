@@ -1,8 +1,10 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
-};
+use oxc_index::IndexSlice;
+
+use oxc_diagnostics::Diagnostics;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand_with_functions, each_terminal_operand,
@@ -11,12 +13,13 @@ use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
     PropertyLiteral, ReturnVariant, Terminal,
 };
+use oxc_span::Span;
 
 /// Validates useMemo() usage patterns.
 ///
 /// Port of ValidateUseMemo.ts.
 /// Returns VoidUseMemo errors separately (for logging via logErrors, not as compile errors).
-pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> CompilerError {
+pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> Diagnostics {
     validate_use_memo_impl(
         func,
         &env.functions,
@@ -28,25 +31,25 @@ pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> CompilerE
 /// Information about a FunctionExpression needed for validation.
 struct FuncExprInfo {
     func_id: FunctionId,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 fn validate_use_memo_impl(
     func: &HirFunction,
-    functions: &[HirFunction],
-    errors: &mut CompilerError,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    errors: &mut Diagnostics,
     validate_no_void_use_memo: bool,
-) -> CompilerError {
-    let mut void_memo_errors = CompilerError::new();
+) -> Diagnostics {
+    let mut void_memo_errors = Diagnostics::new();
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut react: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut func_exprs: FxHashMap<IdentifierId, FuncExprInfo> = FxHashMap::default();
-    let mut unused_use_memos: FxHashMap<IdentifierId, (SourceLocation, Option<String>)> =
+    let mut unused_use_memos: FxHashMap<IdentifierId, (Span, Option<String>)> =
         FxHashMap::default();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue = &instr.lvalue;
             let value = &instr.value;
 
@@ -67,18 +70,17 @@ fn validate_use_memo_impl(
                     }
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
-                    if react.contains(&object.identifier) {
-                        if let PropertyLiteral::String(prop_name) = property {
-                            if prop_name == "useMemo" {
-                                use_memos.insert(lvalue.identifier);
-                            }
-                        }
+                    if react.contains(&object.identifier)
+                        && let PropertyLiteral::String(prop_name) = property
+                        && prop_name == "useMemo"
+                    {
+                        use_memos.insert(lvalue.identifier);
                     }
                 }
-                InstructionValue::FunctionExpression { lowered_func, loc, .. } => {
+                InstructionValue::FunctionExpression { lowered_func, span, .. } => {
                     func_exprs.insert(
                         lvalue.identifier,
-                        FuncExprInfo { func_id: lowered_func.func, loc: *loc },
+                        FuncExprInfo { func_id: lowered_func.func, span: *span },
                     );
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
@@ -123,20 +125,14 @@ fn validate_use_memo_impl(
 
     // Report unused useMemo results
     if !unused_use_memos.is_empty() {
-        for (loc, _) in unused_use_memos.values() {
-            void_memo_errors.push_diagnostic(
-                CompilerDiagnostic::new(
-                    ErrorCategory::VoidUseMemo,
-                    "useMemo() result is unused",
-                    Some(
-                        "This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects"
-                            .to_string(),
-                    ),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: Some(*loc),
-                    message: Some("useMemo() result is unused".to_string()),
-                }),
+        for (span, _) in unused_use_memos.values() {
+            void_memo_errors.push(
+                ErrorCategory::VoidUseMemo
+                    .diagnostic("useMemo() result is unused")
+                    .with_help(
+                        "This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects",
+                    )
+                    .with_label(span.label("useMemo() result is unused")),
             );
         }
     }
@@ -146,12 +142,12 @@ fn validate_use_memo_impl(
 
 #[allow(clippy::too_many_arguments)]
 fn handle_possible_use_memo_call(
-    functions: &[HirFunction],
-    errors: &mut CompilerError,
-    void_memo_errors: &mut CompilerError,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    errors: &mut Diagnostics,
+    void_memo_errors: &mut Diagnostics,
     use_memos: &FxHashSet<IdentifierId>,
     func_exprs: &FxHashMap<IdentifierId, FuncExprInfo>,
-    unused_use_memos: &mut FxHashMap<IdentifierId, (SourceLocation, Option<String>)>,
+    unused_use_memos: &mut FxHashMap<IdentifierId, (Span, Option<String>)>,
     callee: &Place,
     args: &[PlaceOrSpread],
     lvalue: &Place,
@@ -172,46 +168,38 @@ fn handle_possible_use_memo_call(
         None => return,
     };
 
-    let body_func = &functions[body_info.func_id.0 as usize];
+    let body_func = &functions[body_info.func_id];
 
     // Validate no parameters
     if !body_func.params.is_empty() {
         let first_param = &body_func.params[0];
-        let loc = match first_param {
-            ParamPattern::Place(place) => place.loc,
-            ParamPattern::Spread(spread) => spread.place.loc,
+        let span = match first_param {
+            ParamPattern::Place(place) => place.span,
+            ParamPattern::Spread(spread) => spread.place.span,
         };
-        errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::UseMemo,
-                "useMemo() callbacks may not accept parameters",
-                Some(
-                    "useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation"
-                        .to_string(),
-                ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                loc,
-                message: Some("Callbacks with parameters are not supported".to_string()),
-            }),
+        errors.push(
+            ErrorCategory::UseMemo
+                .diagnostic("useMemo() callbacks may not accept parameters")
+                .with_help(
+                    "useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation",
+                )
+                .with_labels(span.map(|s| s.label("Callbacks with parameters are not supported"))),
         );
     }
 
     // Validate not async or generator
     if body_func.is_async || body_func.generator {
-        errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::UseMemo,
-                "useMemo() callbacks may not be async or generator functions",
-                Some(
-                    "useMemo() callbacks are called once and must synchronously return a value"
-                        .to_string(),
+        errors.push(
+            ErrorCategory::UseMemo
+                .diagnostic("useMemo() callbacks may not be async or generator functions")
+                .with_help(
+                    "useMemo() callbacks are called once and must synchronously return a value",
+                )
+                .with_labels(
+                    body_info
+                        .span
+                        .map(|s| s.label("Async and generator functions are not supported")),
                 ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                loc: body_info.loc,
-                message: Some("Async and generator functions are not supported".to_string()),
-            }),
         );
     }
 
@@ -219,53 +207,45 @@ fn handle_possible_use_memo_call(
     validate_no_context_variable_assignment(body_func, errors);
 
     if validate_no_void_use_memo && !has_non_void_return(body_func) {
-        void_memo_errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::VoidUseMemo,
-                "useMemo() callbacks must return a value",
-                Some(
-                    "This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects"
-                        .to_string(),
+        void_memo_errors.push(
+            ErrorCategory::VoidUseMemo
+                .diagnostic("useMemo() callbacks must return a value")
+                .with_help(
+                    "This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects",
+                )
+                .with_labels(
+                    body_info.span.map(|s| s.label("useMemo() callbacks must return a value")),
                 ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                loc: body_info.loc,
-                message: Some("useMemo() callbacks must return a value".to_string()),
-            }),
         );
-    } else if validate_no_void_use_memo {
-        if let Some(callee_loc) = callee.loc {
-            // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
-            // The identifierName in Babel's AST SourceLocation is "useMemo".
-            unused_use_memos.insert(lvalue.identifier, (callee_loc, Some("useMemo".to_string())));
-        }
+    } else if validate_no_void_use_memo && let Some(callee_span) = callee.span {
+        // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
+        // The identifierName in Babel's AST Span is "useMemo".
+        unused_use_memos.insert(lvalue.identifier, (callee_span, Some("useMemo".to_string())));
     }
 }
 
-fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut CompilerError) {
+fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diagnostics) {
     let context: FxHashSet<IdentifierId> =
         func.context.iter().map(|place| place.identifier).collect();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
-            if let InstructionValue::StoreContext { lvalue, .. } = &instr.value {
-                if context.contains(&lvalue.place.identifier) {
-                    errors.push_diagnostic(
-                        CompilerDiagnostic::new(
-                            ErrorCategory::UseMemo,
-                            "useMemo() callbacks may not reassign variables declared outside of the callback",
-                            Some(
-                                "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function"
-                                    .to_string(),
+            let instr = &func.instructions[instr_id.index()];
+            if let InstructionValue::StoreContext { lvalue, .. } = &instr.value
+                && context.contains(&lvalue.place.identifier)
+            {
+                errors.push(
+                        ErrorCategory::UseMemo
+                            .diagnostic(
+                                "useMemo() callbacks may not reassign variables declared outside of the callback",
+                            )
+                            .with_help(
+                                "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function",
+                            )
+                            .with_labels(
+                                lvalue.place.span.map(|s| s.label("Cannot reassign variable")),
                             ),
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            loc: lvalue.place.loc,
-                            message: Some("Cannot reassign variable".to_string()),
-                        }),
                     );
-                }
             }
         }
     }
@@ -273,10 +253,10 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Comp
 
 fn has_non_void_return(func: &HirFunction) -> bool {
     for (_block_id, block) in &func.body.blocks {
-        if let Terminal::Return { return_variant, .. } = &block.terminal {
-            if matches!(return_variant, ReturnVariant::Explicit | ReturnVariant::Implicit) {
-                return true;
-            }
+        if let Terminal::Return { return_variant, .. } = &block.terminal
+            && matches!(return_variant, ReturnVariant::Explicit | ReturnVariant::Implicit)
+        {
+            return true;
         }
     }
     false
@@ -286,7 +266,7 @@ fn has_non_void_return(func: &HirFunction) -> bool {
 /// Thin wrapper around canonical `each_instruction_value_operand_with_functions` that maps to ids.
 fn each_instruction_value_operand_ids(
     value: &InstructionValue,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
 ) -> Vec<IdentifierId> {
     each_instruction_value_operand_with_functions(value, functions)
         .into_iter()

@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn, CloneInSemanticIds};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -31,13 +31,16 @@ impl CloneIn<'_> for Redeclaration {
     type Cloned = Self;
 
     #[inline]
-    fn clone_in(&self, _allocator: &Allocator) -> Self::Cloned {
-        Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
-    }
-
-    #[inline]
-    fn clone_in_with_semantic_ids(&self, _allocator: &Allocator) -> Self::Cloned {
-        self.clone()
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &Allocator,
+    ) -> Self::Cloned {
+        Self {
+            span: self.span,
+            declaration: self.declaration.clone_in_impl(with_semantic_ids, allocator),
+            flags: self.flags,
+        }
     }
 }
 
@@ -345,6 +348,12 @@ impl Scoping {
         *self.symbol_table.symbol_spans(symbol_id)
     }
 
+    /// Set the span of `symbol_id`.
+    #[inline]
+    pub fn set_symbol_span(&mut self, symbol_id: SymbolId, span: Span) {
+        *self.symbol_table.symbol_spans_mut(symbol_id) = span;
+    }
+
     /// Get the identifier name a symbol is bound to.
     #[inline]
     pub fn symbol_name(&self, symbol_id: SymbolId) -> &str {
@@ -507,6 +516,13 @@ impl Scoping {
                     vacant.insert(v);
                 }
             }
+        });
+    }
+
+    /// Remove all redeclaration metadata for a symbol.
+    pub fn clear_symbol_redeclarations(&mut self, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.symbol_redeclarations.remove(&symbol_id);
         });
     }
 
@@ -687,6 +703,10 @@ impl Scoping {
 
     /// Get the body scopes for an enum declaration symbol.
     /// Returns multiple scopes for merged enum declarations.
+    ///
+    /// Unlike the enum bits in `SymbolFlags`, this stays valid after the transformer
+    /// lowers the enum to a `var`/`let` binding, so it identifies enums at any point
+    /// during a transform.
     pub fn get_enum_body_scopes(&self, symbol_id: SymbolId) -> Option<&[ScopeId]> {
         self.enum_data.get_body_scopes(symbol_id)
     }
@@ -695,6 +715,19 @@ impl Scoping {
     /// Appends to the list (supports merged enum declarations).
     pub(crate) fn add_enum_body_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
         self.enum_data.add_body_scope(symbol_id, scope_id);
+    }
+
+    /// Whether the symbol is a `const enum` declaration.
+    ///
+    /// Returns `false` for regular enums and non-enum symbols alike — gate on
+    /// [`Self::get_enum_body_scopes`] to identify enums.
+    pub fn is_const_enum(&self, symbol_id: SymbolId) -> bool {
+        self.enum_data.is_const_enum(symbol_id)
+    }
+
+    /// Mark a symbol as a `const enum` declaration.
+    pub(crate) fn add_const_enum(&mut self, symbol_id: SymbolId) {
+        self.enum_data.add_const_enum(symbol_id);
     }
 }
 
@@ -1018,7 +1051,7 @@ impl Scoping {
         });
     }
 
-    /// Remove bindings that exist only in TypeScript type space.
+    /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
         #[expect(
             clippy::inline_always,
@@ -1050,7 +1083,8 @@ impl Scoping {
                     !flags.intersects(
                         SymbolFlags::TypeAlias
                             | SymbolFlags::Interface
-                            | SymbolFlags::TypeParameter,
+                            | SymbolFlags::TypeParameter
+                            | SymbolFlags::EnumMember,
                     )
                 });
             }

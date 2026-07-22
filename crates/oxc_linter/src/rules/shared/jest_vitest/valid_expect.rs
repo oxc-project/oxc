@@ -47,7 +47,7 @@ Examples of **correct** code for this rule:
 ```javascript
 expect('something').toEqual('something');
 expect(true).toBeDefined();
-expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
+await expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
 ```
 ";
 

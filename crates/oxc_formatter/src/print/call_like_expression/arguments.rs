@@ -8,12 +8,12 @@ use crate::{
     format_args,
     formatter::{
         Comments, FormatElement, JoinBuilderJsExt as _, JsFormatContext, JsFormatter,
-        JsFormatterExt as _, SourceText, VecBuffer,
+        JsFormatterExt as _, SourceText,
         buffer::RemoveSoftLinesBuffer,
         format_element,
         prelude::{
-            FormatElements, Tag, empty_line, expand_parent, format_once, format_with, group,
-            soft_block_indent, soft_line_break_or_space, space,
+            FormatElements, best_fitting_variant, empty_line, expand_parent, format_once,
+            format_with, group, soft_block_indent, soft_line_break_or_space, space,
         },
         trivia::format_dangling_comments,
     },
@@ -29,7 +29,8 @@ use crate::{
         parameters::has_only_simple_parameters,
     },
     utils::{
-        call_expression::is_test_call_expression, is_long_curried_call,
+        call_expression::is_test_call_expression,
+        expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
         member_chain::simple_argument::SimpleArgument,
     },
     write,
@@ -194,17 +195,15 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
                 }
                 has_seen_function_like = true;
             }
-            Argument::ChainExpression(chain) => {
-                return if let ChainElement::CallExpression(call) = &chain.expression {
-                    is_call_expression_with_arrow_or_function(call)
-                } else {
-                    false
-                };
+            _ => {
+                if arg
+                    .as_expression()
+                    .and_then(as_call_expression_without_chain_wrappers)
+                    .is_some_and(is_call_expression_with_arrow_or_function)
+                {
+                    return true;
+                }
             }
-            Argument::CallExpression(call) if is_call_expression_with_arrow_or_function(call) => {
-                return true;
-            }
-            _ => {}
         }
     }
 
@@ -630,14 +629,18 @@ fn can_group_arrow_function_expression_argument(
         // `couldExpandArg` naturally returns false. In oxc's AST the parens are stripped, so we
         // must explicitly check for type cast comments to prevent incorrect grouping.
         // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
-        Expression::ChainExpression(chain) => {
-            matches!(chain.expression, ChainElement::CallExpression(_))
-                && !is_arrow_recursion
-                && !f
-                    .comments()
-                    .has_type_cast_comment_in_range(arrow_function.span.start, expr.span().start)
-        }
-        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => {
+        //
+        // A call wrapped in `ChainExpression` / `TSNonNullExpression`
+        // (e.g. `a?.b()`, `a.b()!`) counts as a call,
+        // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
+        //
+        // NOTE: The conditional check is deliberately asymmetric:
+        // Prettier matches a bare `ConditionalExpression` body only,
+        // so a wrapped one (`(a ? b : c)!`) does not count.
+        // Not derivable from a principle; follow Prettier if it changes.
+        expr if matches!(expr, Expression::ConditionalExpression(_))
+            || as_call_expression_without_chain_wrappers(expr).is_some() =>
+        {
             !is_arrow_recursion
                 && !f
                     .comments()
@@ -733,16 +736,9 @@ fn write_grouped_arguments<'a>(
     }
 
     // First write the most expanded variant because it needs `arguments`.
-    let most_expanded = {
-        let mut buffer = VecBuffer::new(f.state_mut());
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
-        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
-
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-        buffer.into_vec().into_arena_slice()
-    };
+    let most_expanded = best_fitting_variant(f.state_mut(), |buffer| {
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, buffer);
+    });
 
     // Now reformat the first or last argument if they happen to be a function or arrow function expression.
     // Function and arrow function expression apply a custom formatting that removes soft line breaks from the parameters,
@@ -821,11 +817,7 @@ fn write_grouped_arguments<'a>(
     }
 
     // Write the second variant that forces the group of the first/last argument to expand.
-    let middle_variant = {
-        let mut buffer = VecBuffer::new(f.state_mut());
-
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
+    let middle_variant = best_fitting_variant(f.state_mut(), |buffer| {
         write!(
             buffer,
             [
@@ -857,11 +849,7 @@ fn write_grouped_arguments<'a>(
                 ")"
             ]
         );
-
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-        buffer.into_vec().into_arena_slice()
-    };
+    });
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
@@ -870,10 +858,7 @@ fn write_grouped_arguments<'a>(
         ArenaVec::from_array_in([middle_variant, most_expanded], f)
     } else {
         // Write the most flat variant with the first or last argument grouped.
-        let most_flat = {
-            let mut buffer = VecBuffer::new(f.state_mut());
-            buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
+        let most_flat = best_fitting_variant(f.state_mut(), |buffer| {
             write!(
                 buffer,
                 [
@@ -892,11 +877,7 @@ fn write_grouped_arguments<'a>(
                     ")",
                 ]
             );
-
-            buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-            buffer.into_vec().into_arena_slice()
-        };
+        });
 
         ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f)
     };
@@ -1006,7 +987,7 @@ pub fn is_simple_module_import(
                             Expression::Identifier(ident) if ident.name.as_str() == "require" => {
                                 // `require.resolve("foo")`
                             }
-                            Expression::MetaProperty(_) => {
+                            Expression::ImportMeta(_) => {
                                 // `import.meta.resolve("foo")`
                             }
                             _ => return false,

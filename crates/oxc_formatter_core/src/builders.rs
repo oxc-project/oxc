@@ -8,8 +8,8 @@ use std::num::NonZeroU8;
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
-    GroupId, VecBuffer,
+    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, FormatState,
+    Formatter, GroupId, HeapVecBuffer,
     format::write,
     format_element::{
         self, LineMode, PrintMode, TextWidth,
@@ -881,19 +881,32 @@ impl<'fmt, 'ast, C> BestFitting<'fmt, 'ast, C> {
     }
 }
 
+/// Stages one [`BestFitting`] variant and moves it into the arena exactly-sized.
+///
+/// This is the single place encoding the variant shape the printer's [`format_element::BestFittingElement`] relies on:
+/// an entry-tag-wrapped, exactly-sized arena slice.
+/// The content is staged on the heap so only that final slice lands in the arena (see [`HeapVecBuffer`]).
+pub fn best_fitting_variant<'ast, C>(
+    state: &mut FormatState<'ast, C>,
+    content: impl FnOnce(&mut HeapVecBuffer<'_, 'ast, C>),
+) -> &'ast [FormatElement<'ast>] {
+    let mut buffer = HeapVecBuffer::new(state);
+    buffer.write_element(FormatElement::Tag(StartEntry));
+    content(&mut buffer);
+    buffer.write_element(FormatElement::Tag(EndEntry));
+    buffer.take_into_arena_slice()
+}
+
 impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        let mut buffer = VecBuffer::new(f.state_mut());
         let variants = self.variants.items();
 
         let mut formatted_variants = Vec::with_capacity(variants.len());
 
         for variant in variants {
-            buffer.write_element(FormatElement::Tag(StartEntry));
-            buffer.write_fmt(Arguments::from(variant));
-            buffer.write_element(FormatElement::Tag(EndEntry));
-
-            formatted_variants.push(buffer.take_vec().into_arena_slice());
+            formatted_variants.push(best_fitting_variant(f.state_mut(), |buffer| {
+                buffer.write_fmt(Arguments::from(variant));
+            }));
         }
 
         let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);

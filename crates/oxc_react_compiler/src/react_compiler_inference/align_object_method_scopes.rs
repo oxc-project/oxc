@@ -34,7 +34,7 @@ fn find_scopes_to_merge(func: &HirFunction, env: &Environment) -> DisjointSet<Sc
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::ObjectMethod { .. } => {
                     object_method_decls.insert(instr.lvalue.identifier);
@@ -46,12 +46,10 @@ fn find_scopes_to_merge(func: &HirFunction, env: &Environment) -> DisjointSet<Sc
                             ObjectPropertyOrSpread::Spread(spread) => &spread.place,
                         };
                         if object_method_decls.contains(&operand_place.identifier) {
-                            let operand_scope =
-                                env.identifiers[operand_place.identifier.0 as usize].scope;
-                            let lvalue_scope =
-                                env.identifiers[instr.lvalue.identifier.0 as usize].scope;
+                            let operand_scope = env.identifiers[operand_place.identifier].scope;
+                            let lvalue_scope = env.identifiers[instr.lvalue.identifier].scope;
 
-                            // TS: CompilerError.invariant(operandScope != null && lvalueScope != null, ...)
+                            // TS: Diagnostics.invariant(operandScope != null && lvalueScope != null, ...)
                             let operand_sid = operand_scope.expect(
                                 "Internal error: Expected all ObjectExpressions and ObjectMethods to have non-null scope.",
                             );
@@ -82,15 +80,15 @@ pub fn align_object_method_scopes(func: &mut HirFunction, env: &mut Environment)
     // Handle inner functions first (TS recurses before processing the outer function)
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
                     let func_id = lowered_func.func;
                     let mut inner_func =
-                        replace(&mut env.functions[func_id.0 as usize], placeholder_function());
+                        replace(&mut env.functions[func_id], placeholder_function(env.allocator));
                     align_object_method_scopes(&mut inner_func, env);
-                    env.functions[func_id.0 as usize] = inner_func;
+                    env.functions[func_id] = inner_func;
                 }
                 _ => {}
             }
@@ -109,40 +107,39 @@ pub fn align_object_method_scopes(func: &mut HirFunction, env: &mut Environment)
         if scope_id == root_id {
             return;
         }
-        let scope_range = env.scopes[scope_id.0 as usize].range.clone();
-        let root_range = env.scopes[root_id.0 as usize].range.clone();
+        let scope_range = env.scopes[scope_id].range;
+        let root_range = env.scopes[root_id].range;
 
         let entry =
             range_updates.entry(root_id).or_insert_with(|| (root_range.start, root_range.end));
-        entry.0 = EvaluationOrder(cmp::min(entry.0.0, scope_range.start.0));
-        entry.1 = EvaluationOrder(cmp::max(entry.1.0, scope_range.end.0));
+        entry.0 = cmp::min(entry.0, scope_range.start);
+        entry.1 = cmp::max(entry.1, scope_range.end);
     });
 
     // Save original scope range IDs before updating
     let original_range_ids: FxHashMap<ScopeId, MutableRangeId> = range_updates
         .keys()
         .map(|&root_id| {
-            let range_id = env.scopes[root_id.0 as usize].range.id;
+            let range_id = env.scopes[root_id].range.id;
             (root_id, range_id)
         })
         .collect();
 
-    for (root_id, (new_start, new_end)) in &range_updates {
-        env.scopes[root_id.0 as usize].range.start = *new_start;
-        env.scopes[root_id.0 as usize].range.end = *new_end;
+    for (&root_id, (new_start, new_end)) in &range_updates {
+        env.scopes[root_id].range.start = *new_start;
+        env.scopes[root_id].range.end = *new_end;
     }
 
     // Sync identifier mutable_ranges that shared the old scope range.
     // Uses MutableRangeId for exact identity matching instead of value comparison.
     for ident in &mut env.identifiers {
-        if let Some(scope_id) = ident.scope {
-            if let Some(&orig_range_id) = original_range_ids.get(&scope_id) {
-                if ident.mutable_range.id == orig_range_id {
-                    let new_range = &env.scopes[scope_id.0 as usize].range;
-                    ident.mutable_range.start = new_range.start;
-                    ident.mutable_range.end = new_range.end;
-                }
-            }
+        if let Some(scope_id) = ident.scope
+            && let Some(&orig_range_id) = original_range_ids.get(&scope_id)
+            && ident.mutable_range.id == orig_range_id
+        {
+            let new_range = &env.scopes[scope_id].range;
+            ident.mutable_range.start = new_range.start;
+            ident.mutable_range.end = new_range.end;
         }
     }
 
@@ -157,12 +154,12 @@ pub fn align_object_method_scopes(func: &mut HirFunction, env: &mut Environment)
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let lvalue_id = func.instructions[instr_id.0 as usize].lvalue.identifier;
+            let lvalue_id = func.instructions[instr_id.index()].lvalue.identifier;
 
-            if let Some(current_scope) = env.identifiers[lvalue_id.0 as usize].scope {
-                if let Some(&root) = scope_remap.get(&current_scope) {
-                    env.identifiers[lvalue_id.0 as usize].scope = Some(root);
-                }
+            if let Some(current_scope) = env.identifiers[lvalue_id].scope
+                && let Some(&root) = scope_remap.get(&current_scope)
+            {
+                env.identifiers[lvalue_id].scope = Some(root);
             }
         }
     }

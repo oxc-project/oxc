@@ -1,7 +1,24 @@
 parser_misc Summary:
-AST Parsed     : 70/70 (100.00%)
-Positive Passed: 70/70 (100.00%)
-Negative Passed: 149/149 (100.00%)
+AST Parsed     : 74/74 (100.00%)
+Positive Passed: 74/74 (100.00%)
+Negative Passed: 154/154 (100.00%)
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
+ 1 │ export {};
+ 2 │ declare var arguments: unknown;
+   ·             ─────────
+ 3 │ declare const eval: unknown;
+   ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval-ambient.ts:3:15]
+ 2 │ declare var arguments: unknown;
+ 3 │ declare const eval: unknown;
+   ·               ────
+   ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -9,6 +26,7 @@ Negative Passed: 149/149 (100.00%)
    ·          ─────────
  2 │ function eval() {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:2:10]
@@ -17,6 +35,7 @@ Negative Passed: 149/149 (100.00%)
    ·          ────
  3 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:4:16]
@@ -25,6 +44,7 @@ Negative Passed: 149/149 (100.00%)
    ·                ─────────
  5 │ function foo2([arguments]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:5:16]
@@ -33,6 +53,7 @@ Negative Passed: 149/149 (100.00%)
    ·                ─────────
  6 │ function foo3({ eval }) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:6:17]
@@ -41,14 +62,79 @@ Negative Passed: 149/149 (100.00%)
    ·                 ────
  7 │ function foo4([eval]) {}
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[misc/fail/arguments-eval.ts:7:16]
  6 │ function foo3({ eval }) {}
  7 │ function foo4([eval]) {}
    ·                ────
- 8 │ 
+ 8 │ declare function foo5({ arguments }: { arguments: number }): void;
    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:8:25]
+ 7 │ function foo4([eval]) {}
+ 8 │ declare function foo5({ arguments }: { arguments: number }): void;
+   ·                         ─────────
+ 9 │ declare function foo6([eval]: [number]): void;
+   ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:9:24]
+  8 │ declare function foo5({ arguments }: { arguments: number }): void;
+  9 │ declare function foo6([eval]: [number]): void;
+    ·                        ────
+ 10 │ declare function foo7([arguments = 0]: [number?]): void;
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:10:24]
+  9 │ declare function foo6([eval]: [number]): void;
+ 10 │ declare function foo7([arguments = 0]: [number?]): void;
+    ·                        ─────────
+ 11 │ declare function foo8({ ...arguments }: object): void;
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:11:28]
+ 10 │ declare function foo7([arguments = 0]: [number?]): void;
+ 11 │ declare function foo8({ ...arguments }: object): void;
+    ·                            ─────────
+ 12 │ declare function foo9([...eval]: unknown[]): void;
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:12:27]
+ 11 │ declare function foo8({ ...arguments }: object): void;
+ 12 │ declare function foo9([...eval]: unknown[]): void;
+    ·                           ────
+ 13 │ declare class C {
+    ╰────
+  note: Modules are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:14:12]
+ 13 │ declare class C {
+ 14 │   method({ eval }: { eval: number }): void;
+    ·            ────
+ 15 │   constructor([arguments]: [number]);
+    ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[misc/fail/arguments-eval.ts:15:16]
+ 14 │   method({ eval }: { eval: number }): void;
+ 15 │   constructor([arguments]: [number]);
+    ·                ─────────
+ 16 │ }
+    ╰────
+  note: Classes are always strict mode code
 
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
@@ -116,6 +202,31 @@ Negative Passed: 149/149 (100.00%)
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:1:1]
+ 1 │ -value ** 2;
+   · ──────
+ 2 │ await value ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:2:1]
+ 1 │ -value ** 2;
+ 2 │ await value ** 2;
+   · ───────────
+ 3 │ <number>value ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+   ╭─[misc/fail/exponentiation-left-operands.ts:3:1]
+ 2 │ await value ** 2;
+ 3 │ <number>value ** 2;
+   · ─────────────
+   ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[misc/fail/export-equal-with-normal-export.ts:4:1]
@@ -399,6 +510,7 @@ Negative Passed: 149/149 (100.00%)
    · ───
  5 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:6:1]
@@ -407,6 +519,7 @@ Negative Passed: 149/149 (100.00%)
    · ───
  7 │ let()[x] = 1;
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:7:1]
@@ -415,6 +528,7 @@ Negative Passed: 149/149 (100.00%)
    · ───
  8 │ 
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:9:1]
@@ -423,6 +537,7 @@ Negative Passed: 149/149 (100.00%)
     · ───
  10 │ let?.y.z;
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:10:1]
@@ -431,6 +546,7 @@ Negative Passed: 149/149 (100.00%)
     · ───
  11 │ let?.[0];
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:11:1]
@@ -439,6 +555,7 @@ Negative Passed: 149/149 (100.00%)
     · ───
  12 │ let?.method();
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
     ╭─[misc/fail/let-member-expression.js:12:1]
@@ -446,6 +563,7 @@ Negative Passed: 149/149 (100.00%)
  12 │ let?.method();
     · ───
     ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[misc/fail/minus-yield-100.js:1:27]
@@ -3579,6 +3697,7 @@ Negative Passed: 149/149 (100.00%)
     ·       ─────
  10 │ }
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
    ╭─[misc/fail/oxc-23170.ts:2:16]
@@ -3601,6 +3720,65 @@ Negative Passed: 149/149 (100.00%)
  1 │ x = (/* a */)
    ·     ─────────
    ╰────
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:1:5]
+ 1 │ new import('').prop;
+   ·     ───────────────
+ 2 │ new import.source('<module source>').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:2:5]
+ 1 │ new import('').prop;
+ 2 │ new import.source('<module source>').prop;
+   ·     ─────────────────────────────────────
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:3:5]
+ 2 │ new import.source('<module source>').prop;
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ·     ───────────────────────────────────────
+ 4 │ new import('x').prop``;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:4:5]
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+ 4 │ new import('x').prop``;
+   ·     ──────────────────
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:1:5]
+ 1 │ new import('x').prop!;
+   ·     ─────────────────
+ 2 │ new import('x').prop as Foo;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:2:5]
+ 1 │ new import('x').prop!;
+ 2 │ new import('x').prop as Foo;
+   ·     ────────────────
+ 3 │ new import('x').prop satisfies Foo;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:3:5]
+ 2 │ new import('x').prop as Foo;
+ 3 │ new import('x').prop satisfies Foo;
+   ·     ────────────────
+   ╰────
+  help: Wrap this with parenthesis
 
   × Expected 'with' in import type options
     ╭─[misc/fail/oxc-2394.ts:20:22]
@@ -3642,6 +3820,89 @@ Negative Passed: 149/149 (100.00%)
     ·                     ╰── `{` expected
  39 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
     ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[misc/fail/oxc-24503.ts:2:20]
+ 1 │ class Basic {
+ 2 │     accessor noType!;
+   ·                    ─
+ 3 │     accessor initialized! = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[misc/fail/oxc-24503.ts:3:25]
+ 2 │     accessor noType!;
+ 3 │     accessor initialized! = 1;
+   ·                         ─
+ 4 │     accessor typed!: number;
+   ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+   ╭─[misc/fail/oxc-24503.ts:5:32]
+ 4 │     accessor typed!: number;
+ 5 │     static accessor staticTyped!: number;
+   ·                                ─
+ 6 │     static accessor staticNoType!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[misc/fail/oxc-24503.ts:6:33]
+ 5 │     static accessor staticTyped!: number;
+ 6 │     static accessor staticNoType!;
+   ·                                 ─
+ 7 │     static accessor staticInitialized! = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[misc/fail/oxc-24503.ts:7:38]
+ 6 │     static accessor staticNoType!;
+ 7 │     static accessor staticInitialized! = 1;
+   ·                                      ─
+ 8 │ }
+   ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[misc/fail/oxc-24503.ts:11:28]
+ 10 │ abstract class Abstract {
+ 11 │     abstract accessor value!: number;
+    ·                            ─
+ 12 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[misc/fail/oxc-24503.ts:15:19]
+ 14 │ declare class Ambient {
+ 15 │     accessor value!: number;
+    ·                   ─
+ 16 │ }
+    ╰────
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+    ╭─[misc/fail/oxc-24503.ts:19:5]
+ 18 │ class DeclareMember {
+ 19 │     declare accessor typed!: number;
+    ·     ───────
+ 20 │     declare accessor untyped!;
+    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+    ╭─[misc/fail/oxc-24503.ts:20:5]
+ 19 │     declare accessor typed!: number;
+ 20 │     declare accessor untyped!;
+    ·     ───────
+ 21 │     declare accessor initialized! = 1;
+    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+    ╭─[misc/fail/oxc-24503.ts:21:5]
+ 20 │     declare accessor untyped!;
+ 21 │     declare accessor initialized! = 1;
+    ·     ───────
+ 22 │ }
+    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]

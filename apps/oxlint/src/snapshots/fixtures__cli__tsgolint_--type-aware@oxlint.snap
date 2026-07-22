@@ -98,7 +98,8 @@ working directory: fixtures/cli/tsgolint
    ,-[no-floating-promises.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
-   : ^^^^^^^^
+   : ^^^|^^^^
+   :    `-- This unhandled promise-like value has type `Promise<unknown>`.
  3 | 
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
@@ -169,7 +170,8 @@ working directory: fixtures/cli/tsgolint
    ,-[no-unnecessary-condition.ts:3:19]
  2 | declare const b2: boolean;
  3 | export const t1 = b1 && b2;
-   :                   ^^
+   :                   ^|^
+   :                    `-- Type: object
  4 | 
    `----
 
@@ -307,6 +309,16 @@ working directory: fixtures/cli/tsgolint
  3 | 
    `----
 
+  x typescript(no-unnecessary-condition): Unnecessary comparison between literal values.
+    ,-[no-unsafe-enum-comparison.ts:9:32]
+  8 | }
+  9 | const comparison = Status.Open === Color.Red;
+    :                    ^^^^^|^^^^^ ^^^ ^^^^|^^^^
+    :                         |       |      `-- Type: Color.Red
+    :                         `-- Type: Status.Open
+ 10 | 
+    `----
+
   x typescript(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
     ,-[no-unsafe-enum-comparison.ts:9:20]
   8 | }
@@ -317,14 +329,6 @@ working directory: fixtures/cli/tsgolint
  10 | 
     `----
   help: Compare enum values to members of the same enum, or convert both sides to the same primitive type before comparing them.
-
-  x typescript(no-unnecessary-condition): Unnecessary comparison between literal values.
-    ,-[no-unsafe-enum-comparison.ts:9:20]
-  8 | }
-  9 | const comparison = Status.Open === Color.Red;
-    :                    ^^^^^^^^^^^^^^^^^^^^^^^^^
- 10 | 
-    `----
 
   x typescript(no-unsafe-member-access): Unsafe member access .foo on an `any` value.
    ,-[no-unsafe-member-access.ts:2:10]
@@ -438,11 +442,11 @@ working directory: fixtures/cli/tsgolint
    `----
 
   x typescript(no-unnecessary-condition): This condition will always return the same value since the types have no overlap.
-   ,-[prefer-nullish-coalescing.ts:2:49]
+   ,-[prefer-nullish-coalescing.ts:2:65]
  1 | declare const nullableString: string | null;
  2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
-   :                                                 ^^^^^^^|^^^^^^^    ^^^^^|^^^^
-   :                                                        |                `-- Type: undefined
+   :                                                 ^^^^^^^|^^^^^^^ ^^^^^^^^|^^^^
+   :                                                        |         |      `-- Type: undefined
    :                                                        `-- Type: string
    `----
 
@@ -453,18 +457,19 @@ working directory: fixtures/cli/tsgolint
    : ^^^^^^^^^^^^^^^^^^^^^^
    `----
 
+  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ,-[prefer-promise-reject-errors.ts:1:1]
+ 1 | Promise.reject('error');
+   : ^^^^^^^^^^^|^^^^^^^^^^^^
+   :            `-- This unhandled promise-like value has type `Promise<never>`.
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
   x typescript(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
    ,-[prefer-promise-reject-errors.ts:1:1]
  1 | Promise.reject('error');
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
-
-  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
-   ,-[prefer-promise-reject-errors.ts:1:1]
- 1 | Promise.reject('error');
-   : ^^^^^^^^^^^^^^^^^^^^^^^^
-   `----
-  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript(prefer-readonly-parameter-types): Parameter should be a readonly type.
    ,-[prefer-readonly-parameter-types.ts:5:18]
@@ -617,7 +622,8 @@ working directory: fixtures/cli/tsgolint
    ,-[strict-boolean-expressions.ts:2:5]
  1 | const str = 'hello';
  2 | if (str) {
-   :     ^^^
+   :     ^|^^
+   :      `-- Type: "hello"
  3 | }
    `----
 

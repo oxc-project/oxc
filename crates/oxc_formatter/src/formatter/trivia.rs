@@ -46,7 +46,7 @@
 //! // In container node formatting:
 //! write!(f, [
 //!     "{",
-//!     format_dangling_comments(container.span).with_block_indent(),
+//!     format_dangling_comments(container.span).with_soft_block_indent(),
 //!     "}"
 //! ]);
 //! ```
@@ -54,6 +54,7 @@
 //! **Implementation**:
 //! 1. Calls `comments_between()` to find internal comments not owned by children
 //! 2. Applies indentation based on container type (block, soft, none)
+//!    — see [`DanglingIndentMode`] for which variant an empty container takes
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
 use oxc_allocator::ArenaStringBuilder;
@@ -287,6 +288,13 @@ pub enum FormatDanglingComments<'a> {
     Comments { comments: &'a [Comment], indent: DanglingIndentMode },
 }
 
+/// How an empty container indents its dangling comments.
+///
+/// Prettier >= 3.9: expression-level containers that may stay flat
+/// (`[]`, `{}`, `()`, tuple types, enum bodies) take [`Soft`](Self::Soft),
+/// so a single one-line block comment stays inline;
+/// statement bodies that always expand (function/class/interface/namespace bodies)
+/// take [`Block`](Self::Block).
 #[derive(Copy, Clone, Debug)]
 pub enum DanglingIndentMode {
     /// Writes every comment on its own line and indents them with a block indent.

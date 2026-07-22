@@ -11,11 +11,13 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneAlwaysInvalidatingScopes.ts`.
 
-use std::mem::take;
+use std::mem::replace;
 
+use oxc_allocator::Vec as ArenaVec;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     IdentifierId, InstructionValue, PrunedReactiveScopeBlock, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -32,7 +34,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn prune_always_invalidating_scopes<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let mut transform = Transform {
         env,
         always_invalidating_values: FxHashSet::default(),
@@ -59,7 +61,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_instruction(instruction, within_scope)?;
 
         let lvalue = &instruction.lvalue;
@@ -109,12 +111,13 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         _within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         let mut within_scope = true;
         self.visit_scope(scope, &mut within_scope)?;
 
+        let alloc = self.env.allocator;
         let scope_id = scope.scope;
-        let scope_data = &self.env.scopes[scope_id.0 as usize];
+        let scope_data = &self.env.scopes[scope_id];
 
         for dep in &scope_data.dependencies {
             if self.unmemoized_values.contains(&dep.identifier) {
@@ -122,7 +125,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 // Propagate always-invalidating and unmemoized to declarations/reassignments
                 let decl_ids: Vec<IdentifierId> =
                     scope_data.declarations.iter().map(|(_, decl)| decl.identifier).collect();
-                let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.clone();
+                let reassign_ids: Vec<IdentifierId> =
+                    scope_data.reassignments.iter().copied().collect();
 
                 for id in &decl_ids {
                     if self.always_invalidating_values.contains(id) {
@@ -138,7 +142,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 return Ok(Transformed::Replace(ReactiveStatement::PrunedScope(
                     PrunedReactiveScopeBlock {
                         scope: scope.scope,
-                        instructions: take(&mut scope.instructions),
+                        instructions: replace(&mut scope.instructions, ArenaVec::new_in(&alloc)),
                     },
                 )));
             }

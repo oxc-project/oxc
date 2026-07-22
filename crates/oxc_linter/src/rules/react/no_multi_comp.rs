@@ -6,7 +6,7 @@ use oxc_ast::{
         ObjectProperty, PropertyKey, Statement, VariableDeclarator,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -138,7 +138,7 @@ impl<'a, 'ctx> ComponentFinder<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
+impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
     fn visit_class(&mut self, class: &Class<'a>) {
         if is_es6_component_class(class) {
             let name = class
@@ -147,10 +147,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
                 .map_or_else(|| "UnnamedComponent".into(), |id| id.name.to_string());
             self.record_component(name, class.span, false);
             self.component_depth += 1;
-            walk::walk_class(self, class);
+            walk_js::walk_class(self, class);
             self.component_depth -= 1;
         } else {
-            walk::walk_class(self, class);
+            walk_js::walk_class(self, class);
         }
     }
 
@@ -162,10 +162,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         {
             self.record_component(func_id.name.to_string(), func.span, true);
             self.component_depth += 1;
-            walk::walk_function(self, func, flags);
+            walk_js::walk_function(self, func, flags);
             self.component_depth -= 1;
         } else {
-            walk::walk_function(self, func, flags);
+            walk_js::walk_function(self, func, flags);
         }
     }
 
@@ -175,14 +175,14 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
             // Store var name for potential createReactClass detection in nested call
             self.current_var_name = decl.id.get_identifier_name().map(|s| s.to_string());
             self.component_depth += 1;
-            walk::walk_variable_declarator(self, decl);
+            walk_js::walk_variable_declarator(self, decl);
             self.component_depth -= 1;
             self.current_var_name = None;
         } else {
             // Check if this might contain a createReactClass call
             let old_name = self.current_var_name.take();
             self.current_var_name = decl.id.get_identifier_name().map(|s| s.to_string());
-            walk::walk_variable_declarator(self, decl);
+            walk_js::walk_variable_declarator(self, decl);
             self.current_var_name = old_name;
         }
     }
@@ -193,10 +193,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
             let name = self.current_var_name.clone().unwrap_or_else(|| "UnnamedComponent".into());
             self.record_component(name, call.span, false);
             self.component_depth += 1;
-            walk::walk_call_expression(self, call);
+            walk_js::walk_call_expression(self, call);
             self.component_depth -= 1;
         } else {
-            walk::walk_call_expression(self, call);
+            walk_js::walk_call_expression(self, call);
         }
     }
 
@@ -207,10 +207,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         {
             self.record_component("UnnamedComponent".into(), export_decl.span, true);
             self.component_depth += 1;
-            walk::walk_export_default_declaration(self, export_decl);
+            walk_js::walk_export_default_declaration(self, export_decl);
             self.component_depth -= 1;
         } else {
-            walk::walk_export_default_declaration(self, export_decl);
+            walk_js::walk_export_default_declaration(self, export_decl);
         }
     }
 
@@ -225,10 +225,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         {
             self.record_component(id.name.to_string(), prop.span, true);
             self.component_depth += 1;
-            walk::walk_object_property(self, prop);
+            walk_js::walk_object_property(self, prop);
             self.component_depth -= 1;
         } else {
-            walk::walk_object_property(self, prop);
+            walk_js::walk_object_property(self, prop);
         }
     }
 
@@ -245,13 +245,13 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
                 if is_component {
                     self.record_component(prop_name.to_string(), assign.span, true);
                     self.component_depth += 1;
-                    walk::walk_assignment_expression(self, assign);
+                    walk_js::walk_assignment_expression(self, assign);
                     self.component_depth -= 1;
                     return;
                 }
             }
         }
-        walk::walk_assignment_expression(self, assign);
+        walk_js::walk_assignment_expression(self, assign);
     }
 }
 

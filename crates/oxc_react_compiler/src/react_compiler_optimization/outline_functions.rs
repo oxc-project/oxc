@@ -15,6 +15,9 @@ use std::mem::replace;
 
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::CloneIn;
+use oxc_str::Ident;
+
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, NonLocalBinding,
@@ -24,9 +27,9 @@ use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 /// Outline anonymous function expressions that have no captured context variables.
 ///
 /// Ported from TS `outlineFunctions` in `Optimization/OutlineFunctions.ts`.
-pub fn outline_functions(
-    func: &mut HirFunction,
-    env: &mut Environment,
+pub fn outline_functions<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     fbt_operands: &FxHashSet<IdentifierId>,
 ) {
     // Collect per-instruction actions to maintain depth-first name allocation order.
@@ -42,12 +45,12 @@ pub fn outline_functions(
 
     for block in func.body.blocks.values() {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.0 as usize];
+                    let inner_func = &env.functions[lowered_func.func];
 
                     // Check outlining conditions (TS only checks func.id === null, not name):
                     // 1. No captured context variables
@@ -58,7 +61,7 @@ pub fn outline_functions(
                         && !fbt_operands.contains(&lvalue_id)
                     {
                         actions.push(Action::RecurseAndOutline {
-                            instr_idx: instr_id.0 as usize,
+                            instr_idx: instr_id.index(),
                             function_id: lowered_func.func,
                         });
                     } else {
@@ -81,36 +84,34 @@ pub fn outline_functions(
         match action {
             Action::Recurse(function_id) => {
                 let mut inner_func =
-                    replace(&mut env.functions[function_id.0 as usize], placeholder_function());
+                    replace(&mut env.functions[function_id], placeholder_function(env.allocator));
                 outline_functions(&mut inner_func, env, fbt_operands);
-                env.functions[function_id.0 as usize] = inner_func;
+                env.functions[function_id] = inner_func;
             }
             Action::RecurseAndOutline { instr_idx, function_id } => {
                 // First recurse into the inner function (depth-first)
                 let mut inner_func =
-                    replace(&mut env.functions[function_id.0 as usize], placeholder_function());
+                    replace(&mut env.functions[function_id], placeholder_function(env.allocator));
                 outline_functions(&mut inner_func, env, fbt_operands);
-                env.functions[function_id.0 as usize] = inner_func;
+                env.functions[function_id] = inner_func;
 
                 // Then generate the name and outline (after recursion, matching TS order)
-                let hint: Option<String> = env.functions[function_id.0 as usize]
-                    .id
-                    .clone()
-                    .or_else(|| env.functions[function_id.0 as usize].name_hint.clone());
+                let inner = &env.functions[function_id];
+                let hint: Option<Ident<'a>> = inner.id.or(inner.name_hint);
                 let generated_name = env.generate_globally_unique_identifier_name(hint.as_deref());
 
                 // Set the id on the inner function
-                env.functions[function_id.0 as usize].id = Some(generated_name.clone());
+                env.functions[function_id].id = Some(generated_name);
 
                 // Outline the function
-                let outlined_func = env.functions[function_id.0 as usize].clone();
+                let outlined_func = env.functions[function_id].clone_in(env.allocator);
                 env.outline_function(outlined_func, None);
 
                 // Replace the instruction value with LoadGlobal
-                let loc = func.instructions[instr_idx].value.loc().cloned();
+                let span = func.instructions[instr_idx].value.span().cloned();
                 func.instructions[instr_idx].value = InstructionValue::LoadGlobal {
                     binding: NonLocalBinding::Global { name: generated_name },
-                    loc,
+                    span,
                 };
             }
         }

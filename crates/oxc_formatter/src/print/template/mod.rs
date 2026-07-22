@@ -21,6 +21,7 @@ use crate::{
     },
     utils::{
         call_expression::is_test_each_pattern,
+        expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
     },
@@ -54,20 +55,45 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Format the tag and type arguments
-        write!(f, [self.tag(), self.type_arguments()]);
+        // Format the tag and type arguments.
+        // Comments between the tag (or type arguments) and the quasi always belong to the quasi
+        // as leading comments; suppress the trailing-comment capture on the last node before the quasi
+        // so they reach `comments_before` below.
+        // ```js
+        // foo /* c */
+        // `x`;
+        // ```
+        // Without this, the newline after the comment would make it the tag's trailing comment (end-of-line rule),
+        // printing ``foo /* c */`x`;``.
+        // Unlike the no-newline form which attaches to the quasi, so formatting is not idempotent.
+        if let Some(type_arguments) = self.type_arguments() {
+            write!(f, [self.tag(), FormatNodeWithoutTrailingComments(type_arguments)]);
+        } else {
+            write!(f, [FormatNodeWithoutTrailingComments(self.tag())]);
+        }
 
         let quasi = self.quasi();
 
         let comments = f.context().comments().comments_before(quasi.span.start);
         if !comments.is_empty() {
-            write!(
-                f,
-                [group(&format_args!(
-                    soft_line_break_or_space(),
-                    FormatLeadingComments::Comments(comments)
-                ))]
-            );
+            // The separator before the first comment is a plain space when the comment starts on the same line,
+            // and a soft line break otherwise.
+            // ```js
+            // foo /* a */ `x`; // same line -> space
+            //
+            // foo
+            // /* b */
+            // `x`;             // own line  -> soft line break
+            // ```
+            // No `group` here:
+            // the line elements inside the comments must inherit the enclosing mode,
+            // so a comment followed by a newline in the source keeps its line break.
+            if comments[0].preceded_by_newline() {
+                write!(f, [soft_line_break()]);
+            } else {
+                write!(f, [space()]);
+            }
+            write!(f, [FormatLeadingComments::Comments(comments)]);
         }
 
         write!(f, [line_suffix_boundary()]);
@@ -86,7 +112,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         }
 
         if embed::try_format_embedded_template(self, f) {
-        } else if is_test_each_pattern(&self.tag) {
+        } else if is_test_each_pattern(&self.tag) && EachTemplateTable::is_table_like(quasi) {
             let template = &EachTemplateTable::from_template(quasi, f);
             // Use table formatting
             write!(f, template);
@@ -383,12 +409,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                     // the closing `}` boundary when the parent is a template literal.
                     e.fmt(f);
                 } else {
+                    // The template owns the trailing comments;
+                    // the generic trailing comments printing is not `}`-aware and could claim a later `${...}`'s comments,
+                    // or defer own-line ones to a leading pass that never runs inside a template, leaking them outside.
                     FormatNodeWithoutTrailingComments(e).fmt(f);
                 }
-                // Print any comments the expression did not claim so they still land before
-                // the closing `}` of the interpolation.
+                // Print the skipped (non-JSX) or unclaimed (JSX) comments before the closing `}`.
+                // Scan from the expression's END, its own source may contain `}`.
                 let trailing_comments =
-                    f.context().comments().comments_before_character(e.span().start, b'}');
+                    f.context().comments().comments_before_character(e.span().end, b'}');
                 FormatTrailingComments::Comments(trailing_comments).fmt(f);
             }
             TemplateExpression::TSType(t) => write!(f, t),
@@ -422,20 +451,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                 let indent = self.expression.as_expression().is_some_and(|e| {
                     has_comment_in_expression
                         || match e.as_ref() {
-                            Expression::StaticMemberExpression(_)
-                            | Expression::ComputedMemberExpression(_)
-                            | Expression::PrivateFieldExpression(_)
-                            | Expression::ConditionalExpression(_)
+                            Expression::ConditionalExpression(_)
                             | Expression::SequenceExpression(_)
                             | Expression::TSAsExpression(_)
                             | Expression::TSSatisfiesExpression(_)
                             | Expression::BinaryExpression(_)
                             | Expression::LogicalExpression(_)
                             | Expression::Identifier(_) => true,
-                            Expression::ChainExpression(chain) => {
-                                chain.expression.is_member_expression()
-                            }
-                            _ => false,
+                            e => is_member_expression_without_chain_wrappers(e),
                         }
                 });
 
@@ -660,6 +683,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for EachTemplateSeparator {
 }
 
 impl<'a> EachTemplateTable<'a> {
+    /// Whether the template qualifies for table formatting:
+    /// Prettier's header check (multiple columns, or one non-empty column name)
+    /// reduces to a non-empty trimmed first quasi.
+    fn is_table_like(quasi: &TemplateLiteral) -> bool {
+        !quasi.quasis[0].value.raw.trim().is_empty()
+    }
+
     pub(crate) fn from_template(
         quasi: &AstNode<'a, TemplateLiteral<'a>>,
         f: &mut JsFormatter<'_, 'a>,

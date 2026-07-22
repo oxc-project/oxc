@@ -2,7 +2,7 @@
 //!
 //! Each input under `fixtures/` (copied from upstream
 //! `babel-plugin-react-compiler/src/__tests__/fixtures/compiler`) is parsed,
-//! analysed, and run through [`oxc_react_compiler::transform`]; the compiled output
+//! analysed, and run through [`oxc_react_compiler::compile`]; the compiled output
 //! plus diagnostics are snapshotted with `insta` into `tests/snapshots/`.
 //!
 //! Per-fixture options come from the first-line `// @directive` pragmas, mirroring
@@ -26,10 +26,10 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_react_compiler::{
-    BuiltInTypeRef, CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig,
-    ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig,
-    HookTypeConfig, InstrumentationConfig, ObjectTypeConfig, PluginOptions, TypeConfig,
-    TypeReferenceConfig, ValueKind, transform,
+    BuiltInTypeRef, CompilationMode, CompilerOutputMode, DynamicGatingConfig, Effect,
+    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig,
+    FxIndexMap, GatingConfig, HookTypeConfig, InstrumentationConfig, ObjectTypeConfig,
+    PanicThreshold, PluginOptions, TypeConfig, TypeReferenceConfig, ValueKind, compile, lint,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -51,7 +51,8 @@ fn normalize_newlines(source: &str) -> String {
     source.cow_replace("\r\n", "\n").cow_replace('\r', "\n").into_owned()
 }
 
-/// Parse, analyse, compile, and render the compiled program + diagnostics.
+/// Parse, analyse, compile, and render the compiled program + diagnostics, plus any
+/// divergence between the read-only `lint` entry point and `compile`.
 fn run_fixture(source: &str) -> String {
     let (source_type, options) = parse_pragma(source);
     // In lint output mode the compiler validates without rewriting the program, so
@@ -69,17 +70,23 @@ fn run_fixture(source: &str) -> String {
     // Surface parse failures rather than silently compiling a recovered/dummy AST.
     push_diagnostics(&mut out, "Parse errors", parsed.diagnostics.as_slice());
 
-    // `transform` borrows a `Semantic` built from the pristine program; scope the
-    // borrow so it ends before we swap in the compiled program.
-    let mut result = {
+    // `compile` and `lint` both borrow a `Semantic` built from the pristine program;
+    // scope the borrow so it ends before the output rewrites the program. `compile`
+    // runs first on the untouched allocator so its output stays byte-identical to a
+    // compile-only run; `lint` then re-runs the same pipeline read-only so we can
+    // cross-check its diagnostics against `compile`'s below.
+    let (output, diagnostics, lint_diagnostics) = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
-        transform(&program, &semantic, &allocator, options)
+        let (output, diagnostics) = compile(&program, &semantic, &allocator, options.clone());
+        let lint_diagnostics = lint(&program, &semantic, &allocator, options).diagnostics;
+        (output, diagnostics, lint_diagnostics)
     };
-    if let Some(compiled) = result.program.take() {
-        program = compiled;
+    let changed = output.is_some();
+    if let Some(output) = output {
+        output.transform(&mut program);
     }
 
-    push_diagnostics(&mut out, "Diagnostics", result.diagnostics.as_slice());
+    push_diagnostics(&mut out, "Diagnostics", diagnostics.as_slice());
     // Mirror the upstream `snap` runner, which always re-emits the program as
     // `## Code` unless a hard error turns the output into `## Error`. So when the
     // compiler cleanly declines to change anything (e.g. `@expectNothingCompiled`,
@@ -88,26 +95,49 @@ fn run_fixture(source: &str) -> String {
     // the `No changes.` marker. The marker is kept only when a non-lint run reports
     // an error (parse failure or compile diagnostic), where upstream emits no code —
     // and echoing a parse-recovered AST would be misleading.
-    let clean = parsed.diagnostics.is_empty() && result.diagnostics.as_slice().is_empty();
-    if result.changed || clean || lint_mode {
+    let clean = parsed.diagnostics.is_empty() && diagnostics.as_slice().is_empty();
+    if changed || clean || lint_mode {
         out.push_str(&Codegen::new().build(&program).code);
     } else {
         out.push_str("No changes.");
+    }
+
+    // Cross-check the read-only `lint` entry point against `compile`. Both funnel
+    // through the same pipeline, so their diagnostics are identical for almost
+    // every fixture. They diverge only where the pipeline gates a validation on lint
+    // output mode: `@validateNoSetStateInEffects` / `@validateNoJSXInTryStatements` /
+    // `@validateStaticComponents` / `@validateNoDerivedComputationsInEffectsExp` fixtures
+    // gain lint-only findings, while `@enableEmitHookGuards` conversely errors only when
+    // emitting. Surface any divergence in the snapshot so it stays reviewed rather than
+    // drifting silently.
+    let transform_body = diagnostics_body(diagnostics.as_slice());
+    let lint_body = diagnostics_body(lint_diagnostics.as_slice());
+    if lint_body != transform_body {
+        out.push_str("\n\nLint-mode diagnostics (differ from transform):\n\n");
+        out.push_str(if lint_body.is_empty() { "(none)\n" } else { &lint_body });
     }
     out
 }
 
 /// Append a `"{label}:\n\n{diag}\n…\n"` section, or nothing when there are none.
 fn push_diagnostics(out: &mut String, label: &str, diagnostics: &[impl std::fmt::Debug]) {
-    if diagnostics.is_empty() {
+    let body = diagnostics_body(diagnostics);
+    if body.is_empty() {
         return;
     }
     out.push_str(label);
     out.push_str(":\n\n");
-    for diagnostic in diagnostics {
-        out.push_str(&format!("{diagnostic:?}\n"));
-    }
+    out.push_str(&body);
     out.push('\n');
+}
+
+/// Render diagnostics as one `{diag:?}` line each, or `""` when there are none.
+fn diagnostics_body(diagnostics: &[impl std::fmt::Debug]) -> String {
+    let mut body = String::new();
+    for diagnostic in diagnostics {
+        body.push_str(&format!("{diagnostic:?}\n"));
+    }
+    body
 }
 
 /// Snapshot name = fixture path under `fixtures/`, extension dropped and path
@@ -141,8 +171,8 @@ fn snapshot_name(path: &Path) -> String {
 fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
     // Upstream `snap` defaults: compile everything, surface every error.
     let mut options = PluginOptions {
-        compilation_mode: "all".to_string(),
-        panic_threshold: "all_errors".to_string(),
+        compilation_mode: CompilationMode::All,
+        panic_threshold: PanicThreshold::AllErrors,
         ..PluginOptions::default()
     };
     // Mirror the snap runner's test `moduleTypeProvider`; unlisted modules fall back to
@@ -163,16 +193,16 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
         match key {
             "script" => is_script = true,
             "compilationMode" => {
-                if let Some(v) = value {
-                    options.compilation_mode = unquote(v);
+                if let Some(v) = value.and_then(|v| unquote(v).parse().ok()) {
+                    options.compilation_mode = v;
                 }
             }
             "panicThreshold" => {
-                if let Some(v) = value {
-                    options.panic_threshold = unquote(v);
+                if let Some(v) = value.and_then(|v| unquote(v).parse().ok()) {
+                    options.panic_threshold = v;
                 }
             }
-            "outputMode" => options.output_mode = value.map(unquote),
+            "outputMode" => options.output_mode = value.and_then(|v| unquote(v).parse().ok()),
             // Fixed test default (upstream `testComplexPluginOptionDefaults`).
             "gating" => {
                 options.gating = Some(GatingConfig {

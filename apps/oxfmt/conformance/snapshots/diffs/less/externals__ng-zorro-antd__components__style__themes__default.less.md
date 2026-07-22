@@ -1,6 +1,7 @@
 # externals/ng-zorro-antd/components/style/themes/default.less
 
 > Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
+> Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it.
 
 ## Option 1
 
@@ -14,7 +15,50 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -465,24 +465,18 @@
+@@ -56,23 +56,15 @@
+ @black: #000;
+ 
+ // Color used by default to control hover and active backgrounds and for
+ // alert info backgrounds.
+-@primary-1: color(
+-  colorPalette("@{primary-color}", 1)
+-); // replace tint(@primary-color, 90%)
+-@primary-2: color(
+-  colorPalette("@{primary-color}", 2)
+-); // replace tint(@primary-color, 80%)
++@primary-1: color(colorPalette("@{primary-color}", 1)); // replace tint(@primary-color, 90%)
++@primary-2: color(colorPalette("@{primary-color}", 2)); // replace tint(@primary-color, 80%)
+ @primary-3: color(colorPalette("@{primary-color}", 3)); // unused
+ @primary-4: color(colorPalette("@{primary-color}", 4)); // unused
+-@primary-5: color(
+-  colorPalette("@{primary-color}", 5)
+-); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
++@primary-5: color(colorPalette("@{primary-color}", 5)); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
+ @primary-6: @primary-color; // color used to control the text color of active buttons, don't use, use @primary-color
+-@primary-7: color(
+-  colorPalette("@{primary-color}", 7)
+-); // replace shade(@primary-color, 5%)
++@primary-7: color(colorPalette("@{primary-color}", 7)); // replace shade(@primary-color, 5%)
+ @primary-8: color(colorPalette("@{primary-color}", 8)); // unused
+ @primary-9: color(colorPalette("@{primary-color}", 9)); // unused
+ @primary-10: color(colorPalette("@{primary-color}", 10)); // unused
+ 
+@@ -196,13 +188,9 @@
+ @outline-width: 2px;
+ @outline-color: @primary-color; // No use anymore
+ @outline-fade: 20%;
+ 
+-@background-color-light: hsv(
+-  0,
+-  0,
+-  98%
+-); // background of header and selected item
++@background-color-light: hsv(0, 0, 98%); // background of header and selected item
+ @background-color-base: hsv(0, 0, 96%); // Default grey background color
+ @background-color-dark: hsv(0, 0, 94%); // dark grey background color
+ 
+ // Disabled states
+@@ -465,24 +453,18 @@
  @input-padding-horizontal-base: @input-padding-horizontal;
  @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
  @input-padding-horizontal-lg: @input-padding-horizontal;
@@ -45,7 +89,7 @@
    0
  );
  @input-padding-vertical-lg: (
-@@ -846,11 +840,12 @@
+@@ -846,11 +828,12 @@
  @tabs-card-head-background: @background-color-light;
  @tabs-card-height: 40px;
  @tabs-card-active-color: @primary-color;
@@ -126,21 +170,13 @@
 
 // Color used by default to control hover and active backgrounds and for
 // alert info backgrounds.
-@primary-1: color(
-  colorPalette("@{primary-color}", 1)
-); // replace tint(@primary-color, 90%)
-@primary-2: color(
-  colorPalette("@{primary-color}", 2)
-); // replace tint(@primary-color, 80%)
+@primary-1: color(colorPalette("@{primary-color}", 1)); // replace tint(@primary-color, 90%)
+@primary-2: color(colorPalette("@{primary-color}", 2)); // replace tint(@primary-color, 80%)
 @primary-3: color(colorPalette("@{primary-color}", 3)); // unused
 @primary-4: color(colorPalette("@{primary-color}", 4)); // unused
-@primary-5: color(
-  colorPalette("@{primary-color}", 5)
-); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
+@primary-5: color(colorPalette("@{primary-color}", 5)); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
 @primary-6: @primary-color; // color used to control the text color of active buttons, don't use, use @primary-color
-@primary-7: color(
-  colorPalette("@{primary-color}", 7)
-); // replace shade(@primary-color, 5%)
+@primary-7: color(colorPalette("@{primary-color}", 7)); // replace shade(@primary-color, 5%)
 @primary-8: color(colorPalette("@{primary-color}", 8)); // unused
 @primary-9: color(colorPalette("@{primary-color}", 9)); // unused
 @primary-10: color(colorPalette("@{primary-color}", 10)); // unused
@@ -266,11 +302,7 @@
 @outline-color: @primary-color; // No use anymore
 @outline-fade: 20%;
 
-@background-color-light: hsv(
-  0,
-  0,
-  98%
-); // background of header and selected item
+@background-color-light: hsv(0, 0, 98%); // background of header and selected item
 @background-color-base: hsv(0, 0, 96%); // Default grey background color
 @background-color-dark: hsv(0, 0, 94%); // dark grey background color
 
@@ -2387,7 +2419,20 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -821,11 +821,12 @@
+@@ -60,11 +60,9 @@
+ @primary-1: color(colorPalette("@{primary-color}", 1)); // replace tint(@primary-color, 90%)
+ @primary-2: color(colorPalette("@{primary-color}", 2)); // replace tint(@primary-color, 80%)
+ @primary-3: color(colorPalette("@{primary-color}", 3)); // unused
+ @primary-4: color(colorPalette("@{primary-color}", 4)); // unused
+-@primary-5: color(
+-  colorPalette("@{primary-color}", 5)
+-); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
++@primary-5: color(colorPalette("@{primary-color}", 5)); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
+ @primary-6: @primary-color; // color used to control the text color of active buttons, don't use, use @primary-color
+ @primary-7: color(colorPalette("@{primary-color}", 7)); // replace shade(@primary-color, 5%)
+ @primary-8: color(colorPalette("@{primary-color}", 8)); // unused
+ @primary-9: color(colorPalette("@{primary-color}", 9)); // unused
+@@ -821,11 +819,12 @@
  @tabs-card-head-background: @background-color-light;
  @tabs-card-height: 40px;
  @tabs-card-active-color: @primary-color;
@@ -2472,9 +2517,7 @@
 @primary-2: color(colorPalette("@{primary-color}", 2)); // replace tint(@primary-color, 80%)
 @primary-3: color(colorPalette("@{primary-color}", 3)); // unused
 @primary-4: color(colorPalette("@{primary-color}", 4)); // unused
-@primary-5: color(
-  colorPalette("@{primary-color}", 5)
-); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
+@primary-5: color(colorPalette("@{primary-color}", 5)); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
 @primary-6: @primary-color; // color used to control the text color of active buttons, don't use, use @primary-color
 @primary-7: color(colorPalette("@{primary-color}", 7)); // replace shade(@primary-color, 5%)
 @primary-8: color(colorPalette("@{primary-color}", 8)); // unused

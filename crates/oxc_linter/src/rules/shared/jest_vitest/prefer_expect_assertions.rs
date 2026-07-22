@@ -12,7 +12,7 @@ use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FunctionBody, Statement},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
@@ -416,7 +416,7 @@ impl HookScanner {
     }
 }
 
-impl<'a> Visit<'a> for HookScanner {
+impl<'a> VisitJs<'a> for HookScanner {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if get_node_name(&call_expr.callee) == self.expected_name.as_str() {
             self.has_expect_has_assertions = true;
@@ -425,7 +425,7 @@ impl<'a> Visit<'a> for HookScanner {
                 self.has_assertions_call_span = Some(call_expr.span);
             }
         }
-        oxc_ast_visit::walk::walk_call_expression(self, call_expr);
+        oxc_ast_visit::walk_js::walk_call_expression(self, call_expr);
     }
 }
 
@@ -465,7 +465,7 @@ impl BodyScanner {
     }
 }
 
-impl<'a> Visit<'a> for BodyScanner {
+impl<'a> VisitJs<'a> for BodyScanner {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if self.is_expect_call(call_expr) {
             if self.expression_depth > 0 {
@@ -475,29 +475,29 @@ impl<'a> Visit<'a> for BodyScanner {
                 self.has_expect_in_loop = true;
             }
         }
-        oxc_ast_visit::walk::walk_call_expression(self, call_expr);
+        oxc_ast_visit::walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
         self.expression_depth += 1;
-        oxc_ast_visit::walk::walk_function_body(self, body);
+        oxc_ast_visit::walk_js::walk_function_body(self, body);
         self.expression_depth -= 1;
     }
 
     fn visit_for_statement(&mut self, it: &oxc_ast::ast::ForStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_for_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_statement(s, it));
     }
     fn visit_for_in_statement(&mut self, it: &oxc_ast::ast::ForInStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_for_in_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_in_statement(s, it));
     }
     fn visit_for_of_statement(&mut self, it: &oxc_ast::ast::ForOfStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_for_of_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_of_statement(s, it));
     }
     fn visit_while_statement(&mut self, it: &oxc_ast::ast::WhileStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_while_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_while_statement(s, it));
     }
     fn visit_do_while_statement(&mut self, it: &oxc_ast::ast::DoWhileStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_do_while_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_do_while_statement(s, it));
     }
 }
 

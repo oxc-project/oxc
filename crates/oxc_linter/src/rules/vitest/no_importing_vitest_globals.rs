@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::is_vitest_import_source};
 
 fn no_importing_vitest_globals_diagnostic(spans: &[Span]) -> OxcDiagnostic {
     let help = format!("You can import anything except `{}`.", VITEST_GLOBALS.join(", "));
@@ -79,11 +79,11 @@ impl Rule for NoImportingVitestGlobals {
                     .declarations
                     .iter()
                     .map(|declaration| {
-                        if !is_vitest_require_declaration(declaration) {
+                        let Some(import_source) = vitest_require_source(declaration) else {
                             return DeclarationRenderType::NoVitest(declaration.span);
-                        }
+                        };
 
-                        process_declaration(declaration, ctx)
+                        process_declaration(declaration, ctx, import_source)
                     })
                     .collect::<Vec<DeclarationRenderType>>();
 
@@ -117,8 +117,9 @@ impl Rule for NoImportingVitestGlobals {
                                     }
 
                                     let new_vitest_declaration = format!(
-                                        "{{ {} }} = require('vitest')",
-                                        vitest_require.non_global_imports.join(", ")
+                                        "{{ {} }} = require('{}')",
+                                        vitest_require.non_global_imports.join(", "),
+                                        vitest_require.import_source
                                     );
                                     Some(new_vitest_declaration)
                                 }
@@ -136,7 +137,7 @@ impl Rule for NoImportingVitestGlobals {
                 );
             }
             AstKind::ImportDeclaration(import_decl) => {
-                if import_decl.source.value.as_str() != "vitest" {
+                if !is_vitest_import_source(import_decl.source.value.as_str()) {
                     return;
                 }
 
@@ -204,34 +205,36 @@ impl Rule for NoImportingVitestGlobals {
     }
 }
 
-fn is_vitest_require_declaration(declaration: &VariableDeclarator<'_>) -> bool {
+fn vitest_require_source<'a>(declaration: &'a VariableDeclarator<'a>) -> Option<&'a str> {
     let Some(Expression::CallExpression(call_expr)) = &declaration.init else {
-        return false;
+        return None;
     };
 
     if !call_expr.is_require_call() {
-        return false;
+        return None;
     }
 
     let Some(Argument::StringLiteral(require_import)) = call_expr.arguments.first() else {
-        return false;
+        return None;
     };
 
-    if require_import.value.as_str() != "vitest" {
-        return false;
+    let import_source = require_import.value.as_str();
+    if !is_vitest_import_source(import_source) {
+        return None;
     }
 
     if declaration.id.is_binding_identifier() {
-        return false;
+        return None;
     }
 
-    true
+    Some(import_source)
 }
 
-fn process_declaration(
-    declaration: &VariableDeclarator<'_>,
-    ctx: &LintContext<'_>,
-) -> DeclarationRenderType {
+fn process_declaration<'a>(
+    declaration: &'a VariableDeclarator<'a>,
+    ctx: &LintContext<'a>,
+    import_source: &'a str,
+) -> DeclarationRenderType<'a> {
     let BindingPattern::ObjectPattern(obj) = &declaration.id else {
         return DeclarationRenderType::NoVitest(declaration.span);
     };
@@ -261,6 +264,7 @@ fn process_declaration(
 
     DeclarationRenderType::Vitest(VitestImport {
         remove_fully: non_global_imports.is_empty(),
+        import_source,
         global_vitest_spans,
         non_global_imports,
     })
@@ -287,16 +291,17 @@ const VITEST_GLOBALS: [&str; 17] = [
 ];
 
 #[derive(Debug, PartialEq, Eq)]
-struct VitestImport {
+struct VitestImport<'a> {
     remove_fully: bool,
+    import_source: &'a str,
     global_vitest_spans: Vec<Span>,
     non_global_imports: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum DeclarationRenderType {
+enum DeclarationRenderType<'a> {
     NoVitest(Span),
-    Vitest(VitestImport),
+    Vitest(VitestImport<'a>),
 }
 
 #[test]
@@ -306,7 +311,9 @@ fn test() {
     let pass = vec![
         "import { describe } from 'jest';",
         "import vitest from 'vitest';",
+        "import vitest from 'vite-plus/test';",
         "import * as vitest from 'vitest';",
+        "import * as vitest from '@effect/vitest';",
         r#"import { "default" as vitest } from 'vitest';"#,
         "import { BenchFactory } from 'vitest';",
         "import type { TestArtifactBase, TestAttachment } from 'vitest'",
@@ -318,14 +325,17 @@ fn test() {
         "const x = require(a_variable);",
         "const x = require('jest');",
         "const x = require('vitest');",
+        "const x = require('vite-plus/test');",
         "const { ...rest } = require('vitest');",
         r#"const { "default": vitest } = require('vitest');"#,
     ];
 
     let fail = vec![
         "import { describe } from 'vitest';",
+        "import { describe } from '@effect/vitest';",
         "import { describe, it } from 'vitest';",
         "import { describe, BenchFactory } from 'vitest';",
+        "import { describe, BenchFactory } from 'vite-plus/test';",
         "import { BenchFactory, describe } from 'vitest';",
         "import { describe, BenchFactory, it } from 'vitest';",
         "import { BenchTask, describe, BenchFactory, it } from 'vitest';",
@@ -335,7 +345,9 @@ fn test() {
         "const x = 1, { describe } = require('vitest');",
         "const x = 1, { describe } = require('vitest'), y = 2;",
         "const { describe, it } = require('vitest');",
+        "const { describe } = require('@effect/vitest');",
         "const { describe, BenchFactory } = require('vitest');",
+        "const { describe, BenchFactory } = require('vite-plus/test');",
         "const { BenchFactory, describe } = require('vitest');",
         "const { describe, BenchFactory, it } = require('vitest');",
         "const { BenchTask, describe, BenchFactory, it } = require('vitest');",
@@ -343,10 +355,16 @@ fn test() {
 
     let fix = vec![
         ("import { describe } from 'vitest';", "", None),
+        ("import { describe } from '@effect/vitest';", "", None),
         ("import { describe, it } from 'vitest';", "", None),
         (
             "import { describe, BenchFactory } from 'vitest';",
             "import { BenchFactory } from 'vitest';",
+            None,
+        ),
+        (
+            "import { describe, BenchFactory } from 'vite-plus/test';",
+            "import { BenchFactory } from 'vite-plus/test';",
             None,
         ),
         (
@@ -381,9 +399,15 @@ import { it, describe } from 'vitest'",
         ("const x = 1, { describe } = require('vitest');", "const x = 1;", None),
         ("const x = 1, { describe } = require('vitest'), y = 2;", "const x = 1, y = 2;", None),
         ("const { describe, it } = require('vitest');", "", None),
+        ("const { describe } = require('@effect/vitest');", "", None),
         (
             "const { describe, BenchFactory } = require('vitest');",
             "const { BenchFactory } = require('vitest');",
+            None,
+        ),
+        (
+            "const { describe, BenchFactory } = require('vite-plus/test');",
+            "const { BenchFactory } = require('vite-plus/test');",
             None,
         ),
         (

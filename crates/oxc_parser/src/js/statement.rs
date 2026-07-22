@@ -83,22 +83,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
             // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-            if expecting_directives {
-                if let Statement::ExpressionStatement(expr) = &stmt
-                    && let Expression::StringLiteral(string) = &expr.expression
-                {
+            let stmt = if expecting_directives {
+                match stmt {
                     // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                    if expr.span.start == string.span.start {
+                    Statement::ExpressionStatement(expr)
+                        if matches!(&expr.expression, Expression::StringLiteral(string)
+                            if expr.span.start == string.span.start) =>
+                    {
+                        let ExpressionStatement { span, expression, .. } = expr.unbox();
+                        let Expression::StringLiteral(string) = expression else { unreachable!() };
+                        let string = string.unbox();
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
-                        let directive =
-                            Directive::new(expr.span, (*string).clone(), Str::from(src), self);
-                        directives.push(directive);
+                        directives.push(Directive::new(span, string, Str::from(src), self));
                         continue;
                     }
+                    stmt => {
+                        expecting_directives = false;
+                        stmt
+                    }
                 }
-                expecting_directives = false;
-            }
+            } else {
+                stmt
+            };
             // In an internal namespace body, module-referencing `import`/`export` statements are
             // not permitted. Validated here as each direct statement is parsed (no second pass).
             if in_ts_namespace_body {
@@ -747,9 +754,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
                 // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                self.error(diagnostics::using_declaration_not_allowed_in_switch_bare_case(
-                    stmt.span(),
-                ));
+                self.error(if var_decl.kind.is_await() {
+                    diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
+                        stmt.span(),
+                    )
+                } else {
+                    diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
+                });
             }
             consequent.push(stmt);
         }

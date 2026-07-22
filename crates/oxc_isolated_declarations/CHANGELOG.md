@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 🐛 Bug Fixes
+
+- a2ef382 isolated-declarations: Reject `window.Symbol`  as global symbol reference (#24689) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- f17514b isolated-declarations: Emit const readonly fields as types (#24288) (camc314)
+
 ## [0.139.0] - 2026-07-06
 
 ### ⚡ Performance

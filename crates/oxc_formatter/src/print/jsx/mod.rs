@@ -19,7 +19,10 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
-    utils::tailwindcss::is_tailwind_jsx_attribute,
+    utils::{
+        expression::as_call_expression_without_chain_wrappers,
+        tailwindcss::is_tailwind_jsx_attribute,
+    },
     write,
 };
 
@@ -277,12 +280,15 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
         | JSXExpression::ArrowFunctionExpression(_)
         | JSXExpression::CallExpression(_)
         | JSXExpression::ImportExpression(_)
-        | JSXExpression::MetaProperty(_)
+        | JSXExpression::ImportMeta(_)
+        | JSXExpression::NewTarget(_)
         | JSXExpression::FunctionExpression(_)
         | JSXExpression::TemplateLiteral(_)
         | JSXExpression::TaggedTemplateExpression(_) => true,
-        JSXExpression::ChainExpression(chain_expression) => {
-            matches!(chain_expression.expression, ChainElement::CallExpression(_))
+        // A call wrapped in `?.` chains and/or `!` assertions still inlines.
+        JSXExpression::ChainExpression(_) | JSXExpression::TSNonNullExpression(_) => {
+            as_call_expression_without_chain_wrappers(container.expression.to_expression())
+                .is_some()
         }
         JSXExpression::AwaitExpression(await_expression) => {
             matches!(
@@ -292,7 +298,8 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
                     | Expression::ArrowFunctionExpression(_)
                     | Expression::CallExpression(_)
                     | Expression::ImportExpression(_)
-                    | Expression::MetaProperty(_)
+                    | Expression::ImportMeta(_)
+                    | Expression::NewTarget(_)
                     | Expression::FunctionExpression(_)
                     | Expression::TemplateLiteral(_)
                     | Expression::TaggedTemplateExpression(_)
@@ -310,13 +317,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let line_break = if f.options().attribute_position == AttributePosition::Multiline {
-            hard_line_break()
+        if f.options().attribute_position == AttributePosition::Multiline {
+            f.join_nodes_with_hardline().entries(self.iter());
         } else {
-            soft_line_break_or_space()
-        };
-
-        f.join_with(&line_break).entries(self.iter());
+            f.join_nodes_with_soft_line().entries(self.iter());
+        }
     }
 }
 

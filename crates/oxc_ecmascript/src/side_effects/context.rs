@@ -1,4 +1,5 @@
 use oxc_ast::ast::Expression;
+use oxc_compat::EngineTargets;
 
 use crate::GlobalContext;
 
@@ -12,6 +13,15 @@ pub enum PropertyReadSideEffects {
 }
 
 pub trait MayHaveSideEffectsContext<'a>: GlobalContext<'a> {
+    /// Target engines used to decide whether runtime features are supported.
+    ///
+    /// The default returns `None`. This means target information is unavailable; callers must treat
+    /// runtime features as unsupported rather than unconstrained, because unsupported syntax can
+    /// make an otherwise pure expression throw at runtime.
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        None
+    }
+
     /// Whether to respect the pure annotations.
     ///
     /// Pure annotations are the comments that marks that a expression is pure.

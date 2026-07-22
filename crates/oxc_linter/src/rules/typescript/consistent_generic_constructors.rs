@@ -139,15 +139,13 @@ impl ConsistentGenericConstructors {
             return;
         }
         if let Some(type_annotation) = type_annotation {
-            if let TSType::TSTypeReference(type_annotation) = &type_annotation.type_annotation {
-                if let TSTypeName::IdentifierReference(ident) = &type_annotation.type_name {
-                    if ident.name != identifier.name {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            } else {
+            let TSType::TSTypeReference(type_annotation) = &type_annotation.type_annotation else {
+                return;
+            };
+            let TSTypeName::IdentifierReference(ident) = &type_annotation.type_name else {
+                return;
+            };
+            if ident.name != identifier.name {
                 return;
             }
         }

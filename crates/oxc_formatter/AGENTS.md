@@ -71,6 +71,95 @@ Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx 
 
 Above all, prioritize consistency, and always consider whether the divergence is a Prettier bug.
 
+### Comment placement invariants
+
+Two layers of rules, know which one you are editing:
+
+- Invariants hold uniformly
+  - violating one is a bug even where Prettier disagrees (the "Never let it cross" list below, and the content/terminator ownership split)
+- Compat tables record measured Prettier behavior that is not derivable from principle (the variant tables below)
+  - extend them by measuring Prettier, never by analogy, and pin every entry in a fixture
+
+Repositioning a comment is allowed only relative to formatter-owned punctuation
+(e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
+
+The `;` rule applies to statement _terminators_ only, never to member _separators_:
+
+- Terminator: the `;` cannot be replaced by `,` — statements, class members
+  (property/accessor via `FormatClassElementWithSemicolon`, bodyless methods in `MethodDefinition`).
+  A same-line trailing comment moves behind it
+- Separator: interface / type literal members and index signatures (`;` is interchangeable with `,`),
+  enum members' `,` — the comment stays before it, same as any list separator.
+  This matches Prettier and is the principled line, not an emulated quirk
+- Known gap, intentionally not covered: TS-only statements
+  (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
+  They are terminators by the rule above, but Prettier does not move their comments (yet);
+  we follow Prettier for now. If Prettier extends the rule to them, follow;
+  each is a small mechanical `FormatContentWithSemicolon` adoption
+
+When the content's source parentheses survive in the output
+(return/throw arguments, sequence/assignment in the prettier#19263 positions),
+comments inside them belong to the content and stay there;
+only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
+
+The "which positions keep their parens" table is intentionally encoded twice:
+
+- `keeps_trailing_comment_inside_parens` (statement side, walks down the rightmost expression)
+- and `write_trailing_comments_inside_parens` (expression side, matches on the parent) in `print/semicolon.rs`
+
+The statement side promises not to hide/move the comment; the expression side actually prints it.
+Change them together: if they drift, the comment silently lands elsewhere (no assert catches it),
+so pin every position change in a fixture.
+
+The move-behind-the-terminator policy has four deliberate variants.
+When extending to a new node, pick by measuring Prettier, not by analogy:
+
+| Site                                                        | Source `;` required?      | Own-line comment before `;`                                                           |
+| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| Statements (`FormatContentWithSemicolon`)                   | yes (ASI: no move)        | deferred to the next node's leading pass                                              |
+| return/throw (`ReturnAndThrowStatement`)                    | no (moves even under ASI) | deferred to the next node's leading pass (only the same-line prefix moves behind `;`) |
+| Class property/accessor (`FormatClassElementWithSemicolon`) | yes                       | cancels the move (stays own-line)                                                     |
+| Bodyless methods (`MethodDefinition`)                       | yes                       | cancels the move                                                                      |
+
+Never let it cross:
+
+- A line boundary: line-based directives (`eslint-disable-line`, ...) must keep their meaning
+  - Line comments are printed via `line_suffix`, and own-line comments stay own-line (they become the next node's leading comments)
+  - Both are structural guarantees, keep them
+- User content (code, other comments):
+  - e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element, that is an attachment artifact, not a rule
+  - We keep the comment in place and diverge intentionally
+- A suppression comment's target: `prettier-ignore` / `oxfmt-ignore` needs its original text
+  preserved
+  - When hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
+
+Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
+(e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
+When that happens, prefer one uniform rule over emulating the asymmetry, and pin the intentional divergence in a fixture with a note.
+
+### Statement terminators and suppression
+
+The formatter owns statement terminators (and the trivia up to them); the user owns content.
+Prettier encodes "the trailing `;` is outside the statement" once, in `locEnd`;
+deciding on the spot, we encode the same policy per site, so keep them in step:
+
+- print side: `FormatContentWithSemicolon` and the move-behind table above
+- return/throw: the same-line-prefix dangling split in `ReturnAndThrowStatement`
+- capture side: `Comments::get_trailing_comments` lets deferred own-line comments escape when the statement shares its distant `;` with the enclosing statement
+  (a single-statement body, `if (1) foo\n// c\n;`); a block's last statement keeps them inside instead
+- suppressed side: `suppressed_statement_content_end` (`print/mod.rs`) ends the ignored range at the content,
+  so even a `prettier-ignore`d statement gets the formatter's terminator (per `semi`) instead of its source one
+
+Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
+
+- Whether a suppressed statement re-adds `;` is a compat table, not a principle:
+  keyword statements (`debugger`/`break`/`continue`) always re-add,
+  content-terminated ones only when a source `;` was stripped — the asymmetry is observable only for a suppressed keyword statement relying on ASI
+- The `semi: false` ASI guard is decided from the guarded statement alone,
+  never from the previous statement's output;
+  sound because no statement leaves its own trailing `;`,
+  except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`
+
 ## Verification
 
 ```sh

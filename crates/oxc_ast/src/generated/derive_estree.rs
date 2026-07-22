@@ -30,7 +30,6 @@ impl ESTree for Expression<'_> {
             Self::StringLiteral(it) => it.serialize(serializer),
             Self::TemplateLiteral(it) => it.serialize(serializer),
             Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
             Self::Super(it) => it.serialize(serializer),
             Self::ArrayExpression(it) => it.serialize(serializer),
             Self::ArrowFunctionExpression(it) => it.serialize(serializer),
@@ -54,6 +53,8 @@ impl ESTree for Expression<'_> {
             Self::UpdateExpression(it) => it.serialize(serializer),
             Self::YieldExpression(it) => it.serialize(serializer),
             Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::ImportMeta(it) => it.serialize(serializer),
+            Self::NewTarget(it) => it.serialize(serializer),
             Self::JSXElement(it) => it.serialize(serializer),
             Self::JSXFragment(it) => it.serialize(serializer),
             Self::TSAsExpression(it) => it.serialize(serializer),
@@ -62,9 +63,9 @@ impl ESTree for Expression<'_> {
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
             Self::V8IntrinsicExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_member_expression().serialize(serializer),
         }
     }
 }
@@ -148,49 +149,50 @@ impl ESTree for ArrayExpressionElement<'_> {
         match self {
             Self::SpreadElement(it) => it.serialize(serializer),
             Self::Elision(it) => it.serialize(serializer),
-            Self::BooleanLiteral(it) => it.serialize(serializer),
-            Self::NullLiteral(it) => it.serialize(serializer),
-            Self::NumericLiteral(it) => it.serialize(serializer),
-            Self::BigIntLiteral(it) => it.serialize(serializer),
-            Self::RegExpLiteral(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-            Self::TemplateLiteral(it) => it.serialize(serializer),
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
-            Self::Super(it) => it.serialize(serializer),
-            Self::ArrayExpression(it) => it.serialize(serializer),
-            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Self::AssignmentExpression(it) => it.serialize(serializer),
-            Self::AwaitExpression(it) => it.serialize(serializer),
-            Self::BinaryExpression(it) => it.serialize(serializer),
-            Self::CallExpression(it) => it.serialize(serializer),
-            Self::ChainExpression(it) => it.serialize(serializer),
-            Self::ClassExpression(it) => it.serialize(serializer),
-            Self::ConditionalExpression(it) => it.serialize(serializer),
-            Self::FunctionExpression(it) => it.serialize(serializer),
-            Self::ImportExpression(it) => it.serialize(serializer),
-            Self::LogicalExpression(it) => it.serialize(serializer),
-            Self::NewExpression(it) => it.serialize(serializer),
-            Self::ObjectExpression(it) => it.serialize(serializer),
-            Self::ParenthesizedExpression(it) => it.serialize(serializer),
-            Self::SequenceExpression(it) => it.serialize(serializer),
-            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
-            Self::UnaryExpression(it) => it.serialize(serializer),
-            Self::UpdateExpression(it) => it.serialize(serializer),
-            Self::YieldExpression(it) => it.serialize(serializer),
-            Self::PrivateInExpression(it) => it.serialize(serializer),
-            Self::JSXElement(it) => it.serialize(serializer),
-            Self::JSXFragment(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
-            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
         }
     }
 }
@@ -241,49 +243,50 @@ impl ESTree for PropertyKey<'_> {
         match self {
             Self::StaticIdentifier(it) => it.serialize(serializer),
             Self::PrivateIdentifier(it) => it.serialize(serializer),
-            Self::BooleanLiteral(it) => it.serialize(serializer),
-            Self::NullLiteral(it) => it.serialize(serializer),
-            Self::NumericLiteral(it) => it.serialize(serializer),
-            Self::BigIntLiteral(it) => it.serialize(serializer),
-            Self::RegExpLiteral(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-            Self::TemplateLiteral(it) => it.serialize(serializer),
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
-            Self::Super(it) => it.serialize(serializer),
-            Self::ArrayExpression(it) => it.serialize(serializer),
-            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Self::AssignmentExpression(it) => it.serialize(serializer),
-            Self::AwaitExpression(it) => it.serialize(serializer),
-            Self::BinaryExpression(it) => it.serialize(serializer),
-            Self::CallExpression(it) => it.serialize(serializer),
-            Self::ChainExpression(it) => it.serialize(serializer),
-            Self::ClassExpression(it) => it.serialize(serializer),
-            Self::ConditionalExpression(it) => it.serialize(serializer),
-            Self::FunctionExpression(it) => it.serialize(serializer),
-            Self::ImportExpression(it) => it.serialize(serializer),
-            Self::LogicalExpression(it) => it.serialize(serializer),
-            Self::NewExpression(it) => it.serialize(serializer),
-            Self::ObjectExpression(it) => it.serialize(serializer),
-            Self::ParenthesizedExpression(it) => it.serialize(serializer),
-            Self::SequenceExpression(it) => it.serialize(serializer),
-            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
-            Self::UnaryExpression(it) => it.serialize(serializer),
-            Self::UpdateExpression(it) => it.serialize(serializer),
-            Self::YieldExpression(it) => it.serialize(serializer),
-            Self::PrivateInExpression(it) => it.serialize(serializer),
-            Self::JSXElement(it) => it.serialize(serializer),
-            Self::JSXFragment(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
-            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
         }
     }
 }
@@ -410,12 +413,23 @@ impl ESTree for NewExpression<'_> {
     }
 }
 
-impl ESTree for MetaProperty<'_> {
+impl ESTree for ImportMeta {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("MetaProperty"));
-        state.serialize_field("meta", &self.meta);
-        state.serialize_field("property", &self.property);
+        state.serialize_field("meta", &crate::serialize::js::ImportMetaMeta(self));
+        state.serialize_field("property", &crate::serialize::js::ImportMetaProperty(self));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for NewTarget {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("MetaProperty"));
+        state.serialize_field("meta", &crate::serialize::js::NewTargetMeta(self));
+        state.serialize_field("property", &crate::serialize::js::NewTargetProperty(self));
         state.serialize_span(self.span);
         state.end();
     }
@@ -435,49 +449,50 @@ impl ESTree for Argument<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::SpreadElement(it) => it.serialize(serializer),
-            Self::BooleanLiteral(it) => it.serialize(serializer),
-            Self::NullLiteral(it) => it.serialize(serializer),
-            Self::NumericLiteral(it) => it.serialize(serializer),
-            Self::BigIntLiteral(it) => it.serialize(serializer),
-            Self::RegExpLiteral(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-            Self::TemplateLiteral(it) => it.serialize(serializer),
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
-            Self::Super(it) => it.serialize(serializer),
-            Self::ArrayExpression(it) => it.serialize(serializer),
-            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Self::AssignmentExpression(it) => it.serialize(serializer),
-            Self::AwaitExpression(it) => it.serialize(serializer),
-            Self::BinaryExpression(it) => it.serialize(serializer),
-            Self::CallExpression(it) => it.serialize(serializer),
-            Self::ChainExpression(it) => it.serialize(serializer),
-            Self::ClassExpression(it) => it.serialize(serializer),
-            Self::ConditionalExpression(it) => it.serialize(serializer),
-            Self::FunctionExpression(it) => it.serialize(serializer),
-            Self::ImportExpression(it) => it.serialize(serializer),
-            Self::LogicalExpression(it) => it.serialize(serializer),
-            Self::NewExpression(it) => it.serialize(serializer),
-            Self::ObjectExpression(it) => it.serialize(serializer),
-            Self::ParenthesizedExpression(it) => it.serialize(serializer),
-            Self::SequenceExpression(it) => it.serialize(serializer),
-            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
-            Self::UnaryExpression(it) => it.serialize(serializer),
-            Self::UpdateExpression(it) => it.serialize(serializer),
-            Self::YieldExpression(it) => it.serialize(serializer),
-            Self::PrivateInExpression(it) => it.serialize(serializer),
-            Self::JSXElement(it) => it.serialize(serializer),
-            Self::JSXFragment(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
-            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
         }
     }
 }
@@ -569,16 +584,19 @@ impl ESTree for AssignmentExpression<'_> {
 impl ESTree for AssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
-            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                self.to_simple_assignment_target().serialize(serializer)
+            }
+            Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_) => {
+                self.to_assignment_target_pattern().serialize(serializer)
+            }
         }
     }
 }
@@ -591,9 +609,9 @@ impl ESTree for SimpleAssignmentTarget<'_> {
             Self::TSSatisfiesExpression(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_member_expression().serialize(serializer),
         }
     }
 }
@@ -651,16 +669,16 @@ impl ESTree for AssignmentTargetMaybeDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::AssignmentTargetWithDefault(it) => it.serialize(serializer),
-            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
-            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => self.to_assignment_target().serialize(serializer),
         }
     }
 }
@@ -767,9 +785,9 @@ impl ESTree for ChainElement<'_> {
         match self {
             Self::CallExpression(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_member_expression().serialize(serializer),
         }
     }
 }
@@ -801,21 +819,23 @@ impl ESTree for Statement<'_> {
             Self::TryStatement(it) => it.serialize(serializer),
             Self::WhileStatement(it) => it.serialize(serializer),
             Self::WithStatement(it) => it.serialize(serializer),
-            Self::VariableDeclaration(it) => it.serialize(serializer),
-            Self::FunctionDeclaration(it) => it.serialize(serializer),
-            Self::ClassDeclaration(it) => it.serialize(serializer),
-            Self::TSTypeAliasDeclaration(it) => it.serialize(serializer),
-            Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            Self::TSEnumDeclaration(it) => it.serialize(serializer),
-            Self::TSModuleDeclaration(it) => it.serialize(serializer),
-            Self::TSGlobalDeclaration(it) => it.serialize(serializer),
-            Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
-            Self::ImportDeclaration(it) => it.serialize(serializer),
-            Self::ExportAllDeclaration(it) => it.serialize(serializer),
-            Self::ExportDefaultDeclaration(it) => it.serialize(serializer),
-            Self::ExportNamedDeclaration(it) => it.serialize(serializer),
-            Self::TSExportAssignment(it) => it.serialize(serializer),
-            Self::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
+            Self::VariableDeclaration(_)
+            | Self::FunctionDeclaration(_)
+            | Self::ClassDeclaration(_)
+            | Self::TSTypeAliasDeclaration(_)
+            | Self::TSInterfaceDeclaration(_)
+            | Self::TSEnumDeclaration(_)
+            | Self::TSModuleDeclaration(_)
+            | Self::TSGlobalDeclaration(_)
+            | Self::TSImportEqualsDeclaration(_) => self.to_declaration().serialize(serializer),
+            Self::ImportDeclaration(_)
+            | Self::ExportAllDeclaration(_)
+            | Self::ExportDefaultDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => {
+                self.to_module_declaration().serialize(serializer)
+            }
         }
     }
 }
@@ -977,49 +997,50 @@ impl ESTree for ForStatementInit<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::VariableDeclaration(it) => it.serialize(serializer),
-            Self::BooleanLiteral(it) => it.serialize(serializer),
-            Self::NullLiteral(it) => it.serialize(serializer),
-            Self::NumericLiteral(it) => it.serialize(serializer),
-            Self::BigIntLiteral(it) => it.serialize(serializer),
-            Self::RegExpLiteral(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-            Self::TemplateLiteral(it) => it.serialize(serializer),
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
-            Self::Super(it) => it.serialize(serializer),
-            Self::ArrayExpression(it) => it.serialize(serializer),
-            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Self::AssignmentExpression(it) => it.serialize(serializer),
-            Self::AwaitExpression(it) => it.serialize(serializer),
-            Self::BinaryExpression(it) => it.serialize(serializer),
-            Self::CallExpression(it) => it.serialize(serializer),
-            Self::ChainExpression(it) => it.serialize(serializer),
-            Self::ClassExpression(it) => it.serialize(serializer),
-            Self::ConditionalExpression(it) => it.serialize(serializer),
-            Self::FunctionExpression(it) => it.serialize(serializer),
-            Self::ImportExpression(it) => it.serialize(serializer),
-            Self::LogicalExpression(it) => it.serialize(serializer),
-            Self::NewExpression(it) => it.serialize(serializer),
-            Self::ObjectExpression(it) => it.serialize(serializer),
-            Self::ParenthesizedExpression(it) => it.serialize(serializer),
-            Self::SequenceExpression(it) => it.serialize(serializer),
-            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
-            Self::UnaryExpression(it) => it.serialize(serializer),
-            Self::UpdateExpression(it) => it.serialize(serializer),
-            Self::YieldExpression(it) => it.serialize(serializer),
-            Self::PrivateInExpression(it) => it.serialize(serializer),
-            Self::JSXElement(it) => it.serialize(serializer),
-            Self::JSXFragment(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
-            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
         }
     }
 }
@@ -1040,16 +1061,16 @@ impl ESTree for ForStatementLeft<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::VariableDeclaration(it) => it.serialize(serializer),
-            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
-            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => self.to_assignment_target().serialize(serializer),
         }
     }
 }
@@ -1736,49 +1757,50 @@ impl ESTree for ExportDefaultDeclarationKind<'_> {
             Self::FunctionDeclaration(it) => it.serialize(serializer),
             Self::ClassDeclaration(it) => it.serialize(serializer),
             Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            Self::BooleanLiteral(it) => it.serialize(serializer),
-            Self::NullLiteral(it) => it.serialize(serializer),
-            Self::NumericLiteral(it) => it.serialize(serializer),
-            Self::BigIntLiteral(it) => it.serialize(serializer),
-            Self::RegExpLiteral(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-            Self::TemplateLiteral(it) => it.serialize(serializer),
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
-            Self::Super(it) => it.serialize(serializer),
-            Self::ArrayExpression(it) => it.serialize(serializer),
-            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Self::AssignmentExpression(it) => it.serialize(serializer),
-            Self::AwaitExpression(it) => it.serialize(serializer),
-            Self::BinaryExpression(it) => it.serialize(serializer),
-            Self::CallExpression(it) => it.serialize(serializer),
-            Self::ChainExpression(it) => it.serialize(serializer),
-            Self::ClassExpression(it) => it.serialize(serializer),
-            Self::ConditionalExpression(it) => it.serialize(serializer),
-            Self::FunctionExpression(it) => it.serialize(serializer),
-            Self::ImportExpression(it) => it.serialize(serializer),
-            Self::LogicalExpression(it) => it.serialize(serializer),
-            Self::NewExpression(it) => it.serialize(serializer),
-            Self::ObjectExpression(it) => it.serialize(serializer),
-            Self::ParenthesizedExpression(it) => it.serialize(serializer),
-            Self::SequenceExpression(it) => it.serialize(serializer),
-            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
-            Self::UnaryExpression(it) => it.serialize(serializer),
-            Self::UpdateExpression(it) => it.serialize(serializer),
-            Self::YieldExpression(it) => it.serialize(serializer),
-            Self::PrivateInExpression(it) => it.serialize(serializer),
-            Self::JSXElement(it) => it.serialize(serializer),
-            Self::JSXFragment(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
-            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
         }
     }
 }
@@ -2034,49 +2056,50 @@ impl ESTree for JSXExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::EmptyExpression(it) => it.serialize(serializer),
-            Self::BooleanLiteral(it) => it.serialize(serializer),
-            Self::NullLiteral(it) => it.serialize(serializer),
-            Self::NumericLiteral(it) => it.serialize(serializer),
-            Self::BigIntLiteral(it) => it.serialize(serializer),
-            Self::RegExpLiteral(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-            Self::TemplateLiteral(it) => it.serialize(serializer),
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::MetaProperty(it) => it.serialize(serializer),
-            Self::Super(it) => it.serialize(serializer),
-            Self::ArrayExpression(it) => it.serialize(serializer),
-            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Self::AssignmentExpression(it) => it.serialize(serializer),
-            Self::AwaitExpression(it) => it.serialize(serializer),
-            Self::BinaryExpression(it) => it.serialize(serializer),
-            Self::CallExpression(it) => it.serialize(serializer),
-            Self::ChainExpression(it) => it.serialize(serializer),
-            Self::ClassExpression(it) => it.serialize(serializer),
-            Self::ConditionalExpression(it) => it.serialize(serializer),
-            Self::FunctionExpression(it) => it.serialize(serializer),
-            Self::ImportExpression(it) => it.serialize(serializer),
-            Self::LogicalExpression(it) => it.serialize(serializer),
-            Self::NewExpression(it) => it.serialize(serializer),
-            Self::ObjectExpression(it) => it.serialize(serializer),
-            Self::ParenthesizedExpression(it) => it.serialize(serializer),
-            Self::SequenceExpression(it) => it.serialize(serializer),
-            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
-            Self::UnaryExpression(it) => it.serialize(serializer),
-            Self::UpdateExpression(it) => it.serialize(serializer),
-            Self::YieldExpression(it) => it.serialize(serializer),
-            Self::PrivateInExpression(it) => it.serialize(serializer),
-            Self::JSXElement(it) => it.serialize(serializer),
-            Self::JSXFragment(it) => it.serialize(serializer),
-            Self::TSAsExpression(it) => it.serialize(serializer),
-            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSNonNullExpression(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
-            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
-            Self::ComputedMemberExpression(it) => it.serialize(serializer),
-            Self::StaticMemberExpression(it) => it.serialize(serializer),
-            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
         }
     }
 }
@@ -2447,43 +2470,43 @@ impl ESTree for TSTupleElement<'_> {
         match self {
             Self::TSOptionalType(it) => it.serialize(serializer),
             Self::TSRestType(it) => it.serialize(serializer),
-            Self::TSAnyKeyword(it) => it.serialize(serializer),
-            Self::TSBigIntKeyword(it) => it.serialize(serializer),
-            Self::TSBooleanKeyword(it) => it.serialize(serializer),
-            Self::TSIntrinsicKeyword(it) => it.serialize(serializer),
-            Self::TSNeverKeyword(it) => it.serialize(serializer),
-            Self::TSNullKeyword(it) => it.serialize(serializer),
-            Self::TSNumberKeyword(it) => it.serialize(serializer),
-            Self::TSObjectKeyword(it) => it.serialize(serializer),
-            Self::TSStringKeyword(it) => it.serialize(serializer),
-            Self::TSSymbolKeyword(it) => it.serialize(serializer),
-            Self::TSUndefinedKeyword(it) => it.serialize(serializer),
-            Self::TSUnknownKeyword(it) => it.serialize(serializer),
-            Self::TSVoidKeyword(it) => it.serialize(serializer),
-            Self::TSArrayType(it) => it.serialize(serializer),
-            Self::TSConditionalType(it) => it.serialize(serializer),
-            Self::TSConstructorType(it) => it.serialize(serializer),
-            Self::TSFunctionType(it) => it.serialize(serializer),
-            Self::TSImportType(it) => it.serialize(serializer),
-            Self::TSIndexedAccessType(it) => it.serialize(serializer),
-            Self::TSInferType(it) => it.serialize(serializer),
-            Self::TSIntersectionType(it) => it.serialize(serializer),
-            Self::TSLiteralType(it) => it.serialize(serializer),
-            Self::TSMappedType(it) => it.serialize(serializer),
-            Self::TSNamedTupleMember(it) => it.serialize(serializer),
-            Self::TSTemplateLiteralType(it) => it.serialize(serializer),
-            Self::TSThisType(it) => it.serialize(serializer),
-            Self::TSTupleType(it) => it.serialize(serializer),
-            Self::TSTypeLiteral(it) => it.serialize(serializer),
-            Self::TSTypeOperatorType(it) => it.serialize(serializer),
-            Self::TSTypePredicate(it) => it.serialize(serializer),
-            Self::TSTypeQuery(it) => it.serialize(serializer),
-            Self::TSTypeReference(it) => it.serialize(serializer),
-            Self::TSUnionType(it) => it.serialize(serializer),
-            Self::TSParenthesizedType(it) => it.serialize(serializer),
-            Self::JSDocNullableType(it) => it.serialize(serializer),
-            Self::JSDocNonNullableType(it) => it.serialize(serializer),
-            Self::JSDocUnknownType(it) => it.serialize(serializer),
+            Self::TSAnyKeyword(_)
+            | Self::TSBigIntKeyword(_)
+            | Self::TSBooleanKeyword(_)
+            | Self::TSIntrinsicKeyword(_)
+            | Self::TSNeverKeyword(_)
+            | Self::TSNullKeyword(_)
+            | Self::TSNumberKeyword(_)
+            | Self::TSObjectKeyword(_)
+            | Self::TSStringKeyword(_)
+            | Self::TSSymbolKeyword(_)
+            | Self::TSUndefinedKeyword(_)
+            | Self::TSUnknownKeyword(_)
+            | Self::TSVoidKeyword(_)
+            | Self::TSArrayType(_)
+            | Self::TSConditionalType(_)
+            | Self::TSConstructorType(_)
+            | Self::TSFunctionType(_)
+            | Self::TSImportType(_)
+            | Self::TSIndexedAccessType(_)
+            | Self::TSInferType(_)
+            | Self::TSIntersectionType(_)
+            | Self::TSLiteralType(_)
+            | Self::TSMappedType(_)
+            | Self::TSNamedTupleMember(_)
+            | Self::TSTemplateLiteralType(_)
+            | Self::TSThisType(_)
+            | Self::TSTupleType(_)
+            | Self::TSTypeLiteral(_)
+            | Self::TSTypeOperatorType(_)
+            | Self::TSTypePredicate(_)
+            | Self::TSTypeQuery(_)
+            | Self::TSTypeReference(_)
+            | Self::TSUnionType(_)
+            | Self::TSParenthesizedType(_)
+            | Self::JSDocNullableType(_)
+            | Self::JSDocNonNullableType(_)
+            | Self::JSDocUnknownType(_) => self.to_ts_type().serialize(serializer),
         }
     }
 }
@@ -2977,9 +3000,9 @@ impl ESTree for TSTypeQueryExprName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::TSImportType(it) => it.serialize(serializer),
-            Self::IdentifierReference(it) => it.serialize(serializer),
-            Self::QualifiedName(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::IdentifierReference(_) | Self::QualifiedName(_) | Self::ThisExpression(_) => {
+                self.to_ts_type_name().serialize(serializer)
+            }
         }
     }
 }

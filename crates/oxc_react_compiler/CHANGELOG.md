@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### ⚡ Performance
+
+- ba35a0d react_compiler: Use IndexVec for dense id-keyed maps (#24549) (Boshen)
+- b685062 react_compiler: Keep small hot-path collections inline (#24514) (Marius Schulz)
+- 7808a6e react_compiler: Make aliasing effects cheap to intern and clone (#24506) (Marius Schulz)
+- 3a36f2a react_compiler: Store AbstractValue reasons as a u16 bitmask (#24480) (Boshen)
+- 1c96753 react_compiler: Use FxHashMap for the lookup-only aliasing node map (#24490) (Boshen)
+
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- a3a39f9 react_compiler: Implement enableEmitHookGuards codegen (#24329) (Boshen)
+
+### ⚡ Performance
+
+- dce0f29 react_compiler: Replace all compiled functions in a single AST walk (#24403) (Boshen)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🐛 Bug Fixes

@@ -73,18 +73,6 @@ impl<'a> ObjectLike<'a, '_> {
         }
     }
 
-    /// Check if the object is inside a JSX spread attribute or JSX spread child.
-    /// In these contexts, empty objects with comments should use soft line breaks
-    /// so they can stay on one line if they fit.
-    fn is_inside_jsx_spread(&self) -> bool {
-        match self {
-            Self::ObjectExpression(o) => {
-                matches!(o.parent(), AstNodes::JSXSpreadAttribute(_) | AstNodes::JSXSpreadChild(_))
-            }
-            Self::TSTypeLiteral(_) => false,
-        }
-    }
-
     fn write_members(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::ObjectExpression(o) => o.properties().fmt(f),
@@ -100,15 +88,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
         write!(f, "{");
 
         if self.members_are_empty() {
-            // In JSX spread attributes/children, use soft indent so the object
-            // can stay on one line if it fits (e.g., `<div {...{/* comment */}} />`).
-            // In other contexts like variable declarations, use block indent to
-            // expand the object (e.g., `var a = {\n  /* comment */\n};`).
-            if self.is_inside_jsx_spread() {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
-            } else {
-                write!(f, format_dangling_comments(self.span()).with_block_indent());
-            }
+            // Soft indent so the object can stay on one line if it fits:
+            // a single one-line block comment stays inline without bracket spacing
+            // line comments and multiple comments still expand.
+            write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
             let should_expand =

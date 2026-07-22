@@ -416,11 +416,6 @@ pub enum ArgsOption {
 }
 impl ArgsOption {
     #[inline]
-    pub const fn is_after_used(&self) -> bool {
-        matches!(self, Self::AfterUsed)
-    }
-
-    #[inline]
     pub const fn is_all(&self) -> bool {
         matches!(self, Self::All)
     }

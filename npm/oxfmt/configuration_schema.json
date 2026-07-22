@@ -51,12 +51,12 @@
       "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`"
     },
     "ignorePatterns": {
-      "description": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`",
+      "description": "Ignore files matching these glob patterns.\nPatterns use gitignore-style matching, rooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.\n\n- Default: `[]`",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`"
+      "markdownDescription": "Ignore files matching these glob patterns.\nPatterns use gitignore-style matching, rooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.\n\n- Default: `[]`"
     },
     "insertFinalNewline": {
       "description": "Whether to insert a final newline at the end of the file.\n\n- Languages: All\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",

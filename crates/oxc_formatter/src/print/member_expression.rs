@@ -6,7 +6,10 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{Buffer, Format, JsFormatter, prelude::*, trivia::FormatLeadingComments},
-    utils::member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
+    utils::{
+        expression::as_call_expression_without_chain_wrappers,
+        member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
+    },
     write,
 };
 
@@ -97,20 +100,8 @@ fn layout<'a>(
 
     let is_nested = match parent {
         AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_) => {
-            let no_break = match object {
-                Expression::CallExpression(call_expression) => {
-                    !call_expression.arguments.is_empty()
-                }
-                Expression::TSNonNullExpression(non_null_assertion) => {
-                    match &non_null_assertion.expression {
-                        Expression::CallExpression(call_expression) => {
-                            !call_expression.arguments.is_empty()
-                        }
-                        _ => false,
-                    }
-                }
-                _ => false,
-            };
+            let no_break = as_call_expression_without_chain_wrappers(object)
+                .is_some_and(|call| !call.arguments.is_empty());
 
             if no_break || is_member_chain {
                 return StaticMemberLayout::NoBreak;

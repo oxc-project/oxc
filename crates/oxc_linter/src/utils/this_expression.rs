@@ -5,7 +5,7 @@ use oxc_ast::{
         ThisExpression, VariableDeclarationKind,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
@@ -42,7 +42,7 @@ impl ThisExpressionFinder {
     }
 }
 
-impl<'a> Visit<'a> for ThisExpressionFinder {
+impl<'a> VisitJs<'a> for ThisExpressionFinder {
     fn visit_this_expression(&mut self, expr: &ThisExpression) {
         self.spans.push(expr.span);
     }
@@ -51,7 +51,7 @@ impl<'a> Visit<'a> for ThisExpressionFinder {
 
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
         if !self.skip_static_blocks {
-            walk::walk_static_block(self, block);
+            walk_js::walk_static_block(self, block);
         }
     }
 
@@ -59,7 +59,7 @@ impl<'a> Visit<'a> for ThisExpressionFinder {
         if self.skip_property_definition_values {
             self.visit_property_key(&prop.key);
         } else {
-            walk::walk_property_definition(self, prop);
+            walk_js::walk_property_definition(self, prop);
         }
     }
 }

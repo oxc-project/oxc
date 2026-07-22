@@ -544,8 +544,7 @@ impl<'a> ObjectRestSpread<'a> {
             let arg = Expression::CallExpression(call_expr);
             let arg = Argument::from(arg);
             if had_props {
-                let empty_object =
-                    Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+                let empty_object = Expression::new_object_expression(SPAN, [], ctx);
                 ArenaVec::from_array_in(
                     [arg, Argument::from(empty_object), Argument::from(obj)],
                     ctx,
@@ -588,7 +587,7 @@ impl<'a> ObjectRestSpread<'a> {
                 if arrow.expression {
                     arrow.expression = false;
 
-                    debug_assert!(arrow.body.statements.len() == 1);
+                    debug_assert_eq!(arrow.body.statements.len(), 1);
 
                     let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
                     else {
@@ -958,8 +957,7 @@ impl<'a> ObjectRestSpread<'a> {
 
         // Insert the original declarator by copying its data out.
         if !remove_empty_object_pattern {
-            let mut binding_pattern =
-                BindingPattern::new_object_pattern(decl.span, ArenaVec::new_in(ctx), NONE, ctx);
+            let mut binding_pattern = BindingPattern::new_object_pattern(decl.span, [], NONE, ctx);
             mem::swap(&mut binding_pattern, &mut decl.id);
             let decl = VariableDeclarator::new(
                 decl.span,
@@ -1046,8 +1044,7 @@ impl<'a> ObjectRestSpread<'a> {
             // `let { [`a`], ... rest }`
             PropertyKey::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
                 let quasis = ArenaVec::from_value_in(lit.quasis[0].clone(), ctx);
-                let expressions = ArenaVec::new_in(ctx);
-                let expr = Expression::new_template_literal(lit.span, quasis, expressions, ctx);
+                let expr = Expression::new_template_literal(lit.span, quasis, [], ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -1159,7 +1156,7 @@ impl<'a> SpreadPair<'a> {
             let arguments = ArenaVec::from_array_in(
                 [
                     // Add `{}`.
-                    Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx),
+                    Argument::new_object_expression(SPAN, [], ctx),
                     Argument::new_sequence_expression(SPAN, sequence, ctx),
                 ],
                 ctx,

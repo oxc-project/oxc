@@ -216,12 +216,12 @@ fn has_next_iteration_path(
                 }
                 EdgeType::Jump => {
                     let mut has_abrupt_jump = false;
-                    let continue_can_complete =
-                        continue_can_complete_after_finalizer(source, ctx, unreachable);
+                    let jump_can_complete =
+                        jump_can_complete_after_finalizer(source, ctx, unreachable);
                     for instruction in cfg.basic_block(source).instructions() {
                         match instruction.kind {
                             InstructionKind::Continue(LabeledInstruction::Unlabeled)
-                                if continue_can_complete
+                                if jump_can_complete
                                     && can_continue_loop_from(
                                         source,
                                         loop_id,
@@ -233,7 +233,7 @@ fn has_next_iteration_path(
                                 return true;
                             }
                             InstructionKind::Continue(LabeledInstruction::Labeled)
-                                if continue_can_complete
+                                if jump_can_complete
                                     && can_continue_loop_from(
                                         edge.target(),
                                         loop_id,
@@ -243,6 +243,12 @@ fn has_next_iteration_path(
                                     ) =>
                             {
                                 return true;
+                            }
+                            InstructionKind::Break(_)
+                                if jump_can_complete
+                                    && is_block_within_loop(edge.target(), loop_id, ctx) =>
+                            {
+                                stack.push(edge.target());
                             }
                             InstructionKind::Break(_)
                                 if reaches_next_iteration_target(
@@ -376,7 +382,7 @@ fn finalizer_can_continue_to_loop(
     false
 }
 
-fn continue_can_complete_after_finalizer(
+fn jump_can_complete_after_finalizer(
     block_id: BlockNodeId,
     ctx: &LintContext<'_>,
     unreachable: Option<&[bool]>,
@@ -654,6 +660,15 @@ fn owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> 
         || empty_backedge_targets_loop(block_id, loop_id, ctx)
 }
 
+fn is_block_within_loop(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
+    owns_block(block_id, loop_id, ctx)
+        || ctx.cfg().basic_block(block_id).instructions().iter().any(|instruction| {
+            instruction.node_id.is_some_and(|node_id| {
+                ctx.nodes().ancestor_ids(node_id).any(|ancestor| ancestor == loop_id)
+            })
+        })
+}
+
 fn directly_owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
     if block_id == ctx.nodes().cfg_id(loop_id) {
         return true;
@@ -795,6 +810,7 @@ fn test() {
         "{ if (foo) { continue; } return; }",
         "{ switch (foo) { case 1: return; } }",
         "{ switch (foo) { case 1: break; default: return; } }",
+        "{ switch (foo) { case 1: break; default: break; } bar(); }",
         "{ switch (foo) { case 1: continue; default: return; } throw err; }",
         "{ try { return bar(); } catch (e) {} }",
         "{ continue; break; }",
@@ -961,8 +977,18 @@ fn test() {
         ("while (a) { try { break; } catch { } }", None).into(),
         ("function foo() { while (a) { try { return; } catch { } } }", None).into(),
         ("while (a) { try { continue; } finally { break; } }", None).into(),
+        (
+            "while (a) { label: try { break label; } finally { break; } bar(); }",
+            None,
+        )
+            .into(),
         ("function foo() { while (a) { try { continue; } finally { return; } } }", None).into(),
         ("for (;;) { while (a) break; }", None).into(),
+        (
+            "while (a) { while (true) { switch (foo) { default: break; } break; } }",
+            None,
+        )
+            .into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }])),

@@ -4,7 +4,9 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, GetAllocator};
+use oxc_allocator::{
+    Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
+};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -117,7 +119,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Str<'_> {
     type Cloned = Str<'new_alloc>;
 
     #[inline]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
         Str::from_in(self.as_str(), allocator)
     }
 }

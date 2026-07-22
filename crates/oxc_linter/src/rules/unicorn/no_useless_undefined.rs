@@ -276,6 +276,25 @@ impl Rule for NoUselessUndefined {
                         if let Some(initializer) = &assign_pattern.initializer
                             && initializer.span() == undefined_literal.span
                         {
+                            let formal_parameters = ctx.nodes().parent_node(parent_node.id());
+                            let AstKind::FormalParameters(formal_parameters) =
+                                formal_parameters.kind()
+                            else {
+                                return;
+                            };
+
+                            // Removing the default initializer makes this parameter required. Do
+                            // not produce a TypeScript-invalid signature by placing it after an
+                            // optional parameter.
+                            let has_preceding_optional_parameter = formal_parameters
+                                .items
+                                .iter()
+                                .take_while(|parameter| parameter.span != assign_pattern.span)
+                                .any(|parameter| parameter.optional);
+                            if has_preceding_optional_parameter {
+                                return;
+                            }
+
                             let left = &assign_pattern
                                 .type_annotation
                                 .as_ref()
@@ -550,6 +569,11 @@ fn test() {
                 public x: number | undefined = undefined
             }
         ",
+            None,
+        ),
+        ("function foo(optional?: string, required: string = undefined) {}", None),
+        (
+            "function getBackLinks(subject: string, limit = 16, cursor?: string, reverse = false, ttl: number | undefined = undefined) {}",
             None,
         ),
     ];

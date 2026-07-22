@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{Format, JsFormatter, prelude::*},
+    print::semicolon::write_trailing_comments_inside_parens,
     write,
 };
 
@@ -42,6 +43,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
             } else {
                 rest.fmt(f);
             }
+
+            // Print the comments before the closing paren inside the group,
+            // so they stay on the last expression's line.
+            write_trailing_comments_inside_parens(f, self.parent(), self.span.end, true);
         });
 
         // For arrow bodies, own the `soft_block_indent` so the break decision is made

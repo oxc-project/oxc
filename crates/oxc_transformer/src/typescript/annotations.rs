@@ -61,8 +61,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
-                Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
-                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                Statement::ExportNamedDeclaration(decl)
+                    if let Some(declaration) = &decl.declaration =>
+                {
+                    !declaration.is_typescript_syntax()
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
@@ -163,7 +165,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // still considered a module
         if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
             let export_decl = Statement::ExportNamedDeclaration(
-                ExportNamedDeclaration::boxed_plain(SPAN, ArenaVec::new_in(ctx), None, ctx),
+                ExportNamedDeclaration::boxed_plain(SPAN, [], None, ctx),
             );
             program.body.push(export_decl);
         }
@@ -589,12 +591,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        Statement::new_block_statement_with_scope_id(
-            span,
-            ArenaVec::from_value_in(stmt, ctx),
-            scope_id,
-            ctx,
-        )
+        Statement::new_block_statement_with_scope_id(span, [stmt], scope_id, ctx)
     }
 
     fn replace_for_statement_body_with_empty_block_if_ts(
@@ -612,12 +609,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            *stmt = Statement::new_block_statement_with_scope_id(
-                stmt.span(),
-                ArenaVec::new_in(ctx),
-                scope_id,
-                ctx,
-            );
+            *stmt = Statement::new_block_statement_with_scope_id(stmt.span(), [], scope_id, ctx);
         }
     }
 

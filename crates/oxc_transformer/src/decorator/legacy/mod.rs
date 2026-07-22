@@ -53,7 +53,7 @@ use oxc_allocator::{
     UnstableAddress,
 };
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{Visit, VisitMut};
+use oxc_ast_visit::{VisitJs, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
@@ -339,7 +339,7 @@ impl<'a> LegacyDecorator<'a> {
             Some(if let Some(ident) = class.id.as_ref() {
                 BoundIdentifier::from_binding_ident(ident)
             } else {
-                ctx.generate_uid_in_current_scope("class", SymbolFlags::Class)
+                ctx.generate_uid("class", class.scope_id(), SymbolFlags::Class)
             })
         } else {
             None
@@ -411,7 +411,7 @@ impl<'a> LegacyDecorator<'a> {
             new_body.push(ClassElement::new_property_definition(
                 SPAN,
                 PropertyDefinitionType::PropertyDefinition,
-                ArenaVec::new_in(ctx),
+                [],
                 PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
                 NONE,
                 accessor.value.take(),
@@ -498,13 +498,8 @@ impl<'a> LegacyDecorator<'a> {
         };
 
         let (params, body_stmt) = if is_getter {
-            let params = FormalParameters::boxed(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ArenaVec::new_in(ctx),
-                NONE,
-                ctx,
-            );
+            let params =
+                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
             let field_expr = Expression::new_private_field_expression(
                 SPAN,
                 create_object(ctx),
@@ -522,7 +517,7 @@ impl<'a> LegacyDecorator<'a> {
             );
             let param = FormalParameter::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
+                [],
                 value_binding.create_binding_pattern(ctx),
                 NONE,
                 NONE,
@@ -535,7 +530,7 @@ impl<'a> LegacyDecorator<'a> {
             let params = FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                ArenaVec::from_value_in(param, ctx),
+                [param],
                 NONE,
                 ctx,
             );
@@ -889,11 +884,17 @@ impl<'a> LegacyDecorator<'a> {
         // Now: `class C {}` -> `let C = class C {}`
         // After: `class C {}` -> `let C = class {}`
         let class_binding = class.id.as_ref().map(|ident| {
-            let new_class_binding =
-                ctx.generate_binding(ident.name, class.scope_id(), SymbolFlags::Class);
+            let binding_span = ident.span;
+            let new_class_binding = ctx.generate_spanned_binding(
+                ident.name,
+                binding_span,
+                class.scope_id(),
+                SymbolFlags::Class,
+            );
             let old_class_symbol_id = ident.symbol_id.replace(Some(new_class_binding.symbol_id));
             let old_class_symbol_id = old_class_symbol_id.expect("class always has a symbol id");
 
+            ctx.scoping_mut().set_symbol_span(old_class_symbol_id, binding_span);
             *ctx.scoping_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
@@ -948,7 +949,7 @@ impl<'a> LegacyDecorator<'a> {
                         ),
                         ctx,
                     );
-                    let body = ArenaVec::from_value_in(class_alias_with_this_assignment, ctx);
+                    let body = [class_alias_with_this_assignment];
                     let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
                     let element =
                         ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
@@ -1005,6 +1006,7 @@ impl<'a> LegacyDecorator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let span = class.span;
+        let binding_span = ctx.scoping().symbol_span(binding.symbol_id);
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
             Expression::ClassExpression(class.take_in_box(ctx)),
@@ -1014,7 +1016,7 @@ impl<'a> LegacyDecorator<'a> {
         let declarator = VariableDeclarator::new(
             SPAN,
             VariableDeclarationKind::Let,
-            binding.create_binding_pattern(ctx),
+            binding.create_spanned_binding_pattern(binding_span, ctx),
             NONE,
             Some(initializer),
             false,
@@ -1023,7 +1025,7 @@ impl<'a> LegacyDecorator<'a> {
         let var_declaration = Declaration::new_variable_declaration(
             span,
             VariableDeclarationKind::Let,
-            ArenaVec::from_value_in(declarator, ctx),
+            [declarator],
             false,
             ctx,
         );
@@ -1381,7 +1383,7 @@ impl<'a> LegacyDecorator<'a> {
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
                 let quasis = literal.quasis.clone_in(ctx.allocator());
-                Expression::new_template_literal(SPAN, quasis, ArenaVec::new_in(ctx), ctx)
+                Expression::new_template_literal(SPAN, quasis, [], ctx)
             }
             PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),
             match_expression!(PropertyKey) => {
@@ -1459,8 +1461,7 @@ impl<'a> LegacyDecorator<'a> {
         let kind = ImportOrExportKind::Value;
         let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
         let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
-        let specifiers =
-            ArenaVec::from_value_in(ExportSpecifier::new(SPAN, local, exported, kind, ctx), ctx);
+        let specifiers = [ExportSpecifier::new(SPAN, local, exported, kind, ctx)];
         let export_class_reference = ModuleDeclaration::new_export_named_declaration(
             SPAN, None, specifiers, None, kind, NONE, ctx,
         );
@@ -1474,7 +1475,7 @@ struct PrivateInExpressionDetector {
     has_private_in_expression: bool,
 }
 
-impl Visit<'_> for PrivateInExpressionDetector {
+impl VisitJs<'_> for PrivateInExpressionDetector {
     fn visit_private_in_expression(&mut self, _it: &PrivateInExpression<'_>) {
         self.has_private_in_expression = true;
     }

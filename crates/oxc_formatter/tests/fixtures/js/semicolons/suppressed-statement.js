@@ -1,0 +1,29 @@
+// A suppressed statement keeps its source text up to the content end;
+// the terminator is printed by the formatter (`;` added or removed per options),
+// and comments between the content and the source `;` lead the next statement.
+
+// prettier-ignore
+do;   while(   1)
+
+;[].sort()
+
+// prettier-ignore
+do  {}   while(   two  );
+
+lbl: for (;;) {
+  // prettier-ignore
+  continue                   lbl
+
+  // breaking comment
+  ;(possibleArray || []).sort()
+}
+
+lbl2: for (;;) {
+  // prettier-ignore
+  break                   lbl2;
+}
+
+lbl3: for (;;) {
+  // prettier-ignore
+  break   lbl3
+}

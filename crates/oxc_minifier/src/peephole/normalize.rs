@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, ValueType},
@@ -8,7 +8,11 @@ use oxc_ecmascript::{
 use oxc_semantic::IsGlobalReference;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
+use super::PeepholeOptimizations;
+use crate::{
+    ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
+    symbol_liveness, symbol_metadata::MemberWriteEffect,
+};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -54,6 +58,38 @@ impl<'a> Traverse<'a> for Normalize {
         }
     }
 
+    // Normalize is the only traversal that builds stable liveness metadata:
+    // registered function declarations and implicitly observable bindings.
+    // Each post-flush analysis derives ownership and reachability from the
+    // current semantic references.
+    fn enter_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        symbol_liveness::register_function(node, ctx);
+    }
+
+    fn enter_variable_declaration(
+        &mut self,
+        node: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::register_using_declaration(node, ctx);
+    }
+
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::register_named_export(node, ctx);
+    }
+
+    fn enter_export_default_declaration(
+        &mut self,
+        node: &mut ExportDefaultDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::register_default_export(node, ctx);
+    }
+
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -63,7 +99,7 @@ impl<'a> Traverse<'a> for Normalize {
         // every console call (statement position included) to `void 0`.
         stmts.retain(|stmt| match stmt {
             Statement::EmptyStatement(_) => false,
-            Statement::DebuggerStatement(_) if ctx.state.options.drop_debugger => false,
+            Statement::DebuggerStatement(_) if ctx.options().drop_debugger => false,
             _ => true,
         });
     }
@@ -93,8 +129,8 @@ impl<'a> Traverse<'a> for Normalize {
         }
         // Handled outside the match below so the replacement can go through
         // `ctx.replace_expression`, which walks the dropped call (its
-        // argument subtrees may contain resolved references) into `PassDirty`.
-        if ctx.state.options.drop_console
+        // argument subtrees may contain resolved references) into `PassChanges`.
+        if ctx.options().drop_console
             && let Expression::CallExpression(call_expr) = &*expr
             && Self::is_console_call_expression(call_expr)
         {
@@ -117,6 +153,64 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::set_no_side_effects_to_call_expr(e, ctx);
+    }
+
+    // The three hooks below seed persistent metadata with a program-wide,
+    // execution-order-independent view of member writes before the fixed-point
+    // loop runs. `MinifierState::should_track_member_write_effects` says when
+    // any consumer is live.
+
+    /// Covers `=` / compound / logical assignment lefts, destructuring member
+    /// targets (`[o.x] = arr`), and for-in/of lefts (`for (o.x in y)`).
+    fn exit_assignment_target(
+        &mut self,
+        node: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.should_track_member_write_effects() {
+            return;
+        }
+        let Some(target) = node.as_simple_assignment_target() else { return };
+        // Compound and logical assignments (`o.x += 1`, `o.y ||= 2`) READ the
+        // property before writing; every other position is a plain write.
+        let is_read_modify = matches!(
+            ctx.parent(),
+            Ancestor::AssignmentExpressionLeft(e) if *e.operator() != AssignmentOperator::Assign
+        );
+        Self::record_simple_target_member_write_hazard(target, is_read_modify, ctx);
+    }
+
+    /// `o.x++` / `--o.x` read the property before writing.
+    fn exit_update_expression(&mut self, e: &mut UpdateExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !ctx.should_track_member_write_effects() {
+            return;
+        }
+        Self::record_simple_target_member_write_hazard(
+            &e.argument,
+            /* is_read_modify */ true,
+            ctx,
+        );
+    }
+
+    /// `delete o.x` neither reads the property nor can trigger setters, so a
+    /// single-level delete is harmless — but a CHAINED delete (`delete a.b.c`)
+    /// reads the intermediate object `a.b`, hazarding the base `a`.
+    fn exit_unary_expression(&mut self, e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !ctx.should_track_member_write_effects() {
+            return;
+        }
+        if e.operator.is_delete()
+            && let Some(member) = e.argument.get_inner_expression().as_member_expression()
+        {
+            // Both flags false: `delete` installs no setter, so the hazard applies
+            // only when depth > 1 (the chained intermediate object).
+            Self::record_member_write_hazard(
+                member.object(),
+                /* key_is_unsafe */ false,
+                /* is_read_modify */ false,
+                ctx,
+            );
+        }
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -143,18 +237,21 @@ impl<'a> Normalize {
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx) else { return };
-        let while_stmt = while_stmt.unbox();
-        let for_stmt = ForStatement::boxed_with_scope_id(
-            while_stmt.span,
-            None,
-            Some(while_stmt.test),
-            None,
-            while_stmt.body,
-            ctx.create_child_scope_of_current(ScopeFlags::empty()),
-            ctx,
-        );
-        *stmt = Statement::ForStatement(for_stmt);
+        // Caller (`exit_statement`) only calls this for a `WhileStatement`, so the `else` is dead.
+        stmt.replace_with(|stmt| {
+            let Statement::WhileStatement(while_stmt) = stmt else { unreachable!() };
+            let while_stmt = while_stmt.unbox();
+            let for_stmt = ForStatement::boxed_with_scope_id(
+                while_stmt.span,
+                None,
+                Some(while_stmt.test),
+                None,
+                while_stmt.body,
+                ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                ctx,
+            );
+            Statement::ForStatement(for_stmt)
+        });
     }
 
     fn convert_const_to_let(decl: &mut VariableDeclaration<'a>, ctx: &TraverseCtx<'a>) {
@@ -243,10 +340,9 @@ impl<'a> Normalize {
         if ident.is_global_reference(ctx.scoping()) {
             return;
         }
-        // `replace_expression` walks the dropped ident into `PassDirty`, so
-        // its resolved reference is pruned by the driver's pre-loop
-        // `flush_pass_dirty`, before pass 1 — otherwise the symbol would
-        // look referenced forever.
+        // `replace_expression` walks the dropped ident into `PassChanges`, so
+        // its resolved reference is pruned by `finish_normalize_pass`,
+        // before pass 1 — otherwise the symbol would look referenced forever.
         let new_arg =
             Expression::new_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal, ctx);
         ctx.replace_expression(&mut e.argument, new_arg);
@@ -366,7 +462,7 @@ impl<'a> Normalize {
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
             // RegExp needs special validation using the regex parser
             "RegExp" => {
-                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments) {
+                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments, ctx) {
                     new_expr.pure = true;
                 }
                 return;
@@ -468,6 +564,93 @@ impl<'a> Normalize {
         ctx.is_global_reference(ident)
             // Throw is never pure.
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))
+    }
+
+    /// Extract the member-write parts of a (simple) assignment target and
+    /// record a hazard for its base symbol when one applies.
+    fn record_simple_target_member_write_hazard(
+        target: &SimpleAssignmentTarget<'a>,
+        is_read_modify: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Direct member targets, or the inner member of TS wrappers
+        // (`(o.x as any) = 1`); plain identifier targets have no member write.
+        let Some(member) = target.as_member_expression().or_else(|| {
+            target
+                .get_expression()
+                .map(Expression::get_inner_expression)
+                .and_then(Expression::as_member_expression)
+        }) else {
+            return;
+        };
+        let key_is_unsafe = match member {
+            MemberExpression::StaticMemberExpression(e) => e.property.name == "__proto__",
+            MemberExpression::ComputedMemberExpression(e) => {
+                !PeepholeOptimizations::member_key_is_safe(&e.expression)
+            }
+            // Private fields can't be `__proto__` and aren't affected by the
+            // prototype chain.
+            MemberExpression::PrivateFieldExpression(_) => false,
+        };
+        Self::record_member_write_hazard(member.object(), key_is_unsafe, is_read_modify, ctx);
+    }
+
+    /// Record the base symbol of a hazardous member write in
+    /// persistent symbol metadata. `object` is the member expression's object;
+    /// walking it to the base identifier determines the chain depth.
+    ///
+    /// Records a member-write hazard iff the op reads the property
+    /// (`is_read_modify`), the write is chained (`a.b.c = 1` — dropping the
+    /// intermediate `a.b = {}` would throw), or the key may be `"__proto__"` or a
+    /// non-literal computed value (`key_is_unsafe` — the write may install
+    /// setters).
+    ///
+    /// Unsafe keys record the stronger `MayMutatePrototype` state — a purely
+    /// syntactic effect. The sole-reference exemption is applied at the
+    /// consumer (`is_member_assign_to_unused_binding`), where the reference
+    /// count is current rather than frozen at seed time.
+    fn record_member_write_hazard(
+        object: &Expression<'a>,
+        key_is_unsafe: bool,
+        is_read_modify: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // In tree-shake-only mode only possible prototype mutation has a live
+        // consumer (the opt-in drop); the default hazard reader is full-minify
+        // only.
+        // Skip hazard-only work (safe-key read-modify ops, chained writes,
+        // chained deletes) before walking the chain.
+        if ctx.is_tree_shake_only() && !key_is_unsafe {
+            return;
+        }
+        let mut depth = 1u32;
+        let mut object = object;
+        let base = loop {
+            let inner = object.get_inner_expression();
+            if let Expression::Identifier(ident) = inner {
+                break ident;
+            }
+            let Some(member) = inner.as_member_expression() else {
+                // No identifier base (`f().x`, `(a?.b).c`, `this.x`, …) —
+                // nothing droppable resolves through these, so no hazard to
+                // record.
+                return;
+            };
+            depth += 1;
+            object = member.object();
+        };
+        if !(is_read_modify || depth > 1 || key_is_unsafe) {
+            return;
+        }
+        let Some(symbol_id) = ctx.scoping().get_reference(base.reference_id()).symbol_id() else {
+            return;
+        };
+        let effect = if key_is_unsafe {
+            MemberWriteEffect::MayMutatePrototype
+        } else {
+            MemberWriteEffect::Hazard
+        };
+        ctx.state.symbols.record_member_write_effect(symbol_id, effect);
     }
 
     fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {

@@ -5855,6 +5855,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the loop or make at least one path continue to the next iteration.
 
   ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) { label: try { break label; } finally { break; } bar(); }
+   · ───────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
    ╭─[no_unreachable_loop.tsx:1:18]
  1 │ function foo() { while (a) { try { continue; } finally { return; } } }
    ·                  ───────────────────────────────────────────────────
@@ -5865,6 +5872,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_unreachable_loop.tsx:1:12]
  1 │ for (;;) { while (a) break; }
    ·            ────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:13]
+ 1 │ while (a) { while (true) { switch (foo) { default: break; } break; } }
+   ·             ────────────────────────────────────────────────────────
    ╰────
   help: Remove the loop or make at least one path continue to the next iteration.
 

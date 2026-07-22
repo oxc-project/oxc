@@ -262,15 +262,16 @@ impl GlobMatcher {
         }
     }
 
-    /// tsgo `matchesFileParts` (reduced to a boolean; include bucketing isn't needed).
-    fn file_matches(&self, segments: &[&str]) -> bool {
+    /// tsgo `matchesFileParts`: the index of the first include pattern the file matches (the
+    /// result bucket it lands in), or `None` when excluded or unmatched.
+    fn file_matches(&self, segments: &[&str]) -> Option<usize> {
         if self.excludes.iter().any(|pattern| pattern.matches(segments, false)) {
-            return false;
+            return None;
         }
         if self.includes.is_empty() {
-            return !self.had_includes;
+            return if self.had_includes { None } else { Some(0) };
         }
-        self.includes.iter().any(|pattern| pattern.matches(segments, false))
+        self.includes.iter().position(|pattern| pattern.matches(segments, false))
     }
 
     /// tsgo `matchesDirectoryParts`: could any file under this directory match?
@@ -326,6 +327,10 @@ fn get_base_paths(base: &Path, includes: &[String]) -> Vec<PathBuf> {
 /// tsgo `ReadDirectory`/`matchFiles`: collect files under `base` matching the specs, filtered
 /// by `extensions` (a flat suffix list). Directories are walked only when they could contain a
 /// match, so `node_modules` and excluded subtrees are pruned.
+///
+/// Files are kept in one result bucket per include pattern and the buckets are concatenated in
+/// include order (tsgo's `results [][]string`) — so a file's position follows the first include
+/// spec it matches, not the raw walk order.
 pub fn read_directory(
     base: &Path,
     extensions: &[&str],
@@ -334,11 +339,11 @@ pub fn read_directory(
 ) -> Vec<PathBuf> {
     let matcher = GlobMatcher::new(includes, excludes);
     let mut visited_symlinks = FxHashSet::default();
-    let mut results = Vec::new();
+    let mut results: Vec<Vec<PathBuf>> = vec![Vec::new(); matcher.includes.len().max(1)];
     for base_path in get_base_paths(base, includes) {
         visit(&base_path, &matcher, extensions, &mut visited_symlinks, &mut results);
     }
-    results
+    results.into_iter().flatten().collect()
 }
 
 fn visit(
@@ -346,7 +351,7 @@ fn visit(
     matcher: &GlobMatcher,
     extensions: &[&str],
     visited_symlinks: &mut FxHashSet<PathBuf>,
-    results: &mut Vec<PathBuf>,
+    results: &mut [Vec<PathBuf>],
 ) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
@@ -388,9 +393,9 @@ fn visit(
         }
         let full = dir.join(name);
         let full_string = full.to_string_lossy();
-        if matcher.file_matches(&path_segments(&full_string)) {
+        if let Some(bucket) = matcher.file_matches(&path_segments(&full_string)) {
             drop(full_string);
-            results.push(full);
+            results[bucket].push(full);
         }
     }
 

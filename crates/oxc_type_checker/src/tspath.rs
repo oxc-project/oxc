@@ -57,6 +57,19 @@ pub fn change_extension(path: &str, new_extension: &str) -> String {
     format!("{path}{new_extension}")
 }
 
+/// tsgo `IsExternalModuleNameRelative`: the module name starts with `./`, `../`, or is `.`/`..`
+/// (`tspath.PathIsRelative`, including the Windows `.\` forms).
+pub fn is_external_module_name_relative(module_name: &str) -> bool {
+    let rest = if let Some(rest) = module_name.strip_prefix("..") {
+        rest
+    } else if let Some(rest) = module_name.strip_prefix('.') {
+        rest
+    } else {
+        return false;
+    };
+    rest.is_empty() || rest.starts_with('/') || rest.starts_with('\\')
+}
+
 /// tsgo `ToPath` / `GetNormalizedAbsolutePath`: resolve `file_name` against
 /// `current_directory` into an absolute, lexically-normalized path (collapsing `.`/`..`).
 ///

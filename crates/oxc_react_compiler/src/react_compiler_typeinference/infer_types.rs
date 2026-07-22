@@ -12,7 +12,12 @@ use std::mem::replace;
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use oxc_allocator::Allocator;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::{IndexSlice, IndexVec};
+use oxc_str::{Ident, format_ident};
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::{
     BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_MIXED_READONLY_ID,
@@ -20,22 +25,24 @@ use crate::react_compiler_hir::object_shape::{
     BUILT_IN_USE_REF_ID, ShapeRegistry,
 };
 use crate::react_compiler_hir::{
-    ArrayElement, ArrayPatternElement, BinaryOperator, FunctionId, HirFunction, Identifier,
-    IdentifierId, IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue,
-    JsxAttribute, JsxTag, LoweredFunction, ManualMemoDependencyRoot, NonLocalBinding,
-    ObjectPropertyKey, ObjectPropertyOrSpread, ParamPattern, Pattern, PlaceOrSpread,
-    PropertyLiteral, PropertyNameKind, ReactFunctionType, SourceLocation, Terminal, Type, TypeId,
+    ArrayElement, ArrayPatternElement, FunctionId, HirFunction, Identifier, IdentifierId,
+    IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue, JsxAttribute,
+    JsxTag, LoweredFunction, ManualMemoDependencyRoot, NonLocalBinding, ObjectPropertyKey,
+    ObjectPropertyOrSpread, ParamPattern, Pattern, PlaceOrSpread, PropertyLiteral,
+    PropertyNameKind, ReactFunctionType, Terminal, Type, TypeId,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
+use oxc_ast::ast::BinaryOperator;
+use oxc_span::Span;
 
 // =============================================================================
 // Public API
 // =============================================================================
 
-pub fn infer_types(
-    func: &mut HirFunction,
-    env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+pub fn infer_types<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+) -> Result<(), OxcDiagnostic> {
     let enable_treat_ref_like_identifiers_as_refs =
         env.config.enable_treat_ref_like_identifiers_as_refs;
     let enable_treat_set_identifiers_as_state_setters =
@@ -58,55 +65,57 @@ pub fn infer_types(
 // =============================================================================
 
 /// Get the type for an identifier as a TypeVar referencing its type slot.
-fn get_type(id: IdentifierId, identifiers: &[Identifier]) -> Type {
-    let type_id = identifiers[id.0 as usize].type_;
-    Type::TypeVar { id: type_id }
+fn get_type<'a>(
+    id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+) -> Type<'a> {
+    let type_id = identifiers[id].type_;
+    Type::Var { id: type_id }
 }
 
 /// Allocate a new TypeVar in the types arena (standalone, no &mut Environment needed).
-fn make_type(types: &mut Vec<Type>) -> Type {
-    let id = TypeId(types.len() as u32);
-    types.push(Type::TypeVar { id });
-    Type::TypeVar { id }
+fn make_type<'a>(types: &mut IndexVec<TypeId, Type<'a>>) -> Type<'a> {
+    let id = TypeId::from_usize(types.len());
+    types.push(Type::Var { id });
+    Type::Var { id }
 }
 
 /// Pre-resolve LoadGlobal types for a single function's instructions.
-fn pre_resolve_globals(
-    func: &HirFunction,
-    function_key: u32,
-    env: &mut Environment,
-    global_types: &mut FxHashMap<(u32, InstructionId), Type>,
+fn pre_resolve_globals<'a>(
+    func: &HirFunction<'a>,
+    function_key: Option<FunctionId>,
+    env: &mut Environment<'a>,
+    global_types: &mut FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
 ) {
     for &instr_id in func.body.blocks.values().flat_map(|b| &b.instructions) {
-        let instr = &func.instructions[instr_id.0 as usize];
-        if let InstructionValue::LoadGlobal { binding, loc, .. } = &instr.value {
-            if let Some(global_type) = env.get_global_declaration(binding, *loc).ok().flatten() {
-                global_types.insert((function_key, instr_id), global_type);
-            }
+        let instr = &func.instructions[instr_id.index()];
+        if let InstructionValue::LoadGlobal { binding, span, .. } = &instr.value
+            && let Some(global_type) = env.get_global_declaration(binding, *span).ok().flatten()
+        {
+            global_types.insert((function_key, instr_id), global_type);
         }
     }
 }
 
 /// Recursively pre-resolve LoadGlobal types for an inner function and its children.
-fn pre_resolve_globals_recursive(
+fn pre_resolve_globals_recursive<'a>(
     func_id: FunctionId,
-    env: &mut Environment,
-    global_types: &mut FxHashMap<(u32, InstructionId), Type>,
+    env: &mut Environment<'a>,
+    global_types: &mut FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
 ) {
     // Collect LoadGlobal bindings and child function IDs in one pass to avoid
     // borrow conflicts (we need &env.functions to read, then &mut env for
     // get_global_declaration).
-    let inner = &env.functions[func_id.0 as usize];
-    let mut load_globals: Vec<(InstructionId, NonLocalBinding, Option<SourceLocation>)> =
-        Vec::new();
+    let inner = &env.functions[func_id];
+    let mut load_globals: Vec<(InstructionId, NonLocalBinding, Option<Span>)> = Vec::new();
     let mut child_func_ids: Vec<FunctionId> = Vec::new();
 
     for block in inner.body.blocks.values() {
         for &instr_id in &block.instructions {
-            let instr = &inner.instructions[instr_id.0 as usize];
+            let instr = &inner.instructions[instr_id.index()];
             match &instr.value {
-                InstructionValue::LoadGlobal { binding, loc, .. } => {
-                    load_globals.push((instr_id, binding.clone(), *loc));
+                InstructionValue::LoadGlobal { binding, span, .. } => {
+                    load_globals.push((instr_id, *binding, *span));
                 }
                 InstructionValue::FunctionExpression {
                     lowered_func: LoweredFunction { func: fid },
@@ -124,9 +133,9 @@ fn pre_resolve_globals_recursive(
     }
 
     // Now resolve globals (no longer borrowing env.functions)
-    for (instr_id, binding, loc) in load_globals {
-        if let Some(global_type) = env.get_global_declaration(&binding, loc).ok().flatten() {
-            global_types.insert((func_id.0, instr_id), global_type);
+    for (instr_id, binding, span) in load_globals {
+        if let Some(global_type) = env.get_global_declaration(&binding, span).ok().flatten() {
+            global_types.insert((Some(func_id), instr_id), global_type);
         }
     }
 
@@ -139,21 +148,21 @@ fn pre_resolve_globals_recursive(
 fn is_primitive_binary_op(op: &BinaryOperator) -> bool {
     matches!(
         op,
-        BinaryOperator::Add
-            | BinaryOperator::Subtract
-            | BinaryOperator::Divide
-            | BinaryOperator::Modulo
-            | BinaryOperator::Multiply
-            | BinaryOperator::Exponent
+        BinaryOperator::Addition
+            | BinaryOperator::Subtraction
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Exponential
             | BinaryOperator::BitwiseAnd
-            | BinaryOperator::BitwiseOr
+            | BinaryOperator::BitwiseOR
             | BinaryOperator::ShiftRight
             | BinaryOperator::ShiftLeft
-            | BinaryOperator::BitwiseXor
+            | BinaryOperator::BitwiseXOR
             | BinaryOperator::GreaterThan
             | BinaryOperator::LessThan
-            | BinaryOperator::GreaterEqual
-            | BinaryOperator::LessEqual
+            | BinaryOperator::GreaterEqualThan
+            | BinaryOperator::LessEqualThan
     )
 }
 
@@ -161,24 +170,22 @@ fn is_primitive_binary_op(op: &BinaryOperator) -> bool {
 /// If `custom_hook_type` is provided and the property name looks like a hook,
 /// it will be used as a fallback when no matching property is found (matching
 /// TS `getPropertyType` behavior).
-fn resolve_property_type(
-    shapes: &ShapeRegistry,
-    resolved_object: &Type,
-    property_name: &PropertyNameKind,
-    custom_hook_type: Option<&Type>,
-) -> Option<Type> {
+fn resolve_property_type<'a>(
+    shapes: &ShapeRegistry<'a>,
+    resolved_object: &Type<'a>,
+    property_name: &PropertyNameKind<'a>,
+    custom_hook_type: Option<&Type<'a>>,
+) -> Option<Type<'a>> {
     let shape_id = match resolved_object {
         Type::Object { shape_id } | Type::Function { shape_id, .. } => shape_id.as_deref(),
         _ => {
             // No shape, but if property name is hook-like, return hook type
-            if let Some(hook_type) = custom_hook_type {
-                if let PropertyNameKind::Literal { value: PropertyLiteral::String(s) } =
+            if let Some(hook_type) = custom_hook_type
+                && let PropertyNameKind::Literal { value: PropertyLiteral::String(s) } =
                     property_name
-                {
-                    if is_hook_name(s) {
-                        return Some(hook_type.clone());
-                    }
-                }
+                && is_hook_name(s)
+            {
+                return Some(hook_type.clone());
             }
             return None;
         }
@@ -188,10 +195,10 @@ fn resolve_property_type(
         None => {
             // Object/Function with no shapeId: TS getPropertyType falls through
             // to hook-name check, TS getFallthroughPropertyType returns null
-            if let PropertyNameKind::Literal { value: PropertyLiteral::String(s) } = property_name {
-                if is_hook_name(s) {
-                    return custom_hook_type.cloned();
-                }
+            if let PropertyNameKind::Literal { value: PropertyLiteral::String(s) } = property_name
+                && is_hook_name(s)
+            {
+                return custom_hook_type.cloned();
             }
             return None;
         }
@@ -210,7 +217,7 @@ fn resolve_property_type(
                 .or_else(|| if is_hook_name(s) { custom_hook_type.cloned() } else { None }),
             PropertyLiteral::Number(_) => shape.properties.get("*").cloned(),
         },
-        PropertyNameKind::Computed { .. } => shape.properties.get("*").cloned(),
+        PropertyNameKind::Computed => shape.properties.get("*").cloned(),
     }
 }
 
@@ -244,7 +251,7 @@ fn is_ref_like_name(object_name: &str, property_name: &PropertyNameKind) -> bool
 /// `if` block, so it unconditionally returns false.
 fn type_equals(a: &Type, b: &Type) -> bool {
     match (a, b) {
-        (Type::TypeVar { id: id_a }, Type::TypeVar { id: id_b }) => id_a == id_b,
+        (Type::Var { id: id_a }, Type::Var { id: id_b }) => id_a == id_b,
         (Type::Primitive, Type::Primitive) => true,
         (Type::Poly, Type::Poly) => true,
         (Type::ObjectMethod, Type::ObjectMethod) => true,
@@ -256,14 +263,18 @@ fn type_equals(a: &Type, b: &Type) -> bool {
     }
 }
 
-fn set_name(names: &mut FxHashMap<IdentifierId, String>, id: IdentifierId, source: &Identifier) {
-    if let Some(IdentifierName::Named(ref name)) = source.name {
-        names.insert(id, name.clone());
+fn set_name<'a>(
+    names: &mut FxHashMap<IdentifierId, Ident<'a>>,
+    id: IdentifierId,
+    source: &Identifier<'a>,
+) {
+    if let Some(IdentifierName::Named(name)) = source.name {
+        names.insert(id, name);
     }
 }
 
-fn get_name(names: &FxHashMap<IdentifierId, String>, id: IdentifierId) -> String {
-    names.get(&id).cloned().unwrap_or_default()
+fn get_name<'a>(names: &FxHashMap<IdentifierId, Ident<'a>>, id: IdentifierId) -> Ident<'a> {
+    names.get(&id).copied().unwrap_or(Ident::empty())
 }
 
 // =============================================================================
@@ -276,41 +287,34 @@ fn get_name(names: &FxHashMap<IdentifierId, String>, id: IdentifierId) -> String
 /// `generate_for_function_id` with split borrows instead, because the
 /// take/replace pattern on `env.functions` requires separate `&mut` access
 /// to different fields.
-fn generate(
-    func: &HirFunction,
-    env: &mut Environment,
-    unifier: &mut Unifier,
-) -> Result<(), CompilerDiagnostic> {
+fn generate<'a>(
+    func: &HirFunction<'a>,
+    env: &mut Environment<'a>,
+    unifier: &mut Unifier<'a>,
+) -> Result<(), OxcDiagnostic> {
     // Component params
     if func.fn_type == ReactFunctionType::Component {
         if let Some(ParamPattern::Place(place)) = func.params.first() {
             let ty = get_type(place.identifier, &env.identifiers);
-            unifier.unify(
-                ty,
-                Type::Object { shape_id: Some(BUILT_IN_PROPS_ID.to_string()) },
-                &env.shapes,
-            )?;
+            unifier.unify(ty, Type::Object { shape_id: Some(BUILT_IN_PROPS_ID) }, &env.shapes)?;
         }
         if let Some(ParamPattern::Place(place)) = func.params.get(1) {
             let ty = get_type(place.identifier, &env.identifiers);
-            unifier.unify(
-                ty,
-                Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
-                &env.shapes,
-            )?;
+            unifier.unify(ty, Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) }, &env.shapes)?;
         }
     }
 
     // Pre-resolve LoadGlobal types for all functions (outer + inner). We do
     // this before the instruction loop because get_global_declaration needs
     // &mut env, but generate_instruction_types takes split borrows on env fields.
-    // The key is (function_key, InstructionId) where function_key is u32::MAX
-    // for the outer function and FunctionId.0 for inner functions.
-    let mut global_types: FxHashMap<(u32, InstructionId), Type> = FxHashMap::default();
-    pre_resolve_globals(func, u32::MAX, env, &mut global_types);
+    // The key is (function_key, InstructionId) where function_key is None for the
+    // outer function and Some(FunctionId) for inner functions.
+    let mut global_types: FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>> =
+        FxHashMap::default();
+    pre_resolve_globals(func, None, env, &mut global_types);
     // Also pre-resolve inner functions recursively
     for &instr_id in func.body.blocks.values().flat_map(|b| &b.instructions) {
-        let instr = &func.instructions[instr_id.0 as usize];
+        let instr = &func.instructions[instr_id.index()];
         match &instr.value {
             InstructionValue::FunctionExpression {
                 lowered_func: LoweredFunction { func: func_id },
@@ -326,8 +330,8 @@ fn generate(
         }
     }
 
-    let mut names: FxHashMap<IdentifierId, String> = FxHashMap::default();
-    let mut return_types: Vec<Type> = Vec::new();
+    let mut names: FxHashMap<IdentifierId, Ident<'a>> = FxHashMap::default();
+    let mut return_types: Vec<Type<'a>> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
         // Phis
@@ -341,11 +345,11 @@ fn generate(
         // Instructions — use split borrows: &env.identifiers, &env.shapes
         // are immutable, while &mut env.types and &mut env.functions are mutable.
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             generate_instruction_types(
                 instr,
                 instr_id,
-                u32::MAX,
+                None,
                 &env.identifiers,
                 &mut env.types,
                 &mut env.functions,
@@ -353,6 +357,7 @@ fn generate(
                 &global_types,
                 &env.shapes,
                 unifier,
+                env.allocator,
             )?;
         }
 
@@ -373,42 +378,36 @@ fn generate(
 }
 
 /// Recursively generate equations for an inner function (accessed via FunctionId).
-fn generate_for_function_id(
+#[allow(clippy::too_many_arguments)]
+fn generate_for_function_id<'a>(
     func_id: FunctionId,
-    identifiers: &[Identifier],
-    types: &mut Vec<Type>,
-    functions: &mut Vec<HirFunction>,
-    global_types: &FxHashMap<(u32, InstructionId), Type>,
-    shapes: &ShapeRegistry,
-    unifier: &mut Unifier,
-) -> Result<(), CompilerDiagnostic> {
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexVec<TypeId, Type<'a>>,
+    functions: &mut IndexVec<FunctionId, HirFunction<'a>>,
+    global_types: &FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
+    shapes: &ShapeRegistry<'a>,
+    unifier: &mut Unifier<'a>,
+    allocator: &'a Allocator,
+) -> Result<(), OxcDiagnostic> {
     // Take the function out temporarily to avoid borrow conflicts
-    let inner = replace(&mut functions[func_id.0 as usize], placeholder_function());
+    let inner = replace(&mut functions[func_id], placeholder_function(allocator));
 
     // Process params for component inner functions
     if inner.fn_type == ReactFunctionType::Component {
         if let Some(ParamPattern::Place(place)) = inner.params.first() {
             let ty = get_type(place.identifier, identifiers);
-            unifier.unify(
-                ty,
-                Type::Object { shape_id: Some(BUILT_IN_PROPS_ID.to_string()) },
-                shapes,
-            )?;
+            unifier.unify(ty, Type::Object { shape_id: Some(BUILT_IN_PROPS_ID) }, shapes)?;
         }
         if let Some(ParamPattern::Place(place)) = inner.params.get(1) {
             let ty = get_type(place.identifier, identifiers);
-            unifier.unify(
-                ty,
-                Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
-                shapes,
-            )?;
+            unifier.unify(ty, Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) }, shapes)?;
         }
     }
 
     // TS creates a fresh `names` Map per recursive `generate` call, so inner
     // functions don't inherit or pollute the outer function's name mappings.
-    let mut inner_names: FxHashMap<IdentifierId, String> = FxHashMap::default();
-    let mut inner_return_types: Vec<Type> = Vec::new();
+    let mut inner_names: FxHashMap<IdentifierId, Ident<'a>> = FxHashMap::default();
+    let mut inner_return_types: Vec<Type<'a>> = Vec::new();
 
     for (_block_id, block) in &inner.body.blocks {
         for phi in &block.phis {
@@ -419,11 +418,11 @@ fn generate_for_function_id(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &inner.instructions[instr_id.0 as usize];
+            let instr = &inner.instructions[instr_id.index()];
             generate_instruction_types(
                 instr,
                 instr_id,
-                func_id.0,
+                Some(func_id),
                 identifiers,
                 types,
                 functions,
@@ -431,6 +430,7 @@ fn generate_for_function_id(
                 global_types,
                 shapes,
                 unifier,
+                allocator,
             )?;
         }
 
@@ -447,23 +447,24 @@ fn generate_for_function_id(
     }
 
     // Put the function back
-    functions[func_id.0 as usize] = inner;
+    functions[func_id] = inner;
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_instruction_types(
-    instr: &Instruction,
+fn generate_instruction_types<'a>(
+    instr: &Instruction<'a>,
     instr_id: InstructionId,
-    function_key: u32,
-    identifiers: &[Identifier],
-    types: &mut Vec<Type>,
-    functions: &mut Vec<HirFunction>,
-    names: &mut FxHashMap<IdentifierId, String>,
-    global_types: &FxHashMap<(u32, InstructionId), Type>,
-    shapes: &ShapeRegistry,
-    unifier: &mut Unifier,
-) -> Result<(), CompilerDiagnostic> {
+    function_key: Option<FunctionId>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexVec<TypeId, Type<'a>>,
+    functions: &mut IndexVec<FunctionId, HirFunction<'a>>,
+    names: &mut FxHashMap<IdentifierId, Ident<'a>>,
+    global_types: &FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
+    shapes: &ShapeRegistry<'a>,
+    unifier: &mut Unifier<'a>,
+    allocator: &'a Allocator,
+) -> Result<(), OxcDiagnostic> {
     let left = get_type(instr.lvalue.identifier, identifiers);
 
     match &instr.value {
@@ -478,7 +479,7 @@ fn generate_instruction_types(
         }
 
         InstructionValue::LoadLocal { place, .. } => {
-            set_name(names, instr.lvalue.identifier, &identifiers[place.identifier.0 as usize]);
+            set_name(names, instr.lvalue.identifier, &identifiers[place.identifier]);
             let place_type = get_type(place.identifier, identifiers);
             unifier.unify(left, place_type, shapes)?;
         }
@@ -538,10 +539,10 @@ fn generate_instruction_types(
         InstructionValue::CallExpression { callee, .. } => {
             let return_type = make_type(types);
             let mut shape_id = None;
-            if unifier.enable_treat_set_identifiers_as_state_setters {
-                if names.get(&callee.identifier).is_some_and(|name| name.starts_with("set")) {
-                    shape_id = Some(BUILT_IN_SET_STATE_ID.to_string());
-                }
+            if unifier.enable_treat_set_identifiers_as_state_setters
+                && names.get(&callee.identifier).is_some_and(|name| name.starts_with("set"))
+            {
+                shape_id = Some(BUILT_IN_SET_STATE_ID);
             }
             let callee_type = get_type(callee.identifier, identifiers);
             unifier.unify(
@@ -573,26 +574,18 @@ fn generate_instruction_types(
 
         InstructionValue::ObjectExpression { properties, .. } => {
             for prop in properties {
-                if let ObjectPropertyOrSpread::Property(obj_prop) = prop {
-                    if let ObjectPropertyKey::Computed { name } = &obj_prop.key {
-                        let name_type = get_type(name.identifier, identifiers);
-                        unifier.unify(name_type, Type::Primitive, shapes)?;
-                    }
+                if let ObjectPropertyOrSpread::Property(obj_prop) = prop
+                    && let ObjectPropertyKey::Computed { name } = &obj_prop.key
+                {
+                    let name_type = get_type(name.identifier, identifiers);
+                    unifier.unify(name_type, Type::Primitive, shapes)?;
                 }
             }
-            unifier.unify(
-                left,
-                Type::Object { shape_id: Some(BUILT_IN_OBJECT_ID.to_string()) },
-                shapes,
-            )?;
+            unifier.unify(left, Type::Object { shape_id: Some(BUILT_IN_OBJECT_ID) }, shapes)?;
         }
 
         InstructionValue::ArrayExpression { .. } => {
-            unifier.unify(
-                left,
-                Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
-                shapes,
-            )?;
+            unifier.unify(left, Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) }, shapes)?;
         }
 
         InstructionValue::PropertyLoad { object, property, .. } => {
@@ -603,22 +596,21 @@ fn generate_instruction_types(
                 Type::Property {
                     object_type: Box::new(object_type),
                     object_name,
-                    property_name: PropertyNameKind::Literal { value: property.clone() },
+                    property_name: PropertyNameKind::Literal { value: *property },
                 },
                 shapes,
             )?;
         }
 
-        InstructionValue::ComputedLoad { object, property, .. } => {
+        InstructionValue::ComputedLoad { object, .. } => {
             let object_type = get_type(object.identifier, identifiers);
             let object_name = get_name(names, object.identifier);
-            let prop_type = get_type(property.identifier, identifiers);
             unifier.unify(
                 left,
                 Type::Property {
                     object_type: Box::new(object_type),
                     object_name,
-                    property_name: PropertyNameKind::Computed { value: Box::new(prop_type) },
+                    property_name: PropertyNameKind::Computed,
                 },
                 shapes,
             )?;
@@ -653,7 +645,9 @@ fn generate_instruction_types(
                                     object_type: Box::new(value_type),
                                     object_name,
                                     property_name: PropertyNameKind::Literal {
-                                        value: PropertyLiteral::String(i.to_string()),
+                                        value: PropertyLiteral::String(format_ident!(
+                                            allocator, "{i}"
+                                        )),
                                     },
                                 },
                                 shapes,
@@ -663,7 +657,7 @@ fn generate_instruction_types(
                             let spread_type = get_type(spread.place.identifier, identifiers);
                             unifier.unify(
                                 spread_type,
-                                Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) },
+                                Type::Object { shape_id: Some(BUILT_IN_ARRAY_ID) },
                                 shapes,
                             )?;
                         }
@@ -689,7 +683,7 @@ fn generate_instruction_types(
                                         object_type: Box::new(value_type),
                                         object_name,
                                         property_name: PropertyNameKind::Literal {
-                                            value: PropertyLiteral::String(name.clone()),
+                                            value: PropertyLiteral::String(*name),
                                         },
                                     },
                                     shapes,
@@ -724,14 +718,15 @@ fn generate_instruction_types(
                 global_types,
                 shapes,
                 unifier,
+                allocator,
             )?;
             // Get the inner function's return type
-            let inner_func = &functions[func_id.0 as usize];
+            let inner_func = &functions[*func_id];
             let inner_return_type = get_type(inner_func.returns.identifier, identifiers);
             unifier.unify(
                 left,
                 Type::Function {
-                    shape_id: Some(BUILT_IN_FUNCTION_ID.to_string()),
+                    shape_id: Some(BUILT_IN_FUNCTION_ID),
                     return_type: Box::new(inner_return_type),
                     is_constructor: false,
                 },
@@ -754,6 +749,7 @@ fn generate_instruction_types(
                 global_types,
                 shapes,
                 unifier,
+                allocator,
             )?;
             unifier.unify(left, Type::ObjectMethod, shapes)?;
         }
@@ -761,31 +757,23 @@ fn generate_instruction_types(
         InstructionValue::JsxExpression { props, .. } => {
             if unifier.enable_treat_ref_like_identifiers_as_refs {
                 for prop in props {
-                    if let JsxAttribute::Attribute { name, place } = prop {
-                        if name == "ref" {
-                            let ref_type = get_type(place.identifier, identifiers);
-                            unifier.unify(
-                                ref_type,
-                                Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
-                                shapes,
-                            )?;
-                        }
+                    if let JsxAttribute::Attribute { name, place } = prop
+                        && name == "ref"
+                    {
+                        let ref_type = get_type(place.identifier, identifiers);
+                        unifier.unify(
+                            ref_type,
+                            Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) },
+                            shapes,
+                        )?;
                     }
                 }
             }
-            unifier.unify(
-                left,
-                Type::Object { shape_id: Some(BUILT_IN_JSX_ID.to_string()) },
-                shapes,
-            )?;
+            unifier.unify(left, Type::Object { shape_id: Some(BUILT_IN_JSX_ID) }, shapes)?;
         }
 
         InstructionValue::JsxFragment { .. } => {
-            unifier.unify(
-                left,
-                Type::Object { shape_id: Some(BUILT_IN_JSX_ID.to_string()) },
-                shapes,
-            )?;
+            unifier.unify(left, Type::Object { shape_id: Some(BUILT_IN_JSX_ID) }, shapes)?;
         }
 
         InstructionValue::NewExpression { callee, .. } => {
@@ -812,7 +800,7 @@ fn generate_instruction_types(
                 Type::Property {
                     object_type: Box::new(object_type),
                     object_name,
-                    property_name: PropertyNameKind::Literal { value: property.clone() },
+                    property_name: PropertyNameKind::Literal { value: *property },
                 },
                 shapes,
             )?;
@@ -825,7 +813,6 @@ fn generate_instruction_types(
         | InstructionValue::Await { .. }
         | InstructionValue::GetIterator { .. }
         | InstructionValue::IteratorNext { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Debugger { .. }
         | InstructionValue::FinishMemoize { .. } => {
             // No type equations for these
@@ -842,12 +829,12 @@ fn generate_instruction_types(
 // Apply resolved types
 // =============================================================================
 
-fn apply_function(
-    func: &HirFunction,
-    functions: &[HirFunction],
-    identifiers: &mut [Identifier],
-    types: &mut [Type],
-    unifier: &Unifier,
+fn apply_function<'a>(
+    func: &HirFunction<'a>,
+    functions: &IndexSlice<FunctionId, [HirFunction<'a>]>,
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
+    unifier: &Unifier<'a>,
 ) {
     for (_block_id, block) in &func.body.blocks {
         // Phi places
@@ -856,7 +843,7 @@ fn apply_function(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Instruction lvalue
             resolve_identifier(instr.lvalue.identifier, identifiers, types, unifier);
@@ -877,7 +864,7 @@ fn apply_function(
                     lowered_func: LoweredFunction { func: func_id },
                     ..
                 } => {
-                    let inner_func = &functions[func_id.0 as usize];
+                    let inner_func = &functions[*func_id];
                     // Resolve types for captured context variable places (matching TS
                     // where eachInstructionValueOperand yields func.context places)
                     for ctx in &inner_func.context {
@@ -894,24 +881,24 @@ fn apply_function(
     resolve_identifier(func.returns.identifier, identifiers, types, unifier);
 }
 
-fn resolve_identifier(
+fn resolve_identifier<'a>(
     id: IdentifierId,
-    identifiers: &mut [Identifier],
-    types: &mut [Type],
-    unifier: &Unifier,
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
+    unifier: &Unifier<'a>,
 ) {
-    let type_id = identifiers[id.0 as usize].type_;
-    let current_type = types[type_id.0 as usize].clone();
+    let type_id = identifiers[id].type_;
+    let current_type = types[type_id].clone();
     let resolved = unifier.get(&current_type);
-    types[type_id.0 as usize] = resolved;
+    types[type_id] = resolved;
 }
 
 /// Resolve types for instruction lvalues (mirrors TS eachInstructionLValue).
-fn apply_instruction_lvalues(
-    value: &InstructionValue,
-    identifiers: &mut [Identifier],
-    types: &mut [Type],
-    unifier: &Unifier,
+fn apply_instruction_lvalues<'a>(
+    value: &InstructionValue<'a>,
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
+    unifier: &Unifier<'a>,
 ) {
     match value {
         InstructionValue::StoreLocal { lvalue, .. }
@@ -969,11 +956,11 @@ fn apply_instruction_lvalues(
 }
 
 /// Resolve types for instruction operands (mirrors TS eachInstructionOperand).
-fn apply_instruction_operands(
-    value: &InstructionValue,
-    identifiers: &mut [Identifier],
-    types: &mut [Type],
-    unifier: &Unifier,
+fn apply_instruction_operands<'a>(
+    value: &InstructionValue<'a>,
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
+    unifier: &Unifier<'a>,
 ) {
     match value {
         InstructionValue::LoadLocal { place, .. } | InstructionValue::LoadContext { place, .. } => {
@@ -1170,8 +1157,7 @@ fn apply_instruction_operands(
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
-        | InstructionValue::Debugger { .. }
-        | InstructionValue::UnsupportedNode { .. } => {
+        | InstructionValue::Debugger { .. } => {
             // No operand places
         }
     }
@@ -1181,17 +1167,17 @@ fn apply_instruction_operands(
 // Unifier
 // =============================================================================
 
-struct Unifier {
-    substitutions: FxHashMap<TypeId, Type>,
+struct Unifier<'a> {
+    substitutions: FxHashMap<TypeId, Type<'a>>,
     enable_treat_ref_like_identifiers_as_refs: bool,
     enable_treat_set_identifiers_as_state_setters: bool,
-    custom_hook_type: Option<Type>,
+    custom_hook_type: Option<Type<'a>>,
 }
 
-impl Unifier {
+impl<'a> Unifier<'a> {
     fn new(
         enable_treat_ref_like_identifiers_as_refs: bool,
-        custom_hook_type: Option<Type>,
+        custom_hook_type: Option<Type<'a>>,
         enable_treat_set_identifiers_as_state_setters: bool,
     ) -> Self {
         Unifier {
@@ -1204,35 +1190,22 @@ impl Unifier {
 
     fn unify(
         &mut self,
-        t_a: Type,
-        t_b: Type,
-        shapes: &ShapeRegistry,
-    ) -> Result<(), CompilerDiagnostic> {
-        self.unify_impl(t_a, t_b, shapes)
-    }
-
-    fn unify_impl(
-        &mut self,
-        t_a: Type,
-        t_b: Type,
-        shapes: &ShapeRegistry,
-    ) -> Result<(), CompilerDiagnostic> {
+        t_a: Type<'a>,
+        t_b: Type<'a>,
+        shapes: &ShapeRegistry<'a>,
+    ) -> Result<(), OxcDiagnostic> {
         // Handle Property in the RHS position
         if let Type::Property { ref object_type, ref object_name, ref property_name } = t_b {
             // Check enableTreatRefLikeIdentifiersAsRefs
             if self.enable_treat_ref_like_identifiers_as_refs
                 && is_ref_like_name(object_name, property_name)
             {
-                self.unify_impl(
+                self.unify(
                     *object_type.clone(),
-                    Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
+                    Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID) },
                     shapes,
                 )?;
-                self.unify_impl(
-                    t_a,
-                    Type::Object { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) },
-                    shapes,
-                )?;
+                self.unify(t_a, Type::Object { shape_id: Some(BUILT_IN_REF_VALUE_ID) }, shapes)?;
                 return Ok(());
             }
 
@@ -1245,7 +1218,7 @@ impl Unifier {
                 self.custom_hook_type.as_ref(),
             );
             if let Some(property_type) = property_type {
-                self.unify_impl(t_a, property_type, shapes)?;
+                self.unify(t_a, property_type, shapes)?;
             }
             return Ok(());
         }
@@ -1254,12 +1227,12 @@ impl Unifier {
             return Ok(());
         }
 
-        if let Type::TypeVar { .. } = &t_a {
+        if let Type::Var { .. } = &t_a {
             self.bind_variable_to(t_a, t_b, shapes)?;
             return Ok(());
         }
 
-        if let Type::TypeVar { .. } = &t_b {
+        if let Type::Var { .. } = &t_b {
             self.bind_variable_to(t_b, t_a, shapes)?;
             return Ok(());
         }
@@ -1268,22 +1241,21 @@ impl Unifier {
             Type::Function { return_type: ret_a, is_constructor: con_a, .. },
             Type::Function { return_type: ret_b, is_constructor: con_b, .. },
         ) = (&t_a, &t_b)
+            && con_a == con_b
         {
-            if con_a == con_b {
-                self.unify_impl(*ret_a.clone(), *ret_b.clone(), shapes)?;
-            }
+            self.unify(*ret_a.clone(), *ret_b.clone(), shapes)?;
         }
         Ok(())
     }
 
     fn bind_variable_to(
         &mut self,
-        v: Type,
-        ty: Type,
-        shapes: &ShapeRegistry,
-    ) -> Result<(), CompilerDiagnostic> {
+        v: Type<'a>,
+        ty: Type<'a>,
+        shapes: &ShapeRegistry<'a>,
+    ) -> Result<(), OxcDiagnostic> {
         let v_id = match &v {
-            Type::TypeVar { id } => *id,
+            Type::Var { id } => *id,
             _ => return Ok(()),
         };
 
@@ -1293,25 +1265,22 @@ impl Unifier {
         }
 
         if let Some(existing) = self.substitutions.get(&v_id).cloned() {
-            self.unify_impl(existing, ty, shapes)?;
+            self.unify(existing, ty, shapes)?;
             return Ok(());
         }
 
-        if let Type::TypeVar { id: ty_id } = &ty {
-            if let Some(existing) = self.substitutions.get(ty_id).cloned() {
-                self.unify_impl(v, existing, shapes)?;
-                return Ok(());
-            }
+        if let Type::Var { id: ty_id } = &ty
+            && let Some(existing) = self.substitutions.get(ty_id).cloned()
+        {
+            self.unify(v, existing, shapes)?;
+            return Ok(());
         }
 
         if let Type::Phi { ref operands } = ty {
             if operands.is_empty() {
-                return Err(CompilerDiagnostic {
-                    category: ErrorCategory::Invariant,
-                    reason: "there should be at least one operand".to_string(),
-                    description: None,
-                    details: vec![],
-                });
+                return Err(
+                    ErrorCategory::Invariant.diagnostic("there should be at least one operand")
+                );
             }
 
             let mut candidate_type: Option<Type> = None;
@@ -1337,7 +1306,7 @@ impl Unifier {
             }
 
             if let Some(candidate) = candidate_type {
-                self.unify_impl(v, candidate, shapes)?;
+                self.unify(v, candidate, shapes)?;
                 return Ok(());
             }
         }
@@ -1348,36 +1317,30 @@ impl Unifier {
                 self.substitutions.insert(v_id, resolved);
                 return Ok(());
             }
-            return Err(CompilerDiagnostic {
-                category: ErrorCategory::Invariant,
-                reason: "cycle detected".to_string(),
-                description: None,
-                details: vec![],
-            });
+            return Err(ErrorCategory::Invariant.diagnostic("cycle detected"));
         }
 
         self.substitutions.insert(v_id, ty);
         Ok(())
     }
 
-    fn try_resolve_type(&mut self, v: &Type, ty: &Type) -> Option<Type> {
+    fn try_resolve_type(&mut self, v: &Type<'a>, ty: &Type<'a>) -> Option<Type<'a>> {
         match ty {
             Type::Phi { operands } => {
                 let mut new_operands = Vec::new();
                 for operand in operands {
-                    if let Type::TypeVar { id } = operand {
-                        if let Type::TypeVar { id: v_id } = v {
-                            if id == v_id {
-                                continue; // skip self-reference
-                            }
-                        }
+                    if let Type::Var { id } = operand
+                        && let Type::Var { id: v_id } = v
+                        && id == v_id
+                    {
+                        continue; // skip self-reference
                     }
                     let resolved = self.try_resolve_type(v, operand)?;
                     new_operands.push(resolved);
                 }
                 Some(Type::Phi { operands: new_operands })
             }
-            Type::TypeVar { id } => {
+            Type::Var { id } => {
                 let substitution = self.get(ty);
                 if !type_equals(&substitution, ty) {
                     let resolved = self.try_resolve_type(v, &substitution)?;
@@ -1392,15 +1355,15 @@ impl Unifier {
                 let object_type = self.try_resolve_type(v, &resolved_obj)?;
                 Some(Type::Property {
                     object_type: Box::new(object_type),
-                    object_name: object_name.clone(),
-                    property_name: property_name.clone(),
+                    object_name: *object_name,
+                    property_name: *property_name,
                 })
             }
             Type::Function { shape_id, return_type, is_constructor } => {
                 let resolved_ret = self.get(return_type);
                 let return_type = self.try_resolve_type(v, &resolved_ret)?;
                 Some(Type::Function {
-                    shape_id: shape_id.clone(),
+                    shape_id: *shape_id,
                     return_type: Box::new(return_type),
                     is_constructor: *is_constructor,
                 })
@@ -1411,15 +1374,15 @@ impl Unifier {
         }
     }
 
-    fn occurs_check(&self, v: &Type, ty: &Type) -> bool {
+    fn occurs_check(&self, v: &Type<'a>, ty: &Type<'a>) -> bool {
         if type_equals(v, ty) {
             return true;
         }
 
-        if let Type::TypeVar { id } = ty {
-            if let Some(sub) = self.substitutions.get(id) {
-                return self.occurs_check(v, sub);
-            }
+        if let Type::Var { id } = ty
+            && let Some(sub) = self.substitutions.get(id)
+        {
+            return self.occurs_check(v, sub);
         }
 
         if let Type::Phi { operands } = ty {
@@ -1433,11 +1396,11 @@ impl Unifier {
         false
     }
 
-    fn get(&self, ty: &Type) -> Type {
-        if let Type::TypeVar { id } = ty {
-            if let Some(sub) = self.substitutions.get(id) {
-                return self.get(sub);
-            }
+    fn get(&self, ty: &Type<'a>) -> Type<'a> {
+        if let Type::Var { id } = ty
+            && let Some(sub) = self.substitutions.get(id)
+        {
+            return self.get(sub);
         }
 
         if let Type::Phi { operands } = ty {
@@ -1447,7 +1410,7 @@ impl Unifier {
         if let Type::Function { is_constructor, shape_id, return_type } = ty {
             return Type::Function {
                 is_constructor: *is_constructor,
-                shape_id: shape_id.clone(),
+                shape_id: *shape_id,
                 return_type: Box::new(self.get(return_type)),
             };
         }
@@ -1460,11 +1423,11 @@ impl Unifier {
 // Union types helper
 // =============================================================================
 
-fn try_union_types(ty1: &Type, ty2: &Type) -> Option<Type> {
-    let (readonly_type, other_type) = if matches!(ty1, Type::Object { shape_id } if shape_id.as_deref() == Some(BUILT_IN_MIXED_READONLY_ID))
+fn try_union_types<'a>(ty1: &Type<'a>, ty2: &Type<'a>) -> Option<Type<'a>> {
+    let (readonly_type, other_type) = if matches!(ty1, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_MIXED_READONLY_ID)
     {
         (ty1, ty2)
-    } else if matches!(ty2, Type::Object { shape_id } if shape_id.as_deref() == Some(BUILT_IN_MIXED_READONLY_ID))
+    } else if matches!(ty2, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_MIXED_READONLY_ID)
     {
         (ty2, ty1)
     } else {
@@ -1474,7 +1437,7 @@ fn try_union_types(ty1: &Type, ty2: &Type) -> Option<Type> {
     if matches!(other_type, Type::Primitive) {
         // Union(Primitive | MixedReadonly) = MixedReadonly
         return Some(readonly_type.clone());
-    } else if matches!(other_type, Type::Object { shape_id } if shape_id.as_deref() == Some(BUILT_IN_ARRAY_ID))
+    } else if matches!(other_type, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_ARRAY_ID)
     {
         // Union(Array | MixedReadonly) = Array
         return Some(other_type.clone());

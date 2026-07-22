@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, Span};
@@ -126,7 +126,11 @@ impl ContentEq for CommentNewlines {
 impl<'alloc> CloneIn<'alloc> for CommentNewlines {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        _: &'alloc Allocator,
+    ) -> Self::Cloned {
         *self
     }
 }

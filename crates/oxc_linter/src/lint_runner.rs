@@ -292,7 +292,7 @@ impl LintRunner {
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
             let tsgo_messages =
-                type_aware_linter.lint_source(files, file_system, self.directives_store.map())?;
+                type_aware_linter.lint_source(files, file_system, &self.directives_store.map())?;
             messages.extend(tsgo_messages);
         }
 

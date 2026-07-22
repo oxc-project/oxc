@@ -5,7 +5,7 @@ use oxc_ast::{
         ExportDefaultDeclarationKind, Function, ObjectExpression, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -408,7 +408,7 @@ impl<'a, 'ctx> RequireCallScanner<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for RequireCallScanner<'a, '_> {
+impl<'a> VisitJs<'a> for RequireCallScanner<'a, '_> {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if self.found {
             return;
@@ -421,7 +421,7 @@ impl<'a> Visit<'a> for RequireCallScanner<'a, '_> {
             return;
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

@@ -65,3 +65,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ╰── 'args' is declared here
    ╰────
   help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'count' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let count = 0; function foo(c = (count++, 0)) { console.log(c) } foo()
+   ·     ──┬──                        ──┬──
+   ·       │                            ╰── it was last assigned here
+   ·       ╰── 'count' is declared here
+   ╰────
+  help: Did you mean to use this variable?

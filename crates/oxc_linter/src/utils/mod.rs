@@ -249,8 +249,8 @@ fn read_to_arena_bytes_known_size(
         let mut vec = ManuallyDrop::new(vec);
         let bytes_written = file.take(size as u64).read_to_end(&mut vec)?;
 
-        debug_assert!(vec.capacity() == size);
-        debug_assert!(vec.len() == bytes_written);
+        debug_assert_eq!(vec.capacity(), size);
+        debug_assert_eq!(vec.len(), bytes_written);
 
         // Update `size`, in case file was altered and got smaller since the call to `file.metadata()`,
         // or `file.metadata()` reported inaccurate size

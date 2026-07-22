@@ -84,6 +84,8 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
+    /// Nesting depth of TypeScript ambient contexts.
+    ambient_depth: u32,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
     /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
     /// Keyed by the `(original scope, name)` the symbol was declared in, so that future
@@ -153,6 +155,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: SourceType::default(),
             errors: RefCell::new(Diagnostics::new()),
             current_reference_flags: ReferenceFlags::empty(),
+            ambient_depth: 0,
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
@@ -412,12 +415,23 @@ impl<'a> SemanticBuilder<'a> {
         self.node_store.ancestry()
     }
 
-    pub(crate) fn in_declare_scope(&self) -> bool {
-        self.source_type.is_typescript_definition()
-            || self
-                .scoping
-                .scope_ancestors(self.current_scope_id)
-                .any(|scope_id| self.scoping.scope_flags(scope_id).is_ts_module_block())
+    pub(crate) fn in_ambient_context(&self) -> bool {
+        self.ambient_depth > 0
+    }
+
+    #[inline]
+    fn enter_ambient_context(&mut self, is_ambient: bool) {
+        if is_ambient {
+            self.ambient_depth += 1;
+        }
+    }
+
+    #[inline]
+    fn leave_ambient_context(&mut self, is_ambient: bool) {
+        if is_ambient {
+            debug_assert!(self.ambient_depth > 0);
+            self.ambient_depth -= 1;
+        }
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
@@ -662,12 +676,9 @@ impl<'a> SemanticBuilder<'a> {
         let flags = reference.flags_mut();
 
         // Determine whether the symbol can be referenced by this reference.
-        // For pure type references (not value or typeof) in qualified names,
-        // only resolve to namespaces (modules, namespaces, enums, imports).
-        // Type parameters and type aliases cannot have member access in type space.
-        // Value references (including typeof) can always have member access.
+        // Namespace-qualified references must resolve to namespace-capable symbols
+        // (modules, namespaces, enums, imports), not arbitrary values or types.
         let can_resolve = if flags.is_namespace()
-            && !flags.is_value()
             && !flags.is_value_as_type()
             && !symbol_flags.can_be_referenced_as_namespace()
         {
@@ -686,6 +697,10 @@ impl<'a> SemanticBuilder<'a> {
             // The non type-only ExportSpecifier can reference both type/value symbols,
             // if the symbol is a value symbol and reference flag is not type-only,
             // remove the type flag. For example: `const B = 1; export { B };`
+            *flags -= ReferenceFlags::Type;
+        } else if flags.is_namespace() && flags.is_read() {
+            // TS import-equals module references start as reads so downstream transforms
+            // can decide whether to preserve or erase them based on alias usage.
             *flags -= ReferenceFlags::Type;
         } else {
             // 1. ReferenceFlags::ValueAsType -> ReferenceFlags::Type
@@ -872,6 +887,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             AstNodeStoreKind::Ancestry(stack) => stack.push(kind),
         }
 
+        let is_ambient = self.source_type.is_typescript_definition();
+        self.enter_ambient_context(is_ambient);
+
         // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
         // Inline the specific logic for `Program` here instead.
         // This simplifies logic in `enter_scope`, as it doesn't have to handle the special case.
@@ -904,9 +922,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.resolve_all_references();
 
         self.leave_node(kind);
+        self.leave_ambient_context(is_ambient);
 
         // Check `current_function_node_id` has been reset to as it was at start
-        debug_assert!(self.current_function_node_id == NodeId::ROOT);
+        debug_assert_eq!(self.current_function_node_id, NodeId::ROOT);
+        debug_assert_eq!(self.ambient_depth, 0);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -936,12 +956,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
-        self.node_store.current_node_flags |= NodeFlags::Class;
         if class.is_declaration() {
             class.bind(self);
         }
 
         self.visit_decorators(&class.decorators);
+        self.enter_ambient_context(class.declare);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
 
         if class.is_expression() {
@@ -957,7 +977,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &class.super_class {
+            if self.in_ambient_context() {
+                self.current_reference_flags = ReferenceFlags::ValueAsType;
+            }
             self.visit_expression(super_class);
+            self.current_reference_flags = ReferenceFlags::empty();
         }
         if let Some(super_type_parameters) = &class.super_type_arguments {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -967,7 +991,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
-        self.node_store.current_node_flags -= NodeFlags::Class;
+        self.leave_ambient_context(class.declare);
         self.class_table_builder.pop_class();
     }
 
@@ -2005,6 +2029,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+        self.enter_ambient_context(func.declare);
 
         let parent_function_node_id = self.current_function_node_id;
         self.current_function_node_id = self.node_store.current_node_id;
@@ -2094,6 +2119,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(func.declare);
 
         self.current_function_node_id = parent_function_node_id;
     }
@@ -2351,12 +2377,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
 
-        self.node_store.current_node_flags |= NodeFlags::ExportSpecifier;
-
         self.visit_module_export_name(&it.local);
         self.visit_module_export_name(&it.exported);
-
-        self.node_store.current_node_flags -= NodeFlags::ExportSpecifier;
 
         self.leave_node(kind);
     }
@@ -2450,23 +2472,35 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_method_definition(&mut self, method: &MethodDefinition<'a>) {
+        let kind = AstKind::MethodDefinition(self.alloc(method));
+        self.enter_node(kind);
+        self.visit_span(&method.span);
+        self.visit_decorators(&method.decorators);
+        if method.computed && (method.r#type.is_abstract() || self.in_ambient_context()) {
+            // declare class A { [prop](): string }
+            //                    ^^^^  The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&method.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        let flags = match method.kind {
+            MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
+            MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
+            MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
+            MethodDefinitionKind::Method => ScopeFlags::Function,
+        };
+        self.visit_function(&method.value, flags);
+        self.leave_node(kind);
+    }
+
     fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
         let kind = AstKind::PropertyDefinition(self.alloc(prop));
         self.enter_node(kind);
         self.visit_span(&prop.span);
         self.visit_decorators(&prop.decorators);
-        if prop.computed
-            && (prop.declare
-                || prop.r#type.is_abstract()
-                || self
-                    .ancestry()
-                    .ancestor_kinds()
-                    .find_map(|kind| match kind {
-                        AstKind::Class(class) => Some(class.declare),
-                        _ => None,
-                    })
-                    .unwrap_or(false))
-        {
+        self.enter_ambient_context(prop.declare);
+        if prop.computed && (prop.r#type.is_abstract() || self.in_ambient_context()) {
             // class A { declare [prop]: string }
             //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
             self.current_reference_flags = ReferenceFlags::ValueAsType;
@@ -2480,6 +2514,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_expression(value);
         }
         self.leave_node(kind);
+        self.leave_ambient_context(prop.declare);
     }
 
     fn visit_import_specifier(&mut self, specifier: &ImportSpecifier<'a>) {
@@ -2516,8 +2551,30 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
+        self.current_reference_flags = if decl.import_kind.is_type() {
+            ReferenceFlags::Type
+        } else {
+            ReferenceFlags::Read | ReferenceFlags::Type
+        };
         self.visit_ts_module_reference(&decl.module_reference);
+        // External module references do not contain an identifier reference to consume the flags.
+        self.current_reference_flags = ReferenceFlags::empty();
         self.leave_node(kind);
+    }
+
+    fn visit_ts_module_reference(&mut self, module_reference: &TSModuleReference<'a>) {
+        match module_reference {
+            TSModuleReference::ExternalModuleReference(reference) => {
+                self.visit_ts_external_module_reference(reference);
+            }
+            TSModuleReference::IdentifierReference(reference) => {
+                self.current_reference_flags |= ReferenceFlags::Namespace;
+                self.visit_identifier_reference(reference);
+            }
+            TSModuleReference::QualifiedName(name) => {
+                self.visit_ts_qualified_name(name);
+            }
+        }
     }
 
     fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
@@ -2599,6 +2656,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
         let kind = AstKind::TSModuleDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_ts_module_declaration_name(&decl.id);
@@ -2618,11 +2676,26 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
+    }
+
+    fn visit_ts_global_declaration(&mut self, decl: &TSGlobalDeclaration<'a>) {
+        let kind = AstKind::TSGlobalDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
+        self.enter_scope(ScopeFlags::TsModuleBlock, &decl.scope_id);
+        self.visit_span(&decl.span);
+        self.visit_span(&decl.global_span);
+        self.visit_ts_module_block(&decl.body);
+        self.leave_scope();
+        self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
         let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
@@ -2633,11 +2706,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_ts_type(&decl.type_annotation);
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
         let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
@@ -2649,11 +2724,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_ts_interface_body(&decl.body);
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
@@ -2663,6 +2740,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
         }
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_enum_member(&mut self, member: &TSEnumMember<'a>) {
@@ -2796,10 +2874,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // The left side of a qualified name (e.g., `Database` in `Database.Table`)
         // must resolve to a namespace/module, not a type parameter.
         // Add Namespace flag to skip type parameters during resolution.
-        // If no flags set yet (value context like `import foo = A.B.C`),
-        // also add Read as the default.
+        // If no flags set yet (namespace context like `import foo = A.B.C`),
+        // also add Read and Type as the default.
         if self.current_reference_flags.is_empty() {
-            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Namespace;
+            self.current_reference_flags =
+                ReferenceFlags::Read | ReferenceFlags::Type | ReferenceFlags::Namespace;
         } else {
             self.current_reference_flags |= ReferenceFlags::Namespace;
         }
@@ -2820,10 +2899,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         let kind = AstKind::VariableDeclaration(self.alloc(it));
         self.enter_node(kind);
+        self.enter_ambient_context(it.declare);
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_span(&it.span);
         self.visit_variable_declarators(&it.declarations);
         self.leave_node(kind);
+        self.leave_ambient_context(it.declare);
     }
 
     fn visit_empty_statement(&mut self, it: &EmptyStatement) {
