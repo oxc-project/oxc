@@ -154,44 +154,6 @@ declare_oxc_lint!(
     /// <div role="button" onClick={() => {}} />
     /// <div onClick={() => {}} role="presentation" />
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### `handlers`
-    ///
-    /// An array of event handler prop names that should trigger this rule. Defaults to
-    /// the recommended handlers from `eslint-plugin-jsx-a11y` (click, keyboard, focus,
-    /// mouse/drag, and `onError` / `onLoad`).
-    ///
-    /// ```json
-    /// {
-    ///   "jsx-a11y/no-noninteractive-element-interactions": [
-    ///     "error",
-    ///     { "handlers": ["onClick", "onKeyDown"] }
-    ///   ]
-    /// }
-    /// ```
-    ///
-    /// #### Element exceptions (flattened object)
-    ///
-    /// Additional object keys are HTML element or ARIA role names whose values are
-    /// arrays of handlers to ignore for that element. Providing an entry overrides the
-    /// default exceptions for that element.
-    ///
-    /// By default keyboard handlers are allowed on `alert` / `dialog`, and
-    /// `onError` / `onLoad` are allowed on `body`, `iframe`, and `img`:
-    ///
-    /// ```json
-    /// {
-    ///   "jsx-a11y/no-noninteractive-element-interactions": [
-    ///     "error",
-    ///     {
-    ///       "handlers": ["onClick"],
-    ///       "main": ["onClick"]
-    ///     }
-    ///   ]
-    /// }
-    /// ```
     NoNoninteractiveElementInteractions,
     jsx_a11y,
     correctness,

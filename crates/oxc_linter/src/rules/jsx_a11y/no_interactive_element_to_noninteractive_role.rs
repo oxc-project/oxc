@@ -81,24 +81,6 @@ declare_oxc_lint!(
     /// ```jsx
     /// <div role="img"><button>Save</button></div>
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// This rule takes an object whose keys are HTML element names and whose values
-    /// are arrays of non-interactive ARIA roles allowed on that element. Providing an
-    /// entry overrides the default exceptions for that element.
-    ///
-    /// By default `role="none"` / `role="presentation"` are allowed on `<tr>`, and
-    /// `role="img"` is allowed on `<canvas>`:
-    ///
-    /// ```json
-    /// {
-    ///   "jsx-a11y/no-interactive-element-to-noninteractive-role": [
-    ///     "error",
-    ///     { "tr": ["none", "presentation"], "canvas": ["img"] }
-    ///   ]
-    /// }
-    /// ```
     NoInteractiveElementToNoninteractiveRole,
     jsx_a11y,
     correctness,
