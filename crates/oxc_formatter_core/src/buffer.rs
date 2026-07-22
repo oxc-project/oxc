@@ -160,37 +160,53 @@ impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
 /// growth can reuse the allocation only when nothing else was bumped in between, which practically never holds while formatting).
 /// Heap growth is reclaimed by the system allocator, and the arena receives only the final, exactly-sized copy.
 ///
-/// The backing vector is borrowed from the [`FormatState`] scratch pool and returned on drop,
-/// so nested/repeated staging allocates nothing in the steady state.
+/// The buffer is a watermarked view over the format run's single shared staging vector:
+/// its content is the vector's tail past the length recorded at creation, drained on completion (or on drop).
+/// See `ScratchBuffer` in `state.rs` for the sharing scheme and the LIFO discipline it relies on.
 pub struct HeapVecBuffer<'buf, 'ast, C> {
     state: &'buf mut FormatState<'ast, C>,
-    elements: Vec<FormatElement<'ast>>,
+    watermark: usize,
 }
 
 impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
     pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
-        let elements = state.take_scratch_buffer();
-        Self { state, elements }
+        let watermark = state.scratch().len();
+        Self { state, watermark }
+    }
+
+    /// The number of elements written to this buffer.
+    ///
+    /// Shadows the [`Deref`] slice method: computed without the subslice bounds check.
+    pub fn len(&self) -> usize {
+        self.state.scratch().len() - self.watermark
+    }
+
+    /// Returns `true` if nothing has been written to this buffer.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Removes the last element written to this buffer, if any.
     pub fn pop(&mut self) -> Option<FormatElement<'ast>> {
-        self.elements.pop()
+        if self.is_empty() { None } else { self.state.scratch_mut().pop() }
     }
 
     /// Moves the buffered elements into an exactly-sized arena vector, leaving the buffer empty.
     pub fn take_into_arena_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        let len = self.elements.len();
         let allocator = self.state.allocator();
+        let watermark = self.watermark;
+        let scratch = self.state.scratch_mut();
+        let tail = &scratch[watermark..];
+        let len = tail.len();
         let mut vec = ArenaVec::with_capacity_in(len, &allocator);
         // SAFETY: `vec` has capacity for `len` elements, and the heap and arena buffers cannot overlap.
         // `FormatElement` is not `Drop` (`ArenaVec` const-asserts `!needs_drop` on construction),
-        // so the bitwise move duplicates no owning state and the `clear()` below merely forgets the moved-out elements.
+        // so the bitwise move duplicates no owning state and the `truncate()` below merely forgets the moved-out elements.
         unsafe {
-            std::ptr::copy_nonoverlapping(self.elements.as_ptr(), vec.as_mut_ptr(), len);
+            std::ptr::copy_nonoverlapping(tail.as_ptr(), vec.as_mut_ptr(), len);
             vec.set_len(len);
         }
-        self.elements.clear();
+        scratch.truncate(watermark);
         vec
     }
 
@@ -202,7 +218,9 @@ impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
 
 impl<C> Drop for HeapVecBuffer<'_, '_, C> {
     fn drop(&mut self) {
-        self.state.return_scratch_buffer(std::mem::take(&mut self.elements));
+        // Forget any elements not taken, restoring the shared vector for the enclosing buffer.
+        let watermark = self.watermark;
+        self.state.scratch_mut().truncate(watermark);
     }
 }
 
@@ -210,13 +228,13 @@ impl<'ast, C> Deref for HeapVecBuffer<'_, 'ast, C> {
     type Target = [FormatElement<'ast>];
 
     fn deref(&self) -> &Self::Target {
-        &self.elements
+        &self.state.scratch()[self.watermark..]
     }
 }
 
 impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
     fn write_element(&mut self, element: FormatElement<'ast>) {
-        self.elements.push(element);
+        self.state.scratch_mut().push(element);
     }
 
     fn elements(&self) -> &[FormatElement<'ast>] {
@@ -232,7 +250,8 @@ impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
     }
 
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        self.elements.splice(start.., replacement.iter().cloned());
+        let start = self.watermark + start;
+        self.state.scratch_mut().splice(start.., replacement.iter().cloned());
     }
 }
 

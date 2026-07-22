@@ -34,7 +34,7 @@ Pick by what you're building:
 - Root document (feeds `Document::new` / `EmbeddedIr`): `VecBuffer` (arena)
   - it moves into the `Document` for free, and heap-staging it costs an extra copy for no benefit
 - Unknown-length staging that ends interned/sliced: `HeapVecBuffer`
-  - grows on a pooled heap vector, the arena receives one exactly-sized copy (see its rustdoc for the full rationale)
+  - a watermarked view over a shared, thread-cached scratch vector; the arena receives one exactly-sized copy (see its rustdoc for the full rationale)
 - Known-length sequences: build exact-sized directly (e.g. `ArenaVec::from_iter_in`)
 
 `Formatter::intern` and `BestFitting` already stage on the heap; consumer crates get this for free.

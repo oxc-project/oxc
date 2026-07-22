@@ -1,7 +1,59 @@
+use std::{cell::RefCell, mem};
+
 use oxc_allocator::{Allocator, GetAllocator};
 use rustc_hash::FxHashMap;
 
 use crate::{FormatElement, GroupId, UniqueGroupIdBuilder, format_element::Interned};
+
+thread_local! {
+    /// Cache of heap staging vectors, keeping their high-water capacity alive across format runs on the same thread.
+    /// once a thread is warm, staging performs no heap allocation at all.
+    /// A stack because format runs nest (embedded-language formatting creates a child [`FormatState`] on the same thread).
+    static SCRATCH_CACHE: RefCell<Vec<Vec<FormatElement<'static>>>> =
+        const { RefCell::new(Vec::new()) };
+}
+
+/// The heap staging vector backing [`crate::HeapVecBuffer`] (see there for why staging is heap-backed).
+/// One vector per format run, shared by all nesting levels like a stack via watermarks:
+/// each buffer records the length at creation, pushes its elements, and drains its own tail on completion.
+/// Sound because IR staging is strictly LIFO (an inner buffer always completes before its enclosing one resumes).
+///
+/// Checked out of [`SCRATCH_CACHE`] on creation and returned on drop (panics included).
+pub struct ScratchBuffer<'ast>(Vec<FormatElement<'ast>>);
+
+impl<'ast> ScratchBuffer<'ast> {
+    fn checkout() -> Self {
+        let vec = SCRATCH_CACHE.with_borrow_mut(Vec::pop).unwrap_or_default();
+        // SAFETY: cached vectors are always empty (checkin clears them);
+        // an empty vector holds no values, so re-branding its element lifetime is sound.
+        Self(unsafe {
+            mem::transmute::<Vec<FormatElement<'static>>, Vec<FormatElement<'ast>>>(vec)
+        })
+    }
+}
+
+impl Drop for ScratchBuffer<'_> {
+    fn drop(&mut self) {
+        // Every `HeapVecBuffer` drains its own tail on completion;
+        // a leftover means a buffer leaked elements past its watermark.
+        // Checked here because every format run: root, fragment, or embedded — ends by dropping its `FormatState`.
+        // (Skipped mid-unwind: buffers up the stack haven't truncated their tails yet.)
+        debug_assert!(
+            self.0.is_empty() || std::thread::panicking(),
+            "scratch buffer not fully drained at the end of the format run"
+        );
+        let mut vec = mem::take(&mut self.0);
+        // A buffer that never grew has nothing worth caching
+        if vec.capacity() == 0 {
+            return;
+        }
+        vec.clear();
+        // SAFETY: just cleared; see `checkout`
+        let vec =
+            unsafe { mem::transmute::<Vec<FormatElement<'_>>, Vec<FormatElement<'static>>>(vec) };
+        SCRATCH_CACHE.with_borrow_mut(|cache| cache.push(vec));
+    }
+}
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -15,11 +67,8 @@ pub struct FormatState<'ast, C> {
     // For the document IR printing process
     /// The interned elements that have been printed to this point
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
-    /// Reusable heap staging buffers for [`crate::HeapVecBuffer`], LIFO;
-    /// see there for why staging is heap-backed.
-    /// The pool holds one buffer per nesting level, each retaining its high-water capacity,
-    /// so staging costs no allocation at all in the steady state.
-    scratch_buffers: Vec<Vec<FormatElement<'ast>>>,
+    /// Heap staging vector for [`crate::HeapVecBuffer`]; see [`ScratchBuffer`].
+    scratch: ScratchBuffer<'ast>,
 }
 
 impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
@@ -36,26 +85,18 @@ impl<'ast, C> FormatState<'ast, C> {
             allocator,
             group_id_builder: UniqueGroupIdBuilder::default(),
             printed_interned_elements: FxHashMap::default(),
-            scratch_buffers: Vec::new(),
+            scratch: ScratchBuffer::checkout(),
         }
     }
 
-    /// Takes a heap staging buffer from the pool (empty, capacity retained), or creates one.
-    ///
-    /// Used by [`crate::HeapVecBuffer`]; see [`FormatState::scratch_buffers`] for why staging happens on the heap.
-    /// Return it with [`FormatState::return_scratch_buffer`] once done.
-    pub(crate) fn take_scratch_buffer(&mut self) -> Vec<FormatElement<'ast>> {
-        self.scratch_buffers.pop().unwrap_or_default()
+    /// The heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run.
+    pub(crate) fn scratch(&self) -> &[FormatElement<'ast>] {
+        &self.scratch.0
     }
 
-    /// Returns a staging buffer to the pool so its capacity is reused.
-    pub(crate) fn return_scratch_buffer(&mut self, mut buffer: Vec<FormatElement<'ast>>) {
-        // A capacity-less buffer has nothing worth pooling
-        // (a buffer that never grew beyond its `Vec::default` state).
-        if buffer.capacity() > 0 {
-            buffer.clear();
-            self.scratch_buffers.push(buffer);
-        }
+    /// Mutable access to the heap staging vector; see [`FormatState::scratch`].
+    pub(crate) fn scratch_mut(&mut self) -> &mut Vec<FormatElement<'ast>> {
+        &mut self.scratch.0
     }
 
     /// Returns the allocator used for arena-allocating format elements.
