@@ -1,4 +1,4 @@
-//! Generator for builder methods defined directly on AST types.
+//! Generator for AST builder methods defined directly on AST types.
 //!
 //! A node is built with `BindingRestElement::new(span, argument, builder)`, where `builder` is
 //! anything which implements `GetAstBuilder` (e.g. an `AstBuilder`, or a parser/traversal context).
@@ -20,11 +20,11 @@ use crate::{
 use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Generator for builder methods defined directly on AST types.
-pub struct BuilderMethodsGenerator;
+pub struct AstBuilderGenerator;
 
-define_generator!(BuilderMethodsGenerator);
+define_generator!(AstBuilderGenerator);
 
-impl Generator for BuilderMethodsGenerator {
+impl Generator for AstBuilderGenerator {
     /// Register that accept `#[builder]` attr on structs, enums, or struct fields.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
         &[("builder", attr_positions!(Struct | Enum | StructField))]
