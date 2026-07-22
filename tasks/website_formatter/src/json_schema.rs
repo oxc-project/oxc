@@ -1,10 +1,12 @@
+use std::fs;
+
 use oxfmt::oxfmtrc::Oxfmtrc;
 use schemars::schema_for;
 use website_common::{Renderer, generate_schema_json};
 
-#[expect(clippy::print_stdout)]
-pub fn print_schema_json() {
-    println!("{}", generate_schema_json::<Oxfmtrc>());
+pub fn write_schema_json(path: &str) {
+    let json = generate_schema_json::<Oxfmtrc>();
+    fs::write(path, format!("{json}\n")).expect("failed to write schema JSON");
 }
 
 #[test]
