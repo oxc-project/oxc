@@ -3,8 +3,7 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::Zero;
 
-use super::value_type::ValueType;
-use crate::{GlobalContext, ToBoolean, ToJsString, ToNumber};
+use crate::{GlobalContext, ToBoolean, ToJsString, ToNumber, ValueType};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ConstantValue<'a> {

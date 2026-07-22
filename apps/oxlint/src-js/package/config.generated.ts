@@ -1327,6 +1327,7 @@ export interface DummyRuleMap {
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
   "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
+  "node/no-top-level-await"?: RuleNoConfig | [AllowWarnDeny, NoTopLevelAwaitConfig];
   "object-shorthand"?:
     RuleNoConfig | [AllowWarnDeny, ShorthandType] | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
@@ -1361,7 +1362,7 @@ export interface DummyRuleMap {
   "prefer-destructuring"?:
     | RuleNoConfig
     | [AllowWarnDeny, PreferDestructuringOption]
-    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringRenamedPropertiesConfig];
+    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringEnforcementConfig];
   "prefer-exponentiation-operator"?: RuleNoConfig;
   "prefer-named-capture-group"?: RuleNoConfig;
   "prefer-numeric-literals"?: RuleNoConfig;
@@ -4139,6 +4140,14 @@ export interface NoSyncConfig {
    */
   ignores?: string[];
 }
+export interface NoTopLevelAwaitConfig {
+  /**
+   * If `true`, top-level `await` is allowed in files that start with a
+   * hashbang (`#!`), which marks them as executable scripts rather than
+   * importable modules.
+   */
+  ignoreBin?: boolean;
+}
 export interface ObjectShorthandOptions {
   avoidExplicitReturnArrows?: boolean;
   avoidQuotes?: boolean;
@@ -4241,7 +4250,8 @@ export interface PreferDestructuringAssignmentConfig {
   AssignmentExpression?: PreferDestructuringTargetOption;
   VariableDeclarator?: PreferDestructuringTargetOption;
 }
-export interface PreferDestructuringRenamedPropertiesConfig {
+export interface PreferDestructuringEnforcementConfig {
+  enforceForDeclarationWithTypeAnnotation?: boolean;
   enforceForRenamedProperties?: boolean;
 }
 export interface PreferPromiseRejectErrors {

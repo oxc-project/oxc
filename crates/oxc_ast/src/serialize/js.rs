@@ -6,6 +6,7 @@ use oxc_estree::{
     StructSerializer,
 };
 use oxc_span::{GetSpan, Span};
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
@@ -16,13 +17,8 @@ use super::{EmptyArray, Null};
 // Meta properties
 // ----------------------------------------
 
-fn serialize_meta_property_identifier<S: Serializer>(
-    serializer: S,
-    span: Span,
-    name: &'static str,
-) {
-    IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name: Str::from(name).into() }
-        .serialize(serializer);
+fn serialize_meta_property_identifier<S: Serializer>(serializer: S, span: Span, name: Ident<'_>) {
+    IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name }.serialize(serializer);
 }
 
 #[ast_meta]
@@ -48,7 +44,11 @@ pub struct ImportMetaMeta<'b>(pub &'b ImportMeta);
 
 impl ESTree for ImportMetaMeta<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        serialize_meta_property_identifier(serializer, Span::sized(self.0.span.start, 6), "import");
+        serialize_meta_property_identifier(
+            serializer,
+            Span::sized(self.0.span.start, 6),
+            static_ident!("import"),
+        );
     }
 }
 
@@ -78,7 +78,7 @@ impl ESTree for ImportMetaProperty<'_> {
         serialize_meta_property_identifier(
             serializer,
             Span::new(self.0.span.end.saturating_sub(4), self.0.span.end),
-            "meta",
+            static_ident!("meta"),
         );
     }
 }
@@ -106,7 +106,11 @@ pub struct NewTargetMeta<'b>(pub &'b NewTarget);
 
 impl ESTree for NewTargetMeta<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        serialize_meta_property_identifier(serializer, Span::sized(self.0.span.start, 3), "new");
+        serialize_meta_property_identifier(
+            serializer,
+            Span::sized(self.0.span.start, 3),
+            static_ident!("new"),
+        );
     }
 }
 
@@ -136,7 +140,7 @@ impl ESTree for NewTargetProperty<'_> {
         serialize_meta_property_identifier(
             serializer,
             Span::new(self.0.span.end.saturating_sub(6), self.0.span.end),
-            "target",
+            static_ident!("target"),
         );
     }
 }

@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::{ToNumber, WithoutGlobalReferenceInformation};
 use oxc_span::SPAN;
@@ -17,22 +17,19 @@ fn test() {
     let global_undefined_number =
         undefined.to_number(&GlobalReferenceInformation { is_undefined_shadowed: false });
 
-    let empty_object = Expression::new_object_expression(SPAN, ArenaVec::new_in(ast), ast);
+    let empty_object = Expression::new_object_expression(SPAN, [], ast);
     let object_with_to_string = Expression::new_object_expression(
         SPAN,
-        ArenaVec::from_value_in(
-            ObjectPropertyKind::new_object_property(
-                SPAN,
-                PropertyKind::Init,
-                PropertyKey::new_static_identifier(SPAN, "toString", ast),
-                Expression::new_string_literal(SPAN, "foo", None, ast),
-                false,
-                false,
-                false,
-                ast,
-            ),
+        [ObjectPropertyKind::new_object_property(
+            SPAN,
+            PropertyKind::Init,
+            PropertyKey::new_static_identifier(SPAN, "toString", ast),
+            Expression::new_string_literal(SPAN, "foo", None, ast),
+            false,
+            false,
+            false,
             ast,
-        ),
+        )],
         ast,
     );
     let empty_object_number = empty_object.to_number(&WithoutGlobalReferenceInformation {});
@@ -47,10 +44,8 @@ fn test() {
     // Test arrays with boolean elements - should convert to NaN
     let false_literal = ArrayExpressionElement::new_boolean_literal(SPAN, false, ast);
     let true_literal = ArrayExpressionElement::new_boolean_literal(SPAN, true, ast);
-    let array_with_false =
-        Expression::new_array_expression(SPAN, ArenaVec::from_value_in(false_literal, ast), ast);
-    let array_with_true =
-        Expression::new_array_expression(SPAN, ArenaVec::from_value_in(true_literal, ast), ast);
+    let array_with_false = Expression::new_array_expression(SPAN, [false_literal], ast);
+    let array_with_true = Expression::new_array_expression(SPAN, [true_literal], ast);
     let array_with_false_number = array_with_false.to_number(&WithoutGlobalReferenceInformation {});
     let array_with_true_number = array_with_true.to_number(&WithoutGlobalReferenceInformation {});
 

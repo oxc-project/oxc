@@ -563,7 +563,7 @@ fn apply_reactive_flags_replay(
 
         // 2b. Instructions
         let block = func.body.blocks.get(block_id).unwrap();
-        let instr_ids: Vec<InstructionId> = block.instructions.clone();
+        let instr_ids: Vec<InstructionId> = block.instructions.iter().copied().collect();
 
         for instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.index()];

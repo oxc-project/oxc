@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
@@ -41,9 +41,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let has_in = self.ctx.has_in();
         self.ctx = self.ctx.and_in(true);
-        let expression = self.parse_assignment_expression_or_higher();
+        let expression = self.parse_import_argument();
         let arguments = if self.eat(Kind::Comma) && !self.at(Kind::RParen) {
-            Some(self.parse_assignment_expression_or_higher())
+            Some(self.parse_import_argument())
         } else {
             None
         };
@@ -57,6 +57,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let expr = ImportExpression::boxed(self.end_span(span), expression, arguments, phase, self);
         self.module_record_builder.visit_import_expression(&expr);
         Expression::ImportExpression(expr)
+    }
+
+    /// An argument of `ImportCall`. Spread elements are not allowed.
+    fn parse_import_argument(&mut self) -> Expression<'a> {
+        if self.at(Kind::Dot3) {
+            let error = diagnostics::dynamic_import_argument_spread(self.cur_token().span());
+            return self.fatal_error(error);
+        }
+        self.parse_assignment_expression_or_higher()
     }
 
     /// Section 16.2.2 Import Declaration
@@ -267,11 +276,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if let Some(default_specifier) = default_specifier {
             let default_span = default_specifier.span;
-            specifiers.push(ImportDeclarationSpecifier::new_import_default_specifier(
+            let specifier = ImportDeclarationSpecifier::new_import_default_specifier(
                 default_specifier.span,
                 default_specifier,
                 self,
-            ));
+            );
+            specifiers.push(specifier);
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
@@ -281,7 +291,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        specifiers.push(self.parse_import_namespace_specifier());
+                        let specifier = self.parse_import_namespace_specifier();
+                        specifiers.push(specifier);
                     }
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
@@ -308,7 +319,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
-            specifiers.push(self.parse_import_namespace_specifier());
+            let specifier = self.parse_import_namespace_specifier();
+            specifiers.push(specifier);
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
             self.parse_import_specifiers_into(&mut specifiers, import_kind);
@@ -451,7 +463,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     let export_named_decl = ExportNamedDeclaration::boxed(
                         self.end_span(span),
                         Some(stmt.into_declaration()),
-                        ArenaVec::new_in(self),
+                        [],
                         None,
                         ImportOrExportKind::Value,
                         NONE,
@@ -481,7 +493,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let export_named_decl = ExportNamedDeclaration::boxed(
                     self.end_span(span),
                     Some(decl),
-                    ArenaVec::new_in(self),
+                    [],
                     None,
                     ImportOrExportKind::Value,
                     NONE,
@@ -529,7 +541,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 if self.at(Kind::Export) {
-                    self.error(diagnostics::modifier_already_seen(&Modifier::new(
+                    self.error(diagnostics::modifier_already_seen(Modifier::new(
                         self.cur_token().start(),
                         ModifierKind::Export,
                     )));
@@ -580,11 +592,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
-                        self.error(diagnostics::export_named_string(
-                            &specifier.local.to_string(),
-                            &specifier.exported.to_string(),
-                            literal.span,
-                        ));
+                        let local = self.allocator().alloc_str(&specifier.local.to_string());
+                        let exported = self.allocator().alloc_str(&specifier.exported.to_string());
+                        self.error(diagnostics::export_named_string(local, exported, literal.span));
                     }
                     // For each IdentifierName n in ReferencedBindings of NamedExports:
                     // It is a Syntax Error if StringValue of n is a ReservedWord or the StringValue of n
@@ -594,10 +604,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
+                            let local = self.allocator().alloc_str(&specifier.local.to_string());
+                            let exported =
+                                self.allocator().alloc_str(&specifier.exported.to_string());
                             self.error(diagnostics::export_reserved_word(
-                                &specifier.local.to_string(),
-                                &specifier.exported.to_string(),
-                                ident.span,
+                                local, exported, ident.span,
                             ));
                         }
 
@@ -651,7 +662,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let export_named_decl = ExportNamedDeclaration::boxed(
             self.end_span(span),
             Some(declaration),
-            ArenaVec::new_in(self),
+            [],
             None,
             export_kind,
             NONE,

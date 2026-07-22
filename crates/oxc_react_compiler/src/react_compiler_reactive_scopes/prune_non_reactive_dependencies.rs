@@ -236,7 +236,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
             for id in decl_ids {
                 state.insert(id);
             }
-            let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.clone();
+            let reassign_ids: Vec<IdentifierId> =
+                scope_data.reassignments.iter().copied().collect();
             for id in reassign_ids {
                 state.insert(id);
             }

@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
@@ -471,7 +471,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let (name, computed) = self.parse_class_element_name(modifiers);
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
-            false,
+            None,
             FunctionKind::ClassMethod,
         );
         let method_definition = MethodDefinition::boxed(
@@ -512,7 +512,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
-            false,
+            None,
             FunctionKind::Constructor,
         );
         let method_definition = MethodDefinition::boxed(
@@ -555,7 +555,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        let generator = self.eat(Kind::Star);
+        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
         let (name, computed) = self.parse_class_element_name(modifiers);
 
         let cur_token = self.cur_token();
@@ -567,7 +567,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let optional = optional_span.is_some();
 
-        if generator || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
+        if generator.is_some() || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
                 modifiers,
                 ModifierKinds::all_except([ModifierKind::Declare, ModifierKind::Readonly]),
@@ -636,7 +636,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         r#type: MethodDefinitionType,
-        generator: bool,
+        generator: Option<u32>,
         name: PropertyKey<'a>,
         computed: bool,
         optional: bool,
@@ -715,10 +715,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::abstract_with_private_identifier(name.span()));
         }
         if r#abstract && initializer.is_some() {
-            let (name, span) = name.prop_name().unwrap_or_else(|| {
-                let span = name.span();
-                (&self.source_text[span], span)
-            });
+            let (name, span) = self.abstract_member_name(&name);
             self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
         }
         if self.ctx.has_ambient()
@@ -792,6 +789,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    /// Resolve a class member's name (falling back to the source text of its key) to an arena
+    /// `&'a str` for use in a diagnostic. `prop_name()` yields a borrow tied to `&self`, so the
+    /// name is promoted into the arena to reach `'a`.
+    fn abstract_member_name(&self, key: &PropertyKey<'a>) -> (&'a str, Span) {
+        let (name, span) = key.prop_name().unwrap_or_else(|| {
+            let span = key.span();
+            (&self.source_text[span], span)
+        });
+        (self.allocator().alloc_str(name), span)
+    }
+
     fn check_method_definition(&mut self, method: &MethodDefinition<'a>) {
         if method.r#type.is_abstract() && method.key.is_private_identifier() {
             self.error(diagnostics::abstract_with_private_identifier(method.key.span()));
@@ -836,10 +844,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {}
         }
         if method.r#type.is_abstract() && method.value.body.is_some() {
-            let (name, span) = method.key.prop_name().unwrap_or_else(|| {
-                let span = method.key.span();
-                (&self.source_text[span], span)
-            });
+            let (name, span) = self.abstract_member_name(&method.key);
             self.error(diagnostics::abstract_accessor_cannot_have_implementation(name, span));
         }
     }
@@ -848,10 +853,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.check_method_definition(method);
 
         if method.r#type.is_abstract() && method.value.body.is_some() {
-            let (name, span) = method.key.prop_name().unwrap_or_else(|| {
-                let span = method.key.span();
-                (&self.source_text[span], span)
-            });
+            let (name, span) = self.abstract_member_name(&method.key);
             self.error(diagnostics::abstract_method_cannot_have_implementation(name, span));
         }
     }

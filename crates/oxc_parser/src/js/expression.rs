@@ -487,7 +487,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             Ok(regular_expression) => Some(self.alloc(regular_expression)),
             Err(diagnostic) => {
-                self.error(diagnostic);
+                self.error(diagnostic.into());
                 None
             }
         }

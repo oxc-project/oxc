@@ -5742,6 +5742,26 @@
             }
           ]
         },
+        "node/no-top-level-await": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoTopLevelAwaitConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "object-shorthand": {
           "anyOf": [
             {
@@ -6003,7 +6023,7 @@
                   "$ref": "#/definitions/PreferDestructuringOption"
                 },
                 {
-                  "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+                  "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
                 }
               ],
               "maxItems": 3,
@@ -15460,6 +15480,18 @@
       },
       "additionalProperties": false
     },
+    "NoTopLevelAwaitConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreBin": {
+          "description": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoTypeofUndefined": {
       "type": "object",
       "properties": {
@@ -17139,11 +17171,25 @@
           "$ref": "#/definitions/PreferDestructuringOption"
         },
         {
-          "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+          "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
         }
       ],
       "maxItems": 2,
       "minItems": 2
+    },
+    "PreferDestructuringEnforcementConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForDeclarationWithTypeAnnotation": {
+          "default": false,
+          "type": "boolean"
+        },
+        "enforceForRenamedProperties": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     },
     "PreferDestructuringOption": {
       "anyOf": [
@@ -17154,16 +17200,6 @@
           "$ref": "#/definitions/PreferDestructuringAssignmentConfig"
         }
       ]
-    },
-    "PreferDestructuringRenamedPropertiesConfig": {
-      "type": "object",
-      "properties": {
-        "enforceForRenamedProperties": {
-          "default": false,
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
     },
     "PreferDestructuringTargetOption": {
       "type": "object",

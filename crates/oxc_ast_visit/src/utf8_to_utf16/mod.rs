@@ -138,7 +138,7 @@ impl Utf8ToUtf16 {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::{Allocator, ArenaVec};
+    use oxc_allocator::Allocator;
     use oxc_ast::{ast::*, builder::AstBuilder};
     use oxc_span::{GetSpan, SourceType, Span};
 
@@ -153,20 +153,17 @@ mod test {
             Span::new(0, 15),
             SourceType::default(),
             ";'🤨' // 🤨",
-            ArenaVec::from_value_in(Comment::new(8, 15, CommentKind::Line), &ast),
+            [Comment::new(8, 15, CommentKind::Line)],
             None,
-            ArenaVec::new_in(&ast),
-            ArenaVec::from_array_in(
-                [
-                    Statement::new_empty_statement(Span::new(0, 1), &ast),
-                    Statement::new_expression_statement(
-                        Span::new(1, 7),
-                        Expression::new_string_literal(Span::new(1, 7), "🤨", None, &ast),
-                        &ast,
-                    ),
-                ],
-                &ast,
-            ),
+            [],
+            [
+                Statement::new_empty_statement(Span::new(0, 1), &ast),
+                Statement::new_expression_statement(
+                    Span::new(1, 7),
+                    Expression::new_string_literal(Span::new(1, 7), "🤨", None, &ast),
+                    &ast,
+                ),
+            ],
             &ast,
         );
 

@@ -1,6 +1,5 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
-use oxc_index::IndexVec;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::reference::ReferenceFlags;
 
 /// The kind of fresh value a binding was initialized with, or `None` when the
 /// value may alias another binding (or is untracked).
@@ -27,6 +26,59 @@ pub enum FreshValueKind {
     Array,
 }
 
+/// Cached counts for the resolved references to a symbol.
+///
+/// Keep queries here so consumers do not have to coordinate related counters
+/// or repeat the invariant that member-write target reads are a subset of all
+/// reads.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ReferenceCounts {
+    reads: u32,
+    writes: u32,
+    member_write_target_reads: u32,
+}
+
+impl ReferenceCounts {
+    #[inline]
+    pub fn record(&mut self, flags: ReferenceFlags) {
+        debug_assert!(!flags.is_member_write_target() || flags.is_read());
+        if flags.is_read() {
+            self.reads += 1;
+        }
+        if flags.is_write() {
+            self.writes += 1;
+        }
+        if flags.is_member_write_target() {
+            self.member_write_target_reads += 1;
+        }
+    }
+
+    #[inline]
+    pub fn has_reads(self) -> bool {
+        self.reads > 0
+    }
+
+    #[inline]
+    pub fn has_writes(self) -> bool {
+        self.writes > 0
+    }
+
+    #[inline]
+    pub fn has_single_read(self) -> bool {
+        self.reads == 1
+    }
+
+    #[inline]
+    pub fn has_multiple_reads(self) -> bool {
+        self.reads > 1
+    }
+
+    #[inline]
+    pub fn has_only_member_write_target_reads(self) -> bool {
+        self.writes == 0 && self.reads == self.member_write_target_reads
+    }
+}
+
 #[derive(Debug)]
 pub struct SymbolValue<'a> {
     /// Initialized constant value evaluated from expressions.
@@ -42,16 +94,7 @@ pub struct SymbolValue<'a> {
     /// resolve the value through `initialized_constant`.
     pub implicit_undefined: bool,
 
-    /// Symbol is exported.
-    pub exported: bool,
-
-    pub read_references_count: u32,
-    pub write_references_count: u32,
-
-    /// Number of read references that are member write targets (e.g. `a` in `a.foo = 1`).
-    /// These reads exist only to access the object for a property write, not to use the value.
-    /// Always <= `read_references_count`.
-    pub member_write_target_read_count: u32,
+    pub references: ReferenceCounts,
 
     /// The kind of fresh value the symbol holds (cannot alias another binding),
     /// or `FreshValueKind::None` when the value may alias. Set for function/class
@@ -67,43 +110,4 @@ pub struct SymbolValue<'a> {
     /// indistinguishable inside `if (x)` / `x ? …` / `!x`, so such reads fold to
     /// `false` there. See `minimize_expression_in_boolean_context` / #14001.
     pub boolean_falsy: bool,
-}
-
-/// Per-symbol scratch store indexed by `SymbolId`.
-///
-/// Symbol IDs are dense `u32`s, so an indexed `IndexVec` lookup beats a
-/// `FxHashMap` (hash + probe) on every hot path in the peephole pass.
-///
-/// Sized once from `Scoping::symbols_len()`; no minifier pass mints new
-/// symbols, so `init_value` panics on out-of-range — that's the signal to
-/// add a grow path.
-#[derive(Debug)]
-pub struct SymbolValues<'a> {
-    values: IndexVec<SymbolId, Option<SymbolValue<'a>>>,
-}
-
-impl<'a> SymbolValues<'a> {
-    pub(crate) fn new(len: usize) -> Self {
-        let mut values = IndexVec::with_capacity(len);
-        values.resize_with(len, || None);
-        Self { values }
-    }
-
-    /// Reset slots to `None` without releasing the buffer, so the next peephole
-    /// iteration's `init_value` stays on the indexed-write fast path.
-    pub fn reset(&mut self) {
-        for slot in &mut self.values {
-            *slot = None;
-        }
-    }
-
-    #[inline]
-    pub fn init_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolValue<'a>) {
-        self.values[symbol_id] = Some(symbol_value);
-    }
-
-    #[inline]
-    pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolValue<'a>> {
-        self.values.get(symbol_id)?.as_ref()
-    }
 }

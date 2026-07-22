@@ -28,26 +28,31 @@ impl<'a> Program<'a> {
     /// * `directives`
     /// * `body`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         source_type: SourceType,
         source_text: &'a str,
-        comments: ArenaVec<'a, Comment>,
+        comments: T1,
         hashbang: Option<Hashbang<'a>>,
-        directives: ArenaVec<'a, Directive<'a>>,
-        body: ArenaVec<'a, Statement<'a>>,
+        directives: T2,
+        body: T3,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Comment>>,
+        T2: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T3: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
         Program {
             node_id: Cell::new(builder.node_id()),
             span,
             source_type,
             source_text,
-            comments,
+            comments: comments.into_in(builder.allocator()),
             hashbang,
-            directives,
-            body,
+            directives: directives.into_in(builder.allocator()),
+            body: body.into_in(builder.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -64,27 +69,32 @@ impl<'a> Program<'a> {
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         source_type: SourceType,
         source_text: &'a str,
-        comments: ArenaVec<'a, Comment>,
+        comments: T1,
         hashbang: Option<Hashbang<'a>>,
-        directives: ArenaVec<'a, Directive<'a>>,
-        body: ArenaVec<'a, Statement<'a>>,
+        directives: T2,
+        body: T3,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Comment>>,
+        T2: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T3: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
         Program {
             node_id: Cell::new(builder.node_id()),
             span,
             source_type,
             source_text,
-            comments,
+            comments: comments.into_in(builder.allocator()),
             hashbang,
-            directives,
-            body,
+            directives: directives.into_in(builder.allocator()),
+            body: body.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -234,12 +244,16 @@ impl<'a> Expression<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -303,11 +317,14 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new_array_expression<B: GetAstBuilder<'a>>(
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
     }
 
@@ -479,16 +496,17 @@ impl<'a> Expression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -512,17 +530,18 @@ impl<'a> Expression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -568,24 +587,26 @@ impl<'a> Expression<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -621,25 +642,27 @@ impl<'a> Expression<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -854,15 +877,16 @@ impl<'a> Expression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
     }
@@ -878,16 +902,17 @@ impl<'a> Expression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -907,11 +932,14 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new_object_expression<B: GetAstBuilder<'a>>(
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
     }
 
@@ -939,11 +967,14 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new_sequence_expression<B: GetAstBuilder<'a>>(
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
     }
 
@@ -1093,16 +1124,17 @@ impl<'a> Expression<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -1123,13 +1155,16 @@ impl<'a> Expression<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_jsx_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::JSXFragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -1249,12 +1284,15 @@ impl<'a> Expression<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>>(
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
     }
 
@@ -1599,13 +1637,16 @@ impl<'a> ArrayExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, elements: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         let builder = builder.builder();
-        ArrayExpression { node_id: Cell::new(builder.node_id()), span, elements }
+        ArrayExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            elements: elements.into_in(builder.allocator()),
+        }
     }
 
     /// Build an [`ArrayExpression`], and store it in the memory arena.
@@ -1617,11 +1658,14 @@ impl<'a> ArrayExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, elements, builder), builder.builder())
     }
 }
@@ -1797,12 +1841,16 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -1866,11 +1914,14 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new_array_expression<B: GetAstBuilder<'a>>(
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
     }
 
@@ -2042,16 +2093,17 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -2075,17 +2127,18 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -2131,24 +2184,26 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -2184,25 +2239,27 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -2417,15 +2474,16 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
     }
@@ -2441,16 +2499,17 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -2470,11 +2529,14 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new_object_expression<B: GetAstBuilder<'a>>(
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
     }
 
@@ -2502,11 +2564,14 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new_sequence_expression<B: GetAstBuilder<'a>>(
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
     }
 
@@ -2656,16 +2721,17 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -2686,13 +2752,16 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_jsx_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::JSXFragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -2812,12 +2881,15 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>>(
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
     }
 
@@ -2925,13 +2997,16 @@ impl<'a> ObjectExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, properties: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         let builder = builder.builder();
-        ObjectExpression { node_id: Cell::new(builder.node_id()), span, properties }
+        ObjectExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            properties: properties.into_in(builder.allocator()),
+        }
     }
 
     /// Build an [`ObjectExpression`], and store it in the memory arena.
@@ -2943,11 +3018,14 @@ impl<'a> ObjectExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, properties, builder), builder.builder())
     }
 }
@@ -3249,12 +3327,16 @@ impl<'a> PropertyKey<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -3318,11 +3400,14 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new_array_expression<B: GetAstBuilder<'a>>(
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
     }
 
@@ -3494,16 +3579,17 @@ impl<'a> PropertyKey<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -3527,17 +3613,18 @@ impl<'a> PropertyKey<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -3583,24 +3670,26 @@ impl<'a> PropertyKey<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -3636,25 +3725,27 @@ impl<'a> PropertyKey<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -3869,15 +3960,16 @@ impl<'a> PropertyKey<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
     }
@@ -3893,16 +3985,17 @@ impl<'a> PropertyKey<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -3922,11 +4015,14 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new_object_expression<B: GetAstBuilder<'a>>(
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
     }
 
@@ -3954,11 +4050,14 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new_sequence_expression<B: GetAstBuilder<'a>>(
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
     }
 
@@ -4108,16 +4207,17 @@ impl<'a> PropertyKey<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -4138,13 +4238,16 @@ impl<'a> PropertyKey<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_jsx_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::JSXFragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -4264,12 +4367,15 @@ impl<'a> PropertyKey<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>>(
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
     }
 
@@ -4351,14 +4457,23 @@ impl<'a> TemplateLiteral<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         let builder = builder.builder();
-        TemplateLiteral { node_id: Cell::new(builder.node_id()), span, quasis, expressions }
+        TemplateLiteral {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            quasis: quasis.into_in(builder.allocator()),
+            expressions: expressions.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TemplateLiteral`], and store it in the memory arena.
@@ -4371,12 +4486,16 @@ impl<'a> TemplateLiteral<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, quasis, expressions, builder), builder.builder())
     }
 }
@@ -4722,16 +4841,17 @@ impl<'a> CallExpression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         CallExpression {
@@ -4739,7 +4859,7 @@ impl<'a> CallExpression<'a> {
             span,
             callee,
             type_arguments: type_arguments.into_in(builder.allocator()),
-            arguments,
+            arguments: arguments.into_in(builder.allocator()),
             optional,
             pure: Default::default(),
         }
@@ -4757,16 +4877,17 @@ impl<'a> CallExpression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         ArenaBox::new_in(
             Self::new(span, callee, type_arguments, arguments, optional, builder),
@@ -4787,17 +4908,18 @@ impl<'a> CallExpression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         CallExpression {
@@ -4805,7 +4927,7 @@ impl<'a> CallExpression<'a> {
             span,
             callee,
             type_arguments: type_arguments.into_in(builder.allocator()),
-            arguments,
+            arguments: arguments.into_in(builder.allocator()),
             optional,
             pure,
         }
@@ -4824,17 +4946,18 @@ impl<'a> CallExpression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         ArenaBox::new_in(
             Self::new_with_pure(span, callee, type_arguments, arguments, optional, pure, builder),
@@ -4855,15 +4978,16 @@ impl<'a> NewExpression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         NewExpression {
@@ -4871,7 +4995,7 @@ impl<'a> NewExpression<'a> {
             span,
             callee,
             type_arguments: type_arguments.into_in(builder.allocator()),
-            arguments,
+            arguments: arguments.into_in(builder.allocator()),
             pure: Default::default(),
         }
     }
@@ -4887,15 +5011,16 @@ impl<'a> NewExpression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         ArenaBox::new_in(
             Self::new(span, callee, type_arguments, arguments, builder),
@@ -4915,16 +5040,17 @@ impl<'a> NewExpression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         NewExpression {
@@ -4932,7 +5058,7 @@ impl<'a> NewExpression<'a> {
             span,
             callee,
             type_arguments: type_arguments.into_in(builder.allocator()),
-            arguments,
+            arguments: arguments.into_in(builder.allocator()),
             pure,
         }
     }
@@ -4949,16 +5075,17 @@ impl<'a> NewExpression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         ArenaBox::new_in(
             Self::new_with_pure(span, callee, type_arguments, arguments, pure, builder),
@@ -5214,12 +5341,16 @@ impl<'a> Argument<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -5283,11 +5414,14 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new_array_expression<B: GetAstBuilder<'a>>(
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
     }
 
@@ -5459,16 +5593,17 @@ impl<'a> Argument<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -5492,17 +5627,18 @@ impl<'a> Argument<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -5548,24 +5684,26 @@ impl<'a> Argument<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -5601,25 +5739,27 @@ impl<'a> Argument<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -5834,15 +5974,16 @@ impl<'a> Argument<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
     }
@@ -5858,16 +5999,17 @@ impl<'a> Argument<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -5887,11 +6029,14 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new_object_expression<B: GetAstBuilder<'a>>(
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
     }
 
@@ -5919,11 +6064,14 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new_sequence_expression<B: GetAstBuilder<'a>>(
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
     }
 
@@ -6073,16 +6221,17 @@ impl<'a> Argument<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -6103,13 +6252,16 @@ impl<'a> Argument<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_jsx_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::JSXFragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -6229,12 +6381,15 @@ impl<'a> Argument<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>>(
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
     }
 
@@ -6814,14 +6969,15 @@ impl<'a> AssignmentTarget<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
     }
@@ -6835,14 +6991,15 @@ impl<'a> AssignmentTarget<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
     }
@@ -7046,14 +7203,15 @@ impl<'a> AssignmentTargetPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
     }
@@ -7067,14 +7225,15 @@ impl<'a> AssignmentTargetPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
     }
@@ -7091,20 +7250,21 @@ impl<'a> ArrayAssignmentTarget<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
         ArrayAssignmentTarget {
             node_id: Cell::new(builder.node_id()),
             span,
-            elements,
+            elements: elements.into_in(builder.allocator()),
             rest: rest.into_in(builder.allocator()),
         }
     }
@@ -7119,14 +7279,15 @@ impl<'a> ArrayAssignmentTarget<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         ArenaBox::new_in(Self::new(span, elements, rest, builder), builder.builder())
     }
@@ -7143,20 +7304,21 @@ impl<'a> ObjectAssignmentTarget<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
         ObjectAssignmentTarget {
             node_id: Cell::new(builder.node_id()),
             span,
-            properties,
+            properties: properties.into_in(builder.allocator()),
             rest: rest.into_in(builder.allocator()),
         }
     }
@@ -7171,14 +7333,15 @@ impl<'a> ObjectAssignmentTarget<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         ArenaBox::new_in(Self::new(span, properties, rest, builder), builder.builder())
     }
@@ -7437,14 +7600,15 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
     }
@@ -7458,14 +7622,15 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
     }
@@ -7663,13 +7828,16 @@ impl<'a> SequenceExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, expressions: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         let builder = builder.builder();
-        SequenceExpression { node_id: Cell::new(builder.node_id()), span, expressions }
+        SequenceExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            expressions: expressions.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`SequenceExpression`], and store it in the memory arena.
@@ -7681,11 +7849,14 @@ impl<'a> SequenceExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, expressions, builder), builder.builder())
     }
 }
@@ -7799,16 +7970,17 @@ impl<'a> ChainElement<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -7832,17 +8004,18 @@ impl<'a> ChainElement<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -7980,11 +8153,10 @@ impl<'a> Statement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn new_block_statement<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new_block_statement<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         Self::BlockStatement(BlockStatement::boxed(span, body, builder))
     }
 
@@ -7997,12 +8169,15 @@ impl<'a> Statement<'a> {
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn new_block_statement_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_block_statement_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
+        body: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         Self::BlockStatement(BlockStatement::boxed_with_scope_id(span, body, scope_id, builder))
     }
 
@@ -8297,12 +8472,15 @@ impl<'a> Statement<'a> {
     /// * `discriminant`
     /// * `cases`
     #[inline]
-    pub fn new_switch_statement<B: GetAstBuilder<'a>>(
+    pub fn new_switch_statement<B: GetAstBuilder<'a>, T1>(
         span: Span,
         discriminant: Expression<'a>,
-        cases: ArenaVec<'a, SwitchCase<'a>>,
+        cases: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
+    {
         Self::SwitchStatement(SwitchStatement::boxed(span, discriminant, cases, builder))
     }
 
@@ -8316,13 +8494,16 @@ impl<'a> Statement<'a> {
     /// * `cases`
     /// * `scope_id`
     #[inline]
-    pub fn new_switch_statement_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_switch_statement_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         discriminant: Expression<'a>,
-        cases: ArenaVec<'a, SwitchCase<'a>>,
+        cases: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
+    {
         Self::SwitchStatement(SwitchStatement::boxed_with_scope_id(
             span,
             discriminant,
@@ -8441,13 +8622,16 @@ impl<'a> Statement<'a> {
     /// * `declarations`
     /// * `declare`
     #[inline]
-    pub fn new_variable_declaration<B: GetAstBuilder<'a>>(
+    pub fn new_variable_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
+        declarations: T1,
         declare: bool,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
+    {
         Self::VariableDeclaration(VariableDeclaration::boxed(
             span,
             kind,
@@ -8598,24 +8782,26 @@ impl<'a> Statement<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed(
             span,
@@ -8651,25 +8837,27 @@ impl<'a> Statement<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed_with_scope_id(
             span,
@@ -8767,18 +8955,19 @@ impl<'a> Statement<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed(
             span,
@@ -8804,19 +8993,20 @@ impl<'a> Statement<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed_with_scope_id(
             span,
@@ -9078,17 +9268,18 @@ impl<'a> Statement<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T1,
+        with_clause: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         Self::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
             span,
@@ -9187,16 +9378,15 @@ impl<'a> BlockStatement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
         BlockStatement {
             node_id: Cell::new(builder.node_id()),
             span,
-            body,
+            body: body.into_in(builder.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -9210,11 +9400,10 @@ impl<'a> BlockStatement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
     }
 
@@ -9228,17 +9417,20 @@ impl<'a> BlockStatement<'a> {
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
+        body: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
         BlockStatement {
             node_id: Cell::new(builder.node_id()),
             span,
-            body,
+            body: body.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -9253,12 +9445,15 @@ impl<'a> BlockStatement<'a> {
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
+        body: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder.builder())
     }
 }
@@ -9274,13 +9469,16 @@ impl<'a> Declaration<'a> {
     /// * `declarations`
     /// * `declare`
     #[inline]
-    pub fn new_variable_declaration<B: GetAstBuilder<'a>>(
+    pub fn new_variable_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
+        declarations: T1,
         declare: bool,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
+    {
         Self::VariableDeclaration(VariableDeclaration::boxed(
             span,
             kind,
@@ -9431,24 +9629,26 @@ impl<'a> Declaration<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed(
             span,
@@ -9484,25 +9684,27 @@ impl<'a> Declaration<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed_with_scope_id(
             span,
@@ -9600,18 +9802,19 @@ impl<'a> Declaration<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed(
             span,
@@ -9637,19 +9840,20 @@ impl<'a> Declaration<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed_with_scope_id(
             span,
@@ -9829,19 +10033,22 @@ impl<'a> VariableDeclaration<'a> {
     /// * `declarations`
     /// * `declare`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
+        declarations: T1,
         declare: bool,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
+    {
         let builder = builder.builder();
         VariableDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             kind,
-            declarations,
+            declarations: declarations.into_in(builder.allocator()),
             declare,
         }
     }
@@ -9857,13 +10064,16 @@ impl<'a> VariableDeclaration<'a> {
     /// * `declarations`
     /// * `declare`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
+        declarations: T1,
         declare: bool,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, kind, declarations, declare, builder), builder.builder())
     }
 }
@@ -10221,13 +10431,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `declarations`
     /// * `declare`
     #[inline]
-    pub fn new_variable_declaration<B: GetAstBuilder<'a>>(
+    pub fn new_variable_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
+        declarations: T1,
         declare: bool,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
+    {
         Self::VariableDeclaration(VariableDeclaration::boxed(
             span,
             kind,
@@ -10380,12 +10593,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -10449,11 +10666,14 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new_array_expression<B: GetAstBuilder<'a>>(
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
     }
 
@@ -10625,16 +10845,17 @@ impl<'a> ForStatementInit<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -10658,17 +10879,18 @@ impl<'a> ForStatementInit<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -10714,24 +10936,26 @@ impl<'a> ForStatementInit<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -10767,25 +10991,27 @@ impl<'a> ForStatementInit<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -11000,15 +11226,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
     }
@@ -11024,16 +11251,17 @@ impl<'a> ForStatementInit<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -11053,11 +11281,14 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new_object_expression<B: GetAstBuilder<'a>>(
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
     }
 
@@ -11085,11 +11316,14 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new_sequence_expression<B: GetAstBuilder<'a>>(
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
     }
 
@@ -11239,16 +11473,17 @@ impl<'a> ForStatementInit<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -11269,13 +11504,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_jsx_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::JSXFragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -11395,12 +11633,15 @@ impl<'a> ForStatementInit<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>>(
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
     }
 
@@ -11591,13 +11832,16 @@ impl<'a> ForStatementLeft<'a> {
     /// * `declarations`
     /// * `declare`
     #[inline]
-    pub fn new_variable_declaration<B: GetAstBuilder<'a>>(
+    pub fn new_variable_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
+        declarations: T1,
         declare: bool,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
+    {
         Self::VariableDeclaration(VariableDeclaration::boxed(
             span,
             kind,
@@ -11802,14 +12046,15 @@ impl<'a> ForStatementLeft<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
     }
@@ -11823,14 +12068,15 @@ impl<'a> ForStatementLeft<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, AssignmentTargetProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
     }
@@ -12176,18 +12422,21 @@ impl<'a> SwitchStatement<'a> {
     /// * `discriminant`
     /// * `cases`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         discriminant: Expression<'a>,
-        cases: ArenaVec<'a, SwitchCase<'a>>,
+        cases: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
+    {
         let builder = builder.builder();
         SwitchStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             discriminant,
-            cases,
+            cases: cases.into_in(builder.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -12202,12 +12451,15 @@ impl<'a> SwitchStatement<'a> {
     /// * `discriminant`
     /// * `cases`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         discriminant: Expression<'a>,
-        cases: ArenaVec<'a, SwitchCase<'a>>,
+        cases: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, discriminant, cases, builder), builder.builder())
     }
 
@@ -12222,19 +12474,22 @@ impl<'a> SwitchStatement<'a> {
     /// * `cases`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         discriminant: Expression<'a>,
-        cases: ArenaVec<'a, SwitchCase<'a>>,
+        cases: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
+    {
         let builder = builder.builder();
         SwitchStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             discriminant,
-            cases,
+            cases: cases.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -12250,13 +12505,16 @@ impl<'a> SwitchStatement<'a> {
     /// * `cases`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         discriminant: Expression<'a>,
-        cases: ArenaVec<'a, SwitchCase<'a>>,
+        cases: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
+    {
         ArenaBox::new_in(
             Self::new_with_scope_id(span, discriminant, cases, scope_id, builder),
             builder.builder(),
@@ -12272,14 +12530,22 @@ impl<'a> SwitchCase<'a> {
     /// * `test`
     /// * `consequent`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         test: Option<Expression<'a>>,
-        consequent: ArenaVec<'a, Statement<'a>>,
+        consequent: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
-        SwitchCase { node_id: Cell::new(builder.node_id()), span, test, consequent }
+        SwitchCase {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            test,
+            consequent: consequent.into_in(builder.allocator()),
+        }
     }
 }
 
@@ -12635,14 +12901,15 @@ impl<'a> BindingPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_pattern<B: GetAstBuilder<'a>, T1>(
+    pub fn new_object_pattern<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, BindingProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         Self::ObjectPattern(ObjectPattern::boxed(span, properties, rest, builder))
     }
@@ -12656,14 +12923,15 @@ impl<'a> BindingPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_pattern<B: GetAstBuilder<'a>, T1>(
+    pub fn new_array_pattern<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<BindingPattern<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         Self::ArrayPattern(ArrayPattern::boxed(span, elements, rest, builder))
     }
@@ -12739,20 +13007,21 @@ impl<'a> ObjectPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, BindingProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
         ObjectPattern {
             node_id: Cell::new(builder.node_id()),
             span,
-            properties,
+            properties: properties.into_in(builder.allocator()),
             rest: rest.into_in(builder.allocator()),
         }
     }
@@ -12767,14 +13036,15 @@ impl<'a> ObjectPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        properties: ArenaVec<'a, BindingProperty<'a>>,
-        rest: T1,
+        properties: T1,
+        rest: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         ArenaBox::new_in(Self::new(span, properties, rest, builder), builder.builder())
     }
@@ -12821,20 +13091,21 @@ impl<'a> ArrayPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<BindingPattern<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
         ArrayPattern {
             node_id: Cell::new(builder.node_id()),
             span,
-            elements,
+            elements: elements.into_in(builder.allocator()),
             rest: rest.into_in(builder.allocator()),
         }
     }
@@ -12849,14 +13120,15 @@ impl<'a> ArrayPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        elements: ArenaVec<'a, Option<BindingPattern<'a>>>,
-        rest: T1,
+        elements: T1,
+        rest: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         ArenaBox::new_in(Self::new(span, elements, rest, builder), builder.builder())
     }
@@ -13162,22 +13434,23 @@ impl<'a> FormalParameters<'a> {
     /// * `items`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         kind: FormalParameterKind,
-        items: ArenaVec<'a, FormalParameter<'a>>,
-        rest: T1,
+        items: T1,
+        rest: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, FormalParameter<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
         let builder = builder.builder();
         FormalParameters {
             node_id: Cell::new(builder.node_id()),
             span,
             kind,
-            items,
+            items: items.into_in(builder.allocator()),
             rest: rest.into_in(builder.allocator()),
         }
     }
@@ -13193,15 +13466,16 @@ impl<'a> FormalParameters<'a> {
     /// * `items`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         kind: FormalParameterKind,
-        items: ArenaVec<'a, FormalParameter<'a>>,
-        rest: T1,
+        items: T1,
+        rest: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, FormalParameter<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
         ArenaBox::new_in(Self::new(span, kind, items, rest, builder), builder.builder())
     }
@@ -13221,12 +13495,12 @@ impl<'a> FormalParameter<'a> {
     /// * `readonly`
     /// * `override`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         pattern: BindingPattern<'a>,
-        type_annotation: T1,
-        initializer: T2,
+        type_annotation: T2,
+        initializer: T3,
         optional: bool,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
@@ -13234,14 +13508,15 @@ impl<'a> FormalParameter<'a> {
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, Expression<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, Expression<'a>>>>,
     {
         let builder = builder.builder();
         FormalParameter {
             node_id: Cell::new(builder.node_id()),
             span,
-            decorators,
+            decorators: decorators.into_in(builder.allocator()),
             pattern,
             type_annotation: type_annotation.into_in(builder.allocator()),
             initializer: initializer.into_in(builder.allocator()),
@@ -13265,21 +13540,22 @@ impl<'a> FormalParameterRest<'a> {
     /// * `rest`
     /// * `type_annotation`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         rest: BindingRestElement<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         FormalParameterRest {
             node_id: Cell::new(builder.node_id()),
             span,
-            decorators,
+            decorators: decorators.into_in(builder.allocator()),
             rest,
             type_annotation: type_annotation.into_in(builder.allocator()),
         }
@@ -13296,15 +13572,16 @@ impl<'a> FormalParameterRest<'a> {
     /// * `rest`
     /// * `type_annotation`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         rest: BindingRestElement<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         ArenaBox::new_in(
             Self::new(span, decorators, rest, type_annotation, builder),
@@ -13324,14 +13601,23 @@ impl<'a> FunctionBody<'a> {
     /// * `directives`
     /// * `statements`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        directives: ArenaVec<'a, Directive<'a>>,
-        statements: ArenaVec<'a, Statement<'a>>,
+        directives: T1,
+        statements: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
-        FunctionBody { node_id: Cell::new(builder.node_id()), span, directives, statements }
+        FunctionBody {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            directives: directives.into_in(builder.allocator()),
+            statements: statements.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`FunctionBody`], and store it in the memory arena.
@@ -13344,12 +13630,16 @@ impl<'a> FunctionBody<'a> {
     /// * `directives`
     /// * `statements`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        directives: ArenaVec<'a, Directive<'a>>,
-        statements: ArenaVec<'a, Statement<'a>>,
+        directives: T1,
+        statements: T2,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, directives, statements, builder), builder.builder())
     }
 }
@@ -13613,36 +13903,38 @@ impl<'a> Class<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         let builder = builder.builder();
         Class {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
-            decorators,
+            decorators: decorators.into_in(builder.allocator()),
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
             super_class,
             super_type_arguments: super_type_arguments.into_in(builder.allocator()),
-            implements,
+            implements: implements.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
             r#abstract,
             declare,
@@ -13668,24 +13960,26 @@ impl<'a> Class<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         ArenaBox::new_in(
             Self::new(
@@ -13725,37 +14019,39 @@ impl<'a> Class<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         let builder = builder.builder();
         Class {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
-            decorators,
+            decorators: decorators.into_in(builder.allocator()),
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
             super_class,
             super_type_arguments: super_type_arguments.into_in(builder.allocator()),
-            implements,
+            implements: implements.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
             r#abstract,
             declare,
@@ -13782,25 +14078,27 @@ impl<'a> Class<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         ArenaBox::new_in(
             Self::new_with_scope_id(
@@ -13833,13 +14131,16 @@ impl<'a> ClassBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, ClassElement<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ClassElement<'a>>>,
+    {
         let builder = builder.builder();
-        ClassBody { node_id: Cell::new(builder.node_id()), span, body }
+        ClassBody {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            body: body.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`ClassBody`], and store it in the memory arena.
@@ -13851,11 +14152,10 @@ impl<'a> ClassBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, ClassElement<'a>>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ClassElement<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
     }
 }
@@ -13869,11 +14169,10 @@ impl<'a> ClassElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn new_static_block<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new_static_block<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         Self::StaticBlock(StaticBlock::boxed(span, body, builder))
     }
 
@@ -13886,12 +14185,15 @@ impl<'a> ClassElement<'a> {
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn new_static_block_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_static_block_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
+        body: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         Self::StaticBlock(StaticBlock::boxed_with_scope_id(span, body, scope_id, builder))
     }
 
@@ -13912,12 +14214,12 @@ impl<'a> ClassElement<'a> {
     /// * `optional`
     /// * `accessibility`
     #[inline]
-    pub fn new_method_definition<B: GetAstBuilder<'a>, T1>(
+    pub fn new_method_definition<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: MethodDefinitionType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        value: T1,
+        value: T2,
         kind: MethodDefinitionKind,
         computed: bool,
         r#static: bool,
@@ -13927,7 +14229,8 @@ impl<'a> ClassElement<'a> {
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         Self::MethodDefinition(MethodDefinition::boxed(
             span,
@@ -13965,12 +14268,12 @@ impl<'a> ClassElement<'a> {
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new_property_definition<B: GetAstBuilder<'a>, T1>(
+    pub fn new_property_definition<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: PropertyDefinitionType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -13983,7 +14286,8 @@ impl<'a> ClassElement<'a> {
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         Self::PropertyDefinition(PropertyDefinition::boxed(
             span,
@@ -14021,12 +14325,12 @@ impl<'a> ClassElement<'a> {
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new_accessor_property<B: GetAstBuilder<'a>, T1>(
+    pub fn new_accessor_property<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: AccessorPropertyType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -14036,7 +14340,8 @@ impl<'a> ClassElement<'a> {
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         Self::AccessorProperty(AccessorProperty::boxed(
             span,
@@ -14065,16 +14370,17 @@ impl<'a> ClassElement<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
-        type_annotation: T1,
+        parameters: T1,
+        type_annotation: T2,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         Self::TSIndexSignature(TSIndexSignature::boxed(
             span,
@@ -14106,12 +14412,12 @@ impl<'a> MethodDefinition<'a> {
     /// * `optional`
     /// * `accessibility`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: MethodDefinitionType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        value: T1,
+        value: T2,
         kind: MethodDefinitionKind,
         computed: bool,
         r#static: bool,
@@ -14121,14 +14427,15 @@ impl<'a> MethodDefinition<'a> {
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         let builder = builder.builder();
         MethodDefinition {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
-            decorators,
+            decorators: decorators.into_in(builder.allocator()),
             key,
             value: value.into_in(builder.allocator()),
             kind,
@@ -14158,12 +14465,12 @@ impl<'a> MethodDefinition<'a> {
     /// * `optional`
     /// * `accessibility`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: MethodDefinitionType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        value: T1,
+        value: T2,
         kind: MethodDefinitionKind,
         computed: bool,
         r#static: bool,
@@ -14173,7 +14480,8 @@ impl<'a> MethodDefinition<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         ArenaBox::new_in(
             Self::new(
@@ -14217,12 +14525,12 @@ impl<'a> PropertyDefinition<'a> {
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: PropertyDefinitionType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -14235,14 +14543,15 @@ impl<'a> PropertyDefinition<'a> {
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         PropertyDefinition {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
-            decorators,
+            decorators: decorators.into_in(builder.allocator()),
             key,
             type_annotation: type_annotation.into_in(builder.allocator()),
             value,
@@ -14278,12 +14587,12 @@ impl<'a> PropertyDefinition<'a> {
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: PropertyDefinitionType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -14296,7 +14605,8 @@ impl<'a> PropertyDefinition<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         ArenaBox::new_in(
             Self::new(
@@ -14366,16 +14676,15 @@ impl<'a> StaticBlock<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
         StaticBlock {
             node_id: Cell::new(builder.node_id()),
             span,
-            body,
+            body: body.into_in(builder.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -14389,11 +14698,10 @@ impl<'a> StaticBlock<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
     }
 
@@ -14407,17 +14715,20 @@ impl<'a> StaticBlock<'a> {
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
+        body: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
         StaticBlock {
             node_id: Cell::new(builder.node_id()),
             span,
-            body,
+            body: body.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -14432,12 +14743,15 @@ impl<'a> StaticBlock<'a> {
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        body: ArenaVec<'a, Statement<'a>>,
+        body: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder.builder())
     }
 }
@@ -14538,17 +14852,18 @@ impl<'a> ModuleDeclaration<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T1,
+        with_clause: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         Self::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
             span,
@@ -14613,12 +14928,12 @@ impl<'a> AccessorProperty<'a> {
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: AccessorPropertyType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -14628,14 +14943,15 @@ impl<'a> AccessorProperty<'a> {
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         AccessorProperty {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
-            decorators,
+            decorators: decorators.into_in(builder.allocator()),
             key,
             type_annotation: type_annotation.into_in(builder.allocator()),
             value,
@@ -14665,12 +14981,12 @@ impl<'a> AccessorProperty<'a> {
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: AccessorPropertyType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: T2,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -14680,7 +14996,8 @@ impl<'a> AccessorProperty<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         ArenaBox::new_in(
             Self::new(
@@ -15007,14 +15324,22 @@ impl<'a> WithClause<'a> {
     /// * `keyword`
     /// * `with_entries`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         keyword: WithClauseKeyword,
-        with_entries: ArenaVec<'a, ImportAttribute<'a>>,
+        with_entries: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ImportAttribute<'a>>>,
+    {
         let builder = builder.builder();
-        WithClause { node_id: Cell::new(builder.node_id()), span, keyword, with_entries }
+        WithClause {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            keyword,
+            with_entries: with_entries.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`WithClause`], and store it in the memory arena.
@@ -15027,12 +15352,15 @@ impl<'a> WithClause<'a> {
     /// * `keyword`
     /// * `with_entries`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         keyword: WithClauseKeyword,
-        with_entries: ArenaVec<'a, ImportAttribute<'a>>,
+        with_entries: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ImportAttribute<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, keyword, with_entries, builder), builder.builder())
     }
 }
@@ -15131,24 +15459,25 @@ impl<'a> ExportNamedDeclaration<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T1,
+        with_clause: T2,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         let builder = builder.builder();
         ExportNamedDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             declaration,
-            specifiers,
+            specifiers: specifiers.into_in(builder.allocator()),
             source,
             export_kind,
             with_clause: with_clause.into_in(builder.allocator()),
@@ -15168,17 +15497,18 @@ impl<'a> ExportNamedDeclaration<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T1,
+        with_clause: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         ArenaBox::new_in(
             Self::new(span, declaration, specifiers, source, export_kind, with_clause, builder),
@@ -15458,24 +15788,26 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed(
             span,
@@ -15511,25 +15843,27 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed_with_scope_id(
             span,
@@ -15560,18 +15894,19 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed(
             span,
@@ -15597,19 +15932,20 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed_with_scope_id(
             span,
@@ -15766,12 +16102,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -15835,11 +16175,14 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new_array_expression<B: GetAstBuilder<'a>>(
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
     }
 
@@ -16011,16 +16354,17 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -16044,17 +16388,18 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -16100,24 +16445,26 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -16153,25 +16500,27 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -16386,15 +16735,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
     }
@@ -16410,16 +16760,17 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -16439,11 +16790,14 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new_object_expression<B: GetAstBuilder<'a>>(
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
     }
 
@@ -16471,11 +16825,14 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new_sequence_expression<B: GetAstBuilder<'a>>(
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
     }
 
@@ -16625,16 +16982,17 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -16655,13 +17013,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_jsx_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::JSXFragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -16781,12 +17142,15 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>>(
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
     }
 
@@ -16970,14 +17334,22 @@ impl<'a> V8IntrinsicExpression<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         let builder = builder.builder();
-        V8IntrinsicExpression { node_id: Cell::new(builder.node_id()), span, name, arguments }
+        V8IntrinsicExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            name,
+            arguments: arguments.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`V8IntrinsicExpression`], and store it in the memory arena.
@@ -16990,12 +17362,15 @@ impl<'a> V8IntrinsicExpression<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, name, arguments, builder), builder.builder())
     }
 }
@@ -17326,23 +17701,24 @@ impl<'a> JSXElement<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         let builder = builder.builder();
         JSXElement {
             node_id: Cell::new(builder.node_id()),
             span,
             opening_element: opening_element.into_in(builder.allocator()),
-            children,
+            children: children.into_in(builder.allocator()),
             closing_element: closing_element.into_in(builder.allocator()),
         }
     }
@@ -17358,16 +17734,17 @@ impl<'a> JSXElement<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         ArenaBox::new_in(
             Self::new(span, opening_element, children, closing_element, builder),
@@ -17388,15 +17765,16 @@ impl<'a> JSXOpeningElement<'a> {
     /// * `type_arguments`: Type parameters for generic JSX elements.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         name: JSXElementName<'a>,
         type_arguments: T1,
-        attributes: ArenaVec<'a, JSXAttributeItem<'a>>,
+        attributes: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
     {
         let builder = builder.builder();
         JSXOpeningElement {
@@ -17404,7 +17782,7 @@ impl<'a> JSXOpeningElement<'a> {
             span,
             name,
             type_arguments: type_arguments.into_in(builder.allocator()),
-            attributes,
+            attributes: attributes.into_in(builder.allocator()),
         }
     }
 
@@ -17419,15 +17797,16 @@ impl<'a> JSXOpeningElement<'a> {
     /// * `type_arguments`: Type parameters for generic JSX elements.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         name: JSXElementName<'a>,
         type_arguments: T1,
-        attributes: ArenaVec<'a, JSXAttributeItem<'a>>,
+        attributes: T2,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
     {
         ArenaBox::new_in(
             Self::new(span, name, type_arguments, attributes, builder),
@@ -17481,19 +17860,22 @@ impl<'a> JSXFragment<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         let builder = builder.builder();
         JSXFragment {
             node_id: Cell::new(builder.node_id()),
             span,
             opening_fragment,
-            children,
+            children: children.into_in(builder.allocator()),
             closing_fragment,
         }
     }
@@ -17509,13 +17891,16 @@ impl<'a> JSXFragment<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         ArenaBox::new_in(
             Self::new(span, opening_fragment, children, closing_fragment, builder),
             builder.builder(),
@@ -18006,12 +18391,16 @@ impl<'a> JSXExpression<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -18075,11 +18464,14 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     #[inline]
-    pub fn new_array_expression<B: GetAstBuilder<'a>>(
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        elements: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
         Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
     }
 
@@ -18251,16 +18643,17 @@ impl<'a> JSXExpression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -18284,17 +18677,18 @@ impl<'a> JSXExpression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -18340,24 +18734,26 @@ impl<'a> JSXExpression<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -18393,25 +18789,27 @@ impl<'a> JSXExpression<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
         span: Span,
         r#type: ClassType,
-        decorators: ArenaVec<'a, Decorator<'a>>,
+        decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T2,
-        implements: ArenaVec<'a, TSClassImplements<'a>>,
-        body: T3,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -18626,15 +19024,16 @@ impl<'a> JSXExpression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
     }
@@ -18650,16 +19049,17 @@ impl<'a> JSXExpression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         callee: Expression<'a>,
         type_arguments: T1,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T2,
         pure: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -18679,11 +19079,14 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
     #[inline]
-    pub fn new_object_expression<B: GetAstBuilder<'a>>(
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        properties: ArenaVec<'a, ObjectPropertyKind<'a>>,
+        properties: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
         Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
     }
 
@@ -18711,11 +19114,14 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `expressions`
     #[inline]
-    pub fn new_sequence_expression<B: GetAstBuilder<'a>>(
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        expressions: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
     }
 
@@ -18865,16 +19271,17 @@ impl<'a> JSXExpression<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -18895,13 +19302,16 @@ impl<'a> JSXExpression<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_jsx_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::JSXFragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -19021,12 +19431,15 @@ impl<'a> JSXExpression<'a> {
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>>(
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: IdentifierName<'a>,
-        arguments: ArenaVec<'a, Argument<'a>>,
+        arguments: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
         Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
     }
 
@@ -19346,16 +19759,17 @@ impl<'a> JSXAttributeValue<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::Element(JSXElement::boxed(span, opening_element, children, closing_element, builder))
     }
@@ -19370,13 +19784,16 @@ impl<'a> JSXAttributeValue<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::Fragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -19454,16 +19871,17 @@ impl<'a> JSXChild<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_element<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_element<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         opening_element: T1,
-        children: ArenaVec<'a, JSXChild<'a>>,
-        closing_element: T2,
+        children: T2,
+        closing_element: T3,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
         Self::Element(JSXElement::boxed(span, opening_element, children, closing_element, builder))
     }
@@ -19478,13 +19896,16 @@ impl<'a> JSXChild<'a> {
     /// * `children`: Elements inside the fragment.
     /// * `closing_fragment`: `</>`
     #[inline]
-    pub fn new_fragment<B: GetAstBuilder<'a>>(
+    pub fn new_fragment<B: GetAstBuilder<'a>, T1>(
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        children: ArenaVec<'a, JSXChild<'a>>,
+        children: T1,
         closing_fragment: JSXClosingFragment,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
         Self::Fragment(JSXFragment::boxed(
             span,
             opening_fragment,
@@ -19722,16 +20143,15 @@ impl<'a> TSEnumBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        members: ArenaVec<'a, TSEnumMember<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, members: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSEnumMember<'a>>>,
+    {
         let builder = builder.builder();
         TSEnumBody {
             node_id: Cell::new(builder.node_id()),
             span,
-            members,
+            members: members.into_in(builder.allocator()),
             scope_id: Default::default(),
         }
     }
@@ -19743,17 +20163,20 @@ impl<'a> TSEnumBody<'a> {
     /// * `members`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        members: ArenaVec<'a, TSEnumMember<'a>>,
+        members: T1,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSEnumMember<'a>>>,
+    {
         let builder = builder.builder();
         TSEnumBody {
             node_id: Cell::new(builder.node_id()),
             span,
-            members,
+            members: members.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -19903,12 +20326,16 @@ impl<'a> TSEnumMemberName<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_computed_template_string<B: GetAstBuilder<'a>>(
+    pub fn new_computed_template_string<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::ComputedTemplateString(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 }
@@ -20094,12 +20521,16 @@ impl<'a> TSLiteral<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn new_template_literal<B: GetAstBuilder<'a>>(
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        expressions: ArenaVec<'a, Expression<'a>>,
+        quasis: T1,
+        expressions: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
         Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
     }
 
@@ -20570,11 +21001,14 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`
     #[inline]
-    pub fn new_ts_intersection_type<B: GetAstBuilder<'a>>(
+    pub fn new_ts_intersection_type<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
+        types: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         Self::TSIntersectionType(TSIntersectionType::boxed(span, types, builder))
     }
 
@@ -20702,12 +21136,16 @@ impl<'a> TSType<'a> {
     /// * `quasis`: The string parts of the template literal.
     /// * `types`: The interpolated expressions in the template literal.
     #[inline]
-    pub fn new_ts_template_literal_type<B: GetAstBuilder<'a>>(
+    pub fn new_ts_template_literal_type<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        types: ArenaVec<'a, TSType<'a>>,
+        quasis: T1,
+        types: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         Self::TSTemplateLiteralType(TSTemplateLiteralType::boxed(span, quasis, types, builder))
     }
 
@@ -20730,11 +21168,14 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `element_types`
     #[inline]
-    pub fn new_ts_tuple_type<B: GetAstBuilder<'a>>(
+    pub fn new_ts_tuple_type<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        element_types: ArenaVec<'a, TSTupleElement<'a>>,
+        element_types: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
+    {
         Self::TSTupleType(TSTupleType::boxed(span, element_types, builder))
     }
 
@@ -20746,11 +21187,14 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     #[inline]
-    pub fn new_ts_type_literal<B: GetAstBuilder<'a>>(
+    pub fn new_ts_type_literal<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        members: ArenaVec<'a, TSSignature<'a>>,
+        members: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
+    {
         Self::TSTypeLiteral(TSTypeLiteral::boxed(span, members, builder))
     }
 
@@ -20851,11 +21295,10 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
     #[inline]
-    pub fn new_ts_union_type<B: GetAstBuilder<'a>>(
-        span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new_ts_union_type<B: GetAstBuilder<'a>, T1>(span: Span, types: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         Self::TSUnionType(TSUnionType::boxed(span, types, builder))
     }
 
@@ -21068,13 +21511,16 @@ impl<'a> TSUnionType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, types: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         let builder = builder.builder();
-        TSUnionType { node_id: Cell::new(builder.node_id()), span, types }
+        TSUnionType {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            types: types.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSUnionType`], and store it in the memory arena.
@@ -21086,11 +21532,10 @@ impl<'a> TSUnionType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
-        span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(span: Span, types: T1, builder: &B) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, types, builder), builder.builder())
     }
 }
@@ -21105,13 +21550,16 @@ impl<'a> TSIntersectionType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, types: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         let builder = builder.builder();
-        TSIntersectionType { node_id: Cell::new(builder.node_id()), span, types }
+        TSIntersectionType {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            types: types.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSIntersectionType`], and store it in the memory arena.
@@ -21123,11 +21571,10 @@ impl<'a> TSIntersectionType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
-        span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(span: Span, types: T1, builder: &B) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, types, builder), builder.builder())
     }
 }
@@ -21290,13 +21737,16 @@ impl<'a> TSTupleType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `element_types`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        element_types: ArenaVec<'a, TSTupleElement<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, element_types: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
+    {
         let builder = builder.builder();
-        TSTupleType { node_id: Cell::new(builder.node_id()), span, element_types }
+        TSTupleType {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            element_types: element_types.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSTupleType`], and store it in the memory arena.
@@ -21308,11 +21758,14 @@ impl<'a> TSTupleType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `element_types`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        element_types: ArenaVec<'a, TSTupleElement<'a>>,
+        element_types: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, element_types, builder), builder.builder())
     }
 }
@@ -21914,11 +22367,14 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`
     #[inline]
-    pub fn new_ts_intersection_type<B: GetAstBuilder<'a>>(
+    pub fn new_ts_intersection_type<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
+        types: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         Self::TSIntersectionType(TSIntersectionType::boxed(span, types, builder))
     }
 
@@ -22046,12 +22502,16 @@ impl<'a> TSTupleElement<'a> {
     /// * `quasis`: The string parts of the template literal.
     /// * `types`: The interpolated expressions in the template literal.
     #[inline]
-    pub fn new_ts_template_literal_type<B: GetAstBuilder<'a>>(
+    pub fn new_ts_template_literal_type<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        types: ArenaVec<'a, TSType<'a>>,
+        quasis: T1,
+        types: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         Self::TSTemplateLiteralType(TSTemplateLiteralType::boxed(span, quasis, types, builder))
     }
 
@@ -22074,11 +22534,14 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `element_types`
     #[inline]
-    pub fn new_ts_tuple_type<B: GetAstBuilder<'a>>(
+    pub fn new_ts_tuple_type<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        element_types: ArenaVec<'a, TSTupleElement<'a>>,
+        element_types: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
+    {
         Self::TSTupleType(TSTupleType::boxed(span, element_types, builder))
     }
 
@@ -22090,11 +22553,14 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     #[inline]
-    pub fn new_ts_type_literal<B: GetAstBuilder<'a>>(
+    pub fn new_ts_type_literal<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        members: ArenaVec<'a, TSSignature<'a>>,
+        members: T1,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
+    {
         Self::TSTypeLiteral(TSTypeLiteral::boxed(span, members, builder))
     }
 
@@ -22195,11 +22661,10 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `types`: The types in the union.
     #[inline]
-    pub fn new_ts_union_type<B: GetAstBuilder<'a>>(
-        span: Span,
-        types: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new_ts_union_type<B: GetAstBuilder<'a>, T1>(span: Span, types: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         Self::TSUnionType(TSUnionType::boxed(span, types, builder))
     }
 
@@ -22829,13 +23294,16 @@ impl<'a> TSTypeParameterInstantiation<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `params`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        params: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, params: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         let builder = builder.builder();
-        TSTypeParameterInstantiation { node_id: Cell::new(builder.node_id()), span, params }
+        TSTypeParameterInstantiation {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            params: params.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSTypeParameterInstantiation`], and store it in the memory arena.
@@ -22847,11 +23315,14 @@ impl<'a> TSTypeParameterInstantiation<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `params`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        params: ArenaVec<'a, TSType<'a>>,
+        params: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, params, builder), builder.builder())
     }
 }
@@ -22935,13 +23406,16 @@ impl<'a> TSTypeParameterDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `params`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        params: ArenaVec<'a, TSTypeParameter<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, params: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>,
+    {
         let builder = builder.builder();
-        TSTypeParameterDeclaration { node_id: Cell::new(builder.node_id()), span, params }
+        TSTypeParameterDeclaration {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            params: params.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSTypeParameterDeclaration`], and store it in the memory arena.
@@ -22953,11 +23427,14 @@ impl<'a> TSTypeParameterDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `params`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        params: ArenaVec<'a, TSTypeParameter<'a>>,
+        params: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, params, builder), builder.builder())
     }
 }
@@ -23145,18 +23622,19 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         let builder = builder.builder();
         TSInterfaceDeclaration {
@@ -23164,7 +23642,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
             span,
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
-            extends,
+            extends: extends.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
             declare,
             scope_id: Default::default(),
@@ -23184,18 +23662,19 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         ArenaBox::new_in(
             Self::new(span, id, type_parameters, extends, body, declare, builder),
@@ -23217,19 +23696,20 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         let builder = builder.builder();
         TSInterfaceDeclaration {
@@ -23237,7 +23717,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
             span,
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
-            extends,
+            extends: extends.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -23258,19 +23738,20 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
-        extends: ArenaVec<'a, TSInterfaceHeritage<'a>>,
-        body: T2,
+        extends: T2,
+        body: T3,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
+        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
         ArenaBox::new_in(
             Self::new_with_scope_id(
@@ -23298,13 +23779,16 @@ impl<'a> TSInterfaceBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, TSSignature<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
+    {
         let builder = builder.builder();
-        TSInterfaceBody { node_id: Cell::new(builder.node_id()), span, body }
+        TSInterfaceBody {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            body: body.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSInterfaceBody`], and store it in the memory arena.
@@ -23316,11 +23800,10 @@ impl<'a> TSInterfaceBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `body`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
-        span: Span,
-        body: ArenaVec<'a, TSSignature<'a>>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(span: Span, body: T1, builder: &B) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
     }
 }
@@ -23407,16 +23890,17 @@ impl<'a> TSSignature<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
-        type_annotation: T1,
+        parameters: T1,
+        type_annotation: T2,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         Self::TSIndexSignature(TSIndexSignature::boxed(
             span,
@@ -23712,22 +24196,23 @@ impl<'a> TSIndexSignature<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
-        type_annotation: T1,
+        parameters: T1,
+        type_annotation: T2,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         let builder = builder.builder();
         TSIndexSignature {
             node_id: Cell::new(builder.node_id()),
             span,
-            parameters,
+            parameters: parameters.into_in(builder.allocator()),
             type_annotation: type_annotation.into_in(builder.allocator()),
             readonly,
             r#static,
@@ -23746,16 +24231,17 @@ impl<'a> TSIndexSignature<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        parameters: ArenaVec<'a, TSIndexSignatureName<'a>>,
-        type_annotation: T1,
+        parameters: T1,
+        type_annotation: T2,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         ArenaBox::new_in(
             Self::new(span, parameters, type_annotation, readonly, r#static, builder),
@@ -24661,12 +25147,16 @@ impl<'a> TSModuleDeclarationBody<'a> {
     /// * `directives`
     /// * `body`
     #[inline]
-    pub fn new_ts_module_block<B: GetAstBuilder<'a>>(
+    pub fn new_ts_module_block<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        directives: ArenaVec<'a, Directive<'a>>,
-        body: ArenaVec<'a, Statement<'a>>,
+        directives: T1,
+        body: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         Self::TSModuleBlock(TSModuleBlock::boxed(span, directives, body, builder))
     }
 }
@@ -24791,14 +25281,23 @@ impl<'a> TSModuleBlock<'a> {
     /// * `directives`
     /// * `body`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        directives: ArenaVec<'a, Directive<'a>>,
-        body: ArenaVec<'a, Statement<'a>>,
+        directives: T1,
+        body: T2,
         builder: &B,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         let builder = builder.builder();
-        TSModuleBlock { node_id: Cell::new(builder.node_id()), span, directives, body }
+        TSModuleBlock {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            directives: directives.into_in(builder.allocator()),
+            body: body.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSModuleBlock`], and store it in the memory arena.
@@ -24811,12 +25310,16 @@ impl<'a> TSModuleBlock<'a> {
     /// * `directives`
     /// * `body`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        directives: ArenaVec<'a, Directive<'a>>,
-        body: ArenaVec<'a, Statement<'a>>,
+        directives: T1,
+        body: T2,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, directives, body, builder), builder.builder())
     }
 }
@@ -24831,13 +25334,16 @@ impl<'a> TSTypeLiteral<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        members: ArenaVec<'a, TSSignature<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, members: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
+    {
         let builder = builder.builder();
-        TSTypeLiteral { node_id: Cell::new(builder.node_id()), span, members }
+        TSTypeLiteral {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            members: members.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSTypeLiteral`], and store it in the memory arena.
@@ -24849,11 +25355,14 @@ impl<'a> TSTypeLiteral<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `members`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        members: ArenaVec<'a, TSSignature<'a>>,
+        members: T1,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, members, builder), builder.builder())
     }
 }
@@ -25681,14 +26190,18 @@ impl<'a> TSTemplateLiteralType<'a> {
     /// * `quasis`: The string parts of the template literal.
     /// * `types`: The interpolated expressions in the template literal.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>>(
-        span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        types: ArenaVec<'a, TSType<'a>>,
-        builder: &B,
-    ) -> Self {
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(span: Span, quasis: T1, types: T2, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         let builder = builder.builder();
-        TSTemplateLiteralType { node_id: Cell::new(builder.node_id()), span, quasis, types }
+        TSTemplateLiteralType {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            quasis: quasis.into_in(builder.allocator()),
+            types: types.into_in(builder.allocator()),
+        }
     }
 
     /// Build a [`TSTemplateLiteralType`], and store it in the memory arena.
@@ -25701,12 +26214,16 @@ impl<'a> TSTemplateLiteralType<'a> {
     /// * `quasis`: The string parts of the template literal.
     /// * `types`: The interpolated expressions in the template literal.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
-        quasis: ArenaVec<'a, TemplateElement<'a>>,
-        types: ArenaVec<'a, TSType<'a>>,
+        quasis: T1,
+        types: T2,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
+    {
         ArenaBox::new_in(Self::new(span, quasis, types, builder), builder.builder())
     }
 }

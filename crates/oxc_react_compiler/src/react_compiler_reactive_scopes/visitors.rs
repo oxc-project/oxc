@@ -7,8 +7,7 @@
 //!
 //! Corresponds to `src/ReactiveScopes/visitors.ts` in the TypeScript compiler.
 
-use std::mem::replace;
-
+use oxc_allocator::CloneIn;
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::react_compiler_hir::visitors::{
@@ -62,7 +61,7 @@ pub trait ReactiveFunctionVisitor<'a> {
         for block_id in block_ids {
             let inner_func = &self.env().functions[func_id];
             let block = &inner_func.body.blocks[&block_id];
-            let instr_ids: Vec<_> = block.instructions.clone();
+            let instr_ids: Vec<_> = block.instructions.iter().copied().collect();
             let terminal_operands = each_terminal_operand(&block.terminal);
             let terminal_id = block.terminal.evaluation_order();
 
@@ -72,8 +71,8 @@ pub trait ReactiveFunctionVisitor<'a> {
                 // Build a temporary ReactiveInstruction for the visitor
                 let reactive_instr = ReactiveInstruction {
                     id: instr.id,
-                    lvalue: Some(instr.lvalue.clone()),
-                    value: ReactiveValue::Instruction(instr.value.clone()),
+                    lvalue: Some(instr.lvalue),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env().allocator)),
                     span: instr.span,
                 };
                 self.visit_instruction(&reactive_instr, state);
@@ -572,67 +571,67 @@ pub trait ReactiveFunctionTransform<'a> {
         Ok(Transformed::Keep)
     }
 
+    /// Dispatch a single statement to its matching `transform_*` hook.
+    fn transform_stmt(
+        &mut self,
+        stmt: &mut ReactiveStatement<'a>,
+        state: &mut Self::State,
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
+        match stmt {
+            ReactiveStatement::Instruction(instr) => self.transform_instruction(instr, state),
+            ReactiveStatement::Scope(scope) => self.transform_scope(scope, state),
+            ReactiveStatement::PrunedScope(scope) => self.transform_pruned_scope(scope, state),
+            ReactiveStatement::Terminal(terminal) => self.transform_terminal(terminal, state),
+        }
+    }
+
     fn traverse_block(
         &mut self,
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), OxcDiagnostic> {
-        let mut next_block: Option<Vec<ReactiveStatement<'a>>> = None;
-        let len = block.len();
-        for i in 0..len {
-            // Take the statement out temporarily
-            let mut stmt = replace(
-                &mut block[i],
-                // Placeholder — will be overwritten or discarded
-                ReactiveStatement::Instruction(ReactiveInstruction {
-                    id: EvaluationOrder::UNSET,
-                    lvalue: None,
-                    value: ReactiveValue::Instruction(InstructionValue::Debugger { span: None }),
-                    span: None,
-                }),
-            );
-            let transformed = match &mut stmt {
-                ReactiveStatement::Instruction(instr) => {
-                    self.transform_instruction(instr, state)?
-                }
-                ReactiveStatement::Scope(scope) => self.transform_scope(scope, state)?,
-                ReactiveStatement::PrunedScope(scope) => {
-                    self.transform_pruned_scope(scope, state)?
-                }
-                ReactiveStatement::Terminal(terminal) => {
-                    self.transform_terminal(terminal, state)?
-                }
-            };
-            match transformed {
-                Transformed::Keep => {
-                    if let Some(ref mut nb) = next_block {
-                        nb.push(stmt);
-                    } else {
-                        // Put it back
-                        block[i] = stmt;
-                    }
-                }
-                Transformed::Remove => {
-                    if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
-                    }
-                }
+        // Fast path: while statements are only kept or replaced 1:1 the block's
+        // length never changes, so mutate `block` in place — no allocation, no
+        // moves. This covers every read-only visitor pass and every transform
+        // that doesn't restructure the block.
+        let mut i = 0;
+        let first_change = loop {
+            let Some(stmt) = block.get_mut(i) else { return Ok(()) };
+            match self.transform_stmt(stmt, state)? {
+                Transformed::Keep => i += 1,
                 Transformed::Replace(replacement) => {
-                    if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
-                    }
-                    next_block.as_mut().unwrap().push(replacement);
+                    block[i] = replacement;
+                    i += 1;
                 }
-                Transformed::ReplaceMany(replacements) => {
-                    if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
-                    }
-                    next_block.as_mut().unwrap().extend(replacements);
-                }
+                // `Remove`/`ReplaceMany` change the length — hand off to the
+                // rebuild below rather than shifting the suffix in place.
+                change => break change,
             }
+        };
+
+        // Slow path: a `Remove`/`ReplaceMany` at `i` needs restructuring. Detach
+        // the unprocessed tail (`block` keeps the finalized prefix `[0..i]`) and
+        // rebuild it in a single linear pass, *moving* each statement back onto
+        // `block` — never cloning. A pass that removes or expands many statements
+        // in one block therefore stays O(n) instead of the O(n²) of repeated
+        // `remove`/`splice` suffix shifts.
+        let mut tail = block.split_off(i).into_iter();
+        // The statement at `i` was already transformed into `first_change`; drop
+        // its now-superseded original.
+        tail.next();
+        match first_change {
+            Transformed::Remove => {}
+            Transformed::ReplaceMany(replacements) => block.extend(replacements),
+            // The fast-path loop only breaks on `Remove`/`ReplaceMany`.
+            Transformed::Keep | Transformed::Replace(_) => unreachable!(),
         }
-        if let Some(nb) = next_block {
-            *block = nb;
+        for mut stmt in tail {
+            match self.transform_stmt(&mut stmt, state)? {
+                Transformed::Keep => block.push(stmt),
+                Transformed::Remove => {}
+                Transformed::Replace(replacement) => block.push(replacement),
+                Transformed::ReplaceMany(replacements) => block.extend(replacements),
+            }
         }
         Ok(())
     }

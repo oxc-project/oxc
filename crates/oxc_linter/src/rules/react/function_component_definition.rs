@@ -102,7 +102,7 @@ declare_oxc_lint!(
     style,
     conditional_suggestion,
     config = FunctionComponentDefinition,
-    version = "next",
+    version = "1.75.0",
     short_description = "Enforce a specific function type for function components.",
 );
 

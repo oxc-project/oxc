@@ -242,7 +242,7 @@ impl<'a> TaggedTemplateTransform {
         let stmt = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(variable, ctx),
+            [variable],
             false,
             ctx,
         );

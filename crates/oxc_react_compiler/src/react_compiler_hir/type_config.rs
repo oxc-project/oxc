@@ -96,26 +96,6 @@ pub enum AliasingEffectConfig {
 #[derive(Debug, Clone)]
 pub enum ApplyArgConfig {
     Place(&'static str),
-    Spread {
-        #[allow(dead_code)]
-        kind: ApplyArgSpreadKind,
-        place: &'static str,
-    },
-    Hole {
-        #[allow(dead_code)]
-        kind: ApplyArgHoleKind,
-    },
-}
-
-/// Helper enum for tagged serde of `ApplyArgConfig::Spread`.
-#[derive(Debug, Clone)]
-pub enum ApplyArgSpreadKind {
-    Spread,
-}
-
-/// Helper enum for tagged serde of `ApplyArgConfig::Hole`.
-#[derive(Debug, Clone)]
-pub enum ApplyArgHoleKind {
     Hole,
 }
 

@@ -51,7 +51,7 @@ pub fn validate_context_variable_lvalues(
 /// Like [`validate_context_variable_lvalues`], but writes diagnostics into the
 /// provided `errors` instead of `env.errors`. Useful when the caller wants to
 /// discard the diagnostics (e.g. when lowering is incomplete).
-pub fn validate_context_variable_lvalues_with_errors(
+fn validate_context_variable_lvalues_with_errors(
     func: &HirFunction,
     functions: &IndexSlice<FunctionId, [HirFunction]>,
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
@@ -192,6 +192,6 @@ fn visit(
                 .with_labels(place.span.map(|s| s.label(format!("this is {}", prev_kind)))));
         }
     }
-    identifiers.insert(place.identifier, (place.clone(), kind));
+    identifiers.insert(place.identifier, (*place, kind));
     Ok(())
 }
