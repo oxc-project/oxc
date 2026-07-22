@@ -5,12 +5,29 @@ use std::borrow::Cow;
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
-    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState,
+    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, ScratchBuffer,
     buffer::HeapVecBuffer,
     builders::{FillBuilder, JoinBuilder},
     format::{Format, write},
     format_element::Interned,
 };
+
+/// Interns an exactly-sized element sequence, the single place encoding the interning policy:
+/// the 0/1-element cases return without ever allocating an `ArenaVec`.
+fn intern_exact<'ast>(
+    allocator: &'ast Allocator,
+    mut elements: impl ExactSizeIterator<Item = FormatElement<'ast>>,
+) -> Option<FormatElement<'ast>> {
+    match elements.len() {
+        0 => None,
+        // Doesn't get cheaper than calling clone, use the element directly
+        1 => elements.next(),
+        // The exact size hint makes `from_iter_in` allocate exactly-sized
+        _ => Some(FormatElement::Interned(Interned::new(ArenaVec::from_iter_in(
+            elements, &allocator,
+        )))),
+    }
+}
 
 /// Lifts a `Cow<'ast, str>` to `&'ast str`, allocating in the arena only for the owned case.
 /// Borrowed Cows already point into arena-resident source, so they pass through unchanged.
@@ -66,34 +83,16 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     pub fn intern(&mut self, content: &dyn Format<'ast, C>) -> Option<FormatElement<'ast>> {
         let mut buffer = HeapVecBuffer::new(self.state_mut());
         write(&mut buffer, Arguments::new(&[Argument::new(&content)]));
-
-        // Dispatching on the heap buffer lets the 0/1-element cases return
-        // without ever allocating an `ArenaVec`.
-        match buffer.len() {
-            0 => None,
-            // Doesn't get cheaper than calling clone, use the element directly
-            1 => buffer.pop(),
-            _ => Some(FormatElement::Interned(Interned::new(buffer.take_into_arena_vec()))),
-        }
+        intern_exact(buffer.state().allocator(), buffer.drain())
     }
 
-    /// Interns a pre-built element sequence (e.g. a builder's heap accumulator),
-    /// moving it into the arena exactly-sized. The source is cleared,
-    /// retaining its capacity for the caller (a [`crate::ScratchBuffer`] returns it to the cache).
+    /// Interns a builder's heap accumulator, moving it into the arena exactly-sized.
+    /// The source is emptied, retaining its capacity (returned to the cache when the scratch drops).
     pub fn intern_elements(
         &self,
-        elements: &mut Vec<FormatElement<'ast>>,
+        elements: &mut ScratchBuffer<'ast>,
     ) -> Option<FormatElement<'ast>> {
-        match elements.len() {
-            0 => None,
-            // Doesn't get cheaper than calling clone, use the element directly
-            1 => elements.pop(),
-            _ => {
-                // `Drain`'s exact size hint makes `from_iter_in` allocate exactly-sized
-                let vec = ArenaVec::from_iter_in(elements.drain(..), &self.allocator());
-                Some(FormatElement::Interned(Interned::new(vec)))
-            }
-        }
+        intern_exact(self.allocator(), elements.drain())
     }
 
     /// Creates a [`JoinBuilder`] that joins entries together without a separator.

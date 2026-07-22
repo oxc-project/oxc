@@ -139,7 +139,10 @@ impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
     }
 
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        self.elements.splice(start.., replacement.iter().cloned());
+        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
+        assert!(start <= self.elements.len(), "replace_end start out of bounds");
+        self.elements.truncate(start);
+        self.elements.extend_from_slice(replacement);
     }
 }
 
@@ -185,12 +188,17 @@ impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
         if self.is_empty() { None } else { self.state.scratch_mut().pop() }
     }
 
+    /// Removes and returns the buffered elements, leaving the buffer empty.
+    pub(crate) fn drain(&mut self) -> std::vec::Drain<'_, FormatElement<'ast>> {
+        let watermark = self.watermark;
+        self.state.scratch_mut().drain(watermark..)
+    }
+
     /// Moves the buffered elements into an exactly-sized arena vector, leaving the buffer empty.
     pub fn take_into_arena_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
         let allocator = self.state.allocator();
-        let watermark = self.watermark;
         // `Drain`'s exact size hint makes `from_iter_in` allocate exactly-sized
-        ArenaVec::from_iter_in(self.state.scratch_mut().drain(watermark..), &allocator)
+        ArenaVec::from_iter_in(self.drain(), &allocator)
     }
 
     /// Moves the buffered elements into an exactly-sized arena slice, leaving the buffer empty.
@@ -234,7 +242,11 @@ impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
 
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
         let start = self.watermark + start;
-        self.state.scratch_mut().splice(start.., replacement.iter().cloned());
+        let scratch = self.state.scratch_mut();
+        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
+        assert!(start <= scratch.len(), "replace_end start out of bounds");
+        scratch.truncate(start);
+        scratch.extend_from_slice(replacement);
     }
 }
 
@@ -248,7 +260,7 @@ impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
 /// Those can't stage in the arena (every growth would strand the grown-out-of allocation, see [`HeapVecBuffer`])
 /// nor share the format run's scratch vector (suspended or interleaved use breaks its LIFO discipline).
 ///
-/// Instead the caller checks its own [`crate::ScratchBuffer`] out of the thread-local cache
+/// Instead the caller owns a [`crate::ScratchBuffer`] (backed lazily by the thread-local cache)
 /// and writes through this adapter (constructed via [`crate::ScratchBuffer::writer`]);
 /// the arena receives one exactly-sized copy when the finished result is interned ([`crate::Formatter::intern_elements`]),
 /// or nothing at all when the elements are re-emitted into a downstream buffer.
@@ -284,7 +296,10 @@ impl<'ast, C> Buffer<'ast, C> for AccumulatorBuffer<'_, 'ast, C> {
     }
 
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        self.elements.splice(start.., replacement.iter().cloned());
+        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
+        assert!(start <= self.elements.len(), "replace_end start out of bounds");
+        self.elements.truncate(start);
+        self.elements.extend_from_slice(replacement);
     }
 }
 

@@ -555,13 +555,13 @@ enum MultilineLayout {
 struct MultilineBuilder<'a> {
     layout: MultilineLayout,
     /// Heap accumulator; the flat and multiline builders write alternately,
-    /// so each checks out its own (see [`ScratchBuffer::writer`]).
+    /// so each owns its own (see [`ScratchBuffer::writer`]).
     result: ScratchBuffer<'a>,
 }
 
 impl<'a> MultilineBuilder<'a> {
     fn new(layout: MultilineLayout) -> Self {
-        Self { layout, result: ScratchBuffer::checkout() }
+        Self { layout, result: ScratchBuffer::new() }
     }
 
     /// Formats an element that does not require a separator
@@ -700,9 +700,7 @@ struct FlatBuilder<'a> {
 
 impl<'a> FlatBuilder<'a> {
     fn new(disabled: bool) -> Self {
-        // A builder born disabled never writes; skip the pool checkout
-        let result = if disabled { ScratchBuffer::empty() } else { ScratchBuffer::checkout() };
-        Self { result, disabled }
+        Self { result: ScratchBuffer::new(), disabled }
     }
 
     fn write(
@@ -720,8 +718,7 @@ impl<'a> FlatBuilder<'a> {
 
     fn disable(&mut self) {
         self.disabled = true;
-        // Abandoned content; clear so the scratch returns to the cache empty.
-        self.result.clear();
+        self.result.discard();
     }
 
     fn finish(self) -> FormatFlatChildren<'a> {

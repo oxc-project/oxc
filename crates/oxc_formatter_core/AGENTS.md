@@ -35,7 +35,8 @@ Pick by what you're building:
   - it moves into the `Document` for free, and heap-staging it costs an extra copy for no benefit
 - Unknown-length staging that ends interned/sliced: `HeapVecBuffer`
   - a watermarked view over a shared, thread-cached scratch vector; the arena receives one exactly-sized copy (see its rustdoc for the full rationale)
-- Accumulating across interleaved `write()` calls (multiple builders open at once), or staging that must release the state between writes and consumption: check a `ScratchBuffer` out per accumulator and write through `ScratchBuffer::writer`, finish via `Formatter::intern_elements` (or re-emit into the destination buffer)
+  - the per-thread cache has byte and buffer-count limits; oversized staging is released after the format run
+- Accumulating across interleaved `write()` calls (multiple builders open at once), or staging that must release the state between writes and consumption: give each accumulator its own `ScratchBuffer` (pooled capacity is fetched lazily on first write) and write through `ScratchBuffer::writer`, finish via `Formatter::intern_elements` (or re-emit via `ScratchBuffer::drain`, abandon via `ScratchBuffer::discard`)
   - the shared scratch's LIFO rule and its exclusive state borrow rule out `HeapVecBuffer` there (see the JSX child-list builders and `AssignmentLike` in `oxc_formatter`)
 - `BestFitting` variants: `best_fitting_variant` (wraps the entry tags and stages on the heap in one place)
 - Known-length sequences: build exact-sized directly (e.g. `ArenaVec::from_iter_in`)
