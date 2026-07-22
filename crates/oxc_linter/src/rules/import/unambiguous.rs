@@ -52,6 +52,10 @@ declare_oxc_lint!(
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/unambiguous.md>
 impl Rule for Unambiguous {
     fn run_once(&self, ctx: &LintContext<'_>) {
+        // Explicit CommonJS files (`.cjs`, `.cts`) cannot be mistakenly parsed as scripts.
+        if ctx.source_type().is_commonjs() {
+            return;
+        }
         if !ctx.module_record().has_module_syntax {
             ctx.diagnostic(unambiguous_diagnostic(Span::default()));
         }
@@ -83,4 +87,17 @@ fn test() {
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();
+
+    // Explicit CommonJS files (`.cjs`, `.cts`) cannot be mistakenly parsed as scripts
+    let pass = vec![r#"const x = require("y");"#, r"function x() {}"];
+
+    Tester::new(Unambiguous::NAME, Unambiguous::PLUGIN, pass.clone(), vec![])
+        .change_rule_path("index.cjs")
+        .with_import_plugin(true)
+        .test();
+
+    Tester::new(Unambiguous::NAME, Unambiguous::PLUGIN, pass, vec![])
+        .change_rule_path("index.cts")
+        .with_import_plugin(true)
+        .test();
 }
