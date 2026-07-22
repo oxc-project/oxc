@@ -2,12 +2,26 @@ use std::borrow::Cow;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_ast::{Comment, CommentKind, ast::Program};
+use oxc_ast::{
+    Comment, CommentKind,
+    ast::{Expression, Program},
+};
+use oxc_span::GetSpan;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
+
+/// A `pife`-marked arrow or function expression prints its leading comments
+/// inside its own `(` wrap, so operand emission sites must not consume them.
+fn is_pife_function(expression: &Expression<'_>) -> bool {
+    match expression {
+        Expression::ArrowFunctionExpression(arrow) => arrow.pife,
+        Expression::FunctionExpression(function) => function.pife,
+        _ => false,
+    }
+}
 
 /// Which annotation kind an emission site expects to recover from
 /// [`Codegen::annotation_comments`].
@@ -158,13 +172,70 @@ impl Codegen<'_> {
         }
     }
 
-    /// Print leading comments at `start` and consume any pending indent-as-space,
-    /// so the next token glues to the comment instead of breaking onto a new line.
+    /// Print leading comments at `start` and glue the next token to them: after a
+    /// group ending in a newline (line comment / `followed_by_newline`), print the
+    /// indent — mid-expression callers have no statement machinery to do it, and an
+    /// unindented next token renders differently once the parser re-anchors the
+    /// comments to it (codegen would no longer be idempotent). Otherwise consume the
+    /// pending indent-as-space so the token glues with a single space.
     #[inline]
     pub(crate) fn print_leading_comments_anchored_to_self(&mut self, start: u32) {
         if let Some(comments) = self.get_comments(start) {
             self.print_comments(&comments);
-            self.consume_pending_indent_space();
+            if self.last_byte() == Some(b'\n') {
+                self.print_indent();
+            } else {
+                self.consume_pending_indent_space();
+            }
+        }
+    }
+
+    /// Print comments attached to an expression that survives codegen.
+    ///
+    /// Probes the parenthesized layers too: `a || /* c */ (x)` anchors the
+    /// comment at the `(`, `a || (/* c */ x)` at `x` — an operand printer only
+    /// sees one node, so the walk happens here for every emission site.
+    pub(crate) fn print_leading_comments_before_expression(&mut self, expression: &Expression<'_>) {
+        if self.comments.is_empty() || is_pife_function(expression) {
+            return;
+        }
+        self.print_leading_comments_anchored_to_self(expression.span().start);
+        if let Expression::ParenthesizedExpression(paren) = expression {
+            self.print_leading_comments_before_expression(&paren.expression);
+        }
+    }
+
+    /// Print an expression's comment group only when it contains an annotation
+    /// comment, probing parenthesized layers like
+    /// [`Self::print_leading_comments_before_expression`].
+    ///
+    /// This is the variant for emission sites that mutating consumers move
+    /// statements into (the minifier merges `if(a)x;if(b)x;` into
+    /// `if(a||(b,..))x`; rolldown finalizes moved nodes with their original
+    /// spans). Comments are anchored by source position, so a dissolved
+    /// statement's leading normal-comment group can coincide with the moved
+    /// operand's span start — printing it there misplaces statement-level
+    /// trivia inside an expression and is not idempotent
+    /// (`test_normal_comment_before_logical_rhs_not_printed` documents the
+    /// falsifier). Annotations are the one comment kind with expression-level
+    /// meaning, so they still pass through.
+    pub(crate) fn print_annotation_comments_before_expression(
+        &mut self,
+        expression: &Expression<'_>,
+    ) {
+        if self.comments.is_empty() || is_pife_function(expression) {
+            return;
+        }
+        let start = expression.span().start;
+        if self
+            .comments
+            .get(&start)
+            .is_some_and(|comments| comments.iter().any(|comment| comment.is_annotation()))
+        {
+            self.print_leading_comments_anchored_to_self(start);
+        }
+        if let Expression::ParenthesizedExpression(paren) = expression {
+            self.print_annotation_comments_before_expression(&paren.expression);
         }
     }
 
@@ -267,7 +338,12 @@ impl Codegen<'_> {
                     }
                 }
             }
-        } else {
+        } else if !self.consume_pending_indent_space()
+            && matches!(self.last_byte(), None | Some(b'\n'))
+        {
+            // Only indent at a line start. Mid-line emission sites (`a ?? /* c */ b`,
+            // `key: /* c */ value`, `${/* c */ expr}`) would otherwise get a full
+            // indent injected mid-line, growing indentation on every codegen pass.
             self.print_indent();
         }
         self.print_comment(first);

@@ -201,13 +201,15 @@ impl<'a> BinaryExpressionVisitor<'a> {
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
                 // The base of `**` must be an `UpdateExpression`, so a unary/await base
-                // must be parenthesized. Negative numbers print as a unary operator.
+                // must be parenthesized. Negative numbers and BigInts print with a
+                // leading `-`, i.e. as a unary operator.
                 if matches!(
                     e.left(),
                     Expression::UnaryExpression(_)
                         | Expression::AwaitExpression(_)
                         | Expression::TSTypeAssertion(_)
                         | Expression::NumericLiteral(_)
+                        | Expression::BigIntLiteral(_)
                 ) {
                     self.left_precedence = Precedence::Call;
                 }
@@ -230,6 +232,13 @@ impl<'a> BinaryExpressionVisitor<'a> {
         self.operator.r#gen(p);
         p.print_soft_space();
         let right = self.e.right();
+        if let Binaryish::Logical(e) = self.e {
+            // Annotation-gated (see the helper's doc): statements get merged
+            // into logical RHS positions on mutated ASTs. Pass the unstripped
+            // right — `Binaryish::right()` removes the paren layers the helper
+            // needs to probe.
+            p.print_annotation_comments_before_expression(&e.right);
+        }
         if !cjs_module_lexer::try_print_equality_string(p, self.operator, right) {
             right.gen_expr(p, self.right_precedence, self.ctx);
         }

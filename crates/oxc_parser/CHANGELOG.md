@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 4c71560 parser: More friendly error for spread element in dynamic imports (#24705) (sapphi-red)
+- 129b759 parser: Improve diagnostics for unparenthesized LHS on exponential expr (#24569) (camc314)
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 48b59f4 parser: Span ambient generator diagnostics (#24711) (camc314)
+- 7b4baff parser: Reject new import member access (#23459) (camc314)
+- 8421feb parser: Use first `as` span for imported name (#24537) (leaysgur)
+- c517aa0 parser: Reject invalid accessor assertions (#24504) (camc314)
+
+### ⚡ Performance
+
+- 884d9eb parser: Pre-size cover-grammar assignment target buffers (#24683) (Boshen)
+- bcc9de0 parser: Defer diagnostic creation until parse exit (#24663) (Boshen)
+- 747feec parser: Build AST nodes with the AST builder instead of cloning (#24540) (Boshen)
+
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- b47585c parser: Use `ReplaceWith` instead of `TakeIn` (#24018) (overlookmotel)
+
 ## [0.138.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

@@ -19,20 +19,21 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::visitors::each_pattern_operand;
 use crate::react_compiler_hir::{
     BlockKind, DeclarationId, HirFunction, InstructionKind, InstructionValue, ParamPattern, Place,
 };
+use oxc_span::Span;
 
 use crate::react_compiler_hir::environment::Environment;
 
-/// Create an invariant CompilerError (matches TS CompilerError.invariant).
-/// When a span is provided, creates a CompilerDiagnostic with an error detail item
+/// Create an invariant diagnostic (matches TS CompilerError.invariant).
+/// When a span is provided, it is attached as a labelled span
 /// (matching TS CompilerError.invariant which uses .withDetails()).
-fn invariant_error(reason: &str, description: Option<String>) -> CompilerError {
+fn invariant_error(reason: &str, description: Option<String>) -> OxcDiagnostic {
     invariant_error_with_span(reason, description, None)
 }
 
@@ -40,12 +41,13 @@ fn invariant_error_with_span(
     reason: &str,
     description: Option<String>,
     span: Option<Span>,
-) -> CompilerError {
-    let mut err = CompilerError::new();
-    let diagnostic = CompilerDiagnostic::new(ErrorCategory::Invariant, reason, description)
-        .with_detail(CompilerDiagnosticDetail::Error { span, message: Some(reason.to_string()) });
-    err.push_diagnostic(diagnostic);
-    err
+) -> OxcDiagnostic {
+    let mut diagnostic =
+        ErrorCategory::Invariant.diagnostic(reason).with_labels(span.map(|s| s.label(reason)));
+    if let Some(description) = description {
+        diagnostic = diagnostic.with_help(description);
+    }
+    diagnostic
 }
 
 /// Format an InstructionKind variant name (matches TS `${kind}` interpolation).
@@ -65,19 +67,29 @@ fn format_kind(kind: Option<InstructionKind>) -> &'static str {
 
 /// Format a Place like TS `printPlace()`: `<effect> <name>$<id>[<range>]{reactive}`
 fn format_place(place: &Place, env: &Environment) -> String {
-    let ident = &env.identifiers[place.identifier.0 as usize];
+    let ident = &env.identifiers[place.identifier];
     let name = ident.name.as_ref().map_or("", |name| name.value());
-    let scope =
-        ident.scope.map_or(Cow::Borrowed(""), |scope_id| Cow::Owned(format!("_@{}", scope_id.0)));
-    let mutable_range = if ident.mutable_range.end.0 > ident.mutable_range.start.0 + 1 {
-        Cow::Owned(format!("[{}:{}]", ident.mutable_range.start.0, ident.mutable_range.end.0))
+    let scope = ident
+        .scope
+        .map_or(Cow::Borrowed(""), |scope_id| Cow::Owned(format!("_@{}", scope_id.index())));
+    let mutable_range = if ident.mutable_range.end > ident.mutable_range.start + 1 {
+        Cow::Owned(format!(
+            "[{}:{}]",
+            ident.mutable_range.start.index(),
+            ident.mutable_range.end.index()
+        ))
     } else {
         Cow::Borrowed("")
     };
     let reactive = if place.reactive { "{reactive}" } else { "" };
     format!(
         "{} {}${}{}{}{}",
-        place.effect, name, place.identifier.0, scope, mutable_range, reactive
+        place.effect,
+        name,
+        place.identifier.index(),
+        scope,
+        mutable_range,
+        reactive
     )
 }
 
@@ -97,7 +109,7 @@ enum DeclarationLoc {
 pub fn rewrite_instruction_kinds_based_on_reassignment(
     func: &mut HirFunction,
     env: &Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Phase 1: Collect all information about which declarations need updates.
     //
     // Track: for each DeclarationId, the location of its first declaration,
@@ -118,7 +130,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let ident = &env.identifiers[place.identifier.0 as usize];
+        let ident = &env.identifiers[place.identifier];
         if ident.name.is_some() {
             declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
         }
@@ -126,7 +138,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
 
     // Seed with context variables
     for place in &func.context {
-        let ident = &env.identifiers[place.identifier.0 as usize];
+        let ident = &env.identifiers[place.identifier];
         if ident.name.is_some() {
             declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
         }
@@ -138,11 +150,10 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block = &func.body.blocks[block_id];
         let block_kind = block.kind;
         for (local_idx, instr_id) in block.instructions.iter().enumerate() {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::DeclareLocal { lvalue, .. } => {
-                    let decl_id =
-                        env.identifiers[lvalue.place.identifier.0 as usize].declaration_id;
+                    let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
                     if declarations.contains_key(&decl_id) {
                         return Err(invariant_error_with_span(
                             "Expected variable not to be defined prior to declaration",
@@ -159,7 +170,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     );
                 }
                 InstructionValue::StoreLocal { lvalue, .. } => {
-                    let ident = &env.identifiers[lvalue.place.identifier.0 as usize];
+                    let ident = &env.identifiers[lvalue.place.identifier];
                     if ident.name.is_some() {
                         let decl_id = ident.declaration_id;
                         if let Some(existing) = declarations.get(&decl_id) {
@@ -178,7 +189,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             reassign_spans.push((block_index, local_idx));
                         } else {
                             // First store — mark as Const
-                            // Mirrors TS: CompilerError.invariant(!declarations.has(...))
+                            // Mirrors TS: Diagnostics.invariant(!declarations.has(...))
                             if declarations.contains_key(&decl_id) {
                                 return Err(invariant_error_with_span(
                                     "Expected variable not to be defined prior to declaration",
@@ -203,7 +214,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 InstructionValue::Destructure { lvalue, .. } => {
                     let mut kind: Option<InstructionKind> = None;
                     for place in each_pattern_operand(&lvalue.pattern) {
-                        let ident = &env.identifiers[place.identifier.0 as usize];
+                        let ident = &env.identifiers[place.identifier];
                         if ident.name.is_none() {
                             if !(kind.is_none() || kind == Some(InstructionKind::Const)) {
                                 return Err(invariant_error_with_span(
@@ -281,7 +292,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 }
                 InstructionValue::PostfixUpdate { lvalue, .. }
                 | InstructionValue::PrefixUpdate { lvalue, .. } => {
-                    let ident = &env.identifiers[lvalue.identifier.0 as usize];
+                    let ident = &env.identifiers[lvalue.identifier];
                     let decl_id = ident.declaration_id;
                     let Some(existing) = declarations.get(&decl_id) else {
                         return Err(invariant_error_with_span(
@@ -311,7 +322,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili) in const_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
             lvalue.kind = InstructionKind::Const;
         }
@@ -320,7 +331,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili) in reassign_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
             lvalue.kind = InstructionKind::Reassign;
         }
@@ -335,7 +346,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili, kind) in destructure_kind_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         if let InstructionValue::Destructure { lvalue, .. } = &mut instr.value {
             lvalue.kind = kind;
         }
@@ -344,7 +355,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili) in let_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         match &mut instr.value {
             InstructionValue::DeclareLocal { lvalue, .. }
             | InstructionValue::StoreLocal { lvalue, .. } => {

@@ -4,11 +4,10 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_compat::ESFeature;
-use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{
     BoundNames, ToJsString, ToNumber,
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
-    side_effects::MayHaveSideEffects,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, is_typed_array_constructor},
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
@@ -574,8 +573,9 @@ impl<'a> PeepholeOptimizations {
             ctx.scoping().get_reference(is_null_id_ref.reference_id()).symbol_id();
 
         // Plain `clone_in` resets every `reference_id` to `None`, making id
-        // aliasing structurally impossible; the loop below installs the one
-        // fresh reference the clone needs.
+        // aliasing structurally impossible. The fresh references below are
+        // stamped with the current scope, so the next post-flush graph
+        // analysis observes them directly from scoping.
         let mut new_left_expr = typeof_binary_expr.clone_in(ctx.allocator());
         if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
             new_left_expr_binary.operator =
@@ -972,14 +972,11 @@ impl<'a> PeepholeOptimizations {
         if let Some(r_id_pat) = r_id_pat {
             let base_arr = Expression::new_array_expression(
                 SPAN,
-                ArenaVec::from_value_in(
-                    ArrayExpressionElement::new_spread_element(
-                        SPAN,
-                        Expression::Identifier(arguments_id.take_in_box(ctx)),
-                        ctx,
-                    ),
+                [ArrayExpressionElement::new_spread_element(
+                    SPAN,
+                    Expression::Identifier(arguments_id.take_in_box(ctx)),
                     ctx,
-                ),
+                )],
                 ctx,
             );
             // wrap with `.slice(offset)`
@@ -996,10 +993,7 @@ impl<'a> PeepholeOptimizations {
                     SPAN,
                     callee,
                     NONE,
-                    ArenaVec::from_value_in(
-                        Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx),
-                        ctx,
-                    ),
+                    [Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx)],
                     false,
                     ctx,
                 )
@@ -1011,7 +1005,7 @@ impl<'a> PeepholeOptimizations {
                 VariableDeclarator::new(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false, ctx);
             // The old declarators (`e`, `a`, and `r`'s original init) are
             // replaced wholesale — walk them so refs inside (e.g. `e` in
-            // `Array(e > 1 ? e - 1 : 0)`) reach `PassDirty`. The moved-out
+            // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
             // `r` binding and `arguments` ident left id-less dummies behind.
             for decl in &var_init.declarations {
                 ctx.drop_variable_declarator(decl);
@@ -1021,7 +1015,7 @@ impl<'a> PeepholeOptimizations {
             // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
             // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
             // folding becomes an empty statement. Walk the dropped
-            // declarators so their refs reach `PassDirty`.
+            // declarators so their refs reach `PassChanges`.
             for decl in &var_init.declarations {
                 ctx.drop_variable_declarator(decl);
             }
@@ -1214,22 +1208,19 @@ impl<'a> PeepholeOptimizations {
         };
         match name {
             "Object" if args.is_empty() => {
-                let new_value =
-                    Expression::new_object_expression(*span, ArenaVec::new_in(ctx), ctx);
+                let new_value = Expression::new_object_expression(*span, [], ctx);
                 ctx.replace_expression(expr, new_value);
             }
             "Array" => {
                 // `new Array` -> `[]`
                 if args.is_empty() {
-                    let new_value =
-                        Expression::new_array_expression(*span, ArenaVec::new_in(ctx), ctx);
+                    let new_value = Expression::new_array_expression(*span, [], ctx);
                     ctx.replace_expression(expr, new_value);
                 } else if args.len() == 1 {
                     let Some(arg) = args[0].as_expression_mut() else { return };
                     // `new Array(0)` -> `[]`
                     if arg.is_number_0() {
-                        let new_value =
-                            Expression::new_array_expression(*span, ArenaVec::new_in(ctx), ctx);
+                        let new_value = Expression::new_array_expression(*span, [], ctx);
                         ctx.replace_expression(expr, new_value);
                     }
                     // `new Array(8)` -> `Array(8)`
@@ -1265,11 +1256,11 @@ impl<'a> PeepholeOptimizations {
                     }
                     // `new Array(literal)` -> `[literal]`
                     else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
-                        let elements = ArenaVec::from_value_in(
-                            ArrayExpressionElement::from(arg.take_in(ctx)),
+                        let new_value = Expression::new_array_expression(
+                            *span,
+                            [ArrayExpressionElement::from(arg.take_in(ctx))],
                             ctx,
                         );
-                        let new_value = Expression::new_array_expression(*span, elements, ctx);
                         ctx.replace_expression(expr, new_value);
                     }
                     // `new Array(x)` -> `Array(x)`
@@ -1586,13 +1577,10 @@ impl<'a> PeepholeOptimizations {
 
         let new_callee = Expression::new_sequence_expression(
             span,
-            ArenaVec::from_array_in(
-                [
-                    Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx),
-                    arg_expr.take_in(ctx),
-                ],
-                ctx,
-            ),
+            [
+                Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx),
+                arg_expr.take_in(ctx),
+            ],
             ctx,
         );
         ctx.replace_expression(&mut expr.callee, new_callee);
@@ -1637,7 +1625,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &TraverseCtx<'a>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
-        if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
+        if !is_typed_array_constructor(name) || !ctx.is_global_reference(ident) {
             return;
         }
         if e.arguments.len() == 1
@@ -1779,15 +1767,12 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             ),
             NONE,
-            ArenaVec::from_value_in(
-                Argument::new_string_literal(
-                    expr.span(),
-                    Str::from_str_in(delimiter, ctx),
-                    None,
-                    ctx,
-                ),
+            [Argument::new_string_literal(
+                expr.span(),
+                Str::from_str_in(delimiter, ctx),
+                None,
                 ctx,
-            ),
+            )],
             false,
             true,
             ctx,
@@ -1827,6 +1812,46 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Move sequence expressions out of operand positions so the trailing
+    /// expression can be folded into the parent operator.
+    ///
+    /// - `(a, b) + c` -> `a, b + c`
+    /// - `(a, b) || c` -> `a, b || c`
+    /// - `-(a, b)` -> `a, -b`
+    /// - `await (a, b)` -> `a, await b`
+    /// - `yield (a, b)` -> `a, yield b`
+    pub fn fold_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let argument = match expr {
+            Expression::BinaryExpression(binary_expr) => &mut binary_expr.left,
+            Expression::LogicalExpression(logical_expr) => &mut logical_expr.left,
+            Expression::UnaryExpression(unary_expr)
+                if !unary_expr.operator.is_keyword() && !unary_expr.operator.is_not() =>
+            {
+                &mut unary_expr.argument
+            }
+            Expression::AwaitExpression(await_expr) => &mut await_expr.argument,
+            Expression::YieldExpression(yield_expr) => {
+                let Some(maybe_sequence_expression) = &mut yield_expr.argument else { return };
+                maybe_sequence_expression
+            }
+            _ => {
+                return;
+            }
+        };
+
+        let Expression::SequenceExpression(seq_expr) = argument else { return };
+
+        if seq_expr.expressions.len() <= 1 {
+            return;
+        }
+
+        let mut seq_expr = seq_expr.take_in_box(ctx);
+        *argument = seq_expr.expressions.pop().unwrap();
+        seq_expr.expressions.push(expr.take_in(ctx));
+        let new_value = Expression::SequenceExpression(seq_expr);
+        ctx.replace_expression(expr, new_value);
+    }
+
     fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: &str) -> bool {
         body.body.iter().any(|stmt| {
             let Statement::VariableDeclaration(decl) = stmt else { return false };
@@ -1842,29 +1867,9 @@ impl<'a> PeepholeOptimizations {
         })
     }
 
-    /// Whether the name matches any TypedArray name.
-    ///
-    /// See <https://tc39.es/ecma262/multipage/indexed-collections.html#sec-typedarray-objects> for the list of TypedArrays.
-    fn is_typed_array_name(name: &str) -> bool {
-        matches!(
-            name,
-            "Int8Array"
-                | "Uint8Array"
-                | "Uint8ClampedArray"
-                | "Int16Array"
-                | "Uint16Array"
-                | "Int32Array"
-                | "Uint32Array"
-                | "Float32Array"
-                | "Float64Array"
-                | "BigInt64Array"
-                | "BigUint64Array"
-        )
-    }
-
     /// Whether the expression's result will be discarded — bare expression
-    /// statement, or the init of a `var`/`let`/`const` whose binding has no
-    /// references and isn't exported. Used by the IIFE inliner to short-circuit
+    /// statement, or the init of a `var`/`let`/`const` whose binding is unused
+    /// by count. Used by the IIFE inliner to short-circuit
     /// pure-annotated IIFEs to `void 0` so they drop regardless of body shape,
     /// and to allow `(async () => {})()` / `(function* () {})()` (whose return
     /// value isn't a meaningful result) to collapse in those positions too.
@@ -1883,30 +1888,10 @@ impl<'a> PeepholeOptimizations {
                 let BindingPattern::BindingIdentifier(ident) = decl.id() else {
                     return false;
                 };
-                if !ctx.scoping().symbol_is_unused(ident.symbol_id()) {
-                    return false;
-                }
-                !Self::var_declaration_is_exported(ctx)
+                Self::symbol_is_unused_by_count(ident.symbol_id(), ctx)
             }
             _ => false,
         }
-    }
-
-    /// `true` if the `VariableDeclaration` that contains the current expression
-    /// (entered via `VariableDeclaratorInit`) sits directly under an `export`
-    /// wrapper. Exports are cross-module reachable, and the inner
-    /// `VariableDeclaration` never routes through `handle_variable_declaration`
-    /// — dropping its init would silently break the export's runtime value.
-    ///
-    /// Checks the exact ancestor slot above `VariableDeclaration` only;
-    /// walking the full chain would over-broaden the guard to function-local
-    /// vars inside exported functions.
-    fn var_declaration_is_exported(ctx: &TraverseCtx<'a>) -> bool {
-        // Only `ExportNamedDeclaration`'s `declaration` field can hold a
-        // `VariableDeclaration`. `export default` wraps a function / class /
-        // expression — never a `VariableDeclaration` — so no arm is needed
-        // for it.
-        matches!(ctx.ancestors().nth(2), Some(Ancestor::ExportNamedDeclarationDeclaration(_)))
     }
 
     /// Optimizes the usage of Immediately Invoked Function Expressions (IIFEs)
@@ -2066,7 +2051,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Take the IIFE body out for inlining and propagate `pure` onto a
-    /// call/new body. Bails in DCE-only mode — see the
+    /// call/new body. Bails in tree-shake-only mode — see the
     /// `preserve_iife_in_dce_mode` test.
     /// Returns `None` to signal the caller should leave the IIFE intact.
     fn try_take_iife_body(
@@ -2074,7 +2059,7 @@ impl<'a> PeepholeOptimizations {
         is_pure: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return None;
         }
         let mut taken = body.take_in(ctx);

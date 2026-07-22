@@ -1,0 +1,16 @@
+// A comment between a list element and its comma stays BEFORE the comma,
+// across every comma site: include args, paren lists, maps, params, each bindings.
+a {
+  @include mx($a /* c */, $b);
+}
+$paren: (a /* c */, b);
+$map: (k1: 1 /* c */, k2: 2);
+@mixin mx($p1 /* c */, $p2) {
+  color: red;
+}
+@each $k /* c */, $v in $m {
+  a: $k;
+}
+@each $v in aa /* c1 */, bb /* c2 */, cc {
+  b: $v;
+}

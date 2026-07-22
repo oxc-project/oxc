@@ -93,9 +93,9 @@ pub(super) fn write_top_level_value<'a>(
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let (elements, is_comma) = match value {
-        ComponentValue::SassList(list) => (&list.elements, list.comma_spans.is_some()),
-        ComponentValue::LessList(list) => (&list.elements, list.comma_spans.is_some()),
+    let (elements, comma_spans) = match value {
+        ComponentValue::SassList(list) => (&list.elements, list.comma_spans.as_ref()),
+        ComponentValue::LessList(list) => (&list.elements, list.comma_spans.as_ref()),
         _ => {
             value::write_component_value(value, ctx, f);
             return;
@@ -104,17 +104,22 @@ pub(super) fn write_top_level_value<'a>(
     // `paren_break` only applies to a paren group that IS the whole value,
     // not to parens nested inside lists.
     let ctx = ValueContext { paren_break: false, ..ctx };
-    if is_comma {
-        let groups: Vec<&[ComponentValue<'a>]> = elements
+    if let Some(comma_spans) = comma_spans {
+        // Each element paired with the comma that follows it (see `write_value_groups`)
+        let groups: Vec<(&[ComponentValue<'a>], Option<u32>)> = elements
             .iter()
-            .map(|el| match el {
-                ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
-                    &inner.elements[..]
-                }
-                ComponentValue::LessList(inner) if inner.comma_spans.is_none() => {
-                    &inner.elements[..]
-                }
-                other => std::slice::from_ref(other),
+            .enumerate()
+            .map(|(i, el)| {
+                let group = match el {
+                    ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
+                        &inner.elements[..]
+                    }
+                    ComponentValue::LessList(inner) if inner.comma_spans.is_none() => {
+                        &inner.elements[..]
+                    }
+                    other => std::slice::from_ref(other),
+                };
+                (group, comma_spans.get(i).map(|sp| to_span(sp).start))
             })
             .collect();
         let value_span = to_span(value.span());
@@ -124,12 +129,21 @@ pub(super) fn write_top_level_value<'a>(
             .iter_before(value_span.end)
             .any(|c| c.span.start >= value_span.start);
         let force_hard_line = !ctx.decl_prop.is_some_and(|p| p.starts_with("--"))
-            && (groups.iter().enumerate().any(|(i, g)| value::comma_group_is_multi(g, i == 0))
+            && (groups
+                .iter()
+                .enumerate()
+                .any(|(i, (g, _))| value::comma_group_is_multi(g, i == 0))
                 || has_comments);
         value::write_value_groups(&groups, ctx, force_hard_line, true, f);
     } else {
         value::write_comma_group(elements, ctx, f);
     }
+}
+
+/// A paren-delimited map/list value or key: hugs the colon and carries
+/// its own break layout (Prettier's `value-paren_group` checks).
+fn is_paren_block(value: &ComponentValue<'_>) -> bool {
+    matches!(value, ComponentValue::SassMap(_) | ComponentValue::SassParenthesizedExpression(_))
 }
 
 /// `(key: value, ...)`: SCSS maps in map-item positions always break,
@@ -189,7 +203,10 @@ pub(super) fn write_sass_map<'a>(
             write!(f, soft_line_break());
             for (i, item) in map.items.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(
+                        map.comma_spans.get(i - 1).map(|sp| to_span(sp).start),
+                        f,
+                    );
                     // A blank line between items in the source is preserved
                     // (Prettier's isNextLineEmpty → hardline).
                     let prev_end = to_span(map.items[i - 1].span()).end;
@@ -244,7 +261,7 @@ pub(super) fn write_sass_map<'a>(
         let mut first_item_has_leading_comment = false;
         for (i, item) in map.items.iter().enumerate() {
             if i > 0 {
-                write!(f, ",");
+                value::write_group_comma(map.comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
                 write!(f, hard_line_break());
                 // Preserve one blank line between items
                 let prev_end = to_span(map.items[i - 1].span()).end;
@@ -266,10 +283,7 @@ pub(super) fn write_sass_map<'a>(
                 ValueContext { map_key: false, paren_break: true, map_break: true, ..ctx };
             // Nested maps / paren lists hug the colon (`key: (`);
             // the pair never breaks after the colon (Prettier dedents these).
-            let value_is_block = matches!(
-                item.value,
-                ComponentValue::SassMap(_) | ComponentValue::SassParenthesizedExpression(_)
-            );
+            let value_is_block = is_paren_block(&item.value);
 
             // Comments between items:
             // block comments join the item when the pair fits on one line (Prettier's fill);
@@ -293,10 +307,7 @@ pub(super) fn write_sass_map<'a>(
             if i == 0 {
                 first_item_has_leading_comment = had_leading_comment;
             }
-            let key_is_block = matches!(
-                item.key,
-                ComponentValue::SassMap(_) | ComponentValue::SassParenthesizedExpression(_)
-            );
+            let key_is_block = is_paren_block(&item.key);
             if i + 1 == map.items.len() {
                 // Suppressed only when the source ALSO had a trailing comma
                 // (the comment lands inside the last comma_group in postcss).
@@ -312,17 +323,17 @@ pub(super) fn write_sass_map<'a>(
             } else if value_is_block {
                 value::write_component_value(&item.key, key_ctx, f);
                 write!(f, [":", space()]);
-                // A paren/map KEY (or a leading comment, or nesting) keeps the pair's indent on the value
+                // A paren/map KEY (or a leading comment) keeps the pair's indent on the value
                 // (Prettier's dedent applies only when the doc is a plain `group(indent(fill))`).
-                let needs_indent =
-                    key_is_block || had_leading_comment || f.context().block_depth().get() > 0;
-                if needs_indent {
-                    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                        write_top_level_value(&item.value, val_ctx, f);
-                    });
+                // NOTE: Prettier ALSO skips the dedent inside `@if`/`@each`/... and double-indents the value.
+                // (prettier#16607 crash-guard artifact we deliberately do NOT match)
+                let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                    write_top_level_value(&item.value, val_ctx, f);
+                });
+                if key_is_block || had_leading_comment {
                     write!(f, indent(&body));
                 } else {
-                    write_top_level_value(&item.value, val_ctx, f);
+                    write!(f, body);
                 }
             } else {
                 // `key: value` breaks after the colon when too long
@@ -330,11 +341,7 @@ pub(super) fn write_sass_map<'a>(
                     let mut filler = f.fill();
                     let key = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                         // Paren/map keys cancel the pair indent (Prettier's `isKey` → dedent)
-                        if matches!(
-                            item.key,
-                            ComponentValue::SassMap(_)
-                                | ComponentValue::SassParenthesizedExpression(_)
-                        ) {
+                        if key_is_block {
                             let inner = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                                 value::write_component_value(&item.key, key_ctx, f);
                             });
@@ -410,6 +417,7 @@ pub(super) fn write_sass_list<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     if list.comma_spans.is_some() {
+        let comma_spans = list.comma_spans.as_ref();
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             let mut filler = f.fill();
             for (i, el) in list.elements.iter().enumerate() {
@@ -417,7 +425,10 @@ pub(super) fn write_sass_list<'a>(
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     value::write_component_value(el, ctx, f);
                     if !is_last {
-                        write!(f, ",");
+                        value::write_group_comma(
+                            comma_spans.and_then(|s| s.get(i)).map(|sp| to_span(sp).start),
+                            f,
+                        );
                     }
                 });
                 filler.entry(&soft_line_break_or_space(), &content);
@@ -439,10 +450,14 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
 
     // Comma-list expr: the first element joins the `... in` entry,
     // the rest are separate fill entries (mirrors postcss's flat comma groups).
-    let expr_elements: &[ComponentValue<'a>] = match &each.expr {
-        ComponentValue::SassList(list) if list.comma_spans.is_some() => &list.elements,
-        expr => std::slice::from_ref(expr),
+    let (expr_elements, expr_comma_spans): (&[ComponentValue<'a>], _) = match &each.expr {
+        ComponentValue::SassList(list) if list.comma_spans.is_some() => {
+            (&list.elements, list.comma_spans.as_ref())
+        }
+        expr => (std::slice::from_ref(expr), None),
     };
+    let expr_comma_start =
+        move |i: usize| expr_comma_spans.and_then(|s| s.get(i)).map(|sp| to_span(sp).start);
 
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         let mut filler = f.fill();
@@ -470,7 +485,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
                                 f,
                             );
                             if expr_elements.len() > 1 {
-                                write!(f, ",");
+                                value::write_group_comma(expr_comma_start(0), f);
                             }
                         });
                         inner.entry(&soft_line_break_or_space(), &binding);
@@ -485,7 +500,10 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
                     write!(f, group(&indent(&tail)));
                 } else {
                     write!(f, text(source.text_for(&span)));
-                    write!(f, ",");
+                    value::write_group_comma(
+                        each.comma_spans.get(i).map(|sp| to_span(sp).start),
+                        f,
+                    );
                 }
             });
             filler.entry(&soft_line_break_or_space(), &content);
@@ -495,7 +513,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 value::write_component_value(el, ValueContext::default(), f);
                 if !is_last {
-                    write!(f, ",");
+                    value::write_group_comma(expr_comma_start(i), f);
                 }
             });
             filler.entry(&soft_line_break_or_space(), &content);
@@ -539,15 +557,15 @@ pub(super) fn write_sass_function<'a>(function: &SassFunction<'a>, f: &mut CssFo
 
 fn write_sass_parameters<'a>(parameters: &SassParameters<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    let comma_start =
+        |i: usize| parameters.comma_spans.get(i).map(|sp: &oxc_css_parser::Span| to_span(sp).start);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write!(f, soft_line_break());
-        let mut first = true;
-        for param in &parameters.params {
-            if !first {
-                write!(f, ",");
+        for (i, param) in parameters.params.iter().enumerate() {
+            if i > 0 {
+                value::write_group_comma(comma_start(i - 1), f);
                 write!(f, soft_line_break_or_space());
             }
-            first = false;
             let name_span = to_span(param.name.span());
             write!(f, text(source.text_for(&name_span)));
             if let Some(default) = &param.default_value {
@@ -556,8 +574,8 @@ fn write_sass_parameters<'a>(parameters: &SassParameters<'a>, f: &mut CssFormatt
             }
         }
         if let Some(arbitrary) = &parameters.arbitrary_param {
-            if !first {
-                write!(f, ",");
+            if !parameters.params.is_empty() {
+                value::write_group_comma(comma_start(parameters.params.len() - 1), f);
                 write!(f, soft_line_break_or_space());
             }
             let span = to_span(arbitrary.name.span());
@@ -582,6 +600,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
     write!(f, text(source.text_for(&name_span)));
     if let Some(arguments) = &include.arguments {
         let args = &arguments.args;
+        let comma_spans = &arguments.comma_spans;
         // Same first-argument gate as `write_function` (which see), over typed args
         let first_arg_is_kw =
             args.first().is_some_and(|a| matches!(a, ComponentValue::SassKeywordArgument(_)));
@@ -590,7 +609,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
             write!(f, soft_line_break());
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
-                    write!(f, ",");
+                    value::write_group_comma(comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
                     // Preserve a blank line, but only after a multi-part argument
                     // (Prettier checks `value-comma_group`s only).
                     let prev = &args[i - 1];

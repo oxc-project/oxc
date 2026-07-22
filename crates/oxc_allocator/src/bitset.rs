@@ -6,7 +6,7 @@ use std::{
     slice,
 };
 
-use crate::{Allocator, Box, CloneIn};
+use crate::{Allocator, Box, CloneIn, CloneInSemanticIds};
 
 const USIZE_BITS: usize = usize::BITS as usize;
 
@@ -175,7 +175,11 @@ impl Debug for BitSet<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
     type Cloned = BitSet<'new_alloc>;
 
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> BitSet<'new_alloc> {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> BitSet<'new_alloc> {
         let slice = self.entries.as_ref();
 
         // SAFETY: `slice` already exists, so its layout must be valid

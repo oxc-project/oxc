@@ -1,8 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ToBigInt, ToIntegerIndex,
-    constant_evaluation::{DetermineValueType, ValueType},
+    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
     to_numeric::ToNumeric,
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
@@ -25,7 +24,8 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             | Expression::BigIntLiteral(_)
             | Expression::NullLiteral(_)
             | Expression::RegExpLiteral(_)
-            | Expression::MetaProperty(_)
+            | Expression::ImportMeta(_)
+            | Expression::NewTarget(_)
             | Expression::ArrowFunctionExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Super(_) => false,
@@ -408,8 +408,9 @@ impl<'a> MayHaveSideEffects<'a> for MemberExpression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(e) => e.may_have_side_effects(ctx),
             MemberExpression::StaticMemberExpression(e) => e.may_have_side_effects(ctx),
-            MemberExpression::PrivateFieldExpression(_) => {
+            MemberExpression::PrivateFieldExpression(e) => {
                 ctx.property_read_side_effects() != PropertyReadSideEffects::None
+                    || e.object.may_have_side_effects(ctx)
             }
         }
     }
@@ -427,7 +428,7 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
             Expression::StringLiteral(s) => {
                 property_access_may_have_side_effects(&self.object, &s.value, ctx)
             }
-            Expression::TemplateLiteral(t) => t.single_quasi().is_some_and(|quasi| {
+            Expression::TemplateLiteral(t) => t.single_quasi().is_none_or(|quasi| {
                 property_access_may_have_side_effects(&self.object, &quasi, ctx)
             }),
             Expression::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
@@ -616,7 +617,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             }
             if is_pure_global_function(name)
                 || is_pure_callable_constructor(name)
-                || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
             {
                 if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
                     return true;
@@ -893,7 +894,7 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
                     });
                 }
                 _ if is_unconditionally_pure_constructor(name)
-                    || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                    || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
                     || is_pure_collection_constructor(name, &self.arguments, ctx) =>
                 {
                     return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));

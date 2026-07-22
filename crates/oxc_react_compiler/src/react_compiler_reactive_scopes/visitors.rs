@@ -7,9 +7,9 @@
 //!
 //! Corresponds to `src/ReactiveScopes/visitors.ts` in the TypeScript compiler.
 
-use std::mem::replace;
+use oxc_allocator::CloneIn;
+use oxc_diagnostics::OxcDiagnostic;
 
-use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_lvalue, each_instruction_value_operand, each_terminal_operand,
 };
@@ -49,7 +49,7 @@ pub trait ReactiveFunctionVisitor<'a> {
     /// value-lvalues, operands, and nested functions), and terminal operands.
     /// TS: `visitHirFunction`
     fn visit_hir_function(&self, func_id: FunctionId, state: &mut Self::State) {
-        let inner_func = &self.env().functions[func_id.0 as usize];
+        let inner_func = &self.env().functions[func_id];
         for param in &inner_func.params {
             let place = match param {
                 ParamPattern::Place(p) => p,
@@ -59,20 +59,20 @@ pub trait ReactiveFunctionVisitor<'a> {
         }
         let block_ids: Vec<_> = inner_func.body.blocks.keys().copied().collect();
         for block_id in block_ids {
-            let inner_func = &self.env().functions[func_id.0 as usize];
+            let inner_func = &self.env().functions[func_id];
             let block = &inner_func.body.blocks[&block_id];
-            let instr_ids: Vec<_> = block.instructions.clone();
-            let terminal_operands: Vec<Place> = each_terminal_operand(&block.terminal);
+            let instr_ids: Vec<_> = block.instructions.iter().copied().collect();
+            let terminal_operands = each_terminal_operand(&block.terminal);
             let terminal_id = block.terminal.evaluation_order();
 
             for instr_id in &instr_ids {
-                let inner_func = &self.env().functions[func_id.0 as usize];
-                let instr = &inner_func.instructions[instr_id.0 as usize];
+                let inner_func = &self.env().functions[func_id];
+                let instr = &inner_func.instructions[instr_id.index()];
                 // Build a temporary ReactiveInstruction for the visitor
                 let reactive_instr = ReactiveInstruction {
                     id: instr.id,
-                    lvalue: Some(instr.lvalue.clone()),
-                    value: ReactiveValue::Instruction(instr.value.clone()),
+                    lvalue: Some(instr.lvalue),
+                    value: ReactiveValue::Instruction(instr.value.clone_in(self.env().allocator)),
                     span: instr.span,
                 };
                 self.visit_instruction(&reactive_instr, state);
@@ -273,7 +273,7 @@ pub fn visit_reactive_function<'a, V: ReactiveFunctionVisitor<'a>>(
 }
 
 // =============================================================================
-// Transformed / TransformedValue enums
+// Transformed enum
 // =============================================================================
 
 /// Result of transforming a ReactiveStatement.
@@ -283,14 +283,6 @@ pub enum Transformed<T> {
     Remove,
     Replace(T),
     ReplaceMany(Vec<T>),
-}
-
-/// Result of transforming a ReactiveValue.
-/// TS: `TransformedValue`
-#[allow(dead_code)]
-pub enum TransformedValue<'a> {
-    Keep,
-    Replace(ReactiveValue<'a>),
 }
 
 // =============================================================================
@@ -316,7 +308,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         _id: EvaluationOrder,
         _state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         Ok(())
     }
 
@@ -325,7 +317,7 @@ pub trait ReactiveFunctionTransform<'a> {
         _id: EvaluationOrder,
         _place: &Place,
         _state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         Ok(())
     }
 
@@ -334,7 +326,7 @@ pub trait ReactiveFunctionTransform<'a> {
         _id: EvaluationOrder,
         _lvalue: &Place,
         _state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         Ok(())
     }
 
@@ -343,7 +335,7 @@ pub trait ReactiveFunctionTransform<'a> {
         id: EvaluationOrder,
         value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_value(id, value, state)
     }
 
@@ -352,37 +344,19 @@ pub trait ReactiveFunctionTransform<'a> {
         id: EvaluationOrder,
         value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         match value {
             ReactiveValue::OptionalExpression { value: inner, .. } => {
-                let next = self.transform_value(id, inner, state)?;
-                if let TransformedValue::Replace(new_value) = next {
-                    **inner = new_value;
-                }
+                self.visit_value(id, inner, state)?;
             }
             ReactiveValue::LogicalExpression { left, right, .. } => {
-                let next_left = self.transform_value(id, left, state)?;
-                if let TransformedValue::Replace(new_value) = next_left {
-                    **left = new_value;
-                }
-                let next_right = self.transform_value(id, right, state)?;
-                if let TransformedValue::Replace(new_value) = next_right {
-                    **right = new_value;
-                }
+                self.visit_value(id, left, state)?;
+                self.visit_value(id, right, state)?;
             }
             ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
-                let next_test = self.transform_value(id, test, state)?;
-                if let TransformedValue::Replace(new_value) = next_test {
-                    **test = new_value;
-                }
-                let next_cons = self.transform_value(id, consequent, state)?;
-                if let TransformedValue::Replace(new_value) = next_cons {
-                    **consequent = new_value;
-                }
-                let next_alt = self.transform_value(id, alternate, state)?;
-                if let TransformedValue::Replace(new_value) = next_alt {
-                    **alternate = new_value;
-                }
+                self.visit_value(id, test, state)?;
+                self.visit_value(id, consequent, state)?;
+                self.visit_value(id, alternate, state)?;
             }
             ReactiveValue::SequenceExpression {
                 instructions, id: seq_id, value: inner, ..
@@ -391,10 +365,7 @@ pub trait ReactiveFunctionTransform<'a> {
                 for instr in instructions.iter_mut() {
                     self.visit_instruction(instr, state)?;
                 }
-                let next = self.transform_value(seq_id, inner, state)?;
-                if let TransformedValue::Replace(new_value) = next {
-                    **inner = new_value;
-                }
+                self.visit_value(seq_id, inner, state)?;
             }
             ReactiveValue::Instruction(instr_value) => {
                 // Collect operands before visiting to avoid borrow conflict
@@ -412,25 +383,15 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_instruction(instruction, state)
-    }
-
-    fn transform_value(
-        &mut self,
-        id: EvaluationOrder,
-        value: &mut ReactiveValue<'a>,
-        state: &mut Self::State,
-    ) -> Result<TransformedValue<'a>, CompilerError> {
-        self.visit_value(id, value, state)?;
-        Ok(TransformedValue::Keep)
     }
 
     fn traverse_instruction(
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.visit_id(instruction.id, state)?;
         // Visit instruction-level lvalue
         if let Some(lvalue) = &instruction.lvalue {
@@ -442,10 +403,7 @@ pub trait ReactiveFunctionTransform<'a> {
                 self.visit_lvalue(instruction.id, &place, state)?;
             }
         }
-        let next_value = self.transform_value(instruction.id, &mut instruction.value, state)?;
-        if let TransformedValue::Replace(new_value) = next_value {
-            instruction.value = new_value;
-        }
+        self.visit_value(instruction.id, &mut instruction.value, state)?;
         Ok(())
     }
 
@@ -453,7 +411,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_terminal(stmt, state)
     }
 
@@ -461,7 +419,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         let terminal = &mut stmt.terminal;
         let id = terminal_id(terminal);
         self.visit_id(id, state)?;
@@ -475,56 +433,32 @@ pub trait ReactiveFunctionTransform<'a> {
             }
             ReactiveTerminal::For { init, test, update, loop_block, id, .. } => {
                 let id = *id;
-                let next_init = self.transform_value(id, init, state)?;
-                if let TransformedValue::Replace(new_value) = next_init {
-                    *init = new_value;
-                }
-                let next_test = self.transform_value(id, test, state)?;
-                if let TransformedValue::Replace(new_value) = next_test {
-                    *test = new_value;
-                }
+                self.visit_value(id, init, state)?;
+                self.visit_value(id, test, state)?;
                 if let Some(update) = update {
-                    let next_update = self.transform_value(id, update, state)?;
-                    if let TransformedValue::Replace(new_value) = next_update {
-                        *update = new_value;
-                    }
+                    self.visit_value(id, update, state)?;
                 }
                 self.visit_block(loop_block, state)?;
             }
             ReactiveTerminal::ForOf { init, test, loop_block, id, .. } => {
                 let id = *id;
-                let next_init = self.transform_value(id, init, state)?;
-                if let TransformedValue::Replace(new_value) = next_init {
-                    *init = new_value;
-                }
-                let next_test = self.transform_value(id, test, state)?;
-                if let TransformedValue::Replace(new_value) = next_test {
-                    *test = new_value;
-                }
+                self.visit_value(id, init, state)?;
+                self.visit_value(id, test, state)?;
                 self.visit_block(loop_block, state)?;
             }
             ReactiveTerminal::ForIn { init, loop_block, id, .. } => {
                 let id = *id;
-                let next_init = self.transform_value(id, init, state)?;
-                if let TransformedValue::Replace(new_value) = next_init {
-                    *init = new_value;
-                }
+                self.visit_value(id, init, state)?;
                 self.visit_block(loop_block, state)?;
             }
             ReactiveTerminal::DoWhile { loop_block, test, id, .. } => {
                 let id = *id;
                 self.visit_block(loop_block, state)?;
-                let next_test = self.transform_value(id, test, state)?;
-                if let TransformedValue::Replace(new_value) = next_test {
-                    *test = new_value;
-                }
+                self.visit_value(id, test, state)?;
             }
             ReactiveTerminal::While { test, loop_block, id, .. } => {
                 let id = *id;
-                let next_test = self.transform_value(id, test, state)?;
-                if let TransformedValue::Replace(new_value) = next_test {
-                    *test = new_value;
-                }
+                self.visit_value(id, test, state)?;
                 self.visit_block(loop_block, state)?;
             }
             ReactiveTerminal::If { test, consequent, alternate, id, .. } => {
@@ -565,7 +499,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_scope(scope, state)
     }
 
@@ -573,7 +507,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.visit_block(&mut scope.instructions, state)
     }
 
@@ -581,7 +515,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_pruned_scope(scope, state)
     }
 
@@ -589,7 +523,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.visit_block(&mut scope.instructions, state)
     }
 
@@ -597,7 +531,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_block(block, state)
     }
 
@@ -605,7 +539,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_instruction(instruction, state)?;
         Ok(Transformed::Keep)
     }
@@ -614,7 +548,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_terminal(stmt, state)?;
         Ok(Transformed::Keep)
     }
@@ -623,7 +557,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_scope(scope, state)?;
         Ok(Transformed::Keep)
     }
@@ -632,72 +566,72 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_pruned_scope(scope, state)?;
         Ok(Transformed::Keep)
+    }
+
+    /// Dispatch a single statement to its matching `transform_*` hook.
+    fn transform_stmt(
+        &mut self,
+        stmt: &mut ReactiveStatement<'a>,
+        state: &mut Self::State,
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
+        match stmt {
+            ReactiveStatement::Instruction(instr) => self.transform_instruction(instr, state),
+            ReactiveStatement::Scope(scope) => self.transform_scope(scope, state),
+            ReactiveStatement::PrunedScope(scope) => self.transform_pruned_scope(scope, state),
+            ReactiveStatement::Terminal(terminal) => self.transform_terminal(terminal, state),
+        }
     }
 
     fn traverse_block(
         &mut self,
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
-        let mut next_block: Option<Vec<ReactiveStatement<'a>>> = None;
-        let len = block.len();
-        for i in 0..len {
-            // Take the statement out temporarily
-            let mut stmt = replace(
-                &mut block[i],
-                // Placeholder — will be overwritten or discarded
-                ReactiveStatement::Instruction(ReactiveInstruction {
-                    id: EvaluationOrder(0),
-                    lvalue: None,
-                    value: ReactiveValue::Instruction(InstructionValue::Debugger { span: None }),
-                    span: None,
-                }),
-            );
-            let transformed = match &mut stmt {
-                ReactiveStatement::Instruction(instr) => {
-                    self.transform_instruction(instr, state)?
-                }
-                ReactiveStatement::Scope(scope) => self.transform_scope(scope, state)?,
-                ReactiveStatement::PrunedScope(scope) => {
-                    self.transform_pruned_scope(scope, state)?
-                }
-                ReactiveStatement::Terminal(terminal) => {
-                    self.transform_terminal(terminal, state)?
-                }
-            };
-            match transformed {
-                Transformed::Keep => {
-                    if let Some(ref mut nb) = next_block {
-                        nb.push(stmt);
-                    } else {
-                        // Put it back
-                        block[i] = stmt;
-                    }
-                }
-                Transformed::Remove => {
-                    if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
-                    }
-                }
+    ) -> Result<(), OxcDiagnostic> {
+        // Fast path: while statements are only kept or replaced 1:1 the block's
+        // length never changes, so mutate `block` in place — no allocation, no
+        // moves. This covers every read-only visitor pass and every transform
+        // that doesn't restructure the block.
+        let mut i = 0;
+        let first_change = loop {
+            let Some(stmt) = block.get_mut(i) else { return Ok(()) };
+            match self.transform_stmt(stmt, state)? {
+                Transformed::Keep => i += 1,
                 Transformed::Replace(replacement) => {
-                    if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
-                    }
-                    next_block.as_mut().unwrap().push(replacement);
+                    block[i] = replacement;
+                    i += 1;
                 }
-                Transformed::ReplaceMany(replacements) => {
-                    if next_block.is_none() {
-                        next_block = Some(block[..i].to_vec());
-                    }
-                    next_block.as_mut().unwrap().extend(replacements);
-                }
+                // `Remove`/`ReplaceMany` change the length — hand off to the
+                // rebuild below rather than shifting the suffix in place.
+                change => break change,
             }
+        };
+
+        // Slow path: a `Remove`/`ReplaceMany` at `i` needs restructuring. Detach
+        // the unprocessed tail (`block` keeps the finalized prefix `[0..i]`) and
+        // rebuild it in a single linear pass, *moving* each statement back onto
+        // `block` — never cloning. A pass that removes or expands many statements
+        // in one block therefore stays O(n) instead of the O(n²) of repeated
+        // `remove`/`splice` suffix shifts.
+        let mut tail = block.split_off(i).into_iter();
+        // The statement at `i` was already transformed into `first_change`; drop
+        // its now-superseded original.
+        tail.next();
+        match first_change {
+            Transformed::Remove => {}
+            Transformed::ReplaceMany(replacements) => block.extend(replacements),
+            // The fast-path loop only breaks on `Remove`/`ReplaceMany`.
+            Transformed::Keep | Transformed::Replace(_) => unreachable!(),
         }
-        if let Some(nb) = next_block {
-            *block = nb;
+        for mut stmt in tail {
+            match self.transform_stmt(&mut stmt, state)? {
+                Transformed::Keep => block.push(stmt),
+                Transformed::Remove => {}
+                Transformed::Replace(replacement) => block.push(replacement),
+                Transformed::ReplaceMany(replacements) => block.extend(replacements),
+            }
         }
         Ok(())
     }
@@ -709,7 +643,7 @@ pub fn transform_reactive_function<'a, T: ReactiveFunctionTransform<'a>>(
     func: &mut ReactiveFunction<'a>,
     transform: &mut T,
     state: &mut T::State,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     transform.visit_block(&mut func.body, state)
 }
 

@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7b045cd minfier: Drop last break from last switch case (#24673) (Armano)
+- 7d3c178 minifier: Remove unreachable recursive functions (#24125) (Dunqing)
+- 3acf4c1 minifier: Expand switch optimiation to remove empty cases (#24520) (Armano)
+- 4d0c601 minifier: Fold arithmetic over undefined and null operands (#24485) (Dunqing)
+- 91541dd minifier: Drop empty switch statements  (#24527) (Armano)
+
+### 🐛 Bug Fixes
+
+- 64c2241 minifier: Align class heritage removal with assumptions (#24533) (Dunqing)
+- e750a82 ecmascript: Fix false negative for may_have_side_effects on dynamic property access (#24709) (sapphi-red)
+- f145d73 minifier: Guard reordered identifier reads (#24698) (Dunqing)
+- b1bcf72 minifier: Invalidate facts for redeclared bindings (#24658) (Dunqing)
+- 921b834 minifier: Don't treat a conditionally-assigned var as write-once (#24650) (Dunqing)
+- 061af1f minifier: Avoid stale pure function summaries (#24636) (Dunqing)
+- 128b385 minifier: Clippy warning with no-debug-assertions (#24547) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- 616bfa2 minifier: Remove unreachable code after terminating statements (#24441) (Dunqing)
+- b79eef7 minifier: Apply De Morgan's law to negated comparison chains in jump guards and loop tests (#24279) (Dunqing)
+- 34ff7b4 minifier: Drop write-only property assignments to unused local bindings by default (#24112) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 7d33363 minifier: Preserve guaranteed throws from class heritage evaluation (#24349) (Dunqing)
+- 40f769d minifier: Make `__proto__` write tracking execution-order independent (#24280) (Dunqing)
+
+### ⚡ Performance
+
+- b227a06 minifier: Use `ReplaceWith` instead of `TakeIn` (#24017) (overlookmotel)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

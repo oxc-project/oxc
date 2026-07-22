@@ -6,16 +6,15 @@ use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
-        CodeActionContext, CodeActionOrCommand, Diagnostic,
-        DidChangeWatchedFilesRegistrationOptions, FileEvent, FileSystemWatcher, GlobPattern, OneOf,
-        Range, Registration, RelativePattern, TextEdit, Unregistration, Uri, WatchKind,
-        WorkspaceEdit,
+        CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions, FileEvent,
+        FileSystemWatcher, GlobPattern, OneOf, Registration, RelativePattern, TextEdit,
+        Unregistration, Uri, WatchKind, WorkspaceEdit,
     },
 };
 use tracing::debug;
 
 use crate::{
-    TextDocument, ToolRestartChanges,
+    CodeActionParams, TextDocument, ToolRestartChanges,
     capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
     tool::{DiagnosticResult, Tool, ToolBuilder},
@@ -219,17 +218,15 @@ impl WorkspaceWorker {
         (uris_to_clear_diagnostics, watchers_to_unregister)
     }
 
-    /// Get code actions or commands for the given range.
+    /// Get code actions or commands for the given request.
     /// It calls all tools and collects their code actions or commands.
     pub async fn get_code_actions_or_commands(
         &self,
-        uri: &Uri,
-        range: &Range,
-        context: &CodeActionContext,
+        params: &CodeActionParams,
     ) -> Vec<CodeActionOrCommand> {
         let mut actions = Vec::new();
         if let Some(tool) = self.tool.read().await.as_ref() {
-            actions.extend(tool.get_code_actions_or_commands(uri, range, context));
+            actions.extend(tool.get_code_actions_or_commands(params));
         }
         actions
     }
@@ -433,7 +430,7 @@ mod tests {
     use tower_lsp_server::ls_types::{DidChangeWatchedFilesRegistrationOptions, GlobPattern};
 
     use crate::{
-        LanguageId, TextDocument, ToolBuilder,
+        CodeActionParams, LanguageId, TextDocument, ToolBuilder,
         capabilities::DiagnosticMode,
         file_system::LSPFileSystem,
         tests::{FAKE_COMMAND, FakeToolBuilder},
@@ -698,21 +695,23 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let actions = worker
-            .get_code_actions_or_commands(
-                &Uri::from_str("file:///root/file.js").unwrap(),
-                &Range::default(),
-                &CodeActionContext::default(),
-            )
+            .get_code_actions_or_commands(&CodeActionParams {
+                uri: Uri::from_str("file:///root/file.js").unwrap(),
+                range: Range::default(),
+                context: CodeActionContext::default(),
+                is_open_document: false,
+            })
             .await;
 
         assert_eq!(actions.len(), 0);
 
         let actions = worker
-            .get_code_actions_or_commands(
-                &Uri::from_str("file:///root/code_action.config").unwrap(),
-                &Range::default(),
-                &CodeActionContext::default(),
-            )
+            .get_code_actions_or_commands(&CodeActionParams {
+                uri: Uri::from_str("file:///root/code_action.config").unwrap(),
+                range: Range::default(),
+                context: CodeActionContext::default(),
+                is_open_document: false,
+            })
             .await;
 
         assert_eq!(actions.len(), 1);

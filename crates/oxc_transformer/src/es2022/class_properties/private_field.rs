@@ -1049,11 +1049,8 @@ impl<'a> ClassProperties<'a> {
                     // Source = `++object.#prop` (prefix `++`)
 
                     // `(_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)`
-                    let mut value = Expression::new_sequence_expression(
-                        SPAN,
-                        ArenaVec::from_array_in([assignment, update_expr], ctx),
-                        ctx,
-                    );
+                    let mut value =
+                        Expression::new_sequence_expression(SPAN, [assignment, update_expr], ctx);
 
                     // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
                     if let Some(class_ident) = class_ident {
@@ -1080,10 +1077,7 @@ impl<'a> ClassProperties<'a> {
                     // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
                     let mut value = Expression::new_sequence_expression(
                         SPAN,
-                        ArenaVec::from_array_in(
-                            [assignment, assignment2, temp_binding.create_read_expression(ctx)],
-                            ctx,
-                        ),
+                        [assignment, assignment2, temp_binding.create_read_expression(ctx)],
                         ctx,
                     );
 
@@ -1107,10 +1101,7 @@ impl<'a> ClassProperties<'a> {
                     // is consumed (i.e. not in an `ExpressionStatement`)
                     Expression::new_sequence_expression(
                         span,
-                        ArenaVec::from_array_in(
-                            [assignment3, temp_binding2.create_read_expression(ctx)],
-                            ctx,
-                        ),
+                        [assignment3, temp_binding2.create_read_expression(ctx)],
                         ctx,
                     )
                 }
@@ -1154,11 +1145,8 @@ impl<'a> ClassProperties<'a> {
                 if prefix {
                     // Source = `++object.#prop` (prefix `++`)
                     // `(_object$prop = _classPrivateFieldGet(_prop, object), ++_object$prop)`
-                    let value = Expression::new_sequence_expression(
-                        SPAN,
-                        ArenaVec::from_array_in([assignment, update_expr], ctx),
-                        ctx,
-                    );
+                    let value =
+                        Expression::new_sequence_expression(SPAN, [assignment, update_expr], ctx);
                     // `_classPrivateFieldSet(_prop, object, <value>)`
                     self.create_private_setter(
                         &private_name,
@@ -1179,10 +1167,7 @@ impl<'a> ClassProperties<'a> {
                     // `(_object$prop = _classPrivateFieldGet(_prop, object), _object$prop2 = _object$prop++, _object$prop)`
                     let value = Expression::new_sequence_expression(
                         SPAN,
-                        ArenaVec::from_array_in(
-                            [assignment, assignment2, temp_binding.create_read_expression(ctx)],
-                            ctx,
-                        ),
+                        [assignment, assignment2, temp_binding.create_read_expression(ctx)],
                         ctx,
                     );
 
@@ -1201,10 +1186,7 @@ impl<'a> ClassProperties<'a> {
                     // is consumed (i.e. not in an `ExpressionStatement`)
                     Expression::new_sequence_expression(
                         span,
-                        ArenaVec::from_array_in(
-                            [set_call, temp_binding2.create_read_expression(ctx)],
-                            ctx,
-                        ),
+                        [set_call, temp_binding2.create_read_expression(ctx)],
                         ctx,
                     )
                 }
@@ -1742,7 +1724,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
-        debug_assert!(unary_expr.operator == UnaryOperator::Delete);
+        debug_assert_eq!(unary_expr.operator, UnaryOperator::Delete);
         debug_assert!(matches!(unary_expr.argument, Expression::ChainExpression(_)));
 
         if let Some((result, chain_expr)) =
@@ -1946,15 +1928,8 @@ impl<'a> ClassProperties<'a> {
             prop_binding.create_read_expression(ctx)
         };
         let callee = create_member_callee(callee, static_ident!("has"), span, ctx);
-        let argument = self.create_check_in_rhs(right, ctx);
-        Expression::new_call_expression(
-            span,
-            callee,
-            NONE,
-            ArenaVec::from_value_in(Argument::from(argument), ctx),
-            false,
-            ctx,
-        )
+        let argument = Argument::from(self.create_check_in_rhs(right, ctx));
+        Expression::new_call_expression(span, callee, NONE, [argument], false, ctx)
     }
 
     /// Duplicate object to be used in get/set pair.
@@ -2069,10 +2044,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let arguments = Expression::new_array_expression(
             SPAN,
-            ArenaVec::from_array_in(
-                [ArrayExpressionElement::from(prop_ident), ArrayExpressionElement::from(object)],
-                ctx,
-            ),
+            [ArrayExpressionElement::from(prop_ident), ArrayExpressionElement::from(object)],
             ctx,
         );
         let arguments = ArenaVec::from_array_in(
@@ -2297,8 +2269,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let error = self.create_throw_error(Helper::WriteOnlyError, private_name, ctx);
-        let expressions = ArenaVec::from_array_in([object, error], ctx);
-        Expression::new_sequence_expression(span, expressions, ctx)
+        Expression::new_sequence_expression(span, [object, error], ctx)
     }
 
     /// _checkInRHS(object)

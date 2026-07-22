@@ -287,7 +287,8 @@ impl<'a> GatherNodeParts<'a> for Expression<'a> {
             Self::UnaryExpression(expr) => expr.gather(f),
             Self::UpdateExpression(expr) => expr.gather(f),
             Self::ChainExpression(expr) => expr.gather(f),
-            Self::MetaProperty(expr) => expr.gather(f),
+            Self::ImportMeta(expr) => expr.gather(f),
+            Self::NewTarget(expr) => expr.gather(f),
             Self::JSXElement(expr) => expr.gather(f),
             Self::JSXFragment(expr) => expr.gather(f),
             Self::StringLiteral(expr) => expr.gather(f),
@@ -430,10 +431,17 @@ impl<'a> GatherNodeParts<'a> for UpdateExpression<'a> {
     }
 }
 
-impl<'a> GatherNodeParts<'a> for MetaProperty<'a> {
+impl GatherNodeParts<'_> for ImportMeta {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        self.meta.gather(f);
-        self.property.gather(f);
+        f("import");
+        f("meta");
+    }
+}
+
+impl GatherNodeParts<'_> for NewTarget {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        f("new");
+        f("target");
     }
 }
 

@@ -156,7 +156,7 @@ enum BindingContext {
 
 impl NoUnderscoreDangle {
     fn is_allowed(&self, name: &str) -> bool {
-        is_always_allowed(name) || self.allow.contains(&name.to_string())
+        is_always_allowed(name) || self.allow.iter().any(|allowed| allowed == name)
     }
 
     fn report(&self, ctx: &LintContext, span: Span, name: &str) {

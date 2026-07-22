@@ -350,7 +350,7 @@ impl<'a> TypeScript<'a> {
         ClassElement::new_property_definition(
             id.span,
             PropertyDefinitionType::PropertyDefinition,
-            ArenaVec::new_in(ctx),
+            [],
             key,
             NONE,
             None,

@@ -13,7 +13,7 @@ use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_hir::Effect;
 
 /// Mirrors TS `ValueKind` enum for use in config.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ValueKind {
     Mutable,
     Frozen,
@@ -44,90 +44,70 @@ pub enum ValueReason {
 // Aliasing effect config types (from TypeSchema.ts)
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum AliasingEffectConfig {
     Freeze {
-        value: String,
+        value: &'static str,
         reason: ValueReason,
     },
     Create {
-        into: String,
+        into: &'static str,
         value: ValueKind,
         reason: ValueReason,
     },
     CreateFrom {
-        from: String,
-        into: String,
+        from: &'static str,
+        into: &'static str,
     },
     Assign {
-        from: String,
-        into: String,
+        from: &'static str,
+        into: &'static str,
     },
     Alias {
-        from: String,
-        into: String,
+        from: &'static str,
+        into: &'static str,
     },
     Capture {
-        from: String,
-        into: String,
+        from: &'static str,
+        into: &'static str,
     },
     ImmutableCapture {
-        from: String,
-        into: String,
+        from: &'static str,
+        into: &'static str,
     },
     Impure {
-        place: String,
+        place: &'static str,
     },
     Mutate {
-        value: String,
+        value: &'static str,
     },
     MutateTransitiveConditionally {
-        value: String,
+        value: &'static str,
     },
     Apply {
-        receiver: String,
-        function: String,
+        receiver: &'static str,
+        function: &'static str,
         mutates_function: bool,
-        args: Vec<ApplyArgConfig>,
-        into: String,
+        args: &'static [ApplyArgConfig],
+        into: &'static str,
     },
 }
 
 #[derive(Debug, Clone)]
 pub enum ApplyArgConfig {
-    Place(String),
-    Spread {
-        #[allow(dead_code)]
-        kind: ApplyArgSpreadKind,
-        place: String,
-    },
-    Hole {
-        #[allow(dead_code)]
-        kind: ApplyArgHoleKind,
-    },
-}
-
-/// Helper enum for tagged serde of `ApplyArgConfig::Spread`.
-#[derive(Debug, Clone)]
-pub enum ApplyArgSpreadKind {
-    Spread,
-}
-
-/// Helper enum for tagged serde of `ApplyArgConfig::Hole`.
-#[derive(Debug, Clone)]
-pub enum ApplyArgHoleKind {
+    Place(&'static str),
     Hole,
 }
 
 /// Aliasing signature config, the JSON-serializable form.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct AliasingSignatureConfig {
-    pub receiver: String,
-    pub params: Vec<String>,
-    pub rest: Option<String>,
-    pub returns: String,
-    pub temporaries: Vec<String>,
-    pub effects: Vec<AliasingEffectConfig>,
+    pub receiver: &'static str,
+    pub params: &'static [&'static str],
+    pub rest: Option<&'static str>,
+    pub returns: &'static str,
+    pub temporaries: &'static [&'static str],
+    pub effects: &'static [AliasingEffectConfig],
 }
 
 // =============================================================================

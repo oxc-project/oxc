@@ -54,13 +54,59 @@ pub fn class_static_block_await_using(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn reserved_keyword(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1)
+pub fn reserved_keyword(x0: &str, span1: Span, context: ReservedKeywordContext) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1);
+    match context {
+        ReservedKeywordContext::StrictMode => {
+            diagnostic.with_note("This identifier is reserved in strict mode code")
+        }
+        ReservedKeywordContext::Class => {
+            diagnostic.with_note("Classes are always strict mode code")
+        }
+        ReservedKeywordContext::Module => {
+            diagnostic.with_note("Modules are always strict mode code")
+        }
+        ReservedKeywordContext::ModuleAwait => {
+            diagnostic.with_note("The identifier `await` is reserved in module code")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ReservedKeywordContext {
+    StrictMode,
+    Class,
+    Module,
+    ModuleAwait,
 }
 
 #[cold]
-pub fn unexpected_identifier_assign(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot assign to '{x0}' in strict mode")).with_label(span1)
+pub fn unexpected_identifier_assign(
+    x0: &str,
+    span1: Span,
+    context: UnexpectedIdentifierAssignContext,
+) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("Cannot assign to '{x0}' in strict mode")).with_label(span1);
+    match context {
+        UnexpectedIdentifierAssignContext::StrictMode => {
+            diagnostic.with_note("This is strict mode code")
+        }
+        UnexpectedIdentifierAssignContext::Class => {
+            diagnostic.with_note("Classes are always strict mode code")
+        }
+        UnexpectedIdentifierAssignContext::Module => {
+            diagnostic.with_note("Modules are always strict mode code")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnexpectedIdentifierAssignContext {
+    StrictMode,
+    Class,
+    Module,
 }
 
 #[cold]
@@ -307,11 +353,6 @@ pub fn jsdoc_type_in_annotation(
 }
 
 #[cold]
-pub fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
-}
-
-#[cold]
 pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     ts_error(
         "1235",
@@ -365,23 +406,6 @@ pub fn function_implementation_missing(span: Span) -> OxcDiagnostic {
         "Function implementation is missing or not immediately following the declaration.",
     )
     .with_label(span)
-}
-
-/// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
-#[cold]
-pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
-    ts_error(
-        "1242",
-        "'abstract' modifier can only appear on a class, method, or property declaration.",
-    )
-    .with_label(span)
-}
-
-/// 'abstract' modifier cannot be used with a private identifier. (18019)
-#[cold]
-pub fn abstract_cannot_be_used_with_private_identifier(span: Span) -> OxcDiagnostic {
-    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
-        .with_label(span)
 }
 
 /// A parameter property is only allowed in a constructor implementation.ts(2369)

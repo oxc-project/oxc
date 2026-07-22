@@ -14,19 +14,23 @@
 use std::borrow::Cow;
 
 use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::OrderedMap;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use oxc_allocator::Allocator;
+use oxc_allocator::CloneIn;
+use oxc_allocator::Vec as ArenaVec;
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::AliasingEffect;
 use crate::react_compiler_hir::AliasingSignature;
 use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::BlockId;
 use crate::react_compiler_hir::DeclarationId;
+use crate::react_compiler_hir::DiagnosticId;
 use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::FunctionId;
 use crate::react_compiler_hir::HirFunction;
@@ -45,7 +49,6 @@ use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PlaceOrSpreadOrHole;
 use crate::react_compiler_hir::PropertyLiteral;
 use crate::react_compiler_hir::ReactFunctionType;
-use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::SpreadPattern;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::Type;
@@ -64,8 +67,11 @@ use crate::react_compiler_hir::type_config::ApplyArgConfig;
 use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 use crate::react_compiler_hir::visitors;
-use crate::react_compiler_utils::FxIndexSet;
+use oxc_span::Span;
+use smallvec::SmallVec;
+use smallvec::smallvec;
 use std::cell::Cell;
+use std::rc::Rc;
 
 // =============================================================================
 // Public entry point
@@ -74,11 +80,11 @@ use std::cell::Cell;
 /// Infers mutation/aliasing effects for all instructions and terminals in `func`.
 ///
 /// Corresponds to TS `inferMutationAliasingEffects(fn, {isFunctionExpression})`.
-pub fn infer_mutation_aliasing_effects(
-    func: &mut HirFunction,
-    env: &mut Environment,
+pub fn infer_mutation_aliasing_effects<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     is_function_expression: bool,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut initial_state = InferenceState::empty(is_function_expression);
 
     // Map of blocks to the last (merged) incoming state that was processed
@@ -89,17 +95,20 @@ pub fn infer_mutation_aliasing_effects(
         let value_id = ValueId::new();
         initial_state.initialize(
             value_id,
-            AbstractValue { kind: ValueKind::Context, reason: hashset_of(ValueReason::Other) },
+            AbstractValue {
+                kind: ValueKind::Context,
+                reason: ReasonSet::single(ValueReason::Other),
+            },
         );
         initial_state.define(ctx_place.identifier, value_id);
     }
 
     let param_kind: AbstractValue = if is_function_expression {
-        AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) }
+        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) }
     } else {
         AbstractValue {
             kind: ValueKind::Frozen,
-            reason: hashset_of(ValueReason::ReactiveFunctionArgument),
+            reason: ReasonSet::single(ValueReason::ReactiveFunctionArgument),
         }
     };
 
@@ -117,7 +126,10 @@ pub fn infer_mutation_aliasing_effects(
             let value_id = ValueId::new();
             initial_state.initialize(
                 value_id,
-                AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) },
+                AbstractValue {
+                    kind: ValueKind::Mutable,
+                    reason: ReasonSet::single(ValueReason::Other),
+                },
             );
             initial_state.define(ref_place.identifier, value_id);
         }
@@ -136,10 +148,10 @@ pub fn infer_mutation_aliasing_effects(
         block_id: BlockId,
         state: InferenceState,
     ) {
-        if let Some(queued_state) = queued_states.get(&block_id) {
-            let merged = queued_state.merge(&state);
-            let new_state = merged.unwrap_or_else(|| queued_state.clone());
-            queued_states.insert(block_id, new_state);
+        if let Some(queued_state) = queued_states.get_mut(&block_id) {
+            // Merge in place: same contents (and iteration order) as replacing
+            // the entry with `merge`'s result, without cloning the whole state.
+            queued_state.merge_from(&state);
         } else {
             let prev_state = states_by_block.get(&block_id);
             if let Some(prev) = prev_state {
@@ -159,6 +171,7 @@ pub fn infer_mutation_aliasing_effects(
     let non_mutating_spreads = find_non_mutated_destructure_spreads(func, env);
 
     let mut context = Context {
+        alloc: env.allocator,
         interned_effects: FxHashMap::default(),
         instruction_signature_cache: FxHashMap::default(),
         catch_handlers: FxHashMap::default(),
@@ -171,16 +184,31 @@ pub fn infer_mutation_aliasing_effects(
         aliasing_config_temp_cache: FxHashMap::default(),
     };
 
+    // `states_by_block` is only ever read when a block is queued again after it
+    // was already processed, which requires a CFG cycle. If every edge targets a
+    // strictly later block in the map, the graph is acyclic and one pass over the
+    // blocks suffices, so skip the per-block state snapshots. Reverse postorder
+    // (the stored order) only makes this test precise for acyclic CFGs; soundness
+    // needs no ordering assumption, and a successor missing from the map counts
+    // as a back edge to stay conservative. The scan cannot go stale: `infer_block`
+    // rewrites only terminal effects, never successor ids.
+    let has_back_edge = func.body.blocks.iter().enumerate().any(|(index, (_, block))| {
+        terminal_successors(&block.terminal).into_iter().any(|successor| {
+            match func.body.blocks.get_index_of(&successor) {
+                Some(successor_index) => successor_index <= index,
+                None => true,
+            }
+        })
+    });
+
     let mut iteration_count = 0;
 
     while !queued_states.is_empty() {
         iteration_count += 1;
         if iteration_count > 100 {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
+            return Err(ErrorCategory::Invariant.diagnostic(
                 "[InferMutationAliasingEffects] Potential infinite loop: \
                  A value, temporary place, or effect was not cached properly",
-                None,
             ));
         }
 
@@ -192,15 +220,17 @@ pub fn infer_mutation_aliasing_effects(
                 None => continue,
             };
 
-            states_by_block.insert(block_id, incoming_state.clone());
-            let mut state = incoming_state.clone();
+            if has_back_edge {
+                states_by_block.insert(block_id, incoming_state.clone());
+            }
+            let mut state = incoming_state;
 
             infer_block(&mut context, &mut state, block_id, func, env)?;
 
             // Check for uninitialized identifier access (matches TS invariant:
             // "Expected value kind to be initialized")
             if let Some((uninitialized_id, usage_span)) = state.uninitialized_access.get() {
-                let ident_info = env.identifiers.get(uninitialized_id.0 as usize);
+                let ident_info = env.identifiers.get(uninitialized_id);
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
                     .map(|n| n.value().to_string())
@@ -210,27 +240,31 @@ pub fn infer_mutation_aliasing_effects(
                 // Match TS printPlace format: "<unknown> name$id:type"
                 let type_str = ident_info
                     .map(|ident| {
-                        let ty = &env.types[ident.type_.0 as usize];
+                        let ty = &env.types[ident.type_];
                         format_type_for_print(ty)
                     })
                     .unwrap_or_default();
-                let description = format!("<unknown> {}${}{}", name, uninitialized_id.0, type_str);
-                let diag = CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "[InferMutationAliasingEffects] Expected value kind to be initialized",
-                    Some(description),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    span: error_span,
-                    message: Some("this is uninitialized".to_string()),
-                });
+                let description =
+                    format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
+                let diag = ErrorCategory::Invariant
+                    .diagnostic(
+                        "[InferMutationAliasingEffects] Expected value kind to be initialized",
+                    )
+                    .with_help(description)
+                    .with_labels(error_span.map(|s| s.label("this is uninitialized")));
                 return Err(diag);
             }
 
-            // Queue successors
+            // Queue successors. Every successor receives the same post-block state;
+            // the last one takes it by move instead of by clone.
             let successors = terminal_successors(&func.body.blocks[&block_id].terminal);
-            for next_block_id in successors {
-                queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+            let mut successors = successors.into_iter();
+            if let Some(mut next_block_id) = successors.next() {
+                for later_block_id in successors {
+                    queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+                    next_block_id = later_block_id;
+                }
+                queue(&mut queued_states, &states_by_block, next_block_id, state);
             }
         }
     }
@@ -254,22 +288,67 @@ impl ValueId {
     fn new() -> Self {
         ValueId(NEXT_VALUE_ID.fetch_add(1, Ordering::Relaxed))
     }
+
+    /// Deterministic value id derived from an identifier's current value. The high bit is
+    /// set so these never collide with the counter-allocated ids from `new()`.
+    fn from_identifier(id: IdentifierId) -> Self {
+        ValueId(id.index() as u32 | 0x80000000)
+    }
 }
 
 // =============================================================================
 // AbstractValue
 // =============================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 struct AbstractValue {
     kind: ValueKind,
-    reason: FxIndexSet<ValueReason>,
+    reason: ReasonSet,
 }
 
-fn hashset_of(r: ValueReason) -> FxIndexSet<ValueReason> {
-    let mut s = FxIndexSet::default();
-    s.insert(r);
-    s
+/// A set of [`ValueReason`]s stored as a bitmask.
+///
+/// `AbstractValue`s are copied constantly during the inference fixpoint — once per
+/// entry on every `InferenceState` clone — so `reason` must be cheap to copy. There
+/// are only 12 `ValueReason` variants, so the set fits in a `u16` bitmask: it is
+/// `Copy` (no per-clone allocation or memcpy), and membership/union/superset are
+/// single bitwise ops. [`Self::iter`] yields reasons in `ValueReason` declaration
+/// order, which is the order [`primary_reason`] consumes.
+#[derive(Debug, Clone, Copy, Default)]
+struct ReasonSet(u16);
+
+impl ReasonSet {
+    /// All variants in declaration order; index matches the bit position.
+    const ALL: [ValueReason; 12] = [
+        ValueReason::KnownReturnSignature,
+        ValueReason::State,
+        ValueReason::ReducerState,
+        ValueReason::Context,
+        ValueReason::Effect,
+        ValueReason::HookCaptured,
+        ValueReason::HookReturn,
+        ValueReason::Global,
+        ValueReason::JsxCaptured,
+        ValueReason::StoreLocal,
+        ValueReason::ReactiveFunctionArgument,
+        ValueReason::Other,
+    ];
+
+    fn bit(reason: ValueReason) -> u16 {
+        1 << (reason as u16)
+    }
+
+    fn single(reason: ValueReason) -> Self {
+        Self(Self::bit(reason))
+    }
+
+    fn contains(&self, reason: &ValueReason) -> bool {
+        self.0 & Self::bit(*reason) != 0
+    }
+
+    fn iter(&self) -> impl Iterator<Item = ValueReason> + '_ {
+        Self::ALL.into_iter().filter(move |&reason| self.0 & Self::bit(reason) != 0)
+    }
 }
 
 // =============================================================================
@@ -277,15 +356,22 @@ fn hashset_of(r: ValueReason) -> FxIndexSet<ValueReason> {
 // =============================================================================
 
 /// The abstract state tracked during inference.
-/// Uses interior mutability via a struct with direct fields (no Rc needed since
-/// we always have exclusive access in the pass).
+/// The pass has exclusive access to each state (interior mutability only via
+/// the `uninitialized_access` Cell); the one shared piece is the immutable
+/// per-variable value sets (see `variables`).
 #[derive(Debug, Clone)]
 struct InferenceState {
     is_function_expression: bool,
     /// The kind of each value, based on its allocation site
     values: FxHashMap<ValueId, AbstractValue>,
-    /// The set of values pointed to by each identifier
-    variables: FxHashMap<IdentifierId, FxHashSet<ValueId>>,
+    /// The set of values pointed to by each identifier. The sets are shared via
+    /// `Rc`: every write to the map replaces the whole entry (sets are never
+    /// mutated in place), so state clones and assignments bump a refcount
+    /// instead of deep-copying each set. Shared sets iterate the very table a
+    /// deep clone would have copied; freshly built union/phi/singleton sets are
+    /// constructed by the same insert sequence as before. Either way iteration
+    /// order is unchanged.
+    variables: FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>,
     /// Tracks uninitialized identifier access errors (matches TS invariant).
     /// Uses Cell so it can be set from `&self` methods like `kind()`.
     /// Stores (IdentifierId, usage_span) where usage_span is the source location
@@ -313,24 +399,24 @@ impl InferenceState {
                 }
                 return AbstractValue {
                     kind: ValueKind::Mutable,
-                    reason: hashset_of(ValueReason::Other),
+                    reason: ReasonSet::single(ValueReason::Other),
                 };
             }
         };
         let mut merged_kind: Option<AbstractValue> = None;
-        for value_id in values {
+        for value_id in values.iter() {
             let kind = match self.values.get(value_id) {
                 Some(k) => k,
                 None => continue,
             };
             merged_kind = Some(match merged_kind {
                 Some(prev) => merge_abstract_values(&prev, kind),
-                None => kind.clone(),
+                None => *kind,
             });
         }
         merged_kind.unwrap_or_else(|| AbstractValue {
             kind: ValueKind::Mutable,
-            reason: hashset_of(ValueReason::Other),
+            reason: ReasonSet::single(ValueReason::Other),
         })
     }
 
@@ -341,23 +427,23 @@ impl InferenceState {
     fn define(&mut self, place_id: IdentifierId, value_id: ValueId) {
         let mut set = FxHashSet::default();
         set.insert(value_id);
-        self.variables.insert(place_id, set);
+        self.variables.insert(place_id, Rc::new(set));
     }
 
     fn assign(&mut self, into: IdentifierId, from: IdentifierId) {
         let values = match self.variables.get(&from) {
-            Some(v) => v.clone(),
+            Some(v) => Rc::clone(v),
             None => {
                 // Create a stable value for uninitialized identifiers
                 // Use a deterministic ID based on the from identifier
-                let vid = ValueId(from.0 | 0x80000000);
+                let vid = ValueId::from_identifier(from);
                 let mut set = FxHashSet::default();
                 set.insert(vid);
                 self.values.entry(vid).or_insert_with(|| AbstractValue {
                     kind: ValueKind::Mutable,
-                    reason: hashset_of(ValueReason::Other),
+                    reason: ReasonSet::single(ValueReason::Other),
                 });
-                set
+                Rc::new(set)
             }
         };
         self.variables.insert(into, values);
@@ -365,15 +451,15 @@ impl InferenceState {
 
     fn append_alias(&mut self, place: IdentifierId, value: IdentifierId) {
         let new_values = match self.variables.get(&value) {
-            Some(v) => v.clone(),
+            Some(v) => Rc::clone(v),
             None => return,
         };
         let prev_values = match self.variables.get(&place) {
-            Some(v) => v.clone(),
+            Some(v) => Rc::clone(v),
             None => return,
         };
         let merged: FxHashSet<ValueId> = prev_values.union(&new_values).copied().collect();
-        self.variables.insert(place, merged);
+        self.variables.insert(place, Rc::new(merged));
     }
 
     fn is_defined(&self, place_id: IdentifierId) -> bool {
@@ -385,20 +471,6 @@ impl InferenceState {
             Some(values) => values.iter().copied().collect(),
             None => Vec::new(),
         }
-    }
-
-    #[allow(dead_code)]
-    fn kind_opt(&self, place_id: IdentifierId) -> Option<AbstractValue> {
-        let values = self.variables.get(&place_id)?;
-        let mut merged_kind: Option<AbstractValue> = None;
-        for value_id in values {
-            let kind = self.values.get(value_id)?;
-            merged_kind = Some(match merged_kind {
-                Some(prev) => merge_abstract_values(&prev, kind),
-                None => kind.clone(),
-            });
-        }
-        merged_kind
     }
 
     fn kind(&self, place_id: IdentifierId) -> AbstractValue {
@@ -429,21 +501,11 @@ impl InferenceState {
     fn freeze_value(&mut self, value_id: ValueId, reason: ValueReason) {
         self.values.insert(
             value_id,
-            AbstractValue { kind: ValueKind::Frozen, reason: hashset_of(reason) },
+            AbstractValue { kind: ValueKind::Frozen, reason: ReasonSet::single(reason) },
         );
         // Note: In TS, this also transitively freezes FunctionExpression captures
         // if enableTransitivelyFreezeFunctionExpressions is set. We skip that here
         // since we don't have access to the function arena from within state.
-    }
-
-    #[allow(dead_code)]
-    fn mutate(
-        &self,
-        variant: MutateVariant,
-        place_id: IdentifierId,
-        env: &Environment,
-    ) -> MutationResult {
-        self.mutate_with_span(variant, place_id, env, None)
     }
 
     fn mutate_with_span(
@@ -453,7 +515,7 @@ impl InferenceState {
         env: &Environment,
         usage_span: Option<Span>,
     ) -> MutationResult {
-        let ty = &env.types[env.identifiers[place_id.0 as usize].type_.0 as usize];
+        let ty = &env.types[env.identifiers[place_id].type_];
         if is_ref_or_ref_value(ty) {
             return MutationResult::MutateRef;
         }
@@ -476,7 +538,7 @@ impl InferenceState {
 
     fn merge(&self, other: &InferenceState) -> Option<InferenceState> {
         let mut next_values: Option<FxHashMap<ValueId, AbstractValue>> = None;
-        let mut next_variables: Option<FxHashMap<IdentifierId, FxHashSet<ValueId>>> = None;
+        let mut next_variables: Option<FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>> = None;
 
         // Merge values present in both
         for (id, this_value) in &self.values {
@@ -494,33 +556,25 @@ impl InferenceState {
         for (id, other_value) in &other.values {
             if !self.values.contains_key(id) {
                 let nv = next_values.get_or_insert_with(|| self.values.clone());
-                nv.insert(*id, other_value.clone());
+                nv.insert(*id, *other_value);
             }
         }
 
         // Merge variables present in both
         for (id, this_values) in &self.variables {
-            if let Some(other_values) = other.variables.get(id) {
-                let mut has_new = false;
-                for ov in other_values {
-                    if !this_values.contains(ov) {
-                        has_new = true;
-                        break;
-                    }
-                }
-                if has_new {
-                    let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
-                    let merged: FxHashSet<ValueId> =
-                        this_values.union(other_values).copied().collect();
-                    nvars.insert(*id, merged);
-                }
+            if let Some(other_values) = other.variables.get(id)
+                && contributes_new_value(this_values, other_values)
+            {
+                let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
+                let merged: FxHashSet<ValueId> = this_values.union(other_values).copied().collect();
+                nvars.insert(*id, Rc::new(merged));
             }
         }
         // Add variables only in other
         for (id, other_values) in &other.variables {
             if !self.variables.contains_key(id) {
                 let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
-                nvars.insert(*id, other_values.clone());
+                nvars.insert(*id, Rc::clone(other_values));
             }
         }
 
@@ -536,24 +590,76 @@ impl InferenceState {
         }
     }
 
-    fn infer_phi(&mut self, phi_place_id: IdentifierId, phi_operands: &FxIndexMap<BlockId, Place>) {
+    /// In-place variant of [`InferenceState::merge`] for updating an
+    /// already-queued state: applies the same per-entry updates directly to
+    /// `self` instead of building a replacement state. Because `FxHashMap`'s
+    /// `clone` preserves table layout, this leaves `self` with exactly the same
+    /// contents *and iteration order* as `merge` + reinsert would. Like
+    /// `merge`'s result, the access flag ends up cleared (queued states never
+    /// carry a set flag: a set flag errors out before the state is queued).
+    fn merge_from(&mut self, other: &InferenceState) {
+        for (id, other_value) in &other.values {
+            match self.values.get(id) {
+                Some(this_value) => {
+                    let merged = merge_abstract_values(this_value, other_value);
+                    if merged.kind != this_value.kind
+                        || !is_superset(&this_value.reason, &merged.reason)
+                    {
+                        self.values.insert(*id, merged);
+                    }
+                }
+                None => {
+                    self.values.insert(*id, *other_value);
+                }
+            }
+        }
+
+        for (id, other_values) in &other.variables {
+            match self.variables.get(id) {
+                Some(this_values) => {
+                    if contributes_new_value(this_values, other_values) {
+                        // Build the union as a fresh set exactly like `merge`, so
+                        // the resulting iteration order matches.
+                        let merged: FxHashSet<ValueId> =
+                            this_values.union(other_values).copied().collect();
+                        self.variables.insert(*id, Rc::new(merged));
+                    }
+                }
+                None => {
+                    self.variables.insert(*id, Rc::clone(other_values));
+                }
+            }
+        }
+
+        // `merge` builds its result with a cleared access flag.
+        debug_assert!(self.uninitialized_access.get().is_none());
+        self.uninitialized_access.set(None);
+    }
+
+    fn infer_phi(&mut self, phi_place_id: IdentifierId, phi_operands: &OrderedMap<BlockId, Place>) {
         let mut values: FxHashSet<ValueId> = FxHashSet::default();
         for (_, operand) in phi_operands {
             if let Some(operand_values) = self.variables.get(&operand.identifier) {
-                for v in operand_values {
+                for v in operand_values.iter() {
                     values.insert(*v);
                 }
             }
             // If not found, it's a backedge that will be handled later by merge
         }
         if !values.is_empty() {
-            self.variables.insert(phi_place_id, values);
+            self.variables.insert(phi_place_id, Rc::new(values));
         }
     }
 }
 
-fn is_superset(a: &FxIndexSet<ValueReason>, b: &FxIndexSet<ValueReason>) -> bool {
-    b.iter().all(|x| a.contains(x))
+fn is_superset(a: &ReasonSet, b: &ReasonSet) -> bool {
+    a.0 & b.0 == b.0
+}
+
+/// Whether `other` holds a value that `this` lacks. The sets are immutable and
+/// shared, so an identical allocation can contribute nothing new.
+fn contributes_new_value(this: &Rc<FxHashSet<ValueId>>, other: &Rc<FxHashSet<ValueId>>) -> bool {
+    !Rc::ptr_eq(this, other) && other.iter().any(|value| !this.contains(value))
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -577,116 +683,242 @@ enum MutationResult {
 // Context
 // =============================================================================
 
-struct Context {
-    interned_effects: FxHashMap<String, AliasingEffect>,
-    instruction_signature_cache: FxHashMap<u32, InstructionSignature>,
+struct Context<'a> {
+    alloc: &'a Allocator,
+    interned_effects: FxHashMap<EffectKey, AliasingEffect<'a>>,
+    /// `Rc` so `apply_signature` can hold the signature while passing the
+    /// context on mutably, without deep-cloning the effect list every time.
+    instruction_signature_cache: FxHashMap<u32, Rc<InstructionSignature<'a>>>,
     catch_handlers: FxHashMap<BlockId, Place>,
     is_function_expression: bool,
     hoisted_context_declarations: FxHashMap<DeclarationId, Option<Place>>,
     non_mutating_spreads: FxHashSet<IdentifierId>,
-    /// Cache of ValueIds keyed by effect hash, ensuring stable allocation-site identity
+    /// Cache of ValueIds keyed by effect key, ensuring stable allocation-site identity
     /// across fixpoint iterations. Mirrors TS `effectInstructionValueCache`.
-    effect_value_id_cache: FxHashMap<String, ValueId>,
+    effect_value_id_cache: FxHashMap<EffectKey, ValueId>,
     /// Maps ValueId to FunctionId for function expressions, so we can look up
     /// locally-declared functions when processing Apply effects.
     function_values: FxHashMap<ValueId, FunctionId>,
     /// Cache of function expression signatures, keyed by FunctionId
-    function_signature_cache: FxHashMap<FunctionId, AliasingSignature>,
+    function_signature_cache: FxHashMap<FunctionId, AliasingSignature<'a>>,
     /// Cache of temporary places created for aliasing signature config temporaries.
     /// Keyed by (lvalue_identifier_id, temp_name) to ensure stable allocation
     /// across fixpoint iterations.
     aliasing_config_temp_cache: FxHashMap<(IdentifierId, String), Place>,
 }
 
-impl Context {
-    fn intern_effect(&mut self, effect: AliasingEffect) -> AliasingEffect {
-        let hash = hash_effect(&effect);
-        self.interned_effects.entry(hash).or_insert(effect).clone()
+impl<'a> Context<'a> {
+    fn intern_effect(&mut self, effect: AliasingEffect<'a>) -> AliasingEffect<'a> {
+        let incoming_diagnostic = match &effect {
+            AliasingEffect::MutateFrozen { error, .. }
+            | AliasingEffect::MutateGlobal { error, .. }
+            | AliasingEffect::Impure { error, .. } => Some(*error),
+            _ => None,
+        };
+        let key = effect_key(&effect);
+        let mut interned = self.interned_effects.entry(key).or_insert(effect).clone_in(self.alloc);
+
+        // Diagnostics carry source-specific instances that are not part of effect
+        // identity. Keep the canonical analysis effect, but preserve the instance
+        // from this occurrence for later emission.
+        if let Some(incoming_diagnostic) = incoming_diagnostic {
+            match &mut interned {
+                AliasingEffect::MutateFrozen { error, .. }
+                | AliasingEffect::MutateGlobal { error, .. }
+                | AliasingEffect::Impure { error, .. } => *error = incoming_diagnostic,
+                _ => unreachable!(),
+            }
+        }
+
+        interned
     }
 
     /// Get or create a stable ValueId for a given effect, ensuring fixpoint convergence.
     fn get_or_create_value_id(&mut self, effect: &AliasingEffect) -> ValueId {
-        let hash = hash_effect(effect);
-        *self.effect_value_id_cache.entry(hash).or_insert_with(ValueId::new)
+        let key = effect_key(effect);
+        *self.effect_value_id_cache.entry(key).or_insert_with(ValueId::new)
     }
 }
 
-struct InstructionSignature {
-    effects: Vec<AliasingEffect>,
+struct InstructionSignature<'a> {
+    effects: Vec<AliasingEffect<'a>>,
 }
 
 // =============================================================================
-// Helper: hash_effect
+// Helper: effect_key
 // =============================================================================
 
-fn hash_effect(effect: &AliasingEffect) -> String {
+/// Interning key for an `AliasingEffect`. Exactly the same fields participate in
+/// identity as in the string key this replaces — everything else (`Apply`'s
+/// `signature`/`span`, `Mutate`'s `reason`, `Impure`'s `error`) is ignored — but
+/// building and hashing the key no longer allocates or runs the formatting
+/// machinery on the hot path (except for the rare error-carrying arms, which
+/// clone their message strings).
+#[derive(PartialEq, Eq, Hash)]
+enum EffectKey {
+    Apply {
+        receiver: IdentifierId,
+        function: IdentifierId,
+        mutates_function: bool,
+        args: SmallVec<[ArgKey; 4]>,
+        into: IdentifierId,
+    },
+    CreateFrom {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    ImmutableCapture {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Assign {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Alias {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Capture {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    MaybeAlias {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Create {
+        into: IdentifierId,
+        value: ValueKind,
+        reason: ValueReason,
+    },
+    Freeze {
+        value: IdentifierId,
+        reason: ValueReason,
+    },
+    Impure {
+        place: IdentifierId,
+    },
+    Render {
+        place: IdentifierId,
+    },
+    MutateFrozen {
+        place: IdentifierId,
+        diag: DiagnosticId,
+    },
+    MutateGlobal {
+        place: IdentifierId,
+        diag: DiagnosticId,
+    },
+    Mutate {
+        value: IdentifierId,
+    },
+    MutateConditionally {
+        value: IdentifierId,
+    },
+    MutateTransitive {
+        value: IdentifierId,
+    },
+    MutateTransitiveConditionally {
+        value: IdentifierId,
+    },
+    CreateFunction {
+        into: IdentifierId,
+        function_id: FunctionId,
+        captures: SmallVec<[IdentifierId; 4]>,
+    },
+    /// Synthetic keys used by the `Assign` handler for kind-preserving copies;
+    /// they share the ValueId cache but never collide with real-effect keys.
+    AssignFrozen {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    AssignCopy {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+}
+
+/// Key form of an `Apply` argument (identifier only, like the string encoding).
+#[derive(PartialEq, Eq, Hash)]
+enum ArgKey {
+    Place(IdentifierId),
+    Spread(IdentifierId),
+    Hole,
+}
+
+fn effect_key(effect: &AliasingEffect) -> EffectKey {
     match effect {
         AliasingEffect::Apply { receiver, function, mutates_function, args, into, .. } => {
-            let args_str: Vec<Cow<'_, str>> = args
+            let mut key_args: SmallVec<[ArgKey; 4]> = args
                 .iter()
                 .map(|a| match a {
-                    PlaceOrSpreadOrHole::Hole => Cow::Borrowed(""),
-                    PlaceOrSpreadOrHole::Place(p) => Cow::Owned(format!("{}", p.identifier.0)),
-                    PlaceOrSpreadOrHole::Spread(s) => {
-                        Cow::Owned(format!("...{}", s.place.identifier.0))
-                    }
+                    PlaceOrSpreadOrHole::Hole => ArgKey::Hole,
+                    PlaceOrSpreadOrHole::Place(p) => ArgKey::Place(p.identifier),
+                    PlaceOrSpreadOrHole::Spread(s) => ArgKey::Spread(s.place.identifier),
                 })
                 .collect();
-            format!(
-                "Apply:{}:{}:{}:{}:{}",
-                receiver.identifier.0,
-                function.identifier.0,
-                mutates_function,
-                args_str.join(","),
-                into.identifier.0
-            )
+            // The string key joined args with "," and encoded a hole as "", so a
+            // single-hole list was indistinguishable from an empty one. Keep that.
+            if matches!(key_args.as_slice(), [ArgKey::Hole]) {
+                key_args.clear();
+            }
+            EffectKey::Apply {
+                receiver: receiver.identifier,
+                function: function.identifier,
+                mutates_function: *mutates_function,
+                args: key_args,
+                into: into.identifier,
+            }
         }
         AliasingEffect::CreateFrom { from, into } => {
-            format!("CreateFrom:{}:{}", from.identifier.0, into.identifier.0)
+            EffectKey::CreateFrom { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::ImmutableCapture { from, into } => {
-            format!("ImmutableCapture:{}:{}", from.identifier.0, into.identifier.0)
+            EffectKey::ImmutableCapture { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Assign { from, into } => {
-            format!("Assign:{}:{}", from.identifier.0, into.identifier.0)
+            EffectKey::Assign { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Alias { from, into } => {
-            format!("Alias:{}:{}", from.identifier.0, into.identifier.0)
+            EffectKey::Alias { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Capture { from, into } => {
-            format!("Capture:{}:{}", from.identifier.0, into.identifier.0)
+            EffectKey::Capture { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::MaybeAlias { from, into } => {
-            format!("MaybeAlias:{}:{}", from.identifier.0, into.identifier.0)
+            EffectKey::MaybeAlias { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Create { into, value, reason } => {
-            format!("Create:{}:{:?}:{:?}", into.identifier.0, value, reason)
+            EffectKey::Create { into: into.identifier, value: *value, reason: *reason }
         }
         AliasingEffect::Freeze { value, reason } => {
-            format!("Freeze:{}:{:?}", value.identifier.0, reason)
+            EffectKey::Freeze { value: value.identifier, reason: *reason }
         }
-        AliasingEffect::Impure { place, .. } => format!("Impure:{}", place.identifier.0),
-        AliasingEffect::Render { place } => format!("Render:{}", place.identifier.0),
+        AliasingEffect::Impure { place, .. } => EffectKey::Impure { place: place.identifier },
+        AliasingEffect::Render { place } => EffectKey::Render { place: place.identifier },
         AliasingEffect::MutateFrozen { place, error } => {
-            format!("MutateFrozen:{}:{}:{:?}", place.identifier.0, error.reason, error.description)
+            EffectKey::MutateFrozen { place: place.identifier, diag: error.identity() }
         }
         AliasingEffect::MutateGlobal { place, error } => {
-            format!("MutateGlobal:{}:{}:{:?}", place.identifier.0, error.reason, error.description)
+            EffectKey::MutateGlobal { place: place.identifier, diag: error.identity() }
         }
-        AliasingEffect::Mutate { value, .. } => format!("Mutate:{}", value.identifier.0),
+        AliasingEffect::Mutate { value, .. } => EffectKey::Mutate { value: value.identifier },
         AliasingEffect::MutateConditionally { value } => {
-            format!("MutateConditionally:{}", value.identifier.0)
+            EffectKey::MutateConditionally { value: value.identifier }
         }
         AliasingEffect::MutateTransitive { value } => {
-            format!("MutateTransitive:{}", value.identifier.0)
+            EffectKey::MutateTransitive { value: value.identifier }
         }
         AliasingEffect::MutateTransitiveConditionally { value } => {
-            format!("MutateTransitiveConditionally:{}", value.identifier.0)
+            EffectKey::MutateTransitiveConditionally { value: value.identifier }
         }
         AliasingEffect::CreateFunction { into, function_id, captures } => {
-            let cap_str: Vec<String> =
-                captures.iter().map(|p| format!("{}", p.identifier.0)).collect();
-            format!("CreateFunction:{}:{}:{}", into.identifier.0, function_id.0, cap_str.join(","))
+            EffectKey::CreateFunction {
+                into: into.identifier,
+                function_id: *function_id,
+                captures: captures.iter().map(|p| p.identifier).collect(),
+            }
         }
     }
 }
@@ -698,12 +930,9 @@ fn hash_effect(effect: &AliasingEffect) -> String {
 fn merge_abstract_values(a: &AbstractValue, b: &AbstractValue) -> AbstractValue {
     let kind = merge_value_kinds(a.kind, b.kind);
     if kind == a.kind && kind == b.kind && is_superset(&a.reason, &b.reason) {
-        return a.clone();
+        return *a;
     }
-    let mut reason = a.reason.clone();
-    for r in &b.reason {
-        reason.insert(*r);
-    }
+    let reason = ReasonSet(a.reason.0 | b.reason.0);
     AbstractValue { kind, reason }
 }
 
@@ -754,15 +983,15 @@ fn find_hoisted_context_declarations(
         place: &Place,
         env: &Environment,
     ) {
-        let decl_id = env.identifiers[place.identifier.0 as usize].declaration_id;
+        let decl_id = env.identifiers[place.identifier].declaration_id;
         if hoisted.contains_key(&decl_id) && hoisted.get(&decl_id).unwrap().is_none() {
-            hoisted.insert(decl_id, Some(place.clone()));
+            hoisted.insert(decl_id, Some(*place));
         }
     }
 
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::DeclareContext { lvalue, .. } => {
                     let kind = lvalue.kind;
@@ -770,8 +999,7 @@ fn find_hoisted_context_declarations(
                         || kind == InstructionKind::HoistedFunction
                         || kind == InstructionKind::HoistedLet
                     {
-                        let decl_id =
-                            env.identifiers[lvalue.place.identifier.0 as usize].declaration_id;
+                        let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
                         hoisted.insert(decl_id, None);
                     }
                 }
@@ -821,7 +1049,7 @@ fn find_non_mutated_destructure_spreads(
             }
         }
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
             match &instr.value {
                 InstructionValue::Destructure { lvalue, value, .. } => {
@@ -868,8 +1096,7 @@ fn find_non_mutated_destructure_spreads(
                 }
                 InstructionValue::CallExpression { callee, .. }
                 | InstructionValue::MethodCall { property: callee, .. } => {
-                    let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some() {
                         if !is_ref_or_ref_value_for_id(env, lvalue_id) {
                             known_frozen.insert(lvalue_id);
@@ -918,7 +1145,7 @@ fn infer_param(param: &ParamPattern, state: &mut InferenceState, param_kind: &Ab
         ParamPattern::Spread(s) => &s.place,
     };
     let value_id = ValueId::new();
-    state.initialize(value_id, param_kind.clone());
+    state.initialize(value_id, *param_kind);
     state.define(place.identifier, value_id);
 }
 
@@ -926,24 +1153,34 @@ fn infer_param(param: &ParamPattern, state: &mut InferenceState, param_kind: &Ab
 // inferBlock
 // =============================================================================
 
-fn infer_block(
-    context: &mut Context,
+fn infer_block<'a>(
+    context: &mut Context<'a>,
     state: &mut InferenceState,
     block_id: BlockId,
-    func: &mut HirFunction,
-    env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+) -> Result<(), OxcDiagnostic> {
+    let alloc = context.alloc;
     let block = &func.body.blocks[&block_id];
 
     // Process phis
-    let phis: Vec<(IdentifierId, FxIndexMap<BlockId, Place>)> =
-        block.phis.iter().map(|phi| (phi.place.identifier, phi.operands.clone())).collect();
+    let phis: Vec<(IdentifierId, OrderedMap<BlockId, Place>)> = block
+        .phis
+        .iter()
+        .map(|phi| {
+            let mut operands = OrderedMap::default();
+            for (k, v) in phi.operands.iter() {
+                operands.insert(*k, *v);
+            }
+            (phi.place.identifier, operands)
+        })
+        .collect();
     for (place_id, operands) in &phis {
         state.infer_phi(*place_id, operands);
     }
 
     // Process instructions
-    let instr_ids: Vec<u32> = block.instructions.iter().map(|id| id.0).collect();
+    let instr_ids: Vec<u32> = block.instructions.iter().map(|id| id.index() as u32).collect();
     for instr_idx in &instr_ids {
         let instr_index = *instr_idx as usize;
 
@@ -951,19 +1188,13 @@ fn infer_block(
         if !context.instruction_signature_cache.contains_key(instr_idx) {
             let sig =
                 compute_signature_for_instruction(context, env, &func.instructions[instr_index]);
-            context.instruction_signature_cache.insert(*instr_idx, sig);
+            context.instruction_signature_cache.insert(*instr_idx, Rc::new(sig));
         }
 
         // Apply signature
-        let effects = apply_signature(
-            context,
-            state,
-            *instr_idx,
-            &func.instructions[instr_index],
-            env,
-            func,
-        )?;
-        func.instructions[instr_index].effects = effects;
+        let effects =
+            apply_signature(context, state, *instr_idx, &func.instructions[instr_index], env)?;
+        func.instructions[instr_index].effects = effects.map(|e| ArenaVec::from_iter_in(e, &alloc));
     }
 
     // Process terminal
@@ -978,7 +1209,7 @@ fn infer_block(
         let block = &func.body.blocks[&block_id];
         match &block.terminal {
             Terminal::Try { handler, handler_binding: Some(binding), .. } => {
-                TerminalAction::Try { handler: *handler, binding: binding.clone() }
+                TerminalAction::Try { handler: *handler, binding: *binding }
             }
             Terminal::MaybeThrow { handler: Some(handler_id), .. } => {
                 TerminalAction::MaybeThrow { handler_id: *handler_id }
@@ -993,38 +1224,38 @@ fn infer_block(
             context.catch_handlers.insert(handler, binding);
         }
         TerminalAction::MaybeThrow { handler_id } => {
-            if let Some(handler_param) = context.catch_handlers.get(&handler_id).cloned() {
-                if state.is_defined(handler_param.identifier) {
-                    let mut terminal_effects: Vec<AliasingEffect> = Vec::new();
-                    for instr_idx in &instr_ids {
-                        let instr = &func.instructions[*instr_idx as usize];
-                        match &instr.value {
-                            InstructionValue::CallExpression { .. }
-                            | InstructionValue::MethodCall { .. } => {
-                                state.append_alias(
-                                    handler_param.identifier,
-                                    instr.lvalue.identifier,
-                                );
-                                let kind = state.kind(instr.lvalue.identifier).kind;
-                                if kind == ValueKind::Mutable || kind == ValueKind::Context {
-                                    terminal_effects.push(context.intern_effect(
-                                        AliasingEffect::Alias {
-                                            from: instr.lvalue.clone(),
-                                            into: handler_param.clone(),
-                                        },
-                                    ));
-                                }
+            if let Some(handler_param) = context.catch_handlers.get(&handler_id).cloned()
+                && state.is_defined(handler_param.identifier)
+            {
+                let mut terminal_effects: Vec<AliasingEffect<'a>> = Vec::new();
+                for instr_idx in &instr_ids {
+                    let instr = &func.instructions[*instr_idx as usize];
+                    match &instr.value {
+                        InstructionValue::CallExpression { .. }
+                        | InstructionValue::MethodCall { .. } => {
+                            state.append_alias(handler_param.identifier, instr.lvalue.identifier);
+                            let kind = state.kind(instr.lvalue.identifier).kind;
+                            if kind == ValueKind::Mutable || kind == ValueKind::Context {
+                                terminal_effects.push(context.intern_effect(
+                                    AliasingEffect::Alias {
+                                        from: instr.lvalue,
+                                        into: handler_param,
+                                    },
+                                ));
                             }
-                            _ => {}
                         }
+                        _ => {}
                     }
-                    let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
-                    if let Terminal::MaybeThrow { effects: ref mut term_effects, .. } =
-                        block_mut.terminal
-                    {
-                        *term_effects =
-                            if terminal_effects.is_empty() { None } else { Some(terminal_effects) };
-                    }
+                }
+                let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
+                if let Terminal::MaybeThrow { effects: ref mut term_effects, .. } =
+                    block_mut.terminal
+                {
+                    *term_effects = if terminal_effects.is_empty() {
+                        None
+                    } else {
+                        Some(ArenaVec::from_iter_in(terminal_effects, &alloc))
+                    };
                 }
             }
         }
@@ -1034,10 +1265,13 @@ fn infer_block(
                 if let Terminal::Return { ref value, effects: ref mut term_effects, .. } =
                     block_mut.terminal
                 {
-                    *term_effects = Some(vec![context.intern_effect(AliasingEffect::Freeze {
-                        value: value.clone(),
-                        reason: ValueReason::JsxCaptured,
-                    })]);
+                    *term_effects = Some(ArenaVec::from_array_in(
+                        [context.intern_effect(AliasingEffect::Freeze {
+                            value: *value,
+                            reason: ValueReason::JsxCaptured,
+                        })],
+                        &alloc,
+                    ));
                 }
             }
         }
@@ -1050,21 +1284,21 @@ fn infer_block(
 // applySignature
 // =============================================================================
 
-fn apply_signature(
-    context: &mut Context,
+fn apply_signature<'a>(
+    context: &mut Context<'a>,
     state: &mut InferenceState,
     instr_idx: u32,
-    instr: &Instruction,
-    env: &mut Environment,
-    func: &HirFunction,
-) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
-    let mut effects: Vec<AliasingEffect> = Vec::new();
+    instr: &Instruction<'a>,
+    env: &mut Environment<'a>,
+) -> Result<Option<Vec<AliasingEffect<'a>>>, OxcDiagnostic> {
+    let alloc = context.alloc;
+    let mut effects: Vec<AliasingEffect<'a>> = Vec::new();
 
     // For function instructions, validate frozen mutation
     match &instr.value {
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.0 as usize];
+            let inner_func = &env.functions[lowered_func.func];
             if let Some(ref aliasing_effects) = inner_func.aliasing_effects {
                 let context_ids: FxHashSet<IdentifierId> =
                     inner_func.context.iter().map(|p| p.identifier).collect();
@@ -1083,26 +1317,24 @@ fn apply_signature(
                     let value_abstract = state.kind(mutate_value.identifier);
                     if value_abstract.kind == ValueKind::Frozen {
                         let reason_str = get_write_error_reason(&value_abstract);
-                        let ident = &env.identifiers[mutate_value.identifier.0 as usize];
+                        let ident = &env.identifiers[mutate_value.identifier];
                         let variable = match &ident.name {
                             Some(IdentifierName::Named(n)) => {
                                 format!("`{}`", n)
                             }
                             _ => "value".to_string(),
                         };
-                        let mut diagnostic = CompilerDiagnostic::new(
-                            ErrorCategory::Immutability,
-                            "This value cannot be modified",
-                            Some(reason_str),
-                        );
-                        diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                            span: mutate_value.span,
-                            message: Some(format!("{} cannot be modified", variable)),
-                        });
-                        effects.push(AliasingEffect::MutateFrozen {
-                            place: mutate_value.clone(),
-                            error: diagnostic,
-                        });
+                        let diagnostic = ErrorCategory::Immutability
+                            .diagnostic("This value cannot be modified")
+                            .with_help(reason_str)
+                            .with_labels(
+                                mutate_value
+                                    .span
+                                    .map(|s| s.label(format!("{} cannot be modified", variable))),
+                            );
+                        let error =
+                            env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
+                        effects.push(AliasingEffect::MutateFrozen { place: *mutate_value, error });
                     }
                 }
             }
@@ -1114,21 +1346,23 @@ fn apply_signature(
     let mut initialized: FxHashSet<IdentifierId> = FxHashSet::default();
 
     // Get the cached signature effects
-    let sig = context.instruction_signature_cache.get(&instr_idx).unwrap();
-    let sig_effects: Vec<AliasingEffect> = sig.effects.clone();
+    let sig = Rc::clone(context.instruction_signature_cache.get(&instr_idx).unwrap());
 
-    for effect in &sig_effects {
-        apply_effect(context, state, effect.clone(), &mut initialized, &mut effects, env, func)?;
+    for effect in &sig.effects {
+        apply_effect(context, state, effect.clone_in(alloc), &mut initialized, &mut effects, env)?;
     }
 
     // If lvalue is not yet defined, initialize it with a default value.
     // The TS version asserts this as an invariant, but the Rust port may have
     // edge cases where effects don't cover the lvalue (e.g. missing signature entries).
     if !state.is_defined(instr.lvalue.identifier) {
-        let vid = ValueId(instr.lvalue.identifier.0 | 0x80000000);
+        let vid = ValueId::from_identifier(instr.lvalue.identifier);
         state.initialize(
             vid,
-            AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) },
+            AbstractValue {
+                kind: ValueKind::Mutable,
+                reason: ReasonSet::single(ValueReason::Other),
+            },
         );
         state.define(instr.lvalue.identifier, vid);
     }
@@ -1153,7 +1387,7 @@ fn freeze_function_captures_transitive(
 ) {
     if let Some(&func_id) = context.function_values.get(&value_id) {
         let ctx_ids: Vec<IdentifierId> =
-            env.functions[func_id.0 as usize].context.iter().map(|p| p.identifier).collect();
+            env.functions[func_id].context.iter().map(|p| p.identifier).collect();
         for ctx_id in ctx_ids {
             // Replicate InferenceState::freeze() logic inline —
             // we need to recurse with context/env which freeze() doesn't have.
@@ -1182,22 +1416,20 @@ fn freeze_function_captures_transitive(
 // applyEffect
 // =============================================================================
 
-#[allow(clippy::only_used_in_recursion)]
-fn apply_effect(
-    context: &mut Context,
+fn apply_effect<'a>(
+    context: &mut Context<'a>,
     state: &mut InferenceState,
-    effect: AliasingEffect,
+    effect: AliasingEffect<'a>,
     initialized: &mut FxHashSet<IdentifierId>,
-    effects: &mut Vec<AliasingEffect>,
-    env: &mut Environment,
-    func: &HirFunction,
-) -> Result<(), CompilerDiagnostic> {
+    effects: &mut Vec<AliasingEffect<'a>>,
+    env: &mut Environment<'a>,
+) -> Result<(), OxcDiagnostic> {
     let effect = context.intern_effect(effect);
     match effect {
         AliasingEffect::Freeze { ref value, reason } => {
             let did_freeze = state.freeze(value.identifier, reason);
             if did_freeze {
-                effects.push(effect.clone());
+                effects.push(effect.clone_in(context.alloc));
                 // Transitively freeze FunctionExpression captures if enabled
                 // (matches TS freezeValue which recurses into func.context)
                 let enable_transitive = env.config.enable_preserve_existing_memoization_guarantees
@@ -1221,9 +1453,9 @@ fn apply_effect(
             );
             initialized.insert(into.identifier);
             let value_id = context.get_or_create_value_id(&effect);
-            state.initialize(value_id, AbstractValue { kind, reason: hashset_of(reason) });
+            state.initialize(value_id, AbstractValue { kind, reason: ReasonSet::single(reason) });
             state.define(into.identifier, value_id);
-            effects.push(effect.clone());
+            effects.push(effect.clone_in(context.alloc));
         }
         AliasingEffect::ImmutableCapture { ref from, .. } => {
             let kind = state.kind(from.identifier).kind;
@@ -1232,7 +1464,7 @@ fn apply_effect(
                     // no-op: don't track data flow for copy types
                 }
                 _ => {
-                    effects.push(effect.clone());
+                    effects.push(effect.clone_in(context.alloc));
                 }
             }
         }
@@ -1246,7 +1478,7 @@ fn apply_effect(
             let value_id = context.get_or_create_value_id(&effect);
             state.initialize(
                 value_id,
-                AbstractValue { kind: from_value.kind, reason: from_value.reason.clone() },
+                AbstractValue { kind: from_value.kind, reason: from_value.reason },
             );
             state.define(into.identifier, value_id);
             match from_value.kind {
@@ -1254,7 +1486,7 @@ fn apply_effect(
                     let first_reason = primary_reason(&from_value.reason);
                     effects.push(AliasingEffect::Create {
                         value: from_value.kind,
-                        into: into.clone(),
+                        into: *into,
                         reason: first_reason,
                     });
                 }
@@ -1262,21 +1494,20 @@ fn apply_effect(
                     let first_reason = primary_reason(&from_value.reason);
                     effects.push(AliasingEffect::Create {
                         value: from_value.kind,
-                        into: into.clone(),
+                        into: *into,
                         reason: first_reason,
                     });
                     apply_effect(
                         context,
                         state,
-                        AliasingEffect::ImmutableCapture { from: from.clone(), into: into.clone() },
+                        AliasingEffect::ImmutableCapture { from: *from, into: *into },
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                 }
                 _ => {
-                    effects.push(effect.clone());
+                    effects.push(effect.clone_in(context.alloc));
                 }
             }
         }
@@ -1286,7 +1517,7 @@ fn apply_effect(
                 "[InferMutationAliasingEffects] Cannot re-initialize variable within an instruction"
             );
             initialized.insert(into.identifier);
-            effects.push(effect.clone());
+            effects.push(effect.clone_in(context.alloc));
 
             // Check if function is mutable
             let has_captures = captures.iter().any(|capture| {
@@ -1297,7 +1528,7 @@ fn apply_effect(
                 k == ValueKind::Context || k == ValueKind::Mutable
             });
 
-            let inner_func = &env.functions[function_id.0 as usize];
+            let inner_func = &env.functions[function_id];
             let has_tracked_side_effects = inner_func
                 .aliasing_effects
                 .as_ref()
@@ -1321,7 +1552,7 @@ fn apply_effect(
             let is_mutable = has_captures || has_tracked_side_effects || captures_ref;
 
             // Update context variable effects
-            let context_places: Vec<Place> = inner_func.context.clone();
+            let context_places: Vec<Place> = inner_func.context.iter().copied().collect();
             for operand in &context_places {
                 if operand.effect != Effect::Capture {
                     continue;
@@ -1335,7 +1566,7 @@ fn apply_effect(
                     || kind == ValueKind::Global
                 {
                     // Downgrade to Read - we need to mutate the inner function
-                    let inner_func_mut = &mut env.functions[function_id.0 as usize];
+                    let inner_func_mut = &mut env.functions[function_id];
                     for ctx in &mut inner_func_mut.context {
                         if ctx.identifier == operand.identifier && ctx.effect == Effect::Capture {
                             ctx.effect = Effect::Read;
@@ -1351,7 +1582,7 @@ fn apply_effect(
                 value_id,
                 AbstractValue {
                     kind: if is_mutable { ValueKind::Mutable } else { ValueKind::Frozen },
-                    reason: FxIndexSet::default(),
+                    reason: ReasonSet::default(),
                 },
             );
             state.define(into.identifier, value_id);
@@ -1360,11 +1591,10 @@ fn apply_effect(
                 apply_effect(
                     context,
                     state,
-                    AliasingEffect::Capture { from: capture.clone(), into: into.clone() },
+                    AliasingEffect::Capture { from: *capture, into: *into },
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             }
         }
@@ -1399,27 +1629,25 @@ fn apply_effect(
                 apply_effect(
                     context,
                     state,
-                    AliasingEffect::ImmutableCapture { from: from.clone(), into: into.clone() },
+                    AliasingEffect::ImmutableCapture { from: *from, into: *into },
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             } else if (source_type == Some("mutable") && destination_type == Some("mutable"))
                 || is_maybe_alias
             {
-                effects.push(effect.clone());
+                effects.push(effect.clone_in(context.alloc));
             } else if (source_type == Some("context") && destination_type.is_some())
                 || (source_type == Some("mutable") && destination_type == Some("context"))
             {
                 apply_effect(
                     context,
                     state,
-                    AliasingEffect::MaybeAlias { from: from.clone(), into: into.clone() },
+                    AliasingEffect::MaybeAlias { from: *from, into: *into },
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             }
         }
@@ -1435,14 +1663,13 @@ fn apply_effect(
                     apply_effect(
                         context,
                         state,
-                        AliasingEffect::ImmutableCapture { from: from.clone(), into: into.clone() },
+                        AliasingEffect::ImmutableCapture { from: *from, into: *into },
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                     let cache_key =
-                        format!("Assign_frozen:{}:{}", from.identifier.0, into.identifier.0);
+                        EffectKey::AssignFrozen { from: from.identifier, into: into.identifier };
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)
@@ -1455,7 +1682,7 @@ fn apply_effect(
                 }
                 ValueKind::Global | ValueKind::Primitive => {
                     let cache_key =
-                        format!("Assign_copy:{}:{}", from.identifier.0, into.identifier.0);
+                        EffectKey::AssignCopy { from: from.identifier, into: into.identifier };
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)
@@ -1468,7 +1695,7 @@ fn apply_effect(
                 }
                 _ => {
                     state.assign(into.identifier, from.identifier);
-                    effects.push(effect.clone());
+                    effects.push(effect.clone_in(context.alloc));
                 }
             }
         }
@@ -1478,7 +1705,7 @@ fn apply_effect(
             mutates_function,
             ref args,
             ref into,
-            ref signature,
+            signature,
             ref span,
         } => {
             // First, check if the callee is a locally-declared function expression
@@ -1488,16 +1715,20 @@ fn apply_effect(
                 if function_values.len() == 1 {
                     let value_id = function_values[0];
                     if let Some(func_id) = context.function_values.get(&value_id).copied() {
-                        let inner_func = &env.functions[func_id.0 as usize];
+                        let inner_func = &env.functions[func_id];
                         if inner_func.aliasing_effects.is_some() {
                             // Build or retrieve the signature from the function expression
                             context.function_signature_cache.entry(func_id).or_insert_with(|| {
                                 build_signature_from_function_expression(env, func_id)
                             });
-                            let sig =
-                                context.function_signature_cache.get(&func_id).unwrap().clone();
-                            let inner_func = &env.functions[func_id.0 as usize];
-                            let context_places: Vec<Place> = inner_func.context.clone();
+                            let sig = context
+                                .function_signature_cache
+                                .get(&func_id)
+                                .unwrap()
+                                .clone_in(context.alloc);
+                            let inner_func = &env.functions[func_id];
+                            let context_places: Vec<Place> =
+                                inner_func.context.iter().copied().collect();
                             let sig_effects = compute_effects_for_aliasing_signature(
                                 env,
                                 &sig,
@@ -1513,23 +1744,14 @@ fn apply_effect(
                                     context,
                                     state,
                                     AliasingEffect::MutateTransitiveConditionally {
-                                        value: function.clone(),
+                                        value: *function,
                                     },
                                     initialized,
                                     effects,
                                     env,
-                                    func,
                                 )?;
                                 for se in sig_effs {
-                                    apply_effect(
-                                        context,
-                                        state,
-                                        se,
-                                        initialized,
-                                        effects,
-                                        env,
-                                        func,
-                                    )?;
+                                    apply_effect(context, state, se, initialized, effects, env)?;
                                 }
                                 return Ok(());
                             }
@@ -1537,27 +1759,32 @@ fn apply_effect(
                     }
                 }
             }
-            if let Some(sig) = signature {
+            // Resolve the callee's `FunctionSignature` from its stored `TypeId`,
+            // cloning into a local so it is detached from the `env` borrow (the effect
+            // computations below take `&mut env`). This mirrors the previous
+            // `Rc<FunctionSignature>` snapshot taken at construction time.
+            let sig_owned = signature.and_then(|type_id| {
+                let ty = &env.types[type_id];
+                env.get_function_signature(ty).ok().flatten().cloned()
+            });
+            if let Some(sig) = &sig_owned {
                 // Check known_incompatible (TS line 2351-2370)
-                if let Some(ref incompatible_msg) = sig.known_incompatible {
-                    if env.enable_validations() {
-                        let mut diagnostic = CompilerDiagnostic::new(
-                            ErrorCategory::IncompatibleLibrary,
-                            "Use of incompatible library",
-                            Some(
+                if let Some(ref incompatible_msg) = sig.known_incompatible
+                    && env.enable_validations()
+                {
+                    let diagnostic = ErrorCategory::IncompatibleLibrary
+                            .diagnostic("Use of incompatible library")
+                            .with_help(
                                 "This API returns functions which cannot be memoized without leading to stale UI. \
                                  To prevent this, by default React Compiler will skip memoizing this component/hook. \
                                  However, you may see issues if values from this API are passed to other components/hooks that are \
-                                 memoized".to_string(),
-                            ),
-                        );
-                        diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                            span: receiver.span,
-                            message: Some(incompatible_msg.clone()),
-                        });
-                        // TS throws here, aborting compilation for this function
-                        return Err(diagnostic);
-                    }
+                                 memoized",
+                            )
+                            .with_labels(
+                                receiver.span.map(|s| s.label(incompatible_msg.clone())),
+                            );
+                    // TS throws here, aborting compilation for this function
+                    return Err(diagnostic);
                 }
 
                 if let Some(ref aliasing) = sig.aliasing {
@@ -1573,14 +1800,14 @@ fn apply_effect(
                     )?;
                     if let Some(sig_effs) = sig_effects {
                         for se in sig_effs {
-                            apply_effect(context, state, se, initialized, effects, env, func)?;
+                            apply_effect(context, state, se, initialized, effects, env)?;
                         }
                         return Ok(());
                     }
                 }
 
                 // Legacy signature
-                let mut todo_errors: Vec<CompilerErrorDetail> = Vec::new();
+                let mut todo_errors: Vec<OxcDiagnostic> = Vec::new();
                 let legacy_effects = compute_effects_for_legacy_signature(
                     state,
                     sig,
@@ -1594,10 +1821,10 @@ fn apply_effect(
                 );
                 // Todo errors should short-circuit (TS throws throwTodo)
                 if let Some(err_detail) = todo_errors.into_iter().next() {
-                    return Err(CompilerDiagnostic::from_detail(err_detail));
+                    return Err(err_detail);
                 }
                 for le in legacy_effects {
-                    apply_effect(context, state, le, initialized, effects, env, func)?;
+                    apply_effect(context, state, le, initialized, effects, env)?;
                 }
             } else {
                 // No signature: default behavior
@@ -1605,14 +1832,13 @@ fn apply_effect(
                     context,
                     state,
                     AliasingEffect::Create {
-                        into: into.clone(),
+                        into: *into,
                         value: ValueKind::Mutable,
                         reason: ValueReason::Other,
                     },
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
 
                 let all_operands = build_apply_operands(receiver, function, args);
@@ -1626,40 +1852,27 @@ fn apply_effect(
                         apply_effect(
                             context,
                             state,
-                            AliasingEffect::MutateTransitiveConditionally {
-                                value: operand.clone(),
-                            },
+                            AliasingEffect::MutateTransitiveConditionally { value: *operand },
                             initialized,
                             effects,
                             env,
-                            func,
                         )?;
                     }
 
                     if *is_spread {
-                        let ty = &env.types
-                            [env.identifiers[operand.identifier.0 as usize].type_.0 as usize];
+                        let ty = &env.types[env.identifiers[operand.identifier].type_];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(operand, ty) {
-                            apply_effect(
-                                context,
-                                state,
-                                mutate_iter,
-                                initialized,
-                                effects,
-                                env,
-                                func,
-                            )?;
+                            apply_effect(context, state, mutate_iter, initialized, effects, env)?;
                         }
                     }
 
                     apply_effect(
                         context,
                         state,
-                        AliasingEffect::MaybeAlias { from: operand.clone(), into: into.clone() },
+                        AliasingEffect::MaybeAlias { from: *operand, into: *into },
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
 
                     // In TS, `other === arg` compares the Place extracted from
@@ -1676,11 +1889,10 @@ fn apply_effect(
                         apply_effect(
                             context,
                             state,
-                            AliasingEffect::Capture { from: operand.clone(), into: other.clone() },
+                            AliasingEffect::Capture { from: *operand, into: *other },
                             initialized,
                             effects,
                             env,
-                            func,
                         )?;
                     }
                 }
@@ -1706,7 +1918,7 @@ fn apply_effect(
             let value = mutate_place;
             let mutation_kind = state.mutate_with_span(variant, value.identifier, env, value.span);
             if mutation_kind == MutationResult::Mutate {
-                effects.push(effect.clone());
+                effects.push(effect.clone_in(context.alloc));
             } else if mutation_kind == MutationResult::MutateRef {
                 // no-op
             } else if mutation_kind != MutationResult::None
@@ -1714,7 +1926,7 @@ fn apply_effect(
             {
                 let abstract_value = state.kind(value.identifier);
 
-                let ident = &env.identifiers[value.identifier.0 as usize];
+                let ident = &env.identifiers[value.identifier];
                 let decl_id = ident.declaration_id;
 
                 if mutation_kind == MutationResult::MutateFrozen
@@ -1726,40 +1938,36 @@ fn apply_effect(
                     };
                     let hoisted_access =
                         context.hoisted_context_declarations.get(&decl_id).cloned().flatten();
-                    let mut diagnostic = CompilerDiagnostic::new(
-                        ErrorCategory::Immutability,
-                        "Cannot access variable before it is declared",
-                        Some(format!(
+                    let mut diagnostic = ErrorCategory::Immutability
+                        .diagnostic("Cannot access variable before it is declared")
+                        .with_help(format!(
                             "{} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time",
                             variable.as_deref().unwrap_or("This variable")
-                        )),
-                    );
-                    if let Some(ref access) = hoisted_access {
-                        if access.span != value.span {
-                            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                                span: access.span,
-                                message: Some(format!(
-                                    "{} accessed before it is declared",
-                                    variable.as_deref().unwrap_or("variable")
-                                )),
-                            });
-                        }
+                        ));
+                    if let Some(ref access) = hoisted_access
+                        && access.span != value.span
+                    {
+                        diagnostic.labels.extend(access.span.map(|s| {
+                            s.label(format!(
+                                "{} accessed before it is declared",
+                                variable.as_deref().unwrap_or("variable")
+                            ))
+                        }));
                     }
-                    diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                        span: value.span,
-                        message: Some(format!(
+                    diagnostic.labels.extend(value.span.map(|s| {
+                        s.label(format!(
                             "{} is declared here",
                             variable.as_deref().unwrap_or("variable")
-                        )),
-                    });
+                        ))
+                    }));
+                    let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     apply_effect(
                         context,
                         state,
-                        AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic },
+                        AliasingEffect::MutateFrozen { place: *value, error },
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                 } else {
                     let reason_str = get_write_error_reason(&abstract_value);
@@ -1769,22 +1977,20 @@ fn apply_effect(
                         }
                         _ => "value".to_string(),
                     };
-                    let mut diagnostic = CompilerDiagnostic::new(
-                        ErrorCategory::Immutability,
-                        "This value cannot be modified",
-                        Some(reason_str),
-                    );
-                    diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                        span: value.span,
-                        message: Some(format!("{} cannot be modified", variable)),
-                    });
+                    let diagnostic = ErrorCategory::Immutability
+                        .diagnostic("This value cannot be modified")
+                        .with_help(reason_str)
+                        .with_labels(
+                            value.span.map(|s| s.label(format!("{} cannot be modified", variable))),
+                        );
 
+                    let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
-                        AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic }
+                        AliasingEffect::MutateFrozen { place: *value, error }
                     } else {
-                        AliasingEffect::MutateGlobal { place: value.clone(), error: diagnostic }
+                        AliasingEffect::MutateGlobal { place: *value, error }
                     };
-                    apply_effect(context, state, error_kind, initialized, effects, env, func)?;
+                    apply_effect(context, state, error_kind, initialized, effects, env)?;
                 }
             }
         }
@@ -1792,7 +1998,7 @@ fn apply_effect(
         | AliasingEffect::Render { .. }
         | AliasingEffect::MutateFrozen { .. }
         | AliasingEffect::MutateGlobal { .. } => {
-            effects.push(effect.clone());
+            effects.push(effect.clone_in(context.alloc));
         }
     }
     Ok(())
@@ -1802,40 +2008,34 @@ fn apply_effect(
 // computeSignatureForInstruction
 // =============================================================================
 
-fn compute_signature_for_instruction(
-    context: &mut Context,
-    env: &Environment,
-    instr: &Instruction,
-) -> InstructionSignature {
+fn compute_signature_for_instruction<'a>(
+    context: &mut Context<'a>,
+    env: &Environment<'a>,
+    instr: &Instruction<'a>,
+) -> InstructionSignature<'a> {
+    let alloc = env.allocator;
     let lvalue = &instr.lvalue;
     let value = &instr.value;
-    let mut effects: Vec<AliasingEffect> = Vec::new();
+    let mut effects: Vec<AliasingEffect<'a>> = Vec::new();
 
     match value {
         InstructionValue::ArrayExpression { elements, .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
             for element in elements {
                 match element {
                     ArrayElement::Place(p) => {
-                        effects.push(AliasingEffect::Capture {
-                            from: p.clone(),
-                            into: lvalue.clone(),
-                        });
+                        effects.push(AliasingEffect::Capture { from: *p, into: *lvalue });
                     }
                     ArrayElement::Spread(s) => {
-                        let ty = &env.types
-                            [env.identifiers[s.place.identifier.0 as usize].type_.0 as usize];
+                        let ty = &env.types[env.identifiers[s.place.identifier].type_];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(&s.place, ty) {
                             effects.push(mutate_iter);
                         }
-                        effects.push(AliasingEffect::Capture {
-                            from: s.place.clone(),
-                            into: lvalue.clone(),
-                        });
+                        effects.push(AliasingEffect::Capture { from: s.place, into: *lvalue });
                     }
                     ArrayElement::Hole => {}
                 }
@@ -1843,105 +2043,90 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::ObjectExpression { properties, .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
             for property in properties {
                 match property {
                     ObjectPropertyOrSpread::Property(p) => {
-                        effects.push(AliasingEffect::Capture {
-                            from: p.place.clone(),
-                            into: lvalue.clone(),
-                        });
+                        effects.push(AliasingEffect::Capture { from: p.place, into: *lvalue });
                     }
                     ObjectPropertyOrSpread::Spread(s) => {
-                        effects.push(AliasingEffect::Capture {
-                            from: s.place.clone(),
-                            into: lvalue.clone(),
-                        });
+                        effects.push(AliasingEffect::Capture { from: s.place, into: *lvalue });
                     }
                 }
             }
         }
         InstructionValue::Await { value: await_value, .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
-            effects
-                .push(AliasingEffect::MutateTransitiveConditionally { value: await_value.clone() });
-            effects
-                .push(AliasingEffect::Capture { from: await_value.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::MutateTransitiveConditionally { value: *await_value });
+            effects.push(AliasingEffect::Capture { from: *await_value, into: *lvalue });
         }
         InstructionValue::NewExpression { callee, args, span } => {
-            let sig = get_function_call_signature(env, callee.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
-                receiver: callee.clone(),
-                function: callee.clone(),
+                receiver: *callee,
+                function: *callee,
                 mutates_function: false,
-                args: args.iter().map(place_or_spread_to_hole).collect(),
-                into: lvalue.clone(),
-                signature: sig,
+                args: ArenaVec::from_iter_in(args.iter().map(place_or_spread_to_hole), &alloc),
+                into: *lvalue,
+                signature: Some(env.identifiers[callee.identifier].type_),
                 span: *span,
             });
         }
         InstructionValue::CallExpression { callee, args, span } => {
-            let sig = get_function_call_signature(env, callee.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
-                receiver: callee.clone(),
-                function: callee.clone(),
+                receiver: *callee,
+                function: *callee,
                 mutates_function: true,
-                args: args.iter().map(place_or_spread_to_hole).collect(),
-                into: lvalue.clone(),
-                signature: sig,
+                args: ArenaVec::from_iter_in(args.iter().map(place_or_spread_to_hole), &alloc),
+                into: *lvalue,
+                signature: Some(env.identifiers[callee.identifier].type_),
                 span: *span,
             });
         }
         InstructionValue::MethodCall { receiver, property, args, span } => {
-            let sig = get_function_call_signature(env, property.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
-                receiver: receiver.clone(),
-                function: property.clone(),
+                receiver: *receiver,
+                function: *property,
                 mutates_function: false,
-                args: args.iter().map(place_or_spread_to_hole).collect(),
-                into: lvalue.clone(),
-                signature: sig,
+                args: ArenaVec::from_iter_in(args.iter().map(place_or_spread_to_hole), &alloc),
+                into: *lvalue,
+                signature: Some(env.identifiers[property.identifier].type_),
                 span: *span,
             });
         }
         InstructionValue::PropertyDelete { object, .. }
         | InstructionValue::ComputedDelete { object, .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
-            effects.push(AliasingEffect::Mutate { value: object.clone(), reason: None });
+            effects.push(AliasingEffect::Mutate { value: *object, reason: None });
         }
         InstructionValue::PropertyLoad { object, .. }
         | InstructionValue::ComputedLoad { object, .. } => {
-            let ty = &env.types[env.identifiers[lvalue.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[lvalue.identifier].type_];
             if is_primitive_type(ty) {
                 effects.push(AliasingEffect::Create {
-                    into: lvalue.clone(),
+                    into: *lvalue,
                     value: ValueKind::Primitive,
                     reason: ValueReason::Other,
                 });
             } else {
-                effects.push(AliasingEffect::CreateFrom {
-                    from: object.clone(),
-                    into: lvalue.clone(),
-                });
+                effects.push(AliasingEffect::CreateFrom { from: *object, into: *lvalue });
             }
         }
         InstructionValue::PropertyStore { object, property, value: store_value, .. } => {
             let mutation_reason: Option<MutationReason> = {
-                let obj_ty =
-                    &env.types[env.identifiers[object.identifier.0 as usize].type_.0 as usize];
+                let obj_ty = &env.types[env.identifiers[object.identifier].type_];
                 if let PropertyLiteral::String(prop_name) = property {
-                    if prop_name == "current" && matches!(obj_ty, Type::TypeVar { .. }) {
+                    if prop_name == "current" && matches!(obj_ty, Type::Var { .. }) {
                         Some(MutationReason::AssignCurrentProperty)
                     } else {
                         None
@@ -1950,131 +2135,119 @@ fn compute_signature_for_instruction(
                     None
                 }
             };
-            effects.push(AliasingEffect::Mutate { value: object.clone(), reason: mutation_reason });
-            effects
-                .push(AliasingEffect::Capture { from: store_value.clone(), into: object.clone() });
+            effects.push(AliasingEffect::Mutate { value: *object, reason: mutation_reason });
+            effects.push(AliasingEffect::Capture { from: *store_value, into: *object });
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }
         InstructionValue::ComputedStore { object, value: store_value, .. } => {
-            effects.push(AliasingEffect::Mutate { value: object.clone(), reason: None });
-            effects
-                .push(AliasingEffect::Capture { from: store_value.clone(), into: object.clone() });
+            effects.push(AliasingEffect::Mutate { value: *object, reason: None });
+            effects.push(AliasingEffect::Capture { from: *store_value, into: *object });
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.0 as usize];
-            let captures: Vec<Place> = inner_func
-                .context
-                .iter()
-                .filter(|operand| operand.effect == Effect::Capture)
-                .cloned()
-                .collect();
+            let inner_func = &env.functions[lowered_func.func];
+            let captures = ArenaVec::from_iter_in(
+                inner_func
+                    .context
+                    .iter()
+                    .filter(|operand| operand.effect == Effect::Capture)
+                    .copied(),
+                &alloc,
+            );
             effects.push(AliasingEffect::CreateFunction {
-                into: lvalue.clone(),
+                into: *lvalue,
                 function_id: lowered_func.func,
                 captures,
             });
         }
         InstructionValue::GetIterator { collection, .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
-            let ty = &env.types[env.identifiers[collection.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[collection.identifier].type_];
             if is_builtin_collection_type(ty) {
-                effects.push(AliasingEffect::Capture {
-                    from: collection.clone(),
-                    into: lvalue.clone(),
-                });
+                effects.push(AliasingEffect::Capture { from: *collection, into: *lvalue });
             } else {
-                effects
-                    .push(AliasingEffect::Alias { from: collection.clone(), into: lvalue.clone() });
-                effects.push(AliasingEffect::MutateTransitiveConditionally {
-                    value: collection.clone(),
-                });
+                effects.push(AliasingEffect::Alias { from: *collection, into: *lvalue });
+                effects.push(AliasingEffect::MutateTransitiveConditionally { value: *collection });
             }
         }
         InstructionValue::IteratorNext { iterator, collection, .. } => {
-            effects.push(AliasingEffect::MutateConditionally { value: iterator.clone() });
-            effects.push(AliasingEffect::CreateFrom {
-                from: collection.clone(),
-                into: lvalue.clone(),
-            });
+            effects.push(AliasingEffect::MutateConditionally { value: *iterator });
+            effects.push(AliasingEffect::CreateFrom { from: *collection, into: *lvalue });
         }
         InstructionValue::NextPropertyOf { .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }
         InstructionValue::JsxExpression { tag, props, children, .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Frozen,
                 reason: ValueReason::JsxCaptured,
             });
             for operand in visitors::each_instruction_value_operand(value, env) {
                 effects.push(AliasingEffect::Freeze {
-                    value: operand.clone(),
+                    value: operand,
                     reason: ValueReason::JsxCaptured,
                 });
-                effects
-                    .push(AliasingEffect::Capture { from: operand.clone(), into: lvalue.clone() });
+                effects.push(AliasingEffect::Capture { from: operand, into: *lvalue });
             }
             if let JsxTag::Place(tag_place) = tag {
-                effects.push(AliasingEffect::Render { place: tag_place.clone() });
+                effects.push(AliasingEffect::Render { place: *tag_place });
             }
             if let Some(ch) = children {
                 for child in ch {
-                    effects.push(AliasingEffect::Render { place: child.clone() });
+                    effects.push(AliasingEffect::Render { place: *child });
                 }
             }
             for prop in props {
                 if let JsxAttribute::Attribute { place: prop_place, .. } = prop {
-                    let prop_ty = &env.types
-                        [env.identifiers[prop_place.identifier.0 as usize].type_.0 as usize];
-                    if let Type::Function { return_type, .. } = prop_ty {
-                        if is_jsx_type(return_type) || is_phi_with_jsx(return_type) {
-                            effects.push(AliasingEffect::Render { place: prop_place.clone() });
-                        }
+                    let prop_ty = &env.types[env.identifiers[prop_place.identifier].type_];
+                    if let Type::Function { return_type, .. } = prop_ty
+                        && (is_jsx_type(return_type) || is_phi_with_jsx(return_type))
+                    {
+                        effects.push(AliasingEffect::Render { place: *prop_place });
                     }
                 }
             }
         }
-        InstructionValue::JsxFragment { children: _, .. } => {
+        InstructionValue::JsxFragment { .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Frozen,
                 reason: ValueReason::JsxCaptured,
             });
             for operand in visitors::each_instruction_value_operand(value, env) {
                 effects.push(AliasingEffect::Freeze {
-                    value: operand.clone(),
+                    value: operand,
                     reason: ValueReason::JsxCaptured,
                 });
-                effects
-                    .push(AliasingEffect::Capture { from: operand.clone(), into: lvalue.clone() });
+                effects.push(AliasingEffect::Capture { from: operand, into: *lvalue });
             }
         }
         InstructionValue::DeclareLocal { lvalue: dl, .. } => {
             effects.push(AliasingEffect::Create {
-                into: dl.place.clone(),
+                into: dl.place,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
@@ -2083,18 +2256,17 @@ fn compute_signature_for_instruction(
             for pat_item in each_pattern_items(&dl.pattern) {
                 match pat_item {
                     PatternItem::Place(place) => {
-                        let ty = &env.types
-                            [env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                        let ty = &env.types[env.identifiers[place.identifier].type_];
                         if is_primitive_type(ty) {
                             effects.push(AliasingEffect::Create {
-                                into: place.clone(),
+                                into: *place,
                                 value: ValueKind::Primitive,
                                 reason: ValueReason::Other,
                             });
                         } else {
                             effects.push(AliasingEffect::CreateFrom {
-                                from: dest_value.clone(),
-                                into: place.clone(),
+                                from: *dest_value,
+                                into: *place,
                             });
                         }
                     }
@@ -2106,24 +2278,21 @@ fn compute_signature_for_instruction(
                             ValueKind::Mutable
                         };
                         effects.push(AliasingEffect::Create {
-                            into: place.clone(),
+                            into: *place,
                             reason: ValueReason::Other,
                             value: value_kind,
                         });
-                        effects.push(AliasingEffect::Capture {
-                            from: dest_value.clone(),
-                            into: place.clone(),
-                        });
+                        effects.push(AliasingEffect::Capture { from: *dest_value, into: *place });
                     }
                 }
             }
-            effects.push(AliasingEffect::Assign { from: dest_value.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::Assign { from: *dest_value, into: *lvalue });
         }
         InstructionValue::LoadContext { place, .. } => {
-            effects.push(AliasingEffect::CreateFrom { from: place.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::CreateFrom { from: *place, into: *lvalue });
         }
         InstructionValue::DeclareContext { lvalue: dcl, .. } => {
-            let decl_id = env.identifiers[dcl.place.identifier.0 as usize].declaration_id;
+            let decl_id = env.identifiers[dcl.place.identifier].declaration_id;
             let kind = dcl.kind;
             if !context.hoisted_context_declarations.contains_key(&decl_id)
                 || kind == InstructionKind::HoistedConst
@@ -2131,80 +2300,76 @@ fn compute_signature_for_instruction(
                 || kind == InstructionKind::HoistedLet
             {
                 effects.push(AliasingEffect::Create {
-                    into: dcl.place.clone(),
+                    into: dcl.place,
                     value: ValueKind::Mutable,
                     reason: ValueReason::Other,
                 });
             } else {
-                effects.push(AliasingEffect::Mutate { value: dcl.place.clone(), reason: None });
+                effects.push(AliasingEffect::Mutate { value: dcl.place, reason: None });
             }
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }
         InstructionValue::StoreContext { lvalue: scl, value: sc_value, .. } => {
-            let decl_id = env.identifiers[scl.place.identifier.0 as usize].declaration_id;
+            let decl_id = env.identifiers[scl.place.identifier].declaration_id;
             if scl.kind == InstructionKind::Reassign
                 || context.hoisted_context_declarations.contains_key(&decl_id)
             {
-                effects.push(AliasingEffect::Mutate { value: scl.place.clone(), reason: None });
+                effects.push(AliasingEffect::Mutate { value: scl.place, reason: None });
             } else {
                 effects.push(AliasingEffect::Create {
-                    into: scl.place.clone(),
+                    into: scl.place,
                     value: ValueKind::Mutable,
                     reason: ValueReason::Other,
                 });
             }
-            effects
-                .push(AliasingEffect::Capture { from: sc_value.clone(), into: scl.place.clone() });
-            effects.push(AliasingEffect::Assign { from: sc_value.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::Capture { from: *sc_value, into: scl.place });
+            effects.push(AliasingEffect::Assign { from: *sc_value, into: *lvalue });
         }
         InstructionValue::LoadLocal { place, .. } => {
-            effects.push(AliasingEffect::Assign { from: place.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::Assign { from: *place, into: *lvalue });
         }
         InstructionValue::StoreLocal { lvalue: sl, value: sl_value, .. } => {
-            effects.push(AliasingEffect::Assign { from: sl_value.clone(), into: sl.place.clone() });
-            effects.push(AliasingEffect::Assign { from: sl_value.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::Assign { from: *sl_value, into: sl.place });
+            effects.push(AliasingEffect::Assign { from: *sl_value, into: *lvalue });
         }
         InstructionValue::PostfixUpdate { lvalue: pf_lvalue, .. }
         | InstructionValue::PrefixUpdate { lvalue: pf_lvalue, .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
             effects.push(AliasingEffect::Create {
-                into: pf_lvalue.clone(),
+                into: *pf_lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }
-        InstructionValue::StoreGlobal { name, value: sg_value, span: _, .. } => {
+        InstructionValue::StoreGlobal { name, value: sg_value, .. } => {
             let variable = format!("`{}`", name);
-            let mut diagnostic = CompilerDiagnostic::new(
-                ErrorCategory::Globals,
-                "Cannot reassign variables declared outside of the component/hook",
-                Some(format!(
+            let diagnostic = ErrorCategory::Globals
+                .diagnostic("Cannot reassign variables declared outside of the component/hook")
+                .with_help(format!(
                     "Variable {} is declared outside of the component/hook. Reassigning this value during render is a form of side effect, which can cause unpredictable behavior depending on when the component happens to re-render. If this variable is used in rendering, use useState instead. Otherwise, consider updating it in an effect. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#side-effects-must-run-outside-of-render)",
                     variable
-                )),
-            );
-            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                span: instr.span,
-                message: Some(format!("{} cannot be reassigned", variable)),
-            });
-            effects
-                .push(AliasingEffect::MutateGlobal { place: sg_value.clone(), error: diagnostic });
-            effects.push(AliasingEffect::Assign { from: sg_value.clone(), into: lvalue.clone() });
+                ))
+                .with_labels(
+                    instr.span.map(|s| s.label(format!("{} cannot be reassigned", variable))),
+                );
+            let error = env.intern_aliasing_diagnostic(sg_value.identifier, diagnostic);
+            effects.push(AliasingEffect::MutateGlobal { place: *sg_value, error });
+            effects.push(AliasingEffect::Assign { from: *sg_value, into: *lvalue });
         }
         InstructionValue::TypeCastExpression { value: tc_value, .. } => {
-            effects.push(AliasingEffect::Assign { from: tc_value.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::Assign { from: *tc_value, into: *lvalue });
         }
         InstructionValue::LoadGlobal { .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Global,
                 reason: ValueReason::Global,
             });
@@ -2213,13 +2378,13 @@ fn compute_signature_for_instruction(
             if env.config.enable_preserve_existing_memoization_guarantees {
                 for operand in visitors::each_instruction_value_operand(value, env) {
                     effects.push(AliasingEffect::Freeze {
-                        value: operand.clone(),
+                        value: operand,
                         reason: ValueReason::HookCaptured,
                     });
                 }
             }
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
@@ -2233,10 +2398,9 @@ fn compute_signature_for_instruction(
         | InstructionValue::Primitive { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::TemplateLiteral { .. }
-        | InstructionValue::UnaryExpression { .. }
-        | InstructionValue::UnsupportedNode { .. } => {
+        | InstructionValue::UnaryExpression { .. } => {
             effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
+                into: *lvalue,
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
@@ -2251,44 +2415,40 @@ fn compute_signature_for_instruction(
 // =============================================================================
 
 #[allow(clippy::too_many_arguments)]
-fn compute_effects_for_legacy_signature(
+fn compute_effects_for_legacy_signature<'a>(
     state: &InferenceState,
     signature: &FunctionSignature,
     lvalue: &Place,
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
     span: Option<&Span>,
-    env: &Environment,
+    env: &Environment<'a>,
     function_values: &FxHashMap<ValueId, FunctionId>,
-    todo_errors: &mut Vec<CompilerErrorDetail>,
-) -> Vec<AliasingEffect> {
+    todo_errors: &mut Vec<OxcDiagnostic>,
+) -> Vec<AliasingEffect<'a>> {
     let return_value_reason = signature.return_value_reason.unwrap_or(ValueReason::Other);
-    let mut effects: Vec<AliasingEffect> = Vec::new();
+    let mut effects: Vec<AliasingEffect<'a>> = Vec::new();
 
     effects.push(AliasingEffect::Create {
-        into: lvalue.clone(),
+        into: *lvalue,
         value: signature.return_value_kind,
         reason: return_value_reason,
     });
 
     if signature.impure && env.config.validate_no_impure_functions_in_render {
-        let mut diagnostic = CompilerDiagnostic::new(
-            ErrorCategory::Purity,
-            "Cannot call impure function during render",
-            Some(format!(
+        let diagnostic = ErrorCategory::Purity
+            .diagnostic("Cannot call impure function during render")
+            .with_help(format!(
                 "{}Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)",
                 if let Some(ref name) = signature.canonical_name {
                     format!("`{}` is an impure function. ", name)
                 } else {
                     String::new()
                 }
-            )),
-        );
-        diagnostic.details.push(CompilerDiagnosticDetail::Error {
-            span: span.copied(),
-            message: Some("Cannot call impure function".to_string()),
-        });
-        effects.push(AliasingEffect::Impure { place: receiver.clone(), error: diagnostic });
+            ))
+            .with_labels(span.copied().map(|s| s.label("Cannot call impure function")));
+        let error = env.intern_aliasing_diagnostic(receiver.identifier, diagnostic);
+        effects.push(AliasingEffect::Impure { place: *receiver, error });
     }
 
     // TODO: check signature.known_incompatible and throw (TS line 2351-2370)
@@ -2299,16 +2459,13 @@ fn compute_effects_for_legacy_signature(
     if signature.mutable_only_if_operands_are_mutable
         && are_arguments_immutable_and_non_mutating(state, args, env, function_values)
     {
-        effects.push(AliasingEffect::Alias { from: receiver.clone(), into: lvalue.clone() });
+        effects.push(AliasingEffect::Alias { from: *receiver, into: *lvalue });
         for arg in args {
             match arg {
                 PlaceOrSpreadOrHole::Hole => continue,
                 PlaceOrSpreadOrHole::Place(place)
                 | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
-                    effects.push(AliasingEffect::ImmutableCapture {
-                        from: place.clone(),
-                        into: lvalue.clone(),
-                    });
+                    effects.push(AliasingEffect::ImmutableCapture { from: *place, into: *lvalue });
                 }
             }
         }
@@ -2321,40 +2478,36 @@ fn compute_effects_for_legacy_signature(
     let mut visit = |place: &Place, effect: Effect, effects: &mut Vec<AliasingEffect>| match effect
     {
         Effect::Store => {
-            effects.push(AliasingEffect::Mutate { value: place.clone(), reason: None });
-            stores.push(place.clone());
+            effects.push(AliasingEffect::Mutate { value: *place, reason: None });
+            stores.push(*place);
         }
         Effect::Capture => {
-            captures.push(place.clone());
+            captures.push(*place);
         }
         Effect::ConditionallyMutate => {
-            effects.push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
+            effects.push(AliasingEffect::MutateTransitiveConditionally { value: *place });
         }
         Effect::ConditionallyMutateIterator => {
-            let ty = &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[place.identifier].type_];
             if let Some(mutate_iter) = conditionally_mutate_iterator(place, ty) {
                 effects.push(mutate_iter);
             }
-            effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
+            effects.push(AliasingEffect::Capture { from: *place, into: *lvalue });
         }
         Effect::Freeze => {
-            effects
-                .push(AliasingEffect::Freeze { value: place.clone(), reason: return_value_reason });
+            effects.push(AliasingEffect::Freeze { value: *place, reason: return_value_reason });
         }
         Effect::Mutate => {
-            effects.push(AliasingEffect::MutateTransitive { value: place.clone() });
+            effects.push(AliasingEffect::MutateTransitive { value: *place });
         }
         Effect::Read => {
-            effects.push(AliasingEffect::ImmutableCapture {
-                from: place.clone(),
-                into: lvalue.clone(),
-            });
+            effects.push(AliasingEffect::ImmutableCapture { from: *place, into: *lvalue });
         }
         _ => {}
     };
 
     if signature.callee_effect != Effect::Capture {
-        effects.push(AliasingEffect::Alias { from: receiver.clone(), into: lvalue.clone() });
+        effects.push(AliasingEffect::Alias { from: *receiver, into: *lvalue });
     }
 
     visit(receiver, signature.callee_effect, &mut effects);
@@ -2381,15 +2534,12 @@ fn compute_effects_for_legacy_signature(
     if !captures.is_empty() {
         if stores.is_empty() {
             for capture in &captures {
-                effects.push(AliasingEffect::Alias { from: capture.clone(), into: lvalue.clone() });
+                effects.push(AliasingEffect::Alias { from: *capture, into: *lvalue });
             }
         } else {
             for capture in &captures {
                 for store in &stores {
-                    effects.push(AliasingEffect::Capture {
-                        from: capture.clone(),
-                        into: store.clone(),
-                    });
+                    effects.push(AliasingEffect::Capture { from: *capture, into: *store });
                 }
             }
         }
@@ -2402,19 +2552,18 @@ fn get_argument_effect(
     sig_effect: Effect,
     is_spread: bool,
     spread_span: Option<Span>,
-) -> (Effect, Option<CompilerErrorDetail>) {
+) -> (Effect, Option<OxcDiagnostic>) {
     if !is_spread || sig_effect == Effect::Mutate || sig_effect == Effect::ConditionallyMutate {
         (sig_effect, None)
     } else {
         // Spread with Freeze effect is unsupported for hook arguments
         // (matches TS CompilerError.throwTodo)
         let detail = if sig_effect == Effect::Freeze {
-            Some(CompilerErrorDetail {
-                reason: "Support spread syntax for hook arguments".to_string(),
-                description: None,
-                category: ErrorCategory::Todo,
-                span: spread_span,
-            })
+            Some(
+                ErrorCategory::Todo
+                    .diagnostic("Support spread syntax for hook arguments")
+                    .with_labels(spread_span),
+            )
         } else {
             None
         };
@@ -2440,8 +2589,7 @@ fn are_arguments_immutable_and_non_mutating(
                 // Check if it's a function type with a known signature
                 let is_place = matches!(arg, PlaceOrSpreadOrHole::Place(_));
                 if is_place {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     if let Type::Function { .. } = ty {
                         let fn_shape = env.get_function_signature(ty).ok().flatten();
                         if let Some(fn_sig) = fn_shape {
@@ -2471,14 +2619,14 @@ fn are_arguments_immutable_and_non_mutating(
                 let value_ids = state.values_for(place.identifier);
                 for vid in &value_ids {
                     if let Some(&func_id) = function_values.get(vid) {
-                        let inner_func = &env.functions[func_id.0 as usize];
+                        let inner_func = &env.functions[func_id];
                         let mutates_params = inner_func.params.iter().any(|param| {
                             let param_id = match param {
                                 ParamPattern::Place(p) => p.identifier,
                                 ParamPattern::Spread(s) => s.place.identifier,
                             };
-                            let ident = &env.identifiers[param_id.0 as usize];
-                            ident.mutable_range.end.0 > ident.mutable_range.start.0 + 1
+                            let ident = &env.identifiers[param_id];
+                            ident.mutable_range.end > ident.mutable_range.start + 1
                         });
                         if mutates_params {
                             return false;
@@ -2506,8 +2654,8 @@ fn is_known_mutable_effect(effect: Effect) -> bool {
 // =============================================================================
 
 #[allow(clippy::too_many_arguments)]
-fn compute_effects_for_aliasing_signature_config(
-    env: &mut Environment,
+fn compute_effects_for_aliasing_signature_config<'a>(
+    env: &mut Environment<'a>,
     config: &AliasingSignatureConfig,
     lvalue: &Place,
     receiver: &Place,
@@ -2515,11 +2663,12 @@ fn compute_effects_for_aliasing_signature_config(
     context: &[Place],
     span: Option<&Span>,
     temp_cache: &mut FxHashMap<(IdentifierId, String), Place>,
-) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
+) -> Result<Option<Vec<AliasingEffect<'a>>>, OxcDiagnostic> {
+    let alloc = env.allocator;
     // Build substitutions from config strings to places
     let mut substitutions: FxHashMap<String, Vec<Place>> = FxHashMap::default();
-    substitutions.insert(config.receiver.clone(), vec![receiver.clone()]);
-    substitutions.insert(config.returns.clone(), vec![lvalue.clone()]);
+    substitutions.insert(config.receiver.to_string(), vec![*receiver]);
+    substitutions.insert(config.returns.to_string(), vec![*lvalue]);
 
     let mut mutable_spreads: FxHashSet<IdentifierId> = FxHashSet::default();
 
@@ -2529,16 +2678,15 @@ fn compute_effects_for_aliasing_signature_config(
             PlaceOrSpreadOrHole::Place(place)
             | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
                 if i < config.params.len() && !matches!(arg, PlaceOrSpreadOrHole::Spread(_)) {
-                    substitutions.insert(config.params[i].clone(), vec![place.clone()]);
-                } else if let Some(ref rest) = config.rest {
-                    substitutions.entry(rest.clone()).or_default().push(place.clone());
+                    substitutions.insert(config.params[i].to_string(), vec![*place]);
+                } else if let Some(rest) = config.rest {
+                    substitutions.entry(rest.to_string()).or_default().push(*place);
                 } else {
                     return Ok(None);
                 }
 
                 if matches!(arg, PlaceOrSpreadOrHole::Spread(_)) {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -2549,40 +2697,37 @@ fn compute_effects_for_aliasing_signature_config(
     }
 
     for operand in context {
-        let ident = &env.identifiers[operand.identifier.0 as usize];
+        let ident = &env.identifiers[operand.identifier];
         if let Some(ref name) = ident.name {
-            substitutions.insert(format!("@{}", name.value()), vec![operand.clone()]);
+            substitutions.insert(format!("@{}", name.value()), vec![*operand]);
         }
     }
 
     // Create temporaries (cached by lvalue + temp_name to be stable across fixpoint iterations)
-    for temp_name in &config.temporaries {
-        let cache_key = (lvalue.identifier, temp_name.clone());
-        let temp_place = temp_cache
-            .entry(cache_key)
-            .or_insert_with(|| create_temp_place(env, receiver.span))
-            .clone();
-        substitutions.insert(temp_name.clone(), vec![temp_place]);
+    for temp_name in config.temporaries {
+        let cache_key = (lvalue.identifier, temp_name.to_string());
+        let temp_place =
+            *temp_cache.entry(cache_key).or_insert_with(|| create_temp_place(env, receiver.span));
+        substitutions.insert(temp_name.to_string(), vec![temp_place]);
     }
 
     let mut effects: Vec<AliasingEffect> = Vec::new();
 
-    for eff_config in &config.effects {
+    for eff_config in config.effects {
         match eff_config {
             AliasingEffectConfig::Freeze { value, reason } => {
-                let values = substitutions.get(value).cloned().unwrap_or_default();
+                let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(CompilerDiagnostic::todo(
-                            "Support spread syntax for hook arguments",
-                            v.span,
-                        ));
+                        return Err(ErrorCategory::Todo
+                            .diagnostic("Support spread syntax for hook arguments")
+                            .with_labels(v.span));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
             }
             AliasingEffectConfig::Create { into, value, reason } => {
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for v in intos {
                     effects.push(AliasingEffect::Create {
                         into: v,
@@ -2592,75 +2737,68 @@ fn compute_effects_for_aliasing_signature_config(
                 }
             }
             AliasingEffectConfig::CreateFrom { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
-                        effects
-                            .push(AliasingEffect::CreateFrom { from: f.clone(), into: t.clone() });
+                        effects.push(AliasingEffect::CreateFrom { from: *f, into: *t });
                     }
                 }
             }
             AliasingEffectConfig::Assign { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
-                        effects.push(AliasingEffect::Assign { from: f.clone(), into: t.clone() });
+                        effects.push(AliasingEffect::Assign { from: *f, into: *t });
                     }
                 }
             }
             AliasingEffectConfig::Alias { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
-                        effects.push(AliasingEffect::Alias { from: f.clone(), into: t.clone() });
+                        effects.push(AliasingEffect::Alias { from: *f, into: *t });
                     }
                 }
             }
             AliasingEffectConfig::Capture { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
-                        effects.push(AliasingEffect::Capture { from: f.clone(), into: t.clone() });
+                        effects.push(AliasingEffect::Capture { from: *f, into: *t });
                     }
                 }
             }
             AliasingEffectConfig::ImmutableCapture { from, into } => {
-                let froms = substitutions.get(from).cloned().unwrap_or_default();
-                let intos = substitutions.get(into).cloned().unwrap_or_default();
+                let froms = substitutions.get(*from).cloned().unwrap_or_default();
+                let intos = substitutions.get(*into).cloned().unwrap_or_default();
                 for f in &froms {
                     for t in &intos {
-                        effects.push(AliasingEffect::ImmutableCapture {
-                            from: f.clone(),
-                            into: t.clone(),
-                        });
+                        effects.push(AliasingEffect::ImmutableCapture { from: *f, into: *t });
                     }
                 }
             }
             AliasingEffectConfig::Impure { place } => {
-                let values = substitutions.get(place).cloned().unwrap_or_default();
+                let values = substitutions.get(*place).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::Impure {
-                        place: v,
-                        error: CompilerDiagnostic::new(
-                            ErrorCategory::Purity,
-                            "Impure function call",
-                            None,
-                        ),
-                    });
+                    let error = env.intern_aliasing_diagnostic(
+                        v.identifier,
+                        ErrorCategory::Purity.diagnostic("Impure function call"),
+                    );
+                    effects.push(AliasingEffect::Impure { place: v, error });
                 }
             }
             AliasingEffectConfig::Mutate { value } => {
-                let values = substitutions.get(value).cloned().unwrap_or_default();
+                let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     effects.push(AliasingEffect::Mutate { value: v, reason: None });
                 }
             }
             AliasingEffectConfig::MutateTransitiveConditionally { value } => {
-                let values = substitutions.get(value).cloned().unwrap_or_default();
+                let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     effects.push(AliasingEffect::MutateTransitiveConditionally { value: v });
                 }
@@ -2672,30 +2810,21 @@ fn compute_effects_for_aliasing_signature_config(
                 args: a,
                 into: i,
             } => {
-                let recv = substitutions.get(r).and_then(|v| v.first()).cloned();
-                let func = substitutions.get(f).and_then(|v| v.first()).cloned();
-                let into = substitutions.get(i).and_then(|v| v.first()).cloned();
+                let recv = substitutions.get(*r).and_then(|v| v.first()).cloned();
+                let func = substitutions.get(*f).and_then(|v| v.first()).cloned();
+                let into = substitutions.get(*i).and_then(|v| v.first()).cloned();
                 if let (Some(recv), Some(func), Some(into)) = (recv, func, into) {
-                    let mut apply_args: Vec<PlaceOrSpreadOrHole> = Vec::new();
-                    for arg in a {
+                    let mut apply_args = ArenaVec::new_in(&alloc);
+                    for arg in *a {
                         match arg {
-                            ApplyArgConfig::Hole { .. } => {
+                            ApplyArgConfig::Hole => {
                                 apply_args.push(PlaceOrSpreadOrHole::Hole);
                             }
                             ApplyArgConfig::Place(name) => {
-                                if let Some(places) = substitutions.get(name) {
-                                    if let Some(p) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Place(p.clone()));
-                                    }
-                                }
-                            }
-                            ApplyArgConfig::Spread { place: name, .. } => {
-                                if let Some(places) = substitutions.get(name) {
-                                    if let Some(p) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Spread(
-                                            SpreadPattern { place: p.clone() },
-                                        ));
-                                    }
+                                if let Some(places) = substitutions.get(*name)
+                                    && let Some(p) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Place(*p));
                                 }
                             }
                         }
@@ -2725,12 +2854,13 @@ fn compute_effects_for_aliasing_signature_config(
 
 /// Build an AliasingSignature from a function expression's params/returns/aliasing effects.
 /// Corresponds to TS `buildSignatureFromFunctionExpression`.
-fn build_signature_from_function_expression(
-    env: &mut Environment,
+fn build_signature_from_function_expression<'a>(
+    env: &mut Environment<'a>,
     func_id: FunctionId,
-) -> AliasingSignature {
-    let inner_func = &env.functions[func_id.0 as usize];
-    let mut params: Vec<IdentifierId> = Vec::new();
+) -> AliasingSignature<'a> {
+    let alloc = env.allocator;
+    let inner_func = &env.functions[func_id];
+    let mut params = ArenaVec::new_in(&alloc);
     let mut rest: Option<IdentifierId> = None;
     for param in &inner_func.params {
         match param {
@@ -2739,7 +2869,11 @@ fn build_signature_from_function_expression(
         }
     }
     let returns = inner_func.returns.identifier;
-    let aliasing_effects = inner_func.aliasing_effects.clone().unwrap_or_default();
+    let aliasing_effects = inner_func
+        .aliasing_effects
+        .as_ref()
+        .map(|v| v.clone_in(alloc))
+        .unwrap_or_else(|| ArenaVec::new_in(&alloc));
     let span = inner_func.span;
 
     if rest.is_none() {
@@ -2748,26 +2882,27 @@ fn build_signature_from_function_expression(
     }
 
     AliasingSignature {
-        receiver: IdentifierId(0),
+        receiver: IdentifierId::from_usize(0),
         params,
         rest,
         returns,
         effects: aliasing_effects,
-        temporaries: Vec::new(),
+        temporaries: ArenaVec::new_in(&alloc),
     }
 }
 
 /// Compute effects by substituting an AliasingSignature (IdentifierId-based)
 /// with actual arguments. Corresponds to TS `computeEffectsForSignature`.
-fn compute_effects_for_aliasing_signature(
-    env: &mut Environment,
-    signature: &AliasingSignature,
+fn compute_effects_for_aliasing_signature<'a>(
+    env: &mut Environment<'a>,
+    signature: &AliasingSignature<'a>,
     lvalue: &Place,
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
     context: &[Place],
     span: Option<&Span>,
-) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
+) -> Result<Option<Vec<AliasingEffect<'a>>>, OxcDiagnostic> {
+    let alloc = env.allocator;
     if signature.params.len() > args.len()
         || (args.len() > signature.params.len() && signature.rest.is_none())
     {
@@ -2776,8 +2911,8 @@ fn compute_effects_for_aliasing_signature(
 
     let mut mutable_spreads: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut substitutions: FxHashMap<IdentifierId, Vec<Place>> = FxHashMap::default();
-    substitutions.insert(signature.receiver, vec![receiver.clone()]);
-    substitutions.insert(signature.returns, vec![lvalue.clone()]);
+    substitutions.insert(signature.receiver, vec![*receiver]);
+    substitutions.insert(signature.returns, vec![*lvalue]);
 
     for (i, arg) in args.iter().enumerate() {
         match arg {
@@ -2786,16 +2921,15 @@ fn compute_effects_for_aliasing_signature(
             | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
                 let is_spread = matches!(arg, PlaceOrSpreadOrHole::Spread(_));
                 if !is_spread && i < signature.params.len() {
-                    substitutions.insert(signature.params[i], vec![place.clone()]);
+                    substitutions.insert(signature.params[i], vec![*place]);
                 } else if let Some(rest_id) = signature.rest {
-                    substitutions.entry(rest_id).or_default().push(place.clone());
+                    substitutions.entry(rest_id).or_default().push(*place);
                 } else {
                     return Ok(None);
                 }
 
                 if is_spread {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -2807,7 +2941,7 @@ fn compute_effects_for_aliasing_signature(
 
     // Add context variable substitutions (identity mapping)
     for operand in context {
-        substitutions.insert(operand.identifier, vec![operand.clone()]);
+        substitutions.insert(operand.identifier, vec![*operand]);
     }
 
     // Create temporaries
@@ -2832,25 +2966,22 @@ fn compute_effects_for_aliasing_signature(
                     for t in &to_places {
                         effects.push(match eff {
                             AliasingEffect::MaybeAlias { .. } => {
-                                AliasingEffect::MaybeAlias { from: f.clone(), into: t.clone() }
+                                AliasingEffect::MaybeAlias { from: *f, into: *t }
                             }
                             AliasingEffect::Assign { .. } => {
-                                AliasingEffect::Assign { from: f.clone(), into: t.clone() }
+                                AliasingEffect::Assign { from: *f, into: *t }
                             }
                             AliasingEffect::ImmutableCapture { .. } => {
-                                AliasingEffect::ImmutableCapture {
-                                    from: f.clone(),
-                                    into: t.clone(),
-                                }
+                                AliasingEffect::ImmutableCapture { from: *f, into: *t }
                             }
                             AliasingEffect::Alias { .. } => {
-                                AliasingEffect::Alias { from: f.clone(), into: t.clone() }
+                                AliasingEffect::Alias { from: *f, into: *t }
                             }
                             AliasingEffect::CreateFrom { .. } => {
-                                AliasingEffect::CreateFrom { from: f.clone(), into: t.clone() }
+                                AliasingEffect::CreateFrom { from: *f, into: *t }
                             }
                             AliasingEffect::Capture { .. } => {
-                                AliasingEffect::Capture { from: f.clone(), into: t.clone() }
+                                AliasingEffect::Capture { from: *f, into: *t }
                             }
                             _ => unreachable!(),
                         });
@@ -2860,19 +2991,19 @@ fn compute_effects_for_aliasing_signature(
             AliasingEffect::Impure { place, error } => {
                 let values = substitutions.get(&place.identifier).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::Impure { place: v, error: error.clone() });
+                    effects.push(AliasingEffect::Impure { place: v, error: *error });
                 }
             }
             AliasingEffect::MutateFrozen { place, error } => {
                 let values = substitutions.get(&place.identifier).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::MutateFrozen { place: v, error: error.clone() });
+                    effects.push(AliasingEffect::MutateFrozen { place: v, error: *error });
                 }
             }
             AliasingEffect::MutateGlobal { place, error } => {
                 let values = substitutions.get(&place.identifier).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::MutateGlobal { place: v, error: error.clone() });
+                    effects.push(AliasingEffect::MutateGlobal { place: v, error: *error });
                 }
             }
             AliasingEffect::Render { place } => {
@@ -2884,7 +3015,7 @@ fn compute_effects_for_aliasing_signature(
             AliasingEffect::Mutate { value, reason } => {
                 let values = substitutions.get(&value.identifier).cloned().unwrap_or_default();
                 for v in values {
-                    effects.push(AliasingEffect::Mutate { value: v, reason: reason.clone() });
+                    effects.push(AliasingEffect::Mutate { value: v, reason: *reason });
                 }
             }
             AliasingEffect::MutateConditionally { value } => {
@@ -2909,10 +3040,9 @@ fn compute_effects_for_aliasing_signature(
                 let values = substitutions.get(&value.identifier).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(CompilerDiagnostic::todo(
-                            "Support spread syntax for hook arguments",
-                            v.span,
-                        ));
+                        return Err(ErrorCategory::Todo
+                            .diagnostic("Support spread syntax for hook arguments")
+                            .with_labels(v.span));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
@@ -2940,24 +3070,24 @@ fn compute_effects_for_aliasing_signature(
                 let func = substitutions.get(&f.identifier).and_then(|v| v.first()).cloned();
                 let apply_into = substitutions.get(&i.identifier).and_then(|v| v.first()).cloned();
                 if let (Some(recv), Some(func), Some(apply_into)) = (recv, func, apply_into) {
-                    let mut apply_args: Vec<PlaceOrSpreadOrHole> = Vec::new();
+                    let mut apply_args = ArenaVec::new_in(&alloc);
                     for arg in a {
                         match arg {
                             PlaceOrSpreadOrHole::Hole => apply_args.push(PlaceOrSpreadOrHole::Hole),
                             PlaceOrSpreadOrHole::Place(p) => {
-                                if let Some(places) = substitutions.get(&p.identifier) {
-                                    if let Some(place) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Place(place.clone()));
-                                    }
+                                if let Some(places) = substitutions.get(&p.identifier)
+                                    && let Some(place) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Place(*place));
                                 }
                             }
                             PlaceOrSpreadOrHole::Spread(sp) => {
-                                if let Some(places) = substitutions.get(&sp.place.identifier) {
-                                    if let Some(place) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Spread(
-                                            SpreadPattern { place: place.clone() },
-                                        ));
-                                    }
+                                if let Some(places) = substitutions.get(&sp.place.identifier)
+                                    && let Some(place) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
+                                        place: *place,
+                                    }));
                                 }
                             }
                         }
@@ -2968,7 +3098,7 @@ fn compute_effects_for_aliasing_signature(
                         mutates_function: *mf,
                         args: apply_args,
                         into: apply_into,
-                        signature: s.clone(),
+                        signature: *s,
                         span: span.copied(),
                     });
                 } else {
@@ -2994,8 +3124,8 @@ fn compute_effects_for_aliasing_signature(
 /// since the primary reason is always inserted first, this effectively
 /// picks the most specific non-Other reason. We replicate this by
 /// preferring any non-Other reason over Other.
-fn primary_reason(reasons: &FxIndexSet<ValueReason>) -> ValueReason {
-    for &r in reasons {
+fn primary_reason(reasons: &ReasonSet) -> ValueReason {
+    for r in reasons.iter() {
         if r != ValueReason::Other {
             return r;
         }
@@ -3030,9 +3160,9 @@ fn get_write_error_reason(abstract_value: &AbstractValue) -> String {
     }
 }
 
-fn conditionally_mutate_iterator(place: &Place, ty: &Type) -> Option<AliasingEffect> {
+fn conditionally_mutate_iterator<'a>(place: &Place, ty: &Type) -> Option<AliasingEffect<'a>> {
     if !is_builtin_collection_type(ty) {
-        Some(AliasingEffect::MutateTransitiveConditionally { value: place.clone() })
+        Some(AliasingEffect::MutateTransitiveConditionally { value: *place })
     } else {
         None
     }
@@ -3040,32 +3170,24 @@ fn conditionally_mutate_iterator(place: &Place, ty: &Type) -> Option<AliasingEff
 
 fn is_builtin_collection_type(ty: &Type) -> bool {
     matches!(ty, Type::Object { shape_id: Some(id) }
-        if id == BUILT_IN_ARRAY_ID || id == BUILT_IN_SET_ID || id == BUILT_IN_MAP_ID
+        if *id == BUILT_IN_ARRAY_ID || *id == BUILT_IN_SET_ID || *id == BUILT_IN_MAP_ID
     )
 }
 
-fn get_function_call_signature(
-    env: &Environment,
-    callee_id: IdentifierId,
-) -> Result<Option<FunctionSignature>, CompilerDiagnostic> {
-    let ty = &env.types[env.identifiers[callee_id.0 as usize].type_.0 as usize];
-    Ok(env.get_function_signature(ty)?.cloned())
-}
-
 fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
-    let ty = &env.types[env.identifiers[id.0 as usize].type_.0 as usize];
+    let ty = &env.types[env.identifiers[id].type_];
     is_ref_or_ref_value(ty)
 }
 
 fn get_hook_kind_for_type<'a>(
     env: &'a Environment,
     ty: &Type,
-) -> Result<Option<&'a HookKind>, CompilerDiagnostic> {
+) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
     env.get_hook_kind_for_type(ty)
 }
 
 /// Format a Type for printPlace-style output, matching TS's `printType()`.
-fn format_type_for_print(ty: &Type) -> Cow<'_, str> {
+fn format_type_for_print<'t>(ty: &'t Type) -> Cow<'t, str> {
     match ty {
         Type::Primitive => Cow::Borrowed(""),
         Type::Function { shape_id, return_type, .. } => {
@@ -3090,7 +3212,7 @@ fn format_type_for_print(ty: &Type) -> Cow<'_, str> {
         Type::Poly => Cow::Borrowed(":TPoly"),
         Type::Phi { .. } => Cow::Borrowed(":TPhi"),
         Type::Property { .. } => Cow::Borrowed(":TProperty"),
-        Type::TypeVar { .. } => Cow::Borrowed(""),
+        Type::Var { .. } => Cow::Borrowed(""),
         Type::ObjectMethod => Cow::Borrowed(":TObjectMethod"),
     }
 }
@@ -3101,8 +3223,8 @@ fn is_phi_with_jsx(ty: &Type) -> bool {
 
 fn place_or_spread_to_hole(pos: &PlaceOrSpread) -> PlaceOrSpreadOrHole {
     match pos {
-        PlaceOrSpread::Place(p) => PlaceOrSpreadOrHole::Place(p.clone()),
-        PlaceOrSpread::Spread(s) => PlaceOrSpreadOrHole::Spread(s.clone()),
+        PlaceOrSpread::Place(p) => PlaceOrSpreadOrHole::Place(*p),
+        PlaceOrSpread::Spread(s) => PlaceOrSpreadOrHole::Spread(*s),
     }
 }
 
@@ -3113,12 +3235,12 @@ fn build_apply_operands(
     function: &Place,
     args: &[PlaceOrSpreadOrHole],
 ) -> Vec<(Place, bool, bool)> {
-    let mut result = vec![(receiver.clone(), false, false), (function.clone(), true, false)];
+    let mut result = vec![(*receiver, false, false), (*function, true, false)];
     for arg in args {
         match arg {
             PlaceOrSpreadOrHole::Hole => continue,
-            PlaceOrSpreadOrHole::Place(p) => result.push((p.clone(), false, false)),
-            PlaceOrSpreadOrHole::Spread(s) => result.push((s.place.clone(), false, true)),
+            PlaceOrSpreadOrHole::Place(p) => result.push((*p, false, false)),
+            PlaceOrSpreadOrHole::Spread(s) => result.push((s.place, false, true)),
         }
     }
     result
@@ -3126,7 +3248,7 @@ fn build_apply_operands(
 
 fn create_temp_place(env: &mut Environment, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
-    env.identifiers[id.0 as usize].span = span;
+    env.identifiers[id].span = span;
     Place { identifier: id, effect: Effect::Unknown, reactive: false, span }
 }
 
@@ -3140,29 +3262,31 @@ fn create_temp_place(env: &mut Environment, span: Option<Span>) -> Place {
 /// successors but NOT pseudo-successors (fallthroughs). Fallthroughs for
 /// Logical/Ternary/Optional and Try/Scope/PrunedScope are reached naturally
 /// via the block iteration order (blocks are stored in topological order).
-fn terminal_successors(terminal: &Terminal) -> Vec<BlockId> {
+fn terminal_successors(terminal: &Terminal) -> SmallVec<[BlockId; 2]> {
     match terminal {
-        Terminal::Goto { block, .. } => vec![*block],
-        Terminal::If { consequent, alternate, .. } => vec![*consequent, *alternate],
-        Terminal::Branch { consequent, alternate, .. } => vec![*consequent, *alternate],
+        Terminal::Goto { block, .. } => smallvec![*block],
+        Terminal::If { consequent, alternate, .. } => smallvec![*consequent, *alternate],
+        Terminal::Branch { consequent, alternate, .. } => smallvec![*consequent, *alternate],
         Terminal::Switch { cases, .. } => cases.iter().map(|c| c.block).collect(),
-        Terminal::For { init, .. } => vec![*init],
-        Terminal::ForOf { init, .. } | Terminal::ForIn { init, .. } => vec![*init],
-        Terminal::DoWhile { loop_block, .. } => vec![*loop_block],
-        Terminal::While { test, .. } => vec![*test],
-        Terminal::Return { .. } | Terminal::Throw { .. } | Terminal::Unreachable { .. } => vec![],
-        Terminal::Try { block, .. } => vec![*block],
+        Terminal::For { init, .. } => smallvec![*init],
+        Terminal::ForOf { init, .. } | Terminal::ForIn { init, .. } => smallvec![*init],
+        Terminal::DoWhile { loop_block, .. } => smallvec![*loop_block],
+        Terminal::While { test, .. } => smallvec![*test],
+        Terminal::Return { .. } | Terminal::Throw { .. } | Terminal::Unreachable { .. } => {
+            smallvec![]
+        }
+        Terminal::Try { block, .. } => smallvec![*block],
         Terminal::MaybeThrow { continuation, handler, .. } => {
-            let mut v = vec![*continuation];
+            let mut v = smallvec![*continuation];
             if let Some(h) = handler {
                 v.push(*h);
             }
             v
         }
-        Terminal::Label { block, .. } | Terminal::Sequence { block, .. } => vec![*block],
-        Terminal::Logical { test, .. } | Terminal::Ternary { test, .. } => vec![*test],
-        Terminal::Optional { test, .. } => vec![*test],
-        Terminal::Scope { block, .. } | Terminal::PrunedScope { block, .. } => vec![*block],
+        Terminal::Label { block, .. } | Terminal::Sequence { block, .. } => smallvec![*block],
+        Terminal::Logical { test, .. } | Terminal::Ternary { test, .. } => smallvec![*test],
+        Terminal::Optional { test, .. } => smallvec![*test],
+        Terminal::Scope { block, .. } | Terminal::PrunedScope { block, .. } => smallvec![*block],
     }
 }
 
@@ -3176,7 +3300,7 @@ enum PatternItem<'a> {
     Spread(&'a Place),
 }
 
-fn each_pattern_items(pattern: &Pattern) -> Vec<PatternItem<'_>> {
+fn each_pattern_items<'p>(pattern: &'p Pattern) -> Vec<PatternItem<'p>> {
     let mut items = Vec::new();
     match pattern {
         Pattern::Array(arr) => {

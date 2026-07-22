@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, MetaProperty, NewExpression,
-        VariableDeclarator,
+        Argument, BindingPattern, CallExpression, Expression, NewExpression, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -102,10 +101,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferImportMetaProperties {
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MetaProperty(meta_property) = node.kind() else { return };
-        if !is_import_meta(meta_property) {
-            return;
-        }
+        let AstKind::ImportMeta(meta_property) = node.kind() else { return };
 
         let member_expression_id = ctx.nodes().parent_id(meta_property.node_id());
         let AstKind::StaticMemberExpression(member_expression) =
@@ -183,10 +179,6 @@ fn is_process_get_builtin_module_call(call: &CallExpression<'_>, modules: &[&str
         &call.arguments[0],
         Argument::StringLiteral(lit) if modules.contains(&lit.value.as_str())
     )
-}
-
-fn is_import_meta(meta_property: &MetaProperty<'_>) -> bool {
-    meta_property.meta.name == "import" && meta_property.property.name == "meta"
 }
 
 fn is_parent_literal(argument: &Argument<'_>) -> bool {

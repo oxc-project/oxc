@@ -107,7 +107,7 @@ impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::Identifier(_) => self.transform_identifier(expr, ctx),
-            Expression::MetaProperty(_) => Self::transform_meta_property(expr, ctx),
+            Expression::ImportMeta(_) => Self::transform_import_meta(expr, ctx),
             Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
             _ => {}
         }
@@ -232,8 +232,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
                 let zero =
                     Expression::new_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal, ctx);
-                let expressions = ArenaVec::from_array_in([zero, expr], ctx);
-                Expression::new_sequence_expression(ident.span, expressions, ctx)
+                Expression::new_sequence_expression(ident.span, [zero, expr], ctx)
             } else {
                 expr
             }
@@ -271,13 +270,13 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     /// Transform `import.meta` to `__vite_ssr_import_meta__`.
     #[inline]
-    fn transform_meta_property(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::MetaProperty(meta) = expr else {
+    fn transform_import_meta(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::ImportMeta(import_meta) = expr else {
             unreachable!();
         };
 
         *expr = ctx.create_unbound_ident_expr(
-            meta.span,
+            import_meta.span,
             static_ident!("__vite_ssr_import_meta__"),
             ReferenceFlags::Read,
         );
@@ -521,9 +520,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         } else {
             let callee =
                 Expression::new_identifier(SPAN, static_ident!("__vite_ssr_exportAll__"), ctx);
-            let arguments = ArenaVec::from_value_in(Argument::from(ident), ctx);
+            let ident = Argument::from(ident);
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
-            let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
+            let call = Expression::new_call_expression(SPAN, callee, NONE, [ident], false, ctx);
             let export = Statement::new_expression_statement(span, call, ctx);
             // names from `export *` cannot be known, so add it right after the import.
             hoist_imports.extend([import, export]);
@@ -711,7 +710,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             ctx,
         );
-        Argument::new_object_expression(SPAN, ArenaVec::from_value_in(imported_names, ctx), ctx)
+        Argument::new_object_expression(SPAN, [imported_names], ctx)
     }
 
     // `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
@@ -731,13 +730,8 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let kind = VariableDeclarationKind::Const;
         let declarator = VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(init), false, ctx);
-        let declaration = Declaration::new_variable_declaration(
-            span,
-            kind,
-            ArenaVec::from_value_in(declarator, ctx),
-            false,
-            ctx,
-        );
+        let declaration =
+            Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
     }
 
@@ -777,14 +771,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let kind = FormalParameterKind::FormalParameter;
-        let params = FormalParameters::new(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
+        let params = FormalParameters::new(SPAN, kind, [], NONE, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
-        let body = FunctionBody::new(
-            SPAN,
-            ArenaVec::new_in(ctx),
-            ArenaVec::from_value_in(statement, ctx),
-            ctx,
-        );
+        let body = FunctionBody::new(SPAN, [], [statement], ctx);
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
         Expression::new_function_expression_with_scope_id_and_pure_and_pife(
@@ -816,14 +805,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);
         let object = Expression::new_object_expression(
             SPAN,
-            ArenaVec::from_array_in(
-                [
-                    Self::create_object_property("enumerable", None, ctx),
-                    Self::create_object_property("configurable", None, ctx),
-                    Self::create_object_property("get", Some(getter), ctx),
-                ],
-                ctx,
-            ),
+            [
+                Self::create_object_property("enumerable", None, ctx),
+                Self::create_object_property("configurable", None, ctx),
+                Self::create_object_property("get", Some(getter), ctx),
+            ],
             ctx,
         );
 
@@ -870,13 +856,8 @@ impl<'a> ModuleRunnerTransform<'a> {
         let kind = VariableDeclarationKind::Const;
         let declarator =
             VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(right), false, ctx);
-        let declaration = Declaration::new_variable_declaration(
-            span,
-            kind,
-            ArenaVec::from_value_in(declarator, ctx),
-            false,
-            ctx,
-        );
+        let declaration =
+            Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
     }
 }

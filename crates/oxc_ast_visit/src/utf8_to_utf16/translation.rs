@@ -151,7 +151,7 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
         // so `ptr` remains always aligned for `CHUNK_ALIGNMENT`.
         // `ptr < body_end_ptr` check ensures it's valid to read `CHUNK_SIZE` bytes starting at `ptr`.
         #[expect(clippy::cast_ptr_alignment)]
-        let chunk = unsafe { ptr.cast::<AlignedChunk>().as_ref().unwrap_unchecked() };
+        let chunk = unsafe { ptr.cast::<AlignedChunk>().as_ref_unchecked() };
         if chunk.contains_unicode() {
             // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
             // `ptr` is derived from `start_ptr`.
@@ -169,7 +169,7 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
 
     // Process last chunk
     if remaining_len > 0 {
-        debug_assert!(ptr as usize + remaining_len == bytes.as_ptr() as usize + bytes.len());
+        debug_assert_eq!(ptr as usize + remaining_len, bytes.as_ptr() as usize + bytes.len());
 
         // SAFETY: `ptr` is within `bytes` and `ptr + remaining_len` is end of `bytes`.
         // `bytes` is a `&[u8]`, so guaranteed initialized and valid for reads.

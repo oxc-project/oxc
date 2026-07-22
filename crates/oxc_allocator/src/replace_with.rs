@@ -232,6 +232,7 @@ impl<'a, T: Dummy<'a>> Drop for PanicGuard<'a, T> {
 /// This is the cold panic-path body of `PanicGuard::drop`, factored out as a free function that takes
 /// `ptr` *by value* so it can be `#[inline(never)]` while `PanicGuard::drop` stays an inlinable
 /// forwarder (see the comment there for why that matters).
+#[cold]
 #[inline(never)]
 fn write_dummy<'a, T: Dummy<'a>>(ptr: NonNull<T>) {
     // `replacer` panicked. Build a fresh dummy in its own dedicated `'static` allocator.
@@ -296,11 +297,9 @@ fn fresh_dummy_allocator() -> &'static Allocator {
     // ~`isize::MAX` entries.
     let mut allocators = DUMMY_ALLOCATORS.lock().unwrap();
 
-    // Create an `Allocator` and store it in a `Box` in `DUMMY_ALLOCATORS`
-    allocators.push(StdBox::new(Allocator::new()));
-
-    // Get reference to the `Allocator` on the heap
-    let allocator = allocators.last().unwrap().as_ref();
+    // Create an `Allocator` and store it in a `Box` in `DUMMY_ALLOCATORS`.
+    // Get reference to the `Allocator` on the heap.
+    let allocator = &**allocators.push_mut(StdBox::new(Allocator::new()));
 
     // Extend `&Allocator`'s lifetime to `'static`.
     // SAFETY: The `Allocator` is owned by `DUMMY_ALLOCATORS`, a `static` from which allocators

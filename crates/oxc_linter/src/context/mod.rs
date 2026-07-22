@@ -14,8 +14,7 @@ use oxc_span::Span;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
-    WEBSITE_BASE_RULES_URL,
+    FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings, WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, MessageRule, PossibleFixes, RuleFix, RuleFixer},
@@ -72,34 +71,6 @@ impl<'a> Deref for LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    /// Set the plugin name for the current rule.
-    pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
-        self.current_plugin_name = plugin;
-        self.current_plugin_display_name = plugin_display_name(plugin);
-        self
-    }
-
-    /// Set the current rule name. Name should be kebab-cased like: `no-unused-vars` or `no-undef`.
-    pub fn with_rule_name(mut self, name: &'static str) -> Self {
-        self.current_rule_name = name;
-        self
-    }
-
-    /// Set the current rule fix capabilities. See [`RuleFixMeta`] for more information.
-    #[cfg(debug_assertions)]
-    pub fn with_rule_fix_capabilities(mut self, capabilities: RuleFixMeta) -> Self {
-        self.current_rule_fix_capabilities = capabilities;
-        self
-    }
-
-    /// Update the severity of diagnostics reported by the rule this context is
-    /// associated with.
-    #[inline]
-    pub fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
-        self.severity = Severity::from(severity);
-        self
-    }
-
     /// Get information such as the control flow graph, bound symbols, AST, etc.
     /// for the file being linted.
     ///

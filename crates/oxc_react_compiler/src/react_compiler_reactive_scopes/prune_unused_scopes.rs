@@ -7,9 +7,11 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneUnusedScopes.ts`.
 
-use std::mem::take;
+use std::mem::replace;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use oxc_allocator::Vec as ArenaVec;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     PrunedReactiveScopeBlock, ReactiveFunction, ReactiveScope, ReactiveScopeBlock,
     ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement, ScopeId,
@@ -29,7 +31,7 @@ struct State {
 pub fn prune_unused_scopes<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let mut transform = Transform { env };
     let mut state = State { has_return_statement: false };
     transform_reactive_function(func, &mut transform, &mut state)
@@ -50,7 +52,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_terminal(stmt, state)?;
         if matches!(stmt.terminal, ReactiveTerminal::Return { .. }) {
             state.has_return_statement = true;
@@ -62,12 +64,13 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         _state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         let mut scope_state = State { has_return_statement: false };
         self.visit_scope(scope, &mut scope_state)?;
 
+        let alloc = self.env.allocator;
         let scope_id = scope.scope;
-        let scope_data = &self.env.scopes[scope_id.0 as usize];
+        let scope_data = &self.env.scopes[scope_id];
 
         if !scope_state.has_return_statement
             && scope_data.reassignments.is_empty()
@@ -76,7 +79,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
             // Replace with pruned scope
             Ok(Transformed::Replace(ReactiveStatement::PrunedScope(PrunedReactiveScopeBlock {
                 scope: scope.scope,
-                instructions: take(&mut scope.instructions),
+                instructions: replace(&mut scope.instructions, ArenaVec::new_in(&alloc)),
             })))
         } else {
             Ok(Transformed::Keep)

@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 94f99b3 ast: Allow `NONE` to be passed to AST builder methods where `Option<ArenaVec>` is expected (#24629) (overlookmotel)
+- 77230c5 ast: Accept arrays for `ArenaVec` params of AST builder methods (#24621) (overlookmotel)
+
+### ⚡ Performance
+
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- f85f0d8 ast: Delegate inherited enum variants in clone_in and estree derives (#23555) (Boshen)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

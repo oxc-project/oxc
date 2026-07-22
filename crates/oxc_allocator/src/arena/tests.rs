@@ -11,17 +11,6 @@ use super::{
     create::{OVERHEAD, TYPICAL_PAGE_SIZE},
 };
 
-/// This function tests that `Arena` isn't `Sync`.
-/// ```compile_fail
-/// use oxc_allocator::arena::Arena;
-/// fn _requires_sync<T: Sync>(_value: T) {}
-/// fn _arena_not_sync(b: Arena) {
-///    _requires_sync(b);
-/// }
-/// ```
-#[cfg(doctest)]
-fn arena_not_sync() {}
-
 // Uses private `DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER`, `OVERHEAD`, and `TYPICAL_PAGE_SIZE`
 #[test]
 fn allocated_and_used_bytes() {
@@ -113,7 +102,7 @@ fn test_realloc() {
         let layout = Layout::from_size_align(100, 1).unwrap();
         let p = b.alloc_layout(layout);
         let q = (&b).realloc(p, layout, 50).unwrap();
-        assert!(p != q);
+        assert_ne!(p, q);
         b.reset();
 
         // `realloc` will reuse the last allocation when growing
@@ -135,7 +124,7 @@ fn test_realloc() {
         let p = b.alloc_layout(layout);
         let _ = b.alloc_layout(layout);
         let q = (&b).realloc(p, layout, 2).unwrap();
-        assert!(q.as_ptr().addr() != p.as_ptr().addr() - 1);
+        assert_ne!(q.as_ptr().addr(), p.as_ptr().addr() - 1);
         b.reset();
     }
 }

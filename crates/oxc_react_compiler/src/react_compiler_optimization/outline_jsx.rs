@@ -8,7 +8,12 @@
 //! Outlines JSX expressions in callbacks into separate component functions.
 //! This pass is conditional on `env.config.enable_jsx_outlining` (defaults to false).
 
-use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::OrderedMap;
+use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
+use oxc_allocator::CloneIn;
+use oxc_allocator::Vec as ArenaVec;
+use oxc_index::IndexVec;
+use oxc_str::{Ident, IdentHashSet, format_ident};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::Effect;
@@ -28,7 +33,7 @@ use std::mem::replace;
 ///
 /// Ported from TS `outlineJSX` in `Optimization/OutlineJsx.ts`.
 pub fn outline_jsx<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
-    let mut outlined_fns: Vec<HirFunction<'a>> = Vec::new();
+    let mut outlined_fns: IndexVec<FunctionId, HirFunction<'a>> = IndexVec::new();
     outline_jsx_impl(func, env, &mut outlined_fns);
 
     for outlined_fn in outlined_fns {
@@ -39,15 +44,13 @@ pub fn outline_jsx<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
 /// Data about a JSX instruction for outlining
 struct JsxInstrInfo {
     instr_idx: usize, // index into func.instructions
-    #[allow(dead_code)]
-    instr_id: InstructionId, // the InstructionId
     lvalue_id: IdentifierId,
     eval_order: EvaluationOrder,
 }
 
-struct OutlinedJsxAttribute {
-    original_name: String,
-    new_name: String,
+struct OutlinedJsxAttribute<'a> {
+    original_name: Ident<'a>,
+    new_name: Ident<'a>,
     place: Place,
 }
 
@@ -59,7 +62,7 @@ struct OutlinedResult<'a> {
 fn outline_jsx_impl<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    outlined_fns: &mut Vec<HirFunction<'a>>,
+    outlined_fns: &mut IndexVec<FunctionId, HirFunction<'a>>,
 ) {
     // Collect LoadGlobal instructions (tag -> instr)
     let mut globals: FxHashMap<IdentifierId, usize> = FxHashMap::default(); // id -> instr_idx
@@ -68,7 +71,7 @@ fn outline_jsx_impl<'a>(
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for block_id in &block_ids {
         let block = &func.body.blocks[block_id];
-        let instr_ids = block.instructions.clone();
+        let instr_ids = block.instructions.iter().copied().collect::<Vec<_>>();
 
         let mut rewrite_instr: FxHashMap<EvaluationOrder, Vec<Instruction<'a>>> =
             FxHashMap::default();
@@ -96,12 +99,12 @@ fn outline_jsx_impl<'a>(
         let mut actions: Vec<InstrAction> = Vec::new();
         for i in (0..instr_ids.len()).rev() {
             let iid = instr_ids[i];
-            let instr = &func.instructions[iid.0 as usize];
+            let instr = &func.instructions[iid.index()];
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
                 InstructionValue::LoadGlobal { .. } => {
-                    actions.push(InstrAction::LoadGlobal { lvalue_id, instr_idx: iid.0 as usize });
+                    actions.push(InstrAction::LoadGlobal { lvalue_id, instr_idx: iid.index() });
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     actions.push(InstrAction::FunctionExpr { func_id: lowered_func.func });
@@ -113,7 +116,7 @@ fn outline_jsx_impl<'a>(
                         .unwrap_or_default();
                     actions.push(InstrAction::JsxExpr {
                         lvalue_id,
-                        instr_idx: iid.0 as usize,
+                        instr_idx: iid.index(),
                         eval_order: instr.id,
                         child_ids,
                     });
@@ -132,9 +135,9 @@ fn outline_jsx_impl<'a>(
                 }
                 InstrAction::FunctionExpr { func_id } => {
                     let mut inner_func =
-                        replace(&mut env.functions[func_id.0 as usize], placeholder_function());
+                        replace(&mut env.functions[func_id], placeholder_function(env.allocator));
                     outline_jsx_impl(&mut inner_func, env, outlined_fns);
-                    env.functions[func_id.0 as usize] = inner_func;
+                    env.functions[func_id] = inner_func;
                 }
                 InstrAction::JsxExpr { lvalue_id, instr_idx, eval_order, child_ids } => {
                     if !children_ids.contains(&lvalue_id) {
@@ -149,12 +152,7 @@ fn outline_jsx_impl<'a>(
                         jsx_group.clear();
                         children_ids.clear();
                     }
-                    jsx_group.push(JsxInstrInfo {
-                        instr_idx,
-                        instr_id: InstructionId(instr_idx as u32),
-                        lvalue_id,
-                        eval_order,
-                    });
+                    jsx_group.push(JsxInstrInfo { instr_idx, lvalue_id, eval_order });
                     for child_id in child_ids {
                         children_ids.insert(child_id);
                     }
@@ -173,16 +171,16 @@ fn outline_jsx_impl<'a>(
         );
         if !rewrite_instr.is_empty() {
             let block = func.body.blocks.get_mut(block_id).unwrap();
-            let old_instr_ids = block.instructions.clone();
-            let mut new_instr_ids = Vec::new();
+            let old_instr_ids = block.instructions.iter().copied().collect::<Vec<_>>();
+            let mut new_instr_ids = ArenaVec::new_in(&env.allocator);
             for &iid in &old_instr_ids {
-                let eval_order = func.instructions[iid.0 as usize].id;
+                let eval_order = func.instructions[iid.index()].id;
                 if let Some(replacement_instrs) = rewrite_instr.get(&eval_order) {
                     // Add replacement instructions to the instruction table and reference them
                     for new_instr in replacement_instrs {
                         let new_idx = func.instructions.len();
-                        func.instructions.push(new_instr.clone());
-                        new_instr_ids.push(InstructionId(new_idx as u32));
+                        func.instructions.push(new_instr.clone_in(env.allocator));
+                        new_instr_ids.push(InstructionId::from_usize(new_idx));
                     }
                 } else {
                     new_instr_ids.push(iid);
@@ -203,13 +201,13 @@ fn process_and_outline_jsx<'a>(
     jsx_group: &mut [JsxInstrInfo],
     globals: &FxHashMap<IdentifierId, usize>,
     rewrite_instr: &mut FxHashMap<EvaluationOrder, Vec<Instruction<'a>>>,
-    outlined_fns: &mut Vec<HirFunction<'a>>,
+    outlined_fns: &mut IndexVec<FunctionId, HirFunction<'a>>,
 ) {
     if jsx_group.len() <= 1 {
         return;
     }
     // Sort by eval order ascending (TS: sort by a.id - b.id)
-    jsx_group.sort_by_key(|j| j.eval_order);
+    jsx_group.sort_unstable_by_key(|j| j.eval_order);
 
     let result = process_jsx_group(func, env, jsx_group, globals);
     if let Some(result) = result {
@@ -237,7 +235,7 @@ fn process_jsx_group<'a>(
     let props = collect_props(func, env, jsx_group)?;
 
     let outlined_tag = env.generate_globally_unique_identifier_name(None);
-    let new_instrs = emit_outlined_jsx(func, env, jsx_group, &props, &outlined_tag)?;
+    let new_instrs = emit_outlined_jsx(func, env, jsx_group, &props, outlined_tag)?;
     let outlined_fn = emit_outlined_fn(func, env, jsx_group, &props, globals)?;
 
     // Set the outlined function's id
@@ -251,19 +249,20 @@ fn collect_props<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
     jsx_group: &[JsxInstrInfo],
-) -> Option<Vec<OutlinedJsxAttribute>> {
+) -> Option<Vec<OutlinedJsxAttribute<'a>>> {
     let mut id_counter = 1u32;
-    let mut seen: FxHashSet<String> = FxHashSet::default();
+    let mut seen: IdentHashSet<'a> = IdentHashSet::default();
     let mut attributes = Vec::new();
     let jsx_ids: FxHashSet<IdentifierId> = jsx_group.iter().map(|j| j.lvalue_id).collect();
 
-    let mut generate_name = |old_name: &str| -> String {
-        let mut new_name = old_name.to_string();
+    let allocator = env.allocator;
+    let mut generate_name = |old_name: Ident<'a>| -> Ident<'a> {
+        let mut new_name = old_name;
         while seen.contains(&new_name) {
-            new_name = format!("{}{}", old_name, id_counter);
+            new_name = format_ident!(allocator, "{old_name}{id_counter}");
             id_counter += 1;
         }
-        seen.insert(new_name.clone());
+        seen.insert(new_name);
         // TS: env.programContext.addNewReference(newName)
         // We don't have programContext in Rust, but this is needed for unique name tracking
         new_name
@@ -276,11 +275,11 @@ fn collect_props<'a>(
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
                     JsxAttribute::Attribute { name, place } => {
-                        let new_name = generate_name(name);
+                        let new_name = generate_name(*name);
                         attributes.push(OutlinedJsxAttribute {
-                            original_name: name.clone(),
+                            original_name: *name,
                             new_name,
-                            place: place.clone(),
+                            place: *place,
                         });
                     }
                 }
@@ -293,22 +292,23 @@ fn collect_props<'a>(
                     }
                     // Promote the child's identifier to a named temporary
                     let child_id = child.identifier;
-                    let decl_id = env.identifiers[child_id.0 as usize].declaration_id;
-                    if env.identifiers[child_id.0 as usize].name.is_none() {
-                        env.identifiers[child_id.0 as usize].name =
-                            Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+                    let decl_id = env.identifiers[child_id].declaration_id;
+                    if env.identifiers[child_id].name.is_none() {
+                        env.identifiers[child_id].name = Some(IdentifierName::Promoted(
+                            format_ident!(allocator, "#t{}", decl_id.index()),
+                        ));
                     }
 
-                    let child_name = match &env.identifiers[child_id.0 as usize].name {
-                        Some(IdentifierName::Named(n)) => n.clone(),
-                        Some(IdentifierName::Promoted(n)) => n.clone(),
-                        None => format!("#t{}", decl_id.0),
+                    let child_name = match env.identifiers[child_id].name {
+                        Some(IdentifierName::Named(n)) => n,
+                        Some(IdentifierName::Promoted(n)) => n,
+                        None => format_ident!(allocator, "#t{}", decl_id.index()),
                     };
-                    let new_name = generate_name("t");
+                    let new_name = generate_name(Ident::from("t"));
                     attributes.push(OutlinedJsxAttribute {
                         original_name: child_name,
                         new_name,
-                        place: child.clone(),
+                        place: *child,
                     });
                 }
             }
@@ -322,29 +322,29 @@ fn emit_outlined_jsx<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
     jsx_group: &[JsxInstrInfo],
-    outlined_props: &[OutlinedJsxAttribute],
-    outlined_tag: &str,
+    outlined_props: &[OutlinedJsxAttribute<'a>],
+    outlined_tag: Ident<'a>,
 ) -> Option<Vec<Instruction<'a>>> {
-    let props: Vec<JsxAttribute> = outlined_props
-        .iter()
-        .map(|p| JsxAttribute::Attribute { name: p.new_name.clone(), place: p.place.clone() })
-        .collect();
+    let props = ArenaVec::from_iter_in(
+        outlined_props.iter().map(|p| JsxAttribute::Attribute { name: p.new_name, place: p.place }),
+        &env.allocator,
+    );
 
     // Create LoadGlobal for the outlined component
     let load_id = env.next_identifier_id();
     // Promote it as a JSX tag temporary
-    let decl_id = env.identifiers[load_id.0 as usize].declaration_id;
-    env.identifiers[load_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format!("#T{}", decl_id.0)));
+    let decl_id = env.identifiers[load_id].declaration_id;
+    env.identifiers[load_id].name =
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#T{}", decl_id.index())));
 
     let load_place =
         Place { identifier: load_id, effect: Effect::Unknown, reactive: false, span: None };
 
     let load_jsx = Instruction {
-        id: EvaluationOrder(0),
-        lvalue: load_place.clone(),
+        id: EvaluationOrder::UNSET,
+        lvalue: load_place,
         value: InstructionValue::LoadGlobal {
-            binding: NonLocalBinding::ModuleLocal { name: outlined_tag.to_string() },
+            binding: NonLocalBinding::ModuleLocal { name: outlined_tag },
             span: None,
         },
         span: None,
@@ -355,8 +355,8 @@ fn emit_outlined_jsx<'a>(
     let last_info = jsx_group.last().unwrap();
     let last_instr = &func.instructions[last_info.instr_idx];
     let jsx_expr = Instruction {
-        id: EvaluationOrder(0),
-        lvalue: last_instr.lvalue.clone(),
+        id: EvaluationOrder::UNSET,
+        lvalue: last_instr.lvalue,
         value: InstructionValue::JsxExpression {
             tag: JsxTag::Place(load_place),
             props,
@@ -376,16 +376,16 @@ fn emit_outlined_fn<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
     jsx_group: &[JsxInstrInfo],
-    old_props: &[OutlinedJsxAttribute],
+    old_props: &[OutlinedJsxAttribute<'a>],
     globals: &FxHashMap<IdentifierId, usize>,
 ) -> Option<HirFunction<'a>> {
     let old_to_new_props = create_old_to_new_props_mapping(env, old_props);
 
     // Create props parameter
     let props_obj_id = env.next_identifier_id();
-    let decl_id = env.identifiers[props_obj_id.0 as usize].declaration_id;
-    env.identifiers[props_obj_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+    let decl_id = env.identifiers[props_obj_id].declaration_id;
+    env.identifiers[props_obj_id].name =
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
     let props_obj =
         Place { identifier: props_obj_id, effect: Effect::Unknown, reactive: false, span: None };
 
@@ -393,10 +393,10 @@ fn emit_outlined_fn<'a>(
     let destructure_instr = emit_destructure_props(env, &props_obj, &old_to_new_props);
 
     // Emit load globals for JSX tags
-    let load_global_instrs = emit_load_globals(func, jsx_group, globals)?;
+    let load_global_instrs = emit_load_globals(func, jsx_group, globals, env.allocator)?;
 
     // Emit updated JSX instructions
-    let updated_jsx_instrs = emit_updated_jsx(func, jsx_group, &old_to_new_props);
+    let updated_jsx_instrs = emit_updated_jsx(func, jsx_group, &old_to_new_props, env.allocator);
 
     // Build instructions list
     let mut instructions = Vec::new();
@@ -405,16 +405,16 @@ fn emit_outlined_fn<'a>(
     instructions.extend(updated_jsx_instrs);
 
     // Build instruction table and instruction IDs
-    let mut instr_table = Vec::new();
-    let mut instr_ids = Vec::new();
+    let mut instr_table = ArenaVec::new_in(&env.allocator);
+    let mut instr_ids = ArenaVec::new_in(&env.allocator);
     for instr in instructions {
         let idx = instr_table.len();
         instr_table.push(instr);
-        instr_ids.push(InstructionId(idx as u32));
+        instr_ids.push(InstructionId::from_usize(idx));
     }
 
     // Return terminal uses the last instruction's lvalue
-    let last_lvalue = instr_table.last().unwrap().lvalue.clone();
+    let last_lvalue = instr_table.last().unwrap().lvalue;
 
     // Create return place
     let returns_id = env.next_identifier_id();
@@ -423,35 +423,35 @@ fn emit_outlined_fn<'a>(
 
     let block = BasicBlock {
         kind: BlockKind::Block,
-        id: BlockId(0),
+        id: BlockId::ENTRY,
         instructions: instr_ids,
-        preds: FxIndexSet::default(),
+        preds: ArenaOrderedSet::new_in(env.allocator),
         terminal: Terminal::Return {
             value: last_lvalue,
             return_variant: ReturnVariant::Explicit,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: None,
             effects: None,
         },
-        phis: Vec::new(),
+        phis: ArenaVec::new_in(&env.allocator),
     };
 
-    let mut blocks = FxIndexMap::default();
-    blocks.insert(BlockId(0), block);
+    let mut blocks = OrderedMap::default();
+    blocks.insert(BlockId::ENTRY, block);
 
     let outlined_fn = HirFunction {
         id: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
-        params: vec![ParamPattern::Place(props_obj)],
+        params: ArenaVec::from_array_in([ParamPattern::Place(props_obj)], &env.allocator),
         returns: returns_place,
-        context: Vec::new(),
-        body: HIR { entry: BlockId(0), blocks },
+        context: ArenaVec::new_in(&env.allocator),
+        body: HIR { entry: BlockId::ENTRY, blocks },
         instructions: instr_table,
         generator: false,
         is_async: false,
-        directives: Vec::new(),
-        aliasing_effects: Some(vec![]),
+        directives: ArenaVec::new_in(&env.allocator),
+        aliasing_effects: Some(ArenaVec::new_in(&env.allocator)),
         span: None,
     };
 
@@ -462,6 +462,7 @@ fn emit_load_globals<'a>(
     func: &HirFunction<'a>,
     jsx_group: &[JsxInstrInfo],
     globals: &FxHashMap<IdentifierId, usize>,
+    alloc: &'a oxc_allocator::Allocator,
 ) -> Option<Vec<Instruction<'a>>> {
     let mut instructions = Vec::new();
     for info in jsx_group {
@@ -469,7 +470,7 @@ fn emit_load_globals<'a>(
         if let InstructionValue::JsxExpression { tag: JsxTag::Place(tag_place), .. } = &instr.value
         {
             let global_instr_idx = globals.get(&tag_place.identifier)?;
-            instructions.push(func.instructions[*global_instr_idx].clone());
+            instructions.push(func.instructions[*global_instr_idx].clone_in(alloc));
         }
     }
     Some(instructions)
@@ -478,7 +479,8 @@ fn emit_load_globals<'a>(
 fn emit_updated_jsx<'a>(
     func: &HirFunction<'a>,
     jsx_group: &[JsxInstrInfo],
-    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute>,
+    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute<'a>>,
+    alloc: &'a oxc_allocator::Allocator,
 ) -> Vec<Instruction<'a>> {
     let jsx_ids: FxHashSet<IdentifierId> = jsx_group.iter().map(|j| j.lvalue_id).collect();
     let mut new_instrs = Vec::new();
@@ -494,7 +496,7 @@ fn emit_updated_jsx<'a>(
             closing_span,
         } = &instr.value
         {
-            let mut new_props = Vec::new();
+            let mut new_props = ArenaVec::new_in(&alloc);
             for prop in props {
                 // TS: invariant(prop.kind === 'JsxAttribute', ...)
                 // Spread attributes would have caused collectProps to return null earlier
@@ -512,32 +514,33 @@ fn emit_updated_jsx<'a>(
                     .get(&place.identifier)
                     .expect("Expected a new property for identifier");
                 new_props.push(JsxAttribute::Attribute {
-                    name: new_prop.original_name.clone(),
-                    place: new_prop.place.clone(),
+                    name: new_prop.original_name,
+                    place: new_prop.place,
                 });
             }
 
             let new_children = children.as_ref().map(|kids| {
-                kids.iter()
-                    .map(|child| {
+                ArenaVec::from_iter_in(
+                    kids.iter().map(|child| {
                         if jsx_ids.contains(&child.identifier) {
-                            child.clone()
+                            *child
                         } else {
                             // TS: invariant(newChild !== undefined, ...)
                             let new_prop = old_to_new_props
                                 .get(&child.identifier)
                                 .expect("Expected a new prop for child identifier");
-                            new_prop.place.clone()
+                            new_prop.place
                         }
-                    })
-                    .collect()
+                    }),
+                    &alloc,
+                )
             });
 
             new_instrs.push(Instruction {
                 id: instr.id,
-                lvalue: instr.lvalue.clone(),
+                lvalue: instr.lvalue,
                 value: InstructionValue::JsxExpression {
-                    tag: tag.clone(),
+                    tag: *tag,
                     props: new_props,
                     children: new_children,
                     span: *span,
@@ -545,7 +548,7 @@ fn emit_updated_jsx<'a>(
                     closing_span: *closing_span,
                 },
                 span: instr.span,
-                effects: instr.effects.clone(),
+                effects: instr.effects.as_ref().map(|v| v.clone_in(alloc)),
             });
         }
     }
@@ -553,10 +556,10 @@ fn emit_updated_jsx<'a>(
     new_instrs
 }
 
-fn create_old_to_new_props_mapping(
-    env: &mut Environment<'_>,
-    old_props: &[OutlinedJsxAttribute],
-) -> FxIndexMap<IdentifierId, OutlinedJsxAttribute> {
+fn create_old_to_new_props_mapping<'a>(
+    env: &mut Environment<'a>,
+    old_props: &[OutlinedJsxAttribute<'a>],
+) -> FxIndexMap<IdentifierId, OutlinedJsxAttribute<'a>> {
     let mut old_to_new = FxIndexMap::default();
 
     for old_prop in old_props {
@@ -565,8 +568,7 @@ fn create_old_to_new_props_mapping(
         }
 
         let new_id = env.next_identifier_id();
-        env.identifiers[new_id.0 as usize].name =
-            Some(IdentifierName::Named(old_prop.new_name.clone()));
+        env.identifiers[new_id].name = Some(IdentifierName::Named(old_prop.new_name));
 
         let new_place =
             Place { identifier: new_id, effect: Effect::Unknown, reactive: false, span: None };
@@ -574,8 +576,8 @@ fn create_old_to_new_props_mapping(
         old_to_new.insert(
             old_prop.place.identifier,
             OutlinedJsxAttribute {
-                original_name: old_prop.original_name.clone(),
-                new_name: old_prop.new_name.clone(),
+                original_name: old_prop.original_name,
+                new_name: old_prop.new_name,
                 place: new_place,
             },
         );
@@ -587,14 +589,14 @@ fn create_old_to_new_props_mapping(
 fn emit_destructure_props<'a>(
     env: &mut Environment<'a>,
     props_obj: &Place,
-    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute>,
+    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute<'a>>,
 ) -> Instruction<'a> {
-    let mut properties = Vec::new();
+    let mut properties = ArenaVec::new_in(&env.allocator);
     for prop in old_to_new_props.values() {
         properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
-            key: ObjectPropertyKey::String { name: prop.new_name.clone() },
+            key: ObjectPropertyKey::String { name: prop.new_name },
             property_type: ObjectPropertyType::Property,
-            place: prop.place.clone(),
+            place: prop.place,
         }));
     }
 
@@ -603,14 +605,14 @@ fn emit_destructure_props<'a>(
         Place { identifier: lvalue_id, effect: Effect::Unknown, reactive: false, span: None };
 
     Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue,
         value: InstructionValue::Destructure {
             lvalue: LValuePattern {
                 pattern: Pattern::Object(ObjectPattern { properties }),
                 kind: InstructionKind::Let,
             },
-            value: props_obj.clone(),
+            value: *props_obj,
             span: None,
         },
         span: None,

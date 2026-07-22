@@ -30,6 +30,7 @@ pub use crate::rules::eslint::func_style::FuncStyle as EslintFuncStyle;
 pub use crate::rules::eslint::getter_return::GetterReturn as EslintGetterReturn;
 pub use crate::rules::eslint::grouped_accessor_pairs::GroupedAccessorPairs as EslintGroupedAccessorPairs;
 pub use crate::rules::eslint::guard_for_in::GuardForIn as EslintGuardForIn;
+pub use crate::rules::eslint::id_denylist::IdDenylist as EslintIdDenylist;
 pub use crate::rules::eslint::id_length::IdLength as EslintIdLength;
 pub use crate::rules::eslint::id_match::IdMatch as EslintIdMatch;
 pub use crate::rules::eslint::init_declarations::InitDeclarations as EslintInitDeclarations;
@@ -376,6 +377,7 @@ pub use crate::rules::node::no_new_require::NoNewRequire as NodeNoNewRequire;
 pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
 pub use crate::rules::node::no_sync::NoSync as NodeNoSync;
+pub use crate::rules::node::no_top_level_await::NoTopLevelAwait as NodeNoTopLevelAwait;
 pub use crate::rules::oxc::approx_constant::ApproxConstant as OxcApproxConstant;
 pub use crate::rules::oxc::bad_array_method_on_arguments::BadArrayMethodOnArguments as OxcBadArrayMethodOnArguments;
 pub use crate::rules::oxc::bad_bitwise_operator::BadBitwiseOperator as OxcBadBitwiseOperator;
@@ -426,6 +428,7 @@ pub use crate::rules::react::forbid_component_props::ForbidComponentProps as Rea
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
+pub use crate::rules::react::function_component_definition::FunctionComponentDefinition as ReactFunctionComponentDefinition;
 pub use crate::rules::react::hook_use_state::HookUseState as ReactHookUseState;
 pub use crate::rules::react::iframe_missing_sandbox::IframeMissingSandbox as ReactIframeMissingSandbox;
 pub use crate::rules::react::jsx_boolean_value::JsxBooleanValue as ReactJsxBooleanValue;
@@ -763,6 +766,7 @@ pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPr
 pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as VitestPaddingAroundAfterAllBlocks;
+pub use crate::rules::vitest::padding_around_test_blocks::PaddingAroundTestBlocks as VitestPaddingAroundTestBlocks;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
@@ -914,6 +918,7 @@ pub enum RuleEnum {
     EslintGetterReturn(EslintGetterReturn),
     EslintGroupedAccessorPairs(EslintGroupedAccessorPairs),
     EslintGuardForIn(EslintGuardForIn),
+    EslintIdDenylist(EslintIdDenylist),
     EslintIdLength(EslintIdLength),
     EslintIdMatch(EslintIdMatch),
     EslintInitDeclarations(EslintInitDeclarations),
@@ -1259,6 +1264,7 @@ pub enum RuleEnum {
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
+    ReactFunctionComponentDefinition(ReactFunctionComponentDefinition),
     ReactHookUseState(ReactHookUseState),
     ReactIframeMissingSandbox(ReactIframeMissingSandbox),
     ReactJsxBooleanValue(ReactJsxBooleanValue),
@@ -1611,6 +1617,7 @@ pub enum RuleEnum {
     VitestNoTestReturnStatement(VitestNoTestReturnStatement),
     VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
     VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks),
+    VitestPaddingAroundTestBlocks(VitestPaddingAroundTestBlocks),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
@@ -1664,6 +1671,7 @@ pub enum RuleEnum {
     NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
     NodeNoSync(NodeNoSync),
+    NodeNoTopLevelAwait(NodeNoTopLevelAwait),
     VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
@@ -1764,7 +1772,8 @@ const ESLINT_FUNC_STYLE_ID: usize = ESLINT_FUNC_NAMES_ID + 1usize;
 const ESLINT_GETTER_RETURN_ID: usize = ESLINT_FUNC_STYLE_ID + 1usize;
 const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = ESLINT_GETTER_RETURN_ID + 1usize;
 const ESLINT_GUARD_FOR_IN_ID: usize = ESLINT_GROUPED_ACCESSOR_PAIRS_ID + 1usize;
-const ESLINT_ID_LENGTH_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
+const ESLINT_ID_DENYLIST_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
+const ESLINT_ID_LENGTH_ID: usize = ESLINT_ID_DENYLIST_ID + 1usize;
 const ESLINT_ID_MATCH_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
 const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_MATCH_ID + 1usize;
 const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
@@ -2155,7 +2164,8 @@ const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize
 const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usize;
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
-const REACT_HOOK_USE_STATE_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
+const REACT_FUNCTION_COMPONENT_DEFINITION_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
+const REACT_HOOK_USE_STATE_ID: usize = REACT_FUNCTION_COMPONENT_DEFINITION_ID + 1usize;
 const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_HOOK_USE_STATE_ID + 1usize;
 const REACT_JSX_BOOLEAN_VALUE_ID: usize = REACT_IFRAME_MISSING_SANDBOX_ID + 1usize;
 const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = REACT_JSX_BOOLEAN_VALUE_ID + 1usize;
@@ -2551,8 +2561,10 @@ const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
     VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
 const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize =
     VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize =
     VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+    VITEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
@@ -2607,7 +2619,8 @@ const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_MIXED_REQUIRES_ID + 1usize;
 const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
 const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
 const NODE_NO_SYNC_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_SYNC_ID + 1usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = NODE_NO_SYNC_ID + 1usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_TOP_LEVEL_AWAIT_ID + 1usize;
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CASING_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
@@ -2718,6 +2731,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => ESLINT_GETTER_RETURN_ID,
             Self::EslintGroupedAccessorPairs(_) => ESLINT_GROUPED_ACCESSOR_PAIRS_ID,
             Self::EslintGuardForIn(_) => ESLINT_GUARD_FOR_IN_ID,
+            Self::EslintIdDenylist(_) => ESLINT_ID_DENYLIST_ID,
             Self::EslintIdLength(_) => ESLINT_ID_LENGTH_ID,
             Self::EslintIdMatch(_) => ESLINT_ID_MATCH_ID,
             Self::EslintInitDeclarations(_) => ESLINT_INIT_DECLARATIONS_ID,
@@ -3131,6 +3145,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
+            Self::ReactFunctionComponentDefinition(_) => REACT_FUNCTION_COMPONENT_DEFINITION_ID,
             Self::ReactHookUseState(_) => REACT_HOOK_USE_STATE_ID,
             Self::ReactIframeMissingSandbox(_) => REACT_IFRAME_MISSING_SANDBOX_ID,
             Self::ReactJsxBooleanValue(_) => REACT_JSX_BOOLEAN_VALUE_ID,
@@ -3527,6 +3542,7 @@ impl RuleEnum {
                 VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
+            Self::VitestPaddingAroundTestBlocks(_) => VITEST_PADDING_AROUND_TEST_BLOCKS_ID,
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
@@ -3584,6 +3600,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
             Self::NodeNoSync(_) => NODE_NO_SYNC_ID,
+            Self::NodeNoTopLevelAwait(_) => NODE_NO_TOP_LEVEL_AWAIT_ID,
             Self::VueComponentDefinitionNameCasing(_) => VUE_COMPONENT_DEFINITION_NAME_CASING_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
@@ -3691,6 +3708,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::NAME,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::NAME,
             Self::EslintGuardForIn(_) => EslintGuardForIn::NAME,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::NAME,
             Self::EslintIdLength(_) => EslintIdLength::NAME,
             Self::EslintIdMatch(_) => EslintIdMatch::NAME,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::NAME,
@@ -4102,6 +4120,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::NAME,
             Self::ReactForbidElements(_) => ReactForbidElements::NAME,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::NAME,
+            Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::NAME,
             Self::ReactHookUseState(_) => ReactHookUseState::NAME,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::NAME,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::NAME,
@@ -4490,6 +4509,7 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::NAME
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::NAME,
+            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::NAME,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
@@ -4543,6 +4563,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
             Self::NodeNoSync(_) => NodeNoSync::NAME,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::NAME,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::NAME,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::NAME,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::NAME,
@@ -4652,6 +4673,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::CATEGORY,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::CATEGORY,
             Self::EslintGuardForIn(_) => EslintGuardForIn::CATEGORY,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::CATEGORY,
             Self::EslintIdLength(_) => EslintIdLength::CATEGORY,
             Self::EslintIdMatch(_) => EslintIdMatch::CATEGORY,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::CATEGORY,
@@ -5085,6 +5107,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
+            Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::CATEGORY,
             Self::ReactHookUseState(_) => ReactHookUseState::CATEGORY,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::CATEGORY,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::CATEGORY,
@@ -5495,6 +5518,7 @@ impl RuleEnum {
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::CATEGORY
             }
+            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::CATEGORY,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::CATEGORY
             }
@@ -5558,6 +5582,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
             Self::NodeNoSync(_) => NodeNoSync::CATEGORY,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::CATEGORY,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
@@ -5668,6 +5693,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::FIX,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::FIX,
             Self::EslintGuardForIn(_) => EslintGuardForIn::FIX,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::FIX,
             Self::EslintIdLength(_) => EslintIdLength::FIX,
             Self::EslintIdMatch(_) => EslintIdMatch::FIX,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::FIX,
@@ -6079,6 +6105,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
+            Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::FIX,
             Self::ReactHookUseState(_) => ReactHookUseState::FIX,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::FIX,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::FIX,
@@ -6467,6 +6494,7 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::FIX
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FIX,
+            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::FIX,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
@@ -6520,6 +6548,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
             Self::NodeNoSync(_) => NodeNoSync::FIX,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::FIX,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
@@ -6634,6 +6663,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::documentation(),
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::documentation(),
             Self::EslintGuardForIn(_) => EslintGuardForIn::documentation(),
+            Self::EslintIdDenylist(_) => EslintIdDenylist::documentation(),
             Self::EslintIdLength(_) => EslintIdLength::documentation(),
             Self::EslintIdMatch(_) => EslintIdMatch::documentation(),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::documentation(),
@@ -7145,6 +7175,9 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::documentation(),
+            Self::ReactFunctionComponentDefinition(_) => {
+                ReactFunctionComponentDefinition::documentation()
+            }
             Self::ReactHookUseState(_) => ReactHookUseState::documentation(),
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::documentation(),
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::documentation(),
@@ -7653,6 +7686,9 @@ impl RuleEnum {
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::documentation()
             }
+            Self::VitestPaddingAroundTestBlocks(_) => {
+                VitestPaddingAroundTestBlocks::documentation()
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::documentation()
             }
@@ -7728,6 +7764,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
             Self::NodeNoSync(_) => NodeNoSync::documentation(),
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::documentation(),
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::documentation()
             }
@@ -7936,6 +7973,8 @@ impl RuleEnum {
             }
             Self::EslintGuardForIn(_) => EslintGuardForIn::config_schema(generator)
                 .or_else(|| EslintGuardForIn::schema(generator)),
+            Self::EslintIdDenylist(_) => EslintIdDenylist::config_schema(generator)
+                .or_else(|| EslintIdDenylist::schema(generator)),
             Self::EslintIdLength(_) => EslintIdLength::config_schema(generator)
                 .or_else(|| EslintIdLength::schema(generator)),
             Self::EslintIdMatch(_) => {
@@ -8927,6 +8966,10 @@ impl RuleEnum {
                 .or_else(|| ReactForbidElements::schema(generator)),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::config_schema(generator)
                 .or_else(|| ReactForwardRefUsesRef::schema(generator)),
+            Self::ReactFunctionComponentDefinition(_) => {
+                ReactFunctionComponentDefinition::config_schema(generator)
+                    .or_else(|| ReactFunctionComponentDefinition::schema(generator))
+            }
             Self::ReactHookUseState(_) => ReactHookUseState::config_schema(generator)
                 .or_else(|| ReactHookUseState::schema(generator)),
             Self::ReactIframeMissingSandbox(_) => {
@@ -9938,6 +9981,10 @@ impl RuleEnum {
                 VitestPaddingAroundAfterAllBlocks::config_schema(generator)
                     .or_else(|| VitestPaddingAroundAfterAllBlocks::schema(generator))
             }
+            Self::VitestPaddingAroundTestBlocks(_) => {
+                VitestPaddingAroundTestBlocks::config_schema(generator)
+                    .or_else(|| VitestPaddingAroundTestBlocks::schema(generator))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::config_schema(generator)
                     .or_else(|| VitestPreferCalledExactlyOnceWith::schema(generator))
@@ -10081,6 +10128,8 @@ impl RuleEnum {
             Self::NodeNoSync(_) => {
                 NodeNoSync::config_schema(generator).or_else(|| NodeNoSync::schema(generator))
             }
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::config_schema(generator)
+                .or_else(|| NodeNoTopLevelAwait::schema(generator)),
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::config_schema(generator)
                     .or_else(|| VueComponentDefinitionNameCasing::schema(generator))
@@ -10274,6 +10323,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => "eslint",
             Self::EslintGroupedAccessorPairs(_) => "eslint",
             Self::EslintGuardForIn(_) => "eslint",
+            Self::EslintIdDenylist(_) => "eslint",
             Self::EslintIdLength(_) => "eslint",
             Self::EslintIdMatch(_) => "eslint",
             Self::EslintInitDeclarations(_) => "eslint",
@@ -10617,6 +10667,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
+            Self::ReactFunctionComponentDefinition(_) => "react",
             Self::ReactHookUseState(_) => "react",
             Self::ReactIframeMissingSandbox(_) => "react",
             Self::ReactJsxBooleanValue(_) => "react",
@@ -10965,6 +11016,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => "vitest",
             Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
             Self::VitestPaddingAroundAfterAllBlocks(_) => "vitest",
+            Self::VitestPaddingAroundTestBlocks(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
@@ -11016,6 +11068,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
             Self::NodeNoSync(_) => "node",
+            Self::NodeNoTopLevelAwait(_) => "node",
             Self::VueComponentDefinitionNameCasing(_) => "vue",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
@@ -11221,6 +11274,9 @@ impl RuleEnum {
             )),
             Self::EslintGuardForIn(_) => {
                 Ok(Self::EslintGuardForIn(EslintGuardForIn::from_configuration(value)?))
+            }
+            Self::EslintIdDenylist(_) => {
+                Ok(Self::EslintIdDenylist(EslintIdDenylist::from_configuration(value)?))
             }
             Self::EslintIdLength(_) => {
                 Ok(Self::EslintIdLength(EslintIdLength::from_configuration(value)?))
@@ -12347,6 +12403,11 @@ impl RuleEnum {
             Self::ReactForwardRefUsesRef(_) => {
                 Ok(Self::ReactForwardRefUsesRef(ReactForwardRefUsesRef::from_configuration(value)?))
             }
+            Self::ReactFunctionComponentDefinition(_) => {
+                Ok(Self::ReactFunctionComponentDefinition(
+                    ReactFunctionComponentDefinition::from_configuration(value)?,
+                ))
+            }
             Self::ReactHookUseState(_) => {
                 Ok(Self::ReactHookUseState(ReactHookUseState::from_configuration(value)?))
             }
@@ -13465,6 +13526,9 @@ impl RuleEnum {
                     VitestPaddingAroundAfterAllBlocks::from_configuration(value)?,
                 ))
             }
+            Self::VitestPaddingAroundTestBlocks(_) => Ok(Self::VitestPaddingAroundTestBlocks(
+                VitestPaddingAroundTestBlocks::from_configuration(value)?,
+            )),
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 Ok(Self::VitestPreferCalledExactlyOnceWith(
                     VitestPreferCalledExactlyOnceWith::from_configuration(value)?,
@@ -13630,6 +13694,9 @@ impl RuleEnum {
                 Ok(Self::NodeNoProcessEnv(NodeNoProcessEnv::from_configuration(value)?))
             }
             Self::NodeNoSync(_) => Ok(Self::NodeNoSync(NodeNoSync::from_configuration(value)?)),
+            Self::NodeNoTopLevelAwait(_) => {
+                Ok(Self::NodeNoTopLevelAwait(NodeNoTopLevelAwait::from_configuration(value)?))
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 Ok(Self::VueComponentDefinitionNameCasing(
                     VueComponentDefinitionNameCasing::from_configuration(value)?,
@@ -13833,6 +13900,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.to_configuration(),
             Self::EslintGroupedAccessorPairs(rule) => rule.to_configuration(),
             Self::EslintGuardForIn(rule) => rule.to_configuration(),
+            Self::EslintIdDenylist(rule) => rule.to_configuration(),
             Self::EslintIdLength(rule) => rule.to_configuration(),
             Self::EslintIdMatch(rule) => rule.to_configuration(),
             Self::EslintInitDeclarations(rule) => rule.to_configuration(),
@@ -14178,6 +14246,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.to_configuration(),
             Self::ReactForbidElements(rule) => rule.to_configuration(),
             Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
+            Self::ReactFunctionComponentDefinition(rule) => rule.to_configuration(),
             Self::ReactHookUseState(rule) => rule.to_configuration(),
             Self::ReactIframeMissingSandbox(rule) => rule.to_configuration(),
             Self::ReactJsxBooleanValue(rule) => rule.to_configuration(),
@@ -14526,6 +14595,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.to_configuration(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
+            Self::VitestPaddingAroundTestBlocks(rule) => rule.to_configuration(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
@@ -14579,6 +14649,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
             Self::NodeNoSync(rule) => rule.to_configuration(),
+            Self::NodeNoTopLevelAwait(rule) => rule.to_configuration(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.to_configuration(),
             Self::VueDefineEmitsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
@@ -14683,6 +14754,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run(node, ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run(node, ctx),
             Self::EslintGuardForIn(rule) => rule.run(node, ctx),
+            Self::EslintIdDenylist(rule) => rule.run(node, ctx),
             Self::EslintIdLength(rule) => rule.run(node, ctx),
             Self::EslintIdMatch(rule) => rule.run(node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run(node, ctx),
@@ -15026,6 +15098,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
+            Self::ReactFunctionComponentDefinition(rule) => rule.run(node, ctx),
             Self::ReactHookUseState(rule) => rule.run(node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run(node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run(node, ctx),
@@ -15374,6 +15447,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
+            Self::VitestPaddingAroundTestBlocks(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
@@ -15425,6 +15499,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
             Self::NodeNoSync(rule) => rule.run(node, ctx),
+            Self::NodeNoTopLevelAwait(rule) => rule.run(node, ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -15541,6 +15616,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_once(ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_once(ctx),
             Self::EslintGuardForIn(rule) => rule.run_once(ctx),
+            Self::EslintIdDenylist(rule) => rule.run_once(ctx),
             Self::EslintIdLength(rule) => rule.run_once(ctx),
             Self::EslintIdMatch(rule) => rule.run_once(ctx),
             Self::EslintInitDeclarations(rule) => rule.run_once(ctx),
@@ -15884,6 +15960,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
+            Self::ReactFunctionComponentDefinition(rule) => rule.run_once(ctx),
             Self::ReactHookUseState(rule) => rule.run_once(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_once(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_once(ctx),
@@ -16232,6 +16309,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
+            Self::VitestPaddingAroundTestBlocks(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
@@ -16283,6 +16361,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
             Self::NodeNoSync(rule) => rule.run_once(ctx),
+            Self::NodeNoTopLevelAwait(rule) => rule.run_once(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -16402,6 +16481,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintIdDenylist(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdMatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16813,6 +16893,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactFunctionComponentDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactHookUseState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17201,6 +17282,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPaddingAroundTestBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17254,6 +17336,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NodeNoTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17375,6 +17458,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.should_run(ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.should_run(ctx),
             Self::EslintGuardForIn(rule) => rule.should_run(ctx),
+            Self::EslintIdDenylist(rule) => rule.should_run(ctx),
             Self::EslintIdLength(rule) => rule.should_run(ctx),
             Self::EslintIdMatch(rule) => rule.should_run(ctx),
             Self::EslintInitDeclarations(rule) => rule.should_run(ctx),
@@ -17718,6 +17802,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
+            Self::ReactFunctionComponentDefinition(rule) => rule.should_run(ctx),
             Self::ReactHookUseState(rule) => rule.should_run(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.should_run(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.should_run(ctx),
@@ -18066,6 +18151,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
+            Self::VitestPaddingAroundTestBlocks(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
@@ -18117,6 +18203,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
             Self::NodeNoSync(rule) => rule.should_run(ctx),
+            Self::NodeNoTopLevelAwait(rule) => rule.should_run(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
@@ -18226,6 +18313,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::IS_TSGOLINT_RULE,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::IS_TSGOLINT_RULE,
             Self::EslintGuardForIn(_) => EslintGuardForIn::IS_TSGOLINT_RULE,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::IS_TSGOLINT_RULE,
             Self::EslintIdLength(_) => EslintIdLength::IS_TSGOLINT_RULE,
             Self::EslintIdMatch(_) => EslintIdMatch::IS_TSGOLINT_RULE,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::IS_TSGOLINT_RULE,
@@ -18737,6 +18825,9 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::IS_TSGOLINT_RULE,
+            Self::ReactFunctionComponentDefinition(_) => {
+                ReactFunctionComponentDefinition::IS_TSGOLINT_RULE
+            }
             Self::ReactHookUseState(_) => ReactHookUseState::IS_TSGOLINT_RULE,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::IS_TSGOLINT_RULE,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::IS_TSGOLINT_RULE,
@@ -19245,6 +19336,9 @@ impl RuleEnum {
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
             }
+            Self::VitestPaddingAroundTestBlocks(_) => {
+                VitestPaddingAroundTestBlocks::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
             }
@@ -19320,6 +19414,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
             Self::NodeNoSync(_) => NodeNoSync::IS_TSGOLINT_RULE,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::IS_TSGOLINT_RULE,
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::IS_TSGOLINT_RULE
             }
@@ -19447,6 +19542,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::VERSION,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::VERSION,
             Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::VERSION,
             Self::EslintIdLength(_) => EslintIdLength::VERSION,
             Self::EslintIdMatch(_) => EslintIdMatch::VERSION,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
@@ -19880,6 +19976,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::VERSION,
             Self::ReactForbidElements(_) => ReactForbidElements::VERSION,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::VERSION,
+            Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::VERSION,
             Self::ReactHookUseState(_) => ReactHookUseState::VERSION,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::VERSION,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::VERSION,
@@ -20290,6 +20387,7 @@ impl RuleEnum {
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::VERSION
             }
+            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::VERSION,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::VERSION
             }
@@ -20353,6 +20451,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::VERSION,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
             Self::NodeNoSync(_) => NodeNoSync::VERSION,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::VERSION,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::VERSION,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
@@ -20465,6 +20564,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::HAS_CONFIG,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::HAS_CONFIG,
             Self::EslintGuardForIn(_) => EslintGuardForIn::HAS_CONFIG,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::HAS_CONFIG,
             Self::EslintIdLength(_) => EslintIdLength::HAS_CONFIG,
             Self::EslintIdMatch(_) => EslintIdMatch::HAS_CONFIG,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::HAS_CONFIG,
@@ -20914,6 +21014,9 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::HAS_CONFIG,
+            Self::ReactFunctionComponentDefinition(_) => {
+                ReactFunctionComponentDefinition::HAS_CONFIG
+            }
             Self::ReactHookUseState(_) => ReactHookUseState::HAS_CONFIG,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::HAS_CONFIG,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::HAS_CONFIG,
@@ -21340,6 +21443,7 @@ impl RuleEnum {
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::HAS_CONFIG
             }
+            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::HAS_CONFIG,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::HAS_CONFIG
             }
@@ -21405,6 +21509,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
             Self::NodeNoSync(_) => NodeNoSync::HAS_CONFIG,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::HAS_CONFIG,
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::HAS_CONFIG
             }
@@ -21520,6 +21625,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::INFO,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::INFO,
             Self::EslintGuardForIn(_) => EslintGuardForIn::INFO,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::INFO,
             Self::EslintIdLength(_) => EslintIdLength::INFO,
             Self::EslintIdMatch(_) => EslintIdMatch::INFO,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::INFO,
@@ -21931,6 +22037,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::INFO,
             Self::ReactForbidElements(_) => ReactForbidElements::INFO,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::INFO,
+            Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::INFO,
             Self::ReactHookUseState(_) => ReactHookUseState::INFO,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::INFO,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::INFO,
@@ -22319,6 +22426,7 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::INFO
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::INFO,
+            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::INFO,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::INFO,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::INFO,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::INFO,
@@ -22372,6 +22480,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::INFO,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::INFO,
             Self::NodeNoSync(_) => NodeNoSync::INFO,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::INFO,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::INFO,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::INFO,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::INFO,
@@ -22484,6 +22593,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.types_info(),
             Self::EslintGroupedAccessorPairs(rule) => rule.types_info(),
             Self::EslintGuardForIn(rule) => rule.types_info(),
+            Self::EslintIdDenylist(rule) => rule.types_info(),
             Self::EslintIdLength(rule) => rule.types_info(),
             Self::EslintIdMatch(rule) => rule.types_info(),
             Self::EslintInitDeclarations(rule) => rule.types_info(),
@@ -22827,6 +22937,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
+            Self::ReactFunctionComponentDefinition(rule) => rule.types_info(),
             Self::ReactHookUseState(rule) => rule.types_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.types_info(),
             Self::ReactJsxBooleanValue(rule) => rule.types_info(),
@@ -23175,6 +23286,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
+            Self::VitestPaddingAroundTestBlocks(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
@@ -23226,6 +23338,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
             Self::NodeNoSync(rule) => rule.types_info(),
+            Self::NodeNoTopLevelAwait(rule) => rule.types_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
@@ -23329,6 +23442,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_info(),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_info(),
             Self::EslintGuardForIn(rule) => rule.run_info(),
+            Self::EslintIdDenylist(rule) => rule.run_info(),
             Self::EslintIdLength(rule) => rule.run_info(),
             Self::EslintIdMatch(rule) => rule.run_info(),
             Self::EslintInitDeclarations(rule) => rule.run_info(),
@@ -23672,6 +23786,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
+            Self::ReactFunctionComponentDefinition(rule) => rule.run_info(),
             Self::ReactHookUseState(rule) => rule.run_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.run_info(),
             Self::ReactJsxBooleanValue(rule) => rule.run_info(),
@@ -24020,6 +24135,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
+            Self::VitestPaddingAroundTestBlocks(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
@@ -24071,6 +24187,7 @@ impl RuleEnum {
             Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
             Self::NodeNoSync(rule) => rule.run_info(),
+            Self::NodeNoTopLevelAwait(rule) => rule.run_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
@@ -24196,6 +24313,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintGetterReturn(EslintGetterReturn::default()),
         RuleEnum::EslintGroupedAccessorPairs(EslintGroupedAccessorPairs::default()),
         RuleEnum::EslintGuardForIn(EslintGuardForIn::default()),
+        RuleEnum::EslintIdDenylist(EslintIdDenylist::default()),
         RuleEnum::EslintIdLength(EslintIdLength::default()),
         RuleEnum::EslintIdMatch(EslintIdMatch::default()),
         RuleEnum::EslintInitDeclarations(EslintInitDeclarations::default()),
@@ -24607,6 +24725,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
+        RuleEnum::ReactFunctionComponentDefinition(ReactFunctionComponentDefinition::default()),
         RuleEnum::ReactHookUseState(ReactHookUseState::default()),
         RuleEnum::ReactIframeMissingSandbox(ReactIframeMissingSandbox::default()),
         RuleEnum::ReactJsxBooleanValue(ReactJsxBooleanValue::default()),
@@ -24995,6 +25114,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             VitestNoUnneededAsyncExpectFunction::default(),
         ),
         RuleEnum::VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks::default()),
+        RuleEnum::VitestPaddingAroundTestBlocks(VitestPaddingAroundTestBlocks::default()),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
@@ -25048,6 +25168,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
         RuleEnum::NodeNoSync(NodeNoSync::default()),
+        RuleEnum::NodeNoTopLevelAwait(NodeNoTopLevelAwait::default()),
         RuleEnum::VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),

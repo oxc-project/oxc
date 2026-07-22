@@ -1,5 +1,5 @@
 use itertools::Either;
-use lazy_regex::{Lazy, Regex, lazy_regex};
+use lazy_regex::Regex;
 use schemars::JsonSchema;
 
 use oxc_ast::{
@@ -521,10 +521,8 @@ impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_meta_property(&mut self, it: &oxc_ast::ast::MetaProperty<'a>) {
-        if it.meta.name == "new" && it.property.name == "target" {
-            self.has_lexical_identifier = true;
-        }
+    fn visit_new_target(&mut self, _it: &oxc_ast::ast::NewTarget) {
+        self.has_lexical_identifier = true;
     }
 
     fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
@@ -548,8 +546,6 @@ enum ShorthandType {
     Never,
 }
 
-static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
-
 /// Determines if the first character of the name
 /// is a capital letter.
 /// * `name` - The name of the node to evaluate.
@@ -557,11 +553,10 @@ static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
 /// Returns true if the first character of the property name is a capital letter, false if not.
 fn is_constructor<N: AsRef<str>>(name: N) -> bool {
     // Not a constructor if name has no characters apart from '_', '$' and digits e.g. '_', '$$', '_8'
-    let Some(matched) = CTOR_PREFIX_REGEX.find(name.as_ref()) else {
-        return false;
-    };
-
-    name.as_ref().chars().nth(matched.start()).is_some_and(char::is_uppercase)
+    name.as_ref()
+        .chars()
+        .find(|c| !matches!(c, '_' | '$' | '0'..='9'))
+        .is_some_and(char::is_uppercase)
 }
 
 fn is_property_value_function(property: &ObjectProperty) -> bool {

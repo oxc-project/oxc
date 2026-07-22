@@ -21,8 +21,8 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        InnermostFunction, expression_contains_jsx, find_innermost_function_with_jsx,
-        function_body_contains_jsx, function_contains_jsx, is_hoc_call, is_react_component_name,
+        InnermostFunction, arrow_function_returns, expression_returns,
+        find_innermost_function_with_jsx, function_returns, is_hoc_call, is_react_component_name,
     },
 };
 
@@ -209,7 +209,7 @@ impl Rule for DisplayName {
             for stmt in &program.body {
                 if let oxc_ast::ast::Statement::ExportDefaultDeclaration(export) = stmt {
                     if let Some(component_info) =
-                        is_anonymous_export_component(export, ignore_transpiler_name)
+                        is_anonymous_export_component(export, ctx, ignore_transpiler_name)
                     {
                         components_to_report.push((component_info.span, component_info.is_context));
                     }
@@ -233,6 +233,7 @@ impl Rule for DisplayName {
                             assign,
                             ignore_transpiler_name,
                             check_context_objects,
+                            ctx,
                         ) {
                             components_to_report
                                 .push((component_info.span, component_info.is_context));
@@ -489,9 +490,9 @@ fn is_react_component_node<'a>(
 
             // Check for function/arrow function components with JSX
             if let Some(expr) = &decl.init {
-                // Check if it's a direct component (has JSX directly)
-                let contains_jsx = expression_contains_jsx(expr);
-                if contains_jsx
+                // Check if it's a direct component (returns JSX directly)
+                let returns_jsx = expression_returns(expr, ctx).has_jsx();
+                if returns_jsx
                     && name.as_ref().is_some_and(|name| is_react_component_name(name.as_str()))
                 {
                     return Some(ReactComponentInfo {
@@ -502,8 +503,7 @@ fn is_react_component_node<'a>(
                 }
 
                 // Check if it's a HOF pattern
-                if !contains_jsx
-                    && let Some(innermost) = find_innermost_function_with_jsx(expr, ctx)
+                if !returns_jsx && let Some(innermost) = find_innermost_function_with_jsx(expr, ctx)
                 {
                     let inner_has_name = match innermost {
                         InnermostFunction::Function(func) => func.id.is_some(),
@@ -526,7 +526,7 @@ fn is_react_component_node<'a>(
             // Check for object expressions with methods
             if let Some(Expression::ObjectExpression(obj_expr)) = &decl.init
                 && let Some(name) = &name
-                && has_component_methods_in_object(obj_expr, ignore_transpiler_name)
+                && has_component_methods_in_object(obj_expr, ctx, ignore_transpiler_name)
             {
                 return Some(ReactComponentInfo {
                     span: decl.id.span(),
@@ -545,7 +545,7 @@ fn is_react_component_node<'a>(
                     return None; // Has static displayName
                 }
 
-                if class_contains_jsx(class) {
+                if class_returns_jsx(class, ctx) {
                     return Some(ReactComponentInfo {
                         span: class.span,
                         is_context: false,
@@ -559,8 +559,8 @@ fn is_react_component_node<'a>(
             if let Some(name) = &func.id
                 && is_react_component_name(&name.name)
             {
-                // Check if function directly contains JSX
-                if function_contains_jsx(func) {
+                // Check if function directly returns JSX
+                if function_returns(func, ctx).has_jsx() {
                     return Some(ReactComponentInfo {
                         span: func.span,
                         is_context: false,
@@ -615,6 +615,7 @@ fn is_react_component_node<'a>(
 /// Check if an object expression has component methods
 fn has_component_methods_in_object(
     obj_expr: &ObjectExpression,
+    ctx: &LintContext,
     ignore_transpiler_name: bool,
 ) -> bool {
     for prop in &obj_expr.properties {
@@ -623,7 +624,7 @@ fn has_component_methods_in_object(
             && obj_prop.method
             && ignore_transpiler_name
             && is_react_component_name(&ident.name)
-            && matches!(&obj_prop.value, Expression::FunctionExpression(f) if function_contains_jsx(f))
+            && matches!(&obj_prop.value, Expression::FunctionExpression(f) if function_returns(f, ctx).has_jsx())
         {
             return true;
         }
@@ -634,31 +635,25 @@ fn has_component_methods_in_object(
 /// Handle anonymous export default components
 fn is_anonymous_export_component(
     export: &oxc_ast::ast::ExportDefaultDeclaration,
+    ctx: &LintContext,
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
         ExportDefaultDeclarationKind::ArrowFunctionExpression(func)
-            // Uses visitor pattern to handle JSX in nested control flow
-            if function_body_contains_jsx(&func.body) => {
-                return Some(ReactComponentInfo {
-                    span: export.span,
-                    is_context: false,
-                    name: None,
-                });
-            }
+            if arrow_function_returns(func, ctx).has_jsx() =>
+        {
+            return Some(ReactComponentInfo { span: export.span, is_context: false, name: None });
+        }
         ExportDefaultDeclarationKind::FunctionExpression(func)
-            // Uses visitor pattern to handle JSX in nested control flow
-            if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) => {
-                return Some(ReactComponentInfo {
-                    span: export.span,
-                    is_context: false,
-                    name: None,
-                });
-            }
+            if function_returns(func, ctx).has_jsx()
+                && (func.id.is_none() || ignore_transpiler_name) =>
+        {
+            return Some(ReactComponentInfo { span: export.span, is_context: false, name: None });
+        }
         ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
             // Named default-export functions are handled in phase 1 via symbols/references.
             // Keep this path for anonymous default-export functions only.
-            if func.id.is_none() && function_contains_jsx(func) {
+            if func.id.is_none() && function_returns(func, ctx).has_jsx() {
                 return Some(ReactComponentInfo {
                     span: export.span,
                     is_context: false,
@@ -667,7 +662,7 @@ fn is_anonymous_export_component(
             }
         }
         ExportDefaultDeclarationKind::ClassDeclaration(class) => {
-            return check_class_component(class, export.span, ignore_transpiler_name);
+            return check_class_component(class, export.span, ctx, ignore_transpiler_name);
         }
         _ => {}
     }
@@ -678,6 +673,7 @@ fn is_anonymous_export_component(
 fn check_class_component(
     class: &oxc_ast::ast::Class,
     span: Span,
+    ctx: &LintContext,
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     // Named default-export classes are handled in phase 1 via symbols/references.
@@ -690,7 +686,7 @@ fn check_class_component(
         return None;
     }
 
-    if !class_contains_jsx(class) {
+    if !class_returns_jsx(class, ctx) {
         return None;
     }
 
@@ -711,6 +707,7 @@ fn is_module_exports_component(
     assign: &oxc_ast::ast::AssignmentExpression,
     ignore_transpiler_name: bool,
     check_context_objects: bool,
+    ctx: &LintContext,
 ) -> Option<ReactComponentInfo> {
     if let AssignmentTarget::StaticMemberExpression(member) = &assign.left
         && let Expression::Identifier(ident) = &member.object
@@ -719,23 +716,24 @@ fn is_module_exports_component(
     {
         match &assign.right {
             Expression::ArrowFunctionExpression(func)
-                // Uses visitor pattern to handle JSX in nested control flow
-                if function_body_contains_jsx(&func.body) => {
-                    return Some(ReactComponentInfo {
-                        span: assign.span,
-                        is_context: false,
-                        name: None,
-                    });
-                }
+                if arrow_function_returns(func, ctx).has_jsx() =>
+            {
+                return Some(ReactComponentInfo {
+                    span: assign.span,
+                    is_context: false,
+                    name: None,
+                });
+            }
             Expression::FunctionExpression(func)
-                // Uses visitor pattern to handle JSX in nested control flow
-                if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) => {
-                    return Some(ReactComponentInfo {
-                        span: assign.span,
-                        is_context: false,
-                        name: None,
-                    });
-                }
+                if function_returns(func, ctx).has_jsx()
+                    && (func.id.is_none() || ignore_transpiler_name) =>
+            {
+                return Some(ReactComponentInfo {
+                    span: assign.span,
+                    is_context: false,
+                    name: None,
+                });
+            }
             Expression::CallExpression(call) => {
                 if let Some(callee_name) = call.callee_name() {
                     if callee_name == "createClass" || callee_name == "createReactClass" {
@@ -843,11 +841,11 @@ fn class_has_static_display_name(class: &oxc_ast::ast::Class) -> bool {
     })
 }
 
-/// Check if a class contains JSX in any of its methods
-fn class_contains_jsx(class: &oxc_ast::ast::Class) -> bool {
+/// Check if a class returns JSX from any of its methods.
+fn class_returns_jsx(class: &oxc_ast::ast::Class, ctx: &LintContext) -> bool {
     class.body.body.iter().any(|element| {
         if let ClassElement::MethodDefinition(method_def) = element {
-            return function_contains_jsx(&method_def.value);
+            return function_returns(&method_def.value, ctx).has_jsx();
         }
         false
     })
@@ -858,6 +856,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            "const createHandler = () => () => { someGlobalFunc(<div />); };",
+            None,
+            None,
+        ),
         (
             "
                     var Hello = createReactClass({
@@ -1783,6 +1786,11 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "export default () => { const view = <div/>; return view; };",
+            None,
+            None,
+        ),
         (
             r#"
                     var Hello = createReactClass({

@@ -25,7 +25,6 @@ export type Expression =
   | StringLiteral
   | TemplateLiteral
   | IdentifierReference
-  | MetaProperty
   | Super
   | ArrayExpression
   | ArrowFunctionExpression
@@ -49,6 +48,7 @@ export type Expression =
   | UpdateExpression
   | YieldExpression
   | PrivateInExpression
+  | MetaProperty
   | JSXElement
   | JSXFragment
   | TSAsExpression
