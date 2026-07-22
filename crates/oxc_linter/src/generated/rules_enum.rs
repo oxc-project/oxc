@@ -715,6 +715,7 @@ pub use crate::rules::unicorn::prefer_regexp_test::PreferRegexpTest as UnicornPr
 pub use crate::rules::unicorn::prefer_response_static_json::PreferResponseStaticJson as UnicornPreferResponseStaticJson;
 pub use crate::rules::unicorn::prefer_set_has::PreferSetHas as UnicornPreferSetHas;
 pub use crate::rules::unicorn::prefer_set_size::PreferSetSize as UnicornPreferSetSize;
+pub use crate::rules::unicorn::prefer_simple_condition_first::PreferSimpleConditionFirst as UnicornPreferSimpleConditionFirst;
 pub use crate::rules::unicorn::prefer_single_call::PreferSingleCall as UnicornPreferSingleCall;
 pub use crate::rules::unicorn::prefer_spread::PreferSpread as UnicornPreferSpread;
 pub use crate::rules::unicorn::prefer_string_raw::PreferStringRaw as UnicornPreferStringRaw;
@@ -1441,6 +1442,7 @@ pub enum RuleEnum {
     UnicornPreferResponseStaticJson(UnicornPreferResponseStaticJson),
     UnicornPreferSetHas(UnicornPreferSetHas),
     UnicornPreferSetSize(UnicornPreferSetSize),
+    UnicornPreferSimpleConditionFirst(UnicornPreferSimpleConditionFirst),
     UnicornPreferSingleCall(UnicornPreferSingleCall),
     UnicornPreferSpread(UnicornPreferSpread),
     UnicornPreferStringRaw(UnicornPreferStringRaw),
@@ -2367,7 +2369,8 @@ const UNICORN_PREFER_REGEXP_TEST_ID: usize = UNICORN_PREFER_REFLECT_APPLY_ID + 1
 const UNICORN_PREFER_RESPONSE_STATIC_JSON_ID: usize = UNICORN_PREFER_REGEXP_TEST_ID + 1usize;
 const UNICORN_PREFER_SET_HAS_ID: usize = UNICORN_PREFER_RESPONSE_STATIC_JSON_ID + 1usize;
 const UNICORN_PREFER_SET_SIZE_ID: usize = UNICORN_PREFER_SET_HAS_ID + 1usize;
-const UNICORN_PREFER_SINGLE_CALL_ID: usize = UNICORN_PREFER_SET_SIZE_ID + 1usize;
+const UNICORN_PREFER_SIMPLE_CONDITION_FIRST_ID: usize = UNICORN_PREFER_SET_SIZE_ID + 1usize;
+const UNICORN_PREFER_SINGLE_CALL_ID: usize = UNICORN_PREFER_SIMPLE_CONDITION_FIRST_ID + 1usize;
 const UNICORN_PREFER_SPREAD_ID: usize = UNICORN_PREFER_SINGLE_CALL_ID + 1usize;
 const UNICORN_PREFER_STRING_RAW_ID: usize = UNICORN_PREFER_SPREAD_ID + 1usize;
 const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = UNICORN_PREFER_STRING_RAW_ID + 1usize;
@@ -3352,6 +3355,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UNICORN_PREFER_RESPONSE_STATIC_JSON_ID,
             Self::UnicornPreferSetHas(_) => UNICORN_PREFER_SET_HAS_ID,
             Self::UnicornPreferSetSize(_) => UNICORN_PREFER_SET_SIZE_ID,
+            Self::UnicornPreferSimpleConditionFirst(_) => UNICORN_PREFER_SIMPLE_CONDITION_FIRST_ID,
             Self::UnicornPreferSingleCall(_) => UNICORN_PREFER_SINGLE_CALL_ID,
             Self::UnicornPreferSpread(_) => UNICORN_PREFER_SPREAD_ID,
             Self::UnicornPreferStringRaw(_) => UNICORN_PREFER_STRING_RAW_ID,
@@ -4321,6 +4325,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::NAME,
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::NAME,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::NAME,
+            Self::UnicornPreferSimpleConditionFirst(_) => UnicornPreferSimpleConditionFirst::NAME,
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::NAME,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::NAME,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::NAME,
@@ -5322,6 +5327,9 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::CATEGORY,
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::CATEGORY,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::CATEGORY,
+            Self::UnicornPreferSimpleConditionFirst(_) => {
+                UnicornPreferSimpleConditionFirst::CATEGORY
+            }
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::CATEGORY,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::CATEGORY,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::CATEGORY,
@@ -6306,6 +6314,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::FIX,
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::FIX,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::FIX,
+            Self::UnicornPreferSimpleConditionFirst(_) => UnicornPreferSimpleConditionFirst::FIX,
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::FIX,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::FIX,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::FIX,
@@ -7442,6 +7451,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::documentation(),
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::documentation(),
+            Self::UnicornPreferSimpleConditionFirst(_) => {
+                UnicornPreferSimpleConditionFirst::documentation()
+            }
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::documentation(),
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::documentation(),
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::documentation(),
@@ -9500,6 +9512,10 @@ impl RuleEnum {
                 .or_else(|| UnicornPreferSetHas::schema(generator)),
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::config_schema(generator)
                 .or_else(|| UnicornPreferSetSize::schema(generator)),
+            Self::UnicornPreferSimpleConditionFirst(_) => {
+                UnicornPreferSimpleConditionFirst::config_schema(generator)
+                    .or_else(|| UnicornPreferSimpleConditionFirst::schema(generator))
+            }
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::config_schema(generator)
                 .or_else(|| UnicornPreferSingleCall::schema(generator)),
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::config_schema(generator)
@@ -10844,6 +10860,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => "unicorn",
             Self::UnicornPreferSetHas(_) => "unicorn",
             Self::UnicornPreferSetSize(_) => "unicorn",
+            Self::UnicornPreferSimpleConditionFirst(_) => "unicorn",
             Self::UnicornPreferSingleCall(_) => "unicorn",
             Self::UnicornPreferSpread(_) => "unicorn",
             Self::UnicornPreferStringRaw(_) => "unicorn",
@@ -12980,6 +12997,11 @@ impl RuleEnum {
             Self::UnicornPreferSetSize(_) => {
                 Ok(Self::UnicornPreferSetSize(UnicornPreferSetSize::from_configuration(value)?))
             }
+            Self::UnicornPreferSimpleConditionFirst(_) => {
+                Ok(Self::UnicornPreferSimpleConditionFirst(
+                    UnicornPreferSimpleConditionFirst::from_configuration(value)?,
+                ))
+            }
             Self::UnicornPreferSingleCall(_) => Ok(Self::UnicornPreferSingleCall(
                 UnicornPreferSingleCall::from_configuration(value)?,
             )),
@@ -14423,6 +14445,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(rule) => rule.to_configuration(),
             Self::UnicornPreferSetHas(rule) => rule.to_configuration(),
             Self::UnicornPreferSetSize(rule) => rule.to_configuration(),
+            Self::UnicornPreferSimpleConditionFirst(rule) => rule.to_configuration(),
             Self::UnicornPreferSingleCall(rule) => rule.to_configuration(),
             Self::UnicornPreferSpread(rule) => rule.to_configuration(),
             Self::UnicornPreferStringRaw(rule) => rule.to_configuration(),
@@ -15275,6 +15298,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(rule) => rule.run(node, ctx),
             Self::UnicornPreferSetHas(rule) => rule.run(node, ctx),
             Self::UnicornPreferSetSize(rule) => rule.run(node, ctx),
+            Self::UnicornPreferSimpleConditionFirst(rule) => rule.run(node, ctx),
             Self::UnicornPreferSingleCall(rule) => rule.run(node, ctx),
             Self::UnicornPreferSpread(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringRaw(rule) => rule.run(node, ctx),
@@ -16137,6 +16161,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(rule) => rule.run_once(ctx),
             Self::UnicornPreferSetHas(rule) => rule.run_once(ctx),
             Self::UnicornPreferSetSize(rule) => rule.run_once(ctx),
+            Self::UnicornPreferSimpleConditionFirst(rule) => rule.run_once(ctx),
             Self::UnicornPreferSingleCall(rule) => rule.run_once(ctx),
             Self::UnicornPreferSpread(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringRaw(rule) => rule.run_once(ctx),
@@ -17094,6 +17119,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferSetHas(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferSetSize(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferSimpleConditionFirst(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferSingleCall(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringRaw(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17979,6 +18005,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(rule) => rule.should_run(ctx),
             Self::UnicornPreferSetHas(rule) => rule.should_run(ctx),
             Self::UnicornPreferSetSize(rule) => rule.should_run(ctx),
+            Self::UnicornPreferSimpleConditionFirst(rule) => rule.should_run(ctx),
             Self::UnicornPreferSingleCall(rule) => rule.should_run(ctx),
             Self::UnicornPreferSpread(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringRaw(rule) => rule.should_run(ctx),
@@ -19092,6 +19119,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::IS_TSGOLINT_RULE,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::IS_TSGOLINT_RULE,
+            Self::UnicornPreferSimpleConditionFirst(_) => {
+                UnicornPreferSimpleConditionFirst::IS_TSGOLINT_RULE
+            }
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::IS_TSGOLINT_RULE,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::IS_TSGOLINT_RULE,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::IS_TSGOLINT_RULE,
@@ -20191,6 +20221,9 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::VERSION,
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::VERSION,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::VERSION,
+            Self::UnicornPreferSimpleConditionFirst(_) => {
+                UnicornPreferSimpleConditionFirst::VERSION
+            }
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::VERSION,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::VERSION,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::VERSION,
@@ -21239,6 +21272,9 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::HAS_CONFIG,
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::HAS_CONFIG,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::HAS_CONFIG,
+            Self::UnicornPreferSimpleConditionFirst(_) => {
+                UnicornPreferSimpleConditionFirst::HAS_CONFIG
+            }
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::HAS_CONFIG,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::HAS_CONFIG,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::HAS_CONFIG,
@@ -22238,6 +22274,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::INFO,
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::INFO,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::INFO,
+            Self::UnicornPreferSimpleConditionFirst(_) => UnicornPreferSimpleConditionFirst::INFO,
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::INFO,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::INFO,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::INFO,
@@ -23114,6 +23151,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(rule) => rule.types_info(),
             Self::UnicornPreferSetHas(rule) => rule.types_info(),
             Self::UnicornPreferSetSize(rule) => rule.types_info(),
+            Self::UnicornPreferSimpleConditionFirst(rule) => rule.types_info(),
             Self::UnicornPreferSingleCall(rule) => rule.types_info(),
             Self::UnicornPreferSpread(rule) => rule.types_info(),
             Self::UnicornPreferStringRaw(rule) => rule.types_info(),
@@ -23963,6 +24001,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(rule) => rule.run_info(),
             Self::UnicornPreferSetHas(rule) => rule.run_info(),
             Self::UnicornPreferSetSize(rule) => rule.run_info(),
+            Self::UnicornPreferSimpleConditionFirst(rule) => rule.run_info(),
             Self::UnicornPreferSingleCall(rule) => rule.run_info(),
             Self::UnicornPreferSpread(rule) => rule.run_info(),
             Self::UnicornPreferStringRaw(rule) => rule.run_info(),
@@ -24926,6 +24965,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferResponseStaticJson(UnicornPreferResponseStaticJson::default()),
         RuleEnum::UnicornPreferSetHas(UnicornPreferSetHas::default()),
         RuleEnum::UnicornPreferSetSize(UnicornPreferSetSize::default()),
+        RuleEnum::UnicornPreferSimpleConditionFirst(UnicornPreferSimpleConditionFirst::default()),
         RuleEnum::UnicornPreferSingleCall(UnicornPreferSingleCall::default()),
         RuleEnum::UnicornPreferSpread(UnicornPreferSpread::default()),
         RuleEnum::UnicornPreferStringRaw(UnicornPreferStringRaw::default()),
