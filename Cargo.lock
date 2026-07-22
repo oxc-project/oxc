@@ -2289,7 +2289,6 @@ dependencies = [
  "oxc_index",
  "oxc_mangler",
  "oxc_parser",
- "oxc_regular_expression",
  "oxc_semantic",
  "oxc_sourcemap",
  "oxc_span",

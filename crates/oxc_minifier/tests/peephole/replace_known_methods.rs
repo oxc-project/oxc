@@ -1243,4 +1243,22 @@ fn test_fold_regex_source() {
     test_same_value("/(/.source"); // this regex is invalid
     test_value("/\\u{}/.source", "'\\\\u{}'");
     test_same_value("/\\u{}/u.source"); // this regex is invalid, also u flag is not supported by ES2015
+
+    // Preserve newer RegExp syntax unless every configured target supports it.
+    test_same_value("/a/u.source");
+    for (source, expected, unsupported_target, supported_target) in [
+        ("x = /a/y.source", "x = 'a'", "chrome48", "es2015"),
+        ("x = /a/u.source", "x = 'a'", "chrome49", "es2015"),
+        ("x = /a/s.source", "x = 'a'", "es2017", "es2018"),
+        ("x = /a/d.source", "x = 'a'", "es2021", "es2022"),
+        ("x = /a/v.source", "x = 'a'", "es2023", "es2024"),
+        ("x = /(?<name>a)/.source", "x = '(?<name>a)'", "es2017", "es2018"),
+        (r"x = /\p{Ll}/u.source", r"x = '\\p{Ll}'", "es2017", "es2018"),
+        ("x = /(?<=a)b/.source", "x = '(?<=a)b'", "es2017", "es2018"),
+        ("x = /(?<name>a)|(?<name>b)/.source", "x = '(?<name>a)|(?<name>b)'", "es2024", "es2025"),
+        ("x = /(?i:a)/.source", "x = '(?i:a)'", "es2024", "es2025"),
+    ] {
+        test_target(source, source, unsupported_target);
+        test_target(source, expected, supported_target);
+    }
 }
