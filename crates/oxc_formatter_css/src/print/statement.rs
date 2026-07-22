@@ -646,14 +646,6 @@ fn respace_value_tokens(v: &str) -> String {
 /// Mirrors Prettier's block printing: `{` + indented statements + `}`.
 /// An empty block prints as `{\n}`.
 pub(super) fn write_block<'a>(block: &SimpleBlock<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let depth = f.context().block_depth();
-    depth.set(depth.get() + 1);
-    write_block_inner(block, f);
-    let depth = f.context().block_depth();
-    depth.set(depth.get() - 1);
-}
-
-fn write_block_inner<'a>(block: &SimpleBlock<'a>, f: &mut CssFormatter<'_, 'a>) {
     let block_span = to_span(&block.span);
     let r_curly = block_span.end.saturating_sub(1);
 

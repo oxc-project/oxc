@@ -275,6 +275,10 @@ Notable divergences are:
 - SCSS: A function call directly after a `//` comment in nested-args position
   - Prettier double-indents it
   - We print the normal indent (prettier/prettier#19427)
+- SCSS: A nested map value prints at the SAME indent in every block context
+  - Prettier double-indents it (closing `)` floating between levels) when the nearest
+    at-rule ancestor is a control directive (`@if`/`@else`/`@for`/`@each`/`@while`; selector blocks in between don't shield)
+    = identical source, different indent per context
 - SCSS: The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list (semantics)
   - `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else
   - Prettier 3.9.5 changes `key: ($a + $b)` from a number to a list,
@@ -362,10 +366,10 @@ cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter css/atrule
 ```
 
-At the current version (v3.9.5), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
+At the current version (v3.9.5), the divergences of seven files have been confirmed and are intentional (see "Known divergences"):
 
 - CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
-- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
 
