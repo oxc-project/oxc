@@ -132,10 +132,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
                             _ => write!(f, [empty_line()]),
                         }
                     }
-                    CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
-                        0 | 1 => write!(f, [hard_line_break()]),
-                        _ => write!(f, [empty_line()]),
-                    },
+                    CommentKind::Line | CommentKind::HTMLOpenLine | CommentKind::HTMLCloseLine => {
+                        match f.source_text().lines_after(comment.span.end) {
+                            0 | 1 => write!(f, [hard_line_break()]),
+                            _ => write!(f, [empty_line()]),
+                        }
+                    }
                 }
             }
         }

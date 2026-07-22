@@ -8,6 +8,8 @@ import {
   COMMENTS_LEN_OFFSET,
   COMMENT_SIZE,
   COMMENT_KIND_OFFSET,
+  COMMENT_HTML_CLOSE_LINE_KIND,
+  COMMENT_HTML_OPEN_LINE_KIND,
   COMMENT_LINE_KIND,
   DATA_POINTER_POS_32,
   DESERIALIZED_FLAG_OFFSET,
@@ -340,7 +342,11 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
   // Deserialize comment into a cached `Comment` object
   const comment = cachedComments[index];
 
-  const isBlock = commentsUint8![pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
+  const kind = commentsUint8![pos + COMMENT_KIND_OFFSET];
+  const isBlock =
+    kind !== COMMENT_LINE_KIND &&
+    kind !== COMMENT_HTML_OPEN_LINE_KIND &&
+    kind !== COMMENT_HTML_CLOSE_LINE_KIND;
 
   const pos32 = pos >> 2,
     start = commentsInt32![pos32],
@@ -348,8 +354,13 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
 
   comment.type = isBlock ? "Block" : "Line";
   // Line comments: `// text` -> slice `start + 2..end`
+  // HTML line comments: `<!-- text` / `--> text` -> slice after the full marker
   // Block comments: `/* text */` -> slice `start + 2..end - 2`
-  comment.value = sourceText!.slice(start + 2, end - (+isBlock << 1));
+  comment.value = sourceText!.slice(
+    start +
+      (kind === COMMENT_HTML_OPEN_LINE_KIND ? 4 : kind === COMMENT_HTML_CLOSE_LINE_KIND ? 3 : 2),
+    end - (+isBlock << 1),
+  );
   comment.range[0] = comment.start = start;
   comment.range[1] = comment.end = end;
 

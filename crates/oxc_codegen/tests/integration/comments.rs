@@ -1,7 +1,8 @@
 use crate::{
     test_idempotency, test_idempotency_options,
-    tester::{test, test_same},
+    tester::{default_options, test, test_options_with_source_type, test_same},
 };
+use oxc_span::SourceType;
 
 // A leading comment inside a `pife` arrow alternate of a `?:` must stay
 // inside the paren wrap on every codegen pass; otherwise the parser re-
@@ -192,6 +193,22 @@ fn test_comment_at_top_of_file() {
     ret.program.comments[0].position = CommentPosition::Leading;
     let code = Codegen::new().build(&ret.program).code;
     assert_eq!(code, "/** comment */ export {};\n");
+}
+
+#[test]
+fn test_html_line_comments() {
+    test_options_with_source_type(
+        "<!--a\nlet x",
+        "<!--a\nlet x;\n",
+        SourceType::script(),
+        default_options(),
+    );
+    test_options_with_source_type(
+        "-->\nlet x",
+        "-->\nlet x;\n",
+        SourceType::script(),
+        default_options(),
+    );
 }
 
 #[test]

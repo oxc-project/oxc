@@ -389,7 +389,10 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line | CommentKind::SingleLineBlock => {
+            CommentKind::Line
+            | CommentKind::HTMLOpenLine
+            | CommentKind::HTMLCloseLine
+            | CommentKind::SingleLineBlock => {
                 self.print_str_escaping_script_close_tag(comment_source);
             }
             CommentKind::MultiLineBlock => {
