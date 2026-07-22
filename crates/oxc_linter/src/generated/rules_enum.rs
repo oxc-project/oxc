@@ -30,6 +30,7 @@ pub use crate::rules::eslint::func_style::FuncStyle as EslintFuncStyle;
 pub use crate::rules::eslint::getter_return::GetterReturn as EslintGetterReturn;
 pub use crate::rules::eslint::grouped_accessor_pairs::GroupedAccessorPairs as EslintGroupedAccessorPairs;
 pub use crate::rules::eslint::guard_for_in::GuardForIn as EslintGuardForIn;
+pub use crate::rules::eslint::id_denylist::IdDenylist as EslintIdDenylist;
 pub use crate::rules::eslint::id_length::IdLength as EslintIdLength;
 pub use crate::rules::eslint::id_match::IdMatch as EslintIdMatch;
 pub use crate::rules::eslint::init_declarations::InitDeclarations as EslintInitDeclarations;
@@ -368,6 +369,7 @@ pub use crate::rules::nextjs::no_title_in_document_head::NoTitleInDocumentHead a
 pub use crate::rules::nextjs::no_typos::NoTypos as NextjsNoTypos;
 pub use crate::rules::nextjs::no_unwanted_polyfillio::NoUnwantedPolyfillio as NextjsNoUnwantedPolyfillio;
 pub use crate::rules::node::callback_return::CallbackReturn as NodeCallbackReturn;
+pub use crate::rules::node::exports_style::ExportsStyle as NodeExportsStyle;
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
 pub use crate::rules::node::handle_callback_err::HandleCallbackErr as NodeHandleCallbackErr;
 pub use crate::rules::node::no_exports_assign::NoExportsAssign as NodeNoExportsAssign;
@@ -917,6 +919,7 @@ pub enum RuleEnum {
     EslintGetterReturn(EslintGetterReturn),
     EslintGroupedAccessorPairs(EslintGroupedAccessorPairs),
     EslintGuardForIn(EslintGuardForIn),
+    EslintIdDenylist(EslintIdDenylist),
     EslintIdLength(EslintIdLength),
     EslintIdMatch(EslintIdMatch),
     EslintInitDeclarations(EslintInitDeclarations),
@@ -1661,6 +1664,7 @@ pub enum RuleEnum {
     VitestValidTitle(VitestValidTitle),
     VitestWarnTodo(VitestWarnTodo),
     NodeCallbackReturn(NodeCallbackReturn),
+    NodeExportsStyle(NodeExportsStyle),
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
     NodeNoExportsAssign(NodeNoExportsAssign),
@@ -1770,7 +1774,8 @@ const ESLINT_FUNC_STYLE_ID: usize = ESLINT_FUNC_NAMES_ID + 1usize;
 const ESLINT_GETTER_RETURN_ID: usize = ESLINT_FUNC_STYLE_ID + 1usize;
 const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = ESLINT_GETTER_RETURN_ID + 1usize;
 const ESLINT_GUARD_FOR_IN_ID: usize = ESLINT_GROUPED_ACCESSOR_PAIRS_ID + 1usize;
-const ESLINT_ID_LENGTH_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
+const ESLINT_ID_DENYLIST_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
+const ESLINT_ID_LENGTH_ID: usize = ESLINT_ID_DENYLIST_ID + 1usize;
 const ESLINT_ID_MATCH_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
 const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_MATCH_ID + 1usize;
 const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
@@ -2608,7 +2613,8 @@ const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = VITEST_VALID_EXPECT_ID + 1usize
 const VITEST_VALID_TITLE_ID: usize = VITEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const VITEST_WARN_TODO_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
 const NODE_CALLBACK_RETURN_ID: usize = VITEST_WARN_TODO_ID + 1usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = NODE_CALLBACK_RETURN_ID + 1usize;
+const NODE_EXPORTS_STYLE_ID: usize = NODE_CALLBACK_RETURN_ID + 1usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = NODE_EXPORTS_STYLE_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
 const NODE_NO_MIXED_REQUIRES_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
@@ -2728,6 +2734,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => ESLINT_GETTER_RETURN_ID,
             Self::EslintGroupedAccessorPairs(_) => ESLINT_GROUPED_ACCESSOR_PAIRS_ID,
             Self::EslintGuardForIn(_) => ESLINT_GUARD_FOR_IN_ID,
+            Self::EslintIdDenylist(_) => ESLINT_ID_DENYLIST_ID,
             Self::EslintIdLength(_) => ESLINT_ID_LENGTH_ID,
             Self::EslintIdMatch(_) => ESLINT_ID_MATCH_ID,
             Self::EslintInitDeclarations(_) => ESLINT_INIT_DECLARATIONS_ID,
@@ -3588,6 +3595,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
             Self::VitestWarnTodo(_) => VITEST_WARN_TODO_ID,
             Self::NodeCallbackReturn(_) => NODE_CALLBACK_RETURN_ID,
+            Self::NodeExportsStyle(_) => NODE_EXPORTS_STYLE_ID,
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeHandleCallbackErr(_) => NODE_HANDLE_CALLBACK_ERR_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
@@ -3704,6 +3712,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::NAME,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::NAME,
             Self::EslintGuardForIn(_) => EslintGuardForIn::NAME,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::NAME,
             Self::EslintIdLength(_) => EslintIdLength::NAME,
             Self::EslintIdMatch(_) => EslintIdMatch::NAME,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::NAME,
@@ -4550,6 +4559,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::NAME,
             Self::VitestWarnTodo(_) => VitestWarnTodo::NAME,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::NAME,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::NAME,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
@@ -4668,6 +4678,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::CATEGORY,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::CATEGORY,
             Self::EslintGuardForIn(_) => EslintGuardForIn::CATEGORY,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::CATEGORY,
             Self::EslintIdLength(_) => EslintIdLength::CATEGORY,
             Self::EslintIdMatch(_) => EslintIdMatch::CATEGORY,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::CATEGORY,
@@ -5568,6 +5579,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
             Self::VitestWarnTodo(_) => VitestWarnTodo::CATEGORY,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::CATEGORY,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::CATEGORY,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
@@ -5687,6 +5699,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::FIX,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::FIX,
             Self::EslintGuardForIn(_) => EslintGuardForIn::FIX,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::FIX,
             Self::EslintIdLength(_) => EslintIdLength::FIX,
             Self::EslintIdMatch(_) => EslintIdMatch::FIX,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::FIX,
@@ -6533,6 +6546,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::FIX,
             Self::VitestWarnTodo(_) => VitestWarnTodo::FIX,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::FIX,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::FIX,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
@@ -6656,6 +6670,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::documentation(),
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::documentation(),
             Self::EslintGuardForIn(_) => EslintGuardForIn::documentation(),
+            Self::EslintIdDenylist(_) => EslintIdDenylist::documentation(),
             Self::EslintIdLength(_) => EslintIdLength::documentation(),
             Self::EslintIdMatch(_) => EslintIdMatch::documentation(),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::documentation(),
@@ -7748,6 +7763,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
             Self::VitestWarnTodo(_) => VitestWarnTodo::documentation(),
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::documentation(),
+            Self::NodeExportsStyle(_) => NodeExportsStyle::documentation(),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
@@ -7965,6 +7981,8 @@ impl RuleEnum {
             }
             Self::EslintGuardForIn(_) => EslintGuardForIn::config_schema(generator)
                 .or_else(|| EslintGuardForIn::schema(generator)),
+            Self::EslintIdDenylist(_) => EslintIdDenylist::config_schema(generator)
+                .or_else(|| EslintIdDenylist::schema(generator)),
             Self::EslintIdLength(_) => EslintIdLength::config_schema(generator)
                 .or_else(|| EslintIdLength::schema(generator)),
             Self::EslintIdMatch(_) => {
@@ -10101,6 +10119,8 @@ impl RuleEnum {
                 .or_else(|| VitestWarnTodo::schema(generator)),
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::config_schema(generator)
                 .or_else(|| NodeCallbackReturn::schema(generator)),
+            Self::NodeExportsStyle(_) => NodeExportsStyle::config_schema(generator)
+                .or_else(|| NodeExportsStyle::schema(generator)),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::config_schema(generator)
                 .or_else(|| NodeGlobalRequire::schema(generator)),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::config_schema(generator)
@@ -10313,6 +10333,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => "eslint",
             Self::EslintGroupedAccessorPairs(_) => "eslint",
             Self::EslintGuardForIn(_) => "eslint",
+            Self::EslintIdDenylist(_) => "eslint",
             Self::EslintIdLength(_) => "eslint",
             Self::EslintIdMatch(_) => "eslint",
             Self::EslintInitDeclarations(_) => "eslint",
@@ -11049,6 +11070,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => "vitest",
             Self::VitestWarnTodo(_) => "vitest",
             Self::NodeCallbackReturn(_) => "node",
+            Self::NodeExportsStyle(_) => "node",
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
@@ -11263,6 +11285,9 @@ impl RuleEnum {
             )),
             Self::EslintGuardForIn(_) => {
                 Ok(Self::EslintGuardForIn(EslintGuardForIn::from_configuration(value)?))
+            }
+            Self::EslintIdDenylist(_) => {
+                Ok(Self::EslintIdDenylist(EslintIdDenylist::from_configuration(value)?))
             }
             Self::EslintIdLength(_) => {
                 Ok(Self::EslintIdLength(EslintIdLength::from_configuration(value)?))
@@ -13658,6 +13683,9 @@ impl RuleEnum {
             Self::NodeCallbackReturn(_) => {
                 Ok(Self::NodeCallbackReturn(NodeCallbackReturn::from_configuration(value)?))
             }
+            Self::NodeExportsStyle(_) => {
+                Ok(Self::NodeExportsStyle(NodeExportsStyle::from_configuration(value)?))
+            }
             Self::NodeGlobalRequire(_) => {
                 Ok(Self::NodeGlobalRequire(NodeGlobalRequire::from_configuration(value)?))
             }
@@ -13886,6 +13914,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.to_configuration(),
             Self::EslintGroupedAccessorPairs(rule) => rule.to_configuration(),
             Self::EslintGuardForIn(rule) => rule.to_configuration(),
+            Self::EslintIdDenylist(rule) => rule.to_configuration(),
             Self::EslintIdLength(rule) => rule.to_configuration(),
             Self::EslintIdMatch(rule) => rule.to_configuration(),
             Self::EslintInitDeclarations(rule) => rule.to_configuration(),
@@ -14626,6 +14655,7 @@ impl RuleEnum {
             Self::VitestValidTitle(rule) => rule.to_configuration(),
             Self::VitestWarnTodo(rule) => rule.to_configuration(),
             Self::NodeCallbackReturn(rule) => rule.to_configuration(),
+            Self::NodeExportsStyle(rule) => rule.to_configuration(),
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
@@ -14739,6 +14769,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run(node, ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run(node, ctx),
             Self::EslintGuardForIn(rule) => rule.run(node, ctx),
+            Self::EslintIdDenylist(rule) => rule.run(node, ctx),
             Self::EslintIdLength(rule) => rule.run(node, ctx),
             Self::EslintIdMatch(rule) => rule.run(node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run(node, ctx),
@@ -15475,6 +15506,7 @@ impl RuleEnum {
             Self::VitestValidTitle(rule) => rule.run(node, ctx),
             Self::VitestWarnTodo(rule) => rule.run(node, ctx),
             Self::NodeCallbackReturn(rule) => rule.run(node, ctx),
+            Self::NodeExportsStyle(rule) => rule.run(node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
@@ -15600,6 +15632,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_once(ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_once(ctx),
             Self::EslintGuardForIn(rule) => rule.run_once(ctx),
+            Self::EslintIdDenylist(rule) => rule.run_once(ctx),
             Self::EslintIdLength(rule) => rule.run_once(ctx),
             Self::EslintIdMatch(rule) => rule.run_once(ctx),
             Self::EslintInitDeclarations(rule) => rule.run_once(ctx),
@@ -16336,6 +16369,7 @@ impl RuleEnum {
             Self::VitestValidTitle(rule) => rule.run_once(ctx),
             Self::VitestWarnTodo(rule) => rule.run_once(ctx),
             Self::NodeCallbackReturn(rule) => rule.run_once(ctx),
+            Self::NodeExportsStyle(rule) => rule.run_once(ctx),
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
@@ -16464,6 +16498,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintIdDenylist(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdMatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17310,6 +17345,7 @@ impl RuleEnum {
             Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NodeExportsStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17440,6 +17476,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.should_run(ctx),
             Self::EslintGroupedAccessorPairs(rule) => rule.should_run(ctx),
             Self::EslintGuardForIn(rule) => rule.should_run(ctx),
+            Self::EslintIdDenylist(rule) => rule.should_run(ctx),
             Self::EslintIdLength(rule) => rule.should_run(ctx),
             Self::EslintIdMatch(rule) => rule.should_run(ctx),
             Self::EslintInitDeclarations(rule) => rule.should_run(ctx),
@@ -18176,6 +18213,7 @@ impl RuleEnum {
             Self::VitestValidTitle(rule) => rule.should_run(ctx),
             Self::VitestWarnTodo(rule) => rule.should_run(ctx),
             Self::NodeCallbackReturn(rule) => rule.should_run(ctx),
+            Self::NodeExportsStyle(rule) => rule.should_run(ctx),
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
@@ -18294,6 +18332,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::IS_TSGOLINT_RULE,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::IS_TSGOLINT_RULE,
             Self::EslintGuardForIn(_) => EslintGuardForIn::IS_TSGOLINT_RULE,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::IS_TSGOLINT_RULE,
             Self::EslintIdLength(_) => EslintIdLength::IS_TSGOLINT_RULE,
             Self::EslintIdMatch(_) => EslintIdMatch::IS_TSGOLINT_RULE,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::IS_TSGOLINT_RULE,
@@ -19386,6 +19425,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
             Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::IS_TSGOLINT_RULE,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::IS_TSGOLINT_RULE,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
@@ -19522,6 +19562,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::VERSION,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::VERSION,
             Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::VERSION,
             Self::EslintIdLength(_) => EslintIdLength::VERSION,
             Self::EslintIdMatch(_) => EslintIdMatch::VERSION,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
@@ -20422,6 +20463,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::VERSION,
             Self::VitestWarnTodo(_) => VitestWarnTodo::VERSION,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::VERSION,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::VERSION,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::VERSION,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::VERSION,
@@ -20543,6 +20585,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::HAS_CONFIG,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::HAS_CONFIG,
             Self::EslintGuardForIn(_) => EslintGuardForIn::HAS_CONFIG,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::HAS_CONFIG,
             Self::EslintIdLength(_) => EslintIdLength::HAS_CONFIG,
             Self::EslintIdMatch(_) => EslintIdMatch::HAS_CONFIG,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::HAS_CONFIG,
@@ -21479,6 +21522,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
             Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::HAS_CONFIG,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::HAS_CONFIG,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
@@ -21603,6 +21647,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(_) => EslintGetterReturn::INFO,
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::INFO,
             Self::EslintGuardForIn(_) => EslintGuardForIn::INFO,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::INFO,
             Self::EslintIdLength(_) => EslintIdLength::INFO,
             Self::EslintIdMatch(_) => EslintIdMatch::INFO,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::INFO,
@@ -22449,6 +22494,7 @@ impl RuleEnum {
             Self::VitestValidTitle(_) => VitestValidTitle::INFO,
             Self::VitestWarnTodo(_) => VitestWarnTodo::INFO,
             Self::NodeCallbackReturn(_) => NodeCallbackReturn::INFO,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::INFO,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::INFO,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::INFO,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::INFO,
@@ -22570,6 +22616,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.types_info(),
             Self::EslintGroupedAccessorPairs(rule) => rule.types_info(),
             Self::EslintGuardForIn(rule) => rule.types_info(),
+            Self::EslintIdDenylist(rule) => rule.types_info(),
             Self::EslintIdLength(rule) => rule.types_info(),
             Self::EslintIdMatch(rule) => rule.types_info(),
             Self::EslintInitDeclarations(rule) => rule.types_info(),
@@ -23306,6 +23353,7 @@ impl RuleEnum {
             Self::VitestValidTitle(rule) => rule.types_info(),
             Self::VitestWarnTodo(rule) => rule.types_info(),
             Self::NodeCallbackReturn(rule) => rule.types_info(),
+            Self::NodeExportsStyle(rule) => rule.types_info(),
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
@@ -23418,6 +23466,7 @@ impl RuleEnum {
             Self::EslintGetterReturn(rule) => rule.run_info(),
             Self::EslintGroupedAccessorPairs(rule) => rule.run_info(),
             Self::EslintGuardForIn(rule) => rule.run_info(),
+            Self::EslintIdDenylist(rule) => rule.run_info(),
             Self::EslintIdLength(rule) => rule.run_info(),
             Self::EslintIdMatch(rule) => rule.run_info(),
             Self::EslintInitDeclarations(rule) => rule.run_info(),
@@ -24154,6 +24203,7 @@ impl RuleEnum {
             Self::VitestValidTitle(rule) => rule.run_info(),
             Self::VitestWarnTodo(rule) => rule.run_info(),
             Self::NodeCallbackReturn(rule) => rule.run_info(),
+            Self::NodeExportsStyle(rule) => rule.run_info(),
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
@@ -24288,6 +24338,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintGetterReturn(EslintGetterReturn::default()),
         RuleEnum::EslintGroupedAccessorPairs(EslintGroupedAccessorPairs::default()),
         RuleEnum::EslintGuardForIn(EslintGuardForIn::default()),
+        RuleEnum::EslintIdDenylist(EslintIdDenylist::default()),
         RuleEnum::EslintIdLength(EslintIdLength::default()),
         RuleEnum::EslintIdMatch(EslintIdMatch::default()),
         RuleEnum::EslintInitDeclarations(EslintInitDeclarations::default()),
@@ -25134,6 +25185,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestValidTitle(VitestValidTitle::default()),
         RuleEnum::VitestWarnTodo(VitestWarnTodo::default()),
         RuleEnum::NodeCallbackReturn(NodeCallbackReturn::default()),
+        RuleEnum::NodeExportsStyle(NodeExportsStyle::default()),
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),

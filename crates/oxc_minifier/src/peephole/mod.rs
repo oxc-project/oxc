@@ -21,6 +21,7 @@ use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
 use crate::{Traverse, TraverseCtx};
 
@@ -123,10 +124,26 @@ impl<'a> PeepholeOptimizations {
     /// prelude. No-op if the flag is already set, or if `current_scope_id` is
     /// some inner scope (a block/for/etc.) — those don't end the prelude.
     fn mark_current_body_unsafe(ctx: &mut TraverseCtx<'a>) {
-        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
+        let &(body_scope, body_unsafe, _) = ctx.state.body_unsafe_stack.last();
         if !body_unsafe && body_scope == ctx.current_scope_id() {
             ctx.state.body_unsafe_stack.last_mut().1 = true;
         }
+    }
+
+    /// End offset of the first unconditional `super()` call in an expression.
+    /// A sequence remains unconditional, but nested conditionals and functions do not.
+    fn unconditional_super_call_end(expr: &Expression<'a>) -> Option<u32> {
+        match expr {
+            Expression::CallExpression(call) if call.callee.is_super() => Some(call.span.end),
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().find_map(Self::unconditional_super_call_end)
+            }
+            _ => None,
+        }
+    }
+
+    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
+        Self::unconditional_super_call_end(expr).is_some()
     }
 
     /// Checks if a member expression's base object may be mutated.
@@ -195,6 +212,68 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether the current read closes over a block-scoped binding.
+    ///
+    /// This is a structural test, not proof that the binding is currently in its
+    /// Temporal Dead Zone. Moving such a read before an `await`/`yield` can expose
+    /// the TDZ while outer code is still initializing the binding. A same-function
+    /// binding cannot be initialized mid-suspension, so it stays inlinable.
+    ///
+    /// <https://github.com/rolldown/rolldown/issues/9959>
+    fn is_closed_over_block_scoped_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if !scoping.symbol_flags(symbol_id).is_block_scoped() {
+            return false;
+        }
+
+        let binding_scope = scoping.symbol_scope_id(symbol_id);
+        Self::read_crosses_function_boundary(ctx.current_scope_id(), binding_scope, ctx)
+    }
+
+    /// Whether moving this identifier read earlier could observe a different
+    /// value or enter a closed-over lexical's TDZ.
+    fn identifier_read_blocks_reorder(id: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id();
+        symbol_id.is_none_or(|symbol_id| {
+            Self::symbol_value_may_change(symbol_id, ctx)
+                || Self::is_closed_over_block_scoped_read(symbol_id, ctx)
+        })
+    }
+
+    /// Whether evaluating a member assignment-target part earlier could observe
+    /// a different binding value. This includes ordinary mutation and closed-over
+    /// lexicals that could still be in their TDZ (e.g. `v.x = await f()` or
+    /// `obj[v] = await f()`).
+    fn member_part_blocks_reorder(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match expr {
+            Expression::Identifier(id) => Self::identifier_read_blocks_reorder(id, ctx),
+            Expression::ThisExpression(this_expr) => {
+                // Source offsets stand in for execution order here. This assumes upstream
+                // transforms do not reorder `super()` and `this` without updating their spans;
+                // the current Rolldown and oxc-minify pipelines satisfy this assumption.
+                Self::this_is_inside_derived_constructor(ctx)
+                    && ctx
+                        .state
+                        .body_unsafe_stack
+                        .last()
+                        .2
+                        .is_none_or(|initialized_at| this_expr.span.start < initialized_at)
+            }
+            _ => true,
+        }
+    }
+
+    /// Whether evaluating a computed member key before a side-effecting
+    /// replacement could observe a different value.
+    ///
+    /// The key expression and `GetValue` move before the assignment RHS, but
+    /// `ToPropertyKey` still happens afterward. A scope-independent literal or
+    /// a stable simple reference is therefore safe regardless of its value type.
+    /// <https://tc39.es/ecma262/#sec-evaluate-property-access-with-expression-key>
+    fn computed_key_blocks_reorder(key: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        !key.is_literal_value(false, ctx) && Self::member_part_blocks_reorder(key, ctx)
+    }
+
     /// True if the scope chain from `read_scope` up to (excluding) `stop_scope`
     /// crosses a function boundary — i.e. the read is in a closure relative to
     /// `stop_scope`. Async/generator/arrow scopes are all `Function`.
@@ -227,13 +306,23 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // single program-root entry by the next pass; reset it in place rather
         // than reallocating (matching the `reset`/`clear` above).
         *ctx.state.body_unsafe_stack.last_mut() =
-            (ctx.scoping().root_scope_id(), module_has_loaders);
+            (ctx.scoping().root_scope_id(), module_has_loaders, None);
         // `PassChanges` is managed by pass completion, not reset per
         // traversal.
     }
 
-    fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.body_unsafe_stack.push((ctx.current_scope_id(), false));
+    fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        let initialized_at = if Self::this_is_inside_derived_constructor(ctx) {
+            body.statements.iter().find_map(|stmt| match stmt {
+                Statement::ExpressionStatement(stmt) => {
+                    Self::unconditional_super_call_end(&stmt.expression)
+                }
+                _ => None,
+            })
+        } else {
+            None
+        };
+        ctx.state.body_unsafe_stack.push((ctx.current_scope_id(), false, initialized_at));
     }
 
     fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {

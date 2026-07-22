@@ -86,7 +86,7 @@ pub fn align_object_method_scopes(func: &mut HirFunction, env: &mut Environment)
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
                     let func_id = lowered_func.func;
                     let mut inner_func =
-                        replace(&mut env.functions[func_id], placeholder_function());
+                        replace(&mut env.functions[func_id], placeholder_function(env.allocator));
                     align_object_method_scopes(&mut inner_func, env);
                     env.functions[func_id] = inner_func;
                 }

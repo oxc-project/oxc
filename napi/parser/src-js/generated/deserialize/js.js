@@ -611,13 +611,13 @@ function deserializeImportMeta(pos) {
       type: "Identifier",
       name: "import",
       start: importStart,
-      end: importStart + 6,
+      end: deserializeI32(pos + 4) === 0 ? 0 : importStart + 6,
     },
     metaEnd = deserializeI32(pos + 4),
     metaIdent = {
       type: "Identifier",
       name: "meta",
-      start: metaEnd - 4,
+      start: metaEnd === 0 ? 0 : metaEnd - 4,
       end: metaEnd,
     };
   node.meta = importIdent;
@@ -638,13 +638,13 @@ function deserializeNewTarget(pos) {
       type: "Identifier",
       name: "new",
       start: newStart,
-      end: newStart + 3,
+      end: deserializeI32(pos + 4) === 0 ? 0 : newStart + 3,
     },
     targetEnd = deserializeI32(pos + 4),
     targetIdent = {
       type: "Identifier",
       name: "target",
-      start: targetEnd - 6,
+      start: targetEnd === 0 ? 0 : targetEnd - 6,
       end: targetEnd,
     };
   node.meta = newIdent;

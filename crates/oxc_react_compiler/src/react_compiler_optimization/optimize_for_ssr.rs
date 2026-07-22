@@ -17,6 +17,7 @@
 //!
 //! Ported from TypeScript `src/Optimization/OptimizeForSSR.ts`.
 
+use oxc_allocator::Vec as ArenaVec;
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_hir::environment::Environment;
@@ -33,7 +34,7 @@ use oxc_span::Span;
 /// removing event handlers, and stripping known event handler / ref JSX props.
 ///
 /// Corresponds to TS `optimizeForSSR(fn: HIRFunction): void`.
-pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
+pub fn optimize_for_ssr<'a>(func: &mut HirFunction<'a>, env: &Environment<'a>) {
     // Phase 1: Identify useState/useReducer calls that can be safely inlined.
     //
     // For useState(initialValue) where initialValue is primitive/object/array,
@@ -232,7 +233,10 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                         span,
                                     } => InstructionValue::CallExpression {
                                         callee: *callee,
-                                        args: vec![PlaceOrSpread::Place(*arg)],
+                                        args: ArenaVec::from_array_in(
+                                            [PlaceOrSpread::Place(*arg)],
+                                            &env.allocator,
+                                        ),
                                         span: *span,
                                     },
                                 };

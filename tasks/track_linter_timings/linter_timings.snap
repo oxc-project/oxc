@@ -354,6 +354,7 @@ nextjs/no-sync-scripts                                     |    452
 nextjs/no-title-in-document-head                           |    103
 nextjs/no-unwanted-polyfillio                              |    452
 node/callback-return                                       |  62606
+node/exports-style                                         | 316660
 node/global-require                                        |  62606
 node/handle-callback-err                                   |  16812
 node/no-exports-assign                                     |  13005

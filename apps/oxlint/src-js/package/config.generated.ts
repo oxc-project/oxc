@@ -171,6 +171,7 @@ export type Location = "start" | "anywhere";
  * The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.
  */
 export type CallbackReturn = string[];
+export type ExportsStyleMode = "module.exports" | "exports";
 /**
  * The rule takes a single string option: the name of the error parameter.
  *
@@ -901,6 +902,7 @@ export interface DummyRuleMap {
   "grouped-accessor-pairs"?:
     RuleNoConfig | [AllowWarnDeny, PairOrder] | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
+  "id-denylist"?: RuleNoConfig | [AllowWarnDeny, string, ...string[]];
   "id-length"?: RuleNoConfig | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: RuleNoConfig | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
   "import/consistent-type-specifier-style"?: RuleNoConfig | [AllowWarnDeny, Mode];
@@ -1226,6 +1228,8 @@ export interface DummyRuleMap {
   "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfigJson];
   "no-with"?: RuleNoConfig;
   "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
+  "node/exports-style"?:
+    RuleNoConfig | [AllowWarnDeny, ExportsStyleMode] | [AllowWarnDeny, ExportsStyleMode, ExportsStyleOptions];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
@@ -4026,6 +4030,12 @@ export interface NoWarningCommentsConfigJson {
   decoration?: string[];
   location?: Location;
   terms?: string[];
+}
+export interface ExportsStyleOptions {
+  /**
+   * If this option is set to `true`, `module.exports = exports = obj` are allowed.
+   */
+  allowBatchAssign?: boolean;
 }
 export interface NoMixedRequiresOptions {
   allowCall?: boolean;

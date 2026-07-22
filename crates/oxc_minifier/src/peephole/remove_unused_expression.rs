@@ -193,18 +193,14 @@ impl<'a> PeepholeOptimizations {
                         };
                         if let Some(new_left_hand_expr) = new_left_hand_expr {
                             if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
-                                    && let Expression::AssignmentExpression(assignment_expr) =
-                                        logical_right
-                                    && assignment_expr.operator == AssignmentOperator::Assign
-                                    && Self::has_no_side_effect_for_evaluation_same_target(
-                                        &assignment_expr.left,
-                                        new_left_hand_expr,
-                                        ctx,
-                                    )
-                                    // Don't transform `x.y != null || (x = {}, x.y = 3)` to `x.y ??= (x = {}, 3)` because
-                                    // `??=` evaluates `x.y` (capturing `x`) before the RHS reassigns `x`.
-                                    // https://github.com/oxc-project/oxc/pull/16802#discussion_r2619369597
-                                    && !Self::member_object_may_be_mutated(&assignment_expr.left, ctx)
+                                && let Expression::AssignmentExpression(assignment_expr) =
+                                    logical_right
+                                && assignment_expr.operator == AssignmentOperator::Assign
+                                && Self::can_compress_to_logical_assignment(
+                                    &assignment_expr.left,
+                                    new_left_hand_expr,
+                                    ctx,
+                                )
                             {
                                 assignment_expr.span = *logical_span;
                                 assignment_expr.operator = AssignmentOperator::LogicalNullish;

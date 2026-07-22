@@ -278,6 +278,14 @@ fn remove_empty_function() {
     test_options("var foo = () => {}; x = foo(a(), b())", "x = (a(), b(), void 0)", &options);
     test_options("var foo = function () {}; foo()", "", &options);
 
+    test_options("var foo = (a = 0) => {}; foo()", "", &options);
+    test_options(
+        "var foo = (a = side_effect()) => {}; foo()",
+        "((a = side_effect()) => {})()",
+        &options,
+    );
+    test_same_options("function foo(a = side_effect()) {} foo()", &options);
+
     test_same_options("function foo({}) {} foo()", &options);
     test_options("var foo = ({}) => {}; foo()", "(({}) => {})()", &options);
     test_options("var foo = function ({}) {}; foo()", "(function ({}) {})()", &options);

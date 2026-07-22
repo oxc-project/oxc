@@ -3,6 +3,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
+use oxc_compat::EngineTargets;
 use oxc_minifier::{CompressOptions, Compressor, TreeShakeOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -77,6 +78,24 @@ fn test_same_source_type(source_text: &str, source_type: SourceType) {
 #[track_caller]
 fn test_with_options(source_text: &str, expected: &str, options: CompressOptions) {
     test_with_options_source_type(source_text, expected, SourceType::default(), options);
+}
+
+#[track_caller]
+fn options_for_target(target: &str) -> CompressOptions {
+    CompressOptions {
+        target: EngineTargets::from_target(target).unwrap(),
+        ..CompressOptions::dce()
+    }
+}
+
+#[track_caller]
+fn test_with_target(source_text: &str, expected: &str, target: &str) {
+    test_with_options(source_text, expected, options_for_target(target));
+}
+
+#[track_caller]
+fn test_same_with_target(source_text: &str, target: &str) {
+    test_with_target(source_text, source_text, target);
 }
 
 #[track_caller]
@@ -295,6 +314,78 @@ fn pure_comment_re_evaluated_after_string_concat_fold() {
         "var r = new RegExp('foo' + 'bar'); foo(r)",
         "var r = /* @__PURE__ */ new RegExp(\"foobar\");\nfoo(r)",
     );
+}
+
+#[test]
+fn keep_regexp_feature_detection() {
+    // https://github.com/rolldown/rolldown/issues/10279
+    test_same(
+        r"export function supportsUnicodeRegExp() {
+            try {
+                new RegExp('\\p{Ll}', 'u');
+                return true;
+            } catch {
+                return false;
+            }
+        }",
+    );
+
+    // Patterns supported by all ECMAScript targets remain removable.
+    test("new RegExp('a', 'g')", "");
+
+    test_with_target("new RegExp('a', 'u')", "", "es2015");
+    test_same_with_target(r"new RegExp('\\p{Ll}', 'u')", "es2017");
+    test_with_target(r"new RegExp('\\p{Ll}', 'u')", "", "es2018");
+
+    // A shadowed `RegExp` may have arbitrary constructor side effects.
+    test_same("function f(RegExp) { new RegExp('a', 'g') } export { f }");
+}
+
+#[test]
+fn keep_regexp_literal_with_flags() {
+    test("new RegExp(/x/)", "");
+    test_same("new RegExp(/x/, 'i')");
+    test_same("new RegExp(/x/, 'u')");
+    test_same_with_target("new RegExp(/x/, '!')", "esnext");
+    test_same_with_target("new RegExp(/x/, 'gg')", "esnext");
+    test_same_with_target("new RegExp(/x/, 'uv')", "esnext");
+    test_same_with_target("new RegExp(/x/, 'i')", "chrome48");
+    test_with_target("new RegExp(/x/, 'i')", "", "chrome49");
+    test_with_target("new RegExp(/x/, 'i')", "", "es2015");
+    test_with_target("new RegExp(/x/, 'u')", "", "es2015");
+    test_same_with_target("new RegExp(/x/, 'v')", "es2015");
+    test_with_target("new RegExp(/x/, 'v')", "", "es2024");
+}
+
+#[test]
+fn keep_regexp_for_incomplete_engine_feature_data() {
+    test_same_with_target("new RegExp('(?i:a)')", "safari16");
+    test_same_with_target("new RegExp('(?<a>x)|(?<a>y)')", "deno1");
+    test_with_target("new RegExp('(?i:a)')", "", "chrome125");
+    test_with_target("new RegExp('(?<a>x)|(?<a>y)')", "", "chrome126");
+
+    // Browser-only targets contain an implicit `esnext`; every configured engine must still
+    // satisfy the feature version, regardless of feature-table iteration order.
+    test_same_with_target("new RegExp('a', 'u')", "chrome49");
+    test_with_target("new RegExp('a', 'u')", "", "chrome50");
+}
+
+#[test]
+fn regexp_named_group_targets() {
+    test_with_target("new RegExp('(?<a>x)')", "", "es2018");
+    test_same_with_target("new RegExp('(?<a>x)|(?<a>y)')", "es2024");
+    test_with_target("new RegExp('(?<a>x)|(?<a>y)')", "", "es2025");
+}
+
+#[test]
+fn keep_regexp_with_lone_surrogates() {
+    test_same(r"new RegExp('[\uD801-\uD800]')");
+}
+
+#[test]
+fn keep_regexp_with_invalid_flags_for_modern_target() {
+    test_same_with_target("new RegExp('a', 'gg')", "esnext");
+    test_same_with_target("new RegExp('a', 'uv')", "esnext");
 }
 
 #[test]

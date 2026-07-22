@@ -1,4 +1,4 @@
-js compatibility: 774/809 (95.67%), 23 files skipped
+js compatibility: 773/809 (95.55%), 23 files skipped
 
 # Failed
 
@@ -12,6 +12,7 @@ js compatibility: 774/809 (95.67%), 23 files skipped
 | js/comments/if.js | 💥💥 | 97.99% |
 | js/comments/return-statement-2.js | 💥💥 | 77.78% |
 | js/comments/return-statement.js | 💥💥 | 97.25% |
+| js/comments/tagged-template-literal.js | 💥💥 | 89.66% |
 | js/comments/between-head-and-body/between-head-and-body.js | 💥 | 33.10% |
 | js/comments/between-head-and-body/empty-statement.js | 💥 | 51.25% |
 | js/comments/between-head-and-body/non-block.js | 💥 | 82.86% |

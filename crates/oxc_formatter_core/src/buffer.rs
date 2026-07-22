@@ -7,7 +7,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     Argument, Arguments, Format, FormatElement, FormatState,
@@ -44,11 +44,12 @@ pub trait Buffer<'ast, C> {
 
     /// Replaces the elements starting at `start` with `replacement`.
     ///
-    /// Used by streaming IR transforms (currently `SortImportsTransform`) to splice a reordered
-    /// chunk back into the buffer. Only `VecBuffer` supports this; the wrapper buffers
-    /// (`PreambleBuffer`, `Inspect`, `RemoveSoftLinesBuffer`) are only ever active inside
-    /// inner-expression contexts, never on the call stack while a streaming chunk is being
-    /// flushed, so they implement this as `unreachable!()`.
+    /// Used by streaming IR transforms (currently `SortImportsTransform`)
+    /// to splice a reordered chunk back into the buffer.
+    /// Only the vector-backed buffers (`VecBuffer`, `HeapVecBuffer`, `AccumulatorBuffer`) support this;
+    /// the wrapper buffers (`PreambleBuffer`, `Inspect`, `RemoveSoftLinesBuffer`) are only ever active
+    /// inside inner-expression contexts, never on the call stack while a streaming chunk is being flushed,
+    /// so they implement this as `unreachable!()`.
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]);
 }
 
@@ -90,13 +91,7 @@ pub struct VecBuffer<'buf, 'ast, C> {
 
 impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
     pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
-        Self::new_with_vec(state, ArenaVec::new_in(state))
-    }
-
-    pub fn new_with_vec(
-        state: &'buf mut FormatState<'ast, C>,
-        elements: ArenaVec<'ast, FormatElement<'ast>>,
-    ) -> Self {
+        let elements = ArenaVec::new_in(state);
         Self { state, elements }
     }
 
@@ -109,11 +104,6 @@ impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
     /// Consumes the buffer and returns the written [`FormatElement]`s as a vector.
     pub fn into_vec(self) -> ArenaVec<'ast, FormatElement<'ast>> {
         self.elements
-    }
-
-    /// Takes the elements without consuming self
-    pub fn take_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        self.elements.take_in(self.state)
     }
 }
 
@@ -149,7 +139,150 @@ impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
     }
 
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        self.elements.splice(start.., replacement.iter().cloned());
+        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
+        assert!(start <= self.elements.len(), "replace_end start out of bounds");
+        self.elements.truncate(start);
+        self.elements.extend_from_slice(replacement);
+    }
+}
+
+/// Heap-backed [`Buffer`], the staging twin of [`VecBuffer`].
+///
+/// Use it to build an element sequence whose final length isn't known up front
+/// (interned content, best-fitting variants), then move the result into the arena
+/// exactly-sized via [`HeapVecBuffer::take_into_arena_vec`] / [`HeapVecBuffer::take_into_arena_slice`].
+///
+/// Growing a vector directly in the arena strands every grown-out-of allocation for the rest of the format run
+/// (the arena is a bump allocator and never reclaims;
+/// growth can reuse the allocation only when nothing else was bumped in between, which practically never holds while formatting).
+/// Heap growth is reclaimed by the system allocator, and the arena receives only the final, exactly-sized copy.
+///
+/// The buffer is a watermarked view over the format run's single shared staging vector:
+/// its content is the vector's tail past the length recorded at creation, drained on completion (or on drop).
+/// See `ScratchBuffer` in `state.rs` for the sharing scheme and the LIFO discipline it relies on.
+pub struct HeapVecBuffer<'buf, 'ast, C> {
+    state: &'buf mut FormatState<'ast, C>,
+    watermark: usize,
+}
+
+impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
+    pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
+        let watermark = state.scratch().len();
+        Self { state, watermark }
+    }
+
+    /// Removes and returns the buffered elements, leaving the buffer empty.
+    pub(crate) fn drain(&mut self) -> std::vec::Drain<'_, FormatElement<'ast>> {
+        let watermark = self.watermark;
+        self.state.scratch_mut().drain(watermark..)
+    }
+
+    /// Moves the buffered elements into an exactly-sized arena vector, leaving the buffer empty.
+    pub fn take_into_arena_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
+        let allocator = self.state.allocator();
+        // `Drain`'s exact size hint makes `from_iter_in` allocate exactly-sized
+        ArenaVec::from_iter_in(self.drain(), &allocator)
+    }
+
+    /// Moves the buffered elements into an exactly-sized arena slice, leaving the buffer empty.
+    pub fn take_into_arena_slice(&mut self) -> &'ast [FormatElement<'ast>] {
+        self.take_into_arena_vec().into_arena_slice()
+    }
+}
+
+impl<C> Drop for HeapVecBuffer<'_, '_, C> {
+    fn drop(&mut self) {
+        // Forget any elements not taken, restoring the shared vector for the enclosing buffer.
+        let watermark = self.watermark;
+        self.state.scratch_mut().truncate(watermark);
+    }
+}
+
+impl<'ast, C> Deref for HeapVecBuffer<'_, 'ast, C> {
+    type Target = [FormatElement<'ast>];
+
+    fn deref(&self) -> &Self::Target {
+        &self.state.scratch()[self.watermark..]
+    }
+}
+
+impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
+    fn write_element(&mut self, element: FormatElement<'ast>) {
+        self.state.scratch_mut().push(element);
+    }
+
+    fn elements(&self) -> &[FormatElement<'ast>] {
+        self
+    }
+
+    fn state(&self) -> &FormatState<'ast, C> {
+        self.state
+    }
+
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
+        self.state
+    }
+
+    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
+        let start = self.watermark + start;
+        let scratch = self.state.scratch_mut();
+        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
+        assert!(start <= scratch.len(), "replace_end start out of bounds");
+        scratch.truncate(start);
+        scratch.extend_from_slice(replacement);
+    }
+}
+
+/// Heap accumulator [`Buffer`] over a caller-owned element vector.
+///
+/// For element sequences that outlive a single exclusive borrow of the [`FormatState`]:
+/// builders that accumulate across separate `write()` calls while other content is formatted in between
+/// (multiple builders open at once, see the JSX child-list builders in `oxc_formatter`),
+/// or staging that must release the state between being written and being consumed
+/// (the assignment-like left hand side, whose layout is computed with the formatter in between).
+/// Those can't stage in the arena (every growth would strand the grown-out-of allocation, see [`HeapVecBuffer`])
+/// nor share the format run's scratch vector (suspended or interleaved use breaks its LIFO discipline).
+///
+/// Instead the caller owns a [`crate::ScratchBuffer`] (backed lazily by the thread-local cache)
+/// and writes through this adapter (constructed via [`crate::ScratchBuffer::writer`]);
+/// the arena receives one exactly-sized copy when the finished result is interned ([`crate::Formatter::intern_elements`]),
+/// or nothing at all when the elements are re-emitted into a downstream buffer.
+pub struct AccumulatorBuffer<'buf, 'ast, C> {
+    state: &'buf mut FormatState<'ast, C>,
+    elements: &'buf mut Vec<FormatElement<'ast>>,
+}
+
+impl<'buf, 'ast, C> AccumulatorBuffer<'buf, 'ast, C> {
+    pub(crate) fn new(
+        state: &'buf mut FormatState<'ast, C>,
+        elements: &'buf mut Vec<FormatElement<'ast>>,
+    ) -> Self {
+        Self { state, elements }
+    }
+}
+
+impl<'ast, C> Buffer<'ast, C> for AccumulatorBuffer<'_, 'ast, C> {
+    fn write_element(&mut self, element: FormatElement<'ast>) {
+        self.elements.push(element);
+    }
+
+    fn elements(&self) -> &[FormatElement<'ast>] {
+        self.elements
+    }
+
+    fn state(&self) -> &FormatState<'ast, C> {
+        self.state
+    }
+
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
+        self.state
+    }
+
+    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
+        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
+        assert!(start <= self.elements.len(), "replace_end start out of bounds");
+        self.elements.truncate(start);
+        self.elements.extend_from_slice(replacement);
     }
 }
 

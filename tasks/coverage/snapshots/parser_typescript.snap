@@ -3708,33 +3708,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
   note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:41:31]
- 40 │ declare class c4 {
- 41 │     constructor(i: number, ...arguments); // No error - no code gen
-    ·                               ─────────
- 42 │ }
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:44:17]
- 43 │ declare class c42 {
- 44 │     constructor(arguments: number, ...rest); // No error - no code gen
-    ·                 ─────────
- 45 │ }
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:47:17]
- 46 │ declare class c4NoError {
- 47 │     constructor(arguments: number);  // no error
-    ·                 ─────────
- 48 │ }
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:51:31]
  50 │ class c5 {
  51 │     constructor(i: number, ...arguments); // no codegen no error
@@ -3839,60 +3812,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  70 │         var arguments: any; // no error
     ·             ─────────
  71 │     }
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:75:31]
- 74 │ declare class c6 {
- 75 │     constructor(i: number, ...arguments); // no codegen no error
-    ·                               ─────────
- 76 │     constructor(i: string, ...arguments); // no codegen no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:76:31]
- 75 │     constructor(i: number, ...arguments); // no codegen no error
- 76 │     constructor(i: string, ...arguments); // no codegen no error
-    ·                               ─────────
- 77 │ }
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:79:17]
- 78 │ declare class c62 {
- 79 │     constructor(arguments: number, ...rest); // no codegen no error
-    ·                 ─────────
- 80 │     constructor(arguments: string, ...rest); // no codegen no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:80:17]
- 79 │     constructor(arguments: number, ...rest); // no codegen no error
- 80 │     constructor(arguments: string, ...rest); // no codegen no error
-    ·                 ─────────
- 81 │ }
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:84:17]
- 83 │ declare class c6NoError {
- 84 │     constructor(arguments: number); // no error
-    ·                 ─────────
- 85 │     constructor(arguments: string); // no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:85:17]
- 84 │     constructor(arguments: number); // no error
- 85 │     constructor(arguments: string); // no error
-    ·                 ─────────
- 86 │ }
     ╰────
   note: Classes are always strict mode code
 
@@ -4059,87 +3978,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
   note: Classes are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:29:30]
- 28 │ declare class c2 {
- 29 │     public foo(i: number, ...arguments); // No error - no code gen
-    ·                              ─────────
- 30 │     public foo1(arguments: number, ...rest); // No error - no code gen
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:30:17]
- 29 │     public foo(i: number, ...arguments); // No error - no code gen
- 30 │     public foo1(arguments: number, ...rest); // No error - no code gen
-    ·                 ─────────
- 31 │     public fooNoError(arguments: number); // No error - no code gen
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:31:23]
- 30 │     public foo1(arguments: number, ...rest); // No error - no code gen
- 31 │     public fooNoError(arguments: number); // No error - no code gen
-    ·                       ─────────
- 32 │ 
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:33:29]
- 32 │ 
- 33 │     public f4(i: number, ...arguments); // no codegen no error
-    ·                             ─────────
- 34 │     public f4(i: string, ...arguments); // no codegen no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:34:29]
- 33 │     public f4(i: number, ...arguments); // no codegen no error
- 34 │     public f4(i: string, ...arguments); // no codegen no error
-    ·                             ─────────
- 35 │     public f41(arguments: number, ...rest); // no codegen no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:35:16]
- 34 │     public f4(i: string, ...arguments); // no codegen no error
- 35 │     public f41(arguments: number, ...rest); // no codegen no error
-    ·                ─────────
- 36 │     public f41(arguments: string, ...rest); // no codegen no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:36:16]
- 35 │     public f41(arguments: number, ...rest); // no codegen no error
- 36 │     public f41(arguments: string, ...rest); // no codegen no error
-    ·                ─────────
- 37 │     public f4NoError(arguments: number); // no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:37:22]
- 36 │     public f41(arguments: string, ...rest); // no codegen no error
- 37 │     public f4NoError(arguments: number); // no error
-    ·                      ─────────
- 38 │     public f4NoError(arguments: string); // no error
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:38:22]
- 37 │     public f4NoError(arguments: number); // no error
- 38 │     public f4NoError(arguments: string); // no error
-    ·                      ─────────
- 39 │ }
-    ╰────
-  note: Classes are always strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:43:13]
  42 │     public foo(...restParameters) {
  43 │         var arguments = 10; // no error
@@ -4208,33 +4046,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │     var arguments = 10; // no error
     ·         ─────────
  11 │ }
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:13:35]
- 12 │ 
- 13 │ declare function f2(i: number, ...arguments); // no error - no code gen
-    ·                                   ─────────
- 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:14:22]
- 13 │ declare function f2(i: number, ...arguments); // no error - no code gen
- 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
-    ·                      ─────────
- 15 │ declare function f2NoError(arguments: number); // no error
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:15:28]
- 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
- 15 │ declare function f2NoError(arguments: number); // no error
-    ·                            ─────────
- 16 │ 
     ╰────
   note: This is strict mode code
 
@@ -4361,59 +4172,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  37 │     var arguments: any; // No error
     ·         ─────────
  38 │ }
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:40:21]
- 39 │ 
- 40 │ declare function f5(arguments: number, ...rest); // no codegen no error
-    ·                     ─────────
- 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:41:21]
- 40 │ declare function f5(arguments: number, ...rest); // no codegen no error
- 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
-    ·                     ─────────
- 42 │ declare function f52(i: number, ...arguments); // no codegen no error
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:42:36]
- 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
- 42 │ declare function f52(i: number, ...arguments); // no codegen no error
-    ·                                    ─────────
- 43 │ declare function f52(i: string, ...arguments); // no codegen no error
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:43:36]
- 42 │ declare function f52(i: number, ...arguments); // no codegen no error
- 43 │ declare function f52(i: string, ...arguments); // no codegen no error
-    ·                                    ─────────
- 44 │ declare function f6(arguments: number); // no codegen no error
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:44:21]
- 43 │ declare function f52(i: string, ...arguments); // no codegen no error
- 44 │ declare function f6(arguments: number); // no codegen no error
-    ·                     ─────────
- 45 │ declare function f6(arguments: string); // no codegen no error
-    ╰────
-  note: This is strict mode code
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:45:21]
- 44 │ declare function f6(arguments: number); // no codegen no error
- 45 │ declare function f6(arguments: string); // no codegen no error
-    ·                     ─────────
     ╰────
   note: This is strict mode code
 
@@ -28801,7 +28559,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ }
    ╰────
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:3:9]
  2 │     case 0:
  3 │         await using d20 = { async [Symbol.asyncDispose]() {} };
@@ -28810,7 +28568,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:7:9]
  6 │     case 1:
  7 │         await using d21 = { async [Symbol.asyncDispose]() {} };
@@ -28819,7 +28577,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:11:9]
  10 │     default:
  11 │         await using d22 = { async [Symbol.asyncDispose]() {} };
@@ -28828,7 +28586,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:17:13]
  16 │         case 0:
  17 │             await using d23 = { async [Symbol.asyncDispose]() {} };
@@ -28837,7 +28595,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:21:13]
  20 │         default:
  21 │             await using d24 = { async [Symbol.asyncDispose]() {} };
@@ -28989,7 +28747,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ }
    ╰────
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:3:9]
  2 │     case 0:
  3 │         using d20 = { [Symbol.dispose]() {} };
@@ -28998,7 +28756,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:7:9]
  6 │     case 1:
  7 │         using d21 = { [Symbol.dispose]() {} };
@@ -29007,7 +28765,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:11:9]
  10 │     default:
  11 │         using d22 = { [Symbol.dispose]() {} };
@@ -29016,7 +28774,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:17:13]
  16 │         case 0:
  17 │             using d23 = { [Symbol.dispose]() {} };
@@ -29025,7 +28783,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:21:13]
  20 │         default:
  21 │             using d24 = { [Symbol.dispose]() {} };
