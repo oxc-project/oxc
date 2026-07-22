@@ -171,23 +171,6 @@ impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
         Self { state, watermark }
     }
 
-    /// The number of elements written to this buffer.
-    ///
-    /// Shadows the [`Deref`] slice method: computed without the subslice bounds check.
-    pub fn len(&self) -> usize {
-        self.state.scratch().len() - self.watermark
-    }
-
-    /// Returns `true` if nothing has been written to this buffer.
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Removes the last element written to this buffer, if any.
-    pub fn pop(&mut self) -> Option<FormatElement<'ast>> {
-        if self.is_empty() { None } else { self.state.scratch_mut().pop() }
-    }
-
     /// Removes and returns the buffered elements, leaving the buffer empty.
     pub(crate) fn drain(&mut self) -> std::vec::Drain<'_, FormatElement<'ast>> {
         let watermark = self.watermark;
