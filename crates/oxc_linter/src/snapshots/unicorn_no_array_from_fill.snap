@@ -1,0 +1,92 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill(0)
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill()
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:22]
+ 1 │ Array.from({length}).fill(null)
+   ·                      ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:27]
+ 1 │ Array.from({"length": 3}).fill(0)
+   ·                           ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill({})
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill(0).map((_, index) => index)
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill().map((value, index) => index)
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill(0).flatMap((_, index) => [index])
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill().flatMap(value => [value])
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:1:25]
+ 1 │ Array.from({length: 3}).fill(0).filter(Boolean)
+   ·                         ────
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:2:18]
+ 1 │ Array.from({length: 3})
+ 2 │                 .fill(0)
+   ·                  ────
+ 3 │                 .map((_, index) => index);
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
+
+  ⚠ unicorn(no-array-from-fill): Do not chain `.fill()` after `Array.from({length: …})`.
+   ╭─[no_array_from_fill.tsx:4:18]
+ 3 │             )
+ 4 │                 .fill(0)
+   ·                  ────
+ 5 │                 .map((_, index) => index);
+   ╰────
+  help: Use the `Array.from(…, mapFunction)` argument to create values directly.
