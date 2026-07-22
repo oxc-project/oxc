@@ -76,9 +76,10 @@ pub use crate::{
     },
     context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
-        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
+        DiagnosticRangeKind, ExternalLinter, ExternalLinterCreateWorkspaceCb,
+        ExternalLinterDestroyWorkspaceCb, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
@@ -278,6 +279,52 @@ fn execute_rules<'a, const TIMINGS: bool>(
 
 /// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
 const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
+
+fn create_span_converter(
+    source_text: &str,
+    trim_leading_newline: bool,
+) -> (&str, bool, Utf8ToUtf16) {
+    const BOM: &str = "\u{feff}";
+    #[expect(clippy::cast_possible_truncation)]
+    const BOM_LEN: u32 = BOM.len() as u32;
+
+    let mut stripped_source_text = source_text;
+    let has_bom = stripped_source_text.starts_with(BOM);
+    let trim_leading = if has_bom || !trim_leading_newline {
+        0
+    } else {
+        match stripped_source_text.as_bytes() {
+            [b'\r', b'\n', ..] => 2u32,
+            [b'\n', ..] => 1,
+            _ => 0,
+        }
+    };
+
+    let span_converter = if has_bom {
+        stripped_source_text = &stripped_source_text[BOM.len()..];
+        Utf8ToUtf16::new_with_offset(stripped_source_text, BOM_LEN)
+    } else if trim_leading > 0 {
+        stripped_source_text = &stripped_source_text[trim_leading as usize..];
+        Utf8ToUtf16::new_with_offset(stripped_source_text, trim_leading)
+    } else {
+        Utf8ToUtf16::new(stripped_source_text)
+    };
+
+    (stripped_source_text, has_bom, span_converter)
+}
+
+fn map_actual_span_to_section(span: Span, section_offset: u32, section_len: u32) -> Option<Span> {
+    if section_offset == 0 {
+        return Some(span);
+    }
+
+    let section_end = section_offset.saturating_add(section_len);
+    if span.start < section_offset || span.end > section_end {
+        return None;
+    }
+
+    Some(span.move_left(section_offset))
+}
 
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
@@ -693,57 +740,34 @@ impl Linter {
         tokens: &mut [Token],
         allocator: &Allocator,
     ) {
-        // If has BOM, remove it
-        const BOM: &str = "\u{feff}";
-        const BOM_LEN: usize = BOM.len();
-
-        let original_source_text = program.source_text;
-        let mut source_text = original_source_text;
-        let has_bom = source_text.starts_with(BOM);
-        if has_bom {
-            source_text = &source_text[BOM_LEN..];
-            program.source_text = source_text;
+        let program_original_source_text = program.source_text;
+        let is_partial = ctx_host.current_sub_host().source_text_offset() > 0;
+        let (program_source_text, program_has_bom, program_span_converter) =
+            create_span_converter(program_original_source_text, is_partial);
+        if program_source_text.len() != program_original_source_text.len() {
+            program.source_text = program_source_text;
         }
 
-        // If partial source (Vue/Astro/Svelte), trim the leading newline after `<script>`
-        let is_partial = !has_bom && ctx_host.current_sub_host().source_text_offset() > 0;
-        let trim_leading = match source_text.as_bytes() {
-            [b'\r', b'\n', ..] if is_partial => 2u32,
-            [b'\n', ..] if is_partial => 1,
-            _ => 0,
-        };
-        if trim_leading > 0 {
-            source_text = &source_text[trim_leading as usize..];
-            program.source_text = source_text;
-        }
-
-        // Create span converter.
-        // If source starts with BOM, create converter which ignores the BOM.
-        let span_converter = if has_bom {
-            #[expect(clippy::cast_possible_truncation)]
-            Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
-        } else if trim_leading > 0 {
-            Utf8ToUtf16::new_with_offset(source_text, trim_leading)
-        } else {
-            Utf8ToUtf16::new(source_text)
-        };
+        let actual_original_source_text = ctx_host.actual_source_text();
+        let (_actual_source_text, actual_has_bom, actual_span_converter) =
+            create_span_converter(actual_original_source_text, false);
 
         // Convert token spans to UTF-16 and update token kinds
         #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
         let (tokens_offset, tokens_len) = if !tokens.is_empty() {
-            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            update_tokens(tokens, program, &program_span_converter, ESTreeTokenOptionsJS);
             (tokens.as_ptr() as u32, tokens.len() as u32)
         } else {
             (0, 0)
         };
 
         // Convert AST spans to UTF-16
-        span_converter.convert_program(program);
+        program_span_converter.convert_program(program);
 
         // Convert comment spans to UTF-16.
         // Also set the `content` field (byte 15) of each comment to `None` (0).
         // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
-        if let Some(mut converter) = span_converter.converter() {
+        if let Some(mut converter) = program_span_converter.converter() {
             for comment in &mut program.comments {
                 converter.convert_span(&mut comment.span);
                 comment.content = CommentContent::None;
@@ -764,7 +788,7 @@ impl Linter {
             program_offset,
             is_ts,
             is_jsx,
-            has_bom,
+            program_has_bom,
             tokens_offset,
             tokens_len,
         );
@@ -822,7 +846,28 @@ impl Linter {
         );
         match result {
             Ok(diagnostics) => {
+                #[expect(clippy::cast_possible_truncation)]
+                let current_section_len =
+                    ctx_host.current_sub_host().semantic().source_text().len() as u32;
+                let current_section_offset = ctx_host.current_source_text_offset();
+
                 for diagnostic in diagnostics {
+                    let (source_text, has_bom, span_converter, use_actual_range) =
+                        match diagnostic.range_kind {
+                            DiagnosticRangeKind::Section => (
+                                program_original_source_text,
+                                program_has_bom,
+                                &program_span_converter,
+                                false,
+                            ),
+                            DiagnosticRangeKind::Actual => (
+                                actual_original_source_text,
+                                actual_has_bom,
+                                &actual_span_converter,
+                                true,
+                            ),
+                        };
+
                     // Convert UTF-16 offsets back to UTF-8.
                     // TODO: Validate span offsets are within bounds and `start <= end`.
                     // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
@@ -835,9 +880,20 @@ impl Linter {
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
 
-                    if ctx_host
-                        .disable_directives()
-                        .contains(&format!("{plugin_name}/{rule_name}"), span)
+                    let disable_directives_span = if use_actual_range {
+                        map_actual_span_to_section(
+                            span,
+                            current_section_offset,
+                            current_section_len,
+                        )
+                    } else {
+                        Some(span)
+                    };
+                    if let Some(disable_directives_span) = disable_directives_span
+                        && ctx_host.disable_directives().contains(
+                            &format!("{plugin_name}/{rule_name}"),
+                            disable_directives_span,
+                        )
                     {
                         continue;
                     }
@@ -845,8 +901,8 @@ impl Linter {
                     // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
                     let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
                         fixes,
-                        original_source_text,
-                        &span_converter,
+                        source_text,
+                        span_converter,
                         has_bom,
                     ) {
                         Ok(fix) => Some(fix.with_kind(fix_kind)),
@@ -890,19 +946,22 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(
-                        Message::new(
-                            OxcDiagnostic::error(diagnostic.message)
-                                .with_label(span)
-                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                .with_severity(severity.into()),
-                            possible_fixes,
-                        )
-                        .with_rule(MessageRule {
-                            plugin_name: Cow::Owned(plugin_name.to_string()),
-                            rule_name: Cow::Owned(rule_name.to_string()),
-                        }),
-                    );
+                    let message = Message::new(
+                        OxcDiagnostic::error(diagnostic.message)
+                            .with_label(span)
+                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                            .with_severity(severity.into()),
+                        possible_fixes,
+                    )
+                    .with_rule(MessageRule {
+                        plugin_name: Cow::Owned(plugin_name.to_string()),
+                        rule_name: Cow::Owned(rule_name.to_string()),
+                    });
+                    if use_actual_range {
+                        ctx_host.push_diagnostic_in_actual_coordinates(message);
+                    } else {
+                        ctx_host.push_diagnostic(message);
+                    }
                 }
             }
             Err(err) => {
