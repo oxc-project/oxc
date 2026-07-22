@@ -97,19 +97,13 @@ declare_oxc_lint!(
 
 impl Rule for PreferIncludesOverRepeatedComparisons {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let config = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .cloned()
-            .map_or_else(
-                || Ok(PreferIncludesOverRepeatedComparisonsConfig::default()),
-                serde_json::from_value,
-            )?;
+        let config = value.as_array().and_then(|arr| arr.first()).cloned().map_or_else(
+            || Ok(PreferIncludesOverRepeatedComparisonsConfig::default()),
+            serde_json::from_value,
+        )?;
 
         let minimum_comparisons = config.minimum_comparisons.max(2);
-        Ok(Self(Box::new(PreferIncludesOverRepeatedComparisonsConfig {
-            minimum_comparisons,
-        })))
+        Ok(Self(Box::new(PreferIncludesOverRepeatedComparisonsConfig { minimum_comparisons })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -309,9 +303,10 @@ fn contains_optional_chain(expr: &Expression<'_>) -> bool {
         Expression::CallExpression(call) => {
             call.optional
                 || contains_optional_chain(&call.callee)
-                || call.arguments.iter().any(|arg| {
-                    arg.as_expression().is_some_and(contains_optional_chain)
-                })
+                || call
+                    .arguments
+                    .iter()
+                    .any(|arg| arg.as_expression().is_some_and(contains_optional_chain))
         }
         _ => false,
     }
@@ -396,10 +391,7 @@ fn test() {
         ("undefined === a || undefined === b || undefined === c;", None),
         ("a === null || b === null || c === null;", None),
         (r#"a === undefined || a === "x" || b === undefined;"#, None),
-        (
-            "a === (undefined as any) || b === (undefined as any) || c === (undefined as any);",
-            None,
-        ),
+        ("a === (undefined as any) || b === (undefined as any) || c === (undefined as any);", None),
         (
             r#"value === "a" || value === "b";"#,
             Some(serde_json::json!([{"minimumComparisons": 4}])),

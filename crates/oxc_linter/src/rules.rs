@@ -485,8 +485,7 @@ pub(crate) mod react_perf {
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn>
 pub(crate) mod unicorn {
-        pub mod prefer_includes_over_repeated_comparisons;
-pub mod catch_error_name;
+    pub mod catch_error_name;
     pub mod consistent_assert;
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
@@ -582,6 +581,7 @@ pub mod catch_error_name;
     pub mod prefer_global_this;
     pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
+    pub mod prefer_includes_over_repeated_comparisons;
     pub mod prefer_keyboard_event_key;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_min_max;
