@@ -17,6 +17,10 @@ use super::{EmptyArray, Null};
 // Meta properties
 // ----------------------------------------
 
+/// Serializer for `meta` field of [`ImportMeta`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `import` identifier with span covering first 6 bytes of the [`ImportMeta`].
 #[ast_meta]
 #[estree(
     ts_type = "IdentifierName",
@@ -49,6 +53,10 @@ impl ESTree for ImportMetaMeta<'_> {
     }
 }
 
+/// Serializer for `property` field of [`ImportMeta`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `meta` identifier with span covering last 4 bytes of the [`ImportMeta`].
 #[ast_meta]
 #[estree(
     ts_type = "IdentifierName",
@@ -81,6 +89,10 @@ impl ESTree for ImportMetaProperty<'_> {
     }
 }
 
+/// Serializer for `meta` field of [`NewTarget`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `new` identifier with span covering first 3 bytes of the [`NewTarget`].
 #[ast_meta]
 #[estree(
     ts_type = "IdentifierName",
@@ -113,6 +125,10 @@ impl ESTree for NewTargetMeta<'_> {
     }
 }
 
+/// Serializer for `property` field of [`NewTarget`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `target` identifier with span covering last 6 bytes of the [`NewTarget`].
 #[ast_meta]
 #[estree(
     ts_type = "IdentifierName",
