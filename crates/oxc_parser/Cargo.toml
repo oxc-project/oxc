@@ -1,6 +1,6 @@
 [package]
 name = "oxc_parser"
-version = "0.139.0"
+version = "0.141.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -21,7 +21,11 @@ workspace = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_data_structures = { workspace = true, features = ["assert_unchecked", "fieldless_enum"] }
+oxc_data_structures = { workspace = true, features = [
+  "assert_unchecked",
+  "branch_hints",
+  "fieldless_enum",
+] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_regular_expression = { workspace = true, optional = true }
@@ -39,11 +43,7 @@ seq-macro = { workspace = true }
 memchr = { workspace = true }
 
 [dev-dependencies]
-# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
-# If we enabled `disable_old_builder` feature in main dependency, feature unification would
-# cause it to be activated for `oxc_ast` for the user too.
-oxc_ast = { workspace = true, features = ["disable_old_builder", "serialize"] }
-
+oxc_ast = { workspace = true, features = ["serialize"] }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 pico-args = { workspace = true }
 

@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, FormalParameter, Function, Statement},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
@@ -315,7 +315,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
     }
 }
 
-impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
+impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         let name = get_node_name(&call_expr.callee);
         if self.assert_function_matchers.iter().any(|matcher| matcher.is_match(&name)) {
@@ -332,13 +332,13 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
             }
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_expression_statement(&mut self, stmt: &oxc_ast::ast::ExpressionStatement<'a>) {
         self.check_expression(&stmt.expression);
         if !self.found_assertion {
-            walk::walk_expression_statement(self, stmt);
+            walk_js::walk_expression_statement(self, stmt);
         }
     }
 

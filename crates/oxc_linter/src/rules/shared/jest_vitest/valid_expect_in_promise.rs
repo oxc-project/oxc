@@ -6,7 +6,7 @@ use oxc_ast::{
         SimpleAssignmentTarget, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{Visit, VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
@@ -371,7 +371,7 @@ fn is_promise_call_expression(call_expr: &CallExpression<'_>) -> bool {
         .is_some_and(|prop| matches!(prop, "then" | "catch" | "finally"))
 }
 
-impl<'a> Visit<'a> for PromiseExpectScanner {
+impl<'a> VisitJs<'a> for PromiseExpectScanner {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         // Check for `expect(promise).resolves/rejects` — resolves the promise variable
         let callee_name = get_node_name_vec(&call_expr.callee);
@@ -411,14 +411,14 @@ impl<'a> Visit<'a> for PromiseExpectScanner {
             return;
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_await_expression(&mut self, await_expr: &oxc_ast::ast::AwaitExpression<'a>) {
         self.resolve_ident(&await_expr.argument);
         let was_in_await = self.in_await;
         self.in_await = true;
-        walk::walk_await_expression(self, await_expr);
+        walk_js::walk_await_expression(self, await_expr);
         self.in_await = was_in_await;
     }
 }

@@ -116,7 +116,7 @@ impl LintCommandInfo {
             }
             OxlintSuppressionFileAction::Malformed(error)
             | OxlintSuppressionFileAction::UnableToPerformFsOperation(error) => {
-                format!("{}\n", &error.message.to_string())
+                format!("{}\n", error.message)
             }
         };
 

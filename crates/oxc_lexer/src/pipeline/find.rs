@@ -1,19 +1,38 @@
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
 use crate::tables::{hex_val, is_digit, is_word};
 
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline(always)]
 pub(super) unsafe fn veq(v: __m256i, c: u8) -> __m256i {
     _mm256_cmpeq_epi8(v, _mm256_set1_epi8(c as i8))
 }
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline(always)]
 pub(super) unsafe fn mm(v: __m256i) -> u32 {
     _mm256_movemask_epi8(v) as u32
 }
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline(always)]
 pub(super) unsafe fn load256(src: *const u8, i: usize) -> __m256i {
     _mm256_loadu_si256(src.add(i) as *const __m256i)
 }
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline(always)]
+pub(super) unsafe fn load8(src: *const u8, i: usize) -> u64 {
+    core::ptr::read_unaligned(src.add(i) as *const u64)
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline(always)]
+pub(super) fn eqm(x: u64, b: u8) -> u64 {
+    let lo = 0x0101_0101_0101_0101u64;
+    let y = x ^ lo.wrapping_mul(b as u64);
+    y.wrapping_sub(lo) & !y & 0x8080_8080_8080_8080
+}
+
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 pub(super) unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
     while i + 32 <= n {
@@ -31,6 +50,25 @@ pub(super) unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usi
     }
     n
 }
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline]
+pub(super) unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
+    while i + 8 <= n {
+        let m = eqm(load8(src, i), a);
+        if m != 0 {
+            return i + (m.trailing_zeros() >> 3) as usize;
+        }
+        i += 8;
+    }
+    while i < n {
+        if *src.add(i) == a {
+            return i;
+        }
+        i += 1;
+    }
+    n
+}
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 pub(super) unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
     while i + 32 <= n {
@@ -50,6 +88,27 @@ pub(super) unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8)
     }
     n
 }
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline]
+pub(super) unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
+    while i + 8 <= n {
+        let x = load8(src, i);
+        let m = eqm(x, a) | eqm(x, b);
+        if m != 0 {
+            return i + (m.trailing_zeros() >> 3) as usize;
+        }
+        i += 8;
+    }
+    while i < n {
+        let c = *src.add(i);
+        if c == a || c == b {
+            return i;
+        }
+        i += 1;
+    }
+    n
+}
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
     while i + 32 <= n {
@@ -69,6 +128,27 @@ unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> 
     }
     n
 }
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline]
+unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
+    while i + 8 <= n {
+        let x = load8(src, i);
+        let m = eqm(x, a) | eqm(x, b) | eqm(x, c);
+        if m != 0 {
+            return i + (m.trailing_zeros() >> 3) as usize;
+        }
+        i += 8;
+    }
+    while i < n {
+        let ch = *src.add(i);
+        if ch == a || ch == b || ch == c {
+            return i;
+        }
+        i += 1;
+    }
+    n
+}
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8, d: u8) -> usize {
     while i + 32 <= n {
@@ -81,6 +161,26 @@ unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8, d: 
             return i + m.trailing_zeros() as usize;
         }
         i += 32;
+    }
+    while i < n {
+        let x = *src.add(i);
+        if x == a || x == b || x == c || x == d {
+            return i;
+        }
+        i += 1;
+    }
+    n
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline]
+unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8, d: u8) -> usize {
+    while i + 8 <= n {
+        let x = load8(src, i);
+        let m = eqm(x, a) | eqm(x, b) | eqm(x, c) | eqm(x, d);
+        if m != 0 {
+            return i + (m.trailing_zeros() >> 3) as usize;
+        }
+        i += 8;
     }
     while i < n {
         let x = *src.add(i);
@@ -112,6 +212,7 @@ pub(super) unsafe fn find_line_terminator(src: *const u8, n: usize, mut i: usize
     }
 }
 /// OR-fold of `vpcmpeqb` results, associated as a tree.
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 macro_rules! vor {
     ($a:expr) => { $a };
     ($a:expr, $b:expr) => { _mm256_or_si256($a, $b) };
@@ -120,11 +221,10 @@ macro_rules! vor {
     };
 }
 
-/// Define a fixed-needle SIMD finder: `$name(src, n, i)` returns the index
-/// of the first byte in `src[i..n]` matching any needle, or `n`.
-macro_rules! simd_finder {
+macro_rules! finder {
     ($(#[$attr:meta])* $name:ident: $($needle:expr),+ $(,)?) => {
         $(#[$attr])*
+        #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
         #[inline]
         pub(super) unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
             while i + 32 <= n {
@@ -144,48 +244,69 @@ macro_rules! simd_finder {
             }
             n
         }
+        $(#[$attr])*
+        #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+        #[inline]
+        pub(super) unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
+            while i + 8 <= n {
+                let x = load8(src, i);
+                let m = $(eqm(x, $needle))|+;
+                if m != 0 {
+                    return i + (m.trailing_zeros() >> 3) as usize;
+                }
+                i += 8;
+            }
+            while i < n {
+                let c = *src.add(i);
+                if $(c == $needle)||+ {
+                    return i;
+                }
+                i += 1;
+            }
+            n
+        }
     };
 }
 
-simd_finder!(
+finder!(
     /// JS-mode top-level scan: string/template/regex-or-comment openers plus
     /// the Annex B `<!--` / `-->` trigger bytes.
     find_opener: b'"', b'\'', b'`', b'/', b'<', b'>'
 );
-simd_finder!(
+finder!(
     /// [`find_opener`] widened with `{` / `}` — used inside template
     /// substitutions, where braces drive the nesting depth.
     find_opener6: b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'
 );
-simd_finder!(
+finder!(
     /// [`find_opener`] shape for `carve_jsx` JS mode at top level: `<` (the
     /// JSX-start byte) instead of the Annex B `<` / `>` pair.
     find_opener_jsx5: b'"', b'\'', b'`', b'/', b'<'
 );
-simd_finder!(
+finder!(
     /// [`find_opener_jsx5`] widened with `{` / `}`. Used by `carve_jsx` JS
     /// mode inside a template substitution or JSX expression container.
     find_opener_jsx7: b'"', b'\'', b'`', b'/', b'{', b'}', b'<'
 );
-simd_finder!(
+finder!(
     /// TAG-mode scan: the bytes that matter inside an opening `<...>` tag.
     find_jsx_tag: b'"', b'\'', b'{', b'/', b'>'
 );
-simd_finder!(
+finder!(
     /// [`find_jsx_tag`] widened with `<` (`.tsx` only), so `carve_jsx` can
     /// spot and skip a type-argument list inside the opening tag.
     find_jsx_tag_ts: b'"', b'\'', b'{', b'/', b'>', b'<'
 );
-simd_finder!(
+finder!(
     /// TEXT-mode scan (strict): JSX child text ends at any of `< { > }`.
     find_jsx_text: b'<', b'{', b'>', b'}'
 );
-simd_finder!(
+finder!(
     /// Template-body scan: terminator, escape lead, or `$` (`${` starts a
     /// substitution).
     find_tmpl: b'`', b'\\', b'$'
 );
-simd_finder!(
+finder!(
     /// Regex-body scan. LF/CR and the 0xE2 lead (LS/PS) are watched so
     /// line terminators in the body can be diagnosed.
     find_regex: b'/', b'\\', b'[', b']', b'\n', b'\r', 0xE2
@@ -228,6 +349,7 @@ unsafe fn lic_verify_at(src: *const u8, q: usize) -> bool {
     (c1 == b'l' && core::slice::from_raw_parts(src.add(q + 2), 6) == b"icense")
         || (c1 == b'p' && core::slice::from_raw_parts(src.add(q + 2), 7) == b"reserve")
 }
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline(always)]
 unsafe fn lic_first(src: *const u8, base: usize, mut am: u32) -> i64 {
     while am != 0 {
@@ -239,6 +361,19 @@ unsafe fn lic_first(src: *const u8, base: usize, mut am: u32) -> i64 {
     }
     -1
 }
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline(always)]
+unsafe fn lic_first8(src: *const u8, base: usize, mut am: u64) -> i64 {
+    while am != 0 {
+        let q = base + (am.trailing_zeros() >> 3) as usize;
+        am &= am - 1;
+        if lic_verify_at(src, q) {
+            return q as i64;
+        }
+    }
+    -1
+}
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) unsafe fn scan_block_comment(
     src: *const u8,
     n: usize,
@@ -285,11 +420,59 @@ pub(super) unsafe fn scan_block_comment(
     }
     (n, saw_nl, lic_q)
 }
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) unsafe fn scan_block_comment(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+) -> (usize, bool, i64) {
+    let mut saw_nl = false;
+    let mut lic_q: i64 = -1;
+    while i + 8 <= n {
+        let x = load8(src, i);
+        let y = load8(src, i + 1);
+        let term = eqm(x, b'*') & eqm(y, b'/');
+        let nl = eqm(x, b'\n') | eqm(x, b'\r');
+        let at = eqm(x, b'@');
+        if term != 0 {
+            let j = (term.trailing_zeros() >> 3) as usize;
+            let bodymask: u64 = if j > 0 { (1u64 << (j * 8)) - 1 } else { 0 };
+            saw_nl |= (nl & bodymask) != 0;
+            if lic_q < 0 {
+                let am = at & bodymask;
+                if am != 0 {
+                    lic_q = lic_first8(src, i, am);
+                }
+            }
+            return (i + j + 1, saw_nl, lic_q);
+        }
+        saw_nl |= nl != 0;
+        if lic_q < 0 && at != 0 {
+            lic_q = lic_first8(src, i, at);
+        }
+        i += 8;
+    }
+    while i + 1 < n {
+        let c = *src.add(i);
+        if c == b'*' && *src.add(i + 1) == b'/' {
+            return (i + 1, saw_nl, lic_q);
+        }
+        if c == b'\n' || c == b'\r' {
+            saw_nl = true;
+        }
+        if c == b'@' && lic_q < 0 && lic_verify_at(src, i) {
+            lic_q = i as i64;
+        }
+        i += 1;
+    }
+    (n, saw_nl, lic_q)
+}
 /// Scan a `//` line comment to its LineTerminator (LF, CR, or LS/PS),
 /// tracking the first `@license` / `@preserve` position for comment
 /// metadata. A 0xE2 that isn't LS/PS (typographic punctuation in prose) is
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) unsafe fn scan_line_comment(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
     let mut lic_q: i64 = -1;
     while i + 32 <= n {
@@ -319,6 +502,54 @@ pub(super) unsafe fn scan_line_comment(src: *const u8, n: usize, mut i: usize) -
             lic_q = lic_first(src, i, at);
         }
         i += 32;
+    }
+    while i < n {
+        let c = *src.add(i);
+        if c == b'\n' || c == b'\r' {
+            return (i, lic_q);
+        }
+        if c == 0xE2
+            && *src.add(i + 1) == 0x80
+            && (*src.add(i + 2) == 0xA8 || *src.add(i + 2) == 0xA9)
+        {
+            return (i, lic_q);
+        }
+        if c == b'@' && lic_q < 0 && lic_verify_at(src, i) {
+            lic_q = i as i64;
+        }
+        i += 1;
+    }
+    (n, lic_q)
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) unsafe fn scan_line_comment(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
+    let mut lic_q: i64 = -1;
+    while i + 8 <= n {
+        let x = load8(src, i);
+        let mut term = eqm(x, b'\n') | eqm(x, b'\r') | eqm(x, 0xE2);
+        let at = eqm(x, b'@');
+        while term != 0 {
+            let t = (term.trailing_zeros() >> 3) as usize;
+            let c = *src.add(i + t);
+            if c == 0xE2
+                && !(*src.add(i + t + 1) == 0x80
+                    && (*src.add(i + t + 2) == 0xA8 || *src.add(i + t + 2) == 0xA9))
+            {
+                term &= term - 1;
+                continue;
+            }
+            if lic_q < 0 {
+                let am = at & if t > 0 { (1u64 << (t * 8)) - 1 } else { 0 };
+                if am != 0 {
+                    lic_q = lic_first8(src, i, am);
+                }
+            }
+            return (i + t, lic_q);
+        }
+        if lic_q < 0 && at != 0 {
+            lic_q = lic_first8(src, i, at);
+        }
+        i += 8;
     }
     while i < n {
         let c = *src.add(i);

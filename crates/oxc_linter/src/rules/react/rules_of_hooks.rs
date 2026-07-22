@@ -7,7 +7,7 @@ use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, CallExpression, Function},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId, SymbolId};
@@ -718,7 +718,7 @@ impl<'a> MayThrowBeforeHook {
     }
 }
 
-impl<'a> Visit<'a> for MayThrowBeforeHook {
+impl<'a> VisitJs<'a> for MayThrowBeforeHook {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         if self.found {
             return;
@@ -750,14 +750,14 @@ impl<'a> Visit<'a> for MayThrowBeforeHook {
     fn visit_call_expression(&mut self, expr: &oxc_ast::ast::CallExpression<'a>) {
         self.enter_node(AstKind::CallExpression(expr));
         if !self.found {
-            walk::walk_call_expression(self, expr);
+            walk_js::walk_call_expression(self, expr);
         }
     }
 
     fn visit_new_expression(&mut self, expr: &oxc_ast::ast::NewExpression<'a>) {
         self.enter_node(AstKind::NewExpression(expr));
         if !self.found {
-            walk::walk_new_expression(self, expr);
+            walk_js::walk_new_expression(self, expr);
         }
     }
 }

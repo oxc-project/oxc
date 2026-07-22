@@ -9,7 +9,7 @@ use oxc_ast::{
     },
     match_expression,
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -218,7 +218,7 @@ impl ReturnFinder {
     }
 }
 
-impl<'a> Visit<'a> for ReturnFinder {
+impl<'a> VisitJs<'a> for ReturnFinder {
     fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
         if self.found {
             return;

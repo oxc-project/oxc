@@ -97,18 +97,18 @@ impl Rule for PreferTsExpectError {
     }
 }
 
-fn get_last_comment_line(comment: Comment, raw: &str) -> String {
+fn get_last_comment_line(comment: Comment, raw: &str) -> &str {
     if comment.is_line() {
-        return String::from(raw);
+        return raw;
     }
 
-    String::from(raw.lines().last().unwrap_or(raw))
+    raw.lines().last().unwrap_or(raw)
 }
 
 fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {
     let line = get_last_comment_line(comment, raw);
 
-    if comment.is_line() { test_single_line_comment(&line) } else { test_multi_line_comment(&line) }
+    if comment.is_line() { test_single_line_comment(line) } else { test_multi_line_comment(line) }
 }
 
 fn test_single_line_comment(line: &str) -> bool {

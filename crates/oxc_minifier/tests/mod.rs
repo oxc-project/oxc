@@ -8,6 +8,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_compat::EngineTargets;
 use oxc_parser::{ParseOptions, Parser};
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 pub(crate) use oxc_minifier::{
@@ -50,6 +51,49 @@ pub(crate) fn test_target_same(source_text: &str, target: &str) {
 #[track_caller]
 pub(crate) fn test_options(source_text: &str, expected: &str, options: &CompressOptions) {
     test_options_source_type(source_text, expected, SourceType::mjs(), options);
+}
+
+/// Assert output and iteration count, including the usual idempotency check.
+#[track_caller]
+pub(crate) fn test_options_with_iterations(
+    source_text: &str,
+    expected: &str,
+    expected_iterations: u8,
+    options: &CompressOptions,
+) {
+    let (first, iterations) =
+        run_with_iterations(source_text, SourceType::mjs(), Some(options.clone()));
+    let expected = run(expected, SourceType::mjs(), None);
+    assert_eq!(first, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{first}");
+    assert_eq!(
+        iterations, expected_iterations,
+        "\niteration count for source\n{source_text}\nexpect\n{expected_iterations}\ngot\n{iterations}"
+    );
+
+    let second = run(&first, SourceType::mjs(), Some(options.clone()));
+    assert_eq!(
+        first, second,
+        "\nidempotency for source\n{source_text}\ngot\n{first}\nthen\n{second}"
+    );
+}
+
+/// Assert one capped compression run and its iteration count without an
+/// idempotency check. A deliberately low cap can conservatively retain code.
+#[track_caller]
+pub(crate) fn test_options_once_with_iterations(
+    source_text: &str,
+    expected: &str,
+    expected_iterations: u8,
+    options: &CompressOptions,
+) {
+    let (actual, iterations) =
+        run_with_iterations(source_text, SourceType::mjs(), Some(options.clone()));
+    let expected = run(expected, SourceType::mjs(), None);
+    assert_eq!(actual, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{actual}");
+    assert_eq!(
+        iterations, expected_iterations,
+        "\niteration count for source\n{source_text}\nexpect\n{expected_iterations}\ngot\n{iterations}"
+    );
 }
 
 #[track_caller]
@@ -97,6 +141,15 @@ pub(crate) fn test_same_options_source_type(
 
 #[track_caller]
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
+    run_with_iterations(source_text, source_type, options).0
+}
+
+#[track_caller]
+fn run_with_iterations(
+    source_text: &str,
+    source_type: SourceType,
+    options: Option<CompressOptions>,
+) -> (String, u8) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type)
         .with_options(ParseOptions { allow_return_outside_function: true, ..Default::default() })
@@ -104,11 +157,13 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
     let mut program = ret.program;
-    if let Some(options) = options {
-        Compressor::new(&allocator).build(&mut program, options);
-    }
-    Codegen::new()
+    let iterations = options.map_or(0, |options| {
+        let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+        Compressor::new(&allocator).build_with_scoping(&mut program, scoping, options)
+    });
+    let code = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..Default::default() })
         .build(&program)
-        .code
+        .code;
+    (code, iterations)
 }

@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;

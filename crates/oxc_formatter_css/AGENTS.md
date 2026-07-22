@@ -60,8 +60,7 @@ Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `
 ### Comments
 
 `oxc-css-parser` does not attach comments to the AST;
-they are collected via `ParserBuilder::comments()` into a positional cursor over `CssComment { span, inline }`
-(`inline` = `//`).
+they are collected via `ParserBuilder::comments()` into a positional cursor over `CssComment { span, inline }` (`inline` = `//`).
 
 - Statement-level comments: flushed before each statement
   (`flush_leading_comments`); consecutive same-line comments stay glued
@@ -71,6 +70,29 @@ they are collected via `ParserBuilder::comments()` into a positional cursor over
 - Trailing (`value /* c */;`): flushed by `write_declaration` with the source gap before `;` preserved
 - After each statement, the sequence DISCARDS unclaimed comments inside the
   statement span (cursor must never point before a printed position)
+
+#### Placement invariants
+
+The placement rules follow `crates/oxc_formatter/AGENTS.md` "Comment placement invariants"
+(the invariant / compat-table two-layer split, and the terminator vs separator ownership rule);
+
+this section records their CSS translation:
+
+- A comment never crosses user content (other values, other comments):
+  - it stays on its source side of every value/argument
+- `,` is a list SEPARATOR: a comment between an element and its comma stays BEFORE the comma
+  - `a /* c */, b`; comments after it lead the next element
+  - Declaration value lists (`write_value_groups`) and function arguments (`write_function`) route every comma through `write_group_comma` with the comma offset paired to its group
+  - `split_comma_groups` returns `(group, Option<comma_start>)`; SCSS/Less lists pair `comma_spans`
+  - A new comma site must take the pair, the shape makes taking the groups without the commas a visible choice, not an accident
+  - Adopted by every comma writer (function/include args, maps, paren/sass lists, `@mixin` params, `@each` bindings, keyframe selectors)
+- `;` is a declaration TERMINATOR, but unlike JS statements Prettier does NOT move comments behind it:
+  - `value /* c */;` keeps the comment before `;` (measured behavior, not principle, may change in the future)
+- The positional cursor makes ownership a bounds discipline, not an attachment one:
+  - a flush's upper bound must never extend past the next piece of user content,
+  - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
+- Never let a comment cross a line boundary
+  - `//` comments force a hardline after; own-line comments stay own-line, and never move a suppression comment off its target
 
 ### Line endings
 
@@ -195,6 +217,13 @@ Deliberate divergences from Prettier. Two admission reasons:
 
 Notable divergences are:
 
+- A trailing `//` comment never counts toward the print width
+  - Emitted as a `line_suffix` (like line comments in every other formatter crate),
+    so the preceding value keeps its own layout: `@x: fade(@white, 4%); // long comment` stays flat
+  - Trailing `/* */` comments still count, matching Prettier (both here and in the JS formatter, self-delimiting comments are inline content)
+- A COMMENTED keyframe selector list is formatted structurally (one selector per line, comments per the separator rule: `60% /* mid */,`)
+  - Prettier keeps the whole list verbatim on one line, interior spacing included (`60%   /* mid */  ,   70%` survives untouched)
+  - Ours prints commented and uncommented lists with the same layout; layout-only, rare trigger
 - Broken `:not(...)` selector args indent at +2
   - Prettier lands at +4 (arg) / +2 (`)`)
   - Layout-only, rare trigger (selector longer than line width)
@@ -226,7 +255,12 @@ Notable divergences are:
     - We print `(not (screen and (color)))`
   - Reproducing the half-normalization is pure tokenizer-artifact matching;
     - Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`)
-- `@custom-media` preludes always print structured (e.g. `--viewport-medium (width <= 50rem)`)
+- A source-glued value-position `[...]` stays glued to ANY typed left neighbor and prints verbatim
+  - `theme(fontSize.af-md[0])`, `foo[0.50]`: matching Prettier, which lexes the run as ONE postcss word;
+    But also `var(--x)[0]`, where Prettier prints `var(--x) [0]`)
+    - Prettier's space there is a word-lexing artifact (`[` extends a word, but not across `)`)
+    - Ours is one gap-based rule for all variants: never add a space the source doesn't have
+  - Less lookups (`@config[@key]`) are unaffected: the typed lookup rule wins and keeps printing structurally
   - With the name GLUED to the `(` (`--viewport-medium(width<=50rem)`)
   - Prettier keeps the whole prelude verbatim (ONE `media-type` token)
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
@@ -241,9 +275,13 @@ Notable divergences are:
 - SCSS: A function call directly after a `//` comment in nested-args position
   - Prettier double-indents it
   - We print the normal indent (prettier/prettier#19427)
+- SCSS: A nested map value prints at the SAME indent in every block context
+  - Prettier double-indents it (closing `)` floating between levels) when the nearest
+    at-rule ancestor is a control directive (`@if`/`@else`/`@for`/`@each`/`@while`; selector blocks in between don't shield)
+    = identical source, different indent per context
 - SCSS: The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list (semantics)
   - `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else
-  - Prettier 3.9.1 changes `key: ($a + $b)` from a number to a list,
+  - Prettier 3.9.5 changes `key: ($a + $b)` from a number to a list,
     restructures `key: (a b)` (2-element space list → nested 1-element list),
     and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`)
   - Prettier's own #18530 (math siblings in args) / #19091 (single-node scalars) fixed subsets of this;
@@ -271,6 +309,12 @@ Notable divergences are:
     - Each mode is internally consistent with what its parser produces
   - The value syntax `--p: { ... }` itself is valid CSS, but its only intended consumer was the `@apply --p;` at-rule from the dropped CSS Apply Rule proposal
     - With no consumer, real-world usage is near zero, so the cross-mode behavior difference is theoretical
+- Less: statement-position `&:extend(...)` breaks only on overflow, like the selector-position form
+  - Prettier (3.9.5+) ALWAYS breaks multiple selectors one per line there and never breaks a single one:
+    postcss-less models the statement as a rule node, so the top-level selector-list printer
+    (hardline commas) leaks into the parens (prettier#19550 only fixed the indentation)
+  - Ours prints BOTH positions with the same pseudo-args layout for consistency
+    (inline when it fits; parens on their own lines + one selector per line on overflow, the same shape as Prettier's break)
 - Less: `func(x, + 20px)` unary gluing
   - Prettier prints `+20px`; `oxc-css-parser` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
 - Less: Nested math in a function arg / multi-value shorthand
@@ -299,8 +343,8 @@ Fixtures are grouped per language (`format/{css,scss,less}/`; test modules mirro
 Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics (`parse_error_is_err`).
 Fixtures under `embedded/` route through `format_to_ir` instead of `format()`; the `embedded_debug` example formats files the same way for quick comparison.
 
-Every expected output must be verified against Prettier (3.9.1, the current submodule).
-`npx prettier@3.9.1 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
+Every expected output must be verified against Prettier (3.9.5, the current submodule).
+`npx prettier@3.9.5 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
 
 Exception: a fixture may pin an entry from "Known divergences" (e.g. `map-item-parens.scss`);
 its comments must say which lines deviate from Prettier and why.
@@ -322,10 +366,10 @@ cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter css/atrule
 ```
 
-At the current version (v3.9.1), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
+At the current version (v3.9.5), the divergences of seven files have been confirmed and are intentional (see "Known divergences"):
 
 - CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
-- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
 
@@ -356,11 +400,9 @@ pnpm --dir apps/oxfmt conformance
 ### Manual checks
 
 ```sh
-cargo run -p oxc_formatter_css --example css_formatter file.css
+cargo run -p oxc_formatter_css --example css_formatter file.css                  # defaults to --print-width 80
 cargo run -p oxc_formatter_css --example parse_debug -- --syntax scss file.scss  # dump oxc-css-parser AST
 cargo run -p oxc_formatter_css --example embedded_debug file.scss                # format_to_ir entry
 ```
 
-## Roadmap (TODO: Follow Prettier main)
-
-The guiding axis is Prettier compatibility, matching what is in Prettier's unreleased changelog (main has them, next stable will).
+`DUMP_IR=1` prints the `FormatElement` stream before printing.

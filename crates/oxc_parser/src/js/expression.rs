@@ -23,6 +23,24 @@ use crate::{
     modifiers::Modifiers,
 };
 
+fn is_import_expression_or_member_access_on_import_expression(callee: &Expression<'_>) -> bool {
+    let mut expr = callee;
+    loop {
+        if matches!(expr, Expression::ImportExpression(_)) {
+            return true;
+        }
+        let Some(member_expr) = expr.as_member_expression() else {
+            expr = match expr {
+                Expression::TaggedTemplateExpression(tagged_template) => &tagged_template.tag,
+                Expression::TSNonNullExpression(non_null) => &non_null.expression,
+                _ => return false,
+            };
+            continue;
+        };
+        expr = member_expr.object();
+    }
+}
+
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
@@ -111,12 +129,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         IdentifierName::new(span, name, self)
     }
 
-    /// Parse keyword kind as identifier
-    pub(crate) fn parse_keyword_identifier(&mut self, kind: Kind) -> IdentifierName<'a> {
-        let (span, name) = self.parse_identifier_kind(kind);
-        IdentifierName::new(span, name, self)
-    }
-
     #[inline]
     pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Ident<'a>) {
         let token = self.cur_token();
@@ -125,7 +137,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // from source text without going through `get_string`'s kind matching.
         let name = if token.escaped() { self.cur_string() } else { self.token_source(&token) };
         self.advance(kind);
-        (span, Ident::from(name))
+        (span, self.ident(name))
+    }
+
+    /// Create an [`Ident`], respecting [`ParseOptions::enable_ident_hashes`].
+    ///
+    /// All parser-created [`Ident`]s must be built through this method (or copied from another
+    /// `Ident` that was), so that [`ParseOptions::enable_ident_hashes`] applies uniformly.
+    /// Building an `Ident` from a `&str`/`Str` via `Into` instead would always hash it, producing
+    /// an AST where some `Ident`s are hashed and some are not.
+    ///
+    /// [`ParseOptions::enable_ident_hashes`]: crate::ParseOptions::enable_ident_hashes
+    #[inline]
+    pub(crate) fn ident(&self, name: &'a str) -> Ident<'a> {
+        if self.options.enable_ident_hashes { Ident::from(name) } else { Ident::new_unhashed(name) }
     }
 
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
@@ -159,7 +184,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// # Panics
     pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
         let span = self.cur_token().span();
-        let name = Str::from(self.cur_string());
+        let name = self.ident(self.cur_string());
         self.bump_any();
         PrivateIdentifier::new(span, name, self)
     }
@@ -462,7 +487,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             Ok(regular_expression) => Some(self.alloc(regular_expression)),
             Err(diagnostic) => {
-                self.error(diagnostic);
+                self.error(diagnostic.into());
                 None
             }
         }
@@ -648,21 +673,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 13.3 ImportCall or ImportMeta
     fn parse_import_meta_or_call(&mut self) -> Expression<'a> {
         let span = self.start_span();
-        let meta = self.parse_keyword_identifier(Kind::Import);
+        self.bump_any(); // bump `import`
         match self.cur_kind() {
             Kind::Dot => {
                 self.bump_any(); // bump `.`
                 match self.cur_kind() {
                     // `import.meta`
                     Kind::Meta => {
-                        let property = self.parse_keyword_identifier(Kind::Meta);
+                        self.bump_any(); // bump `meta`
                         let span = self.end_span(span);
                         self.module_record_builder.visit_import_meta(span);
                         // `import.meta` is only allowed in module code.
                         if !self.source_type.is_module() {
                             self.error_on_script(diagnostics::import_meta(span));
                         }
-                        Expression::new_meta_property(span, meta, property, self)
+                        Expression::new_import_meta(span, self)
                     }
                     // `import.source(expr)`
                     Kind::Source => {
@@ -962,16 +987,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// [NewExpression](https://tc39.es/ecma262/#sec-new-operator)
     fn parse_new_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
-        let identifier = self.parse_keyword_identifier(Kind::New);
+        self.bump_any(); // bump `new`
 
         if self.eat(Kind::Dot) {
             return if self.at(Kind::Target) {
-                let property = self.parse_keyword_identifier(Kind::Target);
+                self.bump_any(); // bump `target`
                 let span = self.end_span(span);
                 if !self.ctx.has_new_target() {
                     self.error(diagnostics::new_target_outside_function(span));
                 }
-                Expression::new_meta_property(span, identifier, property, self)
+                Expression::new_new_target(span, self)
             } else {
                 self.bump_any();
                 self.fatal_error(diagnostics::new_target(self.end_span(span)))
@@ -1023,7 +1048,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ArenaVec::new_in(self)
         };
 
-        if is_import && matches!(callee, Expression::ImportExpression(_)) {
+        if is_import && is_import_expression_or_member_access_on_import_expression(&callee) {
             self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
@@ -1383,15 +1408,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else if kind.is_binary_operator() {
                 let span = self.end_span(lhs_span);
                 let op = map_binary_operator(kind);
-                if op == BinaryOperator::Exponential
-                    && !lhs_parenthesized
-                    && let Some(key) = match lhs {
-                        Expression::AwaitExpression(_) => Some("await"),
-                        Expression::UnaryExpression(_) => Some("unary"),
+                if op == BinaryOperator::Exponential && !lhs_parenthesized {
+                    let diagnostic = match &lhs {
+                        Expression::AwaitExpression(_) => Some(
+                            diagnostics::unary_exponentiation_left_operand("await", lhs.span()),
+                        ),
+                        Expression::UnaryExpression(unary) => {
+                            Some(diagnostics::unary_exponentiation_left_operand(
+                                unary.operator.as_str(),
+                                lhs.span(),
+                            ))
+                        }
+                        Expression::TSTypeAssertion(_) => Some(
+                            diagnostics::type_assertion_exponentiation_left_operand(lhs.span()),
+                        ),
                         _ => None,
+                    };
+                    if let Some(diagnostic) = diagnostic {
+                        self.error(diagnostic);
                     }
-                {
-                    self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                 }
                 Expression::new_binary_expression(span, lhs, op, rhs, self)
             } else {

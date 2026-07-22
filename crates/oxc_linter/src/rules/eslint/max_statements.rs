@@ -1,8 +1,8 @@
 use oxc_ast::ast::{
     ArrowFunctionExpression, BlockStatement, Class, Function, FunctionBody, StaticBlock,
 };
-use oxc_ast_visit::Visit;
-use oxc_ast_visit::walk::{
+use oxc_ast_visit::VisitJs;
+use oxc_ast_visit::walk_js::{
     walk_arrow_function_expression, walk_class, walk_function, walk_function_body,
     walk_static_block,
 };
@@ -298,7 +298,7 @@ impl<'a> StatementCounter<'a> {
     }
 }
 
-impl<'a> Visit<'a> for StatementCounter<'a> {
+impl<'a> VisitJs<'a> for StatementCounter<'a> {
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.start_function();
         walk_function(self, func, flags);

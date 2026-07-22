@@ -235,6 +235,10 @@ impl<'a> Comments<'a> {
     }
 
     /// Returns comments that occur before the first instance of a specific character.
+    ///
+    /// Lexical byte scan: the range starting at `start` must contain only trivia and punctuation
+    /// (e.g. an expression end up to its enclosing delimiter).
+    /// A range covering code would false-match the character inside a string literal or nested syntax.
     pub(crate) fn comments_before_character(&self, mut start: u32, character: u8) -> &'a [Comment] {
         let comments = self.comments_after(start);
 
@@ -427,6 +431,51 @@ impl<'a> Comments<'a> {
         if following_span_start == 0 {
             // Find dangling comments at the end of the enclosing node
             let comments = self.comments_before(enclosing_span.end);
+
+            // When the enclosing statement ends at the very position the preceding node does
+            // (a single-statement body sharing its distant `;`),
+            // ```js
+            // if (1) foo
+            // // c
+            // ;
+            // ```
+            // every comment here sits inside the preceding node,
+            // and own-line comments the preceding statement deferred must escape the enclosing statement
+            // to stay own-line for a later pass (the next statement's leading comments),
+            // like Prettier whose statement `locEnd` excludes the trailing `;`.
+            // When the enclosing node continues past the preceding one (e.g. a block's last statement),
+            // the loop below keeps them inside as trailing comments instead.
+            if enclosing_span.end == preceding_span.end {
+                for (idx, comment) in comments.iter().enumerate() {
+                    if !comment.preceded_by_newline() {
+                        continue;
+                    }
+                    // Everything from here to the terminator must be trivia:
+                    // a run of own-line comments separated by whitespace, then the `;`.
+                    let mut pos = comment.span.end;
+                    let mut deferrable = true;
+                    for next in &comments[idx + 1..] {
+                        if !next.preceded_by_newline()
+                            || !source_text
+                                .all_bytes_match(pos, next.span.start, |b| b.is_ascii_whitespace())
+                        {
+                            deferrable = false;
+                            break;
+                        }
+                        pos = next.span.end;
+                    }
+                    if deferrable
+                        && source_text.all_bytes_match(pos, preceding_span.end, |b| {
+                            b.is_ascii_whitespace() || b == b';'
+                        })
+                        && source_text.bytes_contain(pos, preceding_span.end, b';')
+                    {
+                        return &comments[..idx];
+                    }
+                }
+                return comments;
+            }
+
             let mut start = preceding_span.end;
             for (idx, comment) in comments.iter().enumerate() {
                 // Comments inside the preceding node, which should be printed without checking
@@ -549,28 +598,32 @@ impl<'a> Comments<'a> {
         false
     }
 
+    /// Checks if a comment forms the type cast pattern:
+    /// a type cast comment immediately followed by an opening parenthesis.
+    pub fn is_type_cast_comment_followed_by_paren(&self, comment: &Comment) -> bool {
+        self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
+            && self.is_type_cast_comment(comment)
+    }
+
     /// Finds the index of a type cast comment before the given span.
     ///
     /// Searches for a JSDoc comment containing @type or @satisfies that is followed
     /// by an opening parenthesis, which indicates a type cast pattern.
     pub fn get_type_cast_comment_index(&self, span: Span) -> Option<usize> {
-        self.unprinted_comments().iter().take_while(|c| c.span.end <= span.start).position(
-            |comment| {
-                self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
-                    && self.is_type_cast_comment(comment)
-            },
-        )
+        self.unprinted_comments()
+            .iter()
+            .take_while(|c| c.span.end <= span.start)
+            .position(|comment| self.is_type_cast_comment_followed_by_paren(comment))
     }
 
     /// Checks if there is a type cast comment in the given range,
     /// searching all comments regardless of print state.
     pub fn has_type_cast_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.inner.iter().skip_while(|c| c.span.end < start).take_while(|c| c.span.end <= end).any(
-            |comment| {
-                self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
-                    && self.is_type_cast_comment(comment)
-            },
-        )
+        self.inner
+            .iter()
+            .skip_while(|c| c.span.end < start)
+            .take_while(|c| c.span.end <= end)
+            .any(|comment| self.is_type_cast_comment_followed_by_paren(comment))
     }
 
     /// Marks the given span as a type cast node.
@@ -584,8 +637,11 @@ impl<'a> Comments<'a> {
         self.printed_count == self.last_handled_type_cast_comment
     }
 
+    /// Checks if the node is the one currently being formatted as a cast target
+    /// (the read side of [`Comments::mark_as_type_cast_node`];
+    /// not the source-based classification, see `classify_type_cast`).
     #[inline]
-    pub fn is_type_cast_node(&self, node: &impl GetSpan) -> bool {
+    pub fn is_marked_as_type_cast_node(&self, node: &impl GetSpan) -> bool {
         self.type_cast_node_span == node.span()
     }
 

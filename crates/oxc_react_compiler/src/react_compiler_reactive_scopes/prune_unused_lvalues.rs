@@ -12,7 +12,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_hir::{
-    DeclarationId, EvaluationOrder, Place, ReactiveFunction, ReactiveInstruction,
+    DeclarationId, EvaluationOrder, Place, ReactiveBlock, ReactiveFunction, ReactiveInstruction,
     ReactiveStatement, ReactiveTerminal, ReactiveValue, environment::Environment,
 };
 
@@ -64,7 +64,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
 
     /// TS: `visitPlace(_id, place, state) { state.delete(place.identifier.declarationId) }`
     fn visit_place(&self, _id: EvaluationOrder, place: &Place, state: &mut LValues) {
-        let ident = &self.env.identifiers[place.identifier.0 as usize];
+        let ident = &self.env.identifiers[place.identifier];
         state.remove(&ident.declaration_id);
     }
 
@@ -74,7 +74,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
     fn visit_instruction(&self, instruction: &ReactiveInstruction<'a>, state: &mut LValues) {
         self.traverse_instruction(instruction, state);
         if let Some(lv) = &instruction.lvalue {
-            let ident = &self.env.identifiers[lv.identifier.0 as usize];
+            let ident = &self.env.identifiers[lv.identifier];
             if ident.name.is_none() {
                 state.insert(ident.declaration_id);
             }
@@ -85,7 +85,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
 /// Phase 2: Walk the tree and null out lvalues whose DeclarationId is unused.
 /// This is necessary because Rust's visitor takes immutable references.
 fn null_unused_lvalues<'a>(
-    block: &mut Vec<ReactiveStatement<'a>>,
+    block: &mut ReactiveBlock<'a>,
     env: &Environment<'a>,
     unused: &FxHashSet<DeclarationId>,
 ) {
@@ -113,7 +113,7 @@ fn null_unused_in_instruction<'a>(
     unused: &FxHashSet<DeclarationId>,
 ) {
     if let Some(lv) = &instr.lvalue {
-        let ident = &env.identifiers[lv.identifier.0 as usize];
+        let ident = &env.identifiers[lv.identifier];
         if unused.contains(&ident.declaration_id) {
             instr.lvalue = None;
         }

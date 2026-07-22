@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ecmascript"
-version = "0.139.0"
+version = "0.141.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -20,20 +20,19 @@ workspace = true
 test = true
 doctest = false
 
+[features]
+side_effects = ["dep:oxc_allocator", "dep:oxc_compat", "dep:oxc_regular_expression"]
+constant_evaluation = ["side_effects", "dep:cow-utils", "dep:smallvec"]
+
 [dependencies]
-oxc_allocator = { workspace = true }
+oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true }
-oxc_regular_expression = { workspace = true }
+oxc_compat = { workspace = true, optional = true }
+oxc_regular_expression = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
-cow-utils = { workspace = true }
+cow-utils = { workspace = true, optional = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
-smallvec = { workspace = true }
-
-[dev-dependencies]
-# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
-# If we enabled `disable_old_builder` feature in main dependency, feature unification would
-# cause it to be activated for `oxc_ast` for the user too.
-oxc_ast = { workspace = true, features = ["disable_old_builder"] }
+smallvec = { workspace = true, optional = true }

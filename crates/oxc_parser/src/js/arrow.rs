@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::ArenaBox;
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::FileExtension;
 use oxc_syntax::precedence::Precedence;
@@ -237,7 +237,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let params = FormalParameters::boxed(
             ident.span,
             FormalParameterKind::ArrowFormalParameters,
-            ArenaVec::from_value_in(formal_parameter, self),
+            [formal_parameter],
             NONE,
             self,
         );
@@ -321,12 +321,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             });
             let span = self.end_span(span);
             let expr_stmt = Statement::new_expression_statement(span, expr, self);
-            FunctionBody::boxed(
-                span,
-                ArenaVec::new_in(self),
-                ArenaVec::from_value_in(expr_stmt, self),
-                self,
-            )
+            FunctionBody::boxed(span, [], [expr_stmt], self)
         } else {
             self.parse_function_body()
         };

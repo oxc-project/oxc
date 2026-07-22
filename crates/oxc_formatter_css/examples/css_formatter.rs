@@ -26,7 +26,12 @@ fn main() {
         _ => CssVariant::Css,
     };
 
-    let mut options = CssFormatOptions { variant, ..CssFormatOptions::default() };
+    let mut options = CssFormatOptions {
+        variant,
+        // Match Prettier's default print width for side-by-side comparison (default 100)
+        line_width: 80.try_into().unwrap(),
+        ..CssFormatOptions::default()
+    };
     if let Some(width) = line_width {
         options.line_width = width.try_into().unwrap();
     }

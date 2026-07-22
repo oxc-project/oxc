@@ -10,7 +10,10 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_vitest_import_source,
+        parse_general_jest_fn_call,
+    },
 };
 
 fn consistent_vitest_vi_diagnostic(span: Span, fn_value: &VitestFnName) -> OxcDiagnostic {
@@ -108,7 +111,7 @@ impl Rule for ConsistentVitestVi {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportDeclaration(import) => {
-                if import.source.value != "vitest" {
+                if !is_vitest_import_source(import.source.value.as_str()) {
                     return;
                 }
 
@@ -213,6 +216,8 @@ fn test() {
     let pass = vec![
         (r#"import { expect, it } from "vitest";"#, None),
         (r#"import { vi } from "vitest";"#, None),
+        (r#"import { vi } from "vite-plus/test";"#, None),
+        (r#"import { vi } from "@effect/vitest";"#, None),
         (r#"import { vitest } from "vitest";"#, Some(serde_json::json!([{ "fn": "vitest" }]))),
         (
             r#"import { vi } from "vitest";
@@ -224,9 +229,16 @@ fn test() {
 
     let fail = vec![
         (r#"import { vitest } from "vitest";"#, None),
+        (r#"import { vitest } from "vite-plus/test";"#, None),
+        (r#"import { vitest } from "@effect/vitest";"#, None),
         (r#"import { expect, vi, vitest } from "vitest";"#, None),
         (
             r#"import { vitest } from "vitest";
+			vitest.stubEnv("NODE_ENV", "production");"#,
+            None,
+        ),
+        (
+            r#"import { vitest } from "vite-plus/test";
 			vitest.stubEnv("NODE_ENV", "production");"#,
             None,
         ),
@@ -240,6 +252,16 @@ fn test() {
     let fix = vec![
         (r#"import { vitest } from "vitest";"#, r#"import { vi } from "vitest";"#, None), // WORKING
         (
+            r#"import { vitest } from "vite-plus/test";"#,
+            r#"import { vi } from "vite-plus/test";"#,
+            None,
+        ),
+        (
+            r#"import { vitest } from "@effect/vitest";"#,
+            r#"import { vi } from "@effect/vitest";"#,
+            None,
+        ),
+        (
             r#"import { expect, vi, vitest } from "vitest";"#,
             r#"import { expect, vi } from "vitest";"#,
             None,
@@ -248,6 +270,13 @@ fn test() {
             r#"import { vitest } from "vitest";
 			vitest.stubEnv("NODE_ENV", "production");"#,
             r#"import { vi } from "vitest";
+			vi.stubEnv("NODE_ENV", "production");"#,
+            None,
+        ),
+        (
+            r#"import { vitest } from "vite-plus/test";
+			vitest.stubEnv("NODE_ENV", "production");"#,
+            r#"import { vi } from "vite-plus/test";
 			vi.stubEnv("NODE_ENV", "production");"#,
             None,
         ),

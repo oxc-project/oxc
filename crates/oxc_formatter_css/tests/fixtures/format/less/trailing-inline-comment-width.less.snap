@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Pins the "trailing `//` comments don't count toward print width" divergence
+// (see AGENTS.md "Known divergences"): Prettier counts the comment and breaks
+// the value (`fade(\n  @white,\n  4%\n); // ...`); ours keeps the value flat.
+@background-color-light: fade(@white, 4%); // background of header and selected item
+@background-color-base: fade(@white, 8%); // short one stays put
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Pins the "trailing `//` comments don't count toward print width" divergence
+// (see AGENTS.md "Known divergences"): Prettier counts the comment and breaks
+// the value (`fade(\n  @white,\n  4%\n); // ...`); ours keeps the value flat.
+@background-color-light: fade(@white, 4%); // background of header and selected item
+@background-color-base: fade(@white, 8%); // short one stays put
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Pins the "trailing `//` comments don't count toward print width" divergence
+// (see AGENTS.md "Known divergences"): Prettier counts the comment and breaks
+// the value (`fade(\n  @white,\n  4%\n); // ...`); ours keeps the value flat.
+@background-color-light: fade(@white, 4%); // background of header and selected item
+@background-color-base: fade(@white, 8%); // short one stays put
+
+===================== End =====================

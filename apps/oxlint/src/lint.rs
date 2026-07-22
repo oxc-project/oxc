@@ -289,8 +289,6 @@ impl CliRunner {
         enable_plugins.apply_overrides(&mut plugins);
         root_config.plugins = Some(plugins);
 
-        let base_ignore_patterns = root_config.ignore_patterns.clone();
-
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             root_config.clone(),
@@ -334,8 +332,13 @@ impl CliRunner {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
-        let ignore_matcher =
-            { LintIgnoreMatcher::new(&base_ignore_patterns, &self.cwd, nested_ignore_patterns) };
+        let ignore_matcher = LintIgnoreMatcher::new(
+            &root_config.ignore_patterns,
+            // Without a config file there are no patterns and the root is never consulted,
+            // so the CWD fallback is an arbitrary placeholder.
+            root_config.dir().unwrap_or(&self.cwd),
+            nested_ignore_patterns,
+        );
 
         let files_to_lint = paths
             .into_iter()
@@ -389,6 +392,15 @@ impl CliRunner {
                 "The `--type-check-only` option cannot be used with fix flags.\nRemove `--fix`, `--fix-suggestions`, and `--fix-dangerously`.\n",
             );
             return CliRunResult::InvalidOptionTypeCheckOnlyWithFix;
+        }
+        if type_check_only
+            && (suppression_options.suppress_all || suppression_options.prune_suppressions)
+        {
+            print_and_flush_stdout(
+                stdout,
+                "The `--type-check-only` option cannot be used with suppression update flags.\nRemove `--suppress-all` and `--prune-suppressions`.\n",
+            );
+            return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
         }
         let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
@@ -513,7 +525,13 @@ impl CliRunner {
             }
         }
 
-        let result = suppression_manager.finalize(diff_manager, &tx_error, &cwd);
+        // A suppression file can contain regular lint rules that were not run in type-check-only
+        // mode, so its runtime diff is incomplete and cannot be used to validate the baseline.
+        let result = if type_check_only {
+            Ok(())
+        } else {
+            suppression_manager.finalize(diff_manager, &tx_error, &cwd)
+        };
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
 
         drop(tx_error);
@@ -842,6 +860,28 @@ mod test {
         Tester::new()
             .with_cwd("fixtures/cli/ignore_patterns_relative".into())
             .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
+    // https://github.com/oxc-project/oxc/issues/24310
+    fn ignore_patterns_ancestor_config() {
+        // Config is found via ancestor search; its `ignorePatterns` should be
+        // rooted at the config file's directory, not CWD.
+        let args = &["."];
+        Tester::new()
+            .with_cwd("fixtures/cli/ignore_patterns_ancestor_config/packages/foo".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn ignore_patterns_config_path_with_parent_references() {
+        // `..` components in a `--config` path must be normalized before the config's
+        // directory is used as the root for `ignorePatterns`, otherwise the patterns
+        // silently never match.
+        let args = &["-c", "./packages/../.oxlintrc.json", "."];
+        Tester::new()
+            .with_cwd("fixtures/cli/ignore_patterns_ancestor_config".into())
+            .test_and_snapshot(args);
     }
 
     #[test]
@@ -1815,6 +1855,13 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_invalid_glob_in_override() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_glob_in_override".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_missing_rule_in_override() {
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_missing_rule_in_override".into())
@@ -1986,6 +2033,48 @@ mod suppression {
             !matches!(result, CliRunResult::LintFoundErrors),
             "Expected no errors (warnings-only files should not count), got {result:?}"
         );
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_type_check_only_does_not_validate_regular_rule_suppressions() {
+        let cwd = "fixtures/suppression/type_check_only_with_regular_rule";
+
+        let (stdout, result) = Tester::new().with_cwd(cwd.into()).test_output(&["index.ts"]);
+        assert!(
+            matches!(result, CliRunResult::LintSucceeded),
+            "Expected the suppression fixture to pass regular lint, got {result:?}.\nOutput: {stdout}"
+        );
+
+        let (stdout, result) =
+            Tester::new().with_cwd(cwd.into()).test_output(&["--type-check-only", "index.ts"]);
+
+        assert!(
+            matches!(result, CliRunResult::LintSucceeded),
+            "Expected LintSucceeded, got {result:?}.\nOutput: {stdout}"
+        );
+        assert!(
+            !stdout.contains("suppressions that do not occur anymore"),
+            "Regular lint suppressions must not be validated when their rules did not run.\nOutput: {stdout}"
+        );
+    }
+
+    #[test]
+    fn test_type_check_only_rejects_suppression_update_flags() {
+        for flag in ["--suppress-all", "--prune-suppressions"] {
+            let (stdout, result) = Tester::new()
+                .with_cwd("fixtures/suppression/type_check_only_with_regular_rule".into())
+                .test_output(&["--type-check-only", flag, "index.ts"]);
+
+            assert!(
+                matches!(result, CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate),
+                "Expected {flag} to be rejected with --type-check-only, got {result:?}.\nOutput: {stdout}"
+            );
+            assert!(
+                stdout.contains("cannot be used with suppression update flags"),
+                "Expected an invalid option message for {flag}.\nOutput: {stdout}"
+            );
+        }
     }
 
     #[test]

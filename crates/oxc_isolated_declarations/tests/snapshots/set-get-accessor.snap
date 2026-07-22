@@ -39,6 +39,18 @@ declare class GlobalSymbol4 {
 	set [Symbol.toStringTag](v);
 	get [Symbol.toStringTag]();
 }
+declare class ComputedStringGetter {
+	get value(): string;
+	set ["value"](v: string);
+}
+declare class ComputedStringSetter {
+	get ["count"](): number;
+	set count(v: number);
+}
+declare class ComputedNumericGetter {
+	get [1](): boolean;
+	set [`1`](v: boolean);
+}
 
 
 ==================== Errors ====================

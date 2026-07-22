@@ -1,6 +1,6 @@
 {
   "name": "oxlint",
-  "version": "1.73.0",
+  "version": "1.75.0",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [
     "eslint",
@@ -46,7 +46,7 @@
     "./package.json": "./package.json"
   },
   "peerDependencies": {
-    "oxlint-tsgolint": ">=0.24.0",
+    "oxlint-tsgolint": ">=7.0.2001",
     "vite-plus": "*"
   },
   "peerDependenciesMeta": {

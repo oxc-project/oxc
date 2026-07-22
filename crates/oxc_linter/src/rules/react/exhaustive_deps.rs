@@ -11,14 +11,13 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
         ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
-        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeQuery,
-        TSTypeReference, VariableDeclarationKind, VariableDeclarator,
+        StaticMemberExpression, VariableDeclarationKind, VariableDeclarator,
     },
     match_expression,
 };
 use oxc_ast_visit::{
-    Visit,
-    walk::{walk_arrow_function_expression, walk_function, walk_function_body},
+    VisitJs,
+    walk_js::{walk_arrow_function_expression, walk_function, walk_function_body},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -1325,29 +1324,13 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
     }
 }
 
-impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
+impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.stack.push(kind.ty());
     }
 
     fn leave_node(&mut self, _kind: AstKind<'a>) {
         self.stack.pop();
-    }
-
-    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {
-        // noop
-    }
-
-    fn visit_ts_type_reference(&mut self, _it: &TSTypeReference<'a>) {
-        // noop
-    }
-
-    fn visit_ts_type_query(&mut self, _it: &TSTypeQuery<'a>) {
-        // noop
-    }
-
-    fn visit_ts_type_parameter_instantiation(&mut self, _it: &TSTypeParameterInstantiation<'a>) {
-        // noop
     }
 
     fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {

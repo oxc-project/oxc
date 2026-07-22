@@ -16,7 +16,6 @@ use crate::{
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
         external_plugins::ExternalPluginEntry,
-        overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
         rules::OverrideRulesError,
     },
@@ -227,6 +226,8 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
+        validate_ignore_patterns(&oxlintrc)?;
+
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
 
         // Collect external plugins from both base config and overrides
@@ -339,11 +340,6 @@ impl ConfigStoreBuilder {
         self
     }
 
-    pub fn with_categories(mut self, categories: OxlintCategories) -> Self {
-        self.categories = categories;
-        self
-    }
-
     /// Enable or disable a set of plugins, leaving unrelated plugins alone.
     ///
     /// See [`ConfigStoreBuilder::with_builtin_plugins`] for details on how plugin configuration affects your
@@ -387,12 +383,6 @@ impl ConfigStoreBuilder {
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
-        self
-    }
-
-    /// Appends an override to the end of the current list of overrides.
-    pub fn with_overrides<O: IntoIterator<Item = OxlintOverride>>(mut self, overrides: O) -> Self {
-        self.overrides.extend(overrides);
         self
     }
 
@@ -723,6 +713,18 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     }
 }
 
+/// Validate each entry of `ignorePatterns`; see [`oxc_config::validate_ignore_pattern`].
+fn validate_ignore_patterns(oxlintrc: &Oxlintrc) -> Result<(), ConfigBuilderError> {
+    oxlintrc
+        .ignore_patterns
+        .iter()
+        .try_for_each(|pattern| oxc_config::validate_ignore_pattern(pattern))
+        .map_err(|reason| ConfigBuilderError::InvalidConfigFile {
+            file: oxlintrc.path.display().to_string(),
+            reason,
+        })
+}
+
 impl Debug for ConfigStoreBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ConfigStoreBuilder")
@@ -909,6 +911,29 @@ mod test {
         let builder = ConfigStoreBuilder::empty();
         assert_eq!(builder.plugins(), LintPlugins::default());
         assert!(builder.rules.is_empty());
+    }
+
+    #[test]
+    fn test_ignore_patterns_with_parent_reference_rejected() {
+        fn from_ignore_pattern(pattern: &str) -> Result<ConfigStoreBuilder, ConfigBuilderError> {
+            let oxlintrc =
+                Oxlintrc { ignore_patterns: vec![pattern.to_string()], ..Oxlintrc::default() };
+            ConfigStoreBuilder::from_oxlintrc(
+                true,
+                oxlintrc,
+                None,
+                &mut ExternalPluginStore::default(),
+                None,
+            )
+        }
+
+        // Pattern-level cases are covered by `oxc_config::validate_ignore_pattern` tests;
+        // this only checks that `from_oxlintrc` rejects a config containing one.
+        assert!(matches!(
+            from_ignore_pattern("../src"),
+            Err(ConfigBuilderError::InvalidConfigFile { .. })
+        ));
+        assert!(from_ignore_pattern("dist").is_ok());
     }
 
     #[test]

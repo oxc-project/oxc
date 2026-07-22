@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.60.0] - 2026-07-20
+
+### 🐛 Bug Fixes
+
+- 5f76998 formatter_graphql: Keep same line comments pending across intervening tokens (#24579) (leaysgur)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🚀 Features

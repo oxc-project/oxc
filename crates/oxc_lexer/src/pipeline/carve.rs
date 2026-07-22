@@ -329,7 +329,7 @@ unsafe fn lex_slash(
         lex_line_comment(src, srcs, n, st, kind, s, lanes)
     } else if d == b'*' {
         lex_block_comment(src, srcs, n, st, kind, s, lanes)
-    } else if prev_is_regex(t, src, st, kind, word, digit, n, s, ts) {
+    } else if prev_is_regex(t, src, st, kind, word, digit, n, s, ts, lanes.module) {
         lex_regex(src, srcs, n, st, kind, word, s, lanes)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
@@ -488,7 +488,18 @@ pub(super) unsafe fn carve_jsx(
                         } else if c1 == b'=' || is_digit(c1) {
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
-                        } else if prev_is_regex(t, src, st, kind, word, digit, n, s, ts) {
+                        } else if prev_is_regex(
+                            t,
+                            src,
+                            st,
+                            kind,
+                            word,
+                            digit,
+                            n,
+                            s,
+                            ts,
+                            lanes.module,
+                        ) {
                             // Operand position: candidate JSX.
                             let mut tpos = s + 1;
                             while tpos < n && is_ws(*src.add(tpos)) {
@@ -784,13 +795,14 @@ pub(super) unsafe fn carve(
                 i = lex_slash(t, src, srcs, n, st, kind, opch, word, digit, ts, s, lanes);
             }
             b'<' => {
-                // Annex B B.1.3: `<!--` begins a line comment, valid anywhere.
-                // A bare `<` falls through as an operator.
-                if s + 3 < n
+                let html = s + 3 < n
                     && *src.add(s + 1) == b'!'
                     && *src.add(s + 2) == b'-'
-                    && *src.add(s + 3) == b'-'
-                {
+                    && *src.add(s + 3) == b'-';
+                if html && (!lanes.module || html_close_at_line_start(srcs, s)) {
+                    if lanes.module {
+                        lanes.push_diag(s as u32, 4, diag_code::HTML_COMMENT_IN_MODULE);
+                    }
                     let end = find_line_terminator(src, n, s + 4);
                     *kind.add(s) = LCOM;
                     if end > s + 1 {
@@ -819,10 +831,10 @@ pub(super) unsafe fn carve(
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at
-                // line start. `s` is the `>`; the `-->` starts at s - 2.
                 if s >= 2
                     && *src.add(s - 1) == b'-'
                     && *src.add(s - 2) == b'-'
+                    && !lanes.module
                     && html_close_at_line_start(srcs, s - 2)
                 {
                     let start = s - 2;

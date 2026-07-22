@@ -3,14 +3,20 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{ModuleExportName, Program, Statement};
 use oxc_codegen::Codegen;
+use oxc_diagnostics::Diagnostics;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{PluginOptions, TransformResult, transform};
+use oxc_react_compiler::{PluginOptions, compile};
 
 fn options() -> PluginOptions {
     PluginOptions::default()
+}
+
+struct TransformResult {
+    changed: bool,
+    diagnostics: Diagnostics,
 }
 
 /// Parse `source_text` then run the compiler in place, returning the
@@ -20,16 +26,17 @@ fn transform_source<'a>(
     source_type: SourceType,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> (Program<'a>, TransformResult<'a>) {
+) -> (Program<'a>, TransformResult) {
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
-    let mut result = {
+    let (output, diagnostics) = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
-        transform(&program, &semantic, allocator, options)
+        compile(&program, &semantic, allocator, options)
     };
-    if let Some(compiled) = result.program.take() {
-        program = compiled;
+    let changed = output.is_some();
+    if let Some(output) = output {
+        output.transform(&mut program);
     }
-    (program, result)
+    (program, TransformResult { changed, diagnostics })
 }
 
 #[test]
@@ -59,6 +66,43 @@ fn skips_non_react_code() {
     let allocator = Allocator::default();
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
     assert!(!result.changed, "non-React code must not be transformed");
+}
+
+#[test]
+fn default_suppressions_bail_out() {
+    let fixtures = [
+        (
+            "eslint-disable-next-line",
+            include_str!("../fixtures/default-suppression-eslint-next-line.js"),
+            1,
+        ),
+        (
+            "eslint-disable block range",
+            include_str!("../fixtures/default-suppression-eslint-block-range.js"),
+            1,
+        ),
+        ("Flow", include_str!("../fixtures/default-suppression-flow.js"), 1),
+    ];
+
+    // Babel 1.0.0 currently treats a block disable as open-ended. The block fixture
+    // therefore covers the disable/enable syntax without asserting post-enable behavior.
+    for (kind, source, expected_errors) in fixtures {
+        let allocator = Allocator::default();
+        let (_program, result) =
+            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+        assert!(!result.changed, "{kind} suppression must prevent compilation");
+        assert!(
+            result.diagnostics.has_errors(),
+            "{kind} suppression must report the compiler bail-out: {:?}",
+            result.diagnostics
+        );
+        assert_eq!(
+            result.diagnostics.len(),
+            expected_errors,
+            "{kind} suppression should affect the same functions as the Babel plugin"
+        );
+    }
 }
 
 /// TypeScript-only constructs (`declare global`, `import =`, `export =`,
@@ -403,9 +447,9 @@ fn diagnostics_preserve_compiler_severity() {
     );
 }
 
-/// Compilation clones the source program, so top-level comments survive; comments
-/// inside a compiled function are pruned because their anchor no longer resolves to
-/// a statement (see `prune_inner_comments`).
+/// The transform only rewrites the compiled functions, so top-level comments
+/// survive; comments inside a compiled function are pruned because their anchor no
+/// longer resolves to a statement (see `prune_inner_comments`).
 #[test]
 fn top_level_comments_are_preserved() {
     let source = "\

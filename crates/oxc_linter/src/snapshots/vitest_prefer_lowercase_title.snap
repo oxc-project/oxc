@@ -24,6 +24,13 @@ source: crates/oxc_linter/src/tester.rs
   help: `"SFC Compile"`s should begin with lowercase
 
   ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test(`sfc Compile`, function () {})
+   ·      ─────────────
+   ╰────
+  help: `"sfc Compile"`s should begin with lowercase
+
+  ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:7]
  1 │ bench(`Foo MM mm`, function () {})
    ·       ───────────

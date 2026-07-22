@@ -58,7 +58,7 @@ export type TailwindcssOptions = SortTailwindcssConfig;
 /**
  * Define an oxfmt configuration with type inference.
  */
-export function defineConfig<T extends OxfmtConfig>(config: T): T {
+export function defineConfig<T extends OxfmtConfig>(config: T & OxfmtConfig): T {
   return config;
 }
 

@@ -5,21 +5,43 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::prelude::*,
-    print::{ExpressionLeftSide, semicolon::OptionalSemicolon},
-    utils::format_node_without_trailing_comments::format_content_without_comments_after,
+    formatter::{
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
+    },
+    print::{
+        ExpressionLeftSide, return_statement_content_end, semicolon::OptionalSemicolon,
+        semicolon_terminated_content_end, write_suppressed_statement,
+    },
+    utils::{
+        format_node_without_trailing_comments::format_content_without_comments_after,
+        typecast::format_leading_comments_and_open_paren,
+    },
     write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        // The ignored range ends at the argument (or the keyword),
+        // excluding a stripped trailing `;`
+        let (content_end, print_semicolon) = return_statement_content_end(self, f);
+        write_suppressed_statement(self.span, content_end, print_semicolon, f);
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        let (content_end, print_semicolon) =
+            semicolon_terminated_content_end(self.argument().span().end, self.span, f);
+        write_suppressed_statement(self.span, content_end, print_semicolon, f);
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
     }
@@ -92,12 +114,27 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
 
         // The semicolon goes before the dangling comments, like Prettier:
         // `return foo /* comment */;` -> `return foo; /* comment */`
+        // Own-line comments stay own-line:
+        // from the first one on, comments are left for a later pass (the next node's leading comments),
+        // also like Prettier, whose statement `locEnd` excludes the trailing `;`.
         let dangling_comments = f.context().comments().comments_before(self.span().end);
+        let same_line_count =
+            dangling_comments.iter().take_while(|c| !c.preceded_by_newline()).count();
+        let dangling_comments = &dangling_comments[..same_line_count];
 
         write!(f, OptionalSemicolon);
 
         if !dangling_comments.is_empty() {
-            write!(f, [space(), format_dangling_comments(self.span())]);
+            write!(
+                f,
+                [
+                    space(),
+                    FormatDanglingComments::Comments {
+                        comments: dangling_comments,
+                        indent: DanglingIndentMode::None
+                    }
+                ]
+            );
         }
     }
 }
@@ -113,15 +150,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
             // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
             let inner = format_with(|f| {
                 if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    write!(
-                        f,
-                        [
-                            format_leading_comments(argument.span()),
-                            token("("),
-                            argument,
-                            token(")")
-                        ]
-                    );
+                    format_leading_comments_and_open_paren(argument.span(), true, f);
+                    write!(f, [argument, token(")")]);
                 } else {
                     write!(f, argument);
                 }

@@ -156,11 +156,22 @@ pub fn write_dangling_comments(comments: &[Span], f: &mut GraphqlFormatter<'_, '
     }
 }
 
-/// If the next pending comment sits on the same line as `prev_end`,
+/// If the next pending comment sits on the same line as `prev_end`
+/// and ends at or before `upper` (the next piece of user content),
 /// drain it and emit it as a trailing line-suffix comment (` # ...`).
-/// `expand_parent()` keeps the enclosing container multi-line.
-pub fn write_trailing_same_line_comment<'a>(prev_end: u32, f: &mut GraphqlFormatter<'_, 'a>) {
+///
+/// The bound is what keeps a node from claiming a comment across later siblings:
+/// in `f(a: 1, b: 2) # c` everything shares a line, but `# c` ends past `b`'s start,
+/// so `a: 1` leaves it pending for the enclosing node's flush point.
+pub fn write_trailing_same_line_comment<'a>(
+    prev_end: u32,
+    upper: u32,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
     let Some(span) = f.context().comments().peek() else { return };
+    if span.end > upper {
+        return;
+    }
     let source = f.context().source_text();
     if classify_gap(source.bytes_range(prev_end, span.start)) != Gap::None {
         return;

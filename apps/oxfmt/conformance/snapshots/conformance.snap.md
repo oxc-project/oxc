@@ -233,7 +233,7 @@
 
 ## less
 
-### Option 1: 395/409 (96.58%)
+### Option 1: 394/409 (96.33%)
 
 ```json
 {"printWidth":80}
@@ -251,8 +251,9 @@
 | [externals/ng-zorro-antd/components/select/style/status.less](diffs/less/externals__ng-zorro-antd__components__select__style__status.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165) |
 | [externals/ng-zorro-antd/components/style/mixins/customize.less](diffs/less/externals__ng-zorro-antd__components__style__mixins__customize.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165) |
 | [externals/ng-zorro-antd/components/style/themes/compact.less](diffs/less/externals__ng-zorro-antd__components__style__themes__compact.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
-| [externals/ng-zorro-antd/components/style/themes/default.less](diffs/less/externals__ng-zorro-antd__components__style__themes__default.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
-| [externals/ng-zorro-antd/components/style/themes/variable.less](diffs/less/externals__ng-zorro-antd__components__style__themes__variable.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
+| [externals/ng-zorro-antd/components/style/themes/dark.less](diffs/less/externals__ng-zorro-antd__components__style__themes__dark.less.md) | Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it. |
+| [externals/ng-zorro-antd/components/style/themes/default.less](diffs/less/externals__ng-zorro-antd__components__style__themes__default.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md<br>Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it. |
+| [externals/ng-zorro-antd/components/style/themes/variable.less](diffs/less/externals__ng-zorro-antd__components__style__themes__variable.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md<br>Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it. |
 | [externals/ng-zorro-antd/components/table/style/index.less](diffs/less/externals__ng-zorro-antd__components__table__style__index.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)<br>Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
 | [externals/ng-zorro-antd/components/table/style/rtl.less](diffs/less/externals__ng-zorro-antd__components__table__style__rtl.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)<br>Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
 
@@ -270,8 +271,8 @@
 | [externals/ng-zorro-antd/components/mention/style/patch.less](diffs/less/externals__ng-zorro-antd__components__mention__style__patch.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165) |
 | [externals/ng-zorro-antd/components/radio/style/rtl.less](diffs/less/externals__ng-zorro-antd__components__radio__style__rtl.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165) |
 | [externals/ng-zorro-antd/components/select/style/status.less](diffs/less/externals__ng-zorro-antd__components__select__style__status.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165) |
-| [externals/ng-zorro-antd/components/style/themes/default.less](diffs/less/externals__ng-zorro-antd__components__style__themes__default.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
-| [externals/ng-zorro-antd/components/style/themes/variable.less](diffs/less/externals__ng-zorro-antd__components__style__themes__variable.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
+| [externals/ng-zorro-antd/components/style/themes/default.less](diffs/less/externals__ng-zorro-antd__components__style__themes__default.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md<br>Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it. |
+| [externals/ng-zorro-antd/components/style/themes/variable.less](diffs/less/externals__ng-zorro-antd__components__style__themes__variable.less.md) | Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md<br>Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it. |
 | [externals/ng-zorro-antd/components/table/style/index.less](diffs/less/externals__ng-zorro-antd__components__table__style__index.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)<br>Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
 | [externals/ng-zorro-antd/components/table/style/rtl.less](diffs/less/externals__ng-zorro-antd__components__table__style__rtl.less.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)<br>Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md |
 
@@ -291,7 +292,7 @@
 
 ## scss
 
-### Option 1: 202/217 (93.09%)
+### Option 1: 201/217 (92.63%)
 
 ```json
 {"printWidth":80}
@@ -313,6 +314,7 @@
 | [externals/gitlab/stylesheets/page_bundles/merge_requests.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__merge_requests.scss.md) | Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811) |
 | [externals/gitlab/stylesheets/page_bundles/projects.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__projects.scss.md) | Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811) |
 | [externals/gitlab/stylesheets/page_bundles/settings.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__settings.scss.md) | Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811) |
+| [externals/gitlab/stylesheets/pages/profile.scss](diffs/scss/externals__gitlab__stylesheets__pages__profile.scss.md) | Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it. |
 | [externals/gitlab/stylesheets/pages/settings.scss](diffs/scss/externals__gitlab__stylesheets__pages__settings.scss.md) | Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811) |
 
 ### Option 2: 204/217 (94.01%)

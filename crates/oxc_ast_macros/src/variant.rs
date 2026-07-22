@@ -6,7 +6,7 @@
 
 use proc_macro2::Span;
 use syn::{
-    AngleBracketedGenericArguments, AttrStyle, Attribute, Expr, ExprLit, Field, FieldMutability,
+    AngleBracketedGenericArguments, AttrStyle, Attribute, Expr, ExprLit, Field, FieldModifiers,
     Fields, FieldsUnnamed, GenericArgument, Ident, Lifetime, Lit, LitInt, LitStr, Meta,
     MetaNameValue, Path, PathArguments, PathSegment, Type, TypePath, Variant, Visibility,
     punctuated::Punctuated, token,
@@ -41,10 +41,11 @@ pub fn make_inherited_variant(variant: &EnumVariant, doc: &str, span: Span) -> V
             unnamed: once_punctuated(Field {
                 attrs: vec![],
                 vis: Visibility::Inherited,
-                mutability: FieldMutability::None,
+                modifiers: FieldModifiers::default(),
                 ident: None,
                 colon_token: None,
                 ty,
+                default: None,
             }),
         }),
         discriminant: Some((token::Eq::default(), int_expr(variant.discriminant, span))),
@@ -106,6 +107,7 @@ fn angle_bracketed(args: Punctuated<GenericArgument, token::Comma>) -> PathArgum
 /// Single-segment path type, e.g. `Foo` or `Foo<'a>`.
 fn path_type(ident: Ident, arguments: PathArguments) -> Type {
     Type::Path(TypePath {
+        attrs: vec![],
         qself: None,
         path: Path {
             leading_colon: None,

@@ -64,7 +64,10 @@ impl EarlyDivergeDetector {
     }
 
     fn extract_variants_from_diverging_match_arm(&mut self, arm: &Arm) -> CollectionResult {
-        let pat = &arm.pat;
+        let pat = match &arm.pat {
+            Pat::Guard(guard) => guard.pat.as_ref(),
+            pat => pat,
+        };
         match pat {
             Pat::TupleStruct(ts) => {
                 if let Some(variant) = astkind_variant_from_path(&ts.path) {

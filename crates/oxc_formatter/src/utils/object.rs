@@ -31,11 +31,14 @@ pub fn format_property_key<'a>(
             return;
         }
 
-        // For TypeScript class property declarations, quotes should always be preserved.
-        // https://github.com/prettier/prettier/issues/4516
-        let kind = if matches!(key.parent(), AstNodes::PropertyDefinition(_))
-            && f.context().source_type().is_typescript()
-        {
+        let preserve_quotes = match key.parent() {
+            // For TypeScript class property declarations, quotes should always be preserved.
+            // https://github.com/prettier/prettier/issues/4516
+            AstNodes::PropertyDefinition(_) => f.context().source_type().is_typescript(),
+            AstNodes::TSMethodSignature(method) => is_quoted_new_method_signature(method),
+            _ => false,
+        };
+        let kind = if preserve_quotes {
             StringLiteralParentKind::Expression
         } else {
             StringLiteralParentKind::Member
@@ -86,6 +89,16 @@ pub fn write_member_name<'a>(
 
         f.source_text().span_width(key.span())
     }
+}
+
+/// Determine if this is a method signature named `"new"` via a quoted key, which must keep its quotes.
+/// Unquoted `new(...)` in an interface or type literal is a construct signature, not a method.
+/// Optional (`new?()`), getter/setter, and property forms stay a member named `new` and are safe to unquote.
+pub fn is_quoted_new_method_signature(method: &TSMethodSignature<'_>) -> bool {
+    method.kind == TSMethodSignatureKind::Method
+        && !method.computed
+        && !method.optional
+        && matches!(&method.key, PropertyKey::StringLiteral(string) if string.value == "new")
 }
 
 /// Determine if the string literal key should preserve its quotes,

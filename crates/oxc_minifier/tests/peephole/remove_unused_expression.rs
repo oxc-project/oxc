@@ -299,6 +299,10 @@ fn test_logical_expression() {
         "var x = { y: {} }; x.y.z != null || (x.y = {}, x.y.z = 3)",
         "var x = { y: {} }; x.y.z ?? (x.y = {}, x.y.z = 3)",
     );
+    test(
+        "import { x, mutate } from 'm'; x.y != null || (mutate(), x.y = 3)",
+        "import { x, mutate } from 'm'; x.y ?? (mutate(), x.y = 3)",
+    );
     // Safe to transform to ??= when base object is not mutated
     test("var x = {}; x.y != null || (foo(), x.y = 3)", "var x = {}; x.y ??= (foo(), 3)");
     test("var x = {}; x.y != null || (new Foo(), x.y = 3)", "var x = {}; x.y ??= (new Foo(), 3)");
@@ -650,7 +654,9 @@ fn remove_unused_assignment_expression() {
 
     // For loops
     test_options("for (let i;;) i = 0", "for (;;);", &options);
-    test_options("for (let i;;) foo(i)", "for (;;) foo(void 0)", &options);
+    // `i` reads as the implicit `undefined`, but `void 0` prints longer than a
+    // mangled identifier read, so the read (and thus the decl) stays (rolldown#10174).
+    test_same_options("for (let i;;) foo(i)", &options);
     test_same_options("for (let i;;) i = 0, foo(i)", &options);
     test_same_options("for (let i in []) foo(i)", &options);
     test_same_options("for (let element of list) element && (element.foo = bar)", &options);
@@ -899,7 +905,7 @@ fn test_property_write_side_effects() {
         &options,
     );
     // Literal non-string keys can't coerce to `"__proto__"` but are kept
-    // conservatively — see `SymbolFact::PROTO_WRITTEN` docs.
+    // conservatively — see `MemberWriteEffect::MayMutatePrototype`.
     test_options(
         "const a = {}; a[null] = 1; a.a = 1;",
         "const a = {}; a[null] = 1, a.a = 1;",
@@ -919,9 +925,10 @@ fn test_property_write_side_effects() {
 
     // `__proto__` assignment inside a hoisted function — traversal reaches the
     // function body only AFTER `obj.a = 1`, so the old per-pass tracking never saw
-    // it in time and wrongly dropped `obj.a = 1`. `PROTO_WRITTEN` is seeded by
-    // `Normalize` before the fixed-point loop, so it is caught regardless of
-    // order. `f` has an observable side effect (`g()`), so it is not tree-shaken:
+    // it in time and wrongly dropped `obj.a = 1`. `MayMutatePrototype` is
+    // recorded by `Normalize` before the fixed-point loop, so it is caught
+    // regardless of order. `f` has an observable side effect (`g()`), so it is
+    // not tree-shaken:
     // the setter really is installed when `f()` runs, and the sibling `obj.a = 1`
     // that would trigger it must survive.
     test_options(
@@ -1103,6 +1110,17 @@ fn test_drop_write_only_property_assignments_by_default() {
         ..CompressOptions::smallest()
     };
     test_same_options("function A() {} A.from = () => {};", &keep_assign);
+}
+
+#[test]
+fn test_summary_invalidation_preserves_member_write_hazard() {
+    // Both initializers keep the dense fresh-value kind intact. Clearing the
+    // function summary by removing its shared metadata entry would lose the
+    // `||=` hazard and incorrectly drop `foo.x = 1`.
+    test_smallest(
+        "var foo = function() {}; var foo = function() {}; foo.x = 1; foo.x ||= send();",
+        "var foo = function() {}, foo = function() {}; foo.x = 1, foo.x ||= send();",
+    );
 }
 
 #[test]

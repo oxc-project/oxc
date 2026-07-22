@@ -14,19 +14,19 @@ use crate::opmap::{
 };
 
 #[inline(always)]
-pub fn is_ws(c: u8) -> bool {
+pub const fn is_ws(c: u8) -> bool {
     c == b' ' || c == b'\t' || c == b'\n' || c == b'\r' || c == 0x0c || c == 0x0b
 }
 #[inline(always)]
-pub fn is_digit(c: u8) -> bool {
+pub const fn is_digit(c: u8) -> bool {
     c >= b'0' && c <= b'9'
 }
 #[inline(always)]
-pub fn is_id_start(c: u8) -> bool {
+pub const fn is_id_start(c: u8) -> bool {
     (c >= b'a' && c <= b'z') || (c >= b'A' && c <= b'Z') || c == b'_' || c == b'$' || c >= 0x80
 }
 #[inline(always)]
-pub fn is_word(c: u8) -> bool {
+pub const fn is_word(c: u8) -> bool {
     is_id_start(c) || is_digit(c)
 }
 #[inline(always)]
@@ -48,20 +48,20 @@ pub fn is_glue_join(c: u8) -> bool {
 pub const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 pub const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 #[inline(always)]
-pub fn is_kw_init(c: u8) -> bool {
+pub const fn is_kw_init(c: u8) -> bool {
     (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 /// TS-mode variant: the JS set plus `k`/`m`/`p`/`u` (keyof, module, the
 /// p-words, unique/unknown/undefined/using). Same hi-nibble rows.
 pub const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
 #[inline(always)]
-pub fn is_kw_init_ts(c: u8) -> bool {
+pub const fn is_kw_init_ts(c: u8) -> bool {
     (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 pub const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
 pub const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
 #[inline(always)]
-pub fn is_op_char(c: u8) -> bool {
+pub const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 pub const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
@@ -141,7 +141,7 @@ impl Tables {
         // `of` is deliberately absent: it precedes a regex only in a for-of
         // head (never written — a RegExp isn't iterable), while `instance/of/g`
         // style division is real code. Matches es-module-lexer/SWC/RESS.
-        const RX: [&str; 13] = [
+        const RX: [&str; 16] = [
             "in",
             "do",
             "new",
@@ -154,9 +154,11 @@ impl Tables {
             "return",
             "typeof",
             "delete",
+            "default",
+            "extends",
+            "debugger",
             "instanceof",
         ];
-        // Indexed by kind offset from KW_BASE (all 13 sit in the JS kind
         // block, offsets < 64), so the mask is set-independent.
         let mut mask = 0u64;
         for r in RX.iter() {

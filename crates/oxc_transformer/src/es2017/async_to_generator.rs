@@ -55,7 +55,7 @@ use std::{borrow::Cow, mem};
 
 use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::{Ident, static_ident};
@@ -298,12 +298,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         // Modify the wrapper function
         func.r#async = false;
         func.generator = false;
-        func.body = Some(FunctionBody::boxed(
-            SPAN,
-            ArenaVec::new_in(ctx),
-            ArenaVec::from_value_in(statement, ctx),
-            ctx,
-        ));
+        func.body = Some(FunctionBody::boxed(SPAN, [], [statement], ctx));
         func.scope_id.set(Some(wrapper_scope_id));
         sync_function_symbol_flags(func, ctx);
     }
@@ -359,7 +354,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+            let body = FunctionBody::boxed(SPAN, [], statements, ctx);
             let (r#type, id) = if id.is_some() {
                 // Caller is emitted as a function declaration inside the wrapper; its binding
                 // was already moved to `wrapper_scope_id` above.
@@ -411,25 +406,12 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.r#async = false;
             wrapper_function.generator = false;
-            wrapper_function.body.replace(FunctionBody::boxed(
-                SPAN,
-                ArenaVec::new_in(ctx),
-                statements,
-                ctx,
-            ));
+            wrapper_function.body.replace(FunctionBody::boxed(SPAN, [], statements, ctx));
         }
 
         // Construct the IIFE
         let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx));
-        Expression::new_call_expression_with_pure(
-            span,
-            callee,
-            NONE,
-            ArenaVec::new_in(ctx),
-            false,
-            true,
-            ctx,
-        )
+        Expression::new_call_expression_with_pure(span, callee, NONE, [], false, true, ctx)
     }
 
     /// Transforms async function declarations into generator functions wrapped in the asyncToGenerator helper.
@@ -474,12 +456,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
             debug_assert!(wrapper_function.body.is_none());
-            wrapper_function.body.replace(FunctionBody::boxed(
-                SPAN,
-                ArenaVec::new_in(ctx),
-                statements,
-                ctx,
-            ));
+            wrapper_function.body.replace(FunctionBody::boxed(SPAN, [], statements, ctx));
         }
 
         // function _name() { _ref.apply(this, arguments); }
@@ -497,7 +474,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 ],
                 ctx,
             );
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+            let body = FunctionBody::boxed(SPAN, [], statements, ctx);
 
             let scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
             // The generator function will move to this function, so we need
@@ -589,7 +566,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+            let body = FunctionBody::boxed(SPAN, [], statements, ctx);
             let id = function_name.map(|name| {
                 ctx.generate_binding(name, scope_id, SymbolFlags::Function)
                     .create_binding_identifier(ctx)
@@ -615,8 +592,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 generator_function_id,
                 ctx,
             );
-            let statements = ArenaVec::from_array_in([statement, caller_function], ctx);
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+            let body = FunctionBody::boxed(SPAN, [], [statement, caller_function], ctx);
             let params = Self::create_empty_params(ctx);
             let wrapper_function = Self::create_function(
                 FunctionType::FunctionExpression,
@@ -628,14 +604,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             );
             // Construct the IIFE
             let callee = Expression::FunctionExpression(wrapper_function);
-            Expression::new_call_expression(
-                arrow_span,
-                callee,
-                NONE,
-                ArenaVec::new_in(ctx),
-                false,
-                ctx,
-            )
+            Expression::new_call_expression(arrow_span, callee, NONE, [], false, ctx)
         }
     }
 
@@ -910,13 +879,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     /// Creates an empty [FormalParameters] with [FormalParameterKind::FormalParameter].
     #[inline]
     fn create_empty_params(ctx: &TraverseCtx<'a>) -> ArenaBox<'a, FormalParameters<'a>> {
-        FormalParameters::boxed(
-            SPAN,
-            FormalParameterKind::FormalParameter,
-            ArenaVec::new_in(ctx),
-            NONE,
-            ctx,
-        )
+        FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx)
     }
 
     /// Creates a [`BoundIdentifier`] for the id of the function.
@@ -1012,7 +975,7 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for BindingMover<'a, '_> {
+impl<'a> VisitJs<'a> for BindingMover<'a, '_> {
     fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
         // Move the parameter binding itself, then only reparent direct scopes from the initializer.
         // Initializer expressions can contain function/class bindings that must stay in their own

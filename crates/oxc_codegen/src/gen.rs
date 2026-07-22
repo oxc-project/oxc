@@ -1320,7 +1320,8 @@ impl GenExpr for Expression<'_> {
             // Import expression
             Self::ImportExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Meta property
-            Self::MetaProperty(expr) => expr.print(p, ctx),
+            Self::ImportMeta(expr) => expr.print(p, ctx),
+            Self::NewTarget(expr) => expr.print(p, ctx),
             // Chain expression
             Self::ChainExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Private field
@@ -1791,6 +1792,7 @@ impl Gen for ObjectProperty<'_> {
             p.print_soft_space();
         }
 
+        p.print_leading_comments_before_expression(&self.value);
         self.value.print_expr(p, Precedence::Comma, Context::empty());
     }
 }
@@ -1998,28 +2000,16 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             p.print_ascii_byte(b'?');
             p.print_soft_space();
+            // Annotation-gated (see the helper's doc): `if/else` bodies get
+            // merged into consequents on mutated ASTs.
+            p.print_annotation_comments_before_expression(&self.consequent);
             self.consequent.print_expr(p, Precedence::Yield, Context::empty());
             p.print_soft_space();
             p.print_colon();
             p.print_soft_space();
-            // Skip when the alternate is a `pife` arrow/function — its own
-            // gen_expr prints the leading comment inside its `(` wrap so the
-            // source position `: ( /* c */ arrow )` is preserved.
-            if !is_pife_arrow_or_function(&self.alternate) {
-                p.print_leading_comments_anchored_to_self(self.alternate.span().start);
-            }
+            p.print_leading_comments_before_expression(&self.alternate);
             self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
-    }
-}
-
-/// `true` if `expr` is a `pife`-marked arrow or function expression — its
-/// own `gen_expr` adds a `(` wrap and prints leading comments inside it.
-fn is_pife_arrow_or_function(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::ArrowFunctionExpression(arrow) => arrow.pife,
-        Expression::FunctionExpression(func) => func.pife,
-        _ => false,
     }
 }
 
@@ -2313,6 +2303,7 @@ impl Gen for TemplateLiteral<'_> {
         p.print_str_escaping_script_close_tag(first_quasi.value.raw.as_str());
         for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
             p.print_str("${");
+            p.print_leading_comments_before_expression(expr);
             p.print_expression(expr);
             p.print_ascii_byte(b'}');
             p.add_source_mapping(quasi.span);
@@ -2481,13 +2472,19 @@ impl GenExpr for TSTypeAssertion<'_> {
     }
 }
 
-impl Gen for MetaProperty<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+impl Gen for ImportMeta {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
-        self.meta.print(p, ctx);
-        p.print_ascii_byte(b'.');
-        self.property.print(p, ctx);
+        p.print_str("import.meta");
+    }
+}
+
+impl Gen for NewTarget {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
+        p.print_str("new.target");
     }
 }
 

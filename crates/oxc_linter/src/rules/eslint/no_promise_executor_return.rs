@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, FunctionBody},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -193,7 +193,7 @@ impl ReturnStatementFinder {
     }
 }
 
-impl Visit<'_> for ReturnStatementFinder {
+impl VisitJs<'_> for ReturnStatementFinder {
     fn visit_return_statement(&mut self, it: &oxc_ast::ast::ReturnStatement<'_>) {
         // Empty return is allowed
         let Some(argument) = &it.argument else {

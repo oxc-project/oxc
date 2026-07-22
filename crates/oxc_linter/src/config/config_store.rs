@@ -1156,31 +1156,31 @@ mod test {
             ExternalPluginStore::default(),
         );
 
-        assert!(
-            format!("{:?}", base_rules[0].0)
-                == format!(
-                    "{:?}",
-                    store
-                        .resolve("app.ts".as_ref())
-                        .rules
-                        .iter()
-                        .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
-                        .unwrap()
-                        .0
-                )
+        assert_eq!(
+            format!("{:?}", base_rules[0].0),
+            format!(
+                "{:?}",
+                store
+                    .resolve("app.ts".as_ref())
+                    .rules
+                    .iter()
+                    .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+                    .unwrap()
+                    .0
+            )
         );
-        assert!(
-            format!("{:?}", base_rules[0].0)
-                != format!(
-                    "{:?}",
-                    store
-                        .resolve("app.tsx".as_ref())
-                        .rules
-                        .iter()
-                        .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
-                        .unwrap()
-                        .0
-                )
+        assert_ne!(
+            format!("{:?}", base_rules[0].0),
+            format!(
+                "{:?}",
+                store
+                    .resolve("app.tsx".as_ref())
+                    .rules
+                    .iter()
+                    .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+                    .unwrap()
+                    .0
+            )
         );
     }
 

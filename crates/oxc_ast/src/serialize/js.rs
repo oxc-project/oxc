@@ -1,13 +1,169 @@
+use std::cell::Cell;
+
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     Concat2, ConcatElement, ESTree, JsonSafeString, SequenceSerializer, Serializer,
     StructSerializer,
 };
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::{Ident, static_ident};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
 use super::{EmptyArray, Null};
+
+// ----------------------------------------
+// Meta properties
+// ----------------------------------------
+
+/// Serializer for `meta` field of [`ImportMeta`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `import` identifier with span covering first 6 bytes of the [`ImportMeta`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const importStart = DESER[i32](POS_OFFSET.span.start);
+        const importEnd = DESER[i32](POS_OFFSET.span.end) === 0 ? 0 : importStart + 6;
+        const importIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'import',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: importStart,
+            end: importEnd,
+            ...(RANGE && { range: [importStart, importEnd] }),
+            ...(PARENT && { parent }),
+        };
+        importIdent
+    "
+)]
+pub struct ImportMetaMeta<'b>(pub &'b ImportMeta);
+
+impl ESTree for ImportMetaMeta<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.end = span.start + 6;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("import"));
+    }
+}
+
+/// Serializer for `property` field of [`ImportMeta`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `meta` identifier with span covering last 4 bytes of the [`ImportMeta`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const metaEnd = DESER[i32](POS_OFFSET.span.end);
+        const metaStart = metaEnd === 0 ? 0 : metaEnd - 4;
+        const metaIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'meta',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: metaStart,
+            end: metaEnd,
+            ...(RANGE && { range: [metaStart, metaEnd] }),
+            ...(PARENT && { parent }),
+        };
+        metaIdent
+    "
+)]
+pub struct ImportMetaProperty<'b>(pub &'b ImportMeta);
+
+impl ESTree for ImportMetaProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.start = span.end - 4;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("meta"));
+    }
+}
+
+/// Serializer for `meta` field of [`NewTarget`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `new` identifier with span covering first 3 bytes of the [`NewTarget`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const newStart = DESER[i32](POS_OFFSET.span.start);
+        const newEnd = DESER[i32](POS_OFFSET.span.end) === 0 ? 0 : newStart + 3;
+        const newIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'new',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: newStart,
+            end: newEnd,
+            ...(RANGE && { range: [newStart, newEnd] }),
+            ...(PARENT && { parent }),
+        };
+        newIdent
+    "
+)]
+pub struct NewTargetMeta<'b>(pub &'b NewTarget);
+
+impl ESTree for NewTargetMeta<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.end = span.start + 3;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("new"));
+    }
+}
+
+/// Serializer for `property` field of [`NewTarget`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `target` identifier with span covering last 6 bytes of the [`NewTarget`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const targetEnd = DESER[i32](POS_OFFSET.span.end);
+        const targetStart = targetEnd === 0 ? 0 : targetEnd - 6;
+        const targetIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'target',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: targetStart,
+            end: targetEnd,
+            ...(RANGE && { range: [targetStart, targetEnd] }),
+            ...(PARENT && { parent }),
+        };
+        targetIdent
+    "
+)]
+pub struct NewTargetProperty<'b>(pub &'b NewTarget);
+
+impl ESTree for NewTargetProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.start = span.end - 6;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("target"));
+    }
+}
+
+fn serialize_meta_property_identifier<S: Serializer>(serializer: S, span: Span, name: Ident<'_>) {
+    IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name }.serialize(serializer);
+}
 
 // ----------------------------------------
 // Binding patterns and function params

@@ -86,7 +86,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
+                // `ImportMeta`
+                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
             }
@@ -196,7 +197,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
+                // `ImportMeta`
+                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
             }
@@ -270,7 +272,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
+                // `ImportMeta`
+                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
             }
@@ -330,11 +333,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_arguments(&it.arguments);
     }
 
-    #[inline(always)]
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
     #[inline]
     fn visit_spread_element(&mut self, it: &SpreadElement<'a>) {
         self.visit_expression(&it.argument);
@@ -388,7 +386,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
+                // `ImportMeta`
+                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
             }
@@ -778,7 +777,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
+                // `ImportMeta`
+                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
             }
@@ -1225,7 +1225,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
+                // `ImportMeta`
+                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
             }
@@ -1385,7 +1386,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
+                // `ImportMeta`
+                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
             }

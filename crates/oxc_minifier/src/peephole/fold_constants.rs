@@ -94,7 +94,7 @@ impl<'a> PeepholeOptimizations {
                 let new_expr = if base_has_side_effects {
                     Expression::new_sequence_expression(
                         span,
-                        ArenaVec::from_array_in([base, Expression::new_void_0(span, ctx)], ctx),
+                        [base, Expression::new_void_0(span, ctx)],
                         ctx,
                     )
                 } else {
@@ -146,19 +146,16 @@ impl<'a> PeepholeOptimizations {
                 if should_keep_indirect_access {
                     return Some(Expression::new_sequence_expression(
                         logical_expr.span,
-                        ArenaVec::from_array_in(
-                            [
-                                Expression::new_numeric_literal(
-                                    logical_expr.left.span(),
-                                    0.0,
-                                    None,
-                                    NumberBase::Decimal,
-                                    ctx,
-                                ),
-                                logical_expr.right.take_in(ctx),
-                            ],
-                            ctx,
-                        ),
+                        [
+                            Expression::new_numeric_literal(
+                                logical_expr.left.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                                ctx,
+                            ),
+                            logical_expr.right.take_in(ctx),
+                        ],
                         ctx,
                     ));
                 }
@@ -171,8 +168,8 @@ impl<'a> PeepholeOptimizations {
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
             let left = logical_expr.left.take_in(ctx);
             let right = logical_expr.right.take_in(ctx);
-            let vec = ArenaVec::from_array_in([left, right], ctx);
-            let sequence_expr = Expression::new_sequence_expression(logical_expr.span, vec, ctx);
+            let sequence_expr =
+                Expression::new_sequence_expression(logical_expr.span, [left, right], ctx);
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left
             && left_child.operator == logical_expr.operator
@@ -215,10 +212,8 @@ impl<'a> PeepholeOptimizations {
             ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects(ctx) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
-                    let expressions = ArenaVec::from_array_in(
-                        [logical_expr.left.take_in(ctx), logical_expr.right.take_in(ctx)],
-                        ctx,
-                    );
+                    let expressions =
+                        [logical_expr.left.take_in(ctx), logical_expr.right.take_in(ctx)];
                     Expression::new_sequence_expression(logical_expr.span, expressions, ctx)
                 } else {
                     let should_keep_indirect_access =
@@ -227,19 +222,16 @@ impl<'a> PeepholeOptimizations {
                     if should_keep_indirect_access {
                         return Some(Expression::new_sequence_expression(
                             logical_expr.span,
-                            ArenaVec::from_array_in(
-                                [
-                                    Expression::new_numeric_literal(
-                                        logical_expr.left.span(),
-                                        0.0,
-                                        None,
-                                        NumberBase::Decimal,
-                                        ctx,
-                                    ),
-                                    logical_expr.right.take_in(ctx),
-                                ],
-                                ctx,
-                            ),
+                            [
+                                Expression::new_numeric_literal(
+                                    logical_expr.left.span(),
+                                    0.0,
+                                    None,
+                                    NumberBase::Decimal,
+                                    ctx,
+                                ),
+                                logical_expr.right.take_in(ctx),
+                            ],
                             ctx,
                         ));
                     }
@@ -258,19 +250,16 @@ impl<'a> PeepholeOptimizations {
                 if should_keep_indirect_access {
                     return Some(Expression::new_sequence_expression(
                         logical_expr.span,
-                        ArenaVec::from_array_in(
-                            [
-                                Expression::new_numeric_literal(
-                                    logical_expr.right.span(),
-                                    0.0,
-                                    None,
-                                    NumberBase::Decimal,
-                                    ctx,
-                                ),
-                                logical_expr.left.take_in(ctx),
-                            ],
-                            ctx,
-                        ),
+                        [
+                            Expression::new_numeric_literal(
+                                logical_expr.right.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                                ctx,
+                            ),
+                            logical_expr.left.take_in(ctx),
+                        ],
                         ctx,
                     ));
                 }
@@ -281,13 +270,43 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn extract_numeric_values(e: &BinaryExpression<'a>) -> Option<(f64, f64)> {
+    fn extract_numeric_values(
+        e: &BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<(f64, f64)> {
         if let (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) =
             (&e.left, &e.right)
         {
             return Some((left.value, right.value));
         }
-        None
+        // `undefined` has no literal form (`void 0` is a unary expression) and
+        // a tracked-constant read is an identifier, so fall back to the
+        // evaluator, which also applies ToNumber (`undefined` → NaN, `null` →
+        // 0, `'2'` → 2) and refuses operands with side effects.
+        if !Self::is_cheap_to_number_operand(&e.left) || !Self::is_cheap_to_number_operand(&e.right)
+        {
+            return None;
+        }
+        let left = e.left.get_side_free_number_value(ctx)?;
+        let right = e.right.get_side_free_number_value(ctx)?;
+        Some((left, right))
+    }
+
+    /// Operand shapes whose ToNumber evaluation is allocation-free. Evaluating
+    /// the rest is wasted work here: a `BigIntLiteral` heap-allocates a bigint
+    /// only for ToNumber to bail, a `CallExpression` attempts string-method
+    /// folds that build strings, and neither can pass the small-result size
+    /// filters anyway.
+    fn is_cheap_to_number_operand(e: &Expression<'a>) -> bool {
+        matches!(
+            e.get_inner_expression(),
+            Expression::NumericLiteral(_)
+                | Expression::StringLiteral(_)
+                | Expression::BooleanLiteral(_)
+                | Expression::NullLiteral(_)
+                | Expression::Identifier(_)
+                | Expression::UnaryExpression(_)
+        )
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -315,7 +334,7 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Addition => Self::try_fold_add(e, ctx),
             BinaryOperator::Subtraction => {
                 // Subtraction of small-ish integers can definitely be folded without issues
-                Self::extract_numeric_values(e)
+                Self::extract_numeric_values(e, ctx)
                     .filter(|(left, right)| {
                         left.is_nan()
                             || left.is_finite()
@@ -330,7 +349,7 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::Multiplication
             | BinaryOperator::Exponential
-            | BinaryOperator::Remainder => Self::extract_numeric_values(e)
+            | BinaryOperator::Remainder => Self::extract_numeric_values(e, ctx)
                 .filter(|(left, right)| {
                     *left == 0.0
                         || left.is_nan()
@@ -346,11 +365,11 @@ impl<'a> PeepholeOptimizations {
                             && right.fract() == 0.0)
                 })
                 .and_then(|_| ctx.eval_binary(e)),
-            BinaryOperator::Division => Self::extract_numeric_values(e)
+            BinaryOperator::Division => Self::extract_numeric_values(e, ctx)
                 .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
                 .and_then(|_| ctx.eval_binary(e)),
             BinaryOperator::ShiftLeft => {
-                Self::extract_numeric_values(e).and_then(|(left, right)| {
+                Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
@@ -360,7 +379,7 @@ impl<'a> PeepholeOptimizations {
                 })
             }
             BinaryOperator::ShiftRightZeroFill => {
-                Self::extract_numeric_values(e).and_then(|(left, right)| {
+                Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
