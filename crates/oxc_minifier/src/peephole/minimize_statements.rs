@@ -1305,13 +1305,16 @@ impl<'a> PeepholeOptimizations {
             labeled_stmt.body = match stmts.len() {
                 0 => Statement::new_empty_statement(labeled_stmt.body.span(), ctx),
                 1 => stmts[0].take_in(ctx),
-                _ => Statement::new_block_statement_with_scope_id(
-                    labeled_stmt.span,
-                    stmts,
-                    ctx.create_child_scope_of_current(ScopeFlags::empty()),
-                    ctx,
-                ),
-            }
+                _ => {
+                    ctx.notice_change();
+                    Statement::new_block_statement_with_scope_id(
+                        labeled_stmt.span,
+                        stmts,
+                        ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                        ctx,
+                    )
+                }
+            };
         }
         result.push(Statement::LabeledStatement(labeled_stmt));
     }
