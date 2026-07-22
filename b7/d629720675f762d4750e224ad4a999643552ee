@@ -1,0 +1,21 @@
+crates/oxc_linter/src/snapshots/typescript_explicit_function_return_type.snap
+  s_762e59e3b834e5::t_695b2311efd308 184-192
+crates/oxc_linter/src/rules/typescript/explicit_function_return_type.rs
+  s_762e59e3b834e5::t_5ad3be6b6e932d 606-608,619,622,630-637,649,651-670,919-922,1730-1739
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b7d629720675f762d4750e224ad4a999643552ee",
+  "prompts": {},
+  "sessions": {
+    "s_762e59e3b834e5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f88fe-42df-79f1-b773-612228708ed0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
