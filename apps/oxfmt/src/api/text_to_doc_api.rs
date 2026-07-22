@@ -18,7 +18,7 @@ use crate::{
             to_oxc_formatter_graphql, to_prettier,
         },
         oxfmtrc::FormatConfig,
-        resolve_for_embedded_js,
+        resolve_for_embedded_js, utils,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -147,7 +147,7 @@ fn run_full(
     let format_options = resolved.format_options;
 
     let allocator = Allocator::default();
-    let formatted = match tokio::task::block_in_place(|| {
+    let formatted = match utils::run_blocking(|| {
         oxc_formatter::format(
             &allocator,
             source_text,
