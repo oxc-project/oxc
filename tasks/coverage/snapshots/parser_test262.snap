@@ -27692,7 +27692,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Try inserting a semicolon here
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-caseclause.js:22:7]
  21 │     case 0:
  22 │       await using _ = null;
@@ -27701,7 +27701,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-defaultclause.js:22:7]
  21 │     default:
  22 │       await using _ = null;
@@ -27745,7 +27745,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/await-using/syntax/with-initializer-case-expression-statement-list.js:24:32]
  23 │ async function f() {
  24 │     switch (true) { case true: await using x = null; }
@@ -27754,7 +27754,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/await-using/syntax/with-initializer-default-statement-list.js:24:30]
  23 │ async function f() {
  24 │     switch (true) { default: await using x = null; }
@@ -40579,7 +40579,7 @@ Negative Passed: 4651/4651 (100.00%)
  19 │ }
     ╰────
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/using/syntax/using-invalid-switchstatement-caseclause.js:21:5]
  20 │   case 0:
  21 │     using _ = null;
@@ -40588,7 +40588,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/using/syntax/using-invalid-switchstatement-defaultclause.js:21:5]
  20 │   default:
  21 │     using _ = null;
@@ -40605,7 +40605,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this code in a block or use a module
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/using/syntax/with-initializer-case-expression-statement-list.js:20:28]
  19 │ $DONOTEVALUATE();
  20 │ switch (true) { case true: using x = null; }
@@ -40613,7 +40613,7 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/using/syntax/with-initializer-default-statement-list.js:21:26]
  20 │ $DONOTEVALUATE();
  21 │ switch (true) { default: using x = null; }

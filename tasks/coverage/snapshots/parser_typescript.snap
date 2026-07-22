@@ -28559,7 +28559,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ }
    ╰────
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:3:9]
  2 │     case 0:
  3 │         await using d20 = { async [Symbol.asyncDispose]() {} };
@@ -28568,7 +28568,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:7:9]
  6 │     case 1:
  7 │         await using d21 = { async [Symbol.asyncDispose]() {} };
@@ -28577,7 +28577,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:11:9]
  10 │     default:
  11 │         await using d22 = { async [Symbol.asyncDispose]() {} };
@@ -28586,7 +28586,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:17:13]
  16 │         case 0:
  17 │             await using d23 = { async [Symbol.asyncDispose]() {} };
@@ -28595,7 +28595,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:21:13]
  20 │         default:
  21 │             await using d24 = { async [Symbol.asyncDispose]() {} };
@@ -28747,7 +28747,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ }
    ╰────
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:3:9]
  2 │     case 0:
  3 │         using d20 = { [Symbol.dispose]() {} };
@@ -28756,7 +28756,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:7:9]
  6 │     case 1:
  7 │         using d21 = { [Symbol.dispose]() {} };
@@ -28765,7 +28765,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:11:9]
  10 │     default:
  11 │         using d22 = { [Symbol.dispose]() {} };
@@ -28774,7 +28774,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:17:13]
  16 │         case 0:
  17 │             using d23 = { [Symbol.dispose]() {} };
@@ -28783,7 +28783,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:21:13]
  20 │         default:
  21 │             using d24 = { [Symbol.dispose]() {} };

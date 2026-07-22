@@ -747,7 +747,13 @@ parser_diagnostics! {
     };
 
     using_declaration_not_allowed_in_switch_bare_case(span: Span) => {
-        OxcDiagnostic::error("Using declaration cannot appear in the bare case statement.")
+        OxcDiagnostic::error("'using' declaration cannot appear in the bare case statement.")
+            .with_label(span)
+            .with_help("Wrap this declaration in a block statement")
+    };
+
+    await_using_declaration_not_allowed_in_switch_bare_case(span: Span) => {
+        OxcDiagnostic::error("'await using' declaration cannot appear in the bare case statement.")
             .with_label(span)
             .with_help("Wrap this declaration in a block statement")
     };
