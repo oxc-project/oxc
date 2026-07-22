@@ -1,0 +1,133 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/functions/arguments-shadowed.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function | Arrow)",
+            "id": 2,
+            "node": "ArrowFunctionExpression",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 3,
+            "node": "Function(nested)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(ordinary)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 2,
+            "name": "nested",
+            "node": "Function(nested)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function | Arrow)",
+        "id": 4,
+        "node": "ArrowFunctionExpression",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function)",
+        "id": 5,
+        "node": "Function(arguments)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function | FunctionExpression)",
+            "id": 5,
+            "name": "arguments",
+            "node": "Function(arguments)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function)",
+        "id": 6,
+        "node": "Function(explicitlyShadowed)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 7,
+            "name": "arguments",
+            "node": "FormalParameter(arguments)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 5,
+                "name": "arguments",
+                "node_id": 47,
+                "scope_id": 6
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "arguments",
+        "node": "VariableDeclarator(arguments)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "arguments",
+            "node_id": 30,
+            "scope_id": 4
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 1,
+        "name": "ordinary",
+        "node": "Function(ordinary)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 3,
+        "name": "arrow",
+        "node": "VariableDeclarator(arrow)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 4,
+        "name": "named",
+        "node": "VariableDeclarator(named)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 6,
+        "name": "explicitlyShadowed",
+        "node": "Function(explicitlyShadowed)",
+        "references": []
+      }
+    ]
+  }
+]

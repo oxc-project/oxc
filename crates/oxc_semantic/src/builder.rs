@@ -657,12 +657,39 @@ impl<'a> SemanticBuilder<'a> {
     #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
     #[inline(always)]
     fn walk_up_resolve_reference(&mut self, name: Ident<'a>, reference_id: ReferenceId) -> bool {
+        let is_arguments_value_reference = name == "arguments" && {
+            let flags = self.scoping.references[reference_id].flags();
+            flags.is_value() || flags.is_value_as_type()
+        };
         let mut scope_id = Some(self.scoping.references[reference_id].scope_id());
         while let Some(sid) = scope_id {
-            if let Some(symbol_id) = self.scoping.get_binding(sid, name)
-                && self.try_resolve_reference(reference_id, symbol_id)
-            {
-                return true;
+            let is_implicit_arguments_boundary = is_arguments_value_reference && {
+                let flags = self.scoping.scope_flags(sid);
+                flags.is_function() && !flags.is_arrow()
+            };
+
+            if let Some(symbol_id) = self.scoping.get_binding(sid, name) {
+                // The name of a named function expression is in an environment outside the
+                // function's implicit `arguments` binding, even though Oxc represents both with
+                // the same scope. Parameters and local declarations still take precedence.
+                let is_function_expression_name = is_implicit_arguments_boundary
+                    && self
+                        .scoping
+                        .symbol_flags(symbol_id)
+                        .contains(SymbolFlags::FunctionExpression);
+                if !is_function_expression_name
+                    && self.try_resolve_reference(reference_id, symbol_id)
+                {
+                    return true;
+                }
+            }
+
+            // Non-arrow functions implicitly bind `arguments` in value space. Oxc does not
+            // represent that implicit binding as a symbol, so stop before an outer declaration
+            // with the same name can capture the reference. Arrow functions inherit `arguments`
+            // and therefore do not form a boundary here.
+            if is_implicit_arguments_boundary {
+                return false;
             }
             scope_id = self.scoping.scope_parent_id(sid);
         }
