@@ -14731,7 +14731,7 @@
       "type": "object",
       "properties": {
         "handlers": {
-          "description": "An array of event handler names that should trigger this rule.",
+          "description": "An array of event handler prop names that should trigger this rule\n(for example `onClick`, `onKeyDown`).\n\nDefaults to the recommended set from `eslint-plugin-jsx-a11y`, including\n`onClick`, `onKeyDown`, `onKeyPress`, `onKeyUp`, `onFocus`, `onBlur`,\nmouse/drag handlers, and `onError` / `onLoad`.",
           "default": [
             "onError",
             "onLoad",
@@ -14764,7 +14764,7 @@
           "items": {
             "type": "string"
           },
-          "markdownDescription": "An array of event handler names that should trigger this rule."
+          "markdownDescription": "An array of event handler prop names that should trigger this rule\n(for example `onClick`, `onKeyDown`).\n\nDefaults to the recommended set from `eslint-plugin-jsx-a11y`, including\n`onClick`, `onKeyDown`, `onKeyPress`, `onKeyUp`, `onFocus`, `onBlur`,\nmouse/drag handlers, and `onError` / `onLoad`."
         }
       },
       "additionalProperties": {

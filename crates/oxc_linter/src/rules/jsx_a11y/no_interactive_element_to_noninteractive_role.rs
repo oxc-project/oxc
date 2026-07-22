@@ -32,7 +32,16 @@ pub struct NoInteractiveElementToNoninteractiveRole(
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct NoInteractiveElementToNoninteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
-    /// allowed overrides for that element.
+    /// allowed overrides for that element. For example, `{ "tr": ["none", "presentation"] }`
+    /// permits `<tr role="none" />` without triggering the rule.
+    ///
+    /// Defaults are:
+    /// ```json
+    /// {
+    ///   "tr": ["none", "presentation"],
+    ///   "canvas": ["img"]
+    /// }
+    /// ```
     #[serde(default, flatten)]
     pub allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
@@ -71,6 +80,24 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```jsx
     /// <div role="img"><button>Save</button></div>
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// This rule takes an object whose keys are HTML element names and whose values
+    /// are arrays of non-interactive ARIA roles allowed on that element. Providing an
+    /// entry overrides the default exceptions for that element.
+    ///
+    /// By default `role="none"` / `role="presentation"` are allowed on `<tr>`, and
+    /// `role="img"` is allowed on `<canvas>`:
+    ///
+    /// ```json
+    /// {
+    ///   "jsx-a11y/no-interactive-element-to-noninteractive-role": [
+    ///     "error",
+    ///     { "tr": ["none", "presentation"], "canvas": ["img"] }
+    ///   ]
+    /// }
     /// ```
     NoInteractiveElementToNoninteractiveRole,
     jsx_a11y,
