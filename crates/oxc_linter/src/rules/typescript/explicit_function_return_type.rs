@@ -603,6 +603,9 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
         return true;
     }
 
+    let mut is_contextually_typed_return = true;
+    let mut reached_return_boundary = false;
+
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
             AstKind::SequenceExpression(sequence)
@@ -613,10 +616,10 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 return false;
             }
             AstKind::ArrowFunctionExpression(func) if func.return_type.is_some() => {
-                return true;
+                return is_contextually_typed_return;
             }
             AstKind::Function(func) if func.return_type.is_some() => {
-                return true;
+                return is_contextually_typed_return;
             }
             AstKind::VariableDeclarator(decl) => {
                 return decl.type_annotation.is_some();
@@ -624,9 +627,14 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             AstKind::PropertyDefinition(def) => {
                 return def.type_annotation.is_some();
             }
-            AstKind::ExpressionStatement(expr)
-                if !matches!(expr.expression, Expression::ArrowFunctionExpression(_)) =>
-            {
+            AstKind::FormalParameter(param) => {
+                return param.type_annotation.is_some();
+            }
+            AstKind::FormalParameterRest(param) => {
+                return param.type_annotation.is_some();
+            }
+            AstKind::ReturnStatement(_) => reached_return_boundary = true,
+            AstKind::ExpressionStatement(_) => {
                 let function_body = ctx.nodes().parent_node(ancestor.id());
                 if !matches!(function_body.kind(), AstKind::FunctionBody(_)) {
                     return false;
@@ -638,7 +646,28 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 ) {
                     return false;
                 }
+                reached_return_boundary = true;
             }
+            AstKind::ObjectProperty(prop)
+                if !reached_return_boundary
+                    && !prop.value.span().contains_inclusive(node.span()) =>
+            {
+                is_contextually_typed_return = false;
+            }
+            AstKind::ConditionalExpression(conditional)
+                if !reached_return_boundary
+                    && !conditional.consequent.span().contains_inclusive(node.span())
+                    && !conditional.alternate.span().contains_inclusive(node.span()) =>
+            {
+                is_contextually_typed_return = false;
+            }
+            AstKind::ObjectProperty(_)
+            | AstKind::ObjectExpression(_)
+            | AstKind::ParenthesizedExpression(_)
+            | AstKind::SequenceExpression(_)
+            | AstKind::ConditionalExpression(_)
+                if !reached_return_boundary => {}
+            _ if !reached_return_boundary => is_contextually_typed_return = false,
             _ => {}
         }
     }
@@ -887,6 +916,10 @@ fn test() {
               sideEffect(),
               { count: async () => 0 }
             );
+
+            export const buildConditionalRepo = (condition: boolean): Repo => condition
+              ? { count: async () => 0 }
+              : { count: async () => 1 };
             ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
@@ -1689,6 +1722,16 @@ fn test() {
               { count: async () => 0 },
               repo
             );
+            ",
+            Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
+            None,
+            None,
+        ),
+        (
+            "
+            const buildRepo = (): Repo => [
+              { count: async () => 0 }
+            ][0];
             ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
