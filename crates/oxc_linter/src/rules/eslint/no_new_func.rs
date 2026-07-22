@@ -1,8 +1,8 @@
-use oxc_ast::{AstKind, ast::IdentifierReference};
+use oxc_ast::{AstKind, ast::IdentifierReference, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 use oxc_str::static_ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -73,50 +73,35 @@ impl Rule for NoNewFunc {
                 check(id, new_expr.arguments_span(), ctx);
             }
             AstKind::CallExpression(call_expr) => {
-                let Some(obj_id) = call_expr.callee.get_identifier_reference() else {
+                let Some(obj_id) = get_function_constructor_reference(&call_expr.callee) else {
                     return;
                 };
 
                 check(obj_id, call_expr.arguments_span(), ctx);
             }
-            member_expr if member_expr.is_member_expression_kind() => {
-                let Some(member_expr) = member_expr.as_member_expression_kind() else {
-                    return;
-                };
-
-                let parent = ctx.nodes().ancestor_kinds(node.id()).find(|node| {
-                    !matches!(
-                        node,
-                        AstKind::ChainExpression(_) | AstKind::ParenthesizedExpression(_)
-                    )
-                });
-
-                let Some(AstKind::CallExpression(parent_call_expr)) = parent else {
-                    return;
-                };
-
-                if !parent_call_expr.callee.span().contains_inclusive(node.span()) {
-                    return;
-                }
-
-                let Some(static_property_name) =
-                    &member_expr.static_property_name().map(|s| s.as_str())
-                else {
-                    return;
-                };
-
-                if !["apply", "bind", "call"].contains(static_property_name) {
-                    return;
-                }
-
-                let Some(obj_id) = member_expr.object().get_identifier_reference() else {
-                    return;
-                };
-
-                check(obj_id, parent_call_expr.arguments_span(), ctx);
-            }
             _ => {}
         }
+    }
+}
+
+fn get_function_constructor_reference<'a>(
+    callee: &'a oxc_ast::ast::Expression<'a>,
+) -> Option<&'a IdentifierReference<'a>> {
+    callee.get_identifier_reference().or_else(|| {
+        let member_expr = member_expression_through_chain(callee)?;
+        let property_name = member_expr.static_property_name()?;
+        matches!(property_name, "apply" | "bind" | "call")
+            .then(|| member_expr.object().get_identifier_reference())?
+    })
+}
+
+fn member_expression_through_chain<'a>(
+    expr: &'a oxc_ast::ast::Expression<'a>,
+) -> Option<&'a MemberExpression<'a>> {
+    match expr.get_inner_expression() {
+        expr if expr.is_member_expression() => expr.as_member_expression(),
+        oxc_ast::ast::Expression::ChainExpression(chain) => chain.expression.member_expression(),
+        _ => None,
     }
 }
 
