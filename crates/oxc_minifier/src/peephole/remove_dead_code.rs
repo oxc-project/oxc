@@ -485,8 +485,14 @@ impl<'a> PeepholeOptimizations {
         if r#async || generator {
             return;
         }
-        // `function foo({}) {} foo(null)` is runtime type error.
-        if !params.items.iter().all(|pat| pat.pattern.is_binding_identifier()) {
+        // Destructuring can throw. Default initializers run for missing or `undefined`
+        // arguments, and function summaries are call-independent, so reject an initializer
+        // that may have side effects. TDZ-only throws follow the minifier's documented
+        // `No TDZ Violation` assumption.
+        if !params.items.iter().all(|param| {
+            param.pattern.is_binding_identifier()
+                && param.initializer.as_ref().is_none_or(|init| !init.may_have_side_effects(ctx))
+        }) {
             return;
         }
         if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {
