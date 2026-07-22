@@ -10,7 +10,7 @@ use oxc_diagnostics::{
     Error,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
-use oxc_linter::{RuleCategory, rules::RULES};
+use oxc_linter::{RuleCategory, RuleTimingRecord, rules::RULES};
 
 use crate::output_formatter::InternalFormatter;
 
@@ -75,13 +75,20 @@ impl InternalFormatter for JsonOutputFormatter {
         let number_of_rules =
             lint_command_info.number_of_rules.map_or("null".to_string(), |x| x.to_string());
         let start_time = lint_command_info.start_time.as_secs_f64();
+        let rule_timings = lint_command_info.rule_timings.as_ref().map_or_else(String::new, |t| {
+            format!(
+                ",
+              \"rule_timings\": {}",
+                format_rule_timings_json(t)
+            )
+        });
 
         Some(format!(
             r#"{{ "diagnostics": {},
               "number_of_files": {},
               "number_of_rules": {},
               "threads_count": {},
-              "start_time": {}
+              "start_time": {}{}
             }}
             "#,
             diagnostics,
@@ -89,6 +96,7 @@ impl InternalFormatter for JsonOutputFormatter {
             number_of_rules,
             lint_command_info.threads_count,
             start_time,
+            rule_timings,
         ))
     }
 
@@ -137,6 +145,30 @@ impl JsonReporter {
 }
 
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-json>
+fn format_rule_timings_json(rule_timings: &[RuleTimingRecord]) -> String {
+    #[derive(Debug, Serialize)]
+    struct RuleTimingJson<'a> {
+        plugin_name: &'a str,
+        rule_name: &'a str,
+        time_ms: f64,
+        calls: u64,
+        source: &'static str,
+    }
+
+    let records = rule_timings
+        .iter()
+        .map(|record| RuleTimingJson {
+            plugin_name: &record.plugin_name,
+            rule_name: &record.rule_name,
+            time_ms: record.duration.as_secs_f64() * 1000.0,
+            calls: record.calls,
+            source: record.source.as_str(),
+        })
+        .collect::<Vec<_>>();
+
+    serde_json::to_string(&records).expect("Failed to serialize rule timings")
+}
+
 fn format_json(diagnostics: &mut Vec<Error>) -> String {
     let handler = JSONReportHandler::new();
     let messages = diagnostics
@@ -156,6 +188,7 @@ mod test {
     use std::time::Duration;
 
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
+    use oxc_linter::{RuleTimingRecord, RuleTimingSource};
     use oxc_span::Span;
 
     use crate::output_formatter::{
@@ -193,6 +226,45 @@ mod test {
         assert_eq!(
             &output,
             "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
+        );
+    }
+
+    #[test]
+    fn lint_command_info_shows_rule_timings() {
+        let formatter = JsonOutputFormatter::default();
+
+        // Consume the empty diagnostics so `lint_command_info` renders them as `[]`.
+        let mut diagnostic_reporter = formatter.get_diagnostic_reporter();
+        diagnostic_reporter.finish(&DiagnosticResult::default());
+
+        let output = formatter
+            .lint_command_info(&LintCommandInfo {
+                number_of_files: 1,
+                number_of_rules: Some(2),
+                start_time: Duration::from_millis(5),
+                threads_count: 1,
+                oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
+                rule_timings: Some(vec![
+                    RuleTimingRecord {
+                        source: RuleTimingSource::Native,
+                        plugin_name: "eslint".to_string(),
+                        rule_name: "no-debugger".to_string(),
+                        duration: Duration::from_micros(1500),
+                        calls: 3,
+                    },
+                    RuleTimingRecord {
+                        source: RuleTimingSource::TypeAware,
+                        plugin_name: "typescript".to_string(),
+                        rule_name: "no-floating-promises".to_string(),
+                        duration: Duration::from_micros(500),
+                        calls: 0,
+                    },
+                ]),
+            })
+            .unwrap();
+        assert_eq!(
+            &output,
+            "{ \"diagnostics\": [],\n              \"number_of_files\": 1,\n              \"number_of_rules\": 2,\n              \"threads_count\": 1,\n              \"start_time\": 0.005,\n              \"rule_timings\": [{\"plugin_name\":\"eslint\",\"rule_name\":\"no-debugger\",\"time_ms\":1.5,\"calls\":3,\"source\":\"native\"},{\"plugin_name\":\"typescript\",\"rule_name\":\"no-floating-promises\",\"time_ms\":0.5,\"calls\":0,\"source\":\"type-aware\"}]\n            }\n            "
         );
     }
 }
