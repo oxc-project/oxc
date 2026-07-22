@@ -23,7 +23,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Using a non-null assertion (!) next to an assign or equals check (= or == or ===) creates code that is confusing as it looks similar to a not equals check (!= !==).
+    /// Using a non-null assertion (`!`) next to an assignment or equality check (`=` or `==` or
+    /// `===`) creates code that is confusing as it looks similar to an inequality check (`!=` or
+    /// `!==`). Using one next to an `in` or `instanceof` check is also confusing because it may
+    /// look like the operator is negated.
     ///
     /// ### Examples
     ///
@@ -32,6 +35,8 @@ declare_oxc_lint!(
     ///    a! == b; // a non-null assertions(`!`) and an equals test(`==`)
     ///    a !== b; // not equals test(`!==`)
     ///    a! === b; // a non-null assertions(`!`) and an triple equals test(`===`)
+    ///    a! in b;
+    ///    a! instanceof b;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -74,6 +79,14 @@ fn confusing_non_null_assignment_assertion_diagnostic(op_str: &str, span: Span) 
     .with_label(span)
 }
 
+fn confusing_non_null_operator_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Confusing combination of non-null assertion and `{op_str}` operator like `a! {op_str} b`, which might be misinterpreted as `!(a {op_str} b)`."
+    ))
+    .with_help("Remove the `!`, or wrap the left-hand side in parentheses.")
+    .with_label(span)
+}
+
 fn get_depth_ends_in_bang(expr: &Expression<'_>) -> Option<u32> {
     match expr {
         Expression::TSNonNullExpression(_) => Some(0),
@@ -91,7 +104,13 @@ fn get_depth_ends_in_bang(expr: &Expression<'_>) -> Option<u32> {
 }
 
 fn is_confusable_operator(operator: BinaryOperator) -> bool {
-    matches!(operator, BinaryOperator::Equality | BinaryOperator::StrictEquality)
+    matches!(
+        operator,
+        BinaryOperator::Equality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::In
+            | BinaryOperator::Instanceof
+    )
 }
 
 impl Rule for NoConfusingNonNullAssertion {
@@ -103,7 +122,12 @@ impl Rule for NoConfusingNonNullAssertion {
                 let Some(bang_depth) = get_depth_ends_in_bang(&binary_expr.left) else {
                     return;
                 };
-                if bang_depth == 0 {
+                if matches!(binary_expr.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
+                    ctx.diagnostic(confusing_non_null_operator_diagnostic(
+                        binary_expr.operator.as_str(),
+                        binary_expr.span,
+                    ));
+                } else if bang_depth == 0 {
                     ctx.diagnostic(not_need_no_confusing_non_null_assertion_diagnostic(
                         binary_expr.operator.as_str(),
                         binary_expr.span,
@@ -146,6 +170,8 @@ fn test() {
         "a !== b;",
         "a != b;",
         "(a + b!) == c;",
+        "(a + b!) in c;",
+        "(a || b!) instanceof c;",
         "a! + b;",
         "a! += b;",
         "a! - b;",
@@ -168,6 +194,9 @@ fn test() {
         "(a==b)! ==c;",
         "a! = b;",
         "(obj = new new OuterObj().InnerObj).Name! = c;",
+        "a! in b;",
+        "a !in b;",
+        "a! instanceof b;",
     ];
 
     // let fix = vec![
