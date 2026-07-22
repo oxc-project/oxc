@@ -401,6 +401,11 @@ export type DeclarationStyle = "type-based" | "type-literal" | "runtime";
 export type DeclarationStyle2 = "type-based" | "runtime";
 export type Destructure = "only-when-assigned" | "always" | "never";
 export type NextTickOption = "promise" | "callback";
+/**
+ * One entry in the `order` option: either a single name or a group of names
+ * that share the same position.
+ */
+export type OrderEntry = string | string[];
 export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
@@ -1738,6 +1743,7 @@ export interface DummyRuleMap {
   "vue/no-side-effects-in-computed-properties"?: RuleNoConfig;
   "vue/no-this-in-before-route-enter"?: RuleNoConfig;
   "vue/no-watch-after-await"?: RuleNoConfig;
+  "vue/order-in-components"?: RuleNoConfig | [AllowWarnDeny, OrderInComponentsConfig];
   "vue/prefer-import-from-vue"?: RuleNoConfig;
   "vue/prop-name-casing"?: RuleNoConfig | [AllowWarnDeny, CaseType2] | [AllowWarnDeny, CaseType2, Options];
   "vue/require-default-export"?: RuleNoConfig;
@@ -6514,6 +6520,13 @@ export interface NoReservedPropsConfig {
    * more names (`is`, `slot`, `class`, `style`, ...) than Vue 3.
    */
   vueVersion?: number;
+}
+export interface OrderInComponentsConfig {
+  /**
+   * Custom property order. Each entry is a single property name or a group of
+   * names sharing the same rank. Defaults to Vue's recommended order.
+   */
+  order?: OrderEntry[];
 }
 export interface Options {
   /**

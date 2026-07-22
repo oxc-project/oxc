@@ -10359,6 +10359,26 @@
         "vue/no-watch-after-await": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/order-in-components": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/OrderInComponents"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "vue/prefer-import-from-vue": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -16432,6 +16452,39 @@
           "additionalProperties": false
         }
       ]
+    },
+    "OrderEntry": {
+      "description": "One entry in the `order` option: either a single name or a group of names\nthat share the same position.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "markdownDescription": "One entry in the `order` option: either a single name or a group of names\nthat share the same position."
+    },
+    "OrderInComponents": {
+      "$ref": "#/definitions/OrderInComponentsConfig"
+    },
+    "OrderInComponentsConfig": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "description": "Custom property order. Each entry is a single property name or a group of\nnames sharing the same rank. Defaults to Vue's recommended order.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrderEntry"
+          },
+          "markdownDescription": "Custom property order. Each entry is a single property name or a group of\nnames sharing the same rank. Defaults to Vue's recommended order."
+        }
+      },
+      "additionalProperties": false
     },
     "Override": {
       "type": "object",
