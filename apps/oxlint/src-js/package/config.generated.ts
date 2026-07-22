@@ -1730,6 +1730,7 @@ export interface DummyRuleMap {
   "vue/no-import-compiler-macros"?: RuleNoConfig;
   "vue/no-lifecycle-after-await"?: RuleNoConfig;
   "vue/no-multiple-slot-args"?: RuleNoConfig;
+  "vue/no-ref-as-operand"?: RuleNoConfig;
   "vue/no-required-prop-with-default"?: RuleNoConfig;
   "vue/no-reserved-component-names"?: RuleNoConfig | [AllowWarnDeny, NoReservedComponentNames];
   "vue/no-reserved-keys"?: RuleNoConfig | [AllowWarnDeny, NoReservedKeysConfig];

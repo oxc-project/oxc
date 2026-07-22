@@ -5249,6 +5249,12 @@ impl RuleRunner for crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::vue::no_ref_as_operand::NoRefAsOperand {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::IdentifierReference]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::vue::no_required_prop_with_default::NoRequiredPropWithDefault {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::CallExpression,
