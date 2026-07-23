@@ -53,11 +53,11 @@ COMMENT_TYPES[COMMENT_SHEBANG_KIND] = "Shebang";
 // `(BLOCK_COMMENT_KINDS_BITMAP >> kind) & 2` then yields the number of characters to subtract from `end`
 // when slicing source text to get `value` of a comment - 2 for block comments, 0 for line and hashbang comments.
 // Cheaper than a lookup table, which would involve a bounds check and load every time.
-const BLOCK_COMMENT_KINDS_BITMAP =
+export const BLOCK_COMMENT_KINDS_BITMAP =
   (0b1111 & ~(1 << COMMENT_LINE_KIND) & ~(1 << COMMENT_SHEBANG_KIND)) << 1;
 
 // Mask for bits containing comment kind.
-const COMMENT_KIND_MASK = 3;
+export const COMMENT_KIND_MASK = 3;
 
 // Comments for the current file.
 // Created lazily only when needed.
@@ -113,12 +113,12 @@ debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 
 // Same as `COMMENT_SIZE` / `COMMENT_SIZE_SHIFT`, but in units of `i32`s (for indexing `commentsInt32`).
 const COMMENT_SIZE32 = COMMENT_SIZE >> 2;
-const COMMENT_SIZE32_SHIFT = COMMENT_SIZE_SHIFT - 2;
+export const COMMENT_SIZE32_SHIFT = COMMENT_SIZE_SHIFT - 2;
 debugAssert(COMMENT_SIZE32 === 1 << COMMENT_SIZE32_SHIFT);
 
 // `kind` is the low byte of the comment's 4th `i32` (byte 12), so a single `commentsInt32` read + a mask
 // yields it - no `Uint8Array` view needed. `>> 2` converts the byte offset to an `i32` (word) index.
-const COMMENT_KIND_OFFSET32 = COMMENT_KIND_OFFSET >> 2;
+export const COMMENT_KIND_OFFSET32 = COMMENT_KIND_OFFSET >> 2;
 debugAssert(
   (COMMENT_KIND_OFFSET & 3) === 0,
   "`COMMENT_KIND_OFFSET` must be 4-byte aligned to read via `i32`",
