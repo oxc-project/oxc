@@ -1056,3 +1056,105 @@ fn dce_keeps_implicitly_observable_bindings() {
         options,
     );
 }
+
+// https://github.com/oxc-project/oxc/issues/23866
+#[test]
+fn dce_drops_dead_trailing_const_arrow_arguments() {
+    test(
+        "const foo = async (assets) => ({}); export default await foo({ bar: 'baz' })",
+        "const foo = async (assets) => ({}); export default await foo()",
+    );
+
+    // Dropping the argument also removes a nested dynamic import that would
+    // otherwise keep an unnecessary chunk alive in Rolldown.
+    test(
+        "const foo = async (assets) => ({}); export default await foo({ image: () => import('./image.js') })",
+        "const foo = async (assets) => ({}); export default await foo()",
+    );
+    test(
+        "export const foo = async (unused) => bar(); foo({ image: () => import('./image.js') })",
+        "export const foo = async (unused) => bar(); foo()",
+    );
+    test(
+        "const foo = (unused) => { bar() }; foo(1); foo(2)",
+        "const foo = (unused) => { bar() }; foo(); foo()",
+    );
+    test(
+        "const call = () => foo(1); const foo = (unused) => bar(); call()",
+        "const call = () => foo(); const foo = (unused) => bar(); call()",
+    );
+}
+
+#[test]
+fn dce_cascades_dead_trailing_const_arrow_arguments() {
+    test(
+        "const leaf = (value, unused) => value; const middle = (value, unused) => leaf(value, unused); const outer = (value, unused) => middle(value, unused); consume(outer(1, 2))",
+        "const leaf = (value, unused) => value; const middle = (value, unused) => leaf(value); const outer = (value, unused) => middle(value); consume(outer(1))",
+    );
+
+    // Propagate parameter liveness through the chain, but preserve an argument
+    // whose evaluation remains observable at the outermost call.
+    test(
+        "const leaf = (value, unused) => value; const middle = (value, unused) => leaf(value, unused); const outer = (value, unused) => middle(value, unused); consume(outer(1, sideEffect()))",
+        "const leaf = (value, unused) => value; const middle = (value, unused) => leaf(value); const outer = (value, unused) => middle(value); consume(outer(1, sideEffect()))",
+    );
+
+    // Revisit calls that precede the declaration whose summary became stronger.
+    test(
+        "const leaf = (value, unused) => value; const outer = (value, unused) => middle(value, unused); consume(outer(1, 2)); const middle = (value, unused) => leaf(value, unused)",
+        "const leaf = (value, unused) => value; const outer = (value, unused) => middle(value); consume(outer(1)); const middle = (value, unused) => leaf(value)",
+    );
+}
+
+// https://github.com/oxc-project/oxc/issues/23866#issuecomment-5102502151
+#[test]
+fn dce_drops_dead_trailing_function_declaration_arguments() {
+    test(
+        "const __DEV__ = false; function computed(getterOrOptions, debugOptions) { const cRef = { value: getterOrOptions }; if (__DEV__ && debugOptions) { cRef.onTrack = debugOptions.onTrack; cRef.onTrigger = debugOptions.onTrigger } return cRef } consume(computed(123, { onTrack: () => {} }))",
+        "function computed(getterOrOptions, debugOptions) { return { value: getterOrOptions } } consume(computed(123))",
+    );
+
+    // A normal function can observe its actual arguments independently of its
+    // parameter bindings.
+    test_same("function foo(unused) { consume(arguments.length) } foo(1)");
+    test_same("function foo(unused) { return () => arguments.length } consume(foo(1))");
+
+    // A nested normal function owns a different arguments object.
+    test(
+        "function foo(unused) { return function () { consume(arguments.length) } } consume(foo(1))",
+        "function foo(unused) { return function () { consume(arguments.length) } } consume(foo())",
+    );
+
+    // Direct eval can observe a parameter even when static references cannot.
+    test_same("function foo(unused) { eval('consume(unused)') } foo(1)");
+
+    // A written binding no longer proves which function a direct call invokes.
+    test_same("function foo(unused) { bar() } foo = replacement; foo(1)");
+
+    // Sloppy functions expose their current arguments through `foo.arguments`.
+    test_same_source_type("function foo(unused) { bar() } consume(foo(1))", SourceType::cjs());
+}
+
+#[test]
+fn dce_keeps_observable_trailing_const_arrow_arguments() {
+    test_same("const foo = (unused) => bar(); foo(sideEffect())");
+    test_same("let foo = (unused) => bar(); foo(1); foo = replacement");
+    test_same("const foo = (unused) => eval(\"unused\"); consume(foo(1))");
+    test_same("const foo = (a, b) => bar(b); foo(1, 2)");
+    test_same("const foo = (unused = sideEffect()) => bar(); foo(1)");
+    test_same("const foo = ({ unused }) => bar(); foo(value)");
+    test_same("const foo = (...args) => bar(args); foo(1)");
+    test_same("const foo = function(unused) { return arguments.length }; consume(foo(1))");
+    test_same("const foo = (unused) => bar(); foo(...values)");
+    test_same(
+        "class Base {} class Derived extends Base { constructor() { const foo = (unused) => bar(); foo(this); super() } } consume(new Derived())",
+    );
+    test_same_source_type(
+        "function outer(object) { const foo = (unused) => bar(); with (object) foo(1) } outer(source)",
+        SourceType::cjs().with_script(true),
+    );
+    test_same_source_type(
+        "const foo = (unused) => bar(); function outer() { eval(\"var foo = function(value) { return value }\"); consume(foo(1)) } outer()",
+        SourceType::cjs(),
+    );
+}

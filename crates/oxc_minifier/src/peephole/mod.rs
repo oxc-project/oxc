@@ -372,7 +372,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::ForStatement(_) => Self::try_fold_for(stmt, ctx),
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::FunctionDeclaration(_) => {
+                Statement::FunctionDeclaration(function) => {
+                    if Self::record_function_declaration_dead_arguments(function, ctx) {
+                        ctx.state.request_revisit();
+                    }
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
                 Statement::ClassDeclaration(_) => {
@@ -454,6 +457,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if ctx.is_tree_shake_only() {
+            if Self::record_const_arrow_dead_arguments(decl, ctx) {
+                ctx.state.request_revisit();
+            }
             return;
         }
         Self::substitute_variable_declaration(decl, ctx);

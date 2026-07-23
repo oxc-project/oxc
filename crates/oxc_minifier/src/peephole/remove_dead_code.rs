@@ -4,6 +4,10 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
+use oxc_syntax::{
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
+};
 
 use crate::{TraverseCtx, keep_var::KeepVar, symbol_metadata::FunctionSummary};
 
@@ -499,35 +503,141 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
+        if !Self::has_stable_function_binding(symbol_id, ctx) {
+            // Discard a summary from an earlier pass. Removing a write or the
+            // last direct eval can make the binding safe again later.
+            ctx.state.symbols.clear_function_summary(symbol_id);
+            return;
+        }
+        ctx.state.symbols.set_function_summary(
+            symbol_id,
+            if body.is_empty() {
+                FunctionSummary::SideEffectFreeReturnsUndefined
+            } else {
+                FunctionSummary::SideEffectFree
+            },
+        );
+    }
+
+    fn has_stable_function_binding(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
         let binding_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         let binding_scope_flags = ctx.scoping().scope_flags(binding_scope_id);
         // Redeclarations are span-only in semantic and create no references,
         // so the read-only-reference check below cannot see them. A different
-        // declaration of the same symbol may be impure and win at runtime.
+        // declaration of the same symbol may win at runtime.
         if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
-            ctx.state.symbols.clear_function_summary(symbol_id);
-            return;
+            return false;
         }
         // Direct eval and Script global properties can replace the binding
-        // without producing a resolved write reference. Discard any summary
-        // from an earlier pass; removing the last eval may make the binding
-        // safe later, while Script roots are rejected again on every pass.
+        // without producing a resolved write reference.
         if binding_scope_flags.contains_direct_eval()
             || (ctx.source_type().is_script() && binding_scope_id == ctx.scoping().root_scope_id())
         {
-            ctx.state.symbols.clear_function_summary(symbol_id);
-            return;
+            return false;
         }
-        if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
-            ctx.state.symbols.set_function_summary(
-                symbol_id,
-                if body.is_empty() {
-                    FunctionSummary::SideEffectFreeReturnsUndefined
-                } else {
-                    FunctionSummary::SideEffectFree
-                },
-            );
+        ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only())
+    }
+
+    /// Record conservative dead-parameter summaries for immutable local arrows.
+    ///
+    /// Normalize seeds the map before the first peephole pass. Later passes
+    /// refresh it after reference pruning exposes newly unused parameters, so
+    /// chains of calls converge without making results depend on reinvoking DCE.
+    /// Facts are monotone: DCE removes references but never adds parameter uses.
+    pub fn record_const_arrow_dead_arguments(
+        declaration: &VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        if declaration.kind != VariableDeclarationKind::Const {
+            return false;
         }
+        let mut changed = false;
+        for declarator in &declaration.declarations {
+            let BindingPattern::BindingIdentifier(id) = &declarator.id else { continue };
+            let Some(Expression::ArrowFunctionExpression(function)) = &declarator.init else {
+                continue;
+            };
+            let Some(symbol_id) = id.symbol_id.get() else { continue };
+            let Some(scope_id) = function.scope_id.get() else { continue };
+            if ctx.scoping().scope_flags(scope_id).contains_direct_eval() {
+                continue;
+            }
+            if let Some(prefix) = Self::dead_trailing_parameter_prefix(&function.params, ctx) {
+                changed |= ctx.state.symbols.record_dead_argument_prefix(symbol_id, prefix);
+            }
+        }
+        changed
+    }
+
+    /// Record dead-parameter summaries for stable strict function declarations.
+    ///
+    /// Strict mode prevents external observation through `function.arguments`.
+    /// A reference to the function's own `arguments` object remains observable
+    /// independently of parameter-symbol liveness and therefore rejects the
+    /// summary.
+    pub fn record_function_declaration_dead_arguments(
+        function: &Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let Some(id) = &function.id else { return false };
+        let Some(symbol_id) = id.symbol_id.get() else { return false };
+        let Some(scope_id) = function.scope_id.get() else { return false };
+        let scope_flags = ctx.scoping().scope_flags(scope_id);
+        if function.body.is_none()
+            || !scope_flags.is_strict_mode()
+            || scope_flags.contains_direct_eval()
+        {
+            return false;
+        }
+        let Some(prefix) = Self::dead_trailing_parameter_prefix(&function.params, ctx) else {
+            return false;
+        };
+        if Self::function_uses_arguments(scope_id, ctx)
+            || !Self::has_stable_function_binding(symbol_id, ctx)
+        {
+            return false;
+        }
+        ctx.state.symbols.record_dead_argument_prefix(symbol_id, prefix)
+    }
+
+    fn function_uses_arguments(function_scope_id: ScopeId, ctx: &TraverseCtx<'a>) -> bool {
+        let Some(references) = ctx.scoping().root_unresolved_references().get("arguments") else {
+            return false;
+        };
+        references.iter().any(|&reference_id| {
+            let reference_scope_id = ctx.scoping().get_reference(reference_id).scope_id();
+            ctx.scoping().scope_ancestors(reference_scope_id).find(|&scope_id| {
+                let flags = ctx.scoping().scope_flags(scope_id);
+                flags.is_function() && !flags.is_arrow()
+            }) == Some(function_scope_id)
+        })
+    }
+
+    fn dead_trailing_parameter_prefix(
+        params: &FormalParameters<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<usize> {
+        if params.rest.is_some()
+            || !params
+                .items
+                .iter()
+                .all(|param| param.pattern.is_binding_identifier() && param.initializer.is_none())
+        {
+            return None;
+        }
+
+        let mut prefix = params.items.len();
+        while prefix > 0 {
+            let BindingPattern::BindingIdentifier(id) = &params.items[prefix - 1].pattern else {
+                break;
+            };
+            let Some(symbol_id) = id.symbol_id.get() else { break };
+            if !ctx.scoping().symbol_is_unused(symbol_id) {
+                break;
+            }
+            prefix -= 1;
+        }
+        (prefix < params.items.len()).then_some(prefix)
     }
 
     pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -546,8 +656,53 @@ impl<'a> PeepholeOptimizations {
                 exprs.push(Expression::new_void_0(e.span, ctx));
                 let new_expr = Expression::new_sequence_expression(e.span, exprs, ctx);
                 ctx.replace_expression(expr, new_expr);
+                return;
             }
         }
+
+        if !ctx.is_tree_shake_only() {
+            return;
+        }
+        let Expression::Identifier(ident) = &e.callee else { return };
+        let reference_id = ident.reference_id();
+        let reference = ctx.scoping().get_reference(reference_id);
+        let Some(symbol_id) = reference.symbol_id() else { return };
+        let Some(prefix) = ctx.state.symbols.dead_argument_prefix(symbol_id) else { return };
+        if Self::reference_may_be_dynamically_shadowed(reference.scope_id(), ctx) {
+            return;
+        }
+        if e.arguments.len() <= prefix
+            || e.arguments.iter().any(|argument| matches!(argument, Argument::SpreadElement(_)))
+        {
+            return;
+        }
+
+        while e.arguments.len() > prefix {
+            let Some(argument) = e.arguments.last_mut().and_then(Argument::as_expression_mut)
+            else {
+                return;
+            };
+            // Reuse unused-expression analysis so hidden effects and derived-
+            // constructor `this` before `super()` remain observable.
+            if !Self::remove_unused_expression(argument, ctx) {
+                break;
+            }
+            let dropped = e.arguments.pop().unwrap().into_expression();
+            ctx.drop_expression(&dropped);
+        }
+    }
+
+    /// A `with` object or sloppy direct eval can dynamically replace a statically
+    /// resolved identifier.
+    pub(super) fn reference_may_be_dynamically_shadowed(
+        reference_scope_id: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        ctx.scoping().scope_ancestors(reference_scope_id).any(|scope_id| {
+            ctx.scoping()
+                .scope_flags(scope_id)
+                .intersects(ScopeFlags::With | ScopeFlags::DirectEval)
+        })
     }
 
     /// Whether the indirect access should be kept.
