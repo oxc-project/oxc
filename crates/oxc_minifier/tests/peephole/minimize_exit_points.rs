@@ -266,7 +266,7 @@ fn test_dont_test_break_in_do_while_if_condition_has_side_effects() {
 
 #[test]
 fn test_switch_exit_points1() {
-    test("switch (x) { case 1: f(); break; }", "switch (x) { case 1: f();        }");
+    test("switch (x) { case 1: f(); break; }", "x === 1 && f();");
     test(
         "switch (x) { case 1: f(); break; case 2: g(); break; }",
         "switch (x) { case 1: f(); break; case 2: g();        }",

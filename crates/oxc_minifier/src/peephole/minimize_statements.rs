@@ -724,22 +724,6 @@ impl<'a> PeepholeOptimizations {
         is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
     }
 
-    fn wrap_in_block_stmt_if_needed(
-        vec: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Statement<'a> {
-        if vec.len() == 1 && matches!(vec.first(), Some(Statement::BlockStatement(_))) {
-            vec.pop().unwrap()
-        } else {
-            Statement::new_block_statement_with_scope_id(
-                SPAN,
-                vec.take_in(ctx),
-                ctx.create_child_scope_of_current(ScopeFlags::empty()),
-                ctx,
-            )
-        }
-    }
-
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -838,7 +822,18 @@ impl<'a> PeepholeOptimizations {
         {
             ctx.notice_change();
 
-            let block_stmt = Self::wrap_in_block_stmt_if_needed(&mut case.consequent, ctx);
+            let block_stmt = if case.consequent.len() == 1
+                && matches!(case.consequent[0], Statement::BlockStatement(_))
+            {
+                case.consequent.pop().unwrap()
+            } else {
+                Statement::new_block_statement_with_scope_id(
+                    case.span,
+                    case.consequent.take_in(ctx),
+                    switch_stmt.scope_id(),
+                    ctx,
+                )
+            };
 
             if let Some(test) = case.test {
                 result.push(Statement::new_if_statement(
