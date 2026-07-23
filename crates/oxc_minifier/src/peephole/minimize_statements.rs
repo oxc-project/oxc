@@ -859,25 +859,24 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                let mut optimize_implicit_jump = false;
-                // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
-                // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                if ctx.ancestors().nth(1).is_some_and(|v| {
-                    v.is_for_statement() || v.is_for_in_statement() || v.is_for_of_statement()
-                }) && let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent
-                    && continue_stmt.label.is_none()
-                {
-                    optimize_implicit_jump = true;
-                }
+                let optimize_implicit_jump = match &if_stmt.consequent {
+                    // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
+                    // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
+                    Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
+                        ctx.ancestors().nth(1).is_some_and(|v| {
+                            v.is_for_statement()
+                                || v.is_for_in_statement()
+                                || v.is_for_of_statement()
+                        })
+                    }
+                    // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
+                    // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
+                    Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
+                        ctx.parent().is_function_body()
+                    }
+                    _ => false,
+                };
 
-                // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
-                // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
-                if ctx.parent().is_function_body()
-                    && let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent
-                    && return_stmt.argument.is_none()
-                {
-                    optimize_implicit_jump = true;
-                }
                 if optimize_implicit_jump {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
