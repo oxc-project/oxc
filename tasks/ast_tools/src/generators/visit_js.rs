@@ -1,22 +1,23 @@
-//! Generator for `VisitJs` trait.
+//! Generator for `VisitJs` and `VisitJsMut` traits.
 //!
-//! `VisitJs` is a variant of [`Visit`] which traverses only the JavaScript parts of the AST.
-//! It skips pure TypeScript type-space nodes (`TSType`, `TSTypeAnnotation`, interfaces, type
-//! aliases, ...) entirely, but still descends into the JavaScript nested inside a small set of
-//! TS wrapper nodes (`x as T`, decorators, enum initializers, namespace bodies, `export = expr`,
-//! `import x = require(..)`).
+//! `VisitJs` and `VisitJsMut` are variants of [`Visit`] and [`VisitMut`] which traverse only the
+//! JavaScript parts of the AST. They skip pure TypeScript type-space nodes (`TSType`,
+//! `TSTypeAnnotation`, interfaces, type aliases, ...) entirely, but still descend into the
+//! JavaScript nested inside a small set of TS wrapper nodes (`x as T`, decorators, enum
+//! initializers, namespace bodies, `export = expr`, `import x = require(..)`).
 //!
-//! `VisitJs` is for visiting the JavaScript parts of a *TypeScript* AST — it is not a visitor
-//! for ASTs where TypeScript has already been transformed out. The TS constructs carrying
-//! runtime JavaScript must therefore still be walked, so their walk code remains in the
-//! binary; only the pure type grammar is pruned.
+//! These visitors are for visiting the JavaScript parts of a *TypeScript* AST — they are not for
+//! ASTs where TypeScript has already been transformed out. The TS constructs carrying runtime
+//! JavaScript must therefore still be walked, so their walk code remains in the binary; only the
+//! pure type grammar is pruned.
 //!
-//! Because the generated `walk_*` functions in `mod walk_js` never reference the pure-type
-//! `walk_ts_*` functions, an `impl VisitJs` monomorphizes zero TS type-grammar traversal. This
-//! removes the TS-grammar walks (~23% of oxlint's visitor machinery) from the binary contribution
-//! of any visitor that only inspects runtime JavaScript.
+//! Because the generated `walk_*` functions in `mod walk_js` and `mod walk_js_mut` never reference
+//! the pure-type `walk_ts_*` functions, an `impl VisitJs` or `impl VisitJsMut` monomorphizes zero
+//! TS type-grammar traversal. This removes the TS-grammar walks (~23% of oxlint's visitor
+//! machinery) from the binary contribution of any visitor that only inspects runtime JavaScript.
 //!
 //! [`Visit`]: super::visit
+//! [`VisitMut`]: super::visit_mut
 
 use cow_utils::CowUtils;
 use proc_macro2::TokenStream;
@@ -90,11 +91,18 @@ pub struct VisitJsGenerator;
 define_generator!(VisitJsGenerator);
 
 impl Generator for VisitJsGenerator {
-    fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
-        Output::Rust {
-            path: output_path(AST_VISIT_CRATE_PATH, "visit_js.rs"),
-            tokens: generate(schema),
-        }
+    fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
+        let (visit_js, visit_js_mut) = generate_outputs(schema);
+        vec![
+            Output::Rust {
+                path: output_path(AST_VISIT_CRATE_PATH, "visit_js.rs"),
+                tokens: visit_js,
+            },
+            Output::Rust {
+                path: output_path(AST_VISIT_CRATE_PATH, "visit_js_mut.rs"),
+                tokens: visit_js_mut,
+            },
+        ]
     }
 }
 
@@ -132,40 +140,66 @@ fn innermost_is_visited(type_def: &TypeDef, schema: &Schema) -> bool {
     type_is_visited(type_def.innermost_type(schema), schema)
 }
 
-/// [`VisitorOutputs`] for generating visitor calls for just the `VisitJs` trait (immutable side).
-struct JsVisit(TokenStream);
+/// [`VisitorOutputs`] for generating visitor calls for `VisitJs` and `VisitJsMut`.
+struct JsVisitAndMut {
+    visit: TokenStream,
+    visit_mut: TokenStream,
+}
 
-impl VisitorOutputs for JsVisit {
+impl VisitorOutputs for JsVisitAndMut {
     fn gen_each<F: Fn(bool) -> TokenStream>(f: F) -> Self {
-        Self(f(false))
+        Self { visit: f(false), visit_mut: f(true) }
     }
 
     fn map<F: Fn(TokenStream, bool) -> TokenStream>(self, f: F) -> Self {
-        Self(f(self.0, false))
+        Self { visit: f(self.visit, false), visit_mut: f(self.visit_mut, true) }
     }
 }
 
-/// Generate `VisitJs` trait and `walk_js` module.
-fn generate(schema: &Schema) -> TokenStream {
+/// Generate `VisitJs` / `walk_js` and `VisitJsMut` / `walk_js_mut`.
+fn generate_outputs(schema: &Schema) -> (TokenStream, TokenStream) {
     let mut visit_methods = TokenStream::new();
     let mut walk_fns = TokenStream::new();
+    let mut visit_mut_methods = TokenStream::new();
+    let mut walk_mut_fns = TokenStream::new();
 
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
-                generate_struct_visitor(struct_def, schema, &mut visit_methods, &mut walk_fns);
+                generate_struct_visitor(
+                    struct_def,
+                    schema,
+                    &mut visit_methods,
+                    &mut walk_fns,
+                    &mut visit_mut_methods,
+                    &mut walk_mut_fns,
+                );
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum_visitor(enum_def, schema, &mut visit_methods, &mut walk_fns);
+                generate_enum_visitor(
+                    enum_def,
+                    schema,
+                    &mut visit_methods,
+                    &mut walk_fns,
+                    &mut visit_mut_methods,
+                    &mut walk_mut_fns,
+                );
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec_visitor(vec_def, schema, &mut visit_methods, &mut walk_fns);
+                generate_vec_visitor(
+                    vec_def,
+                    schema,
+                    &mut visit_methods,
+                    &mut walk_fns,
+                    &mut visit_mut_methods,
+                    &mut walk_mut_fns,
+                );
             }
             _ => {}
         }
     }
 
-    quote! {
+    let visit_js = quote! {
         //! JavaScript-only visitor
         //!
         //! `VisitJs` traverses only the JavaScript parts of the AST, skipping TypeScript type-space
@@ -252,7 +286,87 @@ fn generate(schema: &Schema) -> TokenStream {
             ///@@line_break
             #walk_fns
         }
-    }
+    };
+
+    let visit_js_mut = quote! {
+        //! JavaScript-only mutable visitor
+        //!
+        //! `VisitJsMut` traverses only the JavaScript parts of the AST, skipping TypeScript
+        //! type-space nodes. See [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html).
+        //!
+        //! This visitor is for visiting the JavaScript parts of a TypeScript AST — not for ASTs
+        //! where TypeScript has already been transformed out. TS constructs carrying runtime
+        //! JavaScript (enum initializers, namespace bodies, decorators, `x as T` casts,
+        //! `export =`, `import x = require(..)`) are still walked, so their walk code remains
+        //! in the binary; only the pure type grammar is pruned.
+
+        //!@@line_break
+        #![expect(unused_variables)]
+        #![allow(
+            clippy::match_same_arms,
+            clippy::semicolon_if_nothing_returned,
+            clippy::needless_pass_by_ref_mut,
+            clippy::trivially_copy_pass_by_ref,
+            clippy::match_wildcard_for_single_variants,
+            clippy::single_match_else,
+        )]
+
+        ///@@line_break
+        use std::cell::Cell;
+
+        ///@@line_break
+        use oxc_allocator::ArenaVec;
+        use oxc_syntax::scope::{ScopeFlags, ScopeId};
+
+        ///@@line_break
+        use oxc_ast::ast::*;
+        use oxc_ast::ast_kind::AstType;
+
+        ///@@line_break
+        use walk_js_mut::*;
+
+        ///@@line_break
+        /// JavaScript-only mutable syntax tree traversal.
+        ///
+        /// Like [`VisitMut`], but skips TypeScript type-space nodes. Still descends into JavaScript
+        /// nested inside TS wrapper nodes (`x as T`, decorators, enum initializers, namespace
+        /// bodies, `export = expr`, `import x = require(..)`).
+        ///
+        /// This trait is for visiting the JavaScript parts of a TypeScript AST — not for ASTs
+        /// where TypeScript has already been transformed out. The walks for those JS-carrying
+        /// TS nodes stay in the binary; only the pure type grammar is pruned.
+        ///
+        /// Pruning is by grammar (node kind), not by TypeScript's erasure semantics: type-only
+        /// imports/exports (`import type`, `export type`) and `declare`d items are JS-grammar
+        /// nodes and are still visited — filter on `import_kind` / `declare` in the visitor if
+        /// needed, exactly as with [`VisitMut`].
+        ///
+        /// [`VisitMut`]: crate::VisitMut
+        pub trait VisitJsMut<'a>: Sized {
+            #[inline]
+            fn enter_node(&mut self, kind: AstType) {}
+            #[inline]
+            fn leave_node(&mut self, kind: AstType) {}
+
+            ///@@line_break
+            #[inline]
+            fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
+            #[inline]
+            fn leave_scope(&mut self) {}
+
+            #visit_mut_methods
+        }
+
+        ///@@line_break
+        pub mod walk_js_mut {
+            use super::*;
+
+            ///@@line_break
+            #walk_mut_fns
+        }
+    };
+
+    (visit_js, visit_js_mut)
 }
 
 /// Generate `visit_*` method and `walk_*` function for a struct.
@@ -261,6 +375,8 @@ fn generate_struct_visitor(
     schema: &Schema,
     visit_methods: &mut TokenStream,
     walk_fns: &mut TokenStream,
+    visit_mut_methods: &mut TokenStream,
+    walk_mut_fns: &mut TokenStream,
 ) {
     // Exit if this struct is not visited by `VisitJs` (not visited at all, or a pure-type TS node)
     if !struct_is_visited(struct_def, schema) {
@@ -284,18 +400,24 @@ fn generate_struct_visitor(
         })
         .unzip();
 
-    visit_methods.extend(quote! {
-        ///@@line_break
-        #[inline]
-        fn #visit_fn_ident(&mut self, it: &#struct_ty #extra_params) {
-            #walk_fn_ident(self, it #extra_args);
+    let gen_visit_fn = |reference| {
+        quote! {
+            ///@@line_break
+            #[inline]
+            fn #visit_fn_ident(&mut self, it: #reference #struct_ty #extra_params) {
+                #walk_fn_ident(self, it #extra_args);
+            }
         }
-    });
+    };
+    visit_methods.extend(gen_visit_fn(quote!(&)));
+    visit_mut_methods.extend(gen_visit_fn(quote!(&mut)));
 
-    // Generate `enter_node` / `leave_node` calls (if this struct has an `AstKind`)
+    // Generate `enter_node` / `leave_node` calls (if this struct has an `AstKind` / `AstType`)
     let struct_ident = struct_def.ident();
     let has_kind = struct_def.kind.has_kind;
     let (enter_node, leave_node) = generate_enter_and_leave_node(&struct_ident, has_kind, false);
+    let (enter_node_mut, leave_node_mut) =
+        generate_enter_and_leave_node(&struct_ident, has_kind, true);
 
     // Generate `enter_scope` / `leave_scope` calls (if this struct has a scope)
     let (mut scope_entry, mut scope_exit) = if let Some(scope) = &struct_def.visit.scope {
@@ -323,8 +445,9 @@ fn generate_struct_visitor(
     // Generate `visit_*` calls for struct fields, skipping TS-typed fields
     let mut field_visits_count = 0usize;
     let mut field_visits = TokenStream::new();
+    let mut field_visits_mut = TokenStream::new();
     for (field_index, field) in struct_def.fields.iter().enumerate() {
-        if let Some(visit) = generate_struct_field_visit(
+        if let Some((visit, visit_mut)) = generate_struct_field_visit(
             field,
             field_index,
             &mut scope_entry,
@@ -332,16 +455,19 @@ fn generate_struct_visitor(
             schema,
         ) {
             field_visits.extend(visit);
+            field_visits_mut.extend(visit_mut);
             field_visits_count += 1;
         }
     }
 
     // If didn't enter or exit scope already, enter/exit after last field
     if let Some((_, enter_scope)) = scope_entry {
-        field_visits.extend(enter_scope);
+        field_visits.extend(enter_scope.clone());
+        field_visits_mut.extend(enter_scope);
     }
     if let Some((_, leave_scope)) = scope_exit {
-        field_visits.extend(leave_scope);
+        field_visits.extend(leave_scope.clone());
+        field_visits_mut.extend(leave_scope);
     }
 
     let maybe_inline_attr =
@@ -356,6 +482,19 @@ fn generate_struct_visitor(
             #leave_node
         }
     });
+    walk_mut_fns.extend(quote! {
+        ///@@line_break
+        #maybe_inline_attr
+        pub fn #walk_fn_ident<'a, V: VisitJsMut<'a>>(
+            visitor: &mut V,
+            it: &mut #struct_ty
+            #extra_params,
+        ) {
+            #enter_node_mut
+            #field_visits_mut
+            #leave_node_mut
+        }
+    });
 }
 
 /// Generate visitor call for a struct field, or `None` if the field is not visited by `VisitJs`.
@@ -367,7 +506,7 @@ fn generate_struct_field_visit(
     scope_entry: &mut Option<(usize, TokenStream)>,
     scope_exit: &mut Option<(usize, TokenStream)>,
     schema: &Schema,
-) -> Option<TokenStream> {
+) -> Option<(TokenStream, TokenStream)> {
     let field_type = field.type_def(schema);
 
     // Skip fields whose innermost type is a TS type node `VisitJs` doesn't visit
@@ -378,7 +517,7 @@ fn generate_struct_field_visit(
     }
 
     let field_ident = field.ident();
-    let JsVisit(mut visit) = generate_visit_type(
+    let JsVisitAndMut { mut visit, mut visit_mut } = generate_visit_type(
         field_type,
         &Target::Property(quote!( it.#field_ident )),
         &field.visit.visit_args,
@@ -395,6 +534,7 @@ fn generate_struct_field_visit(
     {
         let (_, leave_scope) = scope_exit.take().unwrap();
         visit = quote!( #leave_scope #visit );
+        visit_mut = quote!( #leave_scope #visit_mut );
     }
 
     if let Some((enter_index, _)) = scope_entry
@@ -402,9 +542,10 @@ fn generate_struct_field_visit(
     {
         let (_, enter_scope) = scope_entry.take().unwrap();
         visit = quote!( #enter_scope #visit );
+        visit_mut = quote!( #enter_scope #visit_mut );
     }
 
-    Some(visit)
+    Some((visit, visit_mut))
 }
 
 /// Generate `visit_*` method and `walk_*` function for an enum.
@@ -413,6 +554,8 @@ fn generate_enum_visitor(
     schema: &Schema,
     visit_methods: &mut TokenStream,
     walk_fns: &mut TokenStream,
+    visit_mut_methods: &mut TokenStream,
+    walk_mut_fns: &mut TokenStream,
 ) {
     // Exit if this enum is not visited by `VisitJs`
     if !enum_is_visited(enum_def, schema) {
@@ -424,21 +567,26 @@ fn generate_enum_visitor(
     let visit_fn_ident = visitor_names.visitor_ident();
     let walk_fn_ident = visitor_names.walk_ident();
 
-    visit_methods.extend(quote! {
-        ///@@line_break
-        #[inline]
-        fn #visit_fn_ident(&mut self, it: &#enum_ty) {
-            #walk_fn_ident(self, it);
+    let gen_visit_fn = |reference| {
+        quote! {
+            ///@@line_break
+            #[inline]
+            fn #visit_fn_ident(&mut self, it: #reference #enum_ty) {
+                #walk_fn_ident(self, it);
+            }
         }
-    });
+    };
+    visit_methods.extend(gen_visit_fn(quote!(&)));
+    visit_mut_methods.extend(gen_visit_fn(quote!(&mut)));
 
     let enum_ident = enum_def.ident();
     let (enter_node, leave_node) = generate_enter_and_leave_node(&enum_ident, false, false);
+    let (enter_node_mut, leave_node_mut) = generate_enter_and_leave_node(&enum_ident, false, true);
 
     let mut match_arm_count = 0usize;
 
     // Own variants, skipping those whose inner type is a TS type node
-    let variant_match_arms = enum_def
+    let (variant_match_arms, variant_match_arms_mut): (TokenStream, TokenStream) = enum_def
         .variants
         .iter()
         .filter_map(|variant| {
@@ -446,7 +594,7 @@ fn generate_enum_visitor(
             if !innermost_is_visited(variant_type, schema) {
                 return None;
             }
-            let JsVisit(visit) = generate_visit_type(
+            let JsVisitAndMut { visit, visit_mut } = generate_visit_type(
                 variant_type,
                 &Target::Reference(create_ident_tokens("it")),
                 &variant.visit.visit_args,
@@ -459,12 +607,13 @@ fn generate_enum_visitor(
             match_arm_count += 1;
 
             let variant_ident = variant.ident();
-            Some(quote!( #enum_ident::#variant_ident(it) => #visit, ))
+            let match_pattern = quote!( #enum_ident::#variant_ident(it) );
+            Some((quote!( #match_pattern => #visit, ), quote!( #match_pattern => #visit_mut, )))
         })
-        .collect::<TokenStream>();
+        .unzip();
 
     // Inherited enums, skipping any which `VisitJs` doesn't visit
-    let inherits_match_arms = enum_def
+    let (inherits_match_arms, inherits_match_arms_mut): (TokenStream, TokenStream) = enum_def
         .inherits_enums(schema)
         .filter_map(|inherits_type| {
             let inner_visit_fn_ident = inherits_type.visit.visitor_ident()?;
@@ -477,11 +626,17 @@ fn generate_enum_visitor(
             let inherits_snake_name = inherits_type.snake_name();
             let match_ident = format_ident!("match_{inherits_snake_name}");
             let to_fn_ident = format_ident!("to_{inherits_snake_name}");
-            Some(quote! {
-                #match_ident!(#enum_ident) => visitor.#inner_visit_fn_ident(it.#to_fn_ident()),
-            })
+            let to_fn_ident_mut = format_ident!("to_{inherits_snake_name}_mut");
+            Some((
+                quote! {
+                    #match_ident!(#enum_ident) => visitor.#inner_visit_fn_ident(it.#to_fn_ident()),
+                },
+                quote! {
+                    #match_ident!(#enum_ident) => visitor.#inner_visit_fn_ident(it.#to_fn_ident_mut()),
+                },
+            ))
         })
-        .collect::<TokenStream>();
+        .unzip();
 
     // Add catch-all match arm if not all variants are visited
     let catch_all_match_arm = if match_arm_count < enum_def.variants.len() + enum_def.inherits.len()
@@ -507,6 +662,19 @@ fn generate_enum_visitor(
             #leave_node
         }
     });
+    walk_mut_fns.extend(quote! {
+        ///@@line_break
+        #maybe_inline_attr
+        pub fn #walk_fn_ident<'a, V: VisitJsMut<'a>>(visitor: &mut V, it: &mut #enum_ty) {
+            #enter_node_mut
+            match it {
+                #variant_match_arms_mut
+                #inherits_match_arms_mut
+                #catch_all_match_arm
+            }
+            #leave_node_mut
+        }
+    });
 }
 
 /// Generate `visit_*` method and `walk_*` function for a `Vec`.
@@ -515,6 +683,8 @@ fn generate_vec_visitor(
     schema: &Schema,
     visit_methods: &mut TokenStream,
     walk_fns: &mut TokenStream,
+    visit_mut_methods: &mut TokenStream,
+    walk_mut_fns: &mut TokenStream,
 ) {
     // Exit if this `Vec` does not have its own visitor, or its element type is not visited by `VisitJs`
     let Some(visitor_names) = &vec_def.visit.visitor_names else { return };
@@ -527,13 +697,17 @@ fn generate_vec_visitor(
     let visit_fn_ident = visitor_names.visitor_ident();
     let walk_fn_ident = visitor_names.walk_ident();
 
-    visit_methods.extend(quote! {
-        ///@@line_break
-        #[inline]
-        fn #visit_fn_ident(&mut self, it: &#vec_ty) {
-            #walk_fn_ident(self, it);
+    let gen_visit_fn = |reference| {
+        quote! {
+            ///@@line_break
+            #[inline]
+            fn #visit_fn_ident(&mut self, it: #reference #vec_ty) {
+                #walk_fn_ident(self, it);
+            }
         }
-    });
+    };
+    visit_methods.extend(gen_visit_fn(quote!(&)));
+    visit_mut_methods.extend(gen_visit_fn(quote!(&mut)));
 
     let inner_visit_fn_ident = match inner_type {
         TypeDef::Struct(struct_def) => struct_def.visit.visitor_ident().unwrap(),
@@ -546,32 +720,48 @@ fn generate_vec_visitor(
     let is_arguments_vec =
         matches!(inner_type, TypeDef::Enum(enum_def) if enum_def.name() == "Argument");
 
-    let loop_body = if is_arguments_vec {
-        quote! {
-            for el in it {
-                match el {
-                    oxc_ast::ast::Argument::SpreadElement(spread) => {
-                        visitor.visit_spread_element(spread);
-                    }
-                    _ => {
-                        visitor.visit_expression(el.to_expression());
+    let gen_loop_body = |is_mut| {
+        if is_arguments_vec {
+            let to_expression = if is_mut {
+                format_ident!("to_expression_mut")
+            } else {
+                format_ident!("to_expression")
+            };
+            quote! {
+                for el in it {
+                    match el {
+                        oxc_ast::ast::Argument::SpreadElement(spread) => {
+                            visitor.visit_spread_element(spread);
+                        }
+                        _ => {
+                            visitor.visit_expression(el.#to_expression());
+                        }
                     }
                 }
             }
-        }
-    } else {
-        quote! {
-            for el in it {
-                visitor.#inner_visit_fn_ident(el);
+        } else {
+            quote! {
+                for el in it {
+                    visitor.#inner_visit_fn_ident(el);
+                }
             }
         }
     };
+    let loop_body = gen_loop_body(false);
+    let loop_body_mut = gen_loop_body(true);
 
     walk_fns.extend(quote! {
         ///@@line_break
         #[inline]
         pub fn #walk_fn_ident<'a, V: VisitJs<'a>>(visitor: &mut V, it: &#vec_ty) {
             #loop_body
+        }
+    });
+    walk_mut_fns.extend(quote! {
+        ///@@line_break
+        #[inline]
+        pub fn #walk_fn_ident<'a, V: VisitJsMut<'a>>(visitor: &mut V, it: &mut #vec_ty) {
+            #loop_body_mut
         }
     });
 }
