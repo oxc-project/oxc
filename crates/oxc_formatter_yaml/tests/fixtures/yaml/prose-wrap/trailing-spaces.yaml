@@ -1,0 +1,9 @@
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  

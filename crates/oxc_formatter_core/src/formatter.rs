@@ -87,7 +87,7 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     }
 
     /// Interns a builder's heap accumulator, moving it into the arena exactly-sized.
-    /// The source is emptied, retaining its capacity (returned to the cache when the scratch drops).
+    /// The source is emptied.
     pub fn intern_elements(
         &self,
         elements: &mut ScratchBuffer<'ast>,

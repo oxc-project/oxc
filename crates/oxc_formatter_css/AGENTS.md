@@ -10,8 +10,9 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
   - `format()`: standalone files (returns a printable `Formatted`)
   - `format_to_ir()`: embedded use via the dispatcher (e.g. css-in-js);
     tolerates `${}` placeholders and `TopLevelDeclaration`
-- The canonical reference is Prettier's `src/language-css/printer-postcss.js`
-  - port its layout decisions, do not invent new ones
+- The canonical reference is Prettier's OUTPUT (the conformance snapshots); its source is an analysis aid, not a porting target
+  - match its layout decisions, do not invent new ones
+  - never mirror its internal logic 1:1: pin behavior with fixtures, and keep implementation details of Prettier's code out of comments
   - ONE exception: never reproduce output that changes program semantics
     - See "Known divergences" section
 

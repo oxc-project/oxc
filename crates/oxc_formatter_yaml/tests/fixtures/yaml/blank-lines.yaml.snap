@@ -1,0 +1,69 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# (normalized to one) for every node kind alike, and never invented.
+- a
+- b
+
+
+
+# blank above is kept (and collapsed), even after a sequence
+---
+{ flow: mapping }
+
+---
+scalar doc
+
+
+# blank above a trailing comment is kept for scalars too
+---
+literal: |
+  text
+# no blank is invented between a block scalar and this comment
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# (normalized to one) for every node kind alike, and never invented.
+- a
+- b
+
+# blank above is kept (and collapsed), even after a sequence
+---
+{ flow: mapping }
+
+---
+scalar doc
+
+# blank above a trailing comment is kept for scalars too
+---
+literal: |
+  text
+# no blank is invented between a block scalar and this comment
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# (normalized to one) for every node kind alike, and never invented.
+- a
+- b
+
+# blank above is kept (and collapsed), even after a sequence
+---
+{ flow: mapping }
+
+---
+scalar doc
+
+# blank above a trailing comment is kept for scalars too
+---
+literal: |
+  text
+# no blank is invented between a block scalar and this comment
+
+===================== End =====================

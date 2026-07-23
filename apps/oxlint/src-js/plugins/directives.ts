@@ -36,18 +36,23 @@ const LABEL_PATTERN =
 const LINE_DIRECTIVE_PATTERN = /^(?:eslint|oxlint)-disable-(?:-next)?-line$/u;
 const JUSTIFICATION_SEP_PATTERN = /\s-{2,}\s/u;
 
-export function getDisableDirectives() {
+export function getDisableDirectives(): { problems: Problem[]; directives: Directive[] } {
   const problems: Problem[] = [];
   const directives: Directive[] = [];
 
-  getAllComments().forEach((comment) => {
-    if (comment.type === "Shebang") return;
+  const comments = getAllComments();
+
+  // Skip `Shebang` comment
+  let i = comments.length > 0 && comments[0].type === "Shebang" ? 1 : 0;
+
+  for (; i < comments.length; i++) {
+    const comment = comments[i];
 
     let match = LABEL_PATTERN.exec(comment.value);
-    if (!match?.groups?.label) return;
+    if (!match?.groups?.label) continue;
 
     // Only some comment types are supported as line comments
-    if (comment.type === "Line" && LINE_DIRECTIVE_PATTERN.test(match.groups.label)) return;
+    if (comment.type === "Line" && LINE_DIRECTIVE_PATTERN.test(match.groups.label)) continue;
 
     const { label } = match.groups;
 
@@ -61,7 +66,7 @@ export function getDisableDirectives() {
         message: `${label} comment should not span multiple lines.`,
         loc: comment.loc,
       });
-      return;
+      continue;
     }
 
     const rest = comment.value.slice(match[0].length).trim();
@@ -78,7 +83,7 @@ export function getDisableDirectives() {
       value,
       justification,
     });
-  });
+  }
 
   return { problems, directives };
 }
