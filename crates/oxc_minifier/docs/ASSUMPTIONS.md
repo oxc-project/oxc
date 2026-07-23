@@ -192,17 +192,27 @@ serialize((x) => {
 When property-name mangling is enabled, code does not access selected properties through an
 arbitrary runtime string. Quoted syntax is handled per occurrence: it remains unchanged unless
 `mangle_quoted` is enabled, while an unquoted occurrence of the same spelling may be renamed.
+No-substitution template keys follow the same quoted rule; interpolated templates are not
+rewritten.
 
 ```javascript
 obj._field; // eligible when `include` matches
 obj["_field"]; // kept unless quoted mangling is enabled
+obj[`_field`]; // also kept unless quoted mangling is enabled
 obj[keyFromNetwork]; // cannot be updated safely
 ```
 
 Use `exclude`, `reserved`, or a `false` cache entry for public/reflected names. A leading
 `/* @__KEY__ */` or `/* #__KEY__ */` annotation marks a string or no-substitution template as a
-property name. Numeric spellings, template-literal keys without an annotation, `__proto__`,
-`constructor`, and `prototype` are never mangled.
+property name. Numeric spellings, `__proto__`, `constructor`, and `prototype` are never mangled.
+
+Property mangling does not inspect source strings evaluated by direct `eval` or the `Function`
+constructor, and it does not bail out inside a `with` statement. Matching names reached through
+these dynamic mechanisms must be excluded or reserved explicitly.
+
+Property rewriting runs before compression. Computed keys that compression later materializes,
+such as `['f' + 'oo_']`, are not revisited and can diverge from an eligible `obj.foo_` occurrence.
+Exclude or reserve property names that are constructed this way.
 
 Property mangling does not currently make TypeScript enum member names safe. This matches
 esbuild: enum lowering emits both property accesses and quoted reverse-mapping strings that cannot

@@ -270,7 +270,7 @@ impl<'o> PropertyCollector<'o> {
                 if let [quasi] = template.quasis.as_slice()
                     && let Some(cooked) = quasi.value.cooked
                 {
-                    self.occupy(cooked.as_str());
+                    self.quoted(cooked.as_str());
                 }
             }
             Expression::ConditionalExpression(expression) => {
@@ -497,14 +497,7 @@ impl<'a> PropertyRewriter<'a, '_> {
     fn rename_key_expression(&mut self, expression: &mut Expression<'a>) {
         match expression.get_inner_expression_mut() {
             Expression::StringLiteral(literal) => self.rename_string_literal(literal, true),
-            Expression::TemplateLiteral(template)
-                if self.key_annotated.contains(&template.span.start)
-                    || self
-                        .provenance
-                        .is_some_and(|origins| origins.contains_key(&template.span)) =>
-            {
-                self.rename_template_literal(template, true);
-            }
+            Expression::TemplateLiteral(template) => self.rename_template_literal(template, true),
             Expression::ConditionalExpression(expression) => {
                 self.rename_key_expression(&mut expression.consequent);
                 self.rename_key_expression(&mut expression.alternate);

@@ -86,6 +86,17 @@ fn quoted_behavior_is_per_occurrence() {
 }
 
 #[test]
+fn mangle_quoted_rewrites_no_substitution_template_keys() {
+    let mut quoted = options("^_");
+    quoted.mangle_quoted = true;
+    test(
+        "obj[`_foo`] = 1; obj._foo = 2; `_foo` in obj; ({ [`_foo`]: 3 }); obj[`${suffix}_foo`]; use(`_foo`);",
+        "obj[`e`] = 1; obj.e = 2; `e` in obj; ({ [`e`]: 3 }); obj[`${suffix}_foo`]; use(`_foo`);",
+        quoted,
+    );
+}
+
+#[test]
 fn optional_chain_properties_are_rewritten_consistently() {
     test(
         "x._foo; x._foo?.(); x?._foo; x?._foo(); x?._foo._bar; x?._foo._bar();",
@@ -260,12 +271,12 @@ fn reserved_names_are_not_automatic_outputs() {
 }
 
 #[test]
-fn numeric_spellings_and_template_keys_are_never_mangled() {
+fn numeric_spellings_are_never_mangled_and_template_keys_follow_quoted() {
     let mut options = options(".");
     options.mangle_quoted = true;
     test(
         "obj['0']; obj[0]; obj[`template`]; obj.regular;",
-        "obj['0']; obj[0]; obj[`template`]; obj.e;",
+        "obj['0']; obj[0]; obj[`t`]; obj.e;",
         options,
     );
 }
