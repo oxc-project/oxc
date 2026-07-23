@@ -25,6 +25,7 @@ fn main() {
         TestLanguage::Css,
         TestLanguage::Scss,
         TestLanguage::Less,
+        TestLanguage::Yaml,
     ] {
         TestRunner::new(TestRunnerOptions { language, debug, filter: filter.clone() }).run();
     }

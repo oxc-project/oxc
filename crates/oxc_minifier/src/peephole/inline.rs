@@ -117,20 +117,20 @@ impl<'a> PeepholeOptimizations {
         {
             return false;
         }
-        // `body_unsafe` is set by a preceding non-declarative statement, and the
-        // program root additionally starts unsafe when the module has loaders
-        // (see `enter_program`) — so this one check covers the cyclic-import gate.
-        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
-        if body_unsafe || ctx.current_scope_id() != body_scope {
+        // `hoisted_var_inlining_unsafe` is set by a preceding non-declarative
+        // statement. The program root additionally starts unsafe when the module
+        // has loaders (see `enter_program`), covering the cyclic-import gate.
+        let frame = ctx.state.body_frames.last();
+        if frame.hoisted_var_inlining_unsafe || ctx.current_scope_id() != frame.scope_id {
             return false;
         }
         // At least one read, and every read crosses a function boundary.
         let mut reads = ctx.scoping().get_resolved_references(symbol_id).filter(|r| r.is_read());
         let Some(first) = reads.next() else { return false };
-        if !Self::read_crosses_function_boundary(first.scope_id(), body_scope, ctx) {
+        if !Self::read_crosses_function_boundary(first.scope_id(), frame.scope_id, ctx) {
             return false;
         }
-        reads.all(|read| Self::read_crosses_function_boundary(read.scope_id(), body_scope, ctx))
+        reads.all(|read| Self::read_crosses_function_boundary(read.scope_id(), frame.scope_id, ctx))
     }
 
     /// Classify the fresh value an expression creates (a value that cannot alias

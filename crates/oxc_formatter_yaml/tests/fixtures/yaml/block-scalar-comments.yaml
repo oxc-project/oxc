@@ -1,0 +1,13 @@
+# An own-line comment after an item whose LAST DESCENDANT (not direct content)
+# is a block scalar must lead the next item — never be absorbed into the
+# scalar's content as a same-line comment (that would change the parsed value).
+steps:
+  - restore-keys: |
+      store-
+  # leads the next sequence item
+  - name: next
+nested:
+  inner: |
+    text
+# leads the next mapping item
+after: 1

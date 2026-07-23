@@ -11,8 +11,9 @@ Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc
   - `format_to_ir()`: embedded use via the dispatcher (e.g. graphql-in-js);
     allocates from the shared `EmbeddedContext` arena, emits no BOM / trailing newline,
     and leaves `propagate_expand()` to the parent document
-- The canonical reference is Prettier's `src/language-graphql/printer-graphql.js`
-  - port its layout decisions, do not invent new ones
+- The canonical reference is Prettier's OUTPUT (the conformance snapshots); its source is an analysis aid, not a porting target
+  - match its layout decisions, do not invent new ones
+  - never mirror its internal logic 1:1: pin behavior with fixtures, and keep implementation details of Prettier's code out of comments
 
 ### Forked parser
 

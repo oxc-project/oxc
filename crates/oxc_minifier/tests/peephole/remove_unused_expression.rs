@@ -87,6 +87,15 @@ fn test_remove_unused_this() {
         "export class A extends B { constructor() { class C { constructor() {} } super(); } }",
     );
 
+    // A nested class's computed key uses the outer constructor's `this`, so a
+    // bare access before `super()` must not be dropped.
+    test_same(
+        "export class A extends B { constructor() {
+            class C { [(this, f())]() {} }
+            super();
+        } }",
+    );
+
     // In all other positions `this` is always initialized and can be dropped.
     test("{ this; }", "");
     test("export class Foo { foo() { this; } }", "export class Foo { foo() {} }");

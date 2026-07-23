@@ -11,9 +11,12 @@ code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 18, character: 0 }, end: Position { line: 18, character: 9 } }
-related_information[0].message: ""
+related_information[0].message: "This unhandled promise-like value has type `Promise<unknown>`."
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts"
 related_information[0].location.range: Range { start: Position { line: 18, character: 0 }, end: Position { line: 18, character: 9 } }
+related_information[1].message: ""
+related_information[1].location.uri: "file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts"
+related_information[1].location.range: Range { start: Position { line: 18, character: 0 }, end: Position { line: 18, character: 9 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
@@ -22,9 +25,12 @@ code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 38, character: 0 }, end: Position { line: 38, character: 18 } }
-related_information[0].message: ""
+related_information[0].message: "This unhandled promise-like value has type `Promise<number>`."
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts"
 related_information[0].location.range: Range { start: Position { line: 38, character: 0 }, end: Position { line: 38, character: 18 } }
+related_information[1].message: ""
+related_information[1].location.uri: "file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts"
+related_information[1].location.range: Range { start: Position { line: 38, character: 0 }, end: Position { line: 38, character: 18 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None

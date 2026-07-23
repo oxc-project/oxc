@@ -73,6 +73,22 @@ impl<'a> PassChanges<'a> {
     }
 }
 
+/// State associated with one enclosing function body or the program root.
+pub struct BodyFrame {
+    /// Semantic scope containing the body's top-level statements.
+    pub scope_id: ScopeId,
+
+    /// Whether a preceding statement could observe a later hoisted variable
+    /// before its initializer runs. The program root also starts unsafe when a
+    /// module loader could expose its bindings through a cycle.
+    pub hoisted_var_inlining_unsafe: bool,
+
+    /// Source offset after the first unconditional top-level `super()` call,
+    /// used to distinguish initialized and uninitialized derived-constructor
+    /// `this` accesses.
+    pub this_initialized_at: Option<u32>,
+}
+
 pub struct MinifierState<'a> {
     /// Source semantics, compression options, and pipeline selection fixed for
     /// the lifetime of this run.
@@ -88,15 +104,8 @@ pub struct MinifierState<'a> {
     pub private_member_usage: PrivateMemberUsageStack<'a>,
 
     /// One frame per enclosing function body (program root at the bottom).
-    /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
-    /// `var x = <literal>;` whose declarator sits at `body_scope` is safe to
-    /// inline despite hoisting. A preceding non-declarative statement sets it;
-    /// the program root additionally starts unsafe when the module has any
-    /// loader (`import` / `export … from` / `export * from`), since a cyclic
-    /// importer could observe a not-yet-assigned binding our exports close over.
-    /// Pushed by `enter_function_body`, popped by `exit_function_body`. See
-    /// `init_symbol_value`.
-    pub body_unsafe_stack: NonEmptyStack<(ScopeId, bool)>,
+    /// Pushed by `enter_function_body` and popped by `exit_function_body`.
+    pub body_frames: NonEmptyStack<BodyFrame>,
 
     /// Per-pass change accumulator populated by typed mutation helpers and
     /// consumed by `compression_pass` after Normalize and every peephole pass.
@@ -120,7 +129,11 @@ impl<'a> MinifierState<'a> {
             config: CompressionConfig { source_type, options, mode },
             symbols,
             private_member_usage: PrivateMemberUsageStack::new(),
-            body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
+            body_frames: NonEmptyStack::new(BodyFrame {
+                scope_id: scoping.root_scope_id(),
+                hoisted_var_inlining_unsafe: false,
+                this_initialized_at: None,
+            }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
         }

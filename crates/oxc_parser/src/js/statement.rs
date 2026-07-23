@@ -754,9 +754,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
                 // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                self.error(diagnostics::using_declaration_not_allowed_in_switch_bare_case(
-                    stmt.span(),
-                ));
+                self.error(if var_decl.kind.is_await() {
+                    diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
+                        stmt.span(),
+                    )
+                } else {
+                    diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
+                });
             }
             consequent.push(stmt);
         }

@@ -601,7 +601,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Object
             | Kind::Star
             | Kind::Question
-            | Kind::Break
+            | Kind::Bang
             | Kind::Dot3
             | Kind::Infer
             | Kind::Import

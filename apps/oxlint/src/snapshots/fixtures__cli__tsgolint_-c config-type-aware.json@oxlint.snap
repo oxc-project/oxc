@@ -10,7 +10,8 @@ working directory: fixtures/cli/tsgolint
    ,-[no-floating-promises.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
-   : ^^^^^^^^
+   : ^^^|^^^^
+   :    `-- This unhandled promise-like value has type `Promise<unknown>`.
  3 | 
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
@@ -26,7 +27,8 @@ working directory: fixtures/cli/tsgolint
   ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[prefer-promise-reject-errors.ts:1:1]
  1 | Promise.reject('error');
-   : ^^^^^^^^^^^^^^^^^^^^^^^^
+   : ^^^^^^^^^^^|^^^^^^^^^^^^
+   :            `-- This unhandled promise-like value has type `Promise<never>`.
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 

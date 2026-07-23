@@ -530,18 +530,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Whether an expression is or contains a `super()` call at the top level
-    /// (i.e., in a sequence expression, but not nested inside conditionals/functions).
-    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
-        match expr {
-            _ if expr.is_super_call_expression() => true,
-            Expression::SequenceExpression(seq) => {
-                seq.expressions.iter().any(Expression::is_super_call_expression)
-            }
-            _ => false,
-        }
-    }
-
     fn handle_expression_statement(
         mut expr_stmt: ArenaBox<'a, ExpressionStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -560,7 +548,7 @@ impl<'a> PeepholeOptimizations {
         // Only consider top-level expression statements — `super()` inside `if`/loops
         // is conditional and doesn't guarantee `this` is initialized.
         if matches!(expr_stmt.expression, Expression::ThisExpression(_))
-            && Self::this_is_inside_derived_constructor(ctx)
+            && Self::derived_constructor_this_scope(ctx).is_some()
             && result.iter().rev().any(|stmt| {
                 matches!(
                     stmt,
@@ -845,25 +833,24 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                let mut optimize_implicit_jump = false;
-                // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
-                // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                if ctx.ancestors().nth(1).is_some_and(|v| {
-                    v.is_for_statement() || v.is_for_in_statement() || v.is_for_of_statement()
-                }) && let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent
-                    && continue_stmt.label.is_none()
-                {
-                    optimize_implicit_jump = true;
-                }
+                let optimize_implicit_jump = match &if_stmt.consequent {
+                    // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
+                    // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
+                    Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
+                        ctx.ancestors().nth(1).is_some_and(|v| {
+                            v.is_for_statement()
+                                || v.is_for_in_statement()
+                                || v.is_for_of_statement()
+                        })
+                    }
+                    // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
+                    // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
+                    Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
+                        ctx.parent().is_function_body()
+                    }
+                    _ => false,
+                };
 
-                // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
-                // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
-                if ctx.parent().is_function_body()
-                    && let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent
-                    && return_stmt.argument.is_none()
-                {
-                    optimize_implicit_jump = true;
-                }
                 if optimize_implicit_jump {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.

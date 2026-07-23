@@ -4,11 +4,10 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_compat::ESFeature;
-use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{
     BoundNames, ToJsString, ToNumber,
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
-    side_effects::MayHaveSideEffects,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, is_typed_array_constructor},
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
@@ -1626,7 +1625,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &TraverseCtx<'a>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
-        if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
+        if !is_typed_array_constructor(name) || !ctx.is_global_reference(ident) {
             return;
         }
         if e.arguments.len() == 1
@@ -1866,26 +1865,6 @@ impl<'a> PeepholeOptimizations {
             });
             has_same_name
         })
-    }
-
-    /// Whether the name matches any TypedArray name.
-    ///
-    /// See <https://tc39.es/ecma262/multipage/indexed-collections.html#sec-typedarray-objects> for the list of TypedArrays.
-    fn is_typed_array_name(name: &str) -> bool {
-        matches!(
-            name,
-            "Int8Array"
-                | "Uint8Array"
-                | "Uint8ClampedArray"
-                | "Int16Array"
-                | "Uint16Array"
-                | "Int32Array"
-                | "Uint32Array"
-                | "Float32Array"
-                | "Float64Array"
-                | "BigInt64Array"
-                | "BigUint64Array"
-        )
     }
 
     /// Whether the expression's result will be discarded — bare expression

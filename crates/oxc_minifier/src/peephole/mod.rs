@@ -24,7 +24,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
-use crate::{Traverse, TraverseCtx};
+use crate::{Traverse, TraverseCtx, state::BodyFrame};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -125,10 +125,27 @@ impl<'a> PeepholeOptimizations {
     /// prelude. No-op if the flag is already set, or if `current_scope_id` is
     /// some inner scope (a block/for/etc.) — those don't end the prelude.
     fn mark_current_body_unsafe(ctx: &mut TraverseCtx<'a>) {
-        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
-        if !body_unsafe && body_scope == ctx.current_scope_id() {
-            ctx.state.body_unsafe_stack.last_mut().1 = true;
+        let current_scope_id = ctx.current_scope_id();
+        let frame = ctx.state.body_frames.last_mut();
+        if !frame.hoisted_var_inlining_unsafe && frame.scope_id == current_scope_id {
+            frame.hoisted_var_inlining_unsafe = true;
         }
+    }
+
+    /// End offset of the first unconditional `super()` call in an expression.
+    /// A sequence remains unconditional, but nested conditionals and functions do not.
+    fn unconditional_super_call_end(expr: &Expression<'a>) -> Option<u32> {
+        match expr {
+            Expression::CallExpression(call) if call.callee.is_super() => Some(call.span.end),
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().find_map(Self::unconditional_super_call_end)
+            }
+            _ => None,
+        }
+    }
+
+    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
+        Self::unconditional_super_call_end(expr).is_some()
     }
 
     /// Checks if a member expression's base object may be mutated.
@@ -232,7 +249,28 @@ impl<'a> PeepholeOptimizations {
     fn member_part_blocks_reorder(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match expr {
             Expression::Identifier(id) => Self::identifier_read_blocks_reorder(id, ctx),
-            Expression::ThisExpression(_) => false,
+            Expression::ThisExpression(this_expr) => {
+                let Some(this_scope) = Self::derived_constructor_this_scope(ctx) else {
+                    return false;
+                };
+                // Parameter defaults are visited before their function body, so a missing
+                // owner frame means this derived constructor's `this` is uninitialized.
+                let Some(owner_index) =
+                    ctx.state.body_frames.iter().rposition(|frame| frame.scope_id == this_scope)
+                else {
+                    return true;
+                };
+                // Source offsets stand in for execution order here. This assumes upstream
+                // transforms do not reorder `super()` and `this` without updating their spans;
+                // the current Rolldown and oxc-minify pipelines satisfy this assumption.
+                // Arrow body frames above the owner share its lexical `this`, so `super()`
+                // in any of those frames initializes the same binding.
+                !ctx.state.body_frames[owner_index..].iter().any(|frame| {
+                    frame
+                        .this_initialized_at
+                        .is_some_and(|initialized_at| this_expr.span.start >= initialized_at)
+                })
+            }
             _ => true,
         }
     }
@@ -279,18 +317,35 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // `enter`/`exit_function_body` are balanced, so the stack is back to its
         // single program-root entry by the next pass; reset it in place rather
         // than reallocating (matching the `reset`/`clear` above).
-        *ctx.state.body_unsafe_stack.last_mut() =
-            (ctx.scoping().root_scope_id(), module_has_loaders);
+        *ctx.state.body_frames.last_mut() = BodyFrame {
+            scope_id: ctx.scoping().root_scope_id(),
+            hoisted_var_inlining_unsafe: module_has_loaders,
+            this_initialized_at: None,
+        };
         // `PassChanges` is managed by pass completion, not reset per
         // traversal.
     }
 
-    fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.body_unsafe_stack.push((ctx.current_scope_id(), false));
+    fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        let initialized_at = if Self::derived_constructor_this_scope(ctx).is_some() {
+            body.statements.iter().find_map(|stmt| match stmt {
+                Statement::ExpressionStatement(stmt) => {
+                    Self::unconditional_super_call_end(&stmt.expression)
+                }
+                _ => None,
+            })
+        } else {
+            None
+        };
+        ctx.state.body_frames.push(BodyFrame {
+            scope_id: ctx.current_scope_id(),
+            hoisted_var_inlining_unsafe: false,
+            this_initialized_at: initialized_at,
+        });
     }
 
     fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.body_unsafe_stack.pop();
+        ctx.state.body_frames.pop();
     }
 
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
