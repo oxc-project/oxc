@@ -171,7 +171,7 @@ const resetCommentLoc = resetCommentLocTemp!;
 export function initComments(): void {
   debugAssert(comments === null, "Comments already deserialized");
 
-  if (!allCommentsDeserialized) deserializeComments();
+  if (allCommentsDeserialized === false) deserializeComments();
 
   // `initCommentsBuffer` (called by `deserializeComments`) sets `comments` for zero-comment files
   if (comments !== null) return;
@@ -198,7 +198,7 @@ export function initComments(): void {
  * Does NOT build the `comments` array - use `initComments` for that.
  */
 export function deserializeComments(): void {
-  debugAssert(!allCommentsDeserialized, "Comments already deserialized");
+  debugAssert(allCommentsDeserialized === false, "Comments already deserialized");
 
   if (commentsInt32 === null) initCommentsBuffer();
 
@@ -301,7 +301,7 @@ export function initCommentsBuffer(): void {
  */
 export function getComment(index: number): CommentType {
   // Skip all other checks if all comments have been deserialized
-  if (!allCommentsDeserialized) {
+  if (allCommentsDeserialized === false) {
     const comment = deserializeCommentIfNeeded(index);
 
     if (comment !== null) {

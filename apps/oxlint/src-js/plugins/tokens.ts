@@ -284,7 +284,7 @@ export const FLAG_DESERIALIZED = 1;
 export function initTokens(): void {
   debugAssert(tokens === null, "Tokens already initialized");
 
-  if (!allTokensDeserialized) deserializeTokens();
+  if (allTokensDeserialized === false) deserializeTokens();
 
   // Create `tokens` array as a slice of `cachedTokens` array.
   //
@@ -308,7 +308,7 @@ export function initTokens(): void {
  * Does NOT build the `tokens` array - use `initTokens` for that.
  */
 export function deserializeTokens(): void {
-  debugAssert(!allTokensDeserialized, "Tokens already deserialized");
+  debugAssert(allTokensDeserialized === false, "Tokens already deserialized");
 
   if (tokensInt32 === null) initTokensBuffer();
 
@@ -386,7 +386,7 @@ export function initTokensBuffer(): void {
  */
 export function getToken(index: number): TokenType {
   // Skip all other checks if all tokens have been deserialized
-  if (!allTokensDeserialized) {
+  if (allTokensDeserialized === false) {
     const token = deserializeTokenIfNeeded(index);
 
     if (token !== null) {
