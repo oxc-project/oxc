@@ -1,0 +1,104 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE: a flow collection either fits on one line or breaks normally;
+# a comment inside one breaks it (never Prettier's flat-with-newline form),
+# and it stays at its syntactic position.
+{"key" # trailing the key
+:value}
+---
+{["key"] # trailing a collection key (one pair, not two entries)
+:value}
+---
+{
+# own-line leading
+"key": value}
+---
+[a: b # trailing the value
+, c]
+---
+key: [ # kept inside the brackets
+  a,
+  b ]
+---
+[last, # comments before the closing bracket
+# become own-line end comments
+]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE: a flow collection either fits on one line or breaks normally;
+# a comment inside one breaks it (never Prettier's flat-with-newline form),
+# and it stays at its syntactic position.
+{
+  "key": # trailing the key
+    value,
+}
+---
+{
+  ["key"]: # trailing a collection key (one pair, not two entries)
+    value,
+}
+---
+{
+  # own-line leading
+  "key": value,
+}
+---
+[
+  a: b, # trailing the value
+  c,
+]
+---
+key: [
+    # kept inside the brackets
+    a,
+    b,
+  ]
+---
+[
+  last, # comments before the closing bracket
+  # become own-line end comments
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE: a flow collection either fits on one line or breaks normally;
+# a comment inside one breaks it (never Prettier's flat-with-newline form),
+# and it stays at its syntactic position.
+{
+  "key": # trailing the key
+    value,
+}
+---
+{
+  ["key"]: # trailing a collection key (one pair, not two entries)
+    value,
+}
+---
+{
+  # own-line leading
+  "key": value,
+}
+---
+[
+  a: b, # trailing the value
+  c,
+]
+---
+key: [
+    # kept inside the brackets
+    a,
+    b,
+  ]
+---
+[
+  last, # comments before the closing bracket
+  # become own-line end comments
+]
+
+===================== End =====================

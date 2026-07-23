@@ -1,0 +1,14 @@
+%YAML 1.2
+---
+head: with directive
+...
+# comment after an explicit end marker
+---
+plain doc
+---
+next: doc
+
+---
+# the `...` below is explicit and kept
+last: doc
+...

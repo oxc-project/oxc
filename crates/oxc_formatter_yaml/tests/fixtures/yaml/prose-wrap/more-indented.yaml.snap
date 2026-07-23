@@ -1,0 +1,66 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!
+
+-------------------
+{ printWidth: 100 }
+-------------------
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!
+
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!
+
+===================== End =====================
