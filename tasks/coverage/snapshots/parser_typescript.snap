@@ -3117,6 +3117,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × `for await` loops are only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:4:7]
+ 3 │ function normalFunc(p: Promise<number>) {
+ 4 │   for await (const _ of []);
+   ·       ─────
+ 5 │   return await p;
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:5:10]
  4 │   for await (const _ of []);
@@ -3126,12 +3135,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × `for await` loops are only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:9:7]
+  8 │ export function exportedFunc(p: Promise<number>) {
+  9 │   for await (const _ of []);
+    ·       ─────
+ 10 │   return await p;
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:10:10]
   9 │   for await (const _ of []);
  10 │   return await p;
     ·          ─────
  11 │ }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `for await` loops are only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:14:7]
+ 13 │ const functionExpression = function(p: Promise<number>) {
+ 14 │   for await (const _ of []);
+    ·       ─────
+ 15 │   await p;
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
@@ -3144,12 +3171,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × `for await` loops are only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:19:7]
+ 18 │ const arrowFunc = (p: Promise<number>) => {
+ 19 │   for await (const _ of []);
+    ·       ─────
+ 20 │   return await p;
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:20:10]
  19 │   for await (const _ of []);
  20 │   return await p;
     ·          ─────
  21 │ };
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `for await` loops are only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:24:7]
+ 23 │ function* generatorFunc(p: Promise<number>) {
+ 24 │   for await (const _ of []);
+    ·       ─────
+ 25 │   yield await p;
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
@@ -3162,12 +3207,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × `for await` loops are only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:30:9]
+ 29 │   constructor(p: Promise<number>) {
+ 30 │     for await (const _ of []);
+    ·         ─────
+ 31 │     await p;
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:31:5]
  30 │     for await (const _ of []);
  31 │     await p;
     ·     ─────
  32 │   }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `for await` loops are only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:34:7]
+ 33 │   method(p: Promise<number>) {
+ 34 │   for await (const _ of []);
+    ·       ─────
+ 35 │     await p;
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
@@ -24780,7 +24843,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │     }
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:5]
  1 │ for await (const x of y) {
    ·     ─────
@@ -28656,7 +28719,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ 
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
  4 │ 
  5 │ for await (await using of x);

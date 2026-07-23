@@ -355,9 +355,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // [+Await]
         let r#await = if self.at(Kind::Await) {
             if !self.ctx.has_await() {
-                // For `ModuleKind::Unambiguous`, defer the error until we know whether
-                // this is a Module (where for-await is valid at top-level) or Script.
-                self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
+                let error = diagnostics::for_await_statement(self.cur_token().span());
+                if self.ctx.has_top_level() {
+                    // For `ModuleKind::Unambiguous`, defer the error until we know whether
+                    // this is a Module (where for-await is valid at top-level) or Script.
+                    self.error_on_script(error);
+                } else {
+                    // A module only permits await at top level, so an await loop inside a
+                    // non-async function is always invalid.
+                    self.error(error);
+                }
             }
             self.bump_any();
             true
