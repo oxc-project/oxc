@@ -348,6 +348,8 @@ export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
 export type ExplicitTimerDelayMode = "always" | "never";
+export type FilenameCaseJsonOptions =
+  "kebabCase" | "camelCase" | "snakeCase" | "pascalCase" | "lowercase" | "screamingSnakeCase";
 export type ModuleStylesOverride =
   | (
       | false
@@ -1511,7 +1513,7 @@ export interface DummyRuleMap {
   "unicorn/escape-case"?: RuleNoConfig;
   "unicorn/explicit-length-check"?: RuleNoConfig | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/explicit-timer-delay"?: RuleNoConfig | [AllowWarnDeny, ExplicitTimerDelayMode];
-  "unicorn/filename-case"?: DummyRule;
+  "unicorn/filename-case"?: RuleNoConfig | [AllowWarnDeny, FilenameCaseConfigJson];
   "unicorn/import-style"?: RuleNoConfig | [AllowWarnDeny, ImportStyleConfig];
   "unicorn/max-nested-calls"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCalls];
   "unicorn/new-for-builtins"?: RuleNoConfig;
@@ -6037,6 +6039,98 @@ export interface ExplicitLengthCheck {
    * Configuration option to specify how non-zero length checks should be enforced.
    */
   "non-zero"?: NonZero;
+}
+export interface FilenameCaseConfigJson {
+  /**
+   * The case style to enforce for filenames.
+   *
+   * You can set the `case` option like this:
+   * ```json
+   * {
+   *   "unicorn/filename-case": [
+   *     "error",
+   *     {
+   *       "case": "kebabCase"
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  case?: FilenameCaseJsonOptions;
+  /**
+   * The case style(s) to allow/enforce for filenames. `true` means the case style is allowed, `false` means it is banned.
+   *
+   * You can set the `cases` option like this:
+   * ```json
+   * {
+   *   "unicorn/filename-case": [
+   *     "error",
+   *     {
+   *       "cases": {
+   *         "camelCase": true,
+   *         "pascalCase": true
+   *       }
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  cases?: FilenameCaseConfigJsonCases;
+  /**
+   * Whether to check directory names in the file's path, in addition to
+   * the filename. Directory segments starting with `.` or `$` are always
+   * skipped, as are segments matching an `ignore` pattern.
+   */
+  checkDirectories?: boolean;
+  /**
+   * An array of regular expression patterns for filenames to ignore.
+   *
+   * You can set the `ignore` option like this:
+   * ```json
+   * {
+   *   "unicorn/filename-case": [
+   *     "error",
+   *     {
+   *       "ignore": [
+   *         "^foo.*$"
+   *       ]
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  ignore?: string[];
+  /**
+   * Whether to treat additional, `.`-separated parts of a filename as
+   * parts of the extension rather than parts of the filename.
+   */
+  multipleFileExtensions?: boolean;
+}
+export interface FilenameCaseConfigJsonCases {
+  /**
+   * Whether camel case is allowed, e.g. `someFileName.js`.
+   */
+  camelCase?: boolean;
+  /**
+   * Whether kebab case is allowed, e.g. `some-file-name.js`.
+   */
+  kebabCase?: boolean;
+  /**
+   * Whether lowercase is allowed, e.g. `somefilename.js`.
+   */
+  lowercase?: boolean;
+  /**
+   * Whether pascal case is allowed, e.g. `SomeFileName.js`.
+   */
+  pascalCase?: boolean;
+  /**
+   * Whether screaming snake case is allowed, e.g. `SOME_FILE_NAME.js`.
+   */
+  screamingSnakeCase?: boolean;
+  /**
+   * Whether snake case is allowed, e.g. `some_file_name.js`.
+   */
+  snakeCase?: boolean;
 }
 export interface ImportStyleConfig {
   /**

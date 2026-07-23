@@ -172,6 +172,13 @@ impl<'a> LintContext<'a> {
         &self.parent.file_path
     }
 
+    /// Working directory used to resolve linted file paths relative to the
+    /// project root, if known.
+    #[inline]
+    pub fn cwd(&self) -> Option<&Path> {
+        self.parent.cwd()
+    }
+
     /// Extension of the file currently being linted, without the leading dot.
     #[inline]
     pub fn file_extension(&self) -> Option<&OsStr> {
