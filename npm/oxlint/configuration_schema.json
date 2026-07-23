@@ -9024,6 +9024,9 @@
         "unicorn/no-process-exit": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-return-array-push": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-single-promise-in-promise-methods": {
           "$ref": "#/definitions/RuleNoConfig"
         },
