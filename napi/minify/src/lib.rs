@@ -19,6 +19,7 @@ use std::path::PathBuf;
 
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
@@ -40,6 +41,21 @@ pub struct MinifyResult {
     /// Legal comments extracted from the source code.
     /// Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
     pub legal_comments: Vec<String>,
+    /// Updated property-name cache. Present when `mangleProps` ran on a parse without errors.
+    #[napi(ts_type = "Record<string, string | false>")]
+    pub mangle_cache: Option<FxHashMap<String, Either<String, bool>>>,
+}
+
+fn to_napi_mangle_cache(
+    cache: oxc_minifier::ManglePropertyCache,
+) -> FxHashMap<String, Either<String, bool>> {
+    cache
+        .into_iter()
+        .map(|(original, target)| {
+            let value = target.map_or(Either::B(false), |target| Either::A(target.to_string()));
+            (original.to_string(), value)
+        })
+        .collect()
 }
 
 fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
@@ -71,7 +87,13 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let scoping = Minifier::new(minifier_options).minify(&allocator, &mut program).scoping;
+    let minifier_ret = Minifier::new(minifier_options).minify(&allocator, &mut program);
+    let scoping = minifier_ret.scoping;
+    let mangle_cache = parser_ret
+        .diagnostics
+        .is_empty()
+        .then(|| minifier_ret.property_mangle_cache.map(to_napi_mangle_cache))
+        .flatten();
 
     let mut codegen_options = match &options.codegen {
         // Need to remove all comments.
@@ -106,6 +128,7 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
         map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
         errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
         legal_comments,
+        mangle_cache,
     }
 }
 
