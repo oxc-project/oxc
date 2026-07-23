@@ -1,0 +1,88 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:5]
+ 1 │ str.matchAll(/abc/);
+   ·     ────┬─── ──┬──
+   ·         │      ╰── RegExp supplied here
+   ·         ╰── `matchAll` called here
+   ╰────
+  help: To match all occurrences, use the `matchAll` method with the global flag (g) in the regular expression.
+  note: Unlike `match`, `matchAll` throws a `TypeError` when passed a non-global regular expression instead of returning an iterator over all matches.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:5]
+ 1 │ str.matchAll(/abc/i);
+   ·     ────┬─── ───┬──
+   ·         │       ╰── RegExp supplied here
+   ·         ╰── `matchAll` called here
+   ╰────
+  help: To match all occurrences, use the `matchAll` method with the global flag (g) in the regular expression.
+  note: Unlike `match`, `matchAll` throws a `TypeError` when passed a non-global regular expression instead of returning an iterator over all matches.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:5]
+ 1 │ str.matchAll(new RegExp('abc'));
+   ·     ────┬─── ────────┬────────
+   ·         │            ╰── RegExp supplied here
+   ·         ╰── `matchAll` called here
+   ╰────
+  help: To match all occurrences, use the `matchAll` method with the global flag (g) in the regular expression.
+  note: Unlike `match`, `matchAll` throws a `TypeError` when passed a non-global regular expression instead of returning an iterator over all matches.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:5]
+ 1 │ str.matchAll(new RegExp('abc','i'));
+   ·     ────┬─── ──────────┬──────────
+   ·         │              ╰── RegExp supplied here
+   ·         ╰── `matchAll` called here
+   ╰────
+  help: To match all occurrences, use the `matchAll` method with the global flag (g) in the regular expression.
+  note: Unlike `match`, `matchAll` throws a `TypeError` when passed a non-global regular expression instead of returning an iterator over all matches.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:2:25]
+ 1 │ 
+ 2 │             const foo = /abc/;
+   ·                         ──┬──
+   ·                           ╰── RegExp supplied here
+ 3 │ 
+ 4 │             str.matchAll(foo);
+   ·                 ────┬───
+   ·                     ╰── `matchAll` called here
+ 5 │         
+   ╰────
+  help: To match all occurrences, use the `matchAll` method with the global flag (g) in the regular expression.
+  note: Unlike `match`, `matchAll` throws a `TypeError` when passed a non-global regular expression instead of returning an iterator over all matches.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:2:25]
+ 1 │ 
+ 2 │             const foo = /abc/i;
+   ·                         ───┬──
+   ·                            ╰── RegExp supplied here
+ 3 │ 
+ 4 │             str.matchAll(foo);
+   ·                 ────┬───
+   ·                     ╰── `matchAll` called here
+ 5 │         
+   ╰────
+  help: To match all occurrences, use the `matchAll` method with the global flag (g) in the regular expression.
+  note: Unlike `match`, `matchAll` throws a `TypeError` when passed a non-global regular expression instead of returning an iterator over all matches.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:2:25]
+ 1 │ 
+ 2 │             const foo = new RegExp('abc');
+   ·                         ────────┬────────
+   ·                                 ╰── RegExp supplied here
+ 3 │ 
+ 4 │             str.matchAll(foo);
+   ·                 ────┬───
+   ·                     ╰── `matchAll` called here
+ 5 │         
+   ╰────
+  help: To match all occurrences, use the `matchAll` method with the global flag (g) in the regular expression.
+  note: Unlike `match`, `matchAll` throws a `TypeError` when passed a non-global regular expression instead of returning an iterator over all matches.
