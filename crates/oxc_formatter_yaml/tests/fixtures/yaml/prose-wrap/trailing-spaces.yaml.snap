@@ -1,0 +1,94 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle
+
+-------------------
+{ printWidth: 100 }
+-------------------
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle
+
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+fold-blocked-by-trailing-spaces: >
+  word1 word2  
+  word3
+space-only-line-kept: >-
+  word1
+   
+  word2
+trailing-spaces-stripped-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle
+
+===================== End =====================

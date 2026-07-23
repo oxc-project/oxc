@@ -208,8 +208,6 @@ fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s
             continue;
         }
         let mut words = split_with_single_space(line).peekable();
-        // NOTE: Prettier tests `/^\s|\s$/` against the previous array (a JS quirk, `Array::toString` joins with commas);
-        // the effective check is on the previous group's first word start / last word end.
         let prev_group_has_boundary_space = lines.last().is_some_and(|prev| {
             prev.first().is_some_and(|w| w.starts_with(char::is_whitespace))
                 || prev.last().is_some_and(|w| w.ends_with(char::is_whitespace))
