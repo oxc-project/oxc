@@ -502,12 +502,14 @@ function unescapeIdentifier(name: string): string {
 }
 
 /**
- * Check tokens buffer has valid ranges and ascending order.
+ * Check all tokens in buffer have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckValidRanges(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
@@ -520,15 +522,21 @@ function debugCheckValidRanges(): void {
     }
     lastEnd = end;
   }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Tokens end beyond source text length: ${lastEnd} > ${sourceText.length}`);
+  }
 }
 
 /**
- * Check all deserialized tokens are in ascending order.
+ * Check all deserialized tokens have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckDeserializedTokens(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
@@ -545,6 +553,10 @@ function debugCheckDeserializedTokens(): void {
       );
     }
     lastEnd = end;
+  }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Tokens end beyond source text length: ${lastEnd} > ${sourceText.length}`);
   }
 }
 

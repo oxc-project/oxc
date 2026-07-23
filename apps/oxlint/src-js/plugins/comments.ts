@@ -361,12 +361,14 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
 }
 
 /**
- * Check comments buffer has valid ranges and ascending order.
+ * Check all comments in buffer have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckValidRanges(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < commentsLen; i++) {
@@ -380,18 +382,20 @@ function debugCheckValidRanges(): void {
     lastEnd = end;
   }
 
-  if (lastEnd > sourceText!.length) {
-    throw new Error(`Comments end beyond source text length: ${lastEnd} > ${sourceText!.length}`);
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Comments end beyond source text length: ${lastEnd} > ${sourceText.length}`);
   }
 }
 
 /**
- * Check all deserialized comments are in ascending order.
+ * Check all deserialized comments have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckDeserializedComments(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < commentsLen; i++) {
@@ -410,6 +414,10 @@ function debugCheckDeserializedComments(): void {
       );
     }
     lastEnd = end;
+  }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Comments end beyond source text length: ${lastEnd} > ${sourceText.length}`);
   }
 }
 
