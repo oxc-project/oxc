@@ -1480,6 +1480,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        self.with_expression_nesting(|parser| {
+            parser.parse_assignment_expression_or_higher_impl_inner(
+                allow_return_type_in_arrow_function,
+            )
+        })
+    }
+
+    fn parse_assignment_expression_or_higher_impl_inner(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();

@@ -645,9 +645,26 @@ struct ParserImpl<'a, C: ParserConfig> {
 
     /// Precomputed typescript detection
     is_ts: bool,
+
+    /// Current recursive expression parsing depth.
+    expression_depth: u16,
 }
 
 impl<'a, C: ParserConfig> ParserImpl<'a, C> {
+    #[inline]
+    fn with_expression_nesting<T: Dummy<'a>>(&mut self, parse: impl FnOnce(&mut Self) -> T) -> T {
+        const MAX_EXPRESSION_NESTING: u16 = 256;
+
+        if self.expression_depth >= MAX_EXPRESSION_NESTING {
+            return self
+                .fatal_error(diagnostics::excessive_expression_nesting(self.cur_token().span()));
+        }
+        self.expression_depth += 1;
+        let result = parse(self);
+        self.expression_depth -= 1;
+        result
+    }
+
     /// Create a new `ParserImpl`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
@@ -677,6 +694,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             ast: AstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
+            expression_depth: 0,
         }
     }
 
@@ -959,6 +977,42 @@ mod test {
         let source = "a";
         let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
         assert!(matches!(expr, Expression::Identifier(_)));
+    }
+
+    #[test]
+    fn expression_nesting_limit() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        let valid_sources = [
+            format!("{}0{}", "(".repeat(255), ")".repeat(255)),
+            format!("{}0{}", "[".repeat(255), "]".repeat(255)),
+            format!("{}0{}", "{a:".repeat(255), "}".repeat(255)),
+            format!("{}0{}", "f(".repeat(255), ")".repeat(255)),
+        ];
+        for source in valid_sources {
+            let result = Parser::new(&allocator, &source, source_type).parse_expression();
+            assert!(result.is_ok());
+        }
+
+        let excessive_sources = [
+            format!("{}0{}", "(".repeat(257), ")".repeat(257)),
+            format!("{}0{}", "[".repeat(257), "]".repeat(257)),
+            format!("{}0{}", "{a:".repeat(257), "}".repeat(257)),
+            format!("{}0{}", "f(".repeat(257), ")".repeat(257)),
+            format!(
+                "{}() => {}0{}{}",
+                "(".repeat(200),
+                "(".repeat(200),
+                ")".repeat(200),
+                ")".repeat(200)
+            ),
+        ];
+        for source in excessive_sources {
+            let diagnostics =
+                Parser::new(&allocator, &source, source_type).parse_expression().unwrap_err();
+            assert_eq!(diagnostics.first().unwrap().to_string(), "Expression nesting is too deep");
+        }
     }
 
     #[test]
