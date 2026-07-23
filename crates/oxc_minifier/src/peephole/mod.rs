@@ -23,7 +23,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
-use crate::{Traverse, TraverseCtx};
+use crate::{Traverse, TraverseCtx, state::BodyFrame};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -124,9 +124,10 @@ impl<'a> PeepholeOptimizations {
     /// prelude. No-op if the flag is already set, or if `current_scope_id` is
     /// some inner scope (a block/for/etc.) — those don't end the prelude.
     fn mark_current_body_unsafe(ctx: &mut TraverseCtx<'a>) {
-        let &(body_scope, body_unsafe, _) = ctx.state.body_unsafe_stack.last();
-        if !body_unsafe && body_scope == ctx.current_scope_id() {
-            ctx.state.body_unsafe_stack.last_mut().1 = true;
+        let current_scope_id = ctx.current_scope_id();
+        let frame = ctx.state.body_frames.last_mut();
+        if !frame.hoisted_var_inlining_unsafe && frame.scope_id == current_scope_id {
+            frame.hoisted_var_inlining_unsafe = true;
         }
     }
 
@@ -253,11 +254,8 @@ impl<'a> PeepholeOptimizations {
                 };
                 // Parameter defaults are visited before their function body, so a missing
                 // owner frame means this derived constructor's `this` is uninitialized.
-                let Some(owner_index) = ctx
-                    .state
-                    .body_unsafe_stack
-                    .iter()
-                    .rposition(|(body_scope, _, _)| *body_scope == this_scope)
+                let Some(owner_index) =
+                    ctx.state.body_frames.iter().rposition(|frame| frame.scope_id == this_scope)
                 else {
                     return true;
                 };
@@ -266,8 +264,9 @@ impl<'a> PeepholeOptimizations {
                 // the current Rolldown and oxc-minify pipelines satisfy this assumption.
                 // Arrow body frames above the owner share its lexical `this`, so `super()`
                 // in any of those frames initializes the same binding.
-                !ctx.state.body_unsafe_stack[owner_index..].iter().any(|&(_, _, initialized_at)| {
-                    initialized_at
+                !ctx.state.body_frames[owner_index..].iter().any(|frame| {
+                    frame
+                        .this_initialized_at
                         .is_some_and(|initialized_at| this_expr.span.start >= initialized_at)
                 })
             }
@@ -317,8 +316,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         // `enter`/`exit_function_body` are balanced, so the stack is back to its
         // single program-root entry by the next pass; reset it in place rather
         // than reallocating (matching the `reset`/`clear` above).
-        *ctx.state.body_unsafe_stack.last_mut() =
-            (ctx.scoping().root_scope_id(), module_has_loaders, None);
+        *ctx.state.body_frames.last_mut() = BodyFrame {
+            scope_id: ctx.scoping().root_scope_id(),
+            hoisted_var_inlining_unsafe: module_has_loaders,
+            this_initialized_at: None,
+        };
         // `PassChanges` is managed by pass completion, not reset per
         // traversal.
     }
@@ -334,11 +336,15 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         } else {
             None
         };
-        ctx.state.body_unsafe_stack.push((ctx.current_scope_id(), false, initialized_at));
+        ctx.state.body_frames.push(BodyFrame {
+            scope_id: ctx.current_scope_id(),
+            hoisted_var_inlining_unsafe: false,
+            this_initialized_at: initialized_at,
+        });
     }
 
     fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.body_unsafe_stack.pop();
+        ctx.state.body_frames.pop();
     }
 
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
