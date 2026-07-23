@@ -12,7 +12,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_implicit_aria_props, has_jsx_prop_ignore_case},
+    utils::{element_implicitly_provides_aria_prop, get_element_type, has_jsx_prop_ignore_case},
 };
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
@@ -85,12 +85,14 @@ impl Rule for RoleHasRequiredAriaProps {
             let roles = role_values.value.split_whitespace();
             for role in roles {
                 if let Some((_, props)) = ROLE_TO_REQUIRED_ARIA_PROPS.iter().find(|r| r.0 == role) {
-                    if has_implicit_aria_props(&element_type, jsx_el, props) {
-                        continue;
-                    }
                     let formatted_missing = props
                         .iter()
-                        .filter(|prop| has_jsx_prop_ignore_case(jsx_el, prop).is_none())
+                        .filter(|prop| {
+                            // Not explicitly present on the JSX element
+                            has_jsx_prop_ignore_case(jsx_el, prop).is_none()
+                            // And not implicitly provided by the native HTML semantics
+                            && !element_implicitly_provides_aria_prop(&element_type, jsx_el, prop)
+                        })
                         .map(|prop| format!("`{prop}`"))
                         .join(", ");
                     if !formatted_missing.is_empty() {
