@@ -156,6 +156,7 @@ oxc_transformer_plugins = { version = "0.141.0", path = "crates/oxc_transformer_
 oxc_traverse = { version = "0.141.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
+oxc_config = { path = "crates/oxc_config" } # Config discovery
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core
 oxc_formatter_css = { path = "crates/oxc_formatter_css" } # CSS formatter
@@ -166,9 +167,10 @@ oxc_language_server = { path = "crates/oxc_language_server", default-features = 
 oxc_lexer = { path = "crates/oxc_lexer" } # JS/TS lexer (incubating; x86_64 SIMD, stub elsewhere)
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
-oxc_config = { path = "crates/oxc_config" } # Config discovery
 oxc_tasks_common = { path = "tasks/common" } # Task utilities
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform validation
+website_common = { path = "tasks/website_common" } # Website utilities
+oxfmt = { path = "apps/oxfmt" } # Formatter CLI
 oxlint = { path = "apps/oxlint" } # Linter CLI
 
 # Relaxed version so the user can decide which version to use.
@@ -198,7 +200,6 @@ oxc_sourcemap = "8.0.2" # Source map generation
 #
 allocator-api2 = "=0.2.21" # Allocator trait
 anyhow = "1.0" # Flexible error handling
-oxc-graphql-parser = "0.0.7" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
 bpaf = "0.9.26" # CLI parser
@@ -209,6 +210,7 @@ convert_case = "0.11.0" # Case conversion
 cow-utils = "0.1.3" # Copy-on-write utilities
 criterion2 = { version = "3.0.4", default-features = false } # Benchmarking
 dragonbox_ecma = "0.1.12" # Fast float formatting
+editorconfig-parser = "0.0.4" # EditorConfig parsing
 encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
 fast-glob = "1.1.0" # Fast glob matching
@@ -230,10 +232,15 @@ miette = { package = "oxc-miette", version = "3.0.0", features = [
   "fancy-no-syscall",
 ] } # Error reporting
 mimalloc-safe = "0.1.64" # Fast allocator
+natord = "1.0.9" # Natural string ordering
 nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.5.0" # Big integers
 num-traits = "0.2.19" # Numeric traits
+oxc-css-parser = "0.0.9" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
+oxc-graphql-parser = "0.0.7" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
+oxc-toml = "0.14.5" # TOML formatter
+oxc-yaml-parser = "0.0.3" # YAML 1.2 parser (comment-preserving typed AST, node naming from `yaml-unist-parser`)
 papaya = "0.2.4" # Concurrent hash map
 percent-encoding = "2.3.2" # URL encoding
 petgraph = { version = "0.8.3", default-features = false } # Graph data structures
@@ -243,8 +250,6 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.3.0" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
-oxc-css-parser = "0.0.9" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
-oxc-yaml-parser = "0.0.3" # YAML 1.2 parser (comment-preserving typed AST, node naming from `yaml-unist-parser`)
 rand = "0.10.2" # Random number generation
 rayon = "1.12.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure
@@ -257,23 +262,18 @@ simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 valid
 similar = "3.1.1" # Text diffing
 similar-asserts = "2.0.0" # Test diff assertions
 smallvec = { version = "1.15.2", features = ["union", "serde"] } # Stack-allocated vectors
+sort-package-json = "0.0.14" # package.json key sorting
 tempfile = "3.27.0" # Temporary files
 tokio = { version = "1.52.3", default-features = false } # Async runtime
-toml = { version = "1.1.2" }
+toml = { version = "1.1.2" } # TOML parsing
 tower-lsp-server = "0.23.0" # LSP server framework
-tracing = "0.1.44"
+tracing = "0.1.44" # Tracing framework
 tracing-subscriber = "0.3.23" # Tracing implementation
+unicode-width = "0.2" # Unicode display width
 ureq = { version = "3.3.0", default-features = false } # HTTP client
 url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
 windows-sys = { version = "0.61.2" } # Windows API bindings
-editorconfig-parser = "0.0.4"
-natord = "1.0.9"
-oxfmt = { path = "apps/oxfmt" }
-sort-package-json = "0.0.14"
-oxc-toml = "0.14.5"
-unicode-width = "0.2"
-website_common = { path = "tasks/website_common" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]
