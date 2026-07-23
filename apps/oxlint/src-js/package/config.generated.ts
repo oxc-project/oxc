@@ -1012,6 +1012,7 @@ export interface DummyRuleMap {
   "jsdoc/check-tag-names"?: RuleNoConfig | [AllowWarnDeny, CheckTagNamesConfig];
   "jsdoc/empty-tags"?: RuleNoConfig | [AllowWarnDeny, EmptyTagsConfig];
   "jsdoc/implements-on-classes"?: RuleNoConfig;
+  "jsdoc/multiline-blocks"?: RuleNoConfig | [AllowWarnDeny, MultilineBlocksConfig];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
@@ -2458,6 +2459,50 @@ export interface EmptyTagsConfig {
    * Additional tags to check for their descriptions.
    */
   tags?: string[];
+}
+export interface MultilineBlocksConfig {
+  /**
+   * When `noMultilineBlocks` is set, do not report a multiline block that
+   * holds multiple tags (or a description together with a tag), since such a
+   * block cannot be collapsed onto a single line.
+   */
+  allowMultipleTags?: boolean;
+  /**
+   * When `noMultilineBlocks` is set, a multiline block is permitted if its
+   * block description is at least this many characters long. When unset the
+   * length never permits a multiline block.
+   */
+  minimumLengthForMultiline?: number;
+  /**
+   * When `noMultilineBlocks` is set, the presence of one of these tags
+   * permits a multiline block. `"*"` permits any tag.
+   */
+  multilineTags?: string[];
+  /**
+   * For multiline blocks, report any non-whitespace text preceding the `* /`
+   * on the final line.
+   */
+  noFinalLineText?: boolean;
+  /**
+   * If `true`, multiline blocks are reported unless permitted by
+   * `minimumLengthForMultiline`, `multilineTags`, or `allowMultipleTags`.
+   */
+  noMultilineBlocks?: boolean;
+  /**
+   * If `true`, any single line block is reported, except one whose leading
+   * tag is listed in `singleLineTags`.
+   */
+  noSingleLineBlocks?: boolean;
+  /**
+   * For multiline blocks, report any non-whitespace text immediately after
+   * the `/**` on the first line.
+   */
+  noZeroLineText?: boolean;
+  /**
+   * Tags nevertheless allowed as single line blocks when `noSingleLineBlocks`
+   * is set. `"*"` allows any block that carries a tag.
+   */
+  singleLineTags?: string[];
 }
 export interface NoDefaultsConfig {
   /**
