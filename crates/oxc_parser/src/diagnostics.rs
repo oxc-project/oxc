@@ -360,6 +360,14 @@ parser_diagnostics! {
         .with_help("Either remove this `await` or add the `async` keyword to the enclosing function")
     };
 
+    for_await_statement(span: Span) => {
+        OxcDiagnostic::error(
+            "`for await` loops are only allowed within async functions and at the top levels of modules",
+        )
+        .with_label(span)
+        .with_help("Either remove this `await` or add the `async` keyword to the enclosing function")
+    };
+
     yield_expression(span: Span) => {
         OxcDiagnostic::error("A 'yield' expression is only allowed in a generator body.")
             .with_label(span)
@@ -747,7 +755,13 @@ parser_diagnostics! {
     };
 
     using_declaration_not_allowed_in_switch_bare_case(span: Span) => {
-        OxcDiagnostic::error("Using declaration cannot appear in the bare case statement.")
+        OxcDiagnostic::error("'using' declaration cannot appear in the bare case statement.")
+            .with_label(span)
+            .with_help("Wrap this declaration in a block statement")
+    };
+
+    await_using_declaration_not_allowed_in_switch_bare_case(span: Span) => {
+        OxcDiagnostic::error("'await using' declaration cannot appear in the bare case statement.")
             .with_label(span)
             .with_help("Wrap this declaration in a block statement")
     };

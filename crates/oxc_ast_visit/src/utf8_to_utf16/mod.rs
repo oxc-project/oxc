@@ -105,6 +105,19 @@ impl Utf8ToUtf16 {
         converter.convert_program(program);
     }
 
+    /// Convert all spans in AST and comments to UTF-16.
+    pub fn convert_program_and_comments(&self, program: &mut Program<'_>) {
+        if let Some(mut converter) = self.converter() {
+            converter.convert_program(program);
+
+            converter.reset();
+
+            for comment in &mut program.comments {
+                converter.convert_span(&mut comment.span);
+            }
+        }
+    }
+
     /// Convert all spans in comments to UTF-16.
     pub fn convert_comments(&self, comments: &mut [Comment]) {
         if let Some(mut converter) = self.converter() {

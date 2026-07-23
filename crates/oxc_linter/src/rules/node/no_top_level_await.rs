@@ -12,8 +12,9 @@ use crate::{
 };
 
 fn no_top_level_await_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Top-level `await` is forbidden in published modules.")
+    OxcDiagnostic::warn("Top-level `await` prevents this module from being loaded with `require(esm)`.")
         .with_help("Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.")
+        .with_note("This rule is intended for published packages. Consider disabling it if this package is private.")
         .with_label(span)
 }
 

@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+key: value
+map:
+  nested: 1
+  seq:
+    - a
+    - b
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+key: value
+map:
+  nested: 1
+  seq:
+    - a
+    - b
+
+-------------------
+{ printWidth: 100 }
+-------------------
+key: value
+map:
+  nested: 1
+  seq:
+    - a
+    - b
+
+===================== End =====================

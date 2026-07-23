@@ -8,12 +8,12 @@ use crate::{
     format_args,
     formatter::{
         Comments, FormatElement, JoinBuilderJsExt as _, JsFormatContext, JsFormatter,
-        JsFormatterExt as _, SourceText, VecBuffer,
+        JsFormatterExt as _, SourceText,
         buffer::RemoveSoftLinesBuffer,
         format_element,
         prelude::{
-            FormatElements, Tag, empty_line, expand_parent, format_once, format_with, group,
-            soft_block_indent, soft_line_break_or_space, space,
+            FormatElements, best_fitting_variant, empty_line, expand_parent, format_once,
+            format_with, group, soft_block_indent, soft_line_break_or_space, space,
         },
         trivia::format_dangling_comments,
     },
@@ -736,16 +736,9 @@ fn write_grouped_arguments<'a>(
     }
 
     // First write the most expanded variant because it needs `arguments`.
-    let most_expanded = {
-        let mut buffer = VecBuffer::new(f.state_mut());
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
-        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
-
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-        buffer.into_vec().into_arena_slice()
-    };
+    let most_expanded = best_fitting_variant(f.state_mut(), |buffer| {
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, buffer);
+    });
 
     // Now reformat the first or last argument if they happen to be a function or arrow function expression.
     // Function and arrow function expression apply a custom formatting that removes soft line breaks from the parameters,
@@ -824,11 +817,7 @@ fn write_grouped_arguments<'a>(
     }
 
     // Write the second variant that forces the group of the first/last argument to expand.
-    let middle_variant = {
-        let mut buffer = VecBuffer::new(f.state_mut());
-
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
+    let middle_variant = best_fitting_variant(f.state_mut(), |buffer| {
         write!(
             buffer,
             [
@@ -860,11 +849,7 @@ fn write_grouped_arguments<'a>(
                 ")"
             ]
         );
-
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-        buffer.into_vec().into_arena_slice()
-    };
+    });
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
@@ -873,10 +858,7 @@ fn write_grouped_arguments<'a>(
         ArenaVec::from_array_in([middle_variant, most_expanded], f)
     } else {
         // Write the most flat variant with the first or last argument grouped.
-        let most_flat = {
-            let mut buffer = VecBuffer::new(f.state_mut());
-            buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
+        let most_flat = best_fitting_variant(f.state_mut(), |buffer| {
             write!(
                 buffer,
                 [
@@ -895,11 +877,7 @@ fn write_grouped_arguments<'a>(
                     ")",
                 ]
             );
-
-            buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-            buffer.into_vec().into_arena_slice()
-        };
+        });
 
         ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f)
     };

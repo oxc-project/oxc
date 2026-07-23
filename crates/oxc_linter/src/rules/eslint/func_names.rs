@@ -407,7 +407,7 @@ fn is_invalid_function(
 
     match config_type {
         FuncNamesConfigType::Never => {
-            func_name.is_some() && func.r#type != FunctionType::FunctionDeclaration
+            func_name.is_some() && func.r#type == FunctionType::FunctionExpression
         }
         FuncNamesConfigType::AsNeeded => {
             func_name.is_none() && !has_inferred_name(func, parent_node)
@@ -508,6 +508,11 @@ fn test() {
         ("[foo = function(){}] = [];", as_needed.clone()),   // { "ecmaVersion": 6 },
         ("function fn(foo = function(){}) {}", as_needed.clone()), // { "ecmaVersion": 6 },
         ("function foo() {}", never.clone()),
+        ("declare function foo(a: string): string;", never.clone()),
+        (
+            "export function foo(a: string): string; export function foo(a: number): number; export function foo(a: string | number): string | number { return a; }",
+            never.clone(),
+        ),
         ("var a = function() {};", never.clone()),
         ("var a = function foo() { foo(); };", never.clone()),
         (

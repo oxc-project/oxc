@@ -1,7 +1,8 @@
-use oxc_allocator::{Allocator, GetAllocator};
 use rustc_hash::FxHashMap;
 
-use crate::{GroupId, UniqueGroupIdBuilder, format_element::Interned};
+use oxc_allocator::{Allocator, GetAllocator};
+
+use crate::{FormatElement, GroupId, UniqueGroupIdBuilder, format_element::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -15,6 +16,9 @@ pub struct FormatState<'ast, C> {
     // For the document IR printing process
     /// The interned elements that have been printed to this point
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
+    /// Heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run;
+    /// see [`crate::HeapVecBuffer`] for the watermark scheme keeping their views disjoint.
+    scratch: Vec<FormatElement<'ast>>,
 }
 
 impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
@@ -31,7 +35,18 @@ impl<'ast, C> FormatState<'ast, C> {
             allocator,
             group_id_builder: UniqueGroupIdBuilder::default(),
             printed_interned_elements: FxHashMap::default(),
+            scratch: Vec::new(),
         }
+    }
+
+    /// The heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run.
+    pub(crate) fn scratch(&self) -> &[FormatElement<'ast>] {
+        &self.scratch
+    }
+
+    /// Mutable access to the heap staging vector; see [`FormatState::scratch`].
+    pub(crate) fn scratch_mut(&mut self) -> &mut Vec<FormatElement<'ast>> {
+        &mut self.scratch
     }
 
     /// Returns the allocator used for arena-allocating format elements.

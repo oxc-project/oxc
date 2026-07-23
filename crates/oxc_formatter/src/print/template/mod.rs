@@ -112,7 +112,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         }
 
         if embed::try_format_embedded_template(self, f) {
-        } else if is_test_each_pattern(&self.tag) {
+        } else if is_test_each_pattern(&self.tag) && EachTemplateTable::is_table_like(quasi) {
             let template = &EachTemplateTable::from_template(quasi, f);
             // Use table formatting
             write!(f, template);
@@ -409,12 +409,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                     // the closing `}` boundary when the parent is a template literal.
                     e.fmt(f);
                 } else {
+                    // The template owns the trailing comments;
+                    // the generic trailing comments printing is not `}`-aware and could claim a later `${...}`'s comments,
+                    // or defer own-line ones to a leading pass that never runs inside a template, leaking them outside.
                     FormatNodeWithoutTrailingComments(e).fmt(f);
                 }
-                // Print any comments the expression did not claim so they still land before
-                // the closing `}` of the interpolation.
+                // Print the skipped (non-JSX) or unclaimed (JSX) comments before the closing `}`.
+                // Scan from the expression's END, its own source may contain `}`.
                 let trailing_comments =
-                    f.context().comments().comments_before_character(e.span().start, b'}');
+                    f.context().comments().comments_before_character(e.span().end, b'}');
                 FormatTrailingComments::Comments(trailing_comments).fmt(f);
             }
             TemplateExpression::TSType(t) => write!(f, t),
@@ -680,6 +683,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for EachTemplateSeparator {
 }
 
 impl<'a> EachTemplateTable<'a> {
+    /// Whether the template qualifies for table formatting:
+    /// Prettier's header check (multiple columns, or one non-empty column name)
+    /// reduces to a non-empty trimmed first quasi.
+    fn is_table_like(quasi: &TemplateLiteral) -> bool {
+        !quasi.quasis[0].value.raw.trim().is_empty()
+    }
+
     pub(crate) fn from_template(
         quasi: &AstNode<'a, TemplateLiteral<'a>>,
         f: &mut JsFormatter<'_, 'a>,

@@ -56,7 +56,7 @@ mod generated {
 
     #[cfg(debug_assertions)]
     mod assert_layouts;
-    mod builder_methods;
+    mod ast_builder;
     mod derive_clone_in;
     mod derive_content_eq;
     mod derive_dummy;

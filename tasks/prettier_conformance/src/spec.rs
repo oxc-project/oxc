@@ -14,6 +14,7 @@ use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
+use oxc_formatter_yaml::{ProseWrap, YamlFormatOptions};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
 
@@ -33,6 +34,7 @@ pub enum SpecOptions {
     Json(JsonFormatOptions),
     Graphql(GraphqlFormatOptions),
     Css(CssFormatOptions),
+    Yaml(YamlFormatOptions),
 }
 
 pub fn parse_spec(spec: &Path, language: TestLanguage) -> Vec<(SpecOptions, SnapshotOptions)> {
@@ -143,6 +145,7 @@ impl VisitMut<'_> for SpecParser {
                 | TestLanguage::Css
                 | TestLanguage::Scss
                 | TestLanguage::Less
+                | TestLanguage::Yaml
         );
         if is_exact_parser_language && !parsers.iter().any(|p| p == self.language.as_str()) {
             return;
@@ -176,6 +179,10 @@ impl VisitMut<'_> for SpecParser {
             },
             ..Default::default()
         };
+        let mut yaml_options = YamlFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
 
         // Get options
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
@@ -194,6 +201,7 @@ impl VisitMut<'_> for SpecParser {
                             } else if name == "bracketSpacing" {
                                 js_options.bracket_spacing = BracketSpacing::from(literal.value);
                                 graphql_options.bracket_spacing = literal.value.into();
+                                yaml_options.bracket_spacing = literal.value.into();
                             } else if matches!(
                                 name.as_ref(),
                                 "jsxBracketSameLine" | "bracketSameLine"
@@ -208,6 +216,7 @@ impl VisitMut<'_> for SpecParser {
                                 };
                                 json_options.single_quote = literal.value.into();
                                 css_options.single_quote = literal.value.into();
+                                yaml_options.single_quote = literal.value.into();
                             } else if name == "jsxSingleQuote" {
                                 js_options.jsx_quote_style = if literal.value {
                                     QuoteStyle::Single
@@ -224,6 +233,7 @@ impl VisitMut<'_> for SpecParser {
                                 json_options.indent_style = style;
                                 graphql_options.indent_style = style;
                                 css_options.indent_style = style;
+                                yaml_options.indent_style = style;
                             } else if name == "experimentalTernaries" {
                                 js_options.experimental_ternaries = literal.value;
                             } else if name == "singleAttributePerLine" {
@@ -242,6 +252,7 @@ impl VisitMut<'_> for SpecParser {
                                 json_options.line_width = width;
                                 graphql_options.line_width = width;
                                 css_options.line_width = width;
+                                yaml_options.line_width = width;
                             }
                             "tabWidth" => {
                                 let w = IndentWidth::try_from(literal.value as u8).unwrap();
@@ -249,6 +260,7 @@ impl VisitMut<'_> for SpecParser {
                                 json_options.indent_width = w;
                                 graphql_options.indent_width = w;
                                 css_options.indent_width = w;
+                                yaml_options.indent_width = w;
                             }
                             _ => {}
                         },
@@ -268,6 +280,11 @@ impl VisitMut<'_> for SpecParser {
                                         "none" => oxc_formatter_css::TrailingCommas::Never,
                                         _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
                                     };
+                                    yaml_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_yaml::TrailingCommas::Always,
+                                        "none" => oxc_formatter_yaml::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -276,6 +293,14 @@ impl VisitMut<'_> for SpecParser {
                                     json_options.line_ending = ending;
                                     graphql_options.line_ending = ending;
                                     css_options.line_ending = ending;
+                                    yaml_options.line_ending = ending;
+                                }
+                                "proseWrap" => {
+                                    yaml_options.prose_wrap = match s {
+                                        "always" => ProseWrap::Always,
+                                        "never" => ProseWrap::Never,
+                                        _ => ProseWrap::Preserve,
+                                    };
                                 }
                                 "quoteProps" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -349,6 +374,7 @@ impl VisitMut<'_> for SpecParser {
             TestLanguage::Css | TestLanguage::Scss | TestLanguage::Less => {
                 SpecOptions::Css(css_options)
             }
+            TestLanguage::Yaml => SpecOptions::Yaml(yaml_options),
             TestLanguage::Js | TestLanguage::Ts => SpecOptions::Js(Box::new(js_options)),
         };
         self.calls.push((options, snapshot_options));

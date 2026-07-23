@@ -108,13 +108,15 @@ fn transform<'a>(
     // and any `Line(_)` inside is for output positioning, not a real line boundary.
     // e.g. ```import "a"; <StartLineSuffix> Line(Empty) Text("// trailing") <EndLineSuffix>```
     let mut inside_line_suffix = false;
+    let comment_label = LabelId::of(JsLabels::Comment);
+    let import_label = LabelId::of(JsLabels::ImportDeclaration);
     for (idx, el) in prev_elements.iter().enumerate() {
         if let FormatElement::Tag(tag) = el {
             match tag {
                 Tag::StartLabelled(id) => {
-                    if *id == LabelId::of(JsLabels::Comment) {
+                    if *id == comment_label {
                         inside_comment = true;
-                    } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                    } else if *id == import_label {
                         inside_multiline_import = true;
                     }
                 }

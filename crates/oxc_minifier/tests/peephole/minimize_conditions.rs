@@ -1177,6 +1177,111 @@ fn test_compress_conditional_expression_inside() {
 }
 
 #[test]
+fn test_derived_constructor_parameter_default_does_not_use_outer_super_state() {
+    test_same(
+        "class Outer extends P {
+            constructor() {
+                super();
+                class Inner extends Q {
+                    constructor(a = f() ? this.x = 1 : this.x = 2) {
+                        super();
+                    }
+                }
+                new Inner();
+            }
+        }",
+    );
+}
+
+#[test]
+fn test_derived_constructor_this_captured_by_arrow() {
+    test(
+        "class Outer extends P { constructor() {
+            super();
+            use(() => f() ? this.k = 1 : this.k = 2);
+        } }",
+        "class Outer extends P { constructor() {
+            super(), use(() => this.k = f() ? 1 : 2);
+        } }",
+    );
+
+    test(
+        "class Outer extends P { constructor() {
+            use(() => f() ? this.k = 1 : this.k = 2);
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            use(() => f() ? this.k = 1 : this.k = 2), super();
+        } }",
+    );
+
+    test(
+        "class Outer extends P { constructor() {
+            use(() => {
+                super();
+                f() ? this.k = 1 : this.k = 2;
+            });
+        } }",
+        "class Outer extends P { constructor() {
+            use(() => {
+                super(), this.k = f() ? 1 : 2;
+            });
+        } }",
+    );
+}
+
+#[test]
+fn test_derived_constructor_this_in_nested_class_computed_key() {
+    // Evaluating the computed key calls `f()` before accessing the outer
+    // constructor's uninitialized `this`.
+    test_same(
+        "class Outer extends P { constructor() {
+            class Inner { [f() ? this.k = 1 : this.k = 2]() {} }
+            super();
+        } }",
+    );
+
+    // Once `super()` has initialized the outer `this`, the assignment can
+    // still be merged inside a nested computed key.
+    test(
+        "class Outer extends P { constructor() {
+            super();
+            class Inner { [f() ? this.k = 1 : this.k = 2]() {} }
+        } }",
+        "class Outer extends P { constructor() {
+            super();
+            class Inner { [this.k = f() ? 1 : 2]() {} }
+        } }",
+    );
+
+    // A nested method body has its own initialized `this` binding, so the
+    // assignment can still be merged there.
+    test(
+        "class Outer extends P { constructor() {
+            class Inner { method() { f() ? this.k = 1 : this.k = 2 } }
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            class Inner { method() { this.k = f() ? 1 : 2 } }
+            super();
+        } }",
+    );
+
+    // A field initializer also has its own initialized `this` binding, despite
+    // not introducing a function scope.
+    test(
+        "class Outer extends P { constructor() {
+            class Inner { field = f() ? this.k = 1 : this.k = 2 }
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            class Inner { field = this.k = f() ? 1 : 2 }
+            super();
+        } }",
+    );
+}
+
+#[test]
 fn test_fold_is_null_or_undefined() {
     test("v = foo === null || foo === undefined", "v = foo == null");
     test("v = foo === undefined || foo === null", "v = foo == null");

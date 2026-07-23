@@ -640,7 +640,7 @@ impl Linter {
                 hashbang.span.end,
                 CommentKind::Line,
             ));
-            comments_with_hashbang.extend(original_program.comments.iter().copied());
+            comments_with_hashbang.extend_from_slice_copy(&original_program.comments);
 
             original_program.comments.clear();
 
