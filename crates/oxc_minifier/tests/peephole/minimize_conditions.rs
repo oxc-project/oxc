@@ -1231,6 +1231,57 @@ fn test_derived_constructor_this_captured_by_arrow() {
 }
 
 #[test]
+fn test_derived_constructor_this_in_nested_class_computed_key() {
+    // Evaluating the computed key calls `f()` before accessing the outer
+    // constructor's uninitialized `this`.
+    test_same(
+        "class Outer extends P { constructor() {
+            class Inner { [f() ? this.k = 1 : this.k = 2]() {} }
+            super();
+        } }",
+    );
+
+    // Once `super()` has initialized the outer `this`, the assignment can
+    // still be merged inside a nested computed key.
+    test(
+        "class Outer extends P { constructor() {
+            super();
+            class Inner { [f() ? this.k = 1 : this.k = 2]() {} }
+        } }",
+        "class Outer extends P { constructor() {
+            super();
+            class Inner { [this.k = f() ? 1 : 2]() {} }
+        } }",
+    );
+
+    // A nested method body has its own initialized `this` binding, so the
+    // assignment can still be merged there.
+    test(
+        "class Outer extends P { constructor() {
+            class Inner { method() { f() ? this.k = 1 : this.k = 2 } }
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            class Inner { method() { this.k = f() ? 1 : 2 } }
+            super();
+        } }",
+    );
+
+    // A field initializer also has its own initialized `this` binding, despite
+    // not introducing a function scope.
+    test(
+        "class Outer extends P { constructor() {
+            class Inner { field = f() ? this.k = 1 : this.k = 2 }
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            class Inner { field = this.k = f() ? 1 : 2 }
+            super();
+        } }",
+    );
+}
+
+#[test]
 fn test_fold_is_null_or_undefined() {
     test("v = foo === null || foo === undefined", "v = foo == null");
     test("v = foo === undefined || foo === null", "v = foo == null");

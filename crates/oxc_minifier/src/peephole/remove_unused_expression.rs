@@ -63,10 +63,24 @@ impl<'a> PeepholeOptimizations {
             if !flags.is_constructor() {
                 return None;
             }
-            // Found a constructor — check if the class has `extends`.
+            // Found a constructor — check if the class containing that constructor has
+            // `extends`. The nearest class is not necessarily the right one: computed keys
+            // and decorators of a nested class still use the outer lexical `this`.
+            let mut found_constructor_method = false;
             for ancestor in ctx.ancestors() {
-                if let Ancestor::ClassBody(class) = ancestor {
-                    return class.super_class().is_some().then_some(scope_id);
+                match ancestor {
+                    // Field initializers have their own `this`, even though they do not
+                    // introduce a function scope.
+                    Ancestor::PropertyDefinitionValue(_) | Ancestor::AccessorPropertyValue(_) => {
+                        return None;
+                    }
+                    Ancestor::MethodDefinitionValue(method) if method.kind().is_constructor() => {
+                        found_constructor_method = true;
+                    }
+                    Ancestor::ClassBody(class) if found_constructor_method => {
+                        return class.super_class().is_some().then_some(scope_id);
+                    }
+                    _ => {}
                 }
             }
             return None;
