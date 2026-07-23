@@ -157,9 +157,10 @@ impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
 /// growth can reuse the allocation only when nothing else was bumped in between, which practically never holds while formatting).
 /// Heap growth is reclaimed by the system allocator, and the arena receives only the final, exactly-sized copy.
 ///
-/// The buffer is a watermarked view over the format run's single shared staging vector:
-/// its content is the vector's tail past the length recorded at creation, drained on completion (or on drop).
-/// See `ScratchBuffer` in `state.rs` for the sharing scheme and the LIFO discipline it relies on.
+/// The buffer is a watermarked view over the format run's single shared staging vector ([`FormatState`]'s scratch):
+/// its content is the vector's tail past the length recorded at creation,
+/// drained on completion (or on drop). Multiple buffers share the vector like a stack,
+/// sound because IR staging is strictly LIFO (an inner buffer always completes before its enclosing one resumes).
 pub struct HeapVecBuffer<'buf, 'ast, C> {
     state: &'buf mut FormatState<'ast, C>,
     watermark: usize,
@@ -233,6 +234,72 @@ impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
     }
 }
 
+/// An owned heap staging vector for accumulators that outlive a single staging scope.
+///
+/// See [`AccumulatorBuffer`] for why interleaved or suspended accumulators can use
+/// neither the arena nor the format run's shared scratch vector.
+///
+/// Content leaves the buffer only through the named consumption paths ([`crate::Formatter::intern_elements`],
+/// [`ScratchBuffer::drain`], or [`ScratchBuffer::discard`]) all of which leave it empty,
+/// satisfying the drop-time assertion below.
+#[derive(Debug, Default)]
+pub struct ScratchBuffer<'ast>(Vec<FormatElement<'ast>>);
+
+impl<'ast> ScratchBuffer<'ast> {
+    /// An empty scratch buffer.
+    pub const fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    /// Adapts this scratch vector into a [`Buffer`] writing into it.
+    ///
+    /// This is the only way to construct an [`AccumulatorBuffer`] and the only write path into the vector,
+    /// so accumulated content is always guarded by the drain-before-drop assertion below.
+    pub fn writer<'buf, C>(
+        &'buf mut self,
+        state: &'buf mut FormatState<'ast, C>,
+    ) -> AccumulatorBuffer<'buf, 'ast, C> {
+        AccumulatorBuffer::new(state, &mut self.0)
+    }
+
+    /// Removes and returns the accumulated elements, leaving the buffer empty (re-emit consumption path).
+    pub fn drain(&mut self) -> std::vec::Drain<'_, FormatElement<'ast>> {
+        self.0.drain(..)
+    }
+
+    /// Inserts an element at `index`, shifting the rest.
+    /// For post-hoc adjustment of already-accumulated content
+    /// (e.g. slipping a separator into the last written entry); new content goes through [`ScratchBuffer::writer`].
+    pub fn insert(&mut self, index: usize, element: FormatElement<'ast>) {
+        self.0.insert(index, element);
+    }
+
+    /// Abandons any accumulated content, releasing the allocation immediately
+    /// (no caller writes again after a discard, so holding the capacity until drop would only pin peak memory).
+    pub fn discard(&mut self) {
+        self.0 = Vec::new();
+    }
+}
+
+impl<'ast> Deref for ScratchBuffer<'ast> {
+    type Target = [FormatElement<'ast>];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Drop for ScratchBuffer<'_> {
+    fn drop(&mut self) {
+        // Accumulators finish via `intern_elements`/`drain`/`discard`; a leftover means elements leaked.
+        // (Skipped mid-unwind: the owner may unwind while content is still staged.)
+        debug_assert!(
+            self.0.is_empty() || std::thread::panicking(),
+            "scratch buffer dropped before being fully drained"
+        );
+    }
+}
+
 /// Heap accumulator [`Buffer`] over a caller-owned element vector.
 ///
 /// For element sequences that outlive a single exclusive borrow of the [`FormatState`]:
@@ -243,8 +310,7 @@ impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
 /// Those can't stage in the arena (every growth would strand the grown-out-of allocation, see [`HeapVecBuffer`])
 /// nor share the format run's scratch vector (suspended or interleaved use breaks its LIFO discipline).
 ///
-/// Instead the caller owns a [`crate::ScratchBuffer`] (backed lazily by the thread-local cache)
-/// and writes through this adapter (constructed via [`crate::ScratchBuffer::writer`]);
+/// Instead the caller owns a [`ScratchBuffer`] and writes through this adapter (constructed via [`ScratchBuffer::writer`]);
 /// the arena receives one exactly-sized copy when the finished result is interned ([`crate::Formatter::intern_elements`]),
 /// or nothing at all when the elements are re-emitted into a downstream buffer.
 pub struct AccumulatorBuffer<'buf, 'ast, C> {
