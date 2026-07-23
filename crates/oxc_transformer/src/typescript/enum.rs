@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
@@ -698,7 +698,7 @@ impl IdentifierReferenceRename<'_, '_> {
     }
 }
 
-impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
+impl<'a> VisitJsMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         self.scope_stack.push(scope_id.get().unwrap());
     }
@@ -718,7 +718,7 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
                 .into();
             }
             _ => {
-                walk_mut::walk_expression(self, expr);
+                walk_js_mut::walk_expression(self, expr);
             }
         }
     }
