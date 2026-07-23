@@ -3,7 +3,7 @@ use std::{iter, ops::ControlFlow};
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::VisitJs;
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
