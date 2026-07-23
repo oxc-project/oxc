@@ -1,20 +1,21 @@
 export function wrap(result) {
-  let program, module, comments, errors;
+  // Move native-owned fields into JavaScript values immediately. Retaining the NAPI class in
+  // these getter closures delays its finalizer, which can keep one large serialized AST alive
+  // for every discarded parse result until Node eventually drains the native finalizer queue.
+  const { program: programJson, module, comments, errors } = result;
+  let program;
   return {
     get program() {
-      if (!program) program = jsonParseAst(result.program);
+      if (!program) program = jsonParseAst(programJson);
       return program;
     },
     get module() {
-      if (!module) module = result.module;
       return module;
     },
     get comments() {
-      if (!comments) comments = result.comments;
       return comments;
     },
     get errors() {
-      if (!errors) errors = result.errors;
       return errors;
     },
   };
