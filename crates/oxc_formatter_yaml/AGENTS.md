@@ -8,8 +8,9 @@ Prettier compatible YAML formatter (`oxfmt`'s Tier 1 backend), using the `oxc_fo
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
 - Two entry points (see their docs in `src/format.rs`):
   `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. yaml-in-markdown)
-- The canonical reference is Prettier 3.9's `src/language-yaml/printer-yaml.js` + `print/*.js`
-  - port its layout decisions — EXCEPT where they are bugs or internally inconsistent (see below)
+- The canonical reference is Prettier 3.9's OUTPUT (the conformance snapshots); its source is an analysis aid, not a porting target
+  - match its layout decisions — EXCEPT where they are bugs or internally inconsistent (see below)
+  - never mirror its internal logic 1:1: pin behavior with fixtures, and keep implementation details of Prettier's code out of comments
 
 ### Parser
 
