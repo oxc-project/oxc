@@ -798,6 +798,7 @@ pub use crate::rules::vitest::prefer_to_contain::PreferToContain as VitestPrefer
 pub use crate::rules::vitest::prefer_to_have_been_called_times::PreferToHaveBeenCalledTimes as VitestPreferToHaveBeenCalledTimes;
 pub use crate::rules::vitest::prefer_to_have_length::PreferToHaveLength as VitestPreferToHaveLength;
 pub use crate::rules::vitest::prefer_todo::PreferTodo as VitestPreferTodo;
+pub use crate::rules::vitest::prefer_vi_mocked::PreferViMocked as VitestPreferViMocked;
 pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectPoll as VitestRequireAwaitedExpectPoll;
 pub use crate::rules::vitest::require_hook::RequireHook as VitestRequireHook;
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
@@ -1649,6 +1650,7 @@ pub enum RuleEnum {
     VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes),
     VitestPreferToHaveLength(VitestPreferToHaveLength),
     VitestPreferTodo(VitestPreferTodo),
+    VitestPreferViMocked(VitestPreferViMocked),
     VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll),
     VitestRequireHook(VitestRequireHook),
     VitestRequireLocalTestContextForConcurrentSnapshots(
@@ -2598,7 +2600,8 @@ const VITEST_PREFER_TO_CONTAIN_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usiz
 const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = VITEST_PREFER_TO_CONTAIN_ID + 1usize;
 const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID + 1usize;
 const VITEST_PREFER_TODO_ID: usize = VITEST_PREFER_TO_HAVE_LENGTH_ID + 1usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TODO_ID + 1usize;
+const VITEST_PREFER_VI_MOCKED_ID: usize = VITEST_PREFER_TODO_ID + 1usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_VI_MOCKED_ID + 1usize;
 const VITEST_REQUIRE_HOOK_ID: usize = VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
 const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
     VITEST_REQUIRE_HOOK_ID + 1usize;
@@ -3580,6 +3583,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VITEST_PREFER_TO_HAVE_LENGTH_ID,
             Self::VitestPreferTodo(_) => VITEST_PREFER_TODO_ID,
+            Self::VitestPreferViMocked(_) => VITEST_PREFER_VI_MOCKED_ID,
             Self::VitestRequireAwaitedExpectPoll(_) => VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID,
             Self::VitestRequireHook(_) => VITEST_REQUIRE_HOOK_ID,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -4544,6 +4548,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::NAME,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::NAME,
             Self::VitestPreferTodo(_) => VitestPreferTodo::NAME,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::NAME,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::NAME,
             Self::VitestRequireHook(_) => VitestRequireHook::NAME,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -5564,6 +5569,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::CATEGORY,
             Self::VitestPreferTodo(_) => VitestPreferTodo::CATEGORY,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::CATEGORY,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::CATEGORY,
             Self::VitestRequireHook(_) => VitestRequireHook::CATEGORY,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -6531,6 +6537,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::FIX,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::FIX,
             Self::VitestPreferTodo(_) => VitestPreferTodo::FIX,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::FIX,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FIX,
             Self::VitestRequireHook(_) => VitestRequireHook::FIX,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -7742,6 +7749,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::documentation(),
             Self::VitestPreferTodo(_) => VitestPreferTodo::documentation(),
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::documentation(),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::documentation()
             }
@@ -10077,6 +10085,8 @@ impl RuleEnum {
                 .or_else(|| VitestPreferToHaveLength::schema(generator)),
             Self::VitestPreferTodo(_) => VitestPreferTodo::config_schema(generator)
                 .or_else(|| VitestPreferTodo::schema(generator)),
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::config_schema(generator)
+                .or_else(|| VitestPreferViMocked::schema(generator)),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::config_schema(generator)
                     .or_else(|| VitestRequireAwaitedExpectPoll::schema(generator))
@@ -11057,6 +11067,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => "vitest",
             Self::VitestPreferToHaveLength(_) => "vitest",
             Self::VitestPreferTodo(_) => "vitest",
+            Self::VitestPreferViMocked(_) => "vitest",
             Self::VitestRequireAwaitedExpectPoll(_) => "vitest",
             Self::VitestRequireHook(_) => "vitest",
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
@@ -13642,6 +13653,9 @@ impl RuleEnum {
             Self::VitestPreferTodo(_) => {
                 Ok(Self::VitestPreferTodo(VitestPreferTodo::from_configuration(value)?))
             }
+            Self::VitestPreferViMocked(_) => {
+                Ok(Self::VitestPreferViMocked(VitestPreferViMocked::from_configuration(value)?))
+            }
             Self::VitestRequireAwaitedExpectPoll(_) => Ok(Self::VitestRequireAwaitedExpectPoll(
                 VitestRequireAwaitedExpectPoll::from_configuration(value)?,
             )),
@@ -14640,6 +14654,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferToHaveLength(rule) => rule.to_configuration(),
             Self::VitestPreferTodo(rule) => rule.to_configuration(),
+            Self::VitestPreferViMocked(rule) => rule.to_configuration(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.to_configuration(),
             Self::VitestRequireHook(rule) => rule.to_configuration(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
@@ -15493,6 +15508,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run(node, ctx),
             Self::VitestPreferTodo(rule) => rule.run(node, ctx),
+            Self::VitestPreferViMocked(rule) => rule.run(node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run(node, ctx),
             Self::VitestRequireHook(rule) => rule.run(node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
@@ -16356,6 +16372,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run_once(ctx),
             Self::VitestPreferTodo(rule) => rule.run_once(ctx),
+            Self::VitestPreferViMocked(rule) => rule.run_once(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_once(ctx),
             Self::VitestRequireHook(rule) => rule.run_once(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
@@ -17330,6 +17347,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferViMocked(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireHook(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
@@ -18200,6 +18218,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.should_run(ctx),
             Self::VitestPreferTodo(rule) => rule.should_run(ctx),
+            Self::VitestPreferViMocked(rule) => rule.should_run(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.should_run(ctx),
             Self::VitestRequireHook(rule) => rule.should_run(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
@@ -19404,6 +19423,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::IS_TSGOLINT_RULE,
             Self::VitestPreferTodo(_) => VitestPreferTodo::IS_TSGOLINT_RULE,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::IS_TSGOLINT_RULE,
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::IS_TSGOLINT_RULE
             }
@@ -20448,6 +20468,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::VERSION,
             Self::VitestPreferTodo(_) => VitestPreferTodo::VERSION,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::VERSION,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
             Self::VitestRequireHook(_) => VitestRequireHook::VERSION,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -21507,6 +21528,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::HAS_CONFIG,
             Self::VitestPreferTodo(_) => VitestPreferTodo::HAS_CONFIG,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::HAS_CONFIG,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::HAS_CONFIG,
             Self::VitestRequireHook(_) => VitestRequireHook::HAS_CONFIG,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -22479,6 +22501,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::INFO,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::INFO,
             Self::VitestPreferTodo(_) => VitestPreferTodo::INFO,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::INFO,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::INFO,
             Self::VitestRequireHook(_) => VitestRequireHook::INFO,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -23340,6 +23363,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferToHaveLength(rule) => rule.types_info(),
             Self::VitestPreferTodo(rule) => rule.types_info(),
+            Self::VitestPreferViMocked(rule) => rule.types_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.types_info(),
             Self::VitestRequireHook(rule) => rule.types_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
@@ -24190,6 +24214,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferToHaveLength(rule) => rule.run_info(),
             Self::VitestPreferTodo(rule) => rule.run_info(),
+            Self::VitestPreferViMocked(rule) => rule.run_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_info(),
             Self::VitestRequireHook(rule) => rule.run_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
@@ -25170,6 +25195,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes::default()),
         RuleEnum::VitestPreferToHaveLength(VitestPreferToHaveLength::default()),
         RuleEnum::VitestPreferTodo(VitestPreferTodo::default()),
+        RuleEnum::VitestPreferViMocked(VitestPreferViMocked::default()),
         RuleEnum::VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll::default()),
         RuleEnum::VitestRequireHook(VitestRequireHook::default()),
         RuleEnum::VitestRequireLocalTestContextForConcurrentSnapshots(

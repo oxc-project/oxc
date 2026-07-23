@@ -721,6 +721,7 @@ vitest/prefer-to-contain                                   |      0
 vitest/prefer-to-have-been-called-times                    |      0
 vitest/prefer-to-have-length                               |      0
 vitest/prefer-todo                                         |      0
+vitest/prefer-vi-mocked                                    |   2576
 vitest/require-awaited-expect-poll                         |      0
 vitest/require-hook                                        |  62613
 vitest/require-local-test-context-for-concurrent-snapshots |      0
