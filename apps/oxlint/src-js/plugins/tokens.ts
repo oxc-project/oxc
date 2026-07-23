@@ -237,8 +237,8 @@ class Token {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
-const getTokenLoc = getTokenLocTemp!;
-const resetLoc = resetLocTemp!;
+const getTokenLoc = getTokenLocTemp;
+const resetLoc = resetLocTemp;
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;

@@ -161,8 +161,8 @@ class Comment implements Span {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
-const getCommentLoc = getCommentLocTemp!;
-const resetCommentLoc = resetCommentLocTemp!;
+const getCommentLoc = getCommentLocTemp;
+const resetCommentLoc = resetCommentLocTemp;
 
 /**
  * Deserialize all comments and build the `comments` array.
