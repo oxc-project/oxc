@@ -328,28 +328,32 @@ export function getComment(index: number): CommentType {
  * @returns `Comment` object if newly deserialized, or `null` if already deserialized
  */
 function deserializeCommentIfNeeded(index: number): Comment | null {
+  debugAssertIsNonNull(commentsUint8, "Comment buffers should be initialized");
+  debugAssertIsNonNull(commentsInt32, "Comment buffers should be initialized");
+  debugAssertIsNonNull(sourceText, "Source text should be initialized");
+
   const pos = index << COMMENT_SIZE_SHIFT;
 
   // Fast path: If already deserialized, exit
   const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
-  if (commentsUint8![flagPos] !== FLAG_NOT_DESERIALIZED) return null;
+  if (commentsUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
 
   // Mark comment as deserialized, so it won't be deserialized again
-  commentsUint8![flagPos] = FLAG_DESERIALIZED;
+  commentsUint8[flagPos] = FLAG_DESERIALIZED;
 
   // Deserialize comment into a cached `Comment` object
   const comment = cachedComments[index];
 
-  const isBlock = commentsUint8![pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
+  const isBlock = commentsUint8[pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
 
   const pos32 = pos >> 2,
-    start = commentsInt32![pos32],
-    end = commentsInt32![pos32 + 1];
+    start = commentsInt32[pos32],
+    end = commentsInt32[pos32 + 1];
 
   comment.type = isBlock ? "Block" : "Line";
   // Line comments: `// text` -> slice `start + 2..end`
   // Block comments: `/* text */` -> slice `start + 2..end - 2`
-  comment.value = sourceText!.slice(start + 2, end - (+isBlock << 1));
+  comment.value = sourceText.slice(start + 2, end - (+isBlock << 1));
   comment.range[0] = comment.start = start;
   comment.range[1] = comment.end = end;
 

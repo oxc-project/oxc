@@ -413,31 +413,35 @@ export function getToken(index: number): TokenType {
  * @returns `Token` object if newly deserialized, or `null` if already deserialized
  */
 function deserializeTokenIfNeeded(index: number): Token | null {
+  debugAssertIsNonNull(tokensUint8, "Token buffers should be initialized");
+  debugAssertIsNonNull(tokensInt32, "Token buffers should be initialized");
+  debugAssertIsNonNull(sourceText, "Source text should be initialized");
+
   const pos = index << TOKEN_SIZE_SHIFT;
 
   // Fast path: If already deserialized, exit
   const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
-  if (tokensUint8![flagPos] !== FLAG_NOT_DESERIALIZED) return null;
+  if (tokensUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
 
   // Mark token as deserialized, so it won't be deserialized again
-  tokensUint8![flagPos] = FLAG_DESERIALIZED;
+  tokensUint8[flagPos] = FLAG_DESERIALIZED;
 
   // Deserialize token into a cached `Token` object
   const token = cachedTokens[index];
 
-  const kind = tokensUint8![pos + KIND_FIELD_OFFSET];
+  const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
 
   const pos32 = pos >> 2,
-    start = tokensInt32![pos32],
-    end = tokensInt32![pos32 + 1];
+    start = tokensInt32[pos32],
+    end = tokensInt32[pos32 + 1];
 
   // Get `value` as slice of source text `start..end`.
   // Slice `start + 1..end` for private identifiers, to strip leading `#`.
-  let value = sourceText!.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
+  let value = sourceText.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
 
   if (kind <= PRIVATE_IDENTIFIER_KIND) {
     // Unescape if `escaped` flag is set
-    if (tokensUint8![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+    if (tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
       value = unescapeIdentifier(value);
     }
   } else if (kind === REGEXP_KIND) {
