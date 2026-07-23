@@ -865,6 +865,7 @@ pub(crate) mod vue {
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
     pub mod max_props;
+    pub mod multi_word_component_names;
     pub mod next_tick_style;
     pub mod no_arrow_functions_in_watch;
     pub mod no_async_in_computed_properties;

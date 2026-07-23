@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(multi-word-component-names): Component name "test" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:3:44]
+ 2 │                     <script>
+ 3 │                     export default { name: 'test' }
+   ·                                            ──────
+ 4 │                     </script>
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "test" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:3:35]
+ 2 │                     <script>
+ 3 │                     Vue.component('test', {})
+   ·                                   ──────
+ 4 │                     </script>
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "invalid" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:3:44]
+ 2 │                     <script>
+ 3 │                     export default { name: 'invalid' }
+   ·                                            ─────────
+ 4 │                     </script>
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "invalid" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:3:35]
+ 2 │                     <script>
+ 3 │                     Vue.component('invalid', {})
+   ·                                   ─────────
+ 4 │                     </script>
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "invalid" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:2:29]
+ 1 │ 
+ 2 │                     <script>
+   ·                             ▲
+ 3 │                     export default {}
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:3:35]
+ 2 │                     <script>
+ 3 │                     Vue.component('', {})
+   ·                                   ──
+ 4 │                     </script>
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "Item" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:4:27]
+ 3 │                   export default {
+ 4 │                     name: 'Item'
+   ·                           ──────
+ 5 │                   }
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "test" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:2:43]
+ 1 │ 
+ 2 │                   <script setup lang="ts">
+   ·                                           ▲
+ 3 │                   import Item from "@/components/Item.vue";
+   ╰────
+
+  ⚠ vue(multi-word-component-names): Component name "Single" should always be multi-word.
+   ╭─[multi_word_component_names.tsx:3:40]
+ 2 │                   <script setup>
+ 3 │                   defineOptions({name: 'Single'})
+   ·                                        ────────
+ 4 │                   </script>
+   ╰────
