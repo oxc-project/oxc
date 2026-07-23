@@ -117,4 +117,12 @@ pub const IGNORE_TESTS: &[&str] = &[
     "typescript/decorators-ts/angular.ts",
     // postcss-conditionals (archived: https://github.com/andyjansson/postcss-conditionals).
     "css/atrule/if-else.css",
+    // Prettier's yaml parser rejects these (https://github.com/eemeli/yaml/issues/646),
+    // so no snapshot exists (`3-style.yml` is even marked `errors` in its format.test.js).
+    // oxc-yaml-parser parses them fine, but there is nothing to compare against.
+    "yaml/mapping/3-style.yml",
+    "yaml/spec/spec-example-2-11-mapping-between-sequences.yml",
+    // Pragma support (`@format` insertion / require)
+    "yaml/insert-pragma/",
+    "yaml/require-pragma/",
 ];

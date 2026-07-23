@@ -31,6 +31,7 @@ oxc_formatter_core = { workspace = true }
 oxc_formatter_css = { workspace = true }
 oxc_formatter_graphql = { workspace = true }
 oxc_formatter_json = { workspace = true }
+oxc_formatter_yaml = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 oxc_tasks_common = { workspace = true }

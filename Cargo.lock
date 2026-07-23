@@ -2451,6 +2451,7 @@ dependencies = [
  "oxc_formatter_css",
  "oxc_formatter_graphql",
  "oxc_formatter_json",
+ "oxc_formatter_yaml",
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",

@@ -276,13 +276,7 @@ unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }
 
 [workspace.metadata.cargo-shear]
-ignored = [
-  "oxc_transform_napi",
-  "oxc_parser_napi",
-  "oxc_minify_napi",
-  # TEMPORARY: `oxc_formatter_yaml` is consumed by the stacked PR; remove the ignore there.
-  "oxc_formatter_yaml",
-]
+ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]
 
 # `oxc_allocator` is both dogfooded here (workspace path) and published to crates.io.
 # External workspace-dependencies (e.g. `oxc-css-parser`) pull it from the registry,
