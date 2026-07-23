@@ -346,6 +346,7 @@ export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-corr
 export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
+export type ConsistentExportDecoratorPositionOption = "above" | "before" | "after";
 export type NonZero = "greater-than" | "not-equal";
 export type ExplicitTimerDelayMode = "always" | "never";
 export type ModuleStylesOverride =
@@ -1503,6 +1504,8 @@ export interface DummyRuleMap {
   "unicorn/consistent-date-clone"?: RuleNoConfig;
   "unicorn/consistent-empty-array-spread"?: RuleNoConfig;
   "unicorn/consistent-existence-index-check"?: RuleNoConfig;
+  "unicorn/consistent-export-decorator-position"?:
+    RuleNoConfig | [AllowWarnDeny, ConsistentExportDecoratorPositionOption];
   "unicorn/consistent-function-scoping"?: RuleNoConfig | [AllowWarnDeny, ConsistentFunctionScoping];
   "unicorn/consistent-template-literal-escape"?: RuleNoConfig;
   "unicorn/custom-error-definition"?: RuleNoConfig;

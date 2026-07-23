@@ -1555,6 +1555,34 @@
       },
       "additionalProperties": false
     },
+    "ConsistentExportDecoratorPositionOption": {
+      "oneOf": [
+        {
+          "description": "Require decorators on the line above the export.",
+          "type": "string",
+          "enum": [
+            "above"
+          ],
+          "markdownDescription": "Require decorators on the line above the export."
+        },
+        {
+          "description": "Require decorators before export on the same line.",
+          "type": "string",
+          "enum": [
+            "before"
+          ],
+          "markdownDescription": "Require decorators before export on the same line."
+        },
+        {
+          "description": "Require decorators after export or export default.",
+          "type": "string",
+          "enum": [
+            "after"
+          ],
+          "markdownDescription": "Require decorators after export or export default."
+        }
+      ]
+    },
     "ConsistentFunctionScoping": {
       "type": "object",
       "properties": {
@@ -8718,6 +8746,26 @@
         },
         "unicorn/consistent-existence-index-check": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/consistent-export-decorator-position": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentExportDecoratorPositionOption"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/consistent-function-scoping": {
           "anyOf": [
