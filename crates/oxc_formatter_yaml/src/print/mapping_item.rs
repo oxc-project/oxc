@@ -7,12 +7,11 @@ use oxc_yaml_parser::ast::{Content, MappingItem, Node};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, is_suppressed_last_before,
-        suppression_flush_bound, write_single_comment, write_suppressed_node,
+        Gap, classify_gap, flush_leading_comments, is_own_line, write_single_comment,
         write_trailing_same_line_comment,
     },
     options::ProseWrap,
-    print::{YamlFormatter, column_of, format_with, is_own_line, to_span, write_node},
+    print::{YamlFormatter, column_of, format_with, to_span, write_node, write_node_or_suppressed},
 };
 
 /// Where a mapping item lives; decides the empty-value layout
@@ -226,24 +225,12 @@ pub fn write_mapping_item<'a>(
             write!(f, ":");
             if hardline_separator {
                 // Key's same-line comment must be emitted before the line break
-                write_trailing_same_line_comment(key_span_end, f);
+                write_trailing_same_line_comment(key_span_end, b":", f);
                 write!(f, hard_line_break());
             } else {
                 write!(f, space());
             }
-            // Suppress comment leading the value suppresses the value node,
-            // except a block collection, whose first item claims the marker instead
-            // (same delegation as at the document level).
-            let value_is_block_collection =
-                matches!(value_node.content, Content::Mapping(_) | Content::Sequence(_));
-            if !value_is_block_collection && is_suppressed_last_before(f, value_start) {
-                write_suppressed_node(to_span(value_node.span), f);
-            } else {
-                let flush_bound =
-                    suppression_flush_bound(value_is_block_collection, value_start, f);
-                flush_leading_comments(flush_bound, f);
-                write_node(value_node, f);
-            }
+            write_node_or_suppressed(value_node, f);
         });
         write!(f, align(tab_width, &implicit_value));
         return;

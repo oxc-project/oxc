@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use oxc_formatter_core::{
     Buffer, SourceText,
-    builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    builders::{align, empty_line, expand_parent, hard_line_break, line_suffix, space, text},
     spec::is_suppression_marker,
     write,
 };
@@ -111,6 +111,50 @@ pub fn classify_gap(slice: &[u8]) -> Gap {
     }
 }
 
+/// `true` when the source between `from` and `to` holds nothing but whitespace and comments
+/// (every line blank or `#`-only after indentation).
+fn gap_is_trivia_only(source: &str, from: u32, to: u32) -> bool {
+    source[from as usize..to as usize].lines().all(|line| {
+        let trimmed = line.trim_start();
+        trimmed.is_empty() || trimmed.starts_with('#')
+    })
+}
+
+/// `true` when only whitespace precedes `offset` on its line
+/// (an own-line comment, as opposed to one trailing other content).
+pub fn is_own_line(source: &str, offset: u32) -> bool {
+    own_line_column(source, offset).is_some()
+}
+
+/// The 0-based column of `offset` when only whitespace precedes it on its line,
+/// in a single backward scan; `None` when other content does.
+fn own_line_column(source: &str, offset: u32) -> Option<u32> {
+    let mut column = 0u32;
+    for &byte in source.as_bytes()[..offset as usize].iter().rev() {
+        match byte {
+            b'\n' => break,
+            b' ' | b'\t' => column += 1,
+            _ => return None,
+        }
+    }
+    Some(column)
+}
+
+/// One line break, widened to a blank line when the source gap holds one.
+pub fn write_blank_preserving_break(
+    prev_end: u32,
+    upper_bound: u32,
+    f: &mut YamlFormatter<'_, '_>,
+) {
+    if prev_end < upper_bound
+        && classify_gap(f.context().source_text().bytes_range(prev_end, upper_bound)) == Gap::Blank
+    {
+        write!(f, empty_line());
+    } else {
+        write!(f, hard_line_break());
+    }
+}
+
 /// Emit a single comment verbatim (trailing whitespace trimmed).
 /// The spacing after `#` is kept as authored, never normalized.
 pub fn write_single_comment(span: Span, f: &mut YamlFormatter<'_, '_>) {
@@ -149,15 +193,22 @@ pub fn flush_leading_comments(value_start: u32, f: &mut YamlFormatter<'_, '_>) {
 /// drain it and emit it as a trailing line-suffix comment (` # ...`).
 /// `expand_parent()` keeps the enclosing container multi-line.
 ///
-/// The gap may only contain whitespace and structural punctuation,
-/// content in between means the comment trails a LATER node on the same line
+/// The gap may only contain whitespace and `gap_punctuation`:
+/// the structural bytes the CALLER's syntax puts between the node end and its trailing comment
+/// (`,` between flow entries, `:` after an implicit key), so syntax knowledge stays at the print site.
+/// Any other content means the comment trails a LATER node on the same line
 /// (`[a, b, c # comment` must not attach the comment to `a`).
-pub fn write_trailing_same_line_comment<'a>(prev_end: u32, f: &mut YamlFormatter<'_, 'a>) {
+pub fn write_trailing_same_line_comment<'a>(
+    prev_end: u32,
+    gap_punctuation: &[u8],
+    f: &mut YamlFormatter<'_, 'a>,
+) {
     let Some(span) = f.context().comments().peek() else { return };
     let source = f.context().source_text();
     if span.start < prev_end
-        || !source
-            .all_bytes_match(prev_end, span.start, |b| matches!(b, b' ' | b'\t' | b',' | b':'))
+        || !source.all_bytes_match(prev_end, span.start, |b| {
+            matches!(b, b' ' | b'\t') || gap_punctuation.contains(&b)
+        })
     {
         return;
     }
@@ -228,6 +279,46 @@ pub fn write_suppressed_node(span: Span, f: &mut YamlFormatter<'_, '_>) {
     // The verbatim text already includes inside-span comments;
     // advance the cursor so they aren't re-emitted later.
     let _ = f.context().comments().take_before(span.end);
+}
+
+/// Claims pending comments indented strictly deeper than `item_column` as the preceding item's end comments,
+/// printed one indent level in
+/// (the placement effect of Prettier's `shouldOwnEndComment` + `mappingValue.endComments`, re-derived positionally).
+/// Returns the position after the last claimed comment so the caller can keep measuring gaps from it.
+pub fn flush_container_end_comments(
+    item_column: u32,
+    prev_end: u32,
+    upper_bound: u32,
+    f: &mut YamlFormatter<'_, '_>,
+) -> u32 {
+    let source = f.context().source_text();
+    let tab_width = f.options().indent_width.value();
+    let mut prev_end = prev_end;
+    loop {
+        let Some(span) = f.context().comments().peek() else { return prev_end };
+        if span.end > upper_bound
+            || own_line_column(&source, span.start).is_none_or(|column| column <= item_column)
+            // An end-comment run directly follows its container;
+            // other tokens in between mean the comment belongs to a LATER node
+            // (a nested collection's unbounded tail flush must not jump over the parent's following items).
+            || !gap_is_trivia_only(&source, prev_end, span.start)
+        {
+            return prev_end;
+        }
+        f.context().comments().take_before(span.end);
+        let is_blank = classify_gap(source.bytes_range(prev_end, span.start)) == Gap::Blank;
+        // The line break lives INSIDE `align` so the comment line is indented
+        let inner = format_with(move |f: &mut YamlFormatter<'_, '_>| {
+            if is_blank {
+                write!(f, empty_line());
+            } else {
+                write!(f, hard_line_break());
+            }
+            write_single_comment(span, f);
+        });
+        write!(f, align(tab_width, &inner));
+        prev_end = span.end;
+    }
 }
 
 #[cfg(test)]

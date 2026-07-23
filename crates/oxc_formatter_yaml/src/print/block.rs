@@ -8,7 +8,7 @@ use oxc_formatter_core::{
     },
     write,
 };
-use oxc_yaml_parser::ast::{BlockScalar, Chomping};
+use oxc_yaml_parser::ast::{BlockScalar, Chomping, Content, MappingItem, Node, Root};
 
 use crate::{
     comments::{Gap, classify_gap, write_single_comment},
@@ -24,7 +24,7 @@ use crate::{
 /// Zero for the last descendant because the FILE's trailing newline is owned by `FormatYamlRoot` (`format.rs`), not the scalar:
 /// it appends the POSIX final newline itself, EXCEPT after a keep-chomped (`+`) tail whose verbatim value already carries its trailing newlines,
 /// emitting any here would double them.
-pub(super) fn consumed_trailing_newlines(total_newlines: usize, is_last_descendant: bool) -> usize {
+fn consumed_trailing_newlines(total_newlines: usize, is_last_descendant: bool) -> usize {
     if is_last_descendant {
         0
     } else {
@@ -285,4 +285,81 @@ fn remove_unnecessary_trailing_newlines<'s>(
     };
     lines.truncate(keep);
     lines
+}
+
+/// Returns `true` when the stream's last descendant is a keep-chomped (`+`) block scalar.
+/// Its verbatim content already ends with the kept newlines,
+/// so the caller must not append the usual final `hard_line_break()`
+/// (mirrors Prettier's `shouldPrintHardline` gate).
+pub fn ends_with_keep_chomped_block(root: &Root<'_>) -> bool {
+    root.children
+        .last()
+        .and_then(|document| document.body.content.as_deref())
+        .and_then(last_descendant_block_scalar)
+        .is_some_and(|block| block.chomping == Chomping::Keep)
+}
+
+/// The block scalar the node's last descendant resolves to, if any.
+/// Its span consumes the trailing line breaks,
+/// so "same line" checks against the content end are meaningless after one.
+pub fn last_descendant_block_scalar<'b>(node: &'b Node<'_>) -> Option<&'b BlockScalar> {
+    match &node.content {
+        Content::BlockLiteral(block) | Content::BlockFolded(block) => Some(block),
+        Content::Mapping(mapping) => mapping
+            .children
+            .last()
+            .and_then(MappingItem::value_content)
+            .and_then(last_descendant_block_scalar),
+        Content::Sequence(sequence) => sequence
+            .children
+            .last()
+            .and_then(|item| item.content.as_deref())
+            .and_then(last_descendant_block_scalar),
+        // Block scalars cannot appear inside flow collections.
+        _ => None,
+    }
+}
+
+/// Walks to the end offset of the stream's last descendant node
+/// (Prettier's `getLastDescendantNode` on root, used by block scalars).
+pub fn last_descendant_end(root: &Root<'_>) -> u32 {
+    // Spans nest and every wrapper ends at its last descendant
+    // (the parser's `container_span` / `MappingItem` / `Node` span construction),
+    // so the last document body's span end IS the last descendant's end.
+    root.children
+        .last()
+        .and_then(|document| document.body.content.as_deref())
+        .map_or(0, |node| node.span.end)
+}
+
+/// The gap-measurement anchor after an item:
+/// a block scalar's span consumes its trailing line breaks (they are part of its VALUE under keep chomping),
+/// so blank-line detection must start after the last content character,
+/// otherwise the blank line separating it from the next item is invisible.
+pub fn item_gap_anchor(content: Option<&Node<'_>>, end: u32, f: &YamlFormatter<'_, '_>) -> u32 {
+    let Some(block) = content.and_then(last_descendant_block_scalar) else {
+        return end;
+    };
+    // Under keep chomping every trailing newline IS the value; the span end is the correct anchor
+    if block.chomping == Chomping::Keep {
+        return end;
+    }
+    // The trailing break run (`content_end..span.end`, line breaks plus blank-line indentation).
+    // Only the newlines the scalar's own output does NOT consume are the inter-item gap.
+    let tail = f.context().source_text().bytes_range(block.content_end, block.span.end);
+    // A handful of bytes; not worth a bytecount dependency
+    #[expect(clippy::naive_bytecount)]
+    let total_newlines = tail.iter().filter(|&&b| b == b'\n').count();
+    let is_last_descendant = block.span.end >= f.context().last_descendant_end();
+    let kept = consumed_trailing_newlines(total_newlines, is_last_descendant);
+    // Anchor right after the `kept`-th newline of the tail
+    // (the tail is span-bounded, so the saturation never fires).
+    tail.iter()
+        .enumerate()
+        .filter(|&(_, &byte)| byte == b'\n')
+        .take(kept)
+        .last()
+        .map_or(block.content_end, |(i, _)| {
+            block.content_end + u32::try_from(i + 1).unwrap_or(u32::MAX)
+        })
 }

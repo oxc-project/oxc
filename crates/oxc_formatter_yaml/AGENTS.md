@@ -17,7 +17,7 @@ Parses with [`oxc-yaml-parser`](https://crates.io/crates/oxc-yaml-parser).
 Its AST follows `yaml-unist-parser`'s node naming (the nodes Prettier's printer operates on), with spans designed for layout work (see the parser's `ast` module docs)
 
 One caveat the printer still owns: a block scalar's `span` consumes its trailing line breaks.
-The split between the scalar's own output and the inter-item gap is printer policy (see `consumed_trailing_newlines` / `item_gap_anchor`).
+The split between the scalar's own output and the inter-item gap is printer policy, kept together in `src/print/block.rs` (see `consumed_trailing_newlines` / `item_gap_anchor`).
 
 ### Error semantics
 
@@ -38,7 +38,8 @@ A leading BOM is stripped before parsing and re-emitted by `format()`.
 
 Positional cursor (`Comments` in `src/comments.rs`), same approach as graphql/json, yaml-unist-parser's attach algorithm is NOT ported.
 
-Placement is decided at print sites; the rules live as doc comments on the placement helpers (`src/comments.rs`, and `flush_container_end_comments` in `src/print/mod.rs`).
+Placement is decided at print sites; the rules live as doc comments on the placement helpers, all in `src/comments.rs`.
+Stream-tail end comments (`write_end_comments`) are the one document-layer exception, in `src/print/document.rs`.
 
 ## Known divergences
 

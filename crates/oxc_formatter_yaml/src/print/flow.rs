@@ -50,7 +50,7 @@ pub fn write_flow_mapping<'a>(flow: &'a FlowMapping<'a>, f: &mut YamlFormatter<'
             if i + 1 < count {
                 write!(f, ",");
             }
-            write_trailing_same_line_comment(item.span.end, f);
+            write_trailing_same_line_comment(item.span.end, b",", f);
             if i + 1 < count {
                 write_entry_separator(item.span.end, flow.children[i + 1].span.start, f);
             }
@@ -91,7 +91,7 @@ pub fn write_flow_sequence<'a>(flow: &'a FlowSequence<'a>, f: &mut YamlFormatter
             if i + 1 < count {
                 write!(f, ",");
             }
-            write_trailing_same_line_comment(end, f);
+            write_trailing_same_line_comment(end, b",", f);
             if i + 1 < count {
                 write_entry_separator(end, flow_entry_bounds(&flow.children[i + 1]).0, f);
             }
