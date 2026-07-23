@@ -360,6 +360,14 @@ parser_diagnostics! {
         .with_help("Either remove this `await` or add the `async` keyword to the enclosing function")
     };
 
+    for_await_statement(span: Span) => {
+        OxcDiagnostic::error(
+            "`for await` loops are only allowed within async functions and at the top levels of modules",
+        )
+        .with_label(span)
+        .with_help("Either remove this `await` or add the `async` keyword to the enclosing function")
+    };
+
     yield_expression(span: Span) => {
         OxcDiagnostic::error("A 'yield' expression is only allowed in a generator body.")
             .with_label(span)

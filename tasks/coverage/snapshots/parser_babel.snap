@@ -764,7 +764,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove parameters except the first one here
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowAwaitOutsideFunction-false/input.js:1:5]
  1 │ for await (const i of imports) {}
    ·     ─────
@@ -5586,7 +5586,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the trailing comma here
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-context/input.js:2:7]
  1 │ function f() {
  2 │   for await (let x of y);
@@ -8551,7 +8551,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-script/for-await/input.js:1:5]
  1 │ for await (const a of b);
    ·     ─────
