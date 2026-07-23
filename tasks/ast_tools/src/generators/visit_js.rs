@@ -17,7 +17,7 @@
 //! machinery) from the binary contribution of any visitor that only inspects runtime JavaScript.
 //!
 //! [`Visit`]: super::visit
-//! [`VisitMut`]: super::visit_mut
+//! [`VisitMut`]: super::visit
 
 use cow_utils::CowUtils;
 use proc_macro2::TokenStream;
