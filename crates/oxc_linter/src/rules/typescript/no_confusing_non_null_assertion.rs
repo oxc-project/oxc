@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, SimpleAssignmentTarget},
+    ast::{ChainElement, Expression, SimpleAssignmentTarget},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -90,6 +90,9 @@ fn confusing_non_null_operator_diagnostic(op_str: &str, span: Span) -> OxcDiagno
 fn get_depth_ends_in_bang(expr: &Expression<'_>) -> Option<u32> {
     match expr {
         Expression::TSNonNullExpression(_) => Some(0),
+        Expression::ChainExpression(chain_expr) => {
+            matches!(&chain_expr.expression, ChainElement::TSNonNullExpression(_)).then_some(0)
+        }
         Expression::BinaryExpression(binary_expr) => {
             get_depth_ends_in_bang(&binary_expr.right).map(|x| x + 1)
         }
@@ -197,6 +200,8 @@ fn test() {
         "a! in b;",
         "a !in b;",
         "a! instanceof b;",
+        "foo?.bar! in obj;",
+        "foo?.bar! instanceof C;",
     ];
 
     // let fix = vec![
