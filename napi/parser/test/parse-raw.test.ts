@@ -240,6 +240,9 @@ describe.concurrent("edge cases", () => {
     // Hashbangs
     "#!/usr/bin/env node\nlet x;",
     "#!/usr/bin/env node\nlet x;\n// foo",
+    // Decorators on rest parameters
+    "class C { constructor(@dec ...args) {} }",
+    "class C { method(@dec ...args) {} }",
   ])("%s", (sourceText) => {
     // oxlint-disable-next-line jest/expect-expect
     it("JS", () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: "dummy.js", sourceText }));
