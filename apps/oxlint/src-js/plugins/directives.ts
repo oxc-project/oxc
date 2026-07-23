@@ -33,7 +33,6 @@ interface Directive {
 
 const LABEL_PATTERN =
   /^\s*(?<label>(?:eslint|oxlint)-(?:disable(?:(?:-next)?-line)?|enable))(?:\s|$)/u;
-const LINE_DIRECTIVE_PATTERN = /^(?:eslint|oxlint)-disable-(?:-next)?-line$/u;
 const JUSTIFICATION_SEP_PATTERN = /\s-{2,}\s/u;
 
 export function getDisableDirectives(): { problems: Problem[]; directives: Directive[] } {
@@ -50,9 +49,6 @@ export function getDisableDirectives(): { problems: Problem[]; directives: Direc
 
     let match = LABEL_PATTERN.exec(comment.value);
     if (!match?.groups?.label) continue;
-
-    // Only some comment types are supported as line comments
-    if (comment.type === "Line" && LINE_DIRECTIVE_PATTERN.test(match.groups.label)) continue;
 
     const { label } = match.groups;
 
