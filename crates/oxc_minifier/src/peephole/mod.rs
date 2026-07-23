@@ -248,16 +248,28 @@ impl<'a> PeepholeOptimizations {
         match expr {
             Expression::Identifier(id) => Self::identifier_read_blocks_reorder(id, ctx),
             Expression::ThisExpression(this_expr) => {
+                let Some(this_scope) = Self::derived_constructor_this_scope(ctx) else {
+                    return false;
+                };
+                // Parameter defaults are visited before their function body, so a missing
+                // owner frame means this derived constructor's `this` is uninitialized.
+                let Some(owner_index) = ctx
+                    .state
+                    .body_unsafe_stack
+                    .iter()
+                    .rposition(|(body_scope, _, _)| *body_scope == this_scope)
+                else {
+                    return true;
+                };
                 // Source offsets stand in for execution order here. This assumes upstream
                 // transforms do not reorder `super()` and `this` without updating their spans;
                 // the current Rolldown and oxc-minify pipelines satisfy this assumption.
-                Self::this_is_inside_derived_constructor(ctx)
-                    && ctx
-                        .state
-                        .body_unsafe_stack
-                        .last()
-                        .2
-                        .is_none_or(|initialized_at| this_expr.span.start < initialized_at)
+                // Arrow body frames above the owner share its lexical `this`, so `super()`
+                // in any of those frames initializes the same binding.
+                !ctx.state.body_unsafe_stack[owner_index..].iter().any(|&(_, _, initialized_at)| {
+                    initialized_at
+                        .is_some_and(|initialized_at| this_expr.span.start >= initialized_at)
+                })
             }
             _ => true,
         }
@@ -312,7 +324,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        let initialized_at = if Self::this_is_inside_derived_constructor(ctx) {
+        let initialized_at = if Self::derived_constructor_this_scope(ctx).is_some() {
             body.statements.iter().find_map(|stmt| match stmt {
                 Statement::ExpressionStatement(stmt) => {
                     Self::unconditional_super_call_end(&stmt.expression)

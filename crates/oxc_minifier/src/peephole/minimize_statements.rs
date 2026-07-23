@@ -574,7 +574,7 @@ impl<'a> PeepholeOptimizations {
         // Only consider top-level expression statements — `super()` inside `if`/loops
         // is conditional and doesn't guarantee `this` is initialized.
         if matches!(expr_stmt.expression, Expression::ThisExpression(_))
-            && Self::this_is_inside_derived_constructor(ctx)
+            && Self::derived_constructor_this_scope(ctx).is_some()
             && result.iter().rev().any(|stmt| {
                 matches!(
                     stmt,

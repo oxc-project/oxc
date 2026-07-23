@@ -11,7 +11,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use super::PeepholeOptimizations;
 use super::fold_constants::is_cjs_module_exports_hint;
@@ -40,7 +40,9 @@ impl<'a> PeepholeOptimizations {
                 // In a derived class constructor, accessing `this` before `super()` throws
                 // a `ReferenceError`, so we must keep it. In all other positions (including
                 // non-derived constructors) `this` is always initialized and can be dropped.
-                Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
+                Expression::ThisExpression(_) => {
+                    Self::derived_constructor_this_scope(ctx).is_none()
+                }
                 _ => unreachable!(
                     "expr_has_specialized_unused_handler is out of sync with this dispatch"
                 ),
@@ -50,27 +52,26 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Whether the nearest non-arrow, non-block function scope is a constructor
-    /// of a class that extends another class (derived class).
+    /// Scope of the derived constructor whose `this` is used at the current position.
     /// Only derived constructors have the TDZ for `this` before `super()`.
-    pub(crate) fn this_is_inside_derived_constructor(ctx: &TraverseCtx<'a>) -> bool {
+    pub(crate) fn derived_constructor_this_scope(ctx: &TraverseCtx<'a>) -> Option<ScopeId> {
         for scope_id in ctx.ancestor_scopes() {
             let flags = ctx.scoping().scope_flags(scope_id);
             if flags.is_block() || flags.is_arrow() {
                 continue;
             }
             if !flags.is_constructor() {
-                return false;
+                return None;
             }
             // Found a constructor — check if the class has `extends`.
             for ancestor in ctx.ancestors() {
                 if let Ancestor::ClassBody(class) = ancestor {
-                    return class.super_class().is_some();
+                    return class.super_class().is_some().then_some(scope_id);
                 }
             }
-            return false;
+            return None;
         }
-        false
+        None
     }
 
     fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {

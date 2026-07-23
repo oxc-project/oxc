@@ -1177,6 +1177,60 @@ fn test_compress_conditional_expression_inside() {
 }
 
 #[test]
+fn test_derived_constructor_parameter_default_does_not_use_outer_super_state() {
+    test_same(
+        "class Outer extends P {
+            constructor() {
+                super();
+                class Inner extends Q {
+                    constructor(a = f() ? this.x = 1 : this.x = 2) {
+                        super();
+                    }
+                }
+                new Inner();
+            }
+        }",
+    );
+}
+
+#[test]
+fn test_derived_constructor_this_captured_by_arrow() {
+    test(
+        "class Outer extends P { constructor() {
+            super();
+            use(() => f() ? this.k = 1 : this.k = 2);
+        } }",
+        "class Outer extends P { constructor() {
+            super(), use(() => this.k = f() ? 1 : 2);
+        } }",
+    );
+
+    test(
+        "class Outer extends P { constructor() {
+            use(() => f() ? this.k = 1 : this.k = 2);
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            use(() => f() ? this.k = 1 : this.k = 2), super();
+        } }",
+    );
+
+    test(
+        "class Outer extends P { constructor() {
+            use(() => {
+                super();
+                f() ? this.k = 1 : this.k = 2;
+            });
+        } }",
+        "class Outer extends P { constructor() {
+            use(() => {
+                super(), this.k = f() ? 1 : 2;
+            });
+        } }",
+    );
+}
+
+#[test]
 fn test_fold_is_null_or_undefined() {
     test("v = foo === null || foo === undefined", "v = foo == null");
     test("v = foo === undefined || foo === null", "v = foo == null");
