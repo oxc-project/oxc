@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/oxc/bad_char_at_comparison.rs
+  s_1574c7e0f1f72c::t_97eed1cf075cf2 55-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "213f9e34238d218a4f4956af5803dfe521afc6e1",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
