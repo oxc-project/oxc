@@ -306,6 +306,45 @@ impl ESTree for Str<'_> {
     }
 }
 
+/// Create a [`Str<'static>`] for a string literal, evaluated at compile time.
+///
+/// Why this macro? [`Str`] in time will likely evolve to have more features and constraints
+/// than it currently does. e.g. constrain max length to `u32::MAX`, add a flag for "is all ASCII".
+/// [`Str::from`] will likely gain runtime checks, whereas this macro will perform any checks
+/// or calculations at compile time. So using this macro in preference to [`Str::from`]
+/// is future-proof.
+///
+/// ```
+/// use oxc_str::static_str;
+///
+/// let str = static_str!("undefined");
+/// assert_eq!(str.as_str(), "undefined");
+/// ```
+///
+/// Can also be used in const context:
+///
+/// ```
+/// use oxc_str::{Str, static_str};
+///
+/// const UNDEFINED: Str<'static> = static_str!("undefined");
+/// assert_eq!(UNDEFINED.as_str(), "undefined");
+/// ```
+///
+/// Only accepts string literals, not variables:
+///
+/// ```compile_fail
+/// use oxc_str::static_str;
+///
+/// let s = "hello";
+/// let str = static_str!(s);
+/// ```
+#[macro_export]
+macro_rules! static_str {
+    ($s:literal) => {
+        $crate::Str::new_const($s)
+    };
+}
+
 /// Creates a [`Str`] using interpolation of runtime expressions.
 ///
 /// Identical to [`std`'s `format!` macro](std::format), except:
