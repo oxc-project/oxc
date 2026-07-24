@@ -218,6 +218,8 @@ pub fn message_to_lsp_diagnostic(
         &message.error.code,
         error_offset,
         section_offset,
+        message.jsx_child_offset,
+        message.respect_eslint_disable_directives,
         source_text,
     );
 
@@ -409,6 +411,8 @@ fn add_ignore_fixes(
     code: &OxcCode,
     error_offset: u32,
     section_offset: u32,
+    jsx_child_offset: Option<u32>,
+    respect_eslint_disable_directives: bool,
     source_text: &str,
 ) {
     debug_assert!(
@@ -420,23 +424,93 @@ fn add_ignore_fixes(
         return;
     };
     // TODO: doesn't support disabling multiple rules by name for a given line.
-    fixes.push(disable_for_this_line(
+    fixes.push(disable_for_this_line_with_jsx_child(
         &rule_name_with_plugin,
         error_offset,
         section_offset,
+        jsx_child_offset,
+        respect_eslint_disable_directives,
         source_text,
     ));
     fixes.push(disable_for_this_section(&rule_name_with_plugin, section_offset, source_text));
 }
 
+#[cfg(test)]
 fn disable_for_this_line(
     rule_name: &str,
     error_offset: u32,
     section_offset: u32,
     source_text: &str,
 ) -> FixedContent {
+    disable_for_this_line_with_jsx_child(
+        rule_name,
+        error_offset,
+        section_offset,
+        None,
+        true,
+        source_text,
+    )
+}
+
+fn disable_for_this_line_with_jsx_child(
+    rule_name: &str,
+    error_offset: u32,
+    section_offset: u32,
+    jsx_child_offset: Option<u32>,
+    respect_eslint_disable_directives: bool,
+    source_text: &str,
+) -> FixedContent {
     let bytes = source_text.as_bytes();
     let message = format!("Disable {rule_name} for this line");
+
+    if let Some(jsx_child_offset) = jsx_child_offset {
+        let child_line_start = line_start_offset(jsx_child_offset, section_offset, bytes);
+        let error_line_start = line_start_offset(error_offset, section_offset, bytes);
+        let target_offset =
+            if child_line_start == error_line_start { jsx_child_offset } else { error_offset };
+        let target_line_start = line_start_offset(target_offset, section_offset, bytes);
+        let line_prefix = &bytes[target_line_start as usize..target_offset as usize];
+
+        let (content_prefix, insert_offset, trailing_indent) =
+            if line_prefix.iter().all(|byte| matches!(byte, b' ' | b'\t')) {
+                let (content_prefix, insert_offset) =
+                    get_section_insert_position(section_offset, target_line_start, bytes);
+                (content_prefix, insert_offset, String::new())
+            } else {
+                ("", target_offset, " ".repeat((target_offset - target_line_start) as usize))
+            };
+        let whitespace_range = &bytes[insert_offset as usize..target_offset as usize];
+        let whitespace_len =
+            whitespace_range.iter().take_while(|c| matches!(c, b' ' | b'\t')).count();
+        let whitespace = String::from_utf8_lossy(&whitespace_range[..whitespace_len]);
+
+        if let Some(existing_comment_end) = get_existing_jsx_disable_comment_end(
+            target_offset,
+            respect_eslint_disable_directives,
+            bytes,
+        ) {
+            let position = offset_to_position(existing_comment_end, source_text);
+            return FixedContent {
+                message,
+                code: format!(" {rule_name}"),
+                range: Range::new(position, position),
+                kind: FixKind::SafeFix,
+                lsp_kind: FixedContentKind::IgnoreLintRuleLine,
+            };
+        }
+
+        let position = offset_to_position(insert_offset, source_text);
+
+        return FixedContent {
+            message,
+            code: format!(
+                "{content_prefix}{whitespace}{{/* oxlint-disable-next-line {rule_name} */}}\n{trailing_indent}"
+            ),
+            range: Range::new(position, position),
+            kind: FixKind::SafeFix,
+            lsp_kind: FixedContentKind::IgnoreLintRuleLine,
+        };
+    }
 
     // Reuse an inline disable-line comment on the same line when present.
     if let Some(existing_comment_end) = get_inline_disable_line_comment_end(error_offset, bytes) {
@@ -504,6 +578,85 @@ fn disable_for_this_line(
         kind: FixKind::SafeFix,
         lsp_kind: FixedContentKind::IgnoreLintRuleLine,
     }
+}
+
+fn line_start_offset(offset: u32, section_offset: u32, bytes: &[u8]) -> u32 {
+    let mut line_start = offset;
+    for byte in bytes[section_offset as usize..offset as usize].iter().rev() {
+        if *byte == b'\n' || *byte == b'\r' {
+            break;
+        }
+        line_start -= 1;
+    }
+    line_start.max(section_offset)
+}
+
+#[expect(clippy::cast_possible_truncation)]
+fn get_existing_jsx_disable_comment_end(
+    target_offset: u32,
+    respect_eslint_disable_directives: bool,
+    bytes: &[u8],
+) -> Option<u32> {
+    let target_offset = target_offset as usize;
+    let prefix = bytes.get(..target_offset)?;
+    let comment_start = prefix.windows(3).rposition(|window| window == b"{/*")?;
+    let content_start = comment_start + 3;
+    let close_start = content_start
+        + bytes
+            .get(content_start..target_offset)?
+            .windows(3)
+            .position(|window| window == b"*/}")?;
+
+    let between_comment_and_target = bytes.get(close_start + 3..target_offset)?;
+    if !between_comment_and_target.iter().all(u8::is_ascii_whitespace) {
+        return None;
+    }
+    let mut line_break_count = 0;
+    let mut index = 0;
+    while index < between_comment_and_target.len() {
+        match between_comment_and_target[index] {
+            b'\r' => {
+                line_break_count += 1;
+                if between_comment_and_target.get(index + 1) == Some(&b'\n') {
+                    index += 1;
+                }
+            }
+            b'\n' => line_break_count += 1,
+            _ => {}
+        }
+        index += 1;
+    }
+    if line_break_count != 1 {
+        return None;
+    }
+
+    let content = bytes.get(content_start..close_start)?;
+    let mut index = 0;
+    while index < content.len() && content[index].is_ascii_whitespace() {
+        index += 1;
+    }
+
+    let directive = if content[index..].starts_with(b"oxlint-disable-next-line") {
+        b"oxlint-disable-next-line".as_slice()
+    } else if respect_eslint_disable_directives
+        && content[index..].starts_with(b"eslint-disable-next-line")
+    {
+        b"eslint-disable-next-line".as_slice()
+    } else {
+        return None;
+    };
+    index += directive.len();
+
+    if index < content.len() && !content[index].is_ascii_whitespace() {
+        return None;
+    }
+
+    let content_end =
+        content.iter().rposition(|byte| !byte.is_ascii_whitespace()).map_or(index, |last| last + 1);
+    let merge_end = find_description_start_offset(&content[index..content_end])
+        .map_or(content_end, |offset| index + offset);
+
+    Some((content_start + merge_end) as u32)
 }
 
 fn disable_for_this_section(
@@ -834,7 +987,7 @@ mod test {
         let code = OxcCode { scope: Some("jsx-a11y".into()), number: Some("alt-text".into()) };
         let mut fixes = vec![];
 
-        super::add_ignore_fixes(&mut fixes, &code, 0, 0, source);
+        super::add_ignore_fixes(&mut fixes, &code, 0, 0, None, true, source);
 
         assert_eq!(fixes[0].code, "// oxlint-disable-next-line jsx-a11y/alt-text\n");
         assert_eq!(fixes[1].code, "// oxlint-disable jsx-a11y/alt-text\n");
@@ -959,6 +1112,230 @@ mod test {
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
         assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_uses_brace_escaped_comment_before_element() {
+        let source = include_str!("fixtures/jsx-disable-multiline.tsx");
+        let jsx_child_offset = source.find("<div").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "jsx-a11y/interactive-supports-focus",
+            jsx_child_offset,
+            0,
+            Some(jsx_child_offset),
+            true,
+            source,
+        );
+
+        insta::assert_snapshot!(
+            fix.code,
+            @"      {/* oxlint-disable-next-line jsx-a11y/interactive-supports-focus */}"
+        );
+        assert_eq!(fix.range.start.line, 4);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_inserts_before_same_line_nested_child() {
+        let source = "return (\n  <div><button onClick={submit} role=\"button\" /></div>\n);";
+        let error_offset = source.find("onClick").unwrap() as u32;
+        let jsx_child_offset = source.find("<button").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "jsx-a11y/interactive-supports-focus",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            true,
+            source,
+        );
+
+        assert_eq!(
+            fix.code,
+            "{/* oxlint-disable-next-line jsx-a11y/interactive-supports-focus */}\n       "
+        );
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 7);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_uses_error_line_for_multiline_descendant() {
+        let source = "const node = (\n  <div>\n    <p>\n      \"\n    </p>\n  </div>\n);";
+        let error_offset = source.find('"').unwrap() as u32;
+        let jsx_child_offset = source.find("<p>").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "react/no-unescaped-entities",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            true,
+            source,
+        );
+
+        assert_eq!(
+            fix.code,
+            "      {/* oxlint-disable-next-line react/no-unescaped-entities */}\n"
+        );
+        assert_eq!(fix.range.start.line, 3);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_wraps_direct_child_expression() {
+        let source = "const node = (\n  <div>\n    {foo}\n  </div>\n);";
+        let error_offset = source.find("foo").unwrap() as u32;
+        let jsx_child_offset = source.find("{foo}").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            true,
+            source,
+        );
+
+        assert_eq!(fix.code, "    {/* oxlint-disable-next-line no-undef */}\n");
+        assert_eq!(fix.range.start.line, 2);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_attribute_expression_uses_js_comment() {
+        let source = "const node = (\n  <div value={\n    foo\n  } />\n);";
+        let error_offset = source.find("foo").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            None,
+            true,
+            source,
+        );
+
+        assert_eq!(fix.code, "    // oxlint-disable-next-line no-undef\n");
+        assert_eq!(fix.range.start.line, 2);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_attribute_anchors_before_child() {
+        let source = "const node = (\n  <Parent>\n    <Child value={foo} />\n  </Parent>\n);";
+        let error_offset = source.find("foo").unwrap() as u32;
+        let jsx_child_offset = source.find("<Child").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            true,
+            source,
+        );
+
+        assert_eq!(fix.code, "    {/* oxlint-disable-next-line no-undef */}\n");
+        assert_eq!(fix.range.start.line, 2);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_multiline_jsx_expression_uses_js_comment() {
+        let source = "const node = <div>{foo &&\n  bar}</div>;";
+        let error_offset = source.find("bar").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            None,
+            true,
+            source,
+        );
+
+        assert_eq!(fix.code, "  // oxlint-disable-next-line no-undef\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_in_jsx_anchors_before_root_closing_tag() {
+        let source = "const node = (\n  <div>\n  </div>\n);";
+        let error_offset = source.find("</div>").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "react/self-closing-comp",
+            error_offset,
+            0,
+            Some(error_offset),
+            true,
+            source,
+        );
+
+        assert_eq!(fix.code, "  {/* oxlint-disable-next-line react/self-closing-comp */}\n");
+        assert_eq!(fix.range.start.line, 2);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_merges_with_existing_jsx_comment() {
+        let existing = "{/* oxlint-disable-next-line no-alert */}";
+        let source = format!(
+            "const node = (\n  <div>\n    {existing}\n    <button onClick={{foo}} />\n  </div>\n);"
+        );
+        let error_offset = source.find("foo").unwrap() as u32;
+        let jsx_child_offset = source.find("<button").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            true,
+            &source,
+        );
+
+        assert_eq!(fix.code, " no-undef");
+        assert_eq!(
+            fix.range.start.character,
+            ("    ".len() + existing.find(" */}").unwrap()) as u32
+        );
+        assert_eq!(fix.range.start.line, 2);
+    }
+
+    #[test]
+    fn disable_for_this_line_does_not_merge_across_blank_jsx_line() {
+        let existing = "{/* oxlint-disable-next-line no-alert */}";
+        let source = format!(
+            "const node = (\n  <div>\n    {existing}\n\n    <button onClick={{foo}} />\n  </div>\n);"
+        );
+        let error_offset = source.find("foo").unwrap() as u32;
+        let jsx_child_offset = source.find("<button").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            true,
+            &source,
+        );
+
+        assert_eq!(fix.code, "    {/* oxlint-disable-next-line no-undef */}\n");
+        assert_eq!(fix.range.start.line, 4);
+    }
+
+    #[test]
+    fn disable_for_this_line_does_not_merge_ignored_eslint_jsx_comment() {
+        let existing = "{/* eslint-disable-next-line no-alert */}";
+        let source = format!(
+            "const node = (\n  <div>\n    {existing}\n    <button onClick={{foo}} />\n  </div>\n);"
+        );
+        let error_offset = source.find("foo").unwrap() as u32;
+        let jsx_child_offset = source.find("<button").unwrap() as u32;
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            Some(jsx_child_offset),
+            false,
+            &source,
+        );
+
+        assert_eq!(fix.code, "    {/* oxlint-disable-next-line no-undef */}\n");
+        assert_eq!(fix.range.start.line, 3);
     }
 
     #[test]

@@ -268,6 +268,10 @@ pub struct Message {
     pub span: Span,
     fixed: bool,
     pub section_offset: u32,
+    /// Start offset of the JSX child containing this diagnostic.
+    pub jsx_child_offset: Option<u32>,
+    /// Whether `eslint-disable` directives are active for this diagnostic.
+    pub respect_eslint_disable_directives: bool,
     /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
     pub rule: Option<MessageRule>,
 }
@@ -282,7 +286,16 @@ impl Message {
             .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
+        Self {
+            error,
+            span,
+            fixes,
+            fixed: false,
+            section_offset: 0,
+            jsx_child_offset: None,
+            respect_eslint_disable_directives: true,
+            rule: None,
+        }
     }
 
     #[must_use]
@@ -302,6 +315,9 @@ impl Message {
         debug_assert!(offset != 0);
 
         self.span = self.span.move_right(offset);
+        if let Some(jsx_child_offset) = &mut self.jsx_child_offset {
+            *jsx_child_offset = jsx_child_offset.saturating_add(offset);
+        }
 
         for label in &mut self.error.labels {
             label.set_span_offset(label.offset().saturating_add(offset));

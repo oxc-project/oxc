@@ -171,6 +171,7 @@ impl ServerLinterBuilder {
 
         let lint_options = LintOptions {
             fix: fix_kind,
+            collect_jsx_disable_offsets: true,
             report_unused_directive: match options.unused_disable_directives {
                 Some(UnusedDisableDirectives::Allow) => None,
                 Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
