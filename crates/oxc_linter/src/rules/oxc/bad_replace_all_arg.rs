@@ -53,30 +53,14 @@ declare_oxc_lint!(
 
 impl Rule for BadReplaceAllArg {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        if !is_method_call(call_expr, None, Some(&["replaceAll"]), Some(1), None) {
-            return;
-        }
-
-        let Some(regexp_argument) = call_expr.arguments[0].as_expression() else {
-            return;
-        };
-
-        let Some((flags, regex_span)) = resolve_regex_flags(regexp_argument, ctx) else {
-            return;
-        };
-
-        if !flags.contains(RegExpFlags::G) {
-            let Some(call_expr_callee) = call_expr.callee.as_member_expression() else {
-                return;
-            };
-            let Some((replace_all_span, _)) = call_expr_callee.static_property_info() else {
-                return;
-            };
-
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && is_method_call(call_expr, None, Some(&["replaceAll"]), Some(1), None)
+            && let Some(regexp_argument) = call_expr.arguments[0].as_expression()
+            && let Some((flags, regex_span)) = resolve_regex_flags(regexp_argument, ctx)
+            && !flags.contains(RegExpFlags::G)
+            && let Some(call_expr_callee) = call_expr.callee.as_member_expression()
+            && let Some((replace_all_span, _)) = call_expr_callee.static_property_info()
+        {
             ctx.diagnostic(bad_replace_all_arg_diagnostic(replace_all_span, regex_span));
         }
     }
