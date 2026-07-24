@@ -792,6 +792,26 @@ impl<'a> PeepholeOptimizations {
         e: &ObjectExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
+        struct HasSuper {
+            has_super: bool,
+        }
+
+        impl<'a> oxc_ast_visit::Visit<'a> for HasSuper {
+            fn visit_super(&mut self, _it: &Super) {
+                self.has_super = true;
+            }
+
+            fn visit_class(&mut self, _it: &Class<'a>) {}
+
+            fn visit_object_expression(&mut self, _it: &ObjectExpression<'a>) {}
+        }
+
+        let mut visitor = HasSuper { has_super: false };
+        oxc_ast_visit::walk::walk_object_expression(&mut visitor, e);
+        if visitor.has_super {
+            return false;
+        }
+
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {
