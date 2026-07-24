@@ -116,6 +116,14 @@ impl CliRunner {
             GraphicalReportHandler::new()
         };
 
+        // Absolutizes `p` in place. Skips the extra allocation `absolute()`
+        // would otherwise add on top of `cwd.join()` when `p` is already
+        // absolute (a common case: many CI/automation scripts pass
+        // absolute paths already).
+        let absolutize = |p: &Path| -> std::io::Result<PathBuf> {
+            if p.is_absolute() { absolute(p) } else { absolute(self.cwd.join(p)) }
+        };
+
         let mut override_builder = None;
 
         if !ignore_options.no_ignore {
@@ -142,7 +150,7 @@ impl CliRunner {
 
                 paths.retain_mut(|p| {
                     // Try to prepend cwd to all paths
-                    let Ok(mut path) = absolute(self.cwd.join(&p)) else {
+                    let Ok(mut path) = absolutize(p) else {
                         return false;
                     };
 
@@ -158,6 +166,20 @@ impl CliRunner {
             }
 
             override_builder = Some(builder);
+        } else if !paths.is_empty() {
+            // The block above also absolutizes explicit CLI paths as a
+            // side effect of pre-filtering them against ignore rules, but
+            // `--no-ignore` skips that block entirely, so relative paths
+            // would otherwise reach downstream consumers (e.g. the
+            // type-aware tsgolint integration, which requires absolute
+            // paths and panics on a relative one) unabsolutized.
+            paths.retain_mut(|p| {
+                let Ok(mut path) = absolutize(p) else {
+                    return false;
+                };
+                std::mem::swap(p, &mut path);
+                true
+            });
         }
 
         if paths.is_empty() {
