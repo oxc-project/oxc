@@ -1891,12 +1891,11 @@ version = "0.141.0"
 dependencies = [
  "bitflags",
  "cow-utils",
- "dragonbox_ecma",
  "insta",
- "itoa",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
+ "oxc_ecmascript",
  "oxc_index",
  "oxc_parser",
  "oxc_semantic",
@@ -1995,6 +1994,8 @@ name = "oxc_ecmascript"
 version = "0.141.0"
 dependencies = [
  "cow-utils",
+ "dragonbox_ecma",
+ "itoa",
  "num-bigint",
  "num-traits",
  "oxc_allocator",
