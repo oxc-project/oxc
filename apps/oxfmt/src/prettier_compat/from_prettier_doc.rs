@@ -69,6 +69,17 @@ impl<'a, 'b> FmtCtx<'a, 'b> {
     }
 }
 
+/// A `Text` element measured with the default `IndentWidth`.
+///
+/// NOTE: `IndentWidth` only affects tab character width calculation.
+/// If the text contained `\t` (e.g. inside a string literal like `"\t"`?),
+/// the width could be miscalculated when `options.indent_width` != 2.
+/// However, the default value is sufficient in practice.
+pub fn text_element(text: &str) -> FormatElement<'_> {
+    let width = TextWidth::from_text(text, IndentWidth::default());
+    FormatElement::Text { text, width }
+}
+
 fn convert_doc<'a>(
     doc: &Value,
     out: &mut ArenaVec<'a, FormatElement<'a>>,
@@ -76,14 +87,21 @@ fn convert_doc<'a>(
 ) -> Result<(), String> {
     match doc {
         Value::String(s) => {
-            if !s.is_empty() {
-                let text = ctx.allocator.alloc_str(s);
-                // NOTE: `IndentWidth` only affects tab character width calculation.
-                // If a `Doc = string` node contained `\t` (e.g. inside a string literal like `"\t"`?),
-                // the width could be miscalculated when `options.indent_width` != 2.
-                // However, the default value is sufficient in practice.
-                let width = TextWidth::from_text(text, IndentWidth::default());
-                out.push(FormatElement::Text { text, width });
+            // A trailing space maps to `Space` (pending space), not text:
+            // Prettier's printer trims trailing whitespace at every line break,
+            // so a Doc string's trailing space is semantically "a space only if content follows on the same line".
+            // Exactly the core printer's pending-space.
+            // Kept as text it would leak before a soft break (the core printer never trims);
+            // e.g. css-in-html `prop: ` before an `indent([softline, ...])` value.
+            let (content, trailing_space) = match s.strip_suffix(' ') {
+                Some(content) => (content, true),
+                None => (s.as_str(), false),
+            };
+            if !content.is_empty() {
+                out.push(text_element(ctx.allocator.alloc_str(content)));
+            }
+            if trailing_space {
+                out.push(FormatElement::Space);
             }
             Ok(())
         }

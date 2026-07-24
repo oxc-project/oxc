@@ -111,6 +111,20 @@ var(--color),
 "
 `;
 
+exports[`Embedded languages > Misc > should not leak a trailing space when a css-in-html declaration value breaks 1`] = `
+"export const BaseStyles = html\`
+  <style>
+    :root {
+      --ln-font-fallback:
+        -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif,
+        Apple Color Emoji, Segoe UI Emoji;
+      --ln-font-body: "Geist", var(--ln-font-fallback);
+    }
+  </style>
+\`;
+"
+`;
+
 exports[`Embedded languages > should format angular.ts (auto) 1`] = `
 "// Angular @Component decorator - direct template and styles
 // Uses Angular-specific syntax: interpolation, directives, bindings

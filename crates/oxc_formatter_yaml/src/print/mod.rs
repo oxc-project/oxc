@@ -55,18 +55,6 @@ pub fn column_of(source: &str, offset: u32) -> u32 {
     u32::try_from(count).unwrap_or(u32::MAX)
 }
 
-/// A run of `count` newlines with the arena lifetime.
-/// Small runs (the overwhelming case: blank-line counts) slice a static string
-/// instead of building a `String` and copying it into the arena.
-pub fn arena_newlines<'a>(count: usize, f: &YamlFormatter<'_, 'a>) -> &'a str {
-    const NEWLINES: &str = "\n\n\n\n\n\n\n\n";
-    if count <= NEWLINES.len() {
-        &NEWLINES[..count]
-    } else {
-        f.allocator().alloc_str(&"\n".repeat(count))
-    }
-}
-
 /// Emits a node's properties (anchor/tag) in their source order.
 /// NOTE: Prettier 3.9.5 normalizes to `tag anchor` order; we keep the source order instead.
 ///

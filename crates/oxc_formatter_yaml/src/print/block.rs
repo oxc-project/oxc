@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use oxc_formatter_core::{
     Buffer,
     builders::{
-        align, dedent, dedent_to_root, hard_line_break, literal_line_break, mark_as_root,
-        soft_line_break_or_space, space, text,
+        align, dedent, dedent_to_root, exact_line_breaks, hard_line_break, literal_line_break,
+        mark_as_root, soft_line_break_or_space, space, text,
     },
     write,
 };
@@ -13,8 +13,24 @@ use oxc_yaml_parser::ast::{BlockScalar, Chomping, Content, MappingItem, Node, Ro
 use crate::{
     comments::{Gap, classify_gap, write_single_comment},
     options::ProseWrap,
-    print::{YamlFormatter, format_with, scalar::split_with_single_space, to_span},
+    print::{
+        YamlFormatter, format_with,
+        scalar::{join_lines_for_never_wrap, split_with_single_space},
+        to_span,
+    },
 };
+
+/// A run of `count` newlines with the arena lifetime, for the keep-chomping tail.
+/// Small runs (the overwhelming case) slice a static string,
+/// instead of building a `String` and copying it into the arena.
+fn arena_newlines<'a>(count: usize, f: &YamlFormatter<'_, 'a>) -> &'a str {
+    const NEWLINES: &str = "\n\n\n\n\n\n\n\n";
+    if count <= NEWLINES.len() {
+        &NEWLINES[..count]
+    } else {
+        f.allocator().alloc_str(&"\n".repeat(count))
+    }
+}
 
 /// How many of a block scalar's trailing source newlines its own OUTPUT consumes
 /// (the effect of [`remove_unnecessary_trailing_newlines`]):
@@ -94,9 +110,7 @@ pub fn write_block_scalar<'a>(
             })
             .collect();
 
-    // Blank runs are emitted as raw `\n` text followed by a hardline that only re-arms indentation
-    // (consecutive hard lines would otherwise be collapsed by the printer,
-    // same technique as `oxc_formatter_graphql`'s `write_block_string_break`).
+    // Blank runs are the scalar's VALUE
     let chomping_keep = block.chomping == Chomping::Keep;
     let contents = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
         let mut blanks = 0usize;
@@ -109,8 +123,7 @@ pub fn write_block_scalar<'a>(
             if blanks > 0 {
                 // One newline entering this segment
                 // (after the header for the first, the separator otherwise) + one per blank line.
-                write!(f, text(crate::print::arena_newlines(blanks + 1, f)));
-                write!(f, hard_line_break());
+                write!(f, exact_line_breaks(blanks + 1));
             } else if wrote_any {
                 write!(f, mark_as_root(&literal_line_break()));
             } else {
@@ -124,11 +137,18 @@ pub fn write_block_scalar<'a>(
             }
             fill.finish();
         }
-        // Trailing blank lines (kept by chomping / blank-line preservation),
-        // plus the final newline for a keep-chomped last descendant.
-        // The extra `\n` also covers the following hardline being collapsed.
-        if blanks > 0 || (chomping_keep && is_last_descendant && wrote_any) {
-            write!(f, dedent_to_root(&text(crate::print::arena_newlines(blanks + 1, f))));
+        if chomping_keep {
+            // Keep chomping: the trailing newlines are the VALUE
+            // (plus the final newline for a last descendant, which `FormatYamlRoot` skips after a keep tail).
+            // Raw text keeps them exempt from EVERY layout normalization,
+            // including the state effects a line element would have on the following separator.
+            // NOT `exact_line_breaks`: the tail may hold space-only lines, which are part of the value too.
+            if blanks > 0 || (is_last_descendant && wrote_any) {
+                write!(f, dedent_to_root(&text(arena_newlines(blanks + 1, f))));
+            }
+        } else if blanks > 0 {
+            // The trailing blank preserved by blank-line preservation
+            write!(f, exact_line_breaks(blanks + 1));
         }
     });
 
@@ -196,22 +216,22 @@ fn block_value_line_contents<'s>(
     let mut lines = remove_unnecessary_trailing_newlines(block, content, is_last_descendant, lines);
     // Trailing spaces on the LAST content line are dropped (Prettier does the same);
     // intermediate lines keep theirs, they are part of the value under every chomping mode.
-    // The printer's own end-of-line trimming only covers the no-trailing-blank case:
-    // a kept trailing blank run is emitted as raw `\n` text, which does not trim what precedes it.
+    // The core printer never trims, so drop them here.
     if block.chomping != Chomping::Keep {
         trim_trailing_spaces_of_last_content_line(&mut lines);
     }
     lines
 }
 
+/// A block-scalar line with no non-whitespace content (no words, or spaces/tabs only).
+fn is_blank_line(words: &[Cow<'_, str>]) -> bool {
+    words.iter().all(|w| w.trim_end_matches([' ', '\t']).is_empty())
+}
+
 /// Trims the trailing spaces/tabs of the last line holding non-whitespace content.
 /// Whitespace-only lines after it (a preserved trailing blank) are left as-is.
 fn trim_trailing_spaces_of_last_content_line(lines: &mut [Vec<Cow<'_, str>>]) {
-    let Some(words) = lines
-        .iter_mut()
-        .rev()
-        .find(|words| words.iter().any(|w| !w.trim_end_matches([' ', '\t']).is_empty()))
-    else {
+    let Some(words) = lines.iter_mut().rev().find(|words| !is_blank_line(words)) else {
         return;
     };
     if let Some(last) = words.last_mut() {
@@ -273,7 +293,7 @@ fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s
         .collect();
 
     if prose_wrap == ProseWrap::Never {
-        merged = merged.into_iter().map(|words| vec![Cow::Owned(words.join(" "))]).collect();
+        merged = join_lines_for_never_wrap(merged);
     }
     merged
 }
@@ -292,11 +312,8 @@ fn remove_unnecessary_trailing_newlines<'s>(
         return lines;
     }
 
-    let trailing_newline_count = lines
-        .iter()
-        .rev()
-        .take_while(|words| words.iter().all(|w| w.trim_end_matches([' ', '\t']).is_empty()))
-        .count();
+    let trailing_newline_count =
+        lines.iter().rev().take_while(|words| is_blank_line(words)).count();
 
     if trailing_newline_count == 0 {
         return lines;

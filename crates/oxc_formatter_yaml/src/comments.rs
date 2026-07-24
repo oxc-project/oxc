@@ -58,21 +58,17 @@ impl<'a> Comments<'a> {
         self.inner[start..].iter().copied().take_while(move |c| c.end <= upper_bound)
     }
 
-    /// The end of the most recently consumed comment (`None` before any).
-    pub fn last_consumed_end(&self) -> Option<u32> {
-        self.cursor.get().checked_sub(1).map(|i| self.inner[i].end)
+    /// `anchor`, moved past the most recently consumed comment when that lies beyond it.
+    ///
+    /// A nested container's end-comment flush consumes comments PAST the outer caller's anchor
+    /// (a deeper-indented run belongs to the inner container),
+    /// reproducing the vertical spacing in front of them as it prints.
+    /// Gap measurement resuming from the unmoved anchor would observe that same spacing again
+    /// and emit a second blank line.
+    pub fn gap_anchor_after_consumed(&self, anchor: u32) -> u32 {
+        let last_consumed_end = self.cursor.get().checked_sub(1).map(|i| self.inner[i].end);
+        last_consumed_end.map_or(anchor, |end| anchor.max(end))
     }
-}
-
-/// `anchor`, moved past the most recently printed comment when that lies beyond it.
-///
-/// A nested container's end-comment flush consumes comments PAST the outer
-/// caller's anchor (a deeper-indented run belongs to the inner container),
-/// reproducing the vertical spacing in front of them as it prints.
-/// Gap measurement resuming from the unmoved anchor would observe that
-/// same spacing again and emit a second blank line.
-pub fn gap_anchor_after_consumed(anchor: u32, f: &YamlFormatter<'_, '_>) -> u32 {
-    f.context().comments().last_consumed_end().map_or(anchor, |end| anchor.max(end))
 }
 
 /// Vertical spacing implied by an inter-token source gap.
@@ -162,7 +158,7 @@ pub fn write_blank_preserving_break(
     upper_bound: u32,
     f: &mut YamlFormatter<'_, '_>,
 ) {
-    let prev_end = gap_anchor_after_consumed(prev_end, f);
+    let prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
     if prev_end < upper_bound
         && classify_gap(f.context().source_text().bytes_range(prev_end, upper_bound)) == Gap::Blank
     {
@@ -206,6 +202,27 @@ pub fn flush_leading_comments(value_start: u32, f: &mut YamlFormatter<'_, '_>) {
     write_leading_comments(leading, value_start, f);
 }
 
+/// The next pending comment when it sits on the same line after `pos`
+/// (nothing but spaces/tabs between), without consuming it.
+pub fn pending_same_line_comment(pos: u32, f: &YamlFormatter<'_, '_>) -> Option<Span> {
+    pending_same_line_comment_over(pos, &[], f)
+}
+
+/// [pending_same_line_comment], additionally allowing the caller's
+/// `gap_punctuation` bytes in the gap (see [write_trailing_same_line_comment]).
+fn pending_same_line_comment_over(
+    pos: u32,
+    gap_punctuation: &[u8],
+    f: &YamlFormatter<'_, '_>,
+) -> Option<Span> {
+    f.context().comments().peek().filter(|span| {
+        span.start >= pos
+            && f.context().source_text().all_bytes_match(pos, span.start, |b| {
+                matches!(b, b' ' | b'\t') || gap_punctuation.contains(&b)
+            })
+    })
+}
+
 /// If the next pending comment sits on the same line as `prev_end`,
 /// drain it and emit it as a trailing line-suffix comment (` # ...`).
 /// `expand_parent()` keeps the enclosing container multi-line.
@@ -220,15 +237,7 @@ pub fn write_trailing_same_line_comment<'a>(
     gap_punctuation: &[u8],
     f: &mut YamlFormatter<'_, 'a>,
 ) {
-    let Some(span) = f.context().comments().peek() else { return };
-    let source = f.context().source_text();
-    if span.start < prev_end
-        || !source.all_bytes_match(prev_end, span.start, |b| {
-            matches!(b, b' ' | b'\t') || gap_punctuation.contains(&b)
-        })
-    {
-        return;
-    }
+    let Some(span) = pending_same_line_comment_over(prev_end, gap_punctuation, f) else { return };
     f.context().comments().take_before(span.end);
     let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
         write!(f, space());
@@ -310,7 +319,7 @@ pub fn flush_container_end_comments(
 ) -> u32 {
     let source = f.context().source_text();
     let tab_width = f.options().indent_width.value();
-    let mut prev_end = gap_anchor_after_consumed(prev_end, f);
+    let mut prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
     loop {
         let Some(span) = f.context().comments().peek() else { return prev_end };
         if span.end > upper_bound
