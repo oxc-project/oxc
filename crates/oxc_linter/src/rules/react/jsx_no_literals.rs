@@ -17,6 +17,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use oxc_syntax::xml_entities::decode_entities;
 
 use crate::{
     AstNode,
@@ -165,6 +166,23 @@ impl JsxNoLiterals {
         cfg.allowed_strings.iter().any(|allowed| allowed.as_str().trim() == str_literal.trim())
     }
 
+    fn is_allowed_jsx_string(
+        str_literal: &str,
+        cfg: &JsxNoLiteralsOptions,
+        ctx: &LintContext,
+    ) -> bool {
+        if cfg.allowed_strings.is_empty() {
+            return false;
+        }
+        if Self::is_allowed_string(str_literal, cfg) {
+            return true;
+        }
+
+        let mut decoded = None;
+        decode_entities(str_literal, &mut decoded, str_literal.len(), ctx.allocator());
+        decoded.is_some_and(|decoded| Self::is_allowed_string(decoded.as_str(), cfg))
+    }
+
     fn has_parent_jsx_element(node: &AstNode, ctx: &LintContext) -> bool {
         ctx.nodes().ancestors(node.id()).any(|ancestor| {
             matches!(ancestor.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_))
@@ -261,7 +279,7 @@ impl JsxNoLiterals {
                 JSXChild::Text(text) => {
                     let value = text.value.as_str();
 
-                    if Self::is_allowed_string(value, options) {
+                    if Self::is_allowed_jsx_string(value, options, ctx) {
                         continue;
                     }
 
@@ -326,7 +344,7 @@ impl JsxNoLiterals {
 
             match value {
                 JSXAttributeValue::StringLiteral(str_literal) => {
-                    if Self::is_allowed_string(str_literal.value.as_str(), options) {
+                    if Self::is_allowed_jsx_string(str_literal.value.as_str(), options, ctx) {
                         continue;
                     }
 
@@ -669,6 +687,7 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "noStrings": true, "allowedStrings": ["&nbsp;"] }])),
         ),
+        ("<span>&nbsp; · &nbsp;</span>", Some(serde_json::json!([{ "allowedStrings": ["·"] }]))),
         (
             "
                     class Comp1 extends Component {
