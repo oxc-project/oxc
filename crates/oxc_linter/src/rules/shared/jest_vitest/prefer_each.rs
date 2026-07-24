@@ -84,39 +84,37 @@ impl PreferEachConfig {
     }
 
     fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut FxHashSet<NodeId>) {
-        let kind = node.kind();
-
-        let AstKind::CallExpression(call_expr) = kind else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         // Walking up to the nearest enclosing loop is much cheaper than
         // `parse_jest_fn_call`, so find it first: only calls sitting directly in a
         // loop (not nested in another call) can be reported.
-        let Some(loop_node) = ctx
-            .nodes()
-            .ancestors(node.id())
-            .find_map(|parent_node| match parent_node.kind() {
-                AstKind::CallExpression(_) => Some(None),
+        let mut enclosing_loop = None;
+        for parent_node in ctx.nodes().ancestors(node.id()) {
+            match parent_node.kind() {
+                AstKind::CallExpression(_) => return,
                 AstKind::ForStatement(_)
                 | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_) => Some(Some(parent_node)),
-                _ => None,
-            })
-            .flatten()
-        else {
-            return;
-        };
+                | AstKind::ForOfStatement(_) => {
+                    enclosing_loop = Some(parent_node);
+                    break;
+                }
+                _ => {}
+            }
+        }
+        let Some(loop_node) = enclosing_loop else { return };
 
         if skip.contains(&loop_node.id()) {
             return;
         }
 
-        let Some(vitest_fn_call) =
+        let Some(jest_fn_call) =
             parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
         else {
             return;
         };
 
-        let fn_name = match vitest_fn_call.kind() {
+        let fn_name = match jest_fn_call.kind() {
             JestFnKind::General(JestGeneralFnKind::Test) => "it",
             JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Hook) => {
                 "describe"
@@ -128,20 +126,14 @@ impl PreferEachConfig {
             return;
         }
 
-        let span = match loop_node.kind() {
-            AstKind::ForStatement(statement) => {
-                Span::new(statement.span.start, statement.body.span().start)
-            }
-            AstKind::ForInStatement(statement) => {
-                Span::new(statement.span.start, statement.body.span().start)
-            }
-            AstKind::ForOfStatement(statement) => {
-                Span::new(statement.span.start, statement.body.span().start)
-            }
+        let (loop_span, body) = match loop_node.kind() {
+            AstKind::ForStatement(statement) => (statement.span, &statement.body),
+            AstKind::ForInStatement(statement) => (statement.span, &statement.body),
+            AstKind::ForOfStatement(statement) => (statement.span, &statement.body),
             _ => unreachable!(),
         };
 
         skip.insert(loop_node.id());
-        ctx.diagnostic(use_prefer_each(span, fn_name));
+        ctx.diagnostic(use_prefer_each(Span::new(loop_span.start, body.span().start), fn_name));
     }
 }
