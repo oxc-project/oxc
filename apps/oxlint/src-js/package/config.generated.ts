@@ -1594,6 +1594,8 @@ export interface DummyRuleMap {
   "unicorn/prefer-global-this"?: RuleNoConfig;
   "unicorn/prefer-import-meta-properties"?: RuleNoConfig;
   "unicorn/prefer-includes"?: RuleNoConfig;
+  "unicorn/prefer-includes-over-repeated-comparisons"?:
+    RuleNoConfig | [AllowWarnDeny, PreferIncludesOverRepeatedComparisonsConfig];
   "unicorn/prefer-keyboard-event-key"?: RuleNoConfig;
   "unicorn/prefer-logical-operator-over-ternary"?: RuleNoConfig;
   "unicorn/prefer-math-min-max"?: RuleNoConfig;
@@ -6337,6 +6339,12 @@ export interface PreferExportFrom {
    * When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored.
    */
   checkUsedVariables?: boolean;
+}
+export interface PreferIncludesOverRepeatedComparisonsConfig {
+  /**
+   * The minimum number of equality comparisons before reporting.
+   */
+  minimumComparisons?: number;
 }
 export interface PreferNumberPropertiesConfig {
   /**
