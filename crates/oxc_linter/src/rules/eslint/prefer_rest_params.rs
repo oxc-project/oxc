@@ -80,11 +80,11 @@ impl Rule for PreferRestParams {
 
             // Only references to the implicit `arguments` object are relevant, i.e.
             // those inside a (non-arrow) function.
-            let in_function = ctx
+            if !ctx
                 .nodes()
                 .ancestors(reference_node.id())
-                .any(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)));
-            if !in_function {
+                .any(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
+            {
                 continue;
             }
 
