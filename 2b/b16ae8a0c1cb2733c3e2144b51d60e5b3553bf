@@ -1,0 +1,19 @@
+.github/workflows/codecov.yml
+  s_82f1e001375a92::t_22f03a8f0b9704 46-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2bb16ae8a0c1cb2733c3e2144b51d60e5b3553bf",
+  "prompts": {},
+  "sessions": {
+    "s_82f1e001375a92": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f93da-3616-75b0-a3b7-8d373f2901a9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
