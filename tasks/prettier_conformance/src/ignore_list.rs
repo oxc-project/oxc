@@ -110,6 +110,9 @@ pub const IGNORE_TESTS: &[&str] = &[
     "jsx/top-level-await",
     "typescript/top-level-await",
     "js/ternaries/parenthesis/await-expression.js",
+    // Top-level `await (1)` with no import/export: Prettier always parses `.js` as ESM (await expression),
+    // while our unambiguous detection leans to script (call expression), whose output is valid under both
+    "js/await/like-call.js",
     // ES5 vs ES6+ identifier: Prettier uses ES5 validation, OXC uses ES6+
     // Characters outside BMP (like U+102A7) are valid ES6+ identifiers but not ES5
     "js/quotes/objects.js",
