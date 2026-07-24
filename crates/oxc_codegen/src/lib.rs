@@ -7,8 +7,6 @@
 use std::marker::PhantomData;
 use std::{borrow::Cow, cmp, slice};
 
-use cow_utils::CowUtils;
-
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
@@ -28,6 +26,7 @@ mod cjs_module_lexer;
 mod comment;
 mod context;
 mod r#gen;
+mod number_literal;
 mod operator;
 mod options;
 #[cfg(feature = "sourcemap")]
@@ -36,6 +35,7 @@ mod str;
 
 use binary_expr_visitor::BinaryExpressionVisitor;
 use comment::CommentsMap;
+use number_literal::with_number_literal;
 use operator::Operator;
 #[cfg(feature = "sourcemap")]
 use sourcemap_builder::SourcemapBuilder;
@@ -870,14 +870,12 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_non_negative_float(&mut self, num: f64) {
-        // Inline the buffer here to avoid heap allocation on `buffer.format(*self).to_string()`.
-        let mut buffer = dragonbox_ecma::Buffer::new();
-        if num < 1000.0 && num.fract() == 0.0 {
-            self.print_str(buffer.format(num));
-            self.need_space_before_dot = self.code_len();
-        } else {
-            self.print_minified_number(num, &mut buffer);
-        }
+        with_number_literal(num, |literal| {
+            self.print_str(literal);
+            if !literal.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.need_space_before_dot = self.code_len();
+            }
+        });
     }
 
     fn print_decorators(&mut self, decorators: &[Decorator<'_>], ctx: Context) {
@@ -887,92 +885,6 @@ impl<'a> Codegen<'a> {
             // identifier char (`@dec class`); `@dec() class` can be `@dec()class`.
             self.print_soft_space();
             self.print_space_before_identifier();
-        }
-    }
-
-    // Optimized version of `get_minified_number` from terser
-    // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
-    // Instead of building all candidates and finding the shortest, we track the shortest as we go
-    // and use self.print_str directly instead of returning intermediate strings
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
-        if num < 1000.0 && num.fract() == 0.0 {
-            self.print_str(buffer.format(num));
-            self.need_space_before_dot = self.code_len();
-            return;
-        }
-
-        let mut s = buffer.format(num);
-
-        if s.starts_with("0.") {
-            s = &s[1..];
-        }
-
-        let mut best_candidate = s.cow_replacen("e+", "e", 1);
-        let mut is_hex = false;
-
-        // Track the best candidate found so far
-        if num.fract() == 0.0 {
-            // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_candidate.len() {
-                is_hex = true;
-                best_candidate = hex_candidate.into();
-            }
-        }
-        // Check for scientific notation optimizations for numbers starting with ".0"
-        else if best_candidate.starts_with(".0") {
-            // Skip the first '0' since we know it's there from the starts_with check
-            if let Some(i) = best_candidate.bytes().skip(2).position(|c| c != b'0') {
-                let len = i + 2; // `+2` to include the dot and first zero.
-                let digits = &best_candidate[len..];
-                let exp = digits.len() + len - 1;
-                let exp_str_len = itoa::Buffer::new().format(exp).len();
-                // Calculate expected length: digits + 'e-' + exp_length
-                let expected_len = digits.len() + 2 + exp_str_len;
-                if expected_len < best_candidate.len() {
-                    best_candidate = format!("{digits}e-{exp}").into();
-                    debug_assert_eq!(best_candidate.len(), expected_len);
-                }
-            }
-        }
-
-        // Check for numbers ending with zeros (but not hex numbers)
-        // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
-        // from being incorrectly converted to scientific notation
-        if !is_hex
-            && best_candidate.ends_with('0')
-            && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
-        {
-            let base = &best_candidate[0..best_candidate.len() - len];
-            let exp_str_len = itoa::Buffer::new().format(len).len();
-            // Calculate expected length: base + 'e' + len
-            let expected_len = base.len() + 1 + exp_str_len;
-            if expected_len < best_candidate.len() {
-                best_candidate = format!("{base}e{len}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
-            }
-        }
-
-        // Check for scientific notation optimization: `1.2e101` -> `12e100`
-        if let Some((integer, point, exponent)) = best_candidate
-            .split_once('.')
-            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
-        {
-            let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
-            let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
-            // Calculate expected length: integer + point + 'e' + new_exp_str_len
-            let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
-            if expected_len < best_candidate.len() {
-                best_candidate = format!("{integer}{point}e{new_expr}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
-            }
-        }
-
-        // Print the best candidate and update need_space_before_dot
-        self.print_str(&best_candidate);
-        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-            self.need_space_before_dot = self.code_len();
         }
     }
 
