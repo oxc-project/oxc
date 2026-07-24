@@ -325,8 +325,149 @@ export interface ModuleRunnerTransformResult {
 export declare function moduleRunnerTransformSync(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): ModuleRunnerTransformResult
 
 export interface PluginsOptions {
+  /**
+   * Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
+   *
+   * `true` enables it with default options; an object enables it with the
+   * given options; `false` or omitted disables it. When enabled, the compiler
+   * runs in its own pass before every other transform, memoizing React
+   * components and hooks.
+   *
+   * Requires a build with the `react_compiler` Cargo feature, which is on by
+   * default; enabling this option against a build without it is an error.
+   */
+  reactCompiler?: boolean | ReactCompilerOptions
   styledComponents?: StyledComponentsOptions
   taggedTemplateEscape?: boolean
+}
+
+/** Dynamic gating for {@link ReactCompilerOptions#dynamicGating}. */
+export interface ReactCompilerDynamicGating {
+  /** Module the gating import comes from. */
+  source: string
+}
+
+/**
+ * Feature flags and validation toggles for the React Compiler's passes.
+ *
+ * Field names mirror the upstream `EnvironmentConfig` one-for-one, so a value that
+ * works in a Babel `environment` config works here unchanged. Every field is optional;
+ * omitting one keeps the compiler's default. Several of these gate passes that are off
+ * by default, so setting them is the only way to reach those diagnostics.
+ *
+ * @see {@link ReactCompilerOptions#environment}
+ */
+export interface ReactCompilerEnvironmentOptions {
+  customMacros?: Array<string>
+  enableResetCacheOnSourceFileChanges?: boolean
+  enablePreserveExistingMemoizationGuarantees?: boolean
+  validatePreserveExistingMemoizationGuarantees?: boolean
+  validateExhaustiveMemoizationDependencies?: boolean
+  enableOptionalDependencies?: boolean
+  enableNameAnonymousFunctions?: boolean
+  validateHooksUsage?: boolean
+  validateRefAccessDuringRender?: boolean
+  validateNoSetStateInRender?: boolean
+  enableUseKeyedState?: boolean
+  validateNoSetStateInEffects?: boolean
+  validateNoDerivedComputationsInEffects?: boolean
+  validateNoDerivedComputationsInEffectsExp?: boolean
+  validateNoJsxInTryStatements?: boolean
+  validateStaticComponents?: boolean
+  validateNoCapitalizedCalls?: Array<string>
+  validateBlocklistedImports?: Array<string>
+  validateSourceLocations?: boolean
+  validateNoImpureFunctionsInRender?: boolean
+  validateNoFreezingKnownMutableFunctions?: boolean
+  enableAssumeHooksFollowRulesOfReact?: boolean
+  enableTransitivelyFreezeFunctionExpressions?: boolean
+  enableFunctionOutlining?: boolean
+  enableJsxOutlining?: boolean
+  assertValidMutableRanges?: boolean
+  enableCustomTypeDefinitionForReanimated?: boolean
+  enableTreatRefLikeIdentifiersAsRefs?: boolean
+  enableTreatSetIdentifiersAsStateSetters?: boolean
+  validateNoVoidUseMemo?: boolean
+  enableAllowSetStateFromRefsInEffects?: boolean
+  enableVerboseNoSetStateInEffect?: boolean
+  enableForest?: boolean
+}
+
+/** Static gating for {@link ReactCompilerOptions#gating}. */
+export interface ReactCompilerGating {
+  /** Module the gating import comes from. */
+  source: string
+  /** Imported specifier used as the gate. */
+  importSpecifierName: string
+}
+
+/**
+ * Options for the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
+ *
+ * Mirrors the compiler's `PluginOptions`.
+ *
+ * @see {@link PluginsOptions#reactCompiler}
+ */
+export interface ReactCompilerOptions {
+  /**
+   * Which functions to compile.
+   *
+   * @default 'infer'
+   */
+  compilationMode?: 'infer' | 'syntax' | 'annotation' | 'all'
+  /**
+   * What to do when a function cannot be compiled.
+   *
+   * @default 'none'
+   */
+  panicThreshold?: 'none' | 'critical_errors' | 'all_errors'
+  /**
+   * React runtime version target. `17` and `18` require the
+   * `react-compiler-runtime` package; `19` ships the runtime in `react`.
+   *
+   * @default '19'
+   */
+  target?: '17' | '18' | '19'
+  /**
+   * Analyze and report diagnostics only; emit no transformed code.
+   *
+   * @default false
+   */
+  noEmit?: boolean
+  /**
+   * Compiler output mode.
+   *
+   * @default undefined
+   */
+  outputMode?: 'client' | 'ssr' | 'lint'
+  /**
+   * Compile even functions marked with the `"use no memo"` / `"use no forget"`
+   * opt-out directives.
+   *
+   * @default false
+   */
+  ignoreUseNoForget?: boolean
+  /**
+   * Treat Flow suppression comments as opt-outs.
+   *
+   * @default true
+   */
+  flowSuppressions?: boolean
+  /** ESLint rules whose suppressions opt a function out of compilation. */
+  eslintSuppressionRules?: Array<string>
+  /** Extra directives that opt a function out of compilation. */
+  customOptOutDirectives?: Array<string>
+  /** Also emit a gated (feature-flagged) version of each compiled function. */
+  gating?: ReactCompilerGating
+  /** Dynamically-gated compilation. */
+  dynamicGating?: ReactCompilerDynamicGating
+  /**
+   * Feature flags and validation toggles for the compilation passes.
+   *
+   * Each field left unset keeps the compiler's own default, matching the
+   * `Partial<EnvironmentConfig>` shape of the upstream Babel plugin's option.
+   */
+  environment?: ReactCompilerEnvironmentOptions
 }
 
 export interface ReactRefreshOptions {
@@ -448,9 +589,9 @@ export declare function transform(filename: string, sourceText: string, options?
  *
  * Options are listed in evaluation order: the source is parsed (`lang`,
  * `sourceType`), declarations are emitted (`typescript.declaration`), then
- * transforms run (`typescript`, `decorator`, `plugins`,
- * `jsx`, `target`), followed by the `inject` and `define` plugins, and
- * finally codegen (`sourcemap`). `helpers` configures the runtime helpers
+ * transforms run (`plugins.reactCompiler`, `typescript`, `decorator`,
+ * `plugins`, `jsx`, `target`), followed by the `inject` and `define` plugins,
+ * and finally codegen (`sourcemap`). `helpers` configures the runtime helpers
  * the transforms emit.
  *
  * @see {@link transform}
