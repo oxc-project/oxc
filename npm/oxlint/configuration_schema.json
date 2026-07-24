@@ -2312,6 +2312,31 @@
             }
           ]
         },
+        "consistent-this": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "type": "string",
+                  "minLength": 1
+                }
+              ],
+              "additionalItems": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 2,
+              "uniqueItems": true
+            }
+          ]
+        },
         "constructor-super": {
           "$ref": "#/definitions/RuleNoConfig"
         },

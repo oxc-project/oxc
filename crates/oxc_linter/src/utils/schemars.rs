@@ -1,6 +1,9 @@
 use schemars::{
     r#gen::SchemaGenerator,
-    schema::{InstanceType, ObjectValidation, Schema, SchemaObject, SubschemaValidation},
+    schema::{
+        ArrayValidation, InstanceType, ObjectValidation, Schema, SchemaObject, StringValidation,
+        SubschemaValidation,
+    },
 };
 
 #[cfg(feature = "ruledocs")]
@@ -53,6 +56,28 @@ pub fn object_with_nullable_string_schema(_gen: &mut SchemaGenerator) -> Schema 
         instance_type: Some(InstanceType::Object.into()),
         object: Some(Box::new(ObjectValidation {
             additional_properties: Some(Box::new(value_schema.into())),
+            ..Default::default()
+        })),
+        ..Default::default()
+    }
+    .into()
+}
+
+/// Generates a JSON schema for ESLint-style "spread" rule options: a variable-length list of unique, non-empty strings.
+/// The items are emitted as `additionalItems` so the rule-config schema generator prepends `AllowWarnDeny` and keeps the list unbounded.
+/// TS type equivalent of the full rule config: `[AllowWarnDeny, string, ...string[]]`
+pub fn unique_non_empty_string_spread_schema(_gen: &mut SchemaGenerator) -> Schema {
+    let item_schema = SchemaObject {
+        instance_type: Some(InstanceType::String.into()),
+        string: Some(Box::new(StringValidation { min_length: Some(1), ..Default::default() })),
+        ..Default::default()
+    };
+
+    SchemaObject {
+        instance_type: Some(InstanceType::Array.into()),
+        array: Some(Box::new(ArrayValidation {
+            additional_items: Some(Box::new(item_schema.into())),
+            unique_items: Some(true),
             ..Default::default()
         })),
         ..Default::default()
