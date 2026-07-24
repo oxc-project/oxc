@@ -371,7 +371,7 @@ fn try_fold_to_string<'a>(
         Expression::RegExpLiteral(lit) if args.is_empty() => {
             lit.to_js_string(ctx).map(ConstantValue::String)
         }
-        e if args.is_empty() => e
+        e if args.is_empty() && !e.may_have_side_effects(ctx) => e
             .evaluate_value(ctx)
             // `null` and `undefined` returns type errors
             .filter(|v| !v.is_undefined() && !v.is_null())

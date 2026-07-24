@@ -959,6 +959,8 @@ fn test_to_string() {
     test_same("254n.toString(16);"); // unimplemented
     // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
     test_same("null.toString()"); // type error
+    test_same("x = (f(), 5).toString()");
+    test_same("async function t(p) { x = (await p, 5).toString(); } t(p)");
 
     test("x = 100 .toString(0)", "x = 100 .toString(0)");
     test("x = 100 .toString(1)", "x = 100 .toString(1)");
