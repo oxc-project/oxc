@@ -334,12 +334,9 @@ impl ESTree for Str<'_> {
 #[macro_export]
 macro_rules! format_str {
     ($alloc:expr, $($arg:tt)*) => {{
-        use ::std::{write, fmt::Write};
-        use $crate::{Str, __internal::ArenaStringBuilder};
-
-        let mut s = ArenaStringBuilder::new_in($alloc);
-        write!(s, $($arg)*).unwrap();
-        Str::from(s)
+        let mut s = $crate::__internal::ArenaStringBuilder::new_in($alloc);
+        ::std::fmt::Write::write_fmt(&mut s, ::std::format_args!($($arg)*)).unwrap();
+        $crate::Str::from(s)
     }}
 }
 

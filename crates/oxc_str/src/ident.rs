@@ -603,12 +603,9 @@ macro_rules! static_ident {
 #[macro_export]
 macro_rules! format_ident {
     ($alloc:expr, $($arg:tt)*) => {{
-        use ::std::{write, fmt::Write};
-        use $crate::{Ident, __internal::ArenaStringBuilder};
-
-        let mut s = ArenaStringBuilder::new_in($alloc);
-        write!(s, $($arg)*).unwrap();
-        Ident::from(s)
+        let mut s = $crate::__internal::ArenaStringBuilder::new_in($alloc);
+        ::std::fmt::Write::write_fmt(&mut s, ::std::format_args!($($arg)*)).unwrap();
+        $crate::Ident::from(s)
     }}
 }
 
