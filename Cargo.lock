@@ -2304,6 +2304,7 @@ dependencies = [
  "insta",
  "itoa",
  "javascript-globals",
+ "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
