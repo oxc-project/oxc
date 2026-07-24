@@ -259,11 +259,19 @@ impl GetMethod for Statement<'_> {
     }
 }
 
-fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
+fn check_and_report<T: GetMethod>(members: &[T], ctx: &LintContext<'_>) {
+    // A violation needs at least two method-producing members, so bail before
+    // collecting into a `Vec` in the common case of zero or one.
+    if members.iter().filter(|member| member.get_method().is_some()).nth(1).is_none() {
+        return;
+    }
+
+    let methods: Vec<Option<Method>> = members.iter().map(GetMethod::get_method).collect();
+
     let mut last_method: Option<&Method> = None;
     let mut seen_methods: Vec<&Method> = Vec::new();
 
-    for method in methods {
+    for method in &methods {
         if let Some(method) = method {
             let index = seen_methods.iter().position(|m| method.is_same_method(Some(m)));
 
@@ -295,40 +303,13 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 impl Rule for AdjacentOverloadSignatures {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::Class(class) => {
-                let members = &class.body.body;
-                let methods = members.iter().map(GetMethod::get_method).collect();
-                check_and_report(&methods, ctx);
-            }
-            AstKind::TSTypeLiteral(literal) => {
-                let methods = literal.members.iter().map(GetMethod::get_method).collect();
-                check_and_report(&methods, ctx);
-            }
-            AstKind::Program(program) => {
-                let methods = program.body.iter().map(GetMethod::get_method).collect();
-
-                check_and_report(&methods, ctx);
-            }
-            AstKind::TSModuleBlock(block) => {
-                let methods = block.body.iter().map(GetMethod::get_method).collect();
-
-                check_and_report(&methods, ctx);
-            }
-            AstKind::TSInterfaceDeclaration(decl) => {
-                let methods = decl.body.body.iter().map(GetMethod::get_method).collect();
-
-                check_and_report(&methods, ctx);
-            }
-            AstKind::BlockStatement(stmt) => {
-                let methods = stmt.body.iter().map(GetMethod::get_method).collect();
-
-                check_and_report(&methods, ctx);
-            }
-            AstKind::FunctionBody(body) => {
-                let methods = body.statements.iter().map(GetMethod::get_method).collect();
-
-                check_and_report(&methods, ctx);
-            }
+            AstKind::Class(class) => check_and_report(&class.body.body, ctx),
+            AstKind::TSTypeLiteral(literal) => check_and_report(&literal.members, ctx),
+            AstKind::Program(program) => check_and_report(&program.body, ctx),
+            AstKind::TSModuleBlock(block) => check_and_report(&block.body, ctx),
+            AstKind::TSInterfaceDeclaration(decl) => check_and_report(&decl.body.body, ctx),
+            AstKind::BlockStatement(stmt) => check_and_report(&stmt.body, ctx),
+            AstKind::FunctionBody(body) => check_and_report(&body.statements, ctx),
             _ => {}
         }
     }
