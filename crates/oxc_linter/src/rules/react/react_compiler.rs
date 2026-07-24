@@ -12,27 +12,45 @@ use crate::{
 };
 
 /// The compiler options `eslint-plugin-react-compiler` lints with — `lint`
-/// output mode plus validations that are off by default in the compiler.
+/// output mode plus the validations that are off by default in the compiler.
 /// Mirrors `COMPILER_OPTIONS` in the plugin's `src/shared/RunReactCompiler.ts`.
-fn react_compiler_options() -> PluginOptions {
+///
+/// Each validation is gated on the matching [`ReactCompilerConfig`] toggle, so
+/// turning a sub-rule off in the config stops the compiler from emitting its
+/// diagnostics at all (rather than reporting and then filtering them).
+fn react_compiler_options(config: &ReactCompilerConfig) -> PluginOptions {
     PluginOptions {
         output_mode: Some(CompilerOutputMode::Lint),
         // Don't emit errors on Flow suppressions — Flow already gave a signal.
         // Suppressed lines are filtered in `run_once` instead (like the eslint
         // plugin), so other diagnostics in the same function still surface.
         flow_suppressions: false,
+        // The `Suppression` category reports pre-existing `eslint-disable react-*`
+        // comments. The compiler only scans for them when `hooks` or
+        // `memoDependencies` is off (see `program.rs`: `validate_exhaustive &&
+        // validate_hooks`), so without gating, an unrelated toggle would surface
+        // a user's existing ESLint suppressions as new errors. Treat it as a
+        // bail-out: an empty rule list silences the scan unless the user opts in
+        // via `reportAllBailouts` (`None` lets the compiler use its defaults).
+        eslint_suppression_rules: if config.report_all_bailouts { None } else { Some(vec![]) },
         environment: EnvironmentConfig {
-            validate_ref_access_during_render: true,
-            validate_no_set_state_in_render: true,
-            validate_no_set_state_in_effects: true,
-            validate_no_jsx_in_try_statements: true,
-            validate_no_impure_functions_in_render: true,
-            validate_static_components: true,
-            validate_no_freezing_known_mutable_functions: true,
-            validate_no_void_use_memo: true,
-            validate_no_capitalized_calls: Some(vec![]),
-            validate_hooks_usage: true,
-            validate_no_derived_computations_in_effects: true,
+            validate_ref_access_during_render: config.refs,
+            validate_no_set_state_in_render: config.set_state_in_render,
+            validate_no_set_state_in_effects: config.set_state_in_effect,
+            validate_no_jsx_in_try_statements: config.error_boundaries,
+            validate_no_impure_functions_in_render: config.purity,
+            validate_static_components: config.static_components,
+            validate_no_void_use_memo: config.void_use_memo,
+            // `Some(vec![])` enables the check with the default allowlist; `None`
+            // disables it entirely.
+            validate_no_capitalized_calls: config.capitalized_calls.then(Vec::new),
+            validate_hooks_usage: config.hooks,
+            validate_no_derived_computations_in_effects: config.derived_computations_in_effect,
+            validate_exhaustive_memoization_dependencies: config.memo_dependencies,
+            // `PreserveManualMemo` fires when *either* flag is on, so both must be
+            // cleared to silence it.
+            enable_preserve_existing_memoization_guarantees: config.preserve_manual_memo,
+            validate_preserve_existing_memoization_guarantees: config.preserve_manual_memo,
             ..EnvironmentConfig::default()
         },
         ..PluginOptions::default()
@@ -50,7 +68,7 @@ impl std::ops::Deref for ReactCompiler {
     }
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReactCompilerConfig {
     /// Also report compiler bail-outs — places where React Compiler skipped a
@@ -58,6 +76,102 @@ pub struct ReactCompilerConfig {
     /// finding a rule violation. These do not indicate incorrect code, only
     /// code that the compiler declined to optimize.
     report_all_bailouts: bool,
+
+    // ---- Sub-rule toggles ----
+    //
+    // Each flag enables one React Compiler validation. They default to `true`
+    // (see the `Default` impl below); set one to `false` to disable that
+    // category of diagnostic globally, e.g.:
+    //
+    // ```json
+    // "react/react-compiler": ["error", { "refs": false }]
+    // ```
+    /// Hooks must be called unconditionally and in a consistent order
+    /// (`validate_hooks_usage`).
+    hooks: bool,
+    /// Refs may not be read or written during render
+    /// (`validate_ref_access_during_render`).
+    refs: bool,
+    /// `setState` may not be called during render
+    /// (`validate_no_set_state_in_render`).
+    set_state_in_render: bool,
+    /// `setState` may not be called unconditionally inside an effect
+    /// (`validate_no_set_state_in_effects`).
+    set_state_in_effect: bool,
+    /// JSX may not be constructed inside `try`/`catch`
+    /// (`validate_no_jsx_in_try_statements`).
+    error_boundaries: bool,
+    /// Known-impure functions (e.g. `Math.random`, `Date.now`) may not be
+    /// called during render (`validate_no_impure_functions_in_render`).
+    purity: bool,
+    /// Components must be statically defined (`validate_static_components`).
+    static_components: bool,
+    /// `useMemo` callbacks must return a value (`validate_no_void_use_memo`).
+    void_use_memo: bool,
+    /// Capitalized functions are reserved for components and must be invoked as
+    /// JSX (`validate_no_capitalized_calls`).
+    capitalized_calls: bool,
+    /// Effects may not recompute values that could be derived during render
+    /// (emitted as the `EffectDerivationsOfState` category;
+    /// `validate_no_derived_computations_in_effects`).
+    derived_computations_in_effect: bool,
+    /// Memoization dependency arrays (`useMemo`/`useCallback`/`useEffect`) must
+    /// be exhaustive — the `MemoDependencies` category, equivalent to ESLint's
+    /// `react-hooks/exhaustive-deps` (`validate_exhaustive_memoization_dependencies`).
+    memo_dependencies: bool,
+    /// Manual `useMemo`/`useCallback` memoization must be preservable by the
+    /// compiler — the `PreserveManualMemo` category. `eslint-plugin-react-compiler`
+    /// ships this off by default; set to `false` to match
+    /// (`enable_preserve_existing_memoization_guarantees` +
+    /// `validate_preserve_existing_memoization_guarantees`).
+    ///
+    /// NOTE: the memoization validations are coupled. Disabling this alone
+    /// *reclassifies* rather than removes — the compiler still bails on those
+    /// sites and re-reports them under `MemoDependencies` (and a few under
+    /// `Purity`). To silence the family, also set `memoDependencies: false`
+    /// (and `purity: false` if those remain).
+    preserve_manual_memo: bool,
+
+    // ---- Rule-layer toggles ----
+    //
+    // These categories have no usable compiler flag, so the toggle is enforced
+    // by dropping the diagnostic in the rule rather than in the compiler. They
+    // still default to `true`.
+    /// Values that are known to be mutable (props, state) may not be mutated —
+    /// the `Immutability` category. Emitted by the core mutation/aliasing
+    /// inference pass and by `validate_locals_not_reassigned_after_render`,
+    /// neither of which the compiler exposes a flag for.
+    immutability: bool,
+    /// `useMemo`/`useCallback` callbacks must be well-formed — the `UseMemo`
+    /// category (callbacks taking parameters, being async/generator, or
+    /// reassigning outer variables). Distinct from `voidUseMemo`, which covers
+    /// callbacks that return nothing. Emitted by `drop_manual_memoization` and
+    /// the non-void part of `validate_use_memo`, neither gated by a flag.
+    use_memo: bool,
+}
+
+impl Default for ReactCompilerConfig {
+    fn default() -> Self {
+        // Every validation is on by default — this mirrors the set of checks the
+        // rule has always run. Only `report_all_bailouts` is opt-in.
+        Self {
+            report_all_bailouts: false,
+            hooks: true,
+            refs: true,
+            set_state_in_render: true,
+            set_state_in_effect: true,
+            error_boundaries: true,
+            purity: true,
+            static_components: true,
+            void_use_memo: true,
+            capitalized_calls: true,
+            derived_computations_in_effect: true,
+            memo_dependencies: true,
+            preserve_manual_memo: true,
+            immutability: true,
+            use_memo: true,
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -121,22 +235,36 @@ impl Rule for ReactCompiler {
 
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
-        let options = react_compiler_options();
+        let options =
+            react_compiler_options(self);
 
         let result = oxc_react_compiler::lint(program, ctx.semantic(), ctx.allocator(), options);
 
-        let diagnostics = result.diagnostics.into_vec();
-        let diagnostics = if self.report_all_bailouts {
-            diagnostics
-        } else {
-            diagnostics
-                .into_iter()
-                .filter(|diagnostic| diagnostic.severity == Severity::Error)
-                .collect::<Vec<_>>()
-        };
-
         let suppressed_lines = flow_suppression_lines(ctx);
-        for mut diagnostic in diagnostics {
+        for mut diagnostic in result.diagnostics.into_vec() {
+            // Bail-outs surface as non-error severities; hide them unless asked.
+            if !self.report_all_bailouts && diagnostic.severity != Severity::Error {
+                continue;
+            }
+
+            let category = react_compiler_category(&diagnostic.message);
+
+            // `Immutability` and `UseMemo` have no compiler flag, so the
+            // sub-rules are enforced here by dropping their diagnostics when the
+            // toggle is off.
+            if !self.immutability && category == Some("Immutability") {
+                continue;
+            }
+            if !self.use_memo && category == Some("UseMemo") {
+                continue;
+            }
+
+            // Internal compiler errors are not Rules of React violations; hide
+            // them unless the user opts into the full firehose.
+            if !self.report_all_bailouts && category.is_some_and(is_internal_noise) {
+                continue;
+            }
+
             // If Flow already caught this error, we don't need to report it again.
             if is_flow_suppressed(&diagnostic, &suppressed_lines, ctx.source_text()) {
                 continue;
@@ -148,6 +276,23 @@ impl Rule for ReactCompiler {
             ctx.diagnostic(diagnostic);
         }
     }
+}
+
+/// The leading category token of a React Compiler message — e.g. `Immutability`
+/// from `"[ReactCompiler] Immutability: Cannot reassign ..."`. Returns `None`
+/// when the message carries no category, as some fatal-error paths do. Reliable
+/// because the rule runs with `panicThreshold: "none"`, so categorized
+/// diagnostics always render with the `"{category}: {reason}"` shape.
+fn react_compiler_category(message: &str) -> Option<&str> {
+    message.strip_prefix("[ReactCompiler] ").and_then(|rest| rest.split_once(": ")).map(|(c, _)| c)
+}
+
+/// Categories that are internal compiler errors rather than Rules of React
+/// violations. `Invariant` is a compiler-internal assertion; `Unexpected error`
+/// and `Pipeline error` are thrown failures. They are hidden unless
+/// `reportAllBailouts` is set.
+fn is_internal_noise(category: &str) -> bool {
+    matches!(category, "Invariant" | "Unexpected error" | "Pipeline error")
 }
 
 /// Flow suppression codes that silence a React Compiler diagnostic on the next
@@ -307,6 +452,44 @@ function Component(props) {
                 return <fbt desc='label'>Hello</fbt>;
             }",
             None,
+        ),
+        // A sub-rule toggled off in the config does not report: this would
+        // otherwise be a `Refs` violation (see the matching `fail` case).
+        (
+            "
+function Component(props) {
+  const ref = useRef(null);
+  const value = ref.current;
+  return value;
+}
+",
+            Some(json!([{ "refs": false }])),
+        ),
+        // `immutability` is filtered in the rule (the compiler has no flag for
+        // it): turning it off silences the `Immutability` diagnostic that the
+        // matching `fail` case (mutating a `useState` value) otherwise reports.
+        (
+            "
+import { useState } from 'react';
+function Component(props) {
+  const [state, setState] = useState({a: 0});
+  state.a = 1;
+  return <div>{props.foo}</div>;
+}
+",
+            Some(json!([{ "immutability": false }])),
+        ),
+        // `useMemo` is also rule-layer filtered: turning it off silences the
+        // `UseMemo` diagnostic for a malformed (async) `useMemo` callback.
+        (
+            "
+import { useMemo } from 'react';
+function Component(props) {
+  const x = useMemo(async () => props.a + 1, [props.a]);
+  return <div>{x}</div>;
+}
+",
+            Some(json!([{ "useMemo": false }])),
         ),
     ];
 
