@@ -722,6 +722,11 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    return_statement_in_class_static_block(span: Span) => {
+        ts_error("18041", "A 'return' statement cannot be used inside a class static block.")
+            .with_label(span)
+    };
+
     invalid_identifier_in_using_declaration(span: Span) => {
         OxcDiagnostic::error("Using declarations may not have binding patterns.").with_label(span)
     };

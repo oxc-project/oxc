@@ -15217,7 +15217,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
 
-  × TS(1108): A 'return' statement can only be used within a function body.
+  × TS(18041): A 'return' statement cannot be used inside a class static block.
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock7.ts:5:9]
  4 │         yield 1;
  5 │         return 1;
@@ -15234,7 +15234,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
 
-  × TS(1108): A 'return' statement can only be used within a function body.
+  × TS(18041): A 'return' statement cannot be used inside a class static block.
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock7.ts:36:13]
  35 │         static {
  36 │             return 1;

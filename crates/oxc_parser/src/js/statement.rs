@@ -686,7 +686,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Some(expr)
         };
         if !self.ctx.has_return() {
-            self.error(diagnostics::return_statement_only_in_function_body(Span::sized(span, 6)));
+            let span = Span::sized(span, 6);
+            // Class static blocks enable `NewTarget` but disable `Return`.
+            // Other contexts that allow `new.target` cannot directly contain
+            // a return statement without entering a function body first.
+            if self.ctx.has_new_target() {
+                self.error(diagnostics::return_statement_in_class_static_block(span));
+            } else {
+                self.error(diagnostics::return_statement_only_in_function_body(span));
+            }
         }
         Statement::new_return_statement(self.end_span(span), argument, self)
     }
