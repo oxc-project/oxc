@@ -3,7 +3,7 @@ use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, ValueType},
-    side_effects::{is_typed_array_constructor, is_valid_regexp},
+    side_effects::{MayHaveSideEffects, is_typed_array_constructor, is_valid_regexp},
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_syntax::scope::ScopeFlags;
@@ -153,6 +153,15 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::set_no_side_effects_to_call_expr(e, ctx);
+        if ctx.is_tree_shake_only()
+            && let Expression::Identifier(id) = &e.callee
+            && let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
+            && !e.arguments.iter().any(|argument| matches!(argument, Argument::SpreadElement(_)))
+            && let Some(argument) = e.arguments.last().and_then(Argument::as_expression)
+            && !argument.may_have_side_effects(ctx)
+        {
+            ctx.state.symbols.mark_dead_argument_candidate(symbol_id);
+        }
     }
 
     // The three hooks below seed persistent metadata with a program-wide,

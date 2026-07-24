@@ -1056,3 +1056,67 @@ fn dce_keeps_implicitly_observable_bindings() {
         options,
     );
 }
+
+// https://github.com/oxc-project/oxc/issues/23866
+#[test]
+fn dce_drops_dead_trailing_function_arguments() {
+    test(
+        "const foo = async (assets) => ({}); export default await foo({ bar: 'baz' })",
+        "const foo = async (assets) => ({}); export default await foo()",
+    );
+
+    // Dropping the argument also removes a nested dynamic import that would
+    // otherwise keep an unnecessary chunk alive in Rolldown.
+    test(
+        "const foo = async (assets) => ({}); export default await foo({ image: () => import('./image.js') })",
+        "const foo = async (assets) => ({}); export default await foo()",
+    );
+    test(
+        "export const foo = async (unused) => bar(); foo({ image: () => import('./image.js') })",
+        "export const foo = async (unused) => bar(); foo()",
+    );
+    test(
+        "export default async function foo(unused) { bar() } foo({ image: () => import('./image.js') })",
+        "export default async function foo(unused) { bar() } foo()",
+    );
+    test(
+        "foo({ image: () => import('./image.js') }); async function foo(unused) { bar() }",
+        "foo(); async function foo(unused) { bar() }",
+    );
+    test(
+        "const foo = (unused) => { bar() }; foo(1); foo(2)",
+        "const foo = (unused) => { bar() }; foo(); foo()",
+    );
+    test(
+        "const foo = (a) => { bar(a) }; foo(1, 2, 3); foo(4)",
+        "const foo = (a) => { bar(a) }; foo(1); foo(4)",
+    );
+    test(
+        "const foo = function* (unused) { yield bar() }; foo(1).next(); foo(2).next()",
+        "const foo = function* (unused) { yield bar() }; foo().next(); foo().next()",
+    );
+    test(
+        "foo(1, 2); function foo(a, unused) { inner(a, unused) } function inner(a, ignored) { bar(a) }",
+        "foo(1); function foo(a, unused) { inner(a) } function inner(a, ignored) { bar(a) }",
+    );
+}
+
+#[test]
+fn dce_keeps_observable_trailing_function_arguments() {
+    test_same("const foo = (unused) => bar(); foo(sideEffect())");
+    test_same("let foo = (unused) => bar(); foo(1); foo = replacement");
+    test_same("const foo = (unused) => eval(\"unused\"); consume(foo(1))");
+    test_same("const foo = (a, b) => bar(b); foo(1, 2)");
+    test_same("const foo = (unused = sideEffect()) => bar(); foo(1)");
+    test_same("const foo = ({ unused }) => bar(); foo(value)");
+    test_same("const foo = (...args) => bar(args); foo(1)");
+    test_same("const foo = function(unused) { return arguments.length }; consume(foo(1))");
+    test_same("const foo = (unused) => bar(); foo(...values)");
+    test_same(
+        "class Base {} class Derived extends Base { constructor() { const foo = (unused) => bar(); foo(this); super() } } consume(new Derived())",
+    );
+    test_same_source_type(
+        "function outer(object) { const foo = () => {}; with (object) foo(1) } outer(source)",
+        SourceType::cjs().with_script(true),
+    );
+}

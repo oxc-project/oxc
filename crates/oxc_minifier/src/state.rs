@@ -124,7 +124,13 @@ impl<'a> MinifierState<'a> {
         scoping: &Scoping,
         allocator: &'a Allocator,
     ) -> Self {
-        let symbols = SymbolState::new(source_type, &options, scoping, allocator);
+        let symbols = SymbolState::new(
+            source_type,
+            &options,
+            scoping,
+            allocator,
+            matches!(mode, CompressionMode::TreeShakeOnly),
+        );
         Self {
             config: CompressionConfig { source_type, options, mode },
             symbols,

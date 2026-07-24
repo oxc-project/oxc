@@ -675,6 +675,11 @@ impl<'a> PeepholeOptimizations {
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
                     ctx.state.symbols.function_summary(symbol_id).is_side_effect_free()
+                        && (!ctx.is_tree_shake_only()
+                            || !Self::reference_may_be_shadowed_by_with(
+                                ctx.scoping().get_reference(id.reference_id()).scope_id(),
+                                ctx,
+                            ))
                 } else {
                     false
                 })

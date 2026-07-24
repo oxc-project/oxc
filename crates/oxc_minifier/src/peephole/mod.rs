@@ -364,6 +364,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         Self::keep_track_of_pure_functions(stmt, ctx);
     }
 
+    fn exit_function(&mut self, function: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        if ctx.is_tree_shake_only() {
+            Self::keep_track_of_function_declaration_dead_arguments(function, ctx);
+        }
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.is_tree_shake_only() {
             match stmt {
@@ -465,6 +471,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::init_symbol_value(decl, ctx);
+        if ctx.is_tree_shake_only() {
+            Self::keep_track_of_variable_function_dead_arguments(decl, ctx);
+        }
         // Per-declarator update of the body-unsafe flag. Catches multi-declarator
         // statements (`var [x=call()] = '', flag = true;`, possibly produced by
         // join-vars) where an earlier declarator runs user code via a
