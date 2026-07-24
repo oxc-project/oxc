@@ -516,6 +516,34 @@ pub fn get_tags_for_role(role: &str) -> Vec<&'static str> {
     tags
 }
 
+/// Returns `true` when a native HTML element's host language semantics
+/// implicitly provide the given ARIA property, per WAI-ARIA §5.2.2.
+///
+/// For example, `<input type="checkbox">` implicitly provides `aria-checked`
+/// via its native `checked` property, so an explicit `aria-checked` attribute
+/// is not required even when the element has a role that needs it.
+///
+/// See: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/pull/491>
+pub fn element_implicitly_provides_aria_prop(
+    element_type: &str,
+    jsx_el: &JSXOpeningElement,
+    prop: &str,
+) -> bool {
+    match element_type {
+        "input" if prop == "aria-checked" => {
+            // `<input type="checkbox">` and `<input type="radio">` provide
+            // `aria-checked` via their native `checked` property.
+            has_jsx_prop_ignore_case(jsx_el, "type").is_some_and(|attr| {
+                let JSXAttributeItem::Attribute(type_attr) = attr else {
+                    return false;
+                };
+                matches!(&type_attr.value, Some(JSXAttributeValue::StringLiteral(v)) if v.value == "checkbox" || v.value == "radio")
+            })
+        }
+        _ => false,
+    }
+}
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
 pub fn is_interactive_role(role: &str) -> bool {
     INTERACTIVE_ROLES.contains(&role)

@@ -8,7 +8,12 @@ use oxc_span::Span;
 
 use itertools::Itertools;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{element_implicitly_provides_aria_prop, get_element_type, has_jsx_prop_ignore_case},
+};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{role}` role is missing required aria props {props}."))
@@ -74,12 +79,20 @@ impl Rule for RoleHasRequiredAriaProps {
             let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else {
                 return;
             };
+
+            let element_type = get_element_type(ctx, jsx_el);
+
             let roles = role_values.value.split_whitespace();
             for role in roles {
                 if let Some((_, props)) = ROLE_TO_REQUIRED_ARIA_PROPS.iter().find(|r| r.0 == role) {
                     let formatted_missing = props
                         .iter()
-                        .filter(|prop| has_jsx_prop_ignore_case(jsx_el, prop).is_none())
+                        .filter(|prop| {
+                            // Not explicitly present on the JSX element
+                            has_jsx_prop_ignore_case(jsx_el, prop).is_none()
+                            // And not implicitly provided by the native HTML semantics
+                            && !element_implicitly_provides_aria_prop(&element_type, jsx_el, prop)
+                        })
                         .map(|prop| format!("`{prop}`"))
                         .join(", ");
                     if !formatted_missing.is_empty() {
@@ -139,6 +152,7 @@ fn test() {
         ("<div role='switch' aria-checked='false' />", None, None),
         ("<div role='scrollbar' aria-controls='foo' aria-valuenow='0' />", None, None),
         ("<div role='slider' aria-valuenow='0' />", None, None),
+        ("<input type='checkbox' role='switch' />", None, None),
     ];
 
     let fail = vec![
@@ -157,7 +171,6 @@ fn test() {
         ("<div role='scrollbar' aria-valuenow='0' />", None, None),
         ("<div role='meter' />", None, None),
         ("<div role='switch' />", None, None),
-        ("<input type='checkbox' role='switch' />", None, None),
         ("<div role='heading' />", None, None),
         ("<div role='option' />", None, None),
         ("<div role='menuitemradio' />", None, None),
