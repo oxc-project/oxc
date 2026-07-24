@@ -168,6 +168,7 @@ pub use crate::rules::eslint::no_void::NoVoid as EslintNoVoid;
 pub use crate::rules::eslint::no_warning_comments::NoWarningComments as EslintNoWarningComments;
 pub use crate::rules::eslint::no_with::NoWith as EslintNoWith;
 pub use crate::rules::eslint::object_shorthand::ObjectShorthand as EslintObjectShorthand;
+pub use crate::rules::eslint::one_var::OneVar as EslintOneVar;
 pub use crate::rules::eslint::operator_assignment::OperatorAssignment as EslintOperatorAssignment;
 pub use crate::rules::eslint::prefer_arrow_callback::PreferArrowCallback as EslintPreferArrowCallback;
 pub use crate::rules::eslint::prefer_const::PreferConst as EslintPreferConst;
@@ -1057,6 +1058,7 @@ pub enum RuleEnum {
     EslintNoWarningComments(EslintNoWarningComments),
     EslintNoWith(EslintNoWith),
     EslintObjectShorthand(EslintObjectShorthand),
+    EslintOneVar(EslintOneVar),
     EslintOperatorAssignment(EslintOperatorAssignment),
     EslintPreferArrowCallback(EslintPreferArrowCallback),
     EslintPreferConst(EslintPreferConst),
@@ -1912,7 +1914,8 @@ const ESLINT_NO_VOID_ID: usize = ESLINT_NO_VAR_ID + 1usize;
 const ESLINT_NO_WARNING_COMMENTS_ID: usize = ESLINT_NO_VOID_ID + 1usize;
 const ESLINT_NO_WITH_ID: usize = ESLINT_NO_WARNING_COMMENTS_ID + 1usize;
 const ESLINT_OBJECT_SHORTHAND_ID: usize = ESLINT_NO_WITH_ID + 1usize;
-const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_OBJECT_SHORTHAND_ID + 1usize;
+const ESLINT_ONE_VAR_ID: usize = ESLINT_OBJECT_SHORTHAND_ID + 1usize;
+const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_ONE_VAR_ID + 1usize;
 const ESLINT_PREFER_ARROW_CALLBACK_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1usize;
 const ESLINT_PREFER_CONST_ID: usize = ESLINT_PREFER_ARROW_CALLBACK_ID + 1usize;
 const ESLINT_PREFER_DESTRUCTURING_ID: usize = ESLINT_PREFER_CONST_ID + 1usize;
@@ -2872,6 +2875,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => ESLINT_NO_WARNING_COMMENTS_ID,
             Self::EslintNoWith(_) => ESLINT_NO_WITH_ID,
             Self::EslintObjectShorthand(_) => ESLINT_OBJECT_SHORTHAND_ID,
+            Self::EslintOneVar(_) => ESLINT_ONE_VAR_ID,
             Self::EslintOperatorAssignment(_) => ESLINT_OPERATOR_ASSIGNMENT_ID,
             Self::EslintPreferArrowCallback(_) => ESLINT_PREFER_ARROW_CALLBACK_ID,
             Self::EslintPreferConst(_) => ESLINT_PREFER_CONST_ID,
@@ -3850,6 +3854,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::NAME,
             Self::EslintNoWith(_) => EslintNoWith::NAME,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::NAME,
+            Self::EslintOneVar(_) => EslintOneVar::NAME,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::NAME,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::NAME,
             Self::EslintPreferConst(_) => EslintPreferConst::NAME,
@@ -4818,6 +4823,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::CATEGORY,
             Self::EslintNoWith(_) => EslintNoWith::CATEGORY,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::CATEGORY,
+            Self::EslintOneVar(_) => EslintOneVar::CATEGORY,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::CATEGORY,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::CATEGORY,
             Self::EslintPreferConst(_) => EslintPreferConst::CATEGORY,
@@ -5837,6 +5843,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::FIX,
             Self::EslintNoWith(_) => EslintNoWith::FIX,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::FIX,
+            Self::EslintOneVar(_) => EslintOneVar::FIX,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::FIX,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::FIX,
             Self::EslintPreferConst(_) => EslintPreferConst::FIX,
@@ -6830,6 +6837,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::documentation(),
             Self::EslintNoWith(_) => EslintNoWith::documentation(),
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::documentation(),
+            Self::EslintOneVar(_) => EslintOneVar::documentation(),
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::documentation(),
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::documentation(),
             Self::EslintPreferConst(_) => EslintPreferConst::documentation(),
@@ -8328,6 +8336,9 @@ impl RuleEnum {
             }
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::config_schema(generator)
                 .or_else(|| EslintObjectShorthand::schema(generator)),
+            Self::EslintOneVar(_) => {
+                EslintOneVar::config_schema(generator).or_else(|| EslintOneVar::schema(generator))
+            }
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::config_schema(generator)
                 .or_else(|| EslintOperatorAssignment::schema(generator)),
             Self::EslintPreferArrowCallback(_) => {
@@ -10471,6 +10482,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => "eslint",
             Self::EslintNoWith(_) => "eslint",
             Self::EslintObjectShorthand(_) => "eslint",
+            Self::EslintOneVar(_) => "eslint",
             Self::EslintOperatorAssignment(_) => "eslint",
             Self::EslintPreferArrowCallback(_) => "eslint",
             Self::EslintPreferConst(_) => "eslint",
@@ -11703,6 +11715,9 @@ impl RuleEnum {
             }
             Self::EslintObjectShorthand(_) => {
                 Ok(Self::EslintObjectShorthand(EslintObjectShorthand::from_configuration(value)?))
+            }
+            Self::EslintOneVar(_) => {
+                Ok(Self::EslintOneVar(EslintOneVar::from_configuration(value)?))
             }
             Self::EslintOperatorAssignment(_) => Ok(Self::EslintOperatorAssignment(
                 EslintOperatorAssignment::from_configuration(value)?,
@@ -14052,6 +14067,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.to_configuration(),
             Self::EslintNoWith(rule) => rule.to_configuration(),
             Self::EslintObjectShorthand(rule) => rule.to_configuration(),
+            Self::EslintOneVar(rule) => rule.to_configuration(),
             Self::EslintOperatorAssignment(rule) => rule.to_configuration(),
             Self::EslintPreferArrowCallback(rule) => rule.to_configuration(),
             Self::EslintPreferConst(rule) => rule.to_configuration(),
@@ -14907,6 +14923,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run(node, ctx),
             Self::EslintNoWith(rule) => rule.run(node, ctx),
             Self::EslintObjectShorthand(rule) => rule.run(node, ctx),
+            Self::EslintOneVar(rule) => rule.run(node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run(node, ctx),
             Self::EslintPreferArrowCallback(rule) => rule.run(node, ctx),
             Self::EslintPreferConst(rule) => rule.run(node, ctx),
@@ -15770,6 +15787,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run_once(ctx),
             Self::EslintNoWith(rule) => rule.run_once(ctx),
             Self::EslintObjectShorthand(rule) => rule.run_once(ctx),
+            Self::EslintOneVar(rule) => rule.run_once(ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_once(ctx),
             Self::EslintPreferArrowCallback(rule) => rule.run_once(ctx),
             Self::EslintPreferConst(rule) => rule.run_once(ctx),
@@ -16636,6 +16654,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintObjectShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintOneVar(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferArrowCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferConst(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17614,6 +17633,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.should_run(ctx),
             Self::EslintNoWith(rule) => rule.should_run(ctx),
             Self::EslintObjectShorthand(rule) => rule.should_run(ctx),
+            Self::EslintOneVar(rule) => rule.should_run(ctx),
             Self::EslintOperatorAssignment(rule) => rule.should_run(ctx),
             Self::EslintPreferArrowCallback(rule) => rule.should_run(ctx),
             Self::EslintPreferConst(rule) => rule.should_run(ctx),
@@ -18492,6 +18512,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::IS_TSGOLINT_RULE,
             Self::EslintNoWith(_) => EslintNoWith::IS_TSGOLINT_RULE,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::IS_TSGOLINT_RULE,
+            Self::EslintOneVar(_) => EslintOneVar::IS_TSGOLINT_RULE,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::IS_TSGOLINT_RULE,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::IS_TSGOLINT_RULE,
             Self::EslintPreferConst(_) => EslintPreferConst::IS_TSGOLINT_RULE,
@@ -19702,6 +19723,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::VERSION,
             Self::EslintNoWith(_) => EslintNoWith::VERSION,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::VERSION,
+            Self::EslintOneVar(_) => EslintOneVar::VERSION,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::VERSION,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::VERSION,
             Self::EslintPreferConst(_) => EslintPreferConst::VERSION,
@@ -20731,6 +20753,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::HAS_CONFIG,
             Self::EslintNoWith(_) => EslintNoWith::HAS_CONFIG,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::HAS_CONFIG,
+            Self::EslintOneVar(_) => EslintOneVar::HAS_CONFIG,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::HAS_CONFIG,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::HAS_CONFIG,
             Self::EslintPreferConst(_) => EslintPreferConst::HAS_CONFIG,
@@ -21785,6 +21808,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::INFO,
             Self::EslintNoWith(_) => EslintNoWith::INFO,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::INFO,
+            Self::EslintOneVar(_) => EslintOneVar::INFO,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::INFO,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::INFO,
             Self::EslintPreferConst(_) => EslintPreferConst::INFO,
@@ -22754,6 +22778,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.types_info(),
             Self::EslintNoWith(rule) => rule.types_info(),
             Self::EslintObjectShorthand(rule) => rule.types_info(),
+            Self::EslintOneVar(rule) => rule.types_info(),
             Self::EslintOperatorAssignment(rule) => rule.types_info(),
             Self::EslintPreferArrowCallback(rule) => rule.types_info(),
             Self::EslintPreferConst(rule) => rule.types_info(),
@@ -23604,6 +23629,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run_info(),
             Self::EslintNoWith(rule) => rule.run_info(),
             Self::EslintObjectShorthand(rule) => rule.run_info(),
+            Self::EslintOneVar(rule) => rule.run_info(),
             Self::EslintOperatorAssignment(rule) => rule.run_info(),
             Self::EslintPreferArrowCallback(rule) => rule.run_info(),
             Self::EslintPreferConst(rule) => rule.run_info(),
@@ -24476,6 +24502,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoWarningComments(EslintNoWarningComments::default()),
         RuleEnum::EslintNoWith(EslintNoWith::default()),
         RuleEnum::EslintObjectShorthand(EslintObjectShorthand::default()),
+        RuleEnum::EslintOneVar(EslintOneVar::default()),
         RuleEnum::EslintOperatorAssignment(EslintOperatorAssignment::default()),
         RuleEnum::EslintPreferArrowCallback(EslintPreferArrowCallback::default()),
         RuleEnum::EslintPreferConst(EslintPreferConst::default()),
