@@ -79,9 +79,9 @@ pub fn round_down_to(n: usize, divisor: usize) -> usize {
 ///
 /// The exact implementation here is important.
 ///
-/// `Arena::try_alloc_layout_fast` relies on it using `wrapping_sub`.
+/// `Arena::alloc_layout_shared` relies on it using `wrapping_sub`.
 /// `ptr.map_addr(|addr| addr & !(divisor - 1))` would be semantically equivalent,
-/// but would prevent LLVM from folding 2 subtractions into 1 in `try_alloc_layout_fast`.
+/// but would prevent LLVM from folding 2 subtractions into 1 in `alloc_layout_shared`.
 /// See comment in that method for more details.
 #[inline]
 pub fn round_mut_ptr_down_to(ptr: *mut u8, divisor: usize) -> *mut u8 {

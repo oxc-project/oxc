@@ -29,8 +29,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Panics if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
-        let ptr =
-            self.try_alloc_layout_fast(layout).unwrap_or_else(|| self.alloc_layout_slow(layout));
+        let ptr = self.alloc_layout_shared(layout, || self.alloc_layout_slow(layout));
+
+        // SAFETY: The `on_fail` closure is `alloc_layout_slow`, which always returns `Some` -
+        // it allocates a new chunk and only returns on success, otherwise panics via `oom()`.
+        // The fast path also returns `Some` on success, so `alloc_layout_shared` never returns `None` here.
+        let ptr = unsafe { ptr.unwrap_unchecked() };
 
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         self.stats.record_allocation();
@@ -49,23 +53,45 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Errors if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn try_alloc_layout(&self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
-        let res = if let Some(ptr) = self.try_alloc_layout_fast(layout) {
-            Ok(ptr)
-        } else {
-            self.try_alloc_layout_slow(layout).ok_or(AllocErr)
-        };
+        let res = self.alloc_layout_shared(layout, || self.try_alloc_layout_slow(layout));
 
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        if res.is_ok() {
+        if res.is_some() {
             self.stats.record_allocation();
         }
 
-        res
+        res.ok_or(AllocErr)
     }
 
-    // Only `pub(super)` to expose it for unit tests
+    /// Attempt to allocate space for an object with the given `Layout` in current chunk.
+    ///
+    /// Does not fallback to a slow path if cannot service the request in current chunk.
+    //
+    // Only `pub(super)` to expose it for unit tests.
     #[inline(always)]
     pub(super) fn try_alloc_layout_fast(&self, layout: Layout) -> Option<NonNull<u8>> {
+        self.alloc_layout_shared(layout, || None)
+    }
+
+    /// Shared allocation core for every allocation method.
+    ///
+    /// Computes the pointer for `layout` within the current chunk.
+    /// * On success:
+    ///   * Sets `cursor_ptr` to the new cursor pointer.
+    ///   * Returns `Some(ptr)`.
+    /// * If the current chunk cannot service the request:
+    ///   * Returns `on_fail()` (the slow path for the public methods, or `|| None` for `try_alloc_layout_fast`).
+    ///
+    /// Calling `on_fail` from *within* this function - rather than returning `None` and letting the caller
+    /// branch on it with `unwrap_or_else` - is what lets the hot callers `unwrap_unchecked` the result
+    /// without the compiler emitting a redundant `Option::None` (null-niche) branch alongside the bounds check.
+    /// That keeps the hot path to a single branch per allocation.
+    #[inline(always)]
+    fn alloc_layout_shared<F: FnOnce() -> Option<NonNull<u8>>>(
+        &self,
+        layout: Layout,
+        on_fail: F,
+    ) -> Option<NonNull<u8>> {
         let cursor_ptr = self.cursor_ptr.get().as_ptr();
         let start_ptr = self.start_ptr.get().as_ptr();
 
@@ -280,7 +306,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let new_ptr = round_mut_ptr_down_to(new_ptr, align);
 
         if new_ptr.addr().wrapping_sub(start_ptr.addr()) > isize::MAX as usize {
-            return None;
+            // Current chunk is full - hand off to the caller-supplied fallback (slow path)
+            return on_fail();
         }
 
         debug_assert!(
@@ -314,8 +341,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Called when there isn't enough room in our current chunk, so need to allocate a new chunk.
     #[inline(never)]
     #[cold]
-    fn alloc_layout_slow(&self, layout: Layout) -> NonNull<u8> {
-        self.try_alloc_layout_slow_impl(layout).unwrap_or_else(|| oom())
+    fn alloc_layout_slow(&self, layout: Layout) -> Option<NonNull<u8>> {
+        let ptr = self.try_alloc_layout_slow_impl(layout);
+        if ptr.is_some() {
+            ptr
+        } else {
+            oom();
+        }
     }
 
     /// Slow path for [`Arena::try_alloc_layout`].
@@ -353,7 +385,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 ))]
                 {
                     // SAFETY: Allocating `layout` within current chunk is not possible.
-                    // If it was, then `try_alloc_layout_fast` would have succeeded,
+                    // If it was, then `alloc_layout_shared`'s fast path would have succeeded,
                     // and this method wouldn't have been called.
                     // `is_fixed_size` is `true`, so it's a fixed-size chunk.
                     let new_ptr = unsafe { self.grow_fixed_size_chunk(layout) };

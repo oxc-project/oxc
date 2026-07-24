@@ -1,4 +1,5 @@
-//! Unit tests for `try_alloc_layout_fast` bounds check.
+//! Unit tests for the `alloc_layout_shared` fast-path bounds check
+//! (exercised via the fast-path-only `try_alloc_layout_fast`).
 //!
 //! Uses `TestArena` to construct arenas with controlled `cursor_ptr` and `start_ptr` values,
 //! including addresses in the top half of address space (top bit set) which can't be tested

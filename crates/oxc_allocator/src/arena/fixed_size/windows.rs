@@ -354,14 +354,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let container_start_addr = round_down_to(chunk_start_addr, CONTAINER_ALIGN);
         let container_end_addr = container_start_addr + CONTAINER_SIZE;
 
-        // Compute the new pointer the same way as allocation fast path (`Arena::try_alloc_layout_fast`).
+        // Compute the new pointer the same way as allocation fast path (`Arena::alloc_layout_shared`).
         // See comments in that method for rationale and codegen notes.
         let new_ptr = cursor_ptr.wrapping_sub(layout.size());
         let align = max(layout.align(), MIN_ALIGN);
         let new_ptr = round_mut_ptr_down_to(new_ptr, align);
 
         // Bail if `new_ptr` is out of bounds of the Container.
-        // The wrapping-sub trick (same as in `try_alloc_layout_fast`) detects this with a single branch.
+        // The wrapping-sub trick (same as in `alloc_layout_shared`) detects this with a single branch.
         //
         // This handles three cases:
         // 1. The request is too large to fit, even with the whole Container fully committed.
