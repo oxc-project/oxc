@@ -1,0 +1,45 @@
+apps/oxlint/src-js/package/config.generated.ts
+  s_1574c7e0f1f72c::t_631640a7eca837 1250
+crates/oxc_linter/src/ast_util.rs
+  s_276d096dd43021::t_d3766d80163e9a 4,20-23,320-370
+crates/oxc_linter/src/generated/rule_runner_impls.rs
+  s_1574c7e0f1f72c::t_a3b2c91e4a2e4d 4166-4171
+crates/oxc_linter/src/generated/rules_enum.rs
+  s_1574c7e0f1f72c::t_c6b42a30093c96 387,1512,2453-2454,3437,4406,5415,6395,7569,9707-9708,10929,13213-13215,14516,15370,16234,17205,18080,19243,20314,21370,22359,23225,24076,25053
+crates/oxc_linter/src/rules.rs
+  s_1574c7e0f1f72c::t_3a355c8dcbd98f 675
+crates/oxc_linter/src/rules/oxc/bad_match_all_arg.rs
+  s_276d096dd43021::t_3f7c1ed77f123b 1-113
+crates/oxc_linter/src/snapshots/oxc_bad_match_all_arg.snap
+  s_1574c7e0f1f72c::t_b210a3d3ed2c70 1-103
+npm/oxlint/configuration_schema.json
+  s_1574c7e0f1f72c::t_81f10c371b9a7e 5853-5855
+tasks/track_linter_timings/linter_timings.snap
+  s_1574c7e0f1f72c::t_25613d5c37ff09 372
+crates/oxc_linter/src/rules/oxc/bad_replace_all_arg.rs
+  s_1574c7e0f1f72c::t_cc209728017e2b 1,8,68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9c855546df4fa2ee9a5355ff0fe4b3d61207d290",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_276d096dd43021": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f946f-66c7-76f1-8c35-f5770b313354",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
