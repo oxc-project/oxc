@@ -149,6 +149,8 @@ export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type Namespaces = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+export type NoRestrictedGlobalsConfigEnum = string | RestrictedGlobal | NoRestrictedGlobalsObjectConfig;
+export type GlobalNameOrObject = string | RestrictedGlobal;
 export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
 export type PossiblePaths = string | RestrictedPath;
 export type PossiblePatterns = string | RestrictedPattern;
@@ -1179,7 +1181,8 @@ export interface DummyRuleMap {
   "no-redeclare"?: RuleNoConfig | [AllowWarnDeny, NoRedeclare];
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
-  "no-restricted-globals"?: DummyRule;
+  "no-restricted-globals"?:
+    RuleNoConfig | [AllowWarnDeny, NoRestrictedGlobalsConfigEnum, ...NoRestrictedGlobalsConfigEnum[]];
   "no-restricted-imports"?:
     RuleNoConfig | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
   "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
@@ -3487,6 +3490,38 @@ export interface RestrictDefaultExports {
    * ```
    */
   namespaceFrom?: boolean;
+}
+/**
+ * A restricted global with an optional custom message.
+ */
+export interface RestrictedGlobal {
+  /**
+   * A custom message shown when the restricted global is used.
+   */
+  message?: string;
+  /**
+   * The name of the restricted global.
+   */
+  name: string;
+}
+/**
+ * Object form of the configuration, which additionally allows detecting
+ * restricted globals accessed via global objects.
+ */
+export interface NoRestrictedGlobalsObjectConfig {
+  /**
+   * Whether to also detect restricted globals accessed via global objects. Default is `false`.
+   */
+  checkGlobalObject?: boolean;
+  /**
+   * Additional global object names to check when `checkGlobalObject` is enabled.
+   * By default, the rule checks these global objects: `globalThis`, `self`, and `window`.
+   */
+  globalObjects?: string[];
+  /**
+   * The restricted globals, as names or `{ "name", "message" }` objects.
+   */
+  globals: GlobalNameOrObject[];
 }
 export interface RestrictedPath {
   allowImportNames?: string[];
