@@ -107,8 +107,8 @@ export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -988,7 +988,7 @@ export interface DummyRuleMap {
   "jest/prefer-hooks-on-top"?: RuleNoConfig;
   "jest/prefer-importing-jest-globals"?: RuleNoConfig | [AllowWarnDeny, PreferImportingJestGlobalsConfig];
   "jest/prefer-jest-mocked"?: RuleNoConfig;
-  "jest/prefer-lowercase-title"?: DummyRule;
+  "jest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, PreferLowercaseTitleConfig];
   "jest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "jest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "jest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -1685,7 +1685,7 @@ export interface DummyRuleMap {
   "vitest/prefer-hooks-on-top"?: RuleNoConfig;
   "vitest/prefer-import-in-mock"?: RuleNoConfig | [AllowWarnDeny, PreferImportInMockConfig];
   "vitest/prefer-importing-vitest-globals"?: RuleNoConfig;
-  "vitest/prefer-lowercase-title"?: DummyRule;
+  "vitest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, PreferLowercaseTitleConfig];
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "vitest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "vitest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -2404,6 +2404,96 @@ export interface PreferImportingJestGlobalsConfig {
    * Jest function types to enforce importing for.
    */
   types?: JestFnType[];
+}
+export interface PreferLowercaseTitleConfig {
+  /**
+   * This array option allows specifying prefixes, which contain capitals that titles
+   * can start with. This can be useful when writing tests for API endpoints, where
+   * you'd like to prefix with the HTTP method.
+   * By default, nothing is allowed (the equivalent of `{ "allowedPrefixes": [] }`).
+   *
+   * Example of **correct** code for the `{ "allowedPrefixes": ["GET"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "allowedPrefixes": ["GET"] }] * /
+   * describe('GET /live');
+   * ```
+   */
+  allowedPrefixes?: string[];
+  /**
+   * This array option controls which Jest or Vitest functions are checked by this rule. There
+   * are four possible values:
+   * - `"describe"`
+   * - `"test"`
+   * - `"it"`
+   * - `"bench"`
+   *
+   * By default, none of these options are enabled (the equivalent of
+   * `{ "ignore": [] }`).
+   *
+   * Example of **correct** code for the `{ "ignore": ["describe"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["describe"] }] * /
+   * describe('Uppercase description');
+   * ```
+   *
+   * Example of **correct** code for the `{ "ignore": ["test"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["test"] }] * /
+   * test('Uppercase description');
+   * ```
+   *
+   * Example of **correct** code for the `{ "ignore": ["it"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["it"] }] * /
+   * it('Uppercase description');
+   * ```
+   */
+  ignore?: string[];
+  /**
+   * This option can be set to allow only the top-level `describe` blocks to have a
+   * title starting with an upper-case letter.
+   *
+   * Example of **correct** code for the `{ "ignoreTopLevelDescribe": true }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignoreTopLevelDescribe": true }] * /
+   * describe('MyClass', () => {
+   * describe('#myMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   */
+  ignoreTopLevelDescribe?: boolean;
+  /**
+   * This option can be set to only validate that the first character of a test name is lowercased.
+   *
+   * Example of **correct** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
+   * ```js
+   * /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] * /
+   * describe('myClass', () => {
+   * describe('myMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   *
+   * Example of **incorrect** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
+   * ```js
+   * /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] * /
+   * describe('MyClass', () => {
+   * describe('MyMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   */
+  lowercaseFirstCharacterOnly?: boolean;
 }
 export interface RequireHookConfig {
   /**
