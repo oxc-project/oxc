@@ -1743,6 +1743,7 @@ export interface DummyRuleMap {
   "vue/no-side-effects-in-computed-properties"?: RuleNoConfig;
   "vue/no-this-in-before-route-enter"?: RuleNoConfig;
   "vue/no-watch-after-await"?: RuleNoConfig;
+  "vue/one-component-per-file"?: RuleNoConfig;
   "vue/prefer-import-from-vue"?: RuleNoConfig;
   "vue/prop-name-casing"?: RuleNoConfig | [AllowWarnDeny, CaseType2] | [AllowWarnDeny, CaseType2, Options];
   "vue/require-default-export"?: RuleNoConfig;
