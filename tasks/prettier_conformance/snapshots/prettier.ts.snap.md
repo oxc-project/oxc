@@ -1,4 +1,4 @@
-ts compatibility: 628/666 (94.29%), 19 files skipped
+ts compatibility: 625/663 (94.27%), 19 files skipped
 
 # Failed
 
@@ -55,12 +55,12 @@ ts compatibility: 628/666 (94.29%), 19 files skipped
 - typescript/declare/declare-class-fields.ts
 - typescript/declare/declare-module.ts
 - typescript/declare/declare-namespace.ts
+- typescript/decorator-auto-accessors/decorator-auto-accessors-abstract-class.ts
+- typescript/decorator-auto-accessors/decorator-auto-accessors-declare-class.ts
+- typescript/decorator-auto-accessors/decorator-auto-accessors-mixed-modifiers.ts
 - typescript/definite/definite.ts
 - typescript/definite/without-annotation.ts
 - typescript/interface2/module.ts
 - typescript/namespace/invalid-await.ts
-- typescript/trailing-comma/trailing.ts
+- typescript/trailing-comma/invalid.ts
 - typescript/type-parameters-arguments/const.ts
-- typescript/typescript-only/decorator-auto-accessors-abstract-class.ts
-- typescript/typescript-only/decorator-auto-accessors-declara-class.ts
-- typescript/typescript-only/decorator-auto-accessors-mixed-modifiers.ts
