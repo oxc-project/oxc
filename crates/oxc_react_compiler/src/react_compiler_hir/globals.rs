@@ -1306,6 +1306,12 @@ const UNTYPED_GLOBALS: &[&str] = &[
     "JSON",
     "console",
     "eval",
+    "BigInt",
+    "Number",
+    "String",
+    "Boolean",
+    "Symbol",
+    "Array",
 ];
 
 /// A React hook global (an `addHook` entry of TS Globals.ts `REACT_APIS`).
