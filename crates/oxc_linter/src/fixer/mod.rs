@@ -270,6 +270,12 @@ pub struct Message {
     pub section_offset: u32,
     /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
     pub rule: Option<MessageRule>,
+    /// An optional sub-rule within the producing rule, used by "umbrella" rules
+    /// that emit several distinct diagnostic categories under one rule name (for
+    /// example `react/react-compiler`). When set, a disable directive naming
+    /// `{rule}/{sub_rule}` suppresses only this category, while a directive
+    /// naming the bare rule still suppresses all of them.
+    pub sub_rule: Option<Cow<'static, str>>,
 }
 
 impl Message {
@@ -282,12 +288,18 @@ impl Message {
             .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
+        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None, sub_rule: None }
     }
 
     #[must_use]
     pub fn with_rule(mut self, rule: MessageRule) -> Self {
         self.rule = Some(rule);
+        self
+    }
+
+    #[must_use]
+    pub fn with_sub_rule(mut self, sub_rule: Cow<'static, str>) -> Self {
+        self.sub_rule = Some(sub_rule);
         self
     }
 

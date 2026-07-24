@@ -111,7 +111,11 @@ fn run_fixture(source: &str) -> String {
     // emitting. Surface any divergence in the snapshot so it stays reviewed rather than
     // drifting silently.
     let transform_body = diagnostics_body(diagnostics.as_slice());
-    let lint_body = diagnostics_body(lint_diagnostics.as_slice());
+    // `lint` pairs each diagnostic with its category; compare and render the inner
+    // `OxcDiagnostic` so this cross-check tracks the diagnostics themselves rather
+    // than reporting a spurious divergence from the category wrapper's `Debug`.
+    let lint_oxc_diagnostics: Vec<_> = lint_diagnostics.iter().map(|d| &d.diagnostic).collect();
+    let lint_body = diagnostics_body(&lint_oxc_diagnostics);
     if lint_body != transform_body {
         out.push_str("\n\nLint-mode diagnostics (differ from transform):\n\n");
         out.push_str(if lint_body.is_empty() { "(none)\n" } else { &lint_body });
