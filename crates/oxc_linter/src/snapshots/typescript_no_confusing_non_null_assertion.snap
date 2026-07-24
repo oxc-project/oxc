@@ -50,3 +50,38 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────────
    ╰────
   help: Remove the `!`, or wrap the left-hand side in parentheses.
+
+  ⚠ typescript(no-confusing-non-null-assertion): Confusing combination of non-null assertion and `in` operator like `a! in b`, which might be misinterpreted as `!(a in b)`.
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! in b;
+   · ───────
+   ╰────
+  help: Remove the `!`, or wrap the left-hand side in parentheses.
+
+  ⚠ typescript(no-confusing-non-null-assertion): Confusing combination of non-null assertion and `in` operator like `a! in b`, which might be misinterpreted as `!(a in b)`.
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a !in b;
+   · ───────
+   ╰────
+  help: Remove the `!`, or wrap the left-hand side in parentheses.
+
+  ⚠ typescript(no-confusing-non-null-assertion): Confusing combination of non-null assertion and `instanceof` operator like `a! instanceof b`, which might be misinterpreted as `!(a instanceof b)`.
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! instanceof b;
+   · ───────────────
+   ╰────
+  help: Remove the `!`, or wrap the left-hand side in parentheses.
+
+  ⚠ typescript(no-confusing-non-null-assertion): Confusing combination of non-null assertion and `in` operator like `a! in b`, which might be misinterpreted as `!(a in b)`.
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ foo?.bar! in obj;
+   · ────────────────
+   ╰────
+  help: Remove the `!`, or wrap the left-hand side in parentheses.
+
+  ⚠ typescript(no-confusing-non-null-assertion): Confusing combination of non-null assertion and `instanceof` operator like `a! instanceof b`, which might be misinterpreted as `!(a instanceof b)`.
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ foo?.bar! instanceof C;
+   · ──────────────────────
+   ╰────
+  help: Remove the `!`, or wrap the left-hand side in parentheses.

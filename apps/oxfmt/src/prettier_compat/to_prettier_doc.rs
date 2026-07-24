@@ -106,22 +106,32 @@ struct PrinterState {
     /// Boolean semantics naturally deduplicates consecutive spaces.
     pending_space: bool,
 
-    /// Mirrors the printer's `line_width > 0` guard for hardline emission
-    /// and `has_empty_line` flag for empty line deduplication.
-    /// See: `Printer::print_line()` in printer/mod.rs
+    /// Mirrors the printer's end-of-line state for hardline collapsing:
+    /// its `line_width > 0` guard (`Content` vs the rest) and its `has_empty_line` cap (`Blank`).
+    /// See the `Line` arm of `Printer::print_element` in `printer/mod.rs`.
     ///
-    /// When true, consecutive `Hard` lines are suppressed (the line is already broken).
-    /// `Empty` after a hardline emits only one additional `Hard` (the second newline).
-    ///
-    /// NOTE: Consecutive `Empty, Empty` won't fully collapse to a single empty line,
-    /// but such sequences don't occur in practice since the IR generators already
-    /// control line emission.
-    last_was_hardline: bool,
+    /// NOTE: the state resets to `Content` at `Interned` / `BestFitting` boundaries,
+    /// so element sequences crossing them are approximated;
+    /// the real IR shapes (straight-line emission) are what this mirrors faithfully.
+    line: LineState,
+}
+
+/// End-of-line state for [PrinterState::line].
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum LineState {
+    /// Content was emitted since the last line break.
+    Content,
+    /// A line break was just emitted:
+    /// further `Hard`s are suppressed (the line is already broken),
+    /// an `Empty` emits only its second newline.
+    Hardline,
+    /// A blank line was just emitted: further `Empty`s emit nothing at all.
+    Blank,
 }
 
 impl PrinterState {
     fn new() -> Self {
-        Self { pending_space: false, last_was_hardline: false }
+        Self { pending_space: false, line: LineState::Content }
     }
 
     /// Flushes the pending space (if any) by appending `" "` to the current scope's children.
@@ -146,17 +156,17 @@ fn convert_elements(
         match element {
             FormatElement::Space => {
                 printer.pending_space = true;
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::Token { text } => {
                 printer.flush_pending_space(&mut stack)?;
                 concat_string(current_children_mut(&mut stack)?, text);
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::Text { text, .. } => {
                 printer.flush_pending_space(&mut stack)?;
                 push_text(current_children_mut(&mut stack)?, text);
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::Line(mode) => {
                 match mode {
@@ -166,48 +176,79 @@ fn convert_elements(
                         // `SoftOrSpace` subsumes it (just like the printer's boolean idempotency).
                         printer.pending_space = false;
                         push_line(current_children_mut(&mut stack)?, *mode);
+                        printer.line = LineState::Content;
                     }
                     LineMode::Soft => {
                         // Soft produces nothing in flat mode, newline in expanded.
                         // Keep `pending_space` as-is (mirroring the printer).
                         push_line(current_children_mut(&mut stack)?, *mode);
+                        printer.line = LineState::Content;
                     }
                     LineMode::Hard | LineMode::Empty => {
                         printer.flush_pending_space(&mut stack)?;
-                        // Mimic the printer's `line_width > 0` guard and `has_empty_line` dedup:
-                        // - The printer only emits a newline when the line has content (`line_width > 0`).
-                        //   Consecutive `Hard, Hard` produces only one newline.
-                        // - For `Empty` after a hardline, only the second newline of `Empty` is emitted
-                        //   (the first is redundant since the line is already broken).
-                        if printer.last_was_hardline {
-                            if *mode == LineMode::Empty {
-                                push_line(current_children_mut(&mut stack)?, LineMode::Hard);
+                        // Mimic the printer's `line_width > 0` guard and `has_empty_line` cap:
+                        // the printer only emits a newline when the line has content,
+                        // so consecutive `Hard, Hard` produces only one newline;
+                        // for `Empty` after a hardline only the second newline is emitted
+                        // (the first is redundant since the line is already broken),
+                        // and nothing at all when a blank line was already emitted.
+                        match printer.line {
+                            LineState::Content => {
+                                push_line(current_children_mut(&mut stack)?, *mode);
+                                printer.line = if *mode == LineMode::Empty {
+                                    LineState::Blank
+                                } else {
+                                    LineState::Hardline
+                                };
                             }
-                            // `Hard` after `Hard` → skip (line already broken)
-                        } else {
-                            push_line(current_children_mut(&mut stack)?, *mode);
+                            LineState::Hardline => {
+                                if *mode == LineMode::Empty {
+                                    push_line(current_children_mut(&mut stack)?, LineMode::Hard);
+                                    printer.line = LineState::Blank;
+                                }
+                                // `Hard` after `Hard` → skip (line already broken)
+                            }
+                            LineState::Blank => {}
                         }
                     }
+                    LineMode::ExactLineBreaks(count) => {
+                        printer.flush_pending_space(&mut stack)?;
+                        // Exactly `count` breaks, exempt from the collapsing above
+                        // (mirrors the printer's `ExactLineBreaks` arm; `push_line`
+                        // expands this to `count` hardlines, which Prettier's own
+                        // printer never collapses).
+                        push_line(current_children_mut(&mut stack)?, *mode);
+                        // A blank is left behind from the start of a line always,
+                        // mid-line only when a break remains after the line-ending one.
+                        // NOTE: `line != Content` approximates the printer's `line_width == 0`,
+                        // they diverge at the document start and right after a `Literal` (blank there, mid-line here).
+                        // Real IR always emits `ExactLineBreaks` after content, where they agree.
+                        printer.line = if printer.line != LineState::Content || count.get() > 1 {
+                            LineState::Blank
+                        } else {
+                            LineState::Hardline
+                        };
+                    }
                     LineMode::Literal => {
-                        // A literal line always prints (no `last_was_hardline` dedup) and
+                        // A literal line always prints (no hardline dedup) and
                         // preserves the pending space (the printer never trims it away),
                         // matching a `\n` embedded in `FormatElement::Text` below.
                         printer.flush_pending_space(&mut stack)?;
                         push_line(current_children_mut(&mut stack)?, *mode);
+                        printer.line = LineState::Content;
                     }
                 }
-                printer.last_was_hardline = matches!(mode, LineMode::Hard | LineMode::Empty);
             }
             // `ExpandParent` is a directive (not visible content) — it forces the parent group
             // to break. The printer treats it as a no-op (expansion is propagated at IR level).
-            // Neither `pending_space` nor `last_was_hardline` should be affected.
+            // Neither `pending_space` nor `line` should be affected.
             FormatElement::ExpandParent => {
                 current_children_mut(&mut stack)?.push(json!({"type": "break-parent"}));
             }
             FormatElement::LineSuffixBoundary => {
                 printer.flush_pending_space(&mut stack)?;
                 current_children_mut(&mut stack)?.push(json!({"type": "line-suffix-boundary"}));
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::Tag(tag) => {
                 if tag.is_start() {
@@ -310,20 +351,20 @@ fn convert_elements(
                     id
                 };
                 current_children_mut(&mut stack)?.push(json!({ "_REF": id }));
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::BestFitting(best_fitting) => {
                 printer.flush_pending_space(&mut stack)?;
                 let doc = convert_best_fitting(best_fitting, state)?;
                 current_children_mut(&mut stack)?.push(doc);
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::TailwindClass(index) => {
                 printer.flush_pending_space(&mut stack)?;
                 if let Some(class) = state.sorted_tailwind_classes.get(*index) {
                     concat_string(current_children_mut(&mut stack)?, class);
                 }
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::EmbedPlaceholder(index) => {
                 // The host splices `${expr}` for each marker before the IR is finalized,
@@ -427,6 +468,14 @@ fn push_line(children: &mut Vec<Value>, mode: LineMode) {
             children.push(json!({"type": "break-parent"}));
             children.push(json!({"type": "line", "hard": true}));
             children.push(json!({"type": "break-parent"}));
+        }
+        LineMode::ExactLineBreaks(count) => {
+            // hardline x count: Prettier's own printer never collapses hardlines,
+            // so this reproduces exactly `count` breaks.
+            for _ in 0..count.get() {
+                children.push(json!({"type": "line", "hard": true}));
+                children.push(json!({"type": "break-parent"}));
+            }
         }
         LineMode::Literal => {
             push_literal_line(children);
@@ -648,5 +697,69 @@ fn normalize_array(mut arr: Vec<Value>) -> Value {
         0 => Value::String(String::new()),
         1 => arr.pop().unwrap(),
         _ => Value::Array(arr),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::num::NonZeroU32;
+
+    use oxc_formatter_core::{FormatElement, LineMode};
+    use serde_json::Value;
+
+    use super::format_elements_to_prettier_doc;
+
+    /// Counts `{"type": "line", "hard": true}` nodes (excluding literal lines) in the Doc.
+    fn count_hardlines(doc: &Value) -> usize {
+        match doc {
+            Value::Array(items) => items.iter().map(count_hardlines).sum(),
+            Value::Object(map) => {
+                let own = usize::from(
+                    map.get("type").and_then(Value::as_str) == Some("line")
+                        && map.get("hard").and_then(Value::as_bool) == Some(true)
+                        && !map.contains_key("literal"),
+                );
+                own + map.values().map(count_hardlines).sum::<usize>()
+            }
+            _ => 0,
+        }
+    }
+
+    fn exact(count: u32) -> FormatElement<'static> {
+        FormatElement::Line(LineMode::ExactLineBreaks(NonZeroU32::new(count).unwrap()))
+    }
+    const A: FormatElement<'static> = FormatElement::Token { text: "a" };
+    const HARD: FormatElement<'static> = FormatElement::Line(LineMode::Hard);
+    const EMPTY: FormatElement<'static> = FormatElement::Line(LineMode::Empty);
+
+    #[test]
+    fn exact_line_breaks_expand_to_that_many_hardlines() {
+        let doc = format_elements_to_prettier_doc(&[A, exact(3), A], &[]).unwrap();
+        assert_eq!(count_hardlines(&doc), 3);
+    }
+
+    #[test]
+    fn empty_after_mid_line_single_exact_break_adds_a_blank() {
+        // Mid-line count=1 leaves no blank behind: the following Empty may still add one.
+        let doc = format_elements_to_prettier_doc(&[A, exact(1), EMPTY, A], &[]).unwrap();
+        assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    #[test]
+    fn empty_after_blank_leaving_exact_breaks_is_capped() {
+        // Mid-line count=2 leaves a blank: the following Empty adds nothing.
+        let doc = format_elements_to_prettier_doc(&[A, exact(2), EMPTY, A], &[]).unwrap();
+        assert_eq!(count_hardlines(&doc), 2);
+
+        // From the start of a line even count=1 leaves a blank
+        // (no break is consumed as a line ending), capping the Empty too.
+        let doc = format_elements_to_prettier_doc(&[A, HARD, exact(1), EMPTY, A], &[]).unwrap();
+        assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    #[test]
+    fn hard_after_exact_line_breaks_is_absorbed() {
+        let doc = format_elements_to_prettier_doc(&[A, exact(2), HARD, A], &[]).unwrap();
+        assert_eq!(count_hardlines(&doc), 2);
     }
 }

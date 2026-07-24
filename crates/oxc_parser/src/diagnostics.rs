@@ -722,6 +722,11 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    return_statement_in_class_static_block(span: Span) => {
+        ts_error("18041", "A 'return' statement cannot be used inside a class static block.")
+            .with_label(span)
+    };
+
     invalid_identifier_in_using_declaration(span: Span) => {
         OxcDiagnostic::error("Using declarations may not have binding patterns.").with_label(span)
     };
@@ -1138,6 +1143,11 @@ parser_diagnostics! {
         ts_error("1249", "A decorator can only decorate a method implementation, not an overload.")
             .with_label(span)
             .with_help("Move this after all the overloads")
+    };
+
+    type_arguments_in_ts(span: Span) => {
+        ts_error("8011", "Type arguments can only be used in TypeScript files.")
+            .with_label(span)
     };
 
     as_in_ts(span: Span) => {

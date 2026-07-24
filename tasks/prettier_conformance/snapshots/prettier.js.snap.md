@@ -1,4 +1,4 @@
-js compatibility: 773/809 (95.55%), 23 files skipped
+js compatibility: 774/810 (95.56%), 23 files skipped
 
 # Failed
 

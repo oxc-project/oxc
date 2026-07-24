@@ -890,6 +890,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if params.is_empty() {
                 self.error(diagnostics::ts_empty_type_argument_list(span));
             }
+            if !self.is_ts {
+                self.error(diagnostics::type_arguments_in_ts(span));
+            }
             return Some(TSTypeParameterInstantiation::boxed(span, params, self));
         }
         None

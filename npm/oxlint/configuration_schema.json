@@ -5850,6 +5850,9 @@
         "oxc/bad-comparison-sequence": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "oxc/bad-match-all-arg": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "oxc/bad-min-max-func": {
           "$ref": "#/definitions/RuleNoConfig"
         },

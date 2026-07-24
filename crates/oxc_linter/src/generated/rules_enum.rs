@@ -384,6 +384,7 @@ pub use crate::rules::oxc::bad_array_method_on_arguments::BadArrayMethodOnArgume
 pub use crate::rules::oxc::bad_bitwise_operator::BadBitwiseOperator as OxcBadBitwiseOperator;
 pub use crate::rules::oxc::bad_char_at_comparison::BadCharAtComparison as OxcBadCharAtComparison;
 pub use crate::rules::oxc::bad_comparison_sequence::BadComparisonSequence as OxcBadComparisonSequence;
+pub use crate::rules::oxc::bad_match_all_arg::BadMatchAllArg as OxcBadMatchAllArg;
 pub use crate::rules::oxc::bad_min_max_func::BadMinMaxFunc as OxcBadMinMaxFunc;
 pub use crate::rules::oxc::bad_object_literal_comparison::BadObjectLiteralComparison as OxcBadObjectLiteralComparison;
 pub use crate::rules::oxc::bad_replace_all_arg::BadReplaceAllArg as OxcBadReplaceAllArg;
@@ -1508,6 +1509,7 @@ pub enum RuleEnum {
     OxcBadBitwiseOperator(OxcBadBitwiseOperator),
     OxcBadCharAtComparison(OxcBadCharAtComparison),
     OxcBadComparisonSequence(OxcBadComparisonSequence),
+    OxcBadMatchAllArg(OxcBadMatchAllArg),
     OxcBadMinMaxFunc(OxcBadMinMaxFunc),
     OxcBadObjectLiteralComparison(OxcBadObjectLiteralComparison),
     OxcBadReplaceAllArg(OxcBadReplaceAllArg),
@@ -2448,7 +2450,8 @@ const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = OXC_APPROX_CONSTANT_ID + 1us
 const OXC_BAD_BITWISE_OPERATOR_ID: usize = OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID + 1usize;
 const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = OXC_BAD_BITWISE_OPERATOR_ID + 1usize;
 const OXC_BAD_COMPARISON_SEQUENCE_ID: usize = OXC_BAD_CHAR_AT_COMPARISON_ID + 1usize;
-const OXC_BAD_MIN_MAX_FUNC_ID: usize = OXC_BAD_COMPARISON_SEQUENCE_ID + 1usize;
+const OXC_BAD_MATCH_ALL_ARG_ID: usize = OXC_BAD_COMPARISON_SEQUENCE_ID + 1usize;
+const OXC_BAD_MIN_MAX_FUNC_ID: usize = OXC_BAD_MATCH_ALL_ARG_ID + 1usize;
 const OXC_BAD_OBJECT_LITERAL_COMPARISON_ID: usize = OXC_BAD_MIN_MAX_FUNC_ID + 1usize;
 const OXC_BAD_REPLACE_ALL_ARG_ID: usize = OXC_BAD_OBJECT_LITERAL_COMPARISON_ID + 1usize;
 const OXC_BRANCHES_SHARING_CODE_ID: usize = OXC_BAD_REPLACE_ALL_ARG_ID + 1usize;
@@ -3431,6 +3434,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OXC_BAD_BITWISE_OPERATOR_ID,
             Self::OxcBadCharAtComparison(_) => OXC_BAD_CHAR_AT_COMPARISON_ID,
             Self::OxcBadComparisonSequence(_) => OXC_BAD_COMPARISON_SEQUENCE_ID,
+            Self::OxcBadMatchAllArg(_) => OXC_BAD_MATCH_ALL_ARG_ID,
             Self::OxcBadMinMaxFunc(_) => OXC_BAD_MIN_MAX_FUNC_ID,
             Self::OxcBadObjectLiteralComparison(_) => OXC_BAD_OBJECT_LITERAL_COMPARISON_ID,
             Self::OxcBadReplaceAllArg(_) => OXC_BAD_REPLACE_ALL_ARG_ID,
@@ -4399,6 +4403,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::NAME,
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::NAME,
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::NAME,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::NAME,
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::NAME,
             Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::NAME,
             Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::NAME,
@@ -5407,6 +5412,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::CATEGORY,
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::CATEGORY,
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::CATEGORY,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::CATEGORY,
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::CATEGORY,
             Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::CATEGORY,
             Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::CATEGORY,
@@ -6386,6 +6392,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::FIX,
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::FIX,
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::FIX,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::FIX,
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::FIX,
             Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::FIX,
             Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::FIX,
@@ -7559,6 +7566,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::documentation(),
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::documentation(),
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::documentation(),
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::documentation(),
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::documentation(),
             Self::OxcBadObjectLiteralComparison(_) => {
                 OxcBadObjectLiteralComparison::documentation()
@@ -9696,6 +9704,8 @@ impl RuleEnum {
                 .or_else(|| OxcBadCharAtComparison::schema(generator)),
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::config_schema(generator)
                 .or_else(|| OxcBadComparisonSequence::schema(generator)),
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::config_schema(generator)
+                .or_else(|| OxcBadMatchAllArg::schema(generator)),
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::config_schema(generator)
                 .or_else(|| OxcBadMinMaxFunc::schema(generator)),
             Self::OxcBadObjectLiteralComparison(_) => {
@@ -10916,6 +10926,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => "oxc",
             Self::OxcBadCharAtComparison(_) => "oxc",
             Self::OxcBadComparisonSequence(_) => "oxc",
+            Self::OxcBadMatchAllArg(_) => "oxc",
             Self::OxcBadMinMaxFunc(_) => "oxc",
             Self::OxcBadObjectLiteralComparison(_) => "oxc",
             Self::OxcBadReplaceAllArg(_) => "oxc",
@@ -13199,6 +13210,9 @@ impl RuleEnum {
             Self::OxcBadComparisonSequence(_) => Ok(Self::OxcBadComparisonSequence(
                 OxcBadComparisonSequence::from_configuration(value)?,
             )),
+            Self::OxcBadMatchAllArg(_) => {
+                Ok(Self::OxcBadMatchAllArg(OxcBadMatchAllArg::from_configuration(value)?))
+            }
             Self::OxcBadMinMaxFunc(_) => {
                 Ok(Self::OxcBadMinMaxFunc(OxcBadMinMaxFunc::from_configuration(value)?))
             }
@@ -14499,6 +14513,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(rule) => rule.to_configuration(),
             Self::OxcBadCharAtComparison(rule) => rule.to_configuration(),
             Self::OxcBadComparisonSequence(rule) => rule.to_configuration(),
+            Self::OxcBadMatchAllArg(rule) => rule.to_configuration(),
             Self::OxcBadMinMaxFunc(rule) => rule.to_configuration(),
             Self::OxcBadObjectLiteralComparison(rule) => rule.to_configuration(),
             Self::OxcBadReplaceAllArg(rule) => rule.to_configuration(),
@@ -15352,6 +15367,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(rule) => rule.run(node, ctx),
             Self::OxcBadCharAtComparison(rule) => rule.run(node, ctx),
             Self::OxcBadComparisonSequence(rule) => rule.run(node, ctx),
+            Self::OxcBadMatchAllArg(rule) => rule.run(node, ctx),
             Self::OxcBadMinMaxFunc(rule) => rule.run(node, ctx),
             Self::OxcBadObjectLiteralComparison(rule) => rule.run(node, ctx),
             Self::OxcBadReplaceAllArg(rule) => rule.run(node, ctx),
@@ -16215,6 +16231,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(rule) => rule.run_once(ctx),
             Self::OxcBadCharAtComparison(rule) => rule.run_once(ctx),
             Self::OxcBadComparisonSequence(rule) => rule.run_once(ctx),
+            Self::OxcBadMatchAllArg(rule) => rule.run_once(ctx),
             Self::OxcBadMinMaxFunc(rule) => rule.run_once(ctx),
             Self::OxcBadObjectLiteralComparison(rule) => rule.run_once(ctx),
             Self::OxcBadReplaceAllArg(rule) => rule.run_once(ctx),
@@ -17185,6 +17202,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBadCharAtComparison(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBadComparisonSequence(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcBadMatchAllArg(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBadMinMaxFunc(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBadObjectLiteralComparison(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcBadReplaceAllArg(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18059,6 +18077,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(rule) => rule.should_run(ctx),
             Self::OxcBadCharAtComparison(rule) => rule.should_run(ctx),
             Self::OxcBadComparisonSequence(rule) => rule.should_run(ctx),
+            Self::OxcBadMatchAllArg(rule) => rule.should_run(ctx),
             Self::OxcBadMinMaxFunc(rule) => rule.should_run(ctx),
             Self::OxcBadObjectLiteralComparison(rule) => rule.should_run(ctx),
             Self::OxcBadReplaceAllArg(rule) => rule.should_run(ctx),
@@ -19221,6 +19240,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::IS_TSGOLINT_RULE,
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::IS_TSGOLINT_RULE,
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::IS_TSGOLINT_RULE,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::IS_TSGOLINT_RULE,
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::IS_TSGOLINT_RULE,
             Self::OxcBadObjectLiteralComparison(_) => {
                 OxcBadObjectLiteralComparison::IS_TSGOLINT_RULE
@@ -20291,6 +20311,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::VERSION,
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::VERSION,
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::VERSION,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::VERSION,
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::VERSION,
             Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::VERSION,
             Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::VERSION,
@@ -21346,6 +21367,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::HAS_CONFIG,
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::HAS_CONFIG,
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::HAS_CONFIG,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::HAS_CONFIG,
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::HAS_CONFIG,
             Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::HAS_CONFIG,
             Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::HAS_CONFIG,
@@ -22334,6 +22356,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::INFO,
             Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::INFO,
             Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::INFO,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::INFO,
             Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::INFO,
             Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::INFO,
             Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::INFO,
@@ -23199,6 +23222,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(rule) => rule.types_info(),
             Self::OxcBadCharAtComparison(rule) => rule.types_info(),
             Self::OxcBadComparisonSequence(rule) => rule.types_info(),
+            Self::OxcBadMatchAllArg(rule) => rule.types_info(),
             Self::OxcBadMinMaxFunc(rule) => rule.types_info(),
             Self::OxcBadObjectLiteralComparison(rule) => rule.types_info(),
             Self::OxcBadReplaceAllArg(rule) => rule.types_info(),
@@ -24049,6 +24073,7 @@ impl RuleEnum {
             Self::OxcBadBitwiseOperator(rule) => rule.run_info(),
             Self::OxcBadCharAtComparison(rule) => rule.run_info(),
             Self::OxcBadComparisonSequence(rule) => rule.run_info(),
+            Self::OxcBadMatchAllArg(rule) => rule.run_info(),
             Self::OxcBadMinMaxFunc(rule) => rule.run_info(),
             Self::OxcBadObjectLiteralComparison(rule) => rule.run_info(),
             Self::OxcBadReplaceAllArg(rule) => rule.run_info(),
@@ -25025,6 +25050,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcBadBitwiseOperator(OxcBadBitwiseOperator::default()),
         RuleEnum::OxcBadCharAtComparison(OxcBadCharAtComparison::default()),
         RuleEnum::OxcBadComparisonSequence(OxcBadComparisonSequence::default()),
+        RuleEnum::OxcBadMatchAllArg(OxcBadMatchAllArg::default()),
         RuleEnum::OxcBadMinMaxFunc(OxcBadMinMaxFunc::default()),
         RuleEnum::OxcBadObjectLiteralComparison(OxcBadObjectLiteralComparison::default()),
         RuleEnum::OxcBadReplaceAllArg(OxcBadReplaceAllArg::default()),

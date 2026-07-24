@@ -785,7 +785,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: new.target is only allowed in constructors, functions, and class field initializers
 
-  × TS(1108): A 'return' statement can only be used within a function body.
+  × TS(18041): A 'return' statement cannot be used inside a class static block.
    ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowReturnOutsideFunction-true-invalid-in-static-block/input.js:3:5]
  2 │   static {
  3 │     return 0;
@@ -8389,7 +8389,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × TS(1108): A 'return' statement can only be used within a function body.
+  × TS(18041): A 'return' statement cannot be used inside a class static block.
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-return/input.js:4:5]
  3 │   static {
  4 │     return this;

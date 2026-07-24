@@ -13,6 +13,11 @@ use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
+/// Whether a comment remains meaningful if its original AST anchor is removed.
+fn preserve_when_orphaned(comment: Comment) -> bool {
+    comment.is_legal() || comment.is_coverage_ignore_file()
+}
+
 /// A `pife`-marked arrow or function expression prints its leading comments
 /// inside its own `(` wrap, so operand emission sites must not consume them.
 fn is_pife_function(expression: &Expression<'_>) -> bool {
@@ -96,10 +101,10 @@ impl Codegen<'_> {
                 }
             }
             if add {
-                if comment.is_legal()
-                    && let Err(idx) = self.legal_comment_keys.binary_search(&comment.attached_to)
+                if preserve_when_orphaned(*comment)
+                    && let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to)
                 {
-                    self.legal_comment_keys.insert(idx, comment.attached_to);
+                    self.orphan_comment_keys.insert(idx, comment.attached_to);
                 }
                 self.comments.entry(comment.attached_to).or_default().push(*comment);
             }
@@ -239,49 +244,50 @@ impl Codegen<'_> {
         }
     }
 
-    /// Whether a legal-comment orphan with `attached_to < end` is still
-    /// pending. Used by block emitters to keep an empty body multi-line.
+    /// Whether an orphan comment with `attached_to < end` is still pending.
+    /// Used by block emitters to keep an empty body multi-line.
     #[inline]
-    pub(crate) fn has_legal_orphans_before(&self, end: u32) -> bool {
-        self.legal_comment_keys
+    pub(crate) fn has_orphan_comments_before(&self, end: u32) -> bool {
+        self.orphan_comment_keys
             .iter()
             .take_while(|&&k| k < end)
             .any(|k| self.comments.contains_key(k))
     }
 
-    /// Drain pending legal-comment orphans with `attached_to < end` and emit
-    /// them in source order. Called at every statement boundary so legal
-    /// comments survive when their original anchor was removed by DCE.
+    /// Drain pending orphan comments with `attached_to < end` and emit them in
+    /// source order. Called at every statement boundary so legal and file-level
+    /// coverage comments survive when their original anchor was removed by an
+    /// upstream pass.
     #[inline]
-    pub(crate) fn print_legal_orphans_before(&mut self, end: u32) {
-        if self.legal_comment_keys.is_empty() {
+    pub(crate) fn print_orphan_comments_before(&mut self, end: u32) {
+        if self.orphan_comment_keys.is_empty() {
             return;
         }
-        let idx = self.legal_comment_keys.partition_point(|&k| k < end);
+        let idx = self.orphan_comment_keys.partition_point(|&k| k < end);
         if idx == 0 {
             return;
         }
         // Concatenate across keys so `print_comments` sees one sequence;
         // per-key calls would leak `print_next_indent_as_space` and produce
         // stray leading spaces.
-        let mut legals: Vec<Comment> = Vec::new();
+        let mut orphans: Vec<Comment> = Vec::new();
         let comments = &mut self.comments;
-        for k in self.legal_comment_keys.drain(..idx) {
+        for k in self.orphan_comment_keys.drain(..idx) {
             let Some(entry) = comments.get_mut(&k) else { continue };
-            debug_assert!(entry.iter().any(|c| c.is_legal()));
-            legals.extend(entry.extract_if(.., |c| c.is_legal()));
+            debug_assert!(entry.iter().any(|c| preserve_when_orphaned(*c)));
+            orphans.extend(entry.extract_if(.., |c| preserve_when_orphaned(*c)));
             if entry.is_empty() {
                 comments.remove(&k);
             }
         }
-        if let Some(last) = legals.last_mut() {
+        if let Some(last) = orphans.last_mut() {
             // Orphans aren't in their original position, so the source's
             // `followed_by_newline` hint no longer applies. Force it on so
             // `print_comments` emits a trailing newline instead of setting
             // `print_next_indent_as_space` — otherwise the next indent (often
             // before `}`) collapses to a space and pass 2 stops matching.
             last.set_followed_by_newline(true);
-            self.print_comments(&legals);
+            self.print_comments(&orphans);
         }
     }
 

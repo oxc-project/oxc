@@ -8,8 +8,8 @@ use oxc_yaml_parser::ast::{Mapping, Sequence};
 use crate::{
     comments::{
         flush_container_end_comments, flush_leading_comments, gap_upper_bound,
-        is_suppressed_last_before, write_blank_preserving_break, write_suppressed_node,
-        write_trailing_same_line_comment,
+        is_suppressed_last_before, pending_same_line_comment, write_blank_preserving_break,
+        write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{
         YamlFormatter,
@@ -122,7 +122,15 @@ pub fn write_sequence<'a>(sequence: &'a Sequence<'a>, f: &mut YamlFormatter<'_, 
             continue;
         }
         flush_leading_comments(item.span.start, f);
-        write!(f, "- ");
+        // The content-area space stays when something follows it:
+        // the content, or a same-line comment
+        // (whose own line-suffix space makes it `-  # c`, two spaces, Prettier's shape).
+        // For a bare null item don't leave it at the line end.
+        if item.content.is_some() || pending_same_line_comment(item.span.end, f).is_some() {
+            write!(f, "- ");
+        } else {
+            write!(f, "-");
+        }
         if let Some(node) = &item.content {
             write!(f, align(2, &format_with(|f| write_node(node, f))));
         }
