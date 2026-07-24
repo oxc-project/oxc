@@ -231,6 +231,13 @@ fn try_fold_string_char_code_at<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
+    if args
+        .iter()
+        .skip(1)
+        .any(|arg| arg.as_expression().is_none_or(|e| e.may_have_side_effects(ctx)))
+    {
+        return None;
+    }
     let Expression::StringLiteral(s) = object else { return None };
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,

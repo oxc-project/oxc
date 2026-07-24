@@ -266,7 +266,8 @@ fn test_fold_string_char_code_at() {
     test_same("x = 'abcde'.charCodeAt(...foo)");
     test_same("x = 'abcde'.charCodeAt(y)");
     test("x = 'abcde'.charCodeAt()", "x = 97");
-    test("x = 'abcde'.charCodeAt(0, ++z)", "x = 97");
+    test_same("x = 'abcde'.charCodeAt(0, ++z)");
+    test_same("x = 'abcde'.charCodeAt(0, f())");
     test("x = 'abcde'.charCodeAt(null)", "x = 97");
     test("x = 'abcde'.charCodeAt(true)", "x = 98");
     test("x = '\\ud834\\udd1e'.charCodeAt(0)", "x = 55348");
