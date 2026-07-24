@@ -5,12 +5,15 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     fixer::{Fix, RuleFix},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
         object_has_accessible_child,
@@ -23,8 +26,23 @@ fn missing_content(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct AnchorHasContent;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct AnchorHasContent(Box<AnchorHasContentConfig>);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct AnchorHasContentConfig {
+    /// Additional custom component names to treat as anchor elements.
+    components: Vec<CompactStr>,
+}
+
+impl std::ops::Deref for AnchorHasContent {
+    type Target = AnchorHasContentConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -33,6 +51,17 @@ declare_oxc_lint!(
     /// Accessible means that it is not hidden using the `aria-hidden` prop.
     ///
     /// Alternatively, you may use the `title` prop or the `aria-label` prop.
+    ///
+    /// ### Options
+    ///
+    /// This rule accepts a `components` option containing custom component names that should be
+    /// checked in addition to the native `a` element.
+    ///
+    /// ```json
+    /// {
+    ///   "components": ["Anchor"]
+    /// }
+    /// ```
     ///
     /// ### Why is this bad?
     ///
@@ -58,17 +87,22 @@ declare_oxc_lint!(
     AnchorHasContent,
     jsx_a11y,
     correctness,
+    config = AnchorHasContentConfig,
     conditional_suggestion,
     version = "0.0.18",
     short_description = "Enforce that anchors have content and that the content is accessible to screen readers.",
 );
 
 impl Rule for AnchorHasContent {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             let name = get_element_type(ctx, &jsx_el.opening_element);
 
-            if name == "a" {
+            if name == "a" || self.components.iter().any(|component| component == name.as_ref()) {
                 if is_hidden_from_screen_reader(ctx, &jsx_el.opening_element) {
                     return;
                 }
@@ -124,6 +158,12 @@ fn remove_hidden_attributes(element: &JSXElement<'_>) -> RuleFix {
 fn test() {
     use crate::tester::Tester;
 
+    fn components() -> serde_json::Value {
+        serde_json::json!([{
+            "components": ["Anchor", "Link"],
+        }])
+    }
+
     // https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules/anchor-has-content-test.js
     let pass = vec![
         (r"<div />;", None, None),
@@ -134,6 +174,11 @@ fn test() {
         (r#"<a dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None, None),
         (r"<a children={children} />", None, None),
         (r"<Link />", None, None),
+        (r"<Anchor>Anchor Content!</Anchor>", Some(components()), None),
+        (r"<Anchor><TextWrapper /></Anchor>", Some(components()), None),
+        (r#"<Anchor dangerouslySetInnerHTML={{ __html: "foo" }} />"#, Some(components()), None),
+        (r"<Anchor title='foo' />", Some(components()), None),
+        (r"<Anchor aria-label='foo' />", Some(components()), None),
         (
             r"<Link>foo</Link>",
             None,
@@ -166,6 +211,8 @@ fn test() {
         (r#"<a><input type="hidden" /></a>"#, None, None),
         (r"<a>{undefined}</a>", None, None),
         (r"<a>{null}</a>", None, None),
+        (r"<Anchor />", Some(components()), None),
+        (r"<Anchor><TextWrapper aria-hidden /></Anchor>", Some(components()), None),
         (
             r"<Link />",
             None,
