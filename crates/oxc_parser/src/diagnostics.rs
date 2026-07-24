@@ -1140,6 +1140,11 @@ parser_diagnostics! {
             .with_help("Move this after all the overloads")
     };
 
+    type_arguments_in_ts(span: Span) => {
+        ts_error("8011", "Type arguments can only be used in TypeScript files.")
+            .with_label(span)
+    };
+
     as_in_ts(span: Span) => {
         ts_error("8016", "Type assertion expressions can only be used in TypeScript files.")
             .with_label(span)
