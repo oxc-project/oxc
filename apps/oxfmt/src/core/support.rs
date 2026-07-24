@@ -63,6 +63,13 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     if let Some(variant) = classify_css_variant(extension) {
         return Some(FileKind::OxcFormatterCss { path, variant });
     }
+    // Check these before generic YAML check, because Prettier tries to format them as JSON(-in-YAML) first
+    if YAML_RC_FILENAMES.contains(file_name) {
+        return Some(FileKind::OxcFormatterYamlRc { path });
+    }
+    if is_yaml_file(file_name, extension) {
+        return Some(FileKind::OxcFormatterYaml { path });
+    }
 
     // External formatter files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
@@ -101,6 +108,11 @@ pub enum FileKind {
     OxcFormatterGraphql { path: Arc<Path> },
     /// CSS/SCSS/Less files formatted by `oxc_formatter_css`.
     OxcFormatterCss { path: Arc<Path>, variant: CssVariant },
+    /// YAML files formatted by `oxc_formatter_yaml`.
+    OxcFormatterYaml { path: Arc<Path> },
+    /// Files like `.prettierrc`:
+    /// mirroring Prettier's yaml embed, they are formatted as JSON first, then fall back to YAML if that fails.
+    OxcFormatterYamlRc { path: Arc<Path> },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },
     /// Files formatted by external formatter (Prettier).
@@ -127,6 +139,8 @@ impl FileKind {
             | Self::OxcFormatterJsonPackageJson { path }
             | Self::OxcFormatterGraphql { path }
             | Self::OxcFormatterCss { path, .. }
+            | Self::OxcFormatterYaml { path }
+            | Self::OxcFormatterYamlRc { path }
             | Self::OxfmtToml { path } => path,
             #[cfg(feature = "napi")]
             Self::ExternalFormatter { path, .. } => path,
@@ -362,20 +376,48 @@ static CSS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 
 // ---
 
+/// Prettier tries to format these as JSON first, and falls back to YAML when that fails.
+static YAML_RC_FILENAMES: phf::Set<&'static str> = phf_set! {
+    ".prettierrc",
+    ".stylelintrc",
+    ".lintstagedrc",
+};
+
+/// Returns `true` if this is a YAML file (handled by `oxc_formatter_yaml`).
+fn is_yaml_file(file_name: &str, extension: Option<&str>) -> bool {
+    if YAML_FILENAMES.contains(file_name) {
+        return true;
+    }
+    extension.is_some_and(|ext| YAML_EXTENSIONS.contains(ext))
+}
+
+static YAML_FILENAMES: phf::Set<&'static str> = phf_set! {
+    ".clang-format",
+    ".clang-tidy",
+    ".clangd",
+    ".gemrc",
+    "CITATION.cff",
+    "glide.lock",
+    "pixi.lock",
+};
+
+static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "yml",
+    "mir",
+    "reek",
+    "rviz",
+    "sublime-syntax",
+    "syntax",
+    "yaml",
+    "yaml-tmlanguage",
+};
+
+// ---
+
 /// Returns parser name for external formatter, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
-    // YAML
-    if YAML_FILENAMES.contains(file_name) {
-        return Some("yaml");
-    }
-    if let Some(ext) = extension
-        && YAML_EXTENSIONS.contains(ext)
-    {
-        return Some("yaml");
-    }
-
     // Markdown and variants
     if MARKDOWN_FILENAMES.contains(file_name) {
         return Some("markdown");
@@ -457,32 +499,6 @@ static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "ronn",
     "scd",
     "workbook",
-};
-
-#[cfg(feature = "napi")]
-static YAML_FILENAMES: phf::Set<&'static str> = phf_set! {
-    ".clang-format",
-    ".clang-tidy",
-    ".clangd",
-    ".gemrc",
-    "CITATION.cff",
-    "glide.lock",
-    "pixi.lock",
-    ".prettierrc",
-    ".stylelintrc",
-    ".lintstagedrc",
-};
-
-#[cfg(feature = "napi")]
-static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "yml",
-    "mir",
-    "reek",
-    "rviz",
-    "sublime-syntax",
-    "syntax",
-    "yaml",
-    "yaml-tmlanguage",
 };
 
 // ---
@@ -652,12 +668,13 @@ mod tests {
             ("guide.markdown", Some("markdown")),
             ("notes.mdown", Some("markdown")),
             ("page.mdx", Some("mdx")),
-            // YAML
-            (".clang-format", Some("yaml")),
-            (".prettierrc", Some("yaml")),
-            ("config.yml", Some("yaml")),
-            ("settings.yaml", Some("yaml")),
-            ("grammar.sublime-syntax", Some("yaml")),
+            // YAML files are routed to `oxc_formatter_yaml` in `classify_file_kind`
+            // and excluded from this map.
+            (".clang-format", None),
+            (".prettierrc", None),
+            ("config.yml", None),
+            ("settings.yaml", None),
+            ("grammar.sublime-syntax", None),
             // Unknown
             ("unknown.txt", None),
             ("prof.png", None),
@@ -738,6 +755,37 @@ mod tests {
                 "`{file_name}` should be routed to oxc_formatter_css ({expected:?})"
             );
         }
+    }
+
+    #[test]
+    fn test_yaml_files_route_to_oxc_formatter_yaml() {
+        // YAML_EXTENSIONS and YAML_FILENAMES
+        for file_name in [
+            "config.yml",
+            "settings.yaml",
+            "grammar.sublime-syntax",
+            ".clang-format",
+            "CITATION.cff",
+        ] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterYaml { .. })),
+                "`{file_name}` should be routed to oxc_formatter_yaml"
+            );
+        }
+
+        // rc files Prettier tries as JSON first
+        for file_name in [".prettierrc", ".stylelintrc", ".lintstagedrc"] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterYamlRc { .. })),
+                "`{file_name}` should be routed to the JSON-first YAML rc kind"
+            );
+        }
+
+        // YAML lock files are excluded, not formatted
+        let result = classify_file_kind(Arc::from(Path::new("pnpm-lock.yaml")));
+        assert!(result.is_none(), "`pnpm-lock.yaml` should be excluded");
     }
 
     #[test]
