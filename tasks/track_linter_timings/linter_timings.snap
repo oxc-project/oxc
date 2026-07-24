@@ -225,7 +225,7 @@ jest/no-commented-out-tests                                |      7
 jest/no-conditional-expect                                 |      0
 jest/no-conditional-in-test                                |  30315
 jest/no-confusing-set-timeout                              |      7
-jest/no-deprecated-functions                               |  95297
+jest/no-deprecated-functions                               |  94090
 jest/no-disabled-tests                                     |      0
 jest/no-done-callback                                      |      0
 jest/no-duplicate-hooks                                    |      7
