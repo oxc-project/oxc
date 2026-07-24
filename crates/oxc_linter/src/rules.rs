@@ -486,7 +486,7 @@ pub(crate) mod react_perf {
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn>
 pub(crate) mod unicorn {
-    pub mod catch_error_name;
+pub mod catch_error_name;
     pub mod consistent_assert;
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
@@ -518,6 +518,7 @@ pub(crate) mod unicorn {
     pub mod no_confusing_array_with;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
+    pub mod no_duplicate_set_values;
     pub mod no_empty_file;
     pub mod no_hex_escape;
     pub mod no_immediate_mutation;
