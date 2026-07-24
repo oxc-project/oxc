@@ -292,13 +292,13 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: ./.github/actions/check-changes
         id: filter-conformance
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
@@ -437,7 +437,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1

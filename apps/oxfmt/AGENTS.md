@@ -6,7 +6,7 @@ The `oxfmt` implemented under this directory serves several purposes.
 
 - Pure Rust CLI
   - Minimum feature set, CLI usage only, no LSP, no Stdin support
-  - Formats JS/TS, JSON, GraphQL and TOML files, no xxx-in-js support
+  - Formats JS/TS, JSON, CSS, GraphQL, YAML and TOML files, no xxx-in-js support
   - Entry point: `main()` in `src/main.rs`
   - Build with `cargo build --no-default-features`
 - JS/Rust hybrid CLI using `napi-rs`
