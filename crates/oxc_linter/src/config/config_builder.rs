@@ -659,7 +659,8 @@ impl ConfigStoreBuilder {
             None
         };
 
-        if let Some(plugin_name) = &plugin_name
+        if alias.is_some()
+            && let Some(plugin_name) = &plugin_name
             && LintPlugins::try_from(plugin_name.as_str()).is_ok()
         {
             return Err(ConfigBuilderError::ReservedExternalPluginName {
@@ -698,8 +699,9 @@ impl ConfigStoreBuilder {
             // rule list, so a later call to `register_plugin` can hit the offset assertion
             // because the expected rule count no longer matches. Consider explicitly
             // unloading or rolling back the plugin here to keep both sides in sync. We
-            // currently avoid this situation in practice by checking for reserved names
-            // before calling `load_plugin` above.
+            // Explicit aliases are checked before calling `load_plugin` above because they take
+            // precedence over plugin metadata. Package-derived names intentionally reach this point
+            // so `load_plugin` can use `plugin.meta.name` when the plugin declares one.
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }
@@ -880,11 +882,20 @@ impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        },
+        time::{SystemTime, UNIX_EPOCH},
+    };
 
     use cow_utils::CowUtils;
 
     use super::*;
+    use crate::external_linter::LoadPluginResult;
 
     #[test]
     fn test_builder_default() {
@@ -1729,6 +1740,66 @@ mod test {
     }
 
     #[test]
+    fn test_package_plugin_can_use_meta_name_over_reserved_package_name() {
+        let temp_dir = TestTempDir::new("oxc-linter-reserved-plugin-package-name");
+        let package_dir = temp_dir.path().join("node_modules/oxlint-plugin-eslint");
+        fs::create_dir_all(&package_dir).unwrap();
+        fs::write(
+            package_dir.join("package.json"),
+            r#"{ "name": "oxlint-plugin-eslint", "main": "index.js" }"#,
+        )
+        .unwrap();
+        fs::write(package_dir.join("index.js"), "export default {};").unwrap();
+
+        let config_path = temp_dir.path().join(".oxlintrc.json");
+        fs::write(config_path.as_path(), r#"{ "jsPlugins": ["oxlint-plugin-eslint"] }"#).unwrap();
+        let oxlintrc = Oxlintrc::from_file(config_path.as_path()).unwrap();
+
+        let load_called = Arc::new(AtomicBool::new(false));
+        let load_called_clone = Arc::clone(&load_called);
+        let external_linter = ExternalLinter::new(
+            Arc::new(Box::new(
+                move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
+                    load_called_clone.store(true, Ordering::SeqCst);
+
+                    assert!(
+                        plugin_url.contains("node_modules/oxlint-plugin-eslint/index.js"),
+                        "unexpected plugin URL: {plugin_url}"
+                    );
+                    assert_eq!(plugin_name.as_deref(), Some("eslint"));
+                    assert!(!plugin_name_is_alias);
+                    assert_eq!(workspace_uri, None);
+
+                    Ok(LoadPluginResult {
+                        name: "eslint-js".to_string(),
+                        offset: 0,
+                        rule_names: vec!["no-restricted-syntax".to_string()],
+                    })
+                },
+            )),
+            Arc::new(Box::new(|_| Ok(()))),
+            Arc::new(Box::new(|_, _, _, _, _, _, _| Ok(vec![]))),
+            Arc::new(Box::new(|_| Ok(()))),
+            Arc::new(Box::new(|_| Ok(()))),
+        );
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            Some(&external_linter),
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        assert!(load_called.load(Ordering::SeqCst));
+        assert!(external_plugin_store.lookup_rule_id("eslint-js", "no-restricted-syntax").is_ok());
+    }
+
+    #[test]
     fn test_unknown_builtin_rule_errors_in_root_config() {
         let oxlintrc: Oxlintrc = serde_json::from_str(
             r#"
@@ -1784,6 +1855,30 @@ mod test {
         let err = builder.build(&mut external_plugin_store).unwrap_err();
 
         assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
+    }
+
+    struct TestTempDir {
+        path: PathBuf,
+    }
+
+    impl TestTempDir {
+        fn new(prefix: &str) -> Self {
+            let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+            let path =
+                std::env::temp_dir().join(format!("{prefix}-{}-{timestamp}", std::process::id()));
+            fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+    }
+
+    impl Drop for TestTempDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
     }
 
     fn config_store_from_path(path: &str) -> Config {
