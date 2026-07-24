@@ -1,18 +1,18 @@
 use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier, ImportSelector,
-    JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    SortTailwindcssOptions, TrailingCommas,
+    ArrayExpand, ArrayLinePattern, ArrowParentheses, AttributePosition, BracketSameLine,
+    BracketSpacing, CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry,
+    ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 
 use super::{
     super::oxfmtrc::{
-        ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, FormatConfig,
-        HtmlWhitespaceSensitivityConfig, JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig,
-        SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig,
-        TrailingCommaConfig,
+        ArrayWrapConfig, ArrayWrapMode, ArrowParensConfig, CustomGroupItemConfig,
+        EmbeddedLanguageFormattingConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
+        JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig,
+        SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig, TrailingCommaConfig,
     },
     to_core_options::to_core_options,
 };
@@ -123,6 +123,11 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
 
     // Below are our own extensions
 
+    if let Some((array_expand, array_line_pattern)) = to_array_wrap(config)? {
+        format_options.array_expand = array_expand;
+        format_options.array_line_pattern = array_line_pattern;
+    }
+
     format_options.sort_imports = to_sort_imports(config)?;
 
     if let Some(tw_config) =
@@ -141,6 +146,50 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
     format_options.jsdoc = to_jsdoc(config)?;
 
     Ok(format_options)
+}
+
+/// Parse and validate `arrayWrap` into [`ArrayExpand`] and an optional [`ArrayLinePattern`].
+///
+/// Parsing is the validation here, so this is shared by
+/// both [`to_oxc_formatter()`] (build) and [`super::validate::validate()`] (gate).
+///
+/// # Errors
+/// Returns an error if the `arrayWrap` configuration is invalid.
+pub(super) fn to_array_wrap(
+    config: &FormatConfig,
+) -> Result<Option<(ArrayExpand, Option<ArrayLinePattern>)>, String> {
+    let Some(array_wrap) = &config.array_wrap else {
+        return Ok(None);
+    };
+
+    Ok(Some(match array_wrap {
+        ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => (ArrayExpand::Preserve, None),
+        ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => (ArrayExpand::Never, None),
+        ArrayWrapConfig::Options(options) => {
+            if options.min_elements_to_wrap.is_none() && options.line_pattern.is_none() {
+                return Err(
+                    "Invalid `arrayWrap` value.\nExpected at least one of `minElementsToWrap` or `linePattern`.".to_string(),
+                );
+            }
+
+            let line_pattern = options
+                .line_pattern
+                .as_ref()
+                .map(|line_pattern| {
+                    line_pattern
+                        .parse()
+                        .map_err(|err| format!("Invalid `arrayWrap.linePattern` value.\n{err}"))
+                })
+                .transpose()?;
+
+            // A pattern without a threshold applies to arrays kept expanded by preserve
+            let array_expand = options
+                .min_elements_to_wrap
+                .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+
+            (array_expand, line_pattern)
+        }
+    }))
 }
 
 /// Parse and validate `sortImports` into [`SortImportsOptions`].
@@ -435,6 +484,64 @@ mod tests {
         let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
         let format_options = to_oxc_formatter(&config).unwrap();
         assert_eq!(format_options.expand, Expand::Never);
+    }
+
+    #[test]
+    fn test_array_wrap_normalization() {
+        // Test default (no option) -> Auto (Prettier behavior)
+        let config: FormatConfig = serde_json::from_str("{}").unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Auto);
+
+        // Test "preserve" -> Preserve
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "preserve"}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Preserve);
+
+        // Test "collapse" -> Never
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "collapse"}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Never);
+
+        // Test { minElementsToWrap: 2 } -> ForceAboveThreshold(2)
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"minElementsToWrap": 2}}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::ForceAboveThreshold(2));
+        assert_eq!(format_options.array_line_pattern, None);
+
+        // Test { minElementsToWrap: 2, linePattern: "2 1" } -> ForceAboveThreshold(2) + pattern
+        let config: FormatConfig = serde_json::from_str(
+            r#"{"arrayWrap": {"minElementsToWrap": 2, "linePattern": "2 1"}}"#,
+        )
+        .unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::ForceAboveThreshold(2));
+        assert_eq!(format_options.array_line_pattern, Some("2 1".parse().unwrap()));
+
+        // Test { linePattern: "3" } alone -> Preserve + pattern
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "3"}}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Preserve);
+        assert_eq!(format_options.array_line_pattern, Some("3".parse().unwrap()));
+
+        // Test {} -> error
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": {}}"#).unwrap();
+        let err = to_oxc_formatter(&config).unwrap_err();
+        assert!(err.contains("minElementsToWrap"), "unexpected error: {err}");
+
+        // Test invalid linePattern -> error
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "2 x"}}"#).unwrap();
+        let err = to_oxc_formatter(&config).unwrap_err();
+        assert!(err.contains("linePattern"), "unexpected error: {err}");
+
+        // Test zero in linePattern -> error
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "0"}}"#).unwrap();
+        let err = to_oxc_formatter(&config).unwrap_err();
+        assert!(err.contains("linePattern"), "unexpected error: {err}");
     }
 
     #[test]
