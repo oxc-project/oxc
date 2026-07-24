@@ -22,17 +22,18 @@ doctest = false
 
 [features]
 side_effects = ["dep:oxc_allocator", "dep:oxc_compat", "dep:oxc_regular_expression"]
-constant_evaluation = ["side_effects", "dep:smallvec"]
+constant_evaluation = ["side_effects", "dep:cow-utils", "dep:smallvec"]
 
 [dependencies]
 oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true }
 oxc_compat = { workspace = true, optional = true }
+oxc_data_structures = { workspace = true, features = ["inline_string"] }
 oxc_regular_expression = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
-cow-utils = { workspace = true }
+cow-utils = { workspace = true, optional = true }
 dragonbox_ecma = { workspace = true }
 itoa = { workspace = true }
 num-bigint = { workspace = true }

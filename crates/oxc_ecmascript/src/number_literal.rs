@@ -1,86 +1,128 @@
-use cow_utils::CowUtils;
+use oxc_data_structures::inline_string::InlineString;
+
+type LiteralString = InlineString<31, u8>;
 
 /// Call `f` with the shortest JavaScript source representation of a non-negative finite number.
-///
-/// # Panics
-///
-/// Panics if the float formatter produces malformed scientific notation.
 // Adapted from Terser's `get_minified_number`:
 // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
+pub fn with_number_literal<R>(value: f64, f: impl FnOnce(&str) -> R) -> R {
+    let literal = number_literal(value);
+    f(literal.as_str())
+}
+
 #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-pub fn with_number_literal<R>(num: f64, f: impl FnOnce(&str) -> R) -> R {
+fn number_literal(value: f64) -> LiteralString {
     let mut buffer = dragonbox_ecma::Buffer::new();
-    if num < 1000.0 && num.fract() == 0.0 {
-        return f(buffer.format(num));
+    if value < 1000.0 && value.fract() == 0.0 {
+        return LiteralString::from_str(buffer.format(value));
     }
 
-    let mut s = buffer.format(num);
-
-    if s.starts_with("0.") {
-        s = &s[1..];
+    let formatted = buffer.format(value);
+    let mut best_candidate = LiteralString::new();
+    for (index, byte) in formatted.bytes().enumerate() {
+        if (index == 0 && byte == b'0' && formatted.as_bytes().get(1) == Some(&b'.'))
+            || (index > 0 && byte == b'+' && formatted.as_bytes()[index - 1] == b'e')
+        {
+            continue;
+        }
+        best_candidate.push(byte);
     }
 
-    let mut best_candidate = s.cow_replacen("e+", "e", 1);
     let mut is_hex = false;
-
-    // Track the best candidate found so far
-    if num.fract() == 0.0 {
-        // For integers, check hex format and other optimizations
-        let hex_candidate = format!("0x{:x}", num as u128);
-        if hex_candidate.len() < best_candidate.len() {
+    if value.fract() == 0.0 {
+        let integer = value as u128;
+        let hex_digits = (128 - integer.leading_zeros() as usize).div_ceil(4);
+        let hex_len = 2 + hex_digits;
+        if hex_len < best_candidate.len_usize() {
+            let mut candidate = LiteralString::new();
+            candidate.push(b'0');
+            candidate.push(b'x');
+            push_hex(integer, &mut candidate);
+            best_candidate = candidate;
             is_hex = true;
-            best_candidate = hex_candidate.into();
         }
-    }
-    // Check for scientific notation optimizations for numbers starting with ".0"
-    else if best_candidate.starts_with(".0") {
-        // Skip the first '0' since we know it's there from the starts_with check
-        if let Some(i) = best_candidate.bytes().skip(2).position(|c| c != b'0') {
-            let len = i + 2; // `+2` to include the dot and first zero.
-            let digits = &best_candidate[len..];
-            let exp = digits.len() + len - 1;
-            let exp_str_len = itoa::Buffer::new().format(exp).len();
-            // Calculate expected length: digits + 'e-' + exp_length
-            let expected_len = digits.len() + 2 + exp_str_len;
-            if expected_len < best_candidate.len() {
-                best_candidate = format!("{digits}e-{exp}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
+    } else if best_candidate.starts_with(".0")
+        && let Some(index) = best_candidate.bytes().skip(2).position(|byte| byte != b'0')
+    {
+        let digits_start = index + 2;
+        let digits = &best_candidate[digits_start..];
+        let exponent = digits.len() + digits_start - 1;
+        let mut exponent_buffer = itoa::Buffer::new();
+        let exponent = exponent_buffer.format(exponent);
+        let expected_len = digits.len() + 2 + exponent.len();
+        if expected_len < best_candidate.len_usize() {
+            let mut candidate = LiteralString::new();
+            for byte in digits.bytes().chain(b"e-".iter().copied()).chain(exponent.bytes()) {
+                candidate.push(byte);
             }
+            best_candidate = candidate;
         }
     }
 
-    // Check for numbers ending with zeros (but not hex numbers)
-    // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
-    // from being incorrectly converted to scientific notation
     if !is_hex
         && best_candidate.ends_with('0')
-        && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
+        && let Some(exponent) = best_candidate.bytes().rev().position(|byte| byte != b'0')
     {
-        let base = &best_candidate[0..best_candidate.len() - len];
-        let exp_str_len = itoa::Buffer::new().format(len).len();
-        // Calculate expected length: base + 'e' + len
-        let expected_len = base.len() + 1 + exp_str_len;
-        if expected_len < best_candidate.len() {
-            best_candidate = format!("{base}e{len}").into();
-            debug_assert_eq!(best_candidate.len(), expected_len);
+        let base_len = best_candidate.len_usize() - exponent;
+        let mut exponent_buffer = itoa::Buffer::new();
+        let exponent = exponent_buffer.format(exponent);
+        let expected_len = base_len + 1 + exponent.len();
+        if expected_len < best_candidate.len_usize() {
+            let mut candidate = LiteralString::new();
+            for byte in best_candidate.as_bytes()[..base_len]
+                .iter()
+                .copied()
+                .chain(std::iter::once(b'e'))
+                .chain(exponent.bytes())
+            {
+                candidate.push(byte);
+            }
+            best_candidate = candidate;
         }
     }
 
-    // Check for scientific notation optimization: `1.2e101` -> `12e100`
     if let Some((integer, point, exponent)) =
-        best_candidate.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+        best_candidate.split_once('.').and_then(|(integer, rest)| {
+            rest.split_once('e').map(|(point, exponent)| (integer, point, exponent))
+        })
+        && let Ok(exponent) = exponent.parse::<isize>()
     {
-        let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
-        let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
-        // Calculate expected length: integer + point + 'e' + new_exp_str_len
-        let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
-        if expected_len < best_candidate.len() {
-            best_candidate = format!("{integer}{point}e{new_expr}").into();
-            debug_assert_eq!(best_candidate.len(), expected_len);
+        let exponent = exponent - point.len() as isize;
+        let mut exponent_buffer = itoa::Buffer::new();
+        let exponent = exponent_buffer.format(exponent);
+        let expected_len = integer.len() + point.len() + 1 + exponent.len();
+        if expected_len < best_candidate.len_usize() {
+            let mut candidate = LiteralString::new();
+            for byte in integer
+                .bytes()
+                .chain(point.bytes())
+                .chain(std::iter::once(b'e'))
+                .chain(exponent.bytes())
+            {
+                candidate.push(byte);
+            }
+            best_candidate = candidate;
         }
     }
 
-    f(&best_candidate)
+    best_candidate
+}
+
+fn push_hex(mut value: u128, output: &mut LiteralString) {
+    let mut digits = [0; 32];
+    let mut len = 0;
+    loop {
+        let digit = (value & 0xf) as u8;
+        digits[len] = if digit < 10 { b'0' + digit } else { b'a' + digit - 10 };
+        len += 1;
+        value >>= 4;
+        if value == 0 {
+            break;
+        }
+    }
+    for byte in digits[..len].iter().rev() {
+        output.push(*byte);
+    }
 }
 
 #[cfg(test)]

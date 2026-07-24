@@ -2001,6 +2001,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_compat",
+ "oxc_data_structures",
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
