@@ -77,17 +77,13 @@ pub fn punct1_hash(c: u8) -> u8 {
     if h < 16 { PH_T0[h as usize] } else { PH_T1[(h & 15) as usize] }
 }
 
-/// One 64-byte cache line per `st`-mask byte for `compress`: the 8
-/// left-packed set-bit positions as u32 lanes, then the same as a 16-byte
-/// pshufb control. Fused so each mask byte touches one line, not two tables.
 #[repr(C, align(64))]
-pub struct CompressRow {
-    pub lanes: [u32; 8],
-    pub bytes: [u8; 16],
-    pad: [u8; 16],
+pub struct PairLuts {
+    pub lut0z: [[u8; 8]; 256],
+    pub lutpad: [[u8; 32]; 256],
 }
 
-const _: () = assert!(core::mem::size_of::<CompressRow>() == 64);
+const _: () = assert!(core::mem::size_of::<[[u8; 8]; 256]>() % 64 == 0);
 
 pub struct Tables {
     pub op: OpMap,
@@ -101,7 +97,7 @@ pub struct Tables {
     pub wb_hi: [u8; 16],
     pub op2_pack: [u32; 256],
     pub op3_pack: [u64; 256],
-    pub comp_lut: [CompressRow; 256],
+    pub pair_luts: PairLuts,
 }
 
 impl Tables {
@@ -123,12 +119,12 @@ impl Tables {
             wb_hi: [0; 16],
             op2_pack: [0; 256],
             op3_pack: [0; 256],
-            comp_lut: [const { CompressRow { lanes: [0; 8], bytes: [0; 16], pad: [0; 16] } }; 256],
+            pair_luts: PairLuts { lut0z: [[0; 8]; 256], lutpad: [[0; 32]; 256] },
         };
         t.build_regex_kw_mask();
         t.build_op_pack();
         t.build_merged_luts();
-        t.build_lane_lut();
+        t.build_pair_luts();
         kwinit_selfcheck();
         opch_selfcheck();
         t.merged_selfcheck();
@@ -258,22 +254,18 @@ impl Tables {
         }
     }
 
-    fn build_lane_lut(&mut self) {
+    fn build_pair_luts(&mut self) {
         for m in 0..256usize {
-            let row = &mut self.comp_lut[m];
             let mut k = 0usize;
             for bit in 0..8usize {
                 if (m >> bit) & 1 != 0 {
-                    row.lanes[k] = bit as u32;
-                    row.bytes[k] = bit as u8;
+                    self.pair_luts.lut0z[m][k] = bit as u8;
+                    self.pair_luts.lutpad[m][8 + k] = (bit + 8) as u8;
                     k += 1;
                 }
             }
             for j in k..8 {
-                row.lanes[j] = 0;
-            }
-            for j in k..16 {
-                row.bytes[j] = 0x80;
+                self.pair_luts.lutpad[m][8 + j] = 0x80;
             }
         }
     }
