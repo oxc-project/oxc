@@ -122,7 +122,7 @@ eslint/no-shadow-restricted-names                          |      7
 eslint/no-sparse-arrays                                    |   4115
 eslint/no-template-curly-in-string                         |  62460
 eslint/no-ternary                                          |   4722
-eslint/no-this-before-super                                |      5
+eslint/no-this-before-super                                |      4
 eslint/no-throw-literal                                    |    224
 eslint/no-unassigned-vars                                  |  37499
 eslint/no-undef                                            |      7
