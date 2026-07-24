@@ -29,17 +29,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Panics if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
-        let ptr = self.alloc_layout_shared(layout, || self.alloc_layout_slow(layout));
-
-        // SAFETY: The `on_fail` closure is `alloc_layout_slow`, which always returns `Some` -
-        // it allocates a new chunk and only returns on success, otherwise panics via `oom()`.
-        // The fast path also returns `Some` on success, so `alloc_layout_shared` never returns `None` here.
-        let ptr = unsafe { ptr.unwrap_unchecked() };
-
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        self.stats.record_allocation();
-
-        ptr
+        // `COMMIT: true` so that `cursor_ptr` is updated
+        self.alloc_layout_impl::<true>(layout)
     }
 
     /// Attempt to allocate space for an object with the given `Layout`.
@@ -53,7 +44,40 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Errors if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn try_alloc_layout(&self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
-        let res = self.alloc_layout_shared(layout, || self.try_alloc_layout_slow(layout));
+        // `COMMIT: true` so that `cursor_ptr` is updated
+        self.try_alloc_layout_impl::<true>(layout)
+    }
+
+    /// Implementation of [`Arena::alloc_layout`].
+    ///
+    /// Only commits `cursor_ptr` on the fast path if `COMMIT == true`.
+    #[inline(always)]
+    pub(super) fn alloc_layout_impl<const COMMIT: bool>(&self, layout: Layout) -> NonNull<u8> {
+        let ptr = self.alloc_layout_shared::<COMMIT, _>(layout, || self.alloc_layout_slow(layout));
+
+        // SAFETY: The `on_fail` closure is `alloc_layout_slow`, which always returns `Some`
+        // (it allocates a new chunk and only returns on success, otherwise panics via `oom()`).
+        // The fast path also returns `Some` on success, so `alloc_layout_shared` never returns `None` here,
+        // and `unwrap_unchecked` is sound. Using `unwrap_unchecked` (rather than `unwrap_or_else`)
+        // is what keeps the hot path to a single branch - see `alloc_layout_shared`.
+        let ptr = unsafe { ptr.unwrap_unchecked() };
+
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_allocation();
+
+        ptr
+    }
+
+    /// Implementation of [`Arena::try_alloc_layout`].
+    ///
+    /// Only commits `cursor_ptr` on the fast path if `COMMIT == true`.
+    #[inline(always)]
+    pub(super) fn try_alloc_layout_impl<const COMMIT: bool>(
+        &self,
+        layout: Layout,
+    ) -> Result<NonNull<u8>, AllocErr> {
+        let res =
+            self.alloc_layout_shared::<COMMIT, _>(layout, || self.try_alloc_layout_slow(layout));
 
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         if res.is_some() {
@@ -70,14 +94,15 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     // Only `pub(super)` to expose it for unit tests.
     #[inline(always)]
     pub(super) fn try_alloc_layout_fast(&self, layout: Layout) -> Option<NonNull<u8>> {
-        self.alloc_layout_shared(layout, || None)
+        // `COMMIT: true` so that `cursor_ptr` is updated
+        self.alloc_layout_shared::<true, _>(layout, || None)
     }
 
     /// Shared allocation core for every allocation method.
     ///
     /// Computes the pointer for `layout` within the current chunk.
     /// * On success:
-    ///   * Sets `cursor_ptr` to the new cursor pointer.
+    ///   * Commits `cursor_ptr` if `COMMIT == true`.
     ///   * Returns `Some(ptr)`.
     /// * If the current chunk cannot service the request:
     ///   * Returns `on_fail()` (the slow path for the public methods, or `|| None` for `try_alloc_layout_fast`).
@@ -87,7 +112,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// without the compiler emitting a redundant `Option::None` (null-niche) branch alongside the bounds check.
     /// That keeps the hot path to a single branch per allocation.
     #[inline(always)]
-    fn alloc_layout_shared<F: FnOnce() -> Option<NonNull<u8>>>(
+    fn alloc_layout_shared<const COMMIT: bool, F: FnOnce() -> Option<NonNull<u8>>>(
         &self,
         layout: Layout,
         on_fail: F,
@@ -329,8 +354,11 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // above would have wrapped around, and we already exited
         let new_ptr = unsafe { NonNull::new_unchecked(new_ptr) };
 
-        // Update cursor
-        self.cursor_ptr.set(new_ptr);
+        // Update cursor - unless the caller defers the commit until after writing the value
+        // (used by the by-value allocation paths - see `alloc_with_impl`).
+        if COMMIT {
+            self.cursor_ptr.set(new_ptr);
+        }
 
         // Return the pointer
         Some(new_ptr)
