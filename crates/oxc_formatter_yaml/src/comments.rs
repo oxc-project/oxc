@@ -57,6 +57,22 @@ impl<'a> Comments<'a> {
         let start = self.cursor.get();
         self.inner[start..].iter().copied().take_while(move |c| c.end <= upper_bound)
     }
+
+    /// The end of the most recently consumed comment (`None` before any).
+    pub fn last_consumed_end(&self) -> Option<u32> {
+        self.cursor.get().checked_sub(1).map(|i| self.inner[i].end)
+    }
+}
+
+/// `anchor`, moved past the most recently printed comment when that lies beyond it.
+///
+/// A nested container's end-comment flush consumes comments PAST the outer
+/// caller's anchor (a deeper-indented run belongs to the inner container),
+/// reproducing the vertical spacing in front of them as it prints.
+/// Gap measurement resuming from the unmoved anchor would observe that
+/// same spacing again and emit a second blank line.
+pub fn gap_anchor_after_consumed(anchor: u32, f: &YamlFormatter<'_, '_>) -> u32 {
+    f.context().comments().last_consumed_end().map_or(anchor, |end| anchor.max(end))
 }
 
 /// Vertical spacing implied by an inter-token source gap.
@@ -146,6 +162,7 @@ pub fn write_blank_preserving_break(
     upper_bound: u32,
     f: &mut YamlFormatter<'_, '_>,
 ) {
+    let prev_end = gap_anchor_after_consumed(prev_end, f);
     if prev_end < upper_bound
         && classify_gap(f.context().source_text().bytes_range(prev_end, upper_bound)) == Gap::Blank
     {
@@ -293,7 +310,7 @@ pub fn flush_container_end_comments(
 ) -> u32 {
     let source = f.context().source_text();
     let tab_width = f.options().indent_width.value();
-    let mut prev_end = prev_end;
+    let mut prev_end = gap_anchor_after_consumed(prev_end, f);
     loop {
         let Some(span) = f.context().comments().peek() else { return prev_end };
         if span.end > upper_bound

@@ -7,9 +7,9 @@ use oxc_yaml_parser::ast::{Directive, Document, Root};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, gap_upper_bound, is_suppressed_last_before,
-        write_blank_preserving_break, write_single_comment, write_suppressed_node,
-        write_trailing_same_line_comment,
+        Gap, classify_gap, flush_leading_comments, gap_anchor_after_consumed, gap_upper_bound,
+        is_suppressed_last_before, write_blank_preserving_break, write_single_comment,
+        write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{
         YamlFormatter,
@@ -37,7 +37,7 @@ pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool
         if should_print_document_end_marker(document, next) {
             if let Some(marker) = document.document_end_marker {
                 // The body's end comments, printed between it and the `...`
-                let anchor = document_gap_anchor(document, f);
+                let anchor = document_end_comment_anchor(document, f);
                 let comments = f.context().comments().take_before(marker.start);
                 write_end_comments(Some(anchor), comments, f);
             }
@@ -55,11 +55,18 @@ pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool
 
     // Comments after the last node: the last document's end comments
     // (or comments trailing its explicit `...` marker).
-    let anchor = documents.last().map(|document| document_gap_anchor(document, f));
+    let anchor = documents.last().map(|document| document_end_comment_anchor(document, f));
     let remaining = f.context().comments().take_remaining();
     write_end_comments(anchor, remaining, f);
 
     keep_chomped_tail
+}
+
+/// The end-comment gap anchor for `document`, clamped past comments an inner container already consumed.
+/// Must be taken BEFORE the end comments themselves are drained,
+/// that take advances the consumed cursor past them, corrupting the clamp.
+fn document_end_comment_anchor(document: &Document<'_>, f: &YamlFormatter<'_, '_>) -> u32 {
+    gap_anchor_after_consumed(document_gap_anchor(document, f), f)
 }
 
 /// The gap-measurement anchor after a document: its `...` marker,

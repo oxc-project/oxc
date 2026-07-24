@@ -193,7 +193,33 @@ fn block_value_line_contents<'s>(
         fold_lines(&stripped, prose_wrap)
     };
 
-    remove_unnecessary_trailing_newlines(block, content, is_last_descendant, lines)
+    let mut lines = remove_unnecessary_trailing_newlines(block, content, is_last_descendant, lines);
+    // Trailing spaces on the LAST content line are dropped (Prettier does the same);
+    // intermediate lines keep theirs, they are part of the value under every chomping mode.
+    // The printer's own end-of-line trimming only covers the no-trailing-blank case:
+    // a kept trailing blank run is emitted as raw `\n` text, which does not trim what precedes it.
+    if block.chomping != Chomping::Keep {
+        trim_trailing_spaces_of_last_content_line(&mut lines);
+    }
+    lines
+}
+
+/// Trims the trailing spaces/tabs of the last line holding non-whitespace content.
+/// Whitespace-only lines after it (a preserved trailing blank) are left as-is.
+fn trim_trailing_spaces_of_last_content_line(lines: &mut [Vec<Cow<'_, str>>]) {
+    let Some(words) = lines
+        .iter_mut()
+        .rev()
+        .find(|words| words.iter().any(|w| !w.trim_end_matches([' ', '\t']).is_empty()))
+    else {
+        return;
+    };
+    if let Some(last) = words.last_mut() {
+        match last {
+            Cow::Borrowed(word) => *last = Cow::Borrowed(word.trim_end_matches([' ', '\t'])),
+            Cow::Owned(word) => word.truncate(word.trim_end_matches([' ', '\t']).len()),
+        }
+    }
 }
 
 fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s, str>>> {
