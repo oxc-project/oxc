@@ -9,13 +9,15 @@ use tower_lsp_server::{
     jsonrpc::{Error, ErrorCode, Result},
     ls_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
-        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
-        DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
-        ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
+        DiagnosticServerCancellationData, DidChangeConfigurationParams,
+        DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidChangeWorkspaceFoldersParams,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+        DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportKind,
+        DocumentDiagnosticReportResult, DocumentFormattingParams, ExecuteCommandParams,
+        FullDocumentDiagnosticReport, InitializeParams, InitializeResult, InitializedParams,
+        MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
         TextDocumentContentChangeEvent, TextEdit, Uri, WorkspaceEdit,
+        error_codes::SERVER_CANCELLED,
     },
 };
 use tracing::{debug, error, info, warn};
@@ -25,7 +27,6 @@ use crate::{
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
-    worker::WorkspaceWorker,
     worker_manager::WorkerManager,
 };
 
@@ -74,7 +75,7 @@ pub struct Backend {
 impl LanguageServer for Backend {
     /// Initialize the language server with the given parameters.
     /// This method sets up workspace workers, capabilities, and starts the
-    /// [WorkspaceWorker]s if the client sent the configuration with initialization options.
+    /// [crate::worker::WorkspaceWorker]s if the client sent the configuration with initialization options.
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#initialize>
     #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
@@ -184,9 +185,9 @@ impl LanguageServer for Backend {
     }
 
     /// It registers dynamic capabilities like file watchers and formatting if the client supports it.
-    /// It also starts the [WorkspaceWorker]s if they did not start during initialization.
+    /// It also starts the [crate::worker::WorkspaceWorker]s if they did not start during initialization.
     /// If the client supports `workspace/configuration` request, it will request the configuration for each workspace folder
-    /// and start the [WorkspaceWorker]s with the received configuration.
+    /// and start the [crate::worker::WorkspaceWorker]s with the received configuration.
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#initialized>
     async fn initialized(&self, _params: InitializedParams) {
@@ -236,7 +237,7 @@ impl LanguageServer for Backend {
                     let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
                         continue;
                     };
-                    let document = self.file_system.get_document(uri);
+                    let document = self.file_system.get_document(uri.clone());
                     let diagnostics = worker.run_diagnostic(&document).await;
                     match diagnostics {
                         Err(err) => {
@@ -315,7 +316,7 @@ impl LanguageServer for Backend {
         Ok(())
     }
 
-    /// This method updates the configuration of each [WorkspaceWorker] and restarts them if necessary.
+    /// This method updates the configuration of each [crate::worker::WorkspaceWorker] and restarts them if necessary.
     /// It also manages dynamic registrations for file watchers and formatting based on the new configuration.
     /// It will remove/add dynamic registrations if the client supports it.
     /// As an example, if a workspace changes the configuration file path, the file watcher will be updated.
@@ -359,7 +360,7 @@ impl LanguageServer for Backend {
         {
             let configs = self
                 .request_workspace_configuration(
-                    workers.iter().map(WorkspaceWorker::get_root_uri).collect(),
+                    workers.iter().map(|worker| worker.get_root_uri()).collect(),
                 )
                 .await;
 
@@ -495,8 +496,8 @@ impl LanguageServer for Backend {
         }
     }
 
-    /// The server will start new [WorkspaceWorker]s for added workspace folders
-    /// and stop and remove [WorkspaceWorker]s for removed workspace folders including:
+    /// The server will start new [crate::worker::WorkspaceWorker]s for added workspace folders
+    /// and stop and remove [crate::worker::WorkspaceWorker]s for removed workspace folders including:
     /// - clearing diagnostics
     /// - unregistering file watchers
     ///
@@ -584,10 +585,29 @@ impl LanguageServer for Backend {
             let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
                 return;
             };
-            let document = self.file_system.get_document(&uri);
-            match worker.run_diagnostic_on_save(&document).await {
+            // Gate before entering the deduplicated path so the shared future always runs the
+            // full lint. On save this collapses with the plugin's Fix-All pull (same version).
+            if !worker.should_lint_on_save().await {
+                return;
+            }
+            let document_version = self.file_system.get_version(&uri);
+            let document = self.file_system.get_document(uri);
+            let document_uri = document.uri.clone();
+            let diagnostics = worker
+                .run_diagnostic_deduped(&document, document_version.unwrap_or_default())
+                .await;
+
+            if document_version != self.file_system.get_version(&document_uri) {
+                debug!(
+                    "document version changed while diagnostics were running, skipping diagnostics for {}",
+                    document_uri.as_str()
+                );
+                return;
+            }
+
+            match diagnostics {
                 Err(err) => {
-                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                    error!("running diagnostics for {} failed: {err}", document_uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
                         self.client.show_message(MessageType::ERROR, err).await;
                     }
@@ -613,11 +633,8 @@ impl LanguageServer for Backend {
             .next()
             .map(|c: TextDocumentContentChangeEvent| c.text)
         {
-            self.file_system.set(uri.clone(), content);
+            self.file_system.set_with_version(uri.clone(), params.text_document.version, content);
         }
-
-        let document = self.file_system.get_document(&uri);
-
         let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return;
         };
@@ -628,10 +645,20 @@ impl LanguageServer for Backend {
         // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
         worker.remove_uri_cache(&uri).await;
 
+        let document = self.file_system.get_document(uri);
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic_on_change(&document).await {
+            // Gate before the deduplicated path so the shared future always runs the full lint.
+            if !worker.should_lint_on_change().await {
+                return;
+            }
+            let document_uri = document.uri.clone();
+            let diagnostics =
+                worker.run_diagnostic_deduped(&document, params.text_document.version).await;
+
+            match diagnostics {
                 Err(err) => {
-                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                    error!("running diagnostics for {} failed: {err}", document_uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
                         self.client.show_message(MessageType::ERROR, err).await;
                     }
@@ -639,7 +666,7 @@ impl LanguageServer for Backend {
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
                         let version_map = ConcurrentHashMap::default();
-                        version_map.pin().insert(uri.clone(), params.text_document.version);
+                        version_map.pin().insert(document_uri, params.text_document.version);
                         self.publish_all_diagnostics(diagnostics, version_map).await;
                     }
                 }
@@ -651,7 +678,7 @@ impl LanguageServer for Backend {
     /// It will lint the file and send diagnostics, if necessary.
     ///
     /// In single file mode (no workspace was configured during initialize), a new
-    /// [WorkspaceWorker] is created dynamically using the file's parent directory as
+    /// [crate::worker::WorkspaceWorker] is created dynamically using the file's parent directory as
     /// the workspace root if no existing worker covers the URI.
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didOpen>
@@ -679,6 +706,7 @@ impl LanguageServer for Backend {
         self.file_system.set_with_language(
             uri.clone(),
             LanguageId::new(params.text_document.language_id),
+            params.text_document.version,
             content,
         );
 
@@ -687,11 +715,17 @@ impl LanguageServer for Backend {
                 return;
             };
 
-            let document = self.file_system.get_document(&uri);
+            let document_version = self.file_system.get_version(&uri);
+            let document = self.file_system.get_document(uri);
 
-            match worker.run_diagnostic(&document).await {
+            let document_uri = document.uri.clone();
+            let diagnostics = worker
+                .run_diagnostic_deduped(&document, document_version.unwrap_or_default())
+                .await;
+
+            match diagnostics {
                 Err(err) => {
-                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                    error!("running diagnostics for {} failed: {err}", document_uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
                         self.client.show_message(MessageType::ERROR, err).await;
                     }
@@ -699,7 +733,7 @@ impl LanguageServer for Backend {
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
                         let version_map = ConcurrentHashMap::default();
-                        version_map.pin().insert(uri, params.text_document.version);
+                        version_map.pin().insert(document_uri, params.text_document.version);
                         self.publish_all_diagnostics(diagnostics, version_map).await;
                     }
                 }
@@ -845,15 +879,31 @@ impl LanguageServer for Backend {
         &self,
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReportResult> {
-        let uri = &params.text_document.uri;
-        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
+        let uri = params.text_document.uri;
+        let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
                 RelatedFullDocumentDiagnosticReport::default(),
             )));
         };
+        let document_version = self.file_system.get_version(&uri);
+        let document = self.file_system.get_document(uri.clone());
 
-        let document = self.file_system.get_document(uri);
-        let diagnostics = worker.run_diagnostic(&document).await;
+        let diagnostics =
+            worker.run_diagnostic_deduped(&document, document_version.unwrap_or_default()).await;
+
+        if self.file_system.get_version(&uri) != document_version {
+            return Err(Error {
+                code: ErrorCode::ServerError(SERVER_CANCELLED),
+                message: Cow::Borrowed("document version changed while diagnostics were running"),
+                data: Some(
+                    // We expect that the client already requested a new diagnostics request, so we do not need to retrigger it.
+                    serde_json::to_value(DiagnosticServerCancellationData {
+                        retrigger_request: false,
+                    })
+                    .unwrap(),
+                ),
+            });
+        }
 
         let diagnostics = match diagnostics {
             Err(err) => {
@@ -869,12 +919,12 @@ impl LanguageServer for Backend {
 
         let uri_diagnostics = diagnostics
             .iter()
-            .filter(|(diag_uri, _)| diag_uri == uri)
+            .filter(|(diag_uri, _)| *diag_uri == uri)
             .flat_map(|(_, diags)| diags.clone())
             .collect::<Vec<_>>();
 
         let related_diagnostics =
-            diagnostics.into_iter().filter(|(diag_uri, _)| diag_uri != uri).collect::<Vec<_>>();
+            diagnostics.into_iter().filter(|(diag_uri, _)| *diag_uri != uri).collect::<Vec<_>>();
 
         Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
             RelatedFullDocumentDiagnosticReport {
@@ -910,8 +960,8 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting>
     async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
-        let uri = &params.text_document.uri;
-        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
+        let uri = params.text_document.uri;
+        let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return Ok(None);
         };
 
@@ -932,7 +982,7 @@ impl LanguageServer for Backend {
 
 impl Backend {
     /// Create a new Backend with the given client.
-    /// The Backend will manage multiple [WorkspaceWorker]s and their configurations.
+    /// The Backend will manage multiple [crate::worker::WorkspaceWorker]s and their configurations.
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
     pub fn new(client: Client, server_info: ServerInfo, worker_manager: WorkerManager) -> Self {
