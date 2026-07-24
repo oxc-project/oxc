@@ -260,7 +260,7 @@ fn test_handle_switch_statement() {
         "switch (b) { case 2: switch (a) { case 2: a();break;case 3: foo();break;}}",
         "if (b === 2) switch (a) { case 2: a();break;case 3: foo();}",
     ); // ;
-    test_same("b === 2 && a === 2 && foo();");
+    test("switch (b) { case 2: switch (a) { case 2: foo()}}", "b === 2 && a === 2 && foo();");
 
     // TODO: expected TDZ issue, when folding if without body https://github.com/oxc-project/oxc/issues/24589
     test(
