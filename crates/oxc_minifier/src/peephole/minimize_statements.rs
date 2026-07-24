@@ -732,13 +732,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        if case.consequent.is_empty() {
-            return true;
-        }
-
-        let mut break_finder = FindNestedBreak { found_unlabelled_break: false };
-        break_finder.visit_switch_case(case);
-        !break_finder.found_unlabelled_break
+        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
     }
 
     fn handle_switch_statement(
@@ -2136,8 +2130,17 @@ impl<'a> PeepholeOptimizations {
     }
 }
 
+#[derive(Default)]
 struct FindNestedBreak {
     found_unlabelled_break: bool,
+}
+
+impl FindNestedBreak {
+    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+        let mut visitor = Self::default();
+        visitor.visit_switch_case(node);
+        visitor.found_unlabelled_break
+    }
 }
 
 impl<'a> VisitJs<'a> for FindNestedBreak {
