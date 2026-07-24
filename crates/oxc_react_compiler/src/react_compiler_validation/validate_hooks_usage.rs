@@ -307,6 +307,28 @@ pub fn validate_hooks_usage(
                         visit_place(place, &value_kinds, &mut errors_by_span, env)?;
                     }
                 }
+                InstructionValue::TaggedTemplateExpression { tag, subexprs, .. } => {
+                    // A tagged template `tag`...`` invokes `tag` as a function,
+                    // so the tag is a call site (not a value reference). Mirror
+                    // the `CallExpression` handling for the callee.
+                    let callee_kind = get_kind_for_place(tag, &value_kinds, &env.identifiers);
+                    let is_hook_callee =
+                        callee_kind == Kind::KnownHook || callee_kind == Kind::PotentialHook;
+                    if is_hook_callee && !unconditional_blocks.contains(&block.id) {
+                        record_conditional_hook_error(
+                            tag,
+                            &mut value_kinds,
+                            &mut errors_by_span,
+                            env,
+                        )?;
+                    } else if callee_kind == Kind::PotentialHook {
+                        record_dynamic_hook_usage_error(tag, &mut errors_by_span, env)?;
+                    }
+                    // Visit all subexpression operands (not the tag).
+                    for subexpr in subexprs {
+                        visit_place(subexpr, &value_kinds, &mut errors_by_span, env)?;
+                    }
+                }
                 InstructionValue::Destructure { lvalue, value, .. } => {
                     visit_place(value, &value_kinds, &mut errors_by_span, env)?;
                     let object_kind = get_kind_for_place(value, &value_kinds, &env.identifiers);
