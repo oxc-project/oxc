@@ -199,6 +199,7 @@ struct TestServer {
     req_stream: DuplexStream,
     res_stream: DuplexStream,
     responses: VecDeque<String>,
+    response_buffer: Vec<u8>,
 }
 
 impl TestServer {
@@ -226,29 +227,58 @@ impl TestServer {
 
         tokio::spawn(Server::new(req_server, res_server, socket).serve(service));
 
-        Self { req_stream: req_client, res_stream: res_client, responses: VecDeque::new() }
+        Self {
+            req_stream: req_client,
+            res_stream: res_client,
+            responses: VecDeque::new(),
+            response_buffer: Vec::new(),
+        }
     }
 
     fn encode(payload: &str) -> String {
         format!("Content-Length: {}\r\n\r\n{}", payload.len(), payload)
     }
 
-    fn decode(text: &str) -> Vec<String> {
+    fn decode(buffer: &mut Vec<u8>) -> Vec<String> {
         let mut ret = Vec::new();
-        let mut temp = text;
 
-        while !temp.is_empty() {
-            let p = temp.find("\r\n\r\n").unwrap();
-            let (header, body) = temp.split_at(p + 4);
+        while !buffer.is_empty() {
+            let Some(p) = buffer.windows(4).position(|window| window == b"\r\n\r\n") else {
+                break;
+            };
+
+            let header = std::str::from_utf8(&buffer[..p + 4]).unwrap();
             let len =
                 header.strip_prefix("Content-Length: ").unwrap().strip_suffix("\r\n\r\n").unwrap();
             let len: usize = len.parse().unwrap();
-            let (body, rest) = body.split_at(len);
-            ret.push(body.to_string());
-            temp = rest;
+            let body_start = p + 4;
+            let body_end = body_start + len;
+            if buffer.len() < body_end {
+                break;
+            }
+
+            let body = String::from_utf8(buffer[body_start..body_end].to_vec()).unwrap();
+            ret.push(body);
+            buffer.drain(..body_end);
         }
 
         ret
+    }
+
+    async fn read_more_messages(&mut self) {
+        let mut buf = vec![0; 1024];
+        let n = self.res_stream.read(&mut buf).await.unwrap();
+        assert_ne!(n, 0);
+        self.response_buffer.extend_from_slice(&buf[..n]);
+        for x in Self::decode(&mut self.response_buffer) {
+            self.responses.push_front(x);
+        }
+    }
+
+    async fn read_until_message(&mut self) {
+        while self.responses.is_empty() {
+            self.read_more_messages().await;
+        }
     }
 
     async fn send_request(&mut self, req: Request) {
@@ -272,48 +302,27 @@ impl TestServer {
 
     async fn recv_response(&mut self) -> Response {
         if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+            self.read_until_message().await;
         }
         let res = self.responses.pop_back().unwrap();
         serde_json::from_str(&res).unwrap()
     }
 
     async fn recv_notification(&mut self) -> Request {
-        if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
-        }
-        let res = self.responses.pop_back().unwrap();
-        // If the next payload is a response (no `method`), keep it queued for recv_response
-        // and attempt to return the next available notification without looping.
-        let val: serde_json::Value = serde_json::from_str(&res).unwrap();
-        if val.get("method").is_some() {
-            serde_json::from_value(val).unwrap()
-        } else {
-            // Put back the response for recv_response to consume
-            self.responses.push_front(res);
-            // If another message is already queued, return it
-            if let Some(next) = self.responses.pop_back() {
-                return serde_json::from_str(&next).unwrap();
-            }
-            // Otherwise perform a single read to fetch the notification
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+        let mut skipped_responses = Vec::new();
+        loop {
+            self.read_until_message().await;
+
             let res = self.responses.pop_back().unwrap();
-            serde_json::from_str(&res).unwrap()
+            let val: serde_json::Value = serde_json::from_str(&res).unwrap();
+            if val.get("method").is_some() {
+                for response in skipped_responses.into_iter().rev() {
+                    self.responses.push_back(response);
+                }
+                return serde_json::from_value(val).unwrap();
+            }
+
+            skipped_responses.push(res);
         }
     }
 
