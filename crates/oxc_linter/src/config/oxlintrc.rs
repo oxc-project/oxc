@@ -276,10 +276,23 @@ pub struct Oxlintrc {
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
-    /// Globs to ignore during linting. Patterns use gitignore-style matching,
-    /// rooted at the directory containing the configuration file.
-    /// Files outside that directory cannot be matched; patterns containing `..`
-    /// are rejected as a configuration error.
+    /// Globs to ignore during linting.
+    ///
+    /// Patterns use **gitignore-style** matching (not `fast-glob`), rooted at the
+    /// directory containing the configuration file. Prefer this field over a separate
+    /// ignore file so IDE integrations and the CLI share the same ignores.
+    ///
+    /// Files outside the config directory cannot be matched; patterns containing `..`
+    /// are rejected as a configuration error. Negation with `!` is supported.
+    ///
+    /// ## Examples
+    ///
+    /// ```json
+    /// ["dist/**", "coverage/**", "vendor/**", "**/__snapshots__/**"]
+    /// ["build/**/*", "!build/keep.js"]
+    /// ```
+    ///
+    /// See also the [Ignore files](https://oxc.rs/docs/guide/usage/linter/ignore-files.html) guide.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
     /// Paths of configuration files that this configuration file extends (inherits from). The files
