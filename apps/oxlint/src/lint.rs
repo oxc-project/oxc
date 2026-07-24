@@ -543,14 +543,6 @@ impl CliRunner {
             }
             Err(err) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
-                // Regular (non-type-aware) diagnostics were already queued on
-                // `tx_error` before the type-aware linter failed above (e.g. a
-                // crash in the vendored `tsgolint` subprocess). Drain and report
-                // them here instead of dropping `diagnostic_service` unread,
-                // which would silently discard every already-computed lint
-                // result for the whole run.
-                drop(tx_error);
-                diagnostic_service.run(stdout);
                 return CliRunResult::TsGoLintError;
             }
         }
