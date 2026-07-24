@@ -18,3 +18,8 @@ scalar doc
 literal: |
   text
 # no blank is invented between a block scalar and this comment
+---
+last: value # trailing
+
+# one blank stays one; Prettier doubles it when the final item
+# has a trailing comment (the prettier#9130 shape, still alive there)

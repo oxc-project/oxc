@@ -2,9 +2,10 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# An own-line comment after an item whose LAST DESCENDANT (not direct content)
-# is a block scalar must lead the next item — never be absorbed into the
-# scalar's content as a same-line comment (that would change the parsed value).
+# An own-line comment after an item ending in a block scalar must never be
+# absorbed into the scalar's content as a same-line comment (that would change
+# the parsed value). At the item's own column it leads the next item;
+# a deeper one becomes a container end comment (see end-comment-align/).
 steps:
   - restore-keys: |
       store-
@@ -20,9 +21,10 @@ after: 1
 ------------------
 { printWidth: 80 }
 ------------------
-# An own-line comment after an item whose LAST DESCENDANT (not direct content)
-# is a block scalar must lead the next item — never be absorbed into the
-# scalar's content as a same-line comment (that would change the parsed value).
+# An own-line comment after an item ending in a block scalar must never be
+# absorbed into the scalar's content as a same-line comment (that would change
+# the parsed value). At the item's own column it leads the next item;
+# a deeper one becomes a container end comment (see end-comment-align/).
 steps:
   - restore-keys: |
       store-
@@ -37,9 +39,10 @@ after: 1
 -------------------
 { printWidth: 100 }
 -------------------
-# An own-line comment after an item whose LAST DESCENDANT (not direct content)
-# is a block scalar must lead the next item — never be absorbed into the
-# scalar's content as a same-line comment (that would change the parsed value).
+# An own-line comment after an item ending in a block scalar must never be
+# absorbed into the scalar's content as a same-line comment (that would change
+# the parsed value). At the item's own column it leads the next item;
+# a deeper one becomes a container end comment (see end-comment-align/).
 steps:
   - restore-keys: |
       store-

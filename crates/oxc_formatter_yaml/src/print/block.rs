@@ -377,8 +377,11 @@ pub fn last_descendant_end(root: &Root<'_>) -> u32 {
 /// a block scalar's span consumes its trailing line breaks (they are part of its VALUE under keep chomping),
 /// so blank-line detection must start after the last content character,
 /// otherwise the blank line separating it from the next item is invisible.
-pub fn item_gap_anchor(content: Option<&Node<'_>>, end: u32, f: &YamlFormatter<'_, '_>) -> u32 {
-    let Some(block) = content.and_then(last_descendant_block_scalar) else {
+///
+/// `block` is the item's resolved [`last_descendant_block_scalar`];
+/// callers that need the walk's result themselves pass it in instead of paying for it twice.
+pub fn item_gap_anchor(block: Option<&BlockScalar>, end: u32, f: &YamlFormatter<'_, '_>) -> u32 {
+    let Some(block) = block else {
         return end;
     };
     // Under keep chomping every trailing newline IS the value; the span end is the correct anchor
