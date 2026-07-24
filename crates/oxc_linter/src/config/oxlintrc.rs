@@ -410,9 +410,19 @@ impl Oxlintrc {
             .map(|rule| (**rule).clone())
             .collect::<Vec<_>>();
 
-        let settings = self.settings.clone();
-        let env = self.env.clone();
-        let globals = self.globals.clone();
+        // Merge `settings`, `env`, and `globals` from both configs. `self` (the extending
+        // config) overrides `other` (the extended base) on any conflicting keys. Previously
+        // these were cloned from `self` only, which silently dropped values declared in the
+        // parent — inconsistent with `rules`, `plugins`, `overrides`, and `categories`,
+        // which all combine both sides.
+        let mut settings = other.settings.clone();
+        self.settings.override_settings(&mut settings);
+
+        let mut env = other.env.clone();
+        self.env.override_envs(&mut env);
+
+        let mut globals = other.globals.clone();
+        self.globals.override_globals(&mut globals);
 
         let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
@@ -818,6 +828,85 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"jsPlugins": ["./plugin2.ts"]}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.external_plugins.unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_oxlintrc_settings_merge() {
+        // Base config declares a plugin's settings; extending config has no `settings` block.
+        // The base settings should survive the merge (previously dropped).
+        let extending: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        let base: Oxlintrc = serde_json::from_str(
+            r#"{"settings": {"tailwindcss": {"entryPoint": "./styles/tailwind.css"}}}"#,
+        )
+        .unwrap();
+        let merged = extending.merge(base);
+        let tw = merged.settings.json.as_ref().and_then(|j| j.get("tailwindcss"));
+        assert_eq!(
+            tw.and_then(|t| t.get("entryPoint")).and_then(|e| e.as_str()),
+            Some("./styles/tailwind.css"),
+            "base config's settings.tailwindcss.entryPoint should survive the merge",
+        );
+
+        // Extending config's settings win on conflicts, base's other keys survive.
+        let extending: Oxlintrc = serde_json::from_str(
+            r#"{"settings": {"tailwindcss": {"entryPoint": "./child.css"}}}"#,
+        )
+        .unwrap();
+        let base: Oxlintrc = serde_json::from_str(
+            r#"{"settings": {"tailwindcss": {"entryPoint": "./parent.css", "timeout": 1000}}}"#,
+        )
+        .unwrap();
+        let merged = extending.merge(base);
+        let tw = merged.settings.json.as_ref().and_then(|j| j.get("tailwindcss")).unwrap();
+        assert_eq!(
+            tw.get("entryPoint").and_then(|e| e.as_str()),
+            Some("./child.css"),
+            "extending config's entryPoint should win over base's",
+        );
+        assert_eq!(
+            tw.get("timeout").and_then(|t| t.as_u64()),
+            Some(1000),
+            "base config's `timeout` should survive since the extending config didn't set it",
+        );
+    }
+
+    #[test]
+    fn test_oxlintrc_env_merge() {
+        // Base declares an env; extending has none. Base env should survive.
+        let extending: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        let base: Oxlintrc = serde_json::from_str(r#"{"env": {"browser": true}}"#).unwrap();
+        let merged = extending.merge(base);
+        assert!(merged.env.contains("browser"));
+
+        // Extending overrides base for the same key, other keys survive.
+        let extending: Oxlintrc =
+            serde_json::from_str(r#"{"env": {"browser": false}}"#).unwrap();
+        let base: Oxlintrc =
+            serde_json::from_str(r#"{"env": {"browser": true, "node": true}}"#).unwrap();
+        let merged = extending.merge(base);
+        assert!(!merged.env.contains("browser"));
+        assert!(merged.env.contains("node"));
+    }
+
+    #[test]
+    fn test_oxlintrc_globals_merge() {
+        // Base declares a global; extending has none. Base global should survive.
+        let extending: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        let base: Oxlintrc =
+            serde_json::from_str(r#"{"globals": {"MY_GLOBAL": "readonly"}}"#).unwrap();
+        let merged = extending.merge(base);
+        assert!(merged.globals.is_enabled("MY_GLOBAL"));
+
+        // Extending overrides base for the same key, other keys survive.
+        let extending: Oxlintrc =
+            serde_json::from_str(r#"{"globals": {"MY_GLOBAL": "off"}}"#).unwrap();
+        let base: Oxlintrc = serde_json::from_str(
+            r#"{"globals": {"MY_GLOBAL": "readonly", "OTHER": "writable"}}"#,
+        )
+        .unwrap();
+        let merged = extending.merge(base);
+        assert!(!merged.globals.is_enabled("MY_GLOBAL"));
+        assert!(merged.globals.is_enabled("OTHER"));
     }
 
     #[test]
