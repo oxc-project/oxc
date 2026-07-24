@@ -369,6 +369,7 @@ oxc/bad-array-method-on-arguments                          |  94090
 oxc/bad-bitwise-operator                                   |  33609
 oxc/bad-char-at-comparison                                 |  62606
 oxc/bad-comparison-sequence                                |  20604
+oxc/bad-match-all-arg                                      |  62606
 oxc/bad-min-max-func                                       |  62606
 oxc/bad-object-literal-comparison                          |  20604
 oxc/bad-replace-all-arg                                    |  62606

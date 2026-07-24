@@ -26,7 +26,7 @@ working directory: fixtures/cli/tsgolint
   help: Consider using this expression or removing it
 
 Found 1 warning and 1 error.
-Finished in <variable>ms on 1 file with 110 rules using 1 threads.
+Finished in <variable>ms on 1 file with 111 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
