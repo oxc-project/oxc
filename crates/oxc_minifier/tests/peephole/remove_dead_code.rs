@@ -87,6 +87,15 @@ fn test_fold_useless_for() {
 
     test("for (foo = bar; false;) {}", "for (foo = bar; !1;);");
     // test("l1:for(;false;) {  }", "");
+
+    // A `let`/`const` for-init runs exactly once before the `false` test; its side effects must
+    // be preserved. The binding is block-scoped to the (dead) loop and cannot be hoisted out
+    // like `var`, so keep the whole loop rather than dropping the initializer.
+    test("for (let i = foo(); false;) {}", "for (let i = foo(); !1;);");
+    test("for (let i = 0, j = bar(); false;) {}", "for (let i = 0, j = bar(); !1;);");
+    // A pure `let`/`const` init has no side effects to keep, so the loop is still dropped.
+    test("for (let i = 0; false;) {}", "");
+    test("for (const a = 1; false;) {}", "");
 }
 
 #[test]
