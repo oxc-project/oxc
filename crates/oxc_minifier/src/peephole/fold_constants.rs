@@ -4,6 +4,7 @@ use oxc_ecmascript::{
     GlobalContext, ToJsString,
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
+    with_number_literal,
 };
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
@@ -345,26 +346,38 @@ impl<'a> PeepholeOptimizations {
                                 && (left.abs() as usize) <= 0xFFFF_FFFF
                                 && (right.abs() as usize) <= 0xFFFF_FFFF)
                     })
+                    .filter(|(left, right)| {
+                        Self::folded_numeric_expression_is_shorter(e, left - right) != Some(false)
+                    })
                     .and_then(|_| ctx.eval_binary(e))
             }
             BinaryOperator::Multiplication
             | BinaryOperator::Exponential
-            | BinaryOperator::Remainder => Self::extract_numeric_values(e, ctx)
-                .filter(|(left, right)| {
-                    *left == 0.0
-                        || left.is_nan()
-                        || left.is_infinite()
-                        || *right == 0.0
-                        || right.is_nan()
-                        || right.is_infinite()
-                        // Small number multiplication.
-                        || (e.operator == BinaryOperator::Multiplication
-                            && left.abs() <= 255.0
-                            && left.fract() == 0.0
-                            && right.abs() <= 255.0
-                            && right.fract() == 0.0)
+            | BinaryOperator::Remainder => {
+                let shorter_multiplication = if e.operator == BinaryOperator::Multiplication {
+                    Self::try_fold_shorter_numeric_expression(e, ctx)
+                } else {
+                    None
+                };
+                shorter_multiplication.or_else(|| {
+                    Self::extract_numeric_values(e, ctx)
+                        .filter(|(left, right)| {
+                            *left == 0.0
+                                || left.is_nan()
+                                || left.is_infinite()
+                                || *right == 0.0
+                                || right.is_nan()
+                                || right.is_infinite()
+                                // Small number multiplication.
+                                || (e.operator == BinaryOperator::Multiplication
+                                    && left.abs() <= 255.0
+                                    && left.fract() == 0.0
+                                    && right.abs() <= 255.0
+                                    && right.fract() == 0.0)
+                        })
+                        .and_then(|_| ctx.eval_binary(e))
                 })
-                .and_then(|_| ctx.eval_binary(e)),
+            }
             BinaryOperator::Division => Self::extract_numeric_values(e, ctx)
                 .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
                 .and_then(|_| ctx.eval_binary(e)),
@@ -412,11 +425,72 @@ impl<'a> PeepholeOptimizations {
         count
     }
 
+    /// Lower bound for the minified size of a numeric expression. Parentheses are deliberately
+    /// omitted, so accepting a fold based on this count cannot make the output longer.
+    fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
+        match expr.get_inner_expression() {
+            Expression::NumericLiteral(lit) => Self::number_literal_source_len(lit.value),
+            Expression::UnaryExpression(e)
+                if matches!(
+                    e.operator,
+                    UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus
+                ) =>
+            {
+                Some(1 + Self::numeric_expression_size_lower_bound(&e.argument)?)
+            }
+            Expression::BinaryExpression(e)
+                if matches!(
+                    e.operator,
+                    BinaryOperator::Addition
+                        | BinaryOperator::Subtraction
+                        | BinaryOperator::Multiplication
+                        | BinaryOperator::Division
+                        | BinaryOperator::Remainder
+                        | BinaryOperator::Exponential
+                ) =>
+            {
+                Some(
+                    Self::numeric_expression_size_lower_bound(&e.left)?
+                        + e.operator.as_str().len()
+                        + Self::numeric_expression_size_lower_bound(&e.right)?,
+                )
+            }
+            _ => None,
+        }
+    }
+
+    fn number_literal_source_len(value: f64) -> Option<usize> {
+        value.is_finite().then(|| {
+            usize::from(value.is_sign_negative()) + with_number_literal(value.abs(), str::len)
+        })
+    }
+
+    fn try_fold_shorter_numeric_expression(
+        e: &BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let result = e.evaluate_value(ctx)?.into_number()?;
+        Self::folded_numeric_expression_is_shorter(e, result)?
+            .then(|| ctx.value_to_expr(e.span, ConstantValue::Number(result)))
+    }
+
+    fn folded_numeric_expression_is_shorter(e: &BinaryExpression<'a>, result: f64) -> Option<bool> {
+        let original_len = Self::numeric_expression_size_lower_bound(&e.left)?
+            + e.operator.as_str().len()
+            + Self::numeric_expression_size_lower_bound(&e.right)?;
+        Some(Self::number_literal_source_len(result)? <= original_len)
+    }
+
     // Simplified version of `tryFoldAdd` from closure compiler.
     fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
+            if let ConstantValue::Number(result) = &v
+                && Self::folded_numeric_expression_is_shorter(e, *result) == Some(false)
+            {
+                return None;
+            }
             return Some(ctx.value_to_expr(e.span, v));
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
