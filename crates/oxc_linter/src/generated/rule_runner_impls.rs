@@ -2274,7 +2274,6 @@ impl RuleRunner for crate::rules::jest::no_confusing_set_timeout::NoConfusingSet
 impl RuleRunner for crate::rules::jest::no_deprecated_functions::NoDeprecatedFunctions {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ComputedMemberExpression,
-        AstType::PrivateFieldExpression,
         AstType::StaticMemberExpression,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
