@@ -76,6 +76,7 @@ pub enum FragmentContext {
 ///
 /// # Errors
 /// Returns the first parse error as an [`OxcDiagnostic`].
+/// For now, any parse diagnostic is an error, even when the parser could recover.
 pub fn format<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -218,6 +219,12 @@ pub fn parse_for_format<'a>(
 }
 
 /// Parse `source_text` and promote the `Program` to the arena lifetime.
+///
+/// NOTE: Reject ANY parse diagnostic, not only `panicked`: we format valid code only, by design.
+/// A recovered AST may be an unfaithful "fix" of the source
+/// (e.g. invalid modifiers are reported but not all of them are representable),
+/// so formatting it can silently rewrite what the user wrote.
+/// Prettier instead formats invalid inputs through parser recovery, which also hides the error from the user;
 fn parse<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,

@@ -103,10 +103,14 @@ pub const IGNORE_TESTS: &[&str] = &[
     "range",
     // IDE cursor
     "cursor",
-    // Invalid
+    // Invalid (some of them are recoverable, though)
     "js/call/invalid",
-    // Trailing comma after rest element: typescript-eslint recovers and formats, our parser fatals
+    // Trailing comma after rest element
     "typescript/trailing-comma/invalid.ts",
+    // Invalid modifier combos (`readonly accessor`, optional accessor, ambient initializer)
+    "typescript/decorator-auto-accessors/decorator-auto-accessors-abstract-class.ts",
+    "typescript/decorator-auto-accessors/decorator-auto-accessors-declare-class.ts",
+    "typescript/decorator-auto-accessors/decorator-auto-accessors-mixed-modifiers.ts",
     // Ambiguous await
     "js/top-level-await",
     "jsx/top-level-await",
