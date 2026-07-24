@@ -240,6 +240,24 @@ const categories: Category[] = [
     notes: {},
   },
   {
+    name: "yaml",
+    sources: [
+      { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yaml" },
+      { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yml" },
+      { dir: join(EXTERNALS_DIR, "gitlab-ci-templates"), ext: ".yml" },
+      { dir: join(EXTERNALS_DIR, "gitlab"), ext: ".yml" },
+    ],
+    optionSets: [
+      { printWidth: 80 },
+      { printWidth: 100, tabWidth: 4, proseWrap: "always" },
+      { printWidth: 120, singleQuote: true, bracketSpacing: false, trailingComma: "none" },
+    ],
+    notes: {
+      "externals/aws-cloudformation-templates/RainModules/load-balancer.yml":
+        "Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md",
+    },
+  },
+  {
     name: "scss",
     sources: [
       { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".scss" },

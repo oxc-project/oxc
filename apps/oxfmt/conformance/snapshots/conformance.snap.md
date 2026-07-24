@@ -290,6 +290,38 @@
 {"printWidth":100}
 ```
 
+## yaml
+
+### Option 1: 301/302 (99.67%)
+
+```json
+{"printWidth":80}
+```
+
+| File | Note |
+| :--- | :--- |
+| [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md) | Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md |
+
+### Option 2: 301/302 (99.67%)
+
+```json
+{"printWidth":100,"tabWidth":4,"proseWrap":"always"}
+```
+
+| File | Note |
+| :--- | :--- |
+| [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md) | Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md |
+
+### Option 3: 301/302 (99.67%)
+
+```json
+{"printWidth":120,"singleQuote":true,"bracketSpacing":false,"trailingComma":"none"}
+```
+
+| File | Note |
+| :--- | :--- |
+| [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md) | Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md |
+
 ## scss
 
 ### Option 1: 201/217 (92.63%)
