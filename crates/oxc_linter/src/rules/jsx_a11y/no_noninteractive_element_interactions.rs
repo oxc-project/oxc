@@ -91,9 +91,27 @@ pub struct NoNoninteractiveElementInteractions(Box<NoNoninteractiveElementIntera
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoNoninteractiveElementInteractionsConfig {
-    /// An array of event handler names that should trigger this rule.
+    /// An array of event handler prop names that should trigger this rule
+    /// (for example `onClick`, `onKeyDown`).
+    ///
+    /// Defaults to the recommended set from `eslint-plugin-jsx-a11y`, including
+    /// `onClick`, `onKeyDown`, `onKeyPress`, `onKeyUp`, `onFocus`, `onBlur`,
+    /// mouse/drag handlers, and `onError` / `onLoad`.
     handlers: Option<Vec<CompactStr>>,
-    /// A mapping of HTML element names to handler names that should be ignored for that element.
+    /// A mapping of HTML element names (or ARIA role names) to handler names that
+    /// should be ignored for that element. For example, `{ "img": ["onError", "onLoad"] }`
+    /// permits `<img onLoad={() => {}} />` without triggering the rule.
+    ///
+    /// Defaults are:
+    /// ```json
+    /// {
+    ///   "alert": ["onKeyUp", "onKeyDown", "onKeyPress"],
+    ///   "body": ["onError", "onLoad"],
+    ///   "dialog": ["onKeyUp", "onKeyDown", "onKeyPress"],
+    ///   "iframe": ["onError", "onLoad"],
+    ///   "img": ["onError", "onLoad"]
+    /// }
+    /// ```
     #[serde(flatten)]
     handler_exceptions: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
