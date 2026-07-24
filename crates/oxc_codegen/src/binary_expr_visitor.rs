@@ -233,11 +233,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         let right = self.e.right();
         if let Binaryish::Logical(e) = self.e {
-            // Annotation-gated (see the helper's doc): statements get merged
-            // into logical RHS positions on mutated ASTs. Pass the unstripped
-            // right — `Binaryish::right()` removes the paren layers the helper
-            // needs to probe.
-            p.print_annotation_comments_before_expression(&e.right);
+            // Pass the unstripped right: `Binaryish::right()` removes the paren layers
+            // that the comment printer needs to probe.
+            p.print_operand_comments_before_expression(&e.right);
         }
         if !cjs_module_lexer::try_print_equality_string(p, self.operator, right) {
             right.gen_expr(p, self.right_precedence, self.ctx);

@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::hash_map::Entry};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -21,6 +21,12 @@ fn is_pife_function(expression: &Expression<'_>) -> bool {
         Expression::FunctionExpression(function) => function.pife,
         _ => false,
     }
+}
+
+fn should_print_operand_comment_group(comments: &[Comment]) -> bool {
+    comments.iter().any(|comment| comment.is_annotation())
+        || (!comments.iter().any(|comment| comment.is_legal())
+            && comments.iter().all(|comment| !comment.is_statement_leading()))
 }
 
 /// Which annotation kind an emission site expects to recover from
@@ -182,11 +188,16 @@ impl Codegen<'_> {
     pub(crate) fn print_leading_comments_anchored_to_self(&mut self, start: u32) {
         if let Some(comments) = self.get_comments(start) {
             self.print_comments(&comments);
-            if self.last_byte() == Some(b'\n') {
-                self.print_indent();
-            } else {
-                self.consume_pending_indent_space();
-            }
+            self.glue_after_comment_group();
+        }
+    }
+
+    /// Glue the next token to a just-printed comment group.
+    fn glue_after_comment_group(&mut self) {
+        if self.last_byte() == Some(b'\n') {
+            self.print_indent();
+        } else {
+            self.consume_pending_indent_space();
         }
     }
 
@@ -196,46 +207,48 @@ impl Codegen<'_> {
     /// comment at the `(`, `a || (/* c */ x)` at `x` — an operand printer only
     /// sees one node, so the walk happens here for every emission site.
     pub(crate) fn print_leading_comments_before_expression(&mut self, expression: &Expression<'_>) {
-        if self.comments.is_empty() || is_pife_function(expression) {
-            return;
-        }
-        self.print_leading_comments_anchored_to_self(expression.span().start);
-        if let Expression::ParenthesizedExpression(paren) = expression {
-            self.print_leading_comments_before_expression(&paren.expression);
-        }
+        self.print_groups_before_expression(expression, false);
     }
 
-    /// Print an expression's comment group only when it contains an annotation
-    /// comment, probing parenthesized layers like
-    /// [`Self::print_leading_comments_before_expression`].
+    /// Print expression trivia before an operand, excluding statement trivia.
     ///
-    /// This is the variant for emission sites that mutating consumers move
-    /// statements into (the minifier merges `if(a)x;if(b)x;` into
-    /// `if(a||(b,..))x`; rolldown finalizes moved nodes with their original
-    /// spans). Comments are anchored by source position, so a dissolved
-    /// statement's leading normal-comment group can coincide with the moved
-    /// operand's span start — printing it there misplaces statement-level
-    /// trivia inside an expression and is not idempotent
-    /// (`test_normal_comment_before_logical_rhs_not_printed` documents the
-    /// falsifier). Annotations are the one comment kind with expression-level
-    /// meaning, so they still pass through.
-    pub(crate) fn print_annotation_comments_before_expression(
+    /// Transforms can move a statement's expression here without changing its span.
+    /// Annotations still print; legal comments remain for orphan handling.
+    pub(crate) fn print_operand_comments_before_expression(&mut self, expression: &Expression<'_>) {
+        self.print_groups_before_expression(expression, true);
+    }
+
+    fn print_groups_before_expression(
         &mut self,
         expression: &Expression<'_>,
+        filter_statement_comments: bool,
     ) {
-        if self.comments.is_empty() || is_pife_function(expression) {
+        if self.comments.is_empty() {
             return;
         }
-        let start = expression.span().start;
-        if self
-            .comments
-            .get(&start)
-            .is_some_and(|comments| comments.iter().any(|comment| comment.is_annotation()))
-        {
-            self.print_leading_comments_anchored_to_self(start);
+
+        let mut expression = expression;
+        let mut printed = false;
+        loop {
+            // A PIFE function prints its leading comments inside its own `(` wrap.
+            if is_pife_function(expression) {
+                break;
+            }
+
+            if let Entry::Occupied(entry) = self.comments.entry(expression.span().start)
+                && (!filter_statement_comments || should_print_operand_comment_group(entry.get()))
+            {
+                let comments = entry.remove();
+                self.print_comments(&comments);
+                printed = true;
+            }
+
+            let Expression::ParenthesizedExpression(paren) = expression else { break };
+            expression = &paren.expression;
         }
-        if let Expression::ParenthesizedExpression(paren) = expression {
-            self.print_annotation_comments_before_expression(&paren.expression);
+
+        if printed {
+            self.glue_after_comment_group();
         }
     }
 
@@ -327,12 +340,15 @@ impl Codegen<'_> {
         };
 
         if first.preceded_by_newline() {
+            // A leading line break supersedes glue left by a previous group.
+            self.clear_pending_indent_space();
             // Skip printing newline if this comment is already on a newline.
             if let Some(b) = self.last_byte() {
                 match b {
                     b'\n' => self.print_indent(),
                     b'\t' => { /* noop */ }
                     _ => {
+                        self.code.trim_trailing_ascii_whitespace();
                         self.print_hard_newline();
                         self.print_indent();
                     }

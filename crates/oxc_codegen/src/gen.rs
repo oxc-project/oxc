@@ -2000,14 +2000,13 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             p.print_ascii_byte(b'?');
             p.print_soft_space();
-            // Annotation-gated (see the helper's doc): `if/else` bodies get
-            // merged into consequents on mutated ASTs.
-            p.print_annotation_comments_before_expression(&self.consequent);
+            // `if/else` bodies can get merged into consequents on mutated ASTs.
+            p.print_operand_comments_before_expression(&self.consequent);
             self.consequent.print_expr(p, Precedence::Yield, Context::empty());
             p.print_soft_space();
             p.print_colon();
             p.print_soft_space();
-            p.print_leading_comments_before_expression(&self.alternate);
+            p.print_operand_comments_before_expression(&self.alternate);
             self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
     }
