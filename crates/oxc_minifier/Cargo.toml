@@ -38,6 +38,7 @@ oxc_traverse = { workspace = true }
 cow-utils = { workspace = true }
 itoa = { workspace = true }
 rustc-hash = { workspace = true }
+bitflags = { workspace = true }
 
 [dev-dependencies]
 oxc_codegen = { workspace = true, features = ["sourcemap"] }

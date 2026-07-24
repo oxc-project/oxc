@@ -176,14 +176,11 @@ fn test_handle_switch_statement() {
     test("switch (a) { case 3: b(); case 2: case 1: break;}", "switch (a) { case 3: b(); }"); // a === 3 && b();
     test("switch (a) { case 3: b(); case 2: case 1: }", "switch (a) { case 3: b(); }"); // a === 3 && b();
     test_same("switch (x) { default: case 1: foo(); case 2: }"); // x !== 2 && foo();
-    test("switch (a) { case 3: if (b) break }", "switch (a) { case 3: if (b) break; }"); // a === 3 && b;
-    test(
-        "switch (a) { case 3: { if(b) {c()} else {break;} }}",
-        "switch (a) { case 3: if (b) c(); else break; }",
-    ); // a === 3 && b && c();
+    test("switch (a) { case 3: if (b) break }", "switch (a) { case 3: b; }"); // a === 3 && b;
+    test("switch (a) { case 3: { if(b) {c()} else {break;} }}", "switch (a) { case 3: b && c(); }"); // a === 3 && b && c();
     test(
         "switch (a) { case 3: { if(b) {c(); break;} else { d(); break;} }}",
-        "switch (a) { case 3: if(b) {c(); break;} else { d(); break;} }",
+        "switch (a) { case 3: b ? c() : d(); }",
     ); // if (a === 3) b ? c() : d();
     test("switch (a) { case 3: { for (;;) break } }", "switch (a) { case 3: for (;;) break; }"); // if (a === 3) for (;;) break;
     test(
@@ -197,7 +194,7 @@ fn test_handle_switch_statement() {
         "switch (a) { case 1: c(); case 2: default: b();break;}",
         "switch (a) { case 1: c(); default: b(); }",
     ); // a === 1 && c(); b();
-    test_same("function f() { switch (a) { case 1: return;} }"); // function f() { a; }
+    test("function f() { switch (a) { case 1: return;} }", "function f() { a; }");
     test("switch (a()) { default: {let y;} }", "switch (a()) { default: { let y; } }"); // a(); { let y; }
     test(
         "function f(){switch ('x') { case 'x': var x = 1;break; case 'y': break; }}",
