@@ -36,6 +36,56 @@ export type ExternalPluginEntry =
        */
       specifier: string;
     };
+export type LanguagePluginEntry =
+  | string
+  | {
+      /**
+       * Plugin alias, or the plugin specifier when `specifier` is omitted.
+       *
+       * When both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`).
+       */
+      name: string;
+      /**
+       * Options forwarded to the language plugin
+       */
+      options?: {
+        [k: string]: unknown | undefined;
+      };
+      /**
+       * Optional project-owned globs selecting files for this language plugin.
+       *
+       * When omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`).
+       */
+      pattern?: string | string[];
+      /**
+       * Path or package name of the language plugin
+       */
+      specifier?: string;
+    }
+  | {
+      /**
+       * Plugin alias, or the plugin specifier when `specifier` is omitted.
+       *
+       * When both `name` and `specifier` are set, `name` is an alias (same as `jsPlugins`).
+       */
+      name?: string;
+      /**
+       * Options forwarded to the language plugin
+       */
+      options?: {
+        [k: string]: unknown | undefined;
+      };
+      /**
+       * Optional project-owned globs selecting files for this language plugin.
+       *
+       * When omitted, Oxlint uses the plugin's `defaultFiles` (prefer extensions / filenames such as `.vue`).
+       */
+      pattern?: string | string[];
+      /**
+       * Path or package name of the language plugin
+       */
+      specifier: string;
+    };
 /**
  * A set of glob patterns.
  * Patterns are matched against paths relative to the configuration file's directory.
@@ -621,6 +671,43 @@ export interface Oxlintrc {
    */
   jsPlugins?: null | ExternalPluginEntry[];
   /**
+   * Language plugins for embedded frameworks (Vue, Svelte, Angular templates, etc.).
+   *
+   * Language plugins provide a framework-native AST for JS rules, plus an optional
+   * virtual JS/TS transform for Rust rules and typed tooling.
+   *
+   * See the RFC:
+   * <https://github.com/oxc-project/oxc/discussions/21936>
+   *
+   * Note: Language plugins are experimental. Config and the `defineLanguagePlugin`
+   * API are available; the full parse / load / transform pipeline is still being
+   * implemented (tracked in <https://github.com/oxc-project/oxc/issues/23207>).
+   *
+   * Examples:
+   *
+   * ```json
+   * {
+   *   "languagePlugins": [
+   *     "vue-language-plugin"
+   *   ]
+   * }
+   * ```
+   *
+   * ```ts
+   * import { defineConfig } from "oxlint";
+   *
+   * export default defineConfig({
+   * languagePlugins: [
+   * {
+   * name: "vue-language-plugin",
+   * pattern: "packages/app/*.vue",
+   * },
+   * ],
+   * });
+   * ```
+   */
+  languagePlugins?: null | LanguagePluginEntry[];
+  /**
    * Oxlint config options.
    */
   options?: OxlintOptions;
@@ -860,6 +947,12 @@ export interface OxlintOverride {
    * Note: JS plugins are in alpha and not subject to semver.
    */
   jsPlugins?: null | ExternalPluginEntry[];
+  /**
+   * Language plugins for this override.
+   *
+   * See [`crate::config::oxlintrc::Oxlintrc::language_plugins`].
+   */
+  languagePlugins?: null | LanguagePluginEntry[];
   /**
    * Optionally change what plugins are enabled for this override. When
    * omitted, the base config's plugins are used.

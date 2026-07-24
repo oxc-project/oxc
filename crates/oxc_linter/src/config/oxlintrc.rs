@@ -16,6 +16,7 @@ use super::{
     env::OxlintEnv,
     external_plugins::{ExternalPluginEntry, external_plugins_schema},
     globals::OxlintGlobals,
+    language_plugins::{LanguagePluginEntry, language_plugins_schema},
     overrides::OxlintOverrides,
     rules::OxlintRules,
     settings::OxlintSettings,
@@ -240,6 +241,41 @@ pub struct Oxlintrc {
     #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
+    /// Language plugins for embedded frameworks (Vue, Svelte, Angular templates, etc.).
+    ///
+    /// Language plugins provide a framework-native AST for JS rules, plus an optional
+    /// virtual JS/TS transform for Rust rules and typed tooling.
+    ///
+    /// See the RFC:
+    /// <https://github.com/oxc-project/oxc/discussions/21936>
+    ///
+    /// Note: Language plugins are experimental. Config and the `defineLanguagePlugin`
+    /// API are available; the full parse / load / transform pipeline is still being
+    /// implemented (tracked in <https://github.com/oxc-project/oxc/issues/23207>).
+    ///
+    /// Examples:
+    ///
+    /// ```json
+    /// {
+    ///   "languagePlugins": ["vue-language-plugin"]
+    /// }
+    /// ```
+    ///
+    /// ```ts
+    /// import { defineConfig } from "oxlint";
+    ///
+    /// export default defineConfig({
+    ///   languagePlugins: [
+    ///     {
+    ///       name: "vue-language-plugin",
+    ///       pattern: "packages/app/*.vue",
+    ///     },
+    ///   ],
+    /// });
+    /// ```
+    #[serde(rename = "languagePlugins", default, skip_serializing_if = "Option::is_none")]
+    #[schemars(schema_with = "language_plugins_schema")]
+    pub language_plugins: Option<FxHashSet<LanguagePluginEntry>>,
     pub categories: OxlintCategories,
     /// Example
     ///
@@ -433,6 +469,15 @@ impl Oxlintrc {
             (None, None) => None,
         };
 
+        let language_plugins = match (&self.language_plugins, &other.language_plugins) {
+            (Some(self_language), Some(other_language)) => {
+                Some(self_language.iter().chain(other_language.iter()).cloned().collect())
+            }
+            (Some(self_language), None) => Some(self_language.clone()),
+            (None, Some(other_language)) => Some(other_language.clone()),
+            (None, None) => None,
+        };
+
         let schema = self.schema.clone().or(other.schema);
         let options = self.options.merge(&other.options);
 
@@ -440,6 +485,7 @@ impl Oxlintrc {
             schema,
             plugins,
             external_plugins,
+            language_plugins,
             categories,
             rules: OxlintRules::new(rules),
             settings,
@@ -469,9 +515,28 @@ impl Oxlintrc {
                 .collect();
         }
 
+        if let Some(language_plugins) = &mut self.language_plugins {
+            *language_plugins = std::mem::take(language_plugins)
+                .into_iter()
+                .map(|mut entry| {
+                    entry.config_dir = config_dir.to_path_buf();
+                    entry
+                })
+                .collect();
+        }
+
         for override_config in self.overrides.iter_mut() {
             if let Some(external_plugins) = &mut override_config.external_plugins {
                 *external_plugins = std::mem::take(external_plugins)
+                    .into_iter()
+                    .map(|mut entry| {
+                        entry.config_dir = config_dir.to_path_buf();
+                        entry
+                    })
+                    .collect();
+            }
+            if let Some(language_plugins) = &mut override_config.language_plugins {
+                *language_plugins = std::mem::take(language_plugins)
                     .into_iter()
                     .map(|mut entry| {
                         entry.config_dir = config_dir.to_path_buf();
@@ -818,6 +883,53 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"jsPlugins": ["./plugin2.ts"]}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.external_plugins.unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_oxlintrc_language_plugins() {
+        let config: Oxlintrc = serde_json::from_str(
+            r#"{"languagePlugins": ["vue-language-plugin", { "name": "vue", "specifier": "./vue.ts", "pattern": "**/*.vue" }]}"#,
+        )
+        .unwrap();
+        assert_eq!(config.language_plugins.as_ref().unwrap().len(), 2);
+
+        let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        assert!(config.language_plugins.is_none());
+
+        let config: Oxlintrc = serde_json::from_str(r#"{"languagePlugins": []}"#).unwrap();
+        assert_eq!(config.language_plugins.as_ref().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_oxlintrc_language_plugins_rejects_invalid() {
+        assert!(
+            serde_json::from_str::<Oxlintrc>(
+                r#"{"languagePlugins": [{ "name": "x", "specifier": "y", "extra": "z" }]}"#
+            )
+            .is_err()
+        );
+        assert!(
+            serde_json::from_str::<Oxlintrc>(r#"{"languagePlugins": [{ "pattern": "*.vue" }]}"#)
+                .is_err()
+        );
+        assert!(
+            serde_json::from_str::<Oxlintrc>(
+                r#"{"languagePlugins": [{ "name": "vue", "options": [] }]}"#
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn test_oxlintrc_language_plugins_merge() {
+        let base: Oxlintrc =
+            serde_json::from_str(r#"{"languagePlugins": ["vue-language-plugin"]}"#).unwrap();
+        let child: Oxlintrc = serde_json::from_str(
+            r#"{"languagePlugins": [{ "name": "vue", "specifier": "./vue.ts" }]}"#,
+        )
+        .unwrap();
+        let merged = child.merge(base);
+        assert_eq!(merged.language_plugins.as_ref().unwrap().len(), 2);
     }
 
     #[test]
