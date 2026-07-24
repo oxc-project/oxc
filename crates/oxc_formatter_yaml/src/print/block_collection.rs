@@ -30,11 +30,17 @@ fn write_item_separator(prev_end: u32, next_start: u32, f: &mut YamlFormatter<'_
 /// Emits the previous item's same-line trailing comment and container end comments,
 /// then the separator to the next item (when one follows).
 ///
+/// `align_width` is forwarded to [`flush_container_end_comments`]
+/// (see its doc for the per-container value).
+///
 /// Both are skipped after a block scalar value:
-/// its span consumes the trailing line breaks (a comment on the following line would LOOK same-line, and none can follow one),
-/// and comments under its content region lead the next item instead (Prettier's `shouldOwnEndComment` exclusion).
+/// its span consumes the trailing line breaks
+/// (a comment on the following line would LOOK same-line, and none can follow one),
+/// and comments under its content region lead the next item instead
+/// (Prettier's `shouldOwnEndComment` exclusion).
 fn finish_previous_item(
     item_column: u32,
+    align_width: u8,
     prev_end: u32,
     prev_blocks_end_comments: bool,
     next_start: Option<u32>,
@@ -44,7 +50,13 @@ fn finish_previous_item(
         prev_end
     } else {
         write_trailing_same_line_comment(prev_end, &[], f);
-        flush_container_end_comments(item_column, prev_end, next_start.unwrap_or(u32::MAX), f)
+        flush_container_end_comments(
+            item_column,
+            align_width,
+            prev_end,
+            next_start.unwrap_or(u32::MAX),
+            f,
+        )
     };
     if let Some(next_start) = next_start {
         write_item_separator(prev_end, next_start, f);
@@ -59,12 +71,20 @@ pub fn write_mapping<'a>(
     let depth = f.context().collection_depth();
     depth.set(depth.get() + 1);
     let item_column = column_of(&f.context().source_text(), mapping.span.start);
+    let align_width = f.options().indent_width.value();
     let mut prev_end: Option<u32> = None;
     let mut prev_blocks_end_comments = false;
     for item in &mapping.children {
         let start = item.span.start;
         if let Some(prev_end) = prev_end {
-            finish_previous_item(item_column, prev_end, prev_blocks_end_comments, Some(start), f);
+            finish_previous_item(
+                item_column,
+                align_width,
+                prev_end,
+                prev_blocks_end_comments,
+                Some(start),
+                f,
+            );
         }
         let value_node = item.value_content();
         prev_end = Some(item_gap_anchor(value_node, item.span.end, f));
@@ -90,15 +110,19 @@ pub fn write_mapping<'a>(
         write!(f, group(&entry));
     }
     if let Some(prev_end) = prev_end {
-        finish_previous_item(item_column, prev_end, prev_blocks_end_comments, None, f);
+        finish_previous_item(item_column, align_width, prev_end, prev_blocks_end_comments, None, f);
     }
     let depth = f.context().collection_depth();
     depth.set(depth.get() - 1);
 }
 
 pub fn write_sequence<'a>(sequence: &'a Sequence<'a>, f: &mut YamlFormatter<'_, 'a>) {
+    // Sequence item content sits `- ` (2 columns) in, regardless of the tab width
+    const SEQ_CONTENT_ALIGN: u8 = 2;
+
     let depth = f.context().collection_depth();
     depth.set(depth.get() + 1);
+
     let item_column = column_of(&f.context().source_text(), sequence.span.start);
     let mut prev_end: Option<u32> = None;
     let mut prev_blocks_end_comments = false;
@@ -106,6 +130,7 @@ pub fn write_sequence<'a>(sequence: &'a Sequence<'a>, f: &mut YamlFormatter<'_, 
         if let Some(prev_end) = prev_end {
             finish_previous_item(
                 item_column,
+                SEQ_CONTENT_ALIGN,
                 prev_end,
                 prev_blocks_end_comments,
                 Some(item.span.start),
@@ -132,11 +157,18 @@ pub fn write_sequence<'a>(sequence: &'a Sequence<'a>, f: &mut YamlFormatter<'_, 
             write!(f, "-");
         }
         if let Some(node) = &item.content {
-            write!(f, align(2, &format_with(|f| write_node(node, f))));
+            write!(f, align(SEQ_CONTENT_ALIGN, &format_with(|f| write_node(node, f))));
         }
     }
     if let Some(prev_end) = prev_end {
-        finish_previous_item(item_column, prev_end, prev_blocks_end_comments, None, f);
+        finish_previous_item(
+            item_column,
+            SEQ_CONTENT_ALIGN,
+            prev_end,
+            prev_blocks_end_comments,
+            None,
+            f,
+        );
     }
     let depth = f.context().collection_depth();
     depth.set(depth.get() - 1);

@@ -1,0 +1,108 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+root:
+  items:
+    - key: a
+      val: b
+
+      # sequence end comment
+  next: 1
+map:
+  child: 1
+
+  # mapping end comment
+seq:
+  - "A"
+  - "B"
+
+  # same-column comment after sequence
+tail: 2
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+root:
+  items:
+    - key: a
+      val: b
+
+      # sequence end comment
+  next: 1
+map:
+  child: 1
+
+  # mapping end comment
+seq:
+  - "A"
+  - "B"
+
+  # same-column comment after sequence
+tail: 2
+
+-------------------
+{ printWidth: 100 }
+-------------------
+root:
+  items:
+    - key: a
+      val: b
+
+      # sequence end comment
+  next: 1
+map:
+  child: 1
+
+  # mapping end comment
+seq:
+  - "A"
+  - "B"
+
+  # same-column comment after sequence
+tail: 2
+
+-------------------------------
+{ printWidth: 80, tabWidth: 4 }
+-------------------------------
+root:
+    items:
+        - key: a
+          val: b
+
+          # sequence end comment
+    next: 1
+map:
+    child: 1
+
+    # mapping end comment
+seq:
+    - "A"
+    - "B"
+
+    # same-column comment after sequence
+tail: 2
+
+--------------------------------
+{ printWidth: 100, tabWidth: 4 }
+--------------------------------
+root:
+    items:
+        - key: a
+          val: b
+
+          # sequence end comment
+    next: 1
+map:
+    child: 1
+
+    # mapping end comment
+seq:
+    - "A"
+    - "B"
+
+    # same-column comment after sequence
+tail: 2
+
+===================== End =====================
