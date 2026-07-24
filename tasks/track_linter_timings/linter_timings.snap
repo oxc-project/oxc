@@ -166,7 +166,7 @@ eslint/prefer-object-has-own                               |  62606
 eslint/prefer-object-spread                                |  62606
 eslint/prefer-promise-reject-errors                        |  64027
 eslint/prefer-regex-literals                               |  64027
-eslint/prefer-rest-params                                  |  14283
+eslint/prefer-rest-params                                  |      6
 eslint/prefer-spread                                       |  62606
 eslint/prefer-template                                     |  20604
 eslint/preserve-caught-error                               |    151
