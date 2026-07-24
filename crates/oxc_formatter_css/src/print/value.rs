@@ -262,10 +262,10 @@ pub(super) fn adjust_numbers_and_strings<'a>(
                 continue;
             }
         }
-        // Plain byte; push the whole UTF-8 char
-        let ch_len = raw[i..].chars().next().map_or(1, char::len_utf8);
-        out.push_str(&raw[i..i + ch_len]);
-        i += ch_len;
+        // Plain char (always ASCII here; `is_word_start` claims all `>= 0x80` bytes)
+        let ch = raw[i..].chars().next().unwrap();
+        out.push(ch);
+        i += ch.len_utf8();
     }
 
     if changed { Cow::Owned(out) } else { Cow::Borrowed(raw) }
@@ -294,11 +294,9 @@ pub(super) fn write_requoted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_,
             write!(f, text(f.allocator().alloc_str(&normalized)));
             return;
         }
-        let normalized = normalize_quoted_numbers(raw);
-        if normalized == raw {
-            write!(f, text(raw));
-        } else {
-            write!(f, text(f.allocator().alloc_str(&normalized)));
+        match normalize_quoted_numbers(raw) {
+            Cow::Borrowed(_) => write!(f, text(raw)),
+            Cow::Owned(normalized) => write!(f, text(f.allocator().alloc_str(&normalized))),
         }
         return;
     }
@@ -314,34 +312,42 @@ pub(super) fn write_requoted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_,
 }
 
 /// Normalizes `".5"`-style quoted bare numbers inside an interpolated string.
-fn normalize_quoted_numbers(raw: &str) -> String {
+/// Returns `Cow::Borrowed` when nothing changed.
+fn normalize_quoted_numbers(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
-    let mut out = String::with_capacity(raw.len());
-    let mut i = 0;
-    // Skip the outer opening quote
-    out.push(bytes[0] as char);
-    i += 1;
+    let mut out = String::new();
+    // Start of the pending verbatim span.
+    // Quotes are ASCII, so the byte scan is safe;
+    // everything between rewrites copies span-wise (UTF-8 included).
+    let mut copied = 0;
+    let mut i = 1;
+    // Content bounds inside the outer quotes
     let end = raw.len() - 1;
     while i < end {
         let b = bytes[i];
         if (b == b'"' || b == b'\'') && i + 1 < end {
             // Find the matching close within the content
             if let Some(close_rel) = raw[i + 1..end].find(b as char) {
-                let inner = &raw[i + 1..i + 1 + close_rel];
+                let close = i + 1 + close_rel;
+                let inner = &raw[i + 1..close];
                 if !inner.is_empty() && inner.bytes().all(|c| c.is_ascii_digit() || c == b'.') {
-                    out.push(b as char);
-                    out.push_str(&print_css_number(inner));
-                    out.push(b as char);
-                    i = i + 1 + close_rel + 1;
+                    if let Cow::Owned(printed) = print_css_number(inner) {
+                        out.push_str(&raw[copied..=i]);
+                        out.push_str(&printed);
+                        copied = close;
+                    }
+                    i = close + 1;
                     continue;
                 }
             }
         }
-        out.push(b as char);
         i += 1;
     }
-    out.push(bytes[end] as char);
-    out
+    if out.is_empty() {
+        return Cow::Borrowed(raw);
+    }
+    out.push_str(&raw[copied..]);
+    Cow::Owned(out)
 }
 
 fn is_wide_keyword(value: &str) -> bool {
