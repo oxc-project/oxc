@@ -5046,13 +5046,8 @@ impl RuleRunner for crate::rules::node::callback_return::CallbackReturn {
 }
 
 impl RuleRunner for crate::rules::node::exports_style::ExportsStyle {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::AssignmentExpression,
-        AstType::ComputedMemberExpression,
-        AstType::IdentifierReference,
-        AstType::StaticMemberExpression,
-    ]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::node::global_require::GlobalRequire {
