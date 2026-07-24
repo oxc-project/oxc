@@ -105,6 +105,8 @@ pub const IGNORE_TESTS: &[&str] = &[
     "cursor",
     // Invalid
     "js/call/invalid",
+    // Trailing comma after rest element: typescript-eslint recovers and formats, our parser fatals
+    "typescript/trailing-comma/invalid.ts",
     // Ambiguous await
     "js/top-level-await",
     "jsx/top-level-await",

@@ -1,4 +1,4 @@
-ts compatibility: 625/663 (94.27%), 19 files skipped
+ts compatibility: 624/662 (94.26%), 18 files skipped
 
 # Failed
 
@@ -62,5 +62,4 @@ ts compatibility: 625/663 (94.27%), 19 files skipped
 - typescript/definite/without-annotation.ts
 - typescript/interface2/module.ts
 - typescript/namespace/invalid-await.ts
-- typescript/trailing-comma/invalid.ts
 - typescript/type-parameters-arguments/const.ts
