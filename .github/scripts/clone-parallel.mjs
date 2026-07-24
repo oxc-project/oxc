@@ -15,8 +15,8 @@ const BABEL_SHA = "c86e9e4b272be7a8b9242bb310b26719393d700a";
 const TYPESCRIPT_SHA = "637d5746b70257028fb95aad32ddec6b26ab0a14";
 const ESTREE_CONFORMANCE_SHA = "e8fd120287e62c8f27049d5369f3792fadb29df6";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
-// NOTE: Prettier version is now pinned to `v3.9.5` (not updated by workflow above), update manually as needed
-const PRETTIER_SHA = "b6c7d1806807162658fd5694d002b54b778c3756";
+// NOTE: Prettier version is now pinned to `v3.9.6` (not updated by workflow above), update manually as needed
+const PRETTIER_SHA = "8f0c95057cc91d5836409466cd9d9af3bb901e84";
 
 const repoRoot = join(import.meta.dirname, "..", "..");
 

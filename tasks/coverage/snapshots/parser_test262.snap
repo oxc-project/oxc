@@ -34668,7 +34668,7 @@ Negative Passed: 4651/4651 (100.00%)
  25 │   }
     ╰────
 
-  × TS(1108): A 'return' statement can only be used within a function body.
+  × TS(18041): A 'return' statement cannot be used inside a class static block.
     ╭─[test262/test/language/statements/class/static-init-invalid-return.js:25:7]
  24 │     static {
  25 │       return;

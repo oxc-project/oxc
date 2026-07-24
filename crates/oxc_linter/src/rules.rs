@@ -672,6 +672,7 @@ pub(crate) mod oxc {
     pub mod bad_bitwise_operator;
     pub mod bad_char_at_comparison;
     pub mod bad_comparison_sequence;
+    pub mod bad_match_all_arg;
     pub mod bad_min_max_func;
     pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;

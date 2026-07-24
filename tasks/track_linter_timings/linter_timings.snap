@@ -122,7 +122,7 @@ eslint/no-shadow-restricted-names                          |      7
 eslint/no-sparse-arrays                                    |   4115
 eslint/no-template-curly-in-string                         |  62460
 eslint/no-ternary                                          |   4722
-eslint/no-this-before-super                                |      5
+eslint/no-this-before-super                                |      4
 eslint/no-throw-literal                                    |    224
 eslint/no-unassigned-vars                                  |  37499
 eslint/no-undef                                            |      7
@@ -166,7 +166,7 @@ eslint/prefer-object-has-own                               |  62606
 eslint/prefer-object-spread                                |  62606
 eslint/prefer-promise-reject-errors                        |  64027
 eslint/prefer-regex-literals                               |  64027
-eslint/prefer-rest-params                                  |  14283
+eslint/prefer-rest-params                                  |      6
 eslint/prefer-spread                                       |  62606
 eslint/prefer-template                                     |  20604
 eslint/preserve-caught-error                               |    151
@@ -225,7 +225,7 @@ jest/no-commented-out-tests                                |      7
 jest/no-conditional-expect                                 |      0
 jest/no-conditional-in-test                                |  30315
 jest/no-confusing-set-timeout                              |      7
-jest/no-deprecated-functions                               |  95297
+jest/no-deprecated-functions                               |  94090
 jest/no-disabled-tests                                     |      0
 jest/no-done-callback                                      |      0
 jest/no-duplicate-hooks                                    |      7
@@ -248,7 +248,7 @@ jest/padding-around-after-all-blocks                       |      0
 jest/padding-around-test-blocks                            |      0
 jest/prefer-called-with                                    |      0
 jest/prefer-comparison-matcher                             |      0
-jest/prefer-each                                           |      7
+jest/prefer-each                                           |      6
 jest/prefer-ending-with-an-expect                          |      0
 jest/prefer-equality-matcher                               |      0
 jest/prefer-expect-assertions                              |      7
@@ -369,6 +369,7 @@ oxc/bad-array-method-on-arguments                          |  94090
 oxc/bad-bitwise-operator                                   |  33609
 oxc/bad-char-at-comparison                                 |  62606
 oxc/bad-comparison-sequence                                |  20604
+oxc/bad-match-all-arg                                      |  62606
 oxc/bad-min-max-func                                       |  62606
 oxc/bad-object-literal-comparison                          |  20604
 oxc/bad-replace-all-arg                                    |  62606
@@ -697,7 +698,7 @@ vitest/prefer-called-times                                 |      0
 vitest/prefer-called-with                                  |      0
 vitest/prefer-comparison-matcher                           |      0
 vitest/prefer-describe-function-title                      |      0
-vitest/prefer-each                                         |      7
+vitest/prefer-each                                         |      6
 vitest/prefer-equality-matcher                             |      0
 vitest/prefer-expect-assertions                            |      7
 vitest/prefer-expect-resolves                              |      0

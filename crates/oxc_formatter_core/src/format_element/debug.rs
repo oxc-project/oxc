@@ -170,6 +170,15 @@ where
                     LineMode::Empty => {
                         w!(f, [token("empty_line")]);
                     }
+                    LineMode::ExactLineBreaks(count) => {
+                        w!(
+                            f,
+                            [text(
+                                f.allocator()
+                                    .alloc_str(&std::format!("exact_line_breaks({count})"))
+                            )]
+                        );
+                    }
                     LineMode::Literal => {
                         w!(f, [token("literal_line_break")]);
                     }

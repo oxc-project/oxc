@@ -360,6 +360,14 @@ parser_diagnostics! {
         .with_help("Either remove this `await` or add the `async` keyword to the enclosing function")
     };
 
+    for_await_statement(span: Span) => {
+        OxcDiagnostic::error(
+            "`for await` loops are only allowed within async functions and at the top levels of modules",
+        )
+        .with_label(span)
+        .with_help("Either remove this `await` or add the `async` keyword to the enclosing function")
+    };
+
     yield_expression(span: Span) => {
         OxcDiagnostic::error("A 'yield' expression is only allowed in a generator body.")
             .with_label(span)
@@ -711,6 +719,11 @@ parser_diagnostics! {
 
     return_statement_only_in_function_body(span: Span) => {
         ts_error("1108", "A 'return' statement can only be used within a function body.")
+            .with_label(span)
+    };
+
+    return_statement_in_class_static_block(span: Span) => {
+        ts_error("18041", "A 'return' statement cannot be used inside a class static block.")
             .with_label(span)
     };
 
@@ -1130,6 +1143,11 @@ parser_diagnostics! {
         ts_error("1249", "A decorator can only decorate a method implementation, not an overload.")
             .with_label(span)
             .with_help("Move this after all the overloads")
+    };
+
+    type_arguments_in_ts(span: Span) => {
+        ts_error("8011", "Type arguments can only be used in TypeScript files.")
+            .with_label(span)
     };
 
     as_in_ts(span: Span) => {

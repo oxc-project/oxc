@@ -139,9 +139,10 @@ pub struct Codegen<'a> {
     /// or (d) source text isn't available.
     annotation_comments: FxHashMap<u32, Comment>,
 
-    /// Sorted, deduped `attached_to` keys for pending legal comments. Lets
-    /// `print_legal_orphans_before` flush via `partition_point` + `drain`.
-    legal_comment_keys: Vec<u32>,
+    /// Sorted, deduped `attached_to` keys for comments that must survive a
+    /// removed anchor. Lets `print_orphan_comments_before` flush via
+    /// `partition_point` + `drain`.
+    orphan_comment_keys: Vec<u32>,
 
     #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
@@ -196,7 +197,7 @@ impl<'a> Codegen<'a> {
             quote: Quote::Double,
             comments: CommentsMap::default(),
             annotation_comments: FxHashMap::default(),
-            legal_comment_keys: Vec::new(),
+            orphan_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
         }
@@ -665,14 +666,14 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        let single_line = stmt.body.is_empty() && !self.has_legal_orphans_before(stmt.span.end);
+        let single_line = stmt.body.is_empty() && !self.has_orphan_comments_before(stmt.span.end);
         self.print_curly_braces(stmt.span, single_line, |p| {
             p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
         });
         self.needs_semicolon = false;
     }
 
-    /// Print `stmts`, flushing legal-comment orphans before each and at `scope_end`.
+    /// Print `stmts`, flushing orphan comments before each and at `scope_end`.
     fn print_stmts_with_orphan_flush(
         &mut self,
         stmts: &[Statement<'_>],
@@ -680,11 +681,11 @@ impl<'a> Codegen<'a> {
         ctx: Context,
     ) {
         for stmt in stmts {
-            self.print_legal_orphans_before(stmt.span().start);
+            self.print_orphan_comments_before(stmt.span().start);
             self.print_semicolon_if_needed();
             stmt.print(self, ctx);
         }
-        self.print_legal_orphans_before(scope_end);
+        self.print_orphan_comments_before(scope_end);
     }
 
     fn print_directives_and_statements(
@@ -698,11 +699,11 @@ impl<'a> Codegen<'a> {
             directive.print(self, ctx);
         }
         let Some((first, rest)) = stmts.split_first() else {
-            self.print_legal_orphans_before(scope_end);
+            self.print_orphan_comments_before(scope_end);
             return;
         };
 
-        self.print_legal_orphans_before(first.span().start);
+        self.print_orphan_comments_before(first.span().start);
 
         // Ensure first string literal is not a directive.
         let mut first_needs_parens = false;

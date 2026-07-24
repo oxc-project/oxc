@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 74/74 (100.00%)
 Positive Passed: 74/74 (100.00%)
-Negative Passed: 154/154 (100.00%)
+Negative Passed: 155/155 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -4205,3 +4205,9 @@ Negative Passed: 154/154 (100.00%)
    ·                                 ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(8011): Type arguments can only be used in TypeScript files.
+   ╭─[misc/fail/type-arguments-in-js.js:1:18]
+ 1 │ class A extends B<C> {}
+   ·                  ───
+   ╰────

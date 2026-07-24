@@ -17,14 +17,18 @@ Formatting is two stages:
 Key IR pieces are all exported from the crate root.
 
 The semantics of each building block live in the `builders.rs` rustdocs.
-e.g. the three mechanisms for verbatim multi-line content
-(`literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`),
-with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
+e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
 
 Prettier doc primitives are ported on demand; still missing:
 
 - `hardlineWithoutBreakParent` (markdown tables)
 - and the `trim` doc
+
+### The printer never trims
+
+Unlike Prettier's `printDocToString`, this printer emits exactly what was written:
+end-of-line whitespace never appearing in the output is guaranteed by construction (pending space/indention, no indention on blank lines), not by a trimming pass.
+Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
 
 ### Choosing a staging buffer
 

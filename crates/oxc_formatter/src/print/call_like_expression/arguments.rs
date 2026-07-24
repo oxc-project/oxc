@@ -530,11 +530,12 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
                 && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
         Expression::RegExpLiteral(_) => true,
-        Expression::CallExpression(call) => match call.arguments.len() {
-            0 => true,
-            1 => SimpleArgument::from(argument).is_simple(),
-            _ => false,
-        },
+        Expression::CallExpression(call) => {
+            call.arguments.len() <= 1 && SimpleArgument::from(argument).is_simple()
+        }
+        Expression::NewExpression(new_expr) => {
+            new_expr.arguments.len() <= 1 && SimpleArgument::from(argument).is_simple()
+        }
         _ => SimpleArgument::from(argument).is_simple(),
     }
 }

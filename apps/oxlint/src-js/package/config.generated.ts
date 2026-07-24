@@ -1247,6 +1247,7 @@ export interface DummyRuleMap {
   "oxc/bad-bitwise-operator"?: RuleNoConfig;
   "oxc/bad-char-at-comparison"?: RuleNoConfig;
   "oxc/bad-comparison-sequence"?: RuleNoConfig;
+  "oxc/bad-match-all-arg"?: RuleNoConfig;
   "oxc/bad-min-max-func"?: RuleNoConfig;
   "oxc/bad-object-literal-comparison"?: RuleNoConfig;
   "oxc/bad-replace-all-arg"?: RuleNoConfig;

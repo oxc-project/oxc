@@ -92,12 +92,11 @@ pub fn write_member_name<'a>(
 }
 
 /// Determine if this is a method signature named `"new"` via a quoted key, which must keep its quotes.
-/// Unquoted `new(...)` in an interface or type literal is a construct signature, not a method.
-/// Optional (`new?()`), getter/setter, and property forms stay a member named `new` and are safe to unquote.
+/// Unquoting `new(...)` in an interface or type literal would turn it into a construct signature.
+/// Optional (`new?()`) and getter/setter forms would stay a member named `new` even unquoted,
+/// but Prettier keeps the quotes for every method-signature form; only the property form is unquoted.
 pub fn is_quoted_new_method_signature(method: &TSMethodSignature<'_>) -> bool {
-    method.kind == TSMethodSignatureKind::Method
-        && !method.computed
-        && !method.optional
+    !method.computed
         && matches!(&method.key, PropertyKey::StringLiteral(string) if string.value == "new")
 }
 

@@ -12,7 +12,7 @@ use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
     Buffer,
-    builders::{hard_line_break, text},
+    builders::{exact_line_breaks, hard_line_break, text},
     write,
 };
 use oxc_graphql_parser::ast::StringValue;
@@ -38,12 +38,8 @@ fn write_block_string(body: &str, f: &mut GraphqlFormatter<'_, '_>) {
     let unescaped = body.cow_replace("\\\"\"\"", "\"\"\"");
     let cooked_lines = cook_block_string_lines(&unescaped);
 
-    // Prettier: re-escape, then `lines.length === 1` → trim,
-    // all-blank → drop everything.
-    // Trailing spaces/tabs are trimmed per line: Prettier's doc printer trims
-    // them at every hardline. The core printer does the same, but a line
-    // followed by a blank-line run gets its break from raw `\n` text (see
-    // `write_block_string_break`), which bypasses that trim — so trim here.
+    // Prettier: re-escape, then `lines.length === 1` → trim, all-blank → drop everything.
+    // Trailing spaces/tabs are trimmed per line.
     let mut lines: Vec<String> = cooked_lines
         .iter()
         .map(|l| l.trim_end_matches([' ', '\t']).cow_replace("\"\"\"", "\\\"\"\"").into_owned())
@@ -56,12 +52,9 @@ fn write_block_string(body: &str, f: &mut GraphqlFormatter<'_, '_>) {
     }
 
     write!(f, "\"\"\"");
-    // Join with line breaks, preserving runs of blank lines exactly.
-    // Consecutive `hard_line_break()`s collapse in the printer (and `empty_line()` caps
-    // at one blank), but blank lines inside a block string are part of its VALUE.
-    // So a run of `k` blank lines is emitted as `k + 1` raw newlines in a `text()`,
-    // followed by a `hard_line_break()` that prints nothing (the line is already empty)
-    // but re-arms the pending indent for the next line.
+    // Join with line breaks, preserving runs of blank lines exactly:
+    // blank lines inside a block string are part of its VALUE,
+    // so a run of `k` blank lines is emitted as `exact_line_breaks(k + 1)`.
     let mut pending_blanks = 0usize;
     for line in &lines {
         if line.is_empty() {
@@ -80,8 +73,7 @@ fn write_block_string_break(blank_lines: usize, f: &mut GraphqlFormatter<'_, '_>
     if blank_lines == 0 {
         write!(f, hard_line_break());
     } else {
-        write!(f, text(f.allocator().alloc_str(&"\n".repeat(blank_lines + 1))));
-        write!(f, hard_line_break());
+        write!(f, exact_line_breaks(blank_lines + 1));
     }
 }
 
