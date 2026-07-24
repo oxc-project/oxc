@@ -404,6 +404,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, text(self.value().as_str()));
+        write!(f, text(crate::utils::jsx::jsx_text_source(self.as_ref()).as_str()));
     }
 }

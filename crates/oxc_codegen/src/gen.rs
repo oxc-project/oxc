@@ -2677,10 +2677,16 @@ impl Gen for JSXAttributeValue<'_> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
-                p.print_ascii_byte(quote);
-                p.print_str(&lit.value);
-                p.print_ascii_byte(quote);
+                if let Some(raw) = &lit.raw
+                    && lit.value != raw.as_str()[1..raw.len() - 1]
+                {
+                    p.print_str(raw.as_str());
+                } else {
+                    let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
+                    p.print_ascii_byte(quote);
+                    p.print_str(&lit.value);
+                    p.print_ascii_byte(quote);
+                }
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
         }
@@ -2768,7 +2774,7 @@ impl Gen for JSXClosingFragment {
 impl Gen for JSXText<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
-        p.print_str(self.value.as_str());
+        p.print_str(self.raw.as_ref().unwrap_or(&self.value).as_str());
     }
 }
 

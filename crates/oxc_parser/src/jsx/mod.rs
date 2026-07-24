@@ -4,6 +4,7 @@ use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
+use oxc_syntax::xml_entities::decode_entities;
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
@@ -472,7 +473,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_jsx_attribute_value(&mut self) -> JSXAttributeValue<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let str_lit = self.parse_literal_string();
+                let mut str_lit = self.parse_literal_string();
+                str_lit.value = decode_entities(str_lit.value, self.allocator());
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {
@@ -519,7 +521,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_jsx_text(&mut self) -> ArenaBox<'a, JSXText<'a>> {
         let span = self.cur_token().span();
         let raw = Str::from(self.cur_src());
-        let value = Str::from(self.cur_string());
+        let value = decode_entities(Str::from(self.cur_string()), self.allocator());
         self.bump_any();
         JSXText::boxed(span, value, Some(raw), self)
     }

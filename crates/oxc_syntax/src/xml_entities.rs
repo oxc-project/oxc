@@ -1,8 +1,8 @@
 //! XML Entities
 
-use phf::{Map, phf_map};
-
 use oxc_allocator::{Allocator, ArenaStringBuilder};
+use oxc_str::Str;
+use phf::{Map, phf_map};
 
 /// XML Entities
 ///
@@ -264,91 +264,139 @@ pub const XML_ENTITIES: Map<&'static str, char> = phf_map! {
     "diams" => '\u{2666}',
 };
 
-/// Replace entities like `&nbsp;`, `&#123;`, and `&#xDEADBEEF;` with the characters they
-/// encode.
+/// Decode XML/HTML character references in `text`.
 ///
-/// If either the text contains an entity to decode or `acc` is already initialized, the decoded
-/// string is appended to `acc`. Otherwise, `acc` remains `None`, allowing callers to reuse the
-/// original string without copying.
-///
-/// See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>.
-/// Adapted from TypeScript's JSX transformer:
-/// <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617-L635>.
-pub fn decode_entities<'a>(
-    s: &str,
-    acc: &mut Option<ArenaStringBuilder<'a>>,
-    text_len: usize,
-    allocator: &'a Allocator,
-) {
-    let mut chars = s.char_indices();
-    let mut prev = 0;
-    while let Some((i, c)) = chars.next() {
-        if c == '&' {
-            let mut start = i;
-            let mut end = None;
-            for (j, c) in chars.by_ref() {
-                if c == ';' {
-                    end.replace(j);
-                    break;
-                } else if c == '&' {
-                    start = j;
-                }
-            }
-            if let Some(end) = end {
-                let buffer = acc.get_or_insert_with(|| {
-                    ArenaStringBuilder::with_capacity_in(text_len, allocator)
-                });
+/// Returns `text` without allocating if it contains no valid character references.
+pub fn decode_entities<'a>(text: Str<'a>, allocator: &'a Allocator) -> Str<'a> {
+    let mut output = None;
+    decode_entities_impl(text.as_str(), |chunk| {
+        let output = output
+            .get_or_insert_with(|| ArenaStringBuilder::with_capacity_in(text.len(), allocator));
+        chunk.push_to(output);
+    });
+    output.map_or(text, Str::from)
+}
 
-                buffer.push_str(&s[prev..start]);
-                prev = end + 1;
-                let word = &s[start + 1..end];
-                if let Some(decimal) = word.strip_prefix('#') {
-                    if let Some(hex) = decimal.strip_prefix('x') {
-                        if let Some(c) = u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
-                        {
-                            // `&#x0123;`
-                            buffer.push(c);
-                            continue;
-                        }
-                    } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32) {
-                        // `&#0123;`
-                        buffer.push(c);
-                        continue;
-                    }
-                } else if let Some(c) = XML_ENTITIES.get(word) {
-                    // e.g. `&quote;`, `&amp;`
-                    buffer.push(*c);
-                    continue;
-                }
-                // Fallback
-                buffer.push('&');
-                buffer.push_str(word);
-                buffer.push(';');
-            } else {
-                // Reached end of text without finding a `;` after the `&`.
-                // No point searching for a further `&`, so exit the loop.
-                break;
-            }
+/// Append `text`, with XML/HTML character references decoded, to `output`.
+pub fn decode_entities_into(text: &str, output: &mut ArenaStringBuilder<'_>) {
+    if !decode_entities_impl(text, |chunk| chunk.push_to(output)) {
+        output.push_str(text);
+    }
+}
+
+#[derive(Clone, Copy)]
+enum DecodedChunk<'a> {
+    Str(&'a str),
+    Char(char),
+}
+
+impl DecodedChunk<'_> {
+    fn push_to(self, output: &mut ArenaStringBuilder<'_>) {
+        match self {
+            Self::Str(s) => output.push_str(s),
+            Self::Char(c) => output.push(c),
         }
     }
+}
 
-    if let Some(buffer) = acc.as_mut() {
-        buffer.push_str(&s[prev..]);
+/// Call `emit` for each chunk of decoded text.
+///
+/// Returns `true` if at least one character reference was decoded. If it returns `false`, `emit`
+/// was not called.
+fn decode_entities_impl<'a>(s: &'a str, mut emit: impl FnMut(DecodedChunk<'a>)) -> bool {
+    let mut chars = s.char_indices();
+    let mut prev = 0;
+    let mut decoded = false;
+
+    while let Some((i, c)) = chars.next() {
+        if c != '&' {
+            continue;
+        }
+
+        let mut start = i;
+        let mut end = None;
+        for (j, c) in chars.by_ref() {
+            if c == ';' {
+                end = Some(j);
+                break;
+            }
+            if c == '&' {
+                start = j;
+            }
+        }
+
+        let Some(end) = end else {
+            break;
+        };
+        let word = &s[start + 1..end];
+        let entity = if let Some(decimal) = word.strip_prefix('#') {
+            if let Some(hex) = decimal.strip_prefix('x') {
+                u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+            } else {
+                decimal.parse::<u32>().ok().and_then(char::from_u32)
+            }
+        } else {
+            XML_ENTITIES.get(word).copied()
+        };
+
+        let Some(entity) = entity else {
+            continue;
+        };
+
+        emit(DecodedChunk::Str(&s[prev..start]));
+        emit(DecodedChunk::Char(entity));
+        prev = end + 1;
+        decoded = true;
     }
+
+    if decoded {
+        emit(DecodedChunk::Str(&s[prev..]));
+    }
+    decoded
 }
 
 #[cfg(test)]
 mod tests {
-    use oxc_allocator::Allocator;
+    use oxc_allocator::{Allocator, ArenaStringBuilder};
+    use oxc_str::Str;
 
-    use super::decode_entities;
+    use super::{decode_entities, decode_entities_into};
+
+    fn decode(input: &str) -> String {
+        let allocator = Allocator::default();
+        decode_entities(Str::from(input), &allocator).to_string()
+    }
 
     #[test]
-    fn entity_after_stray_amp() {
+    fn decodes_named_and_numeric_entities() {
+        assert_eq!(decode("&amp;&gt;&quot;"), "&>\"");
+        assert_eq!(decode("&#38;&#62;&#34;"), "&>\"");
+        assert_eq!(decode("&#x26;&#x3e;&#x22;"), "&>\"");
+        assert_eq!(decode("&#x1f600;"), "😀");
+    }
+
+    #[test]
+    fn preserves_invalid_entities() {
+        for input in ["&unknown;", "&amp", "&#x110000;", "&#xD800;", "&#wat;"] {
+            let allocator = Allocator::default();
+            let decoded = decode_entities(Str::from(input), &allocator);
+            assert_eq!(decoded, input);
+            assert_eq!(decoded.as_ptr(), input.as_ptr());
+        }
+    }
+
+    #[test]
+    fn decodes_entity_after_stray_ampersand() {
+        assert_eq!(decode("& &amp;"), "& &");
+        assert_eq!(decode("&unknown; &amp;"), "&unknown; &");
+        assert_eq!(decode("&&amp;"), "&&");
+    }
+
+    #[test]
+    fn appends_decoded_entities() {
         let allocator = Allocator::default();
-        let input = "& &amp;";
-        let mut acc = None;
-        decode_entities(input, &mut acc, input.len(), &allocator);
-        assert_eq!(acc.as_ref().unwrap().as_str(), "& &");
+        let mut output = ArenaStringBuilder::from_str_in("prefix ", &allocator);
+        decode_entities_into("&amp; suffix", &mut output);
+        assert_eq!(output, "prefix & suffix");
     }
 }
