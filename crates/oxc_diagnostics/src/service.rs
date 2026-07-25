@@ -257,7 +257,7 @@ const ASCII_SET: AsciiSet =
         // we do not want path separators to be percent-encoded
         .remove(b'/');
 
-pub(crate) fn to_file_url<A: AsRef<Path>>(path: A) -> Option<String> {
+pub fn to_file_url<A: AsRef<Path>>(path: A) -> Option<String> {
     let path = path.as_ref();
 
     let fragment = if path.is_absolute() {
