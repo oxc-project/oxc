@@ -120,11 +120,11 @@ impl<'a> PeepholeOptimizations {
                 }
                 // "function f() { x(); return; }" => "function f() { x(); }"
                 // "f = () => { x(); return; }" => "f = () => { x(); }"
-                Statement::ReturnStatement(s) if s.argument.is_none() => {
-                    if ctx.parent().is_function_body() {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
+                Statement::ReturnStatement(s)
+                    if s.argument.is_none() && ctx.parent().is_function_body() =>
+                {
+                    let dropped = stmts.pop().unwrap();
+                    ctx.drop_statement(&dropped);
                 }
                 _ => {}
             }
