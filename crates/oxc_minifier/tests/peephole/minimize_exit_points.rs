@@ -30,7 +30,9 @@ fn test_break_optimization() {
 #[test]
 fn test_function_return_optimization() {
     test("function f(){return}", "function f(){}");
+    test("f=()=>{return}", "f=()=>{}");
     test("function f(){if(a()){b();if(c())return;}}", "function f(){a()&&(b(),c());}");
+    test("f=()=>{if(a()){b();if(c())return;}}", "f=()=>{a()&&(b(),c());}");
     test("function f(){if(x)return; x=3; return; }", "function f(){ x||=3;}");
     test("function f(){if(true){a();return;}else;b();}", "function f(){a();}");
     test("function f(){if(false){a();return;}else;b();return;}", "function f(){b();}");

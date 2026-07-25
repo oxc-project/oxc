@@ -109,22 +109,19 @@ impl<'a> PeepholeOptimizations {
         if let Some(last_stmt) = stmts.last() {
             match last_stmt {
                 // "while (x) { y(); continue; }" => "while (x) { y(); }"
+                // "for(;;) { y(); continue; }" => "for(;;) { y(); }"
+                // "for(a in x) { y(); continue; }" => "for(a in x) { y(); }"
+                // "for(a of x) { y(); continue; }" => "for(a of x) { y(); }"
                 Statement::ContinueStatement(s) if s.label.is_none() => {
-                    if matches!(
-                        ctx.ancestors().nth(1),
-                        Some(
-                            Ancestor::ForStatementBody(_)
-                                | Ancestor::ForInStatementBody(_)
-                                | Ancestor::ForOfStatementBody(_),
-                        )
-                    ) {
+                    if ctx.ancestors().nth(1).is_some_and(Self::is_ancestor_loop_statement_body) {
                         let dropped = stmts.pop().unwrap();
                         ctx.drop_statement(&dropped);
                     }
                 }
                 // "function f() { x(); return; }" => "function f() { x(); }"
+                // "f = () => { x(); return; }" => "f = () => { x(); }"
                 Statement::ReturnStatement(s) if s.argument.is_none() => {
-                    if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
+                    if ctx.parent().is_function_body() {
                         let dropped = stmts.pop().unwrap();
                         ctx.drop_statement(&dropped);
                     }
@@ -863,11 +860,7 @@ impl<'a> PeepholeOptimizations {
                     // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
                     // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
                     Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                        ctx.ancestors().nth(1).is_some_and(|v| {
-                            v.is_for_statement()
-                                || v.is_for_in_statement()
-                                || v.is_for_of_statement()
-                        })
+                        ctx.ancestors().nth(1).is_some_and(Self::is_ancestor_loop_statement_body)
                     }
                     // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
                     // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
@@ -2067,5 +2060,16 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
+    }
+
+    #[inline]
+    fn is_ancestor_loop_statement_body(ancestor: Ancestor) -> bool {
+        matches!(
+            ancestor,
+            Ancestor::ForStatementBody(_)
+                | Ancestor::ForInStatementBody(_)
+                | Ancestor::ForOfStatementBody(_)
+                | Ancestor::WhileStatementBody(_)
+        )
     }
 }
