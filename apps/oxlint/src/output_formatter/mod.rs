@@ -10,8 +10,7 @@ mod stylish;
 mod unix;
 mod xml_utils;
 
-use std::str::FromStr;
-use std::time::Duration;
+use std::{path::PathBuf, str::FromStr, time::Duration};
 
 use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
@@ -150,12 +149,16 @@ pub struct OutputFormatter {
 
 impl OutputFormatter {
     pub fn new(format: OutputFormat) -> Self {
-        Self { internal: Self::get_internal_formatter(format) }
+        Self::new_with_cwd(format, std::env::current_dir().unwrap_or_default())
     }
 
-    fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
+    pub fn new_with_cwd(format: OutputFormat, cwd: PathBuf) -> Self {
+        Self { internal: Self::get_internal_formatter(format, cwd) }
+    }
+
+    fn get_internal_formatter(format: OutputFormat, cwd: PathBuf) -> Box<dyn InternalFormatter> {
         match format {
-            OutputFormat::Json => Box::<JsonOutputFormatter>::default(),
+            OutputFormat::Json => Box::new(JsonOutputFormatter::new(cwd)),
             OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
             OutputFormat::Github => Box::new(GithubOutputFormatter),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
