@@ -1472,7 +1472,7 @@ impl<'a> IdentifierName<'a> {
         S1: Into<Ident<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, builder), &builder.allocator())
     }
 }
 
@@ -1513,7 +1513,7 @@ impl<'a> IdentifierReference<'a> {
         S1: Into<Ident<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, builder), &builder.allocator())
     }
 
     /// Build an [`IdentifierReference`] with `reference_id`.
@@ -1564,7 +1564,10 @@ impl<'a> IdentifierReference<'a> {
         S1: Into<Ident<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new_with_reference_id(span, name, reference_id, builder), builder)
+        ArenaBox::new_in(
+            Self::new_with_reference_id(span, name, reference_id, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -1605,7 +1608,7 @@ impl<'a> BindingIdentifier<'a> {
         S1: Into<Ident<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, builder), &builder.allocator())
     }
 
     /// Build a [`BindingIdentifier`] with `symbol_id`.
@@ -1656,7 +1659,10 @@ impl<'a> BindingIdentifier<'a> {
         S1: Into<Ident<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new_with_symbol_id(span, name, symbol_id, builder), builder)
+        ArenaBox::new_in(
+            Self::new_with_symbol_id(span, name, symbol_id, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -1700,7 +1706,7 @@ impl ThisExpression {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -1744,7 +1750,7 @@ impl<'a> ArrayExpression<'a> {
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, elements, builder), builder)
+        ArenaBox::new_in(Self::new(span, elements, builder), &builder.allocator())
     }
 }
 
@@ -3131,7 +3137,7 @@ impl Elision {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -3175,7 +3181,7 @@ impl<'a> ObjectExpression<'a> {
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, properties, builder), builder)
+        ArenaBox::new_in(Self::new(span, properties, builder), &builder.allocator())
     }
 }
 
@@ -3297,7 +3303,7 @@ impl<'a> ObjectProperty<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, kind, key, value, method, shorthand, computed, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -4723,7 +4729,7 @@ impl<'a> TemplateLiteral<'a> {
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, quasis, expressions, builder), builder)
+        ArenaBox::new_in(Self::new(span, quasis, expressions, builder), &builder.allocator())
     }
 }
 
@@ -4781,7 +4787,7 @@ impl<'a> TaggedTemplateExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, tag, type_arguments, quasi, builder), builder)
+        ArenaBox::new_in(Self::new(span, tag, type_arguments, quasi, builder), &builder.allocator())
     }
 }
 
@@ -4963,7 +4969,10 @@ impl<'a> ComputedMemberExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, object, expression, optional, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, object, expression, optional, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -5015,7 +5024,7 @@ impl<'a> StaticMemberExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, object, property, optional, builder), builder)
+        ArenaBox::new_in(Self::new(span, object, property, optional, builder), &builder.allocator())
     }
 }
 
@@ -5067,7 +5076,7 @@ impl<'a> PrivateFieldExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, object, field, optional, builder), builder)
+        ArenaBox::new_in(Self::new(span, object, field, optional, builder), &builder.allocator())
     }
 }
 
@@ -5135,7 +5144,7 @@ impl<'a> CallExpression<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, callee, type_arguments, arguments, optional, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -5206,7 +5215,7 @@ impl<'a> CallExpression<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_pure(span, callee, type_arguments, arguments, optional, pure, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -5268,7 +5277,10 @@ impl<'a> NewExpression<'a> {
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, callee, type_arguments, arguments, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, callee, type_arguments, arguments, builder),
+            &builder.allocator(),
+        )
     }
 
     /// Build a [`NewExpression`] with `pure`.
@@ -5333,7 +5345,7 @@ impl<'a> NewExpression<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_pure(span, callee, type_arguments, arguments, pure, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -5362,7 +5374,7 @@ impl ImportMeta {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -5390,7 +5402,7 @@ impl NewTarget {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -5424,7 +5436,7 @@ impl<'a> SpreadElement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, argument, builder), &builder.allocator())
     }
 }
 
@@ -6818,7 +6830,7 @@ impl<'a> UpdateExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, operator, prefix, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, operator, prefix, argument, builder), &builder.allocator())
     }
 }
 
@@ -6860,7 +6872,7 @@ impl<'a> UnaryExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, operator, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, operator, argument, builder), &builder.allocator())
     }
 }
 
@@ -6906,7 +6918,7 @@ impl<'a> BinaryExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, left, operator, right, builder), builder)
+        ArenaBox::new_in(Self::new(span, left, operator, right, builder), &builder.allocator())
     }
 }
 
@@ -6948,7 +6960,7 @@ impl<'a> PrivateInExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
+        ArenaBox::new_in(Self::new(span, left, right, builder), &builder.allocator())
     }
 }
 
@@ -6994,7 +7006,7 @@ impl<'a> LogicalExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, left, operator, right, builder), builder)
+        ArenaBox::new_in(Self::new(span, left, operator, right, builder), &builder.allocator())
     }
 }
 
@@ -7046,7 +7058,10 @@ impl<'a> ConditionalExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, test, consequent, alternate, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, test, consequent, alternate, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -7092,7 +7107,7 @@ impl<'a> AssignmentExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, operator, left, right, builder), builder)
+        ArenaBox::new_in(Self::new(span, operator, left, right, builder), &builder.allocator())
     }
 }
 
@@ -7677,7 +7692,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, elements, rest, builder), builder)
+        ArenaBox::new_in(Self::new(span, elements, rest, builder), &builder.allocator())
     }
 }
 
@@ -7732,7 +7747,7 @@ impl<'a> ObjectAssignmentTarget<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, properties, rest, builder), builder)
+        ArenaBox::new_in(Self::new(span, properties, rest, builder), &builder.allocator())
     }
 }
 
@@ -7770,7 +7785,7 @@ impl<'a> AssignmentTargetRest<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, target, builder), builder)
+        ArenaBox::new_in(Self::new(span, target, builder), &builder.allocator())
     }
 }
 
@@ -8099,7 +8114,7 @@ impl<'a> AssignmentTargetWithDefault<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, binding, init, builder), builder)
+        ArenaBox::new_in(Self::new(span, binding, init, builder), &builder.allocator())
     }
 }
 
@@ -8197,7 +8212,7 @@ impl<'a> AssignmentTargetPropertyIdentifier<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, binding, init, builder), builder)
+        ArenaBox::new_in(Self::new(span, binding, init, builder), &builder.allocator())
     }
 }
 
@@ -8249,7 +8264,7 @@ impl<'a> AssignmentTargetPropertyProperty<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, binding, computed, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, binding, computed, builder), &builder.allocator())
     }
 }
 
@@ -8293,7 +8308,7 @@ impl<'a> SequenceExpression<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expressions, builder), builder)
+        ArenaBox::new_in(Self::new(span, expressions, builder), &builder.allocator())
     }
 }
 
@@ -8321,7 +8336,7 @@ impl Super {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -8355,7 +8370,7 @@ impl<'a> AwaitExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, argument, builder), &builder.allocator())
     }
 }
 
@@ -8393,7 +8408,7 @@ impl<'a> ChainExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -8592,7 +8607,7 @@ impl<'a> ParenthesizedExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -9916,7 +9931,7 @@ impl<'a> BlockStatement<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, body, builder), &builder.allocator())
     }
 
     /// Build a [`BlockStatement`] with `scope_id`.
@@ -9967,7 +9982,10 @@ impl<'a> BlockStatement<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder)
+        ArenaBox::new_in(
+            Self::new_with_scope_id(span, body, scope_id, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -10606,7 +10624,10 @@ impl<'a> VariableDeclaration<'a> {
         T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, kind, declarations, declare, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, kind, declarations, declare, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -10670,7 +10691,7 @@ impl EmptyStatement {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -10704,7 +10725,7 @@ impl<'a> ExpressionStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -10750,7 +10771,10 @@ impl<'a> IfStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, test, consequent, alternate, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, test, consequent, alternate, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -10792,7 +10816,7 @@ impl<'a> DoWhileStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, body, test, builder), builder)
+        ArenaBox::new_in(Self::new(span, body, test, builder), &builder.allocator())
     }
 }
 
@@ -10834,7 +10858,7 @@ impl<'a> WhileStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, test, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, test, body, builder), &builder.allocator())
     }
 }
 
@@ -10892,7 +10916,7 @@ impl<'a> ForStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, init, test, update, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, init, test, update, body, builder), &builder.allocator())
     }
 
     /// Build a [`ForStatement`] with `scope_id`.
@@ -10954,7 +10978,7 @@ impl<'a> ForStatement<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, init, test, update, body, scope_id, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -12369,7 +12393,7 @@ impl<'a> ForInStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, left, right, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, left, right, body, builder), &builder.allocator())
     }
 
     /// Build a [`ForInStatement`] with `scope_id`.
@@ -12426,7 +12450,7 @@ impl<'a> ForInStatement<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, left, right, body, scope_id, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -12778,7 +12802,7 @@ impl<'a> ForOfStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, r#await, left, right, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, r#await, left, right, body, builder), &builder.allocator())
     }
 
     /// Build a [`ForOfStatement`] with `scope_id`.
@@ -12840,7 +12864,7 @@ impl<'a> ForOfStatement<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, r#await, left, right, body, scope_id, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -12879,7 +12903,7 @@ impl<'a> ContinueStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, label, builder), builder)
+        ArenaBox::new_in(Self::new(span, label, builder), &builder.allocator())
     }
 }
 
@@ -12917,7 +12941,7 @@ impl<'a> BreakStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, label, builder), builder)
+        ArenaBox::new_in(Self::new(span, label, builder), &builder.allocator())
     }
 }
 
@@ -12955,7 +12979,7 @@ impl<'a> ReturnStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, argument, builder), &builder.allocator())
     }
 }
 
@@ -13003,7 +13027,7 @@ impl<'a> WithStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, object, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, object, body, builder), &builder.allocator())
     }
 
     /// Build a [`WithStatement`] with `scope_id`.
@@ -13053,7 +13077,10 @@ impl<'a> WithStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new_with_scope_id(span, object, body, scope_id, builder), builder)
+        ArenaBox::new_in(
+            Self::new_with_scope_id(span, object, body, scope_id, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -13107,7 +13134,7 @@ impl<'a> SwitchStatement<'a> {
         T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, discriminant, cases, builder), builder)
+        ArenaBox::new_in(Self::new(span, discriminant, cases, builder), &builder.allocator())
     }
 
     /// Build a [`SwitchStatement`] with `scope_id`.
@@ -13165,7 +13192,7 @@ impl<'a> SwitchStatement<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, discriminant, cases, scope_id, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -13235,7 +13262,7 @@ impl<'a> LabeledStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, label, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, label, body, builder), &builder.allocator())
     }
 }
 
@@ -13269,7 +13296,7 @@ impl<'a> ThrowStatement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, argument, builder), &builder.allocator())
     }
 }
 
@@ -13331,7 +13358,7 @@ impl<'a> TryStatement<'a> {
         T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, block, handler, finalizer, builder), builder)
+        ArenaBox::new_in(Self::new(span, block, handler, finalizer, builder), &builder.allocator())
     }
 }
 
@@ -13385,7 +13412,7 @@ impl<'a> CatchClause<'a> {
         T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, param, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, param, body, builder), &builder.allocator())
     }
 
     /// Build a [`CatchClause`] with `scope_id`.
@@ -13441,7 +13468,10 @@ impl<'a> CatchClause<'a> {
         T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new_with_scope_id(span, param, body, scope_id, builder), builder)
+        ArenaBox::new_in(
+            Self::new_with_scope_id(span, param, body, scope_id, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -13496,7 +13526,7 @@ impl DebuggerStatement {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -13647,7 +13677,7 @@ impl<'a> AssignmentPattern<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
+        ArenaBox::new_in(Self::new(span, left, right, builder), &builder.allocator())
     }
 }
 
@@ -13702,7 +13732,7 @@ impl<'a> ObjectPattern<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, properties, rest, builder), builder)
+        ArenaBox::new_in(Self::new(span, properties, rest, builder), &builder.allocator())
     }
 }
 
@@ -13787,7 +13817,7 @@ impl<'a> ArrayPattern<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, elements, rest, builder), builder)
+        ArenaBox::new_in(Self::new(span, elements, rest, builder), &builder.allocator())
     }
 }
 
@@ -13825,7 +13855,7 @@ impl<'a> BindingRestElement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, argument, builder), &builder.allocator())
     }
 }
 
@@ -13944,7 +13974,7 @@ impl<'a> Function<'a> {
                 body,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -14077,7 +14107,7 @@ impl<'a> Function<'a> {
                 pife,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -14138,7 +14168,7 @@ impl<'a> FormalParameters<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, kind, items, rest, builder), builder)
+        ArenaBox::new_in(Self::new(span, kind, items, rest, builder), &builder.allocator())
     }
 }
 
@@ -14245,7 +14275,10 @@ impl<'a> FormalParameterRest<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, decorators, rest, type_annotation, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, decorators, rest, type_annotation, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -14300,7 +14333,7 @@ impl<'a> FunctionBody<'a> {
         T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, directives, statements, builder), builder)
+        ArenaBox::new_in(Self::new(span, directives, statements, builder), &builder.allocator())
     }
 }
 
@@ -14393,7 +14426,7 @@ impl<'a> ArrowFunctionExpression<'a> {
                 body,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -14500,7 +14533,7 @@ impl<'a> ArrowFunctionExpression<'a> {
                 pife,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -14543,7 +14576,7 @@ impl<'a> YieldExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, delegate, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, delegate, argument, builder), &builder.allocator())
     }
 }
 
@@ -14660,7 +14693,7 @@ impl<'a> Class<'a> {
                 declare,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -14781,7 +14814,7 @@ impl<'a> Class<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -14822,7 +14855,7 @@ impl<'a> ClassBody<'a> {
         T1: IntoIn<'a, ArenaVec<'a, ClassElement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, body, builder), &builder.allocator())
     }
 }
 
@@ -15165,7 +15198,7 @@ impl<'a> MethodDefinition<'a> {
                 accessibility,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -15294,7 +15327,7 @@ impl<'a> PropertyDefinition<'a> {
                 accessibility,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -15331,7 +15364,7 @@ impl<'a> PrivateIdentifier<'a> {
         S1: Into<Ident<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, builder), &builder.allocator())
     }
 }
 
@@ -15372,7 +15405,7 @@ impl<'a> StaticBlock<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, body, builder), &builder.allocator())
     }
 
     /// Build a [`StaticBlock`] with `scope_id`.
@@ -15423,7 +15456,10 @@ impl<'a> StaticBlock<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder)
+        ArenaBox::new_in(
+            Self::new_with_scope_id(span, body, scope_id, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -15694,7 +15730,7 @@ impl<'a> AccessorProperty<'a> {
                 accessibility,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -15741,7 +15777,7 @@ impl<'a> ImportExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, source, options, phase, builder), builder)
+        ArenaBox::new_in(Self::new(span, source, options, phase, builder), &builder.allocator())
     }
 }
 
@@ -15811,7 +15847,7 @@ impl<'a> ImportDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, specifiers, source, phase, with_clause, import_kind, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -15928,7 +15964,10 @@ impl<'a> ImportSpecifier<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, imported, local, import_kind, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, imported, local, import_kind, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -15966,7 +16005,7 @@ impl<'a> ImportDefaultSpecifier<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, local, builder), builder)
+        ArenaBox::new_in(Self::new(span, local, builder), &builder.allocator())
     }
 }
 
@@ -16004,7 +16043,7 @@ impl<'a> ImportNamespaceSpecifier<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, local, builder), builder)
+        ArenaBox::new_in(Self::new(span, local, builder), &builder.allocator())
     }
 }
 
@@ -16057,7 +16096,7 @@ impl<'a> WithClause<'a> {
         T1: IntoIn<'a, ArenaVec<'a, ImportAttribute<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, keyword, with_entries, builder), builder)
+        ArenaBox::new_in(Self::new(span, keyword, with_entries, builder), &builder.allocator())
     }
 }
 
@@ -16209,7 +16248,7 @@ impl<'a> ExportNamedDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, declaration, specifiers, source, export_kind, with_clause, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -16248,7 +16287,7 @@ impl<'a> ExportDefaultDeclaration<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, declaration, builder), builder)
+        ArenaBox::new_in(Self::new(span, declaration, builder), &builder.allocator())
     }
 }
 
@@ -16313,7 +16352,7 @@ impl<'a> ExportAllDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, exported, source, with_clause, export_kind, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -18140,7 +18179,7 @@ impl<'a> V8IntrinsicExpression<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, arguments, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, arguments, builder), &builder.allocator())
     }
 }
 
@@ -18174,7 +18213,7 @@ impl BooleanLiteral {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, builder), builder)
+        ArenaBox::new_in(Self::new(span, value, builder), &builder.allocator())
     }
 }
 
@@ -18202,7 +18241,7 @@ impl NullLiteral {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -18248,7 +18287,7 @@ impl<'a> NumericLiteral<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), builder)
+        ArenaBox::new_in(Self::new(span, value, raw, base, builder), &builder.allocator())
     }
 }
 
@@ -18302,7 +18341,7 @@ impl<'a> StringLiteral<'a> {
         S1: Into<Str<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, builder), builder)
+        ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
     }
 
     /// Build a [`StringLiteral`] with `lone_surrogates`.
@@ -18360,7 +18399,7 @@ impl<'a> StringLiteral<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_lone_surrogates(span, value, raw, lone_surrogates, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -18419,7 +18458,7 @@ impl<'a> BigIntLiteral<'a> {
         S1: Into<Str<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), builder)
+        ArenaBox::new_in(Self::new(span, value, raw, base, builder), &builder.allocator())
     }
 }
 
@@ -18461,7 +18500,7 @@ impl<'a> RegExpLiteral<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, regex, raw, builder), builder)
+        ArenaBox::new_in(Self::new(span, regex, raw, builder), &builder.allocator())
     }
 }
 
@@ -18525,7 +18564,7 @@ impl<'a> JSXElement<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, opening_element, children, closing_element, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -18586,7 +18625,10 @@ impl<'a> JSXOpeningElement<'a> {
         T2: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, type_arguments, attributes, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, name, type_arguments, attributes, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -18620,7 +18662,7 @@ impl<'a> JSXClosingElement<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, builder), &builder.allocator())
     }
 }
 
@@ -18680,7 +18722,7 @@ impl<'a> JSXFragment<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, opening_fragment, children, closing_fragment, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -18861,7 +18903,7 @@ impl<'a> JSXNamespacedName<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, namespace, name, builder), builder)
+        ArenaBox::new_in(Self::new(span, namespace, name, builder), &builder.allocator())
     }
 }
 
@@ -18903,7 +18945,7 @@ impl<'a> JSXMemberExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, object, property, builder), builder)
+        ArenaBox::new_in(Self::new(span, object, property, builder), &builder.allocator())
     }
 }
 
@@ -19022,7 +19064,7 @@ impl<'a> JSXExpressionContainer<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -20393,7 +20435,7 @@ impl JSXEmptyExpression {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -20471,7 +20513,7 @@ impl<'a> JSXAttribute<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, value, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, value, builder), &builder.allocator())
     }
 }
 
@@ -20505,7 +20547,7 @@ impl<'a> JSXSpreadAttribute<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, argument, builder), builder)
+        ArenaBox::new_in(Self::new(span, argument, builder), &builder.allocator())
     }
 }
 
@@ -20708,7 +20750,7 @@ impl<'a> JSXIdentifier<'a> {
         S1: Into<Str<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, builder), builder)
+        ArenaBox::new_in(Self::new(span, name, builder), &builder.allocator())
     }
 }
 
@@ -20861,7 +20903,7 @@ impl<'a> JSXSpreadChild<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -20909,7 +20951,7 @@ impl<'a> JSXText<'a> {
         S1: Into<Str<'a>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, builder), builder)
+        ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
     }
 }
 
@@ -20962,7 +21004,7 @@ impl<'a> TSThisParameter<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, this_span, type_annotation, builder), builder)
+        ArenaBox::new_in(Self::new(span, this_span, type_annotation, builder), &builder.allocator())
     }
 }
 
@@ -21019,7 +21061,7 @@ impl<'a> TSEnumDeclaration<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, id, body, r#const, declare, builder), builder)
+        ArenaBox::new_in(Self::new(span, id, body, r#const, declare, builder), &builder.allocator())
     }
 }
 
@@ -21262,7 +21304,7 @@ impl<'a> TSTypeAnnotation<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), &builder.allocator())
     }
 }
 
@@ -21296,7 +21338,7 @@ impl<'a> TSLiteralType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, literal, builder), builder)
+        ArenaBox::new_in(Self::new(span, literal, builder), &builder.allocator())
     }
 }
 
@@ -22345,7 +22387,7 @@ impl<'a> TSConditionalType<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, check_type, extends_type, true_type, false_type, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -22416,7 +22458,7 @@ impl<'a> TSConditionalType<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -22457,7 +22499,7 @@ impl<'a> TSUnionType<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, types, builder), builder)
+        ArenaBox::new_in(Self::new(span, types, builder), &builder.allocator())
     }
 }
 
@@ -22497,7 +22539,7 @@ impl<'a> TSIntersectionType<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, types, builder), builder)
+        ArenaBox::new_in(Self::new(span, types, builder), &builder.allocator())
     }
 }
 
@@ -22531,7 +22573,7 @@ impl<'a> TSParenthesizedType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), &builder.allocator())
     }
 }
 
@@ -22573,7 +22615,7 @@ impl<'a> TSTypeOperator<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, operator, type_annotation, builder), builder)
+        ArenaBox::new_in(Self::new(span, operator, type_annotation, builder), &builder.allocator())
     }
 }
 
@@ -22607,7 +22649,7 @@ impl<'a> TSArrayType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, element_type, builder), builder)
+        ArenaBox::new_in(Self::new(span, element_type, builder), &builder.allocator())
     }
 }
 
@@ -22649,7 +22691,7 @@ impl<'a> TSIndexedAccessType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, object_type, index_type, builder), builder)
+        ArenaBox::new_in(Self::new(span, object_type, index_type, builder), &builder.allocator())
     }
 }
 
@@ -22693,7 +22735,7 @@ impl<'a> TSTupleType<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, element_types, builder), builder)
+        ArenaBox::new_in(Self::new(span, element_types, builder), &builder.allocator())
     }
 }
 
@@ -22745,7 +22787,10 @@ impl<'a> TSNamedTupleMember<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, label, element_type, optional, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, label, element_type, optional, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -22779,7 +22824,7 @@ impl<'a> TSOptionalType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), &builder.allocator())
     }
 }
 
@@ -22813,7 +22858,7 @@ impl<'a> TSRestType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), &builder.allocator())
     }
 }
 
@@ -23715,7 +23760,7 @@ impl TSAnyKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23743,7 +23788,7 @@ impl TSStringKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23771,7 +23816,7 @@ impl TSBooleanKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23799,7 +23844,7 @@ impl TSNumberKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23827,7 +23872,7 @@ impl TSNeverKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23855,7 +23900,7 @@ impl TSIntrinsicKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23883,7 +23928,7 @@ impl TSUnknownKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23911,7 +23956,7 @@ impl TSNullKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23939,7 +23984,7 @@ impl TSUndefinedKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23967,7 +24012,7 @@ impl TSVoidKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -23995,7 +24040,7 @@ impl TSSymbolKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -24023,7 +24068,7 @@ impl TSThisType {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -24051,7 +24096,7 @@ impl TSObjectKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -24079,7 +24124,7 @@ impl TSBigIntKeyword {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }
 
@@ -24132,7 +24177,7 @@ impl<'a> TSTypeReference<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_name, type_arguments, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_name, type_arguments, builder), &builder.allocator())
     }
 }
 
@@ -24250,7 +24295,7 @@ impl<'a> TSQualifiedName<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
+        ArenaBox::new_in(Self::new(span, left, right, builder), &builder.allocator())
     }
 }
 
@@ -24294,7 +24339,7 @@ impl<'a> TSTypeParameterInstantiation<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, params, builder), builder)
+        ArenaBox::new_in(Self::new(span, params, builder), &builder.allocator())
     }
 }
 
@@ -24363,7 +24408,7 @@ impl<'a> TSTypeParameter<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, name, constraint, default, r#in, out, r#const, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -24408,7 +24453,7 @@ impl<'a> TSTypeParameterDeclaration<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, params, builder), builder)
+        ArenaBox::new_in(Self::new(span, params, builder), &builder.allocator())
     }
 }
 
@@ -24474,7 +24519,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, id, type_parameters, type_annotation, declare, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -24551,7 +24596,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -24654,7 +24699,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, id, type_parameters, extends, body, declare, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -24741,7 +24786,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -24782,7 +24827,7 @@ impl<'a> TSInterfaceBody<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, body, builder), &builder.allocator())
     }
 }
 
@@ -24852,7 +24897,7 @@ impl<'a> TSPropertySignature<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, computed, optional, readonly, key, type_annotation, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -25225,7 +25270,7 @@ impl<'a> TSIndexSignature<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, parameters, type_annotation, readonly, r#static, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -25298,7 +25343,7 @@ impl<'a> TSCallSignatureDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, type_parameters, this_param, params, return_type, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -25381,7 +25426,7 @@ impl<'a> TSCallSignatureDeclaration<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -25485,7 +25530,7 @@ impl<'a> TSMethodSignature<'a> {
                 return_type,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -25592,7 +25637,7 @@ impl<'a> TSMethodSignature<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -25656,7 +25701,10 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_parameters, params, return_type, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, type_parameters, params, return_type, builder),
+            &builder.allocator(),
+        )
     }
 
     /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`.
@@ -25723,7 +25771,7 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, type_parameters, params, return_type, scope_id, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -25839,7 +25887,7 @@ impl<'a> TSTypePredicate<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, parameter_name, asserts, type_annotation, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -25926,7 +25974,7 @@ impl<'a> TSModuleDeclaration<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, id, body, kind, declare, builder), builder)
+        ArenaBox::new_in(Self::new(span, id, body, kind, declare, builder), &builder.allocator())
     }
 
     /// Build a [`TSModuleDeclaration`] with `scope_id`.
@@ -25988,7 +26036,7 @@ impl<'a> TSModuleDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, id, body, kind, declare, scope_id, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -26212,7 +26260,7 @@ impl<'a> TSGlobalDeclaration<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, global_span, body, declare, builder), builder)
+        ArenaBox::new_in(Self::new(span, global_span, body, declare, builder), &builder.allocator())
     }
 
     /// Build a [`TSGlobalDeclaration`] with `scope_id`.
@@ -26269,7 +26317,7 @@ impl<'a> TSGlobalDeclaration<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, global_span, body, declare, scope_id, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -26325,7 +26373,7 @@ impl<'a> TSModuleBlock<'a> {
         T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, directives, body, builder), builder)
+        ArenaBox::new_in(Self::new(span, directives, body, builder), &builder.allocator())
     }
 }
 
@@ -26369,7 +26417,7 @@ impl<'a> TSTypeLiteral<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, members, builder), builder)
+        ArenaBox::new_in(Self::new(span, members, builder), &builder.allocator())
     }
 }
 
@@ -26413,7 +26461,7 @@ impl<'a> TSInferType<'a> {
         T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_parameter, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_parameter, builder), &builder.allocator())
     }
 }
 
@@ -26466,7 +26514,7 @@ impl<'a> TSTypeQuery<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expr_name, type_arguments, builder), builder)
+        ArenaBox::new_in(Self::new(span, expr_name, type_arguments, builder), &builder.allocator())
     }
 }
 
@@ -26642,7 +26690,7 @@ impl<'a> TSImportType<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, source, options, qualifier, type_arguments, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -26720,7 +26768,7 @@ impl<'a> TSImportTypeQualifiedName<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
+        ArenaBox::new_in(Self::new(span, left, right, builder), &builder.allocator())
     }
 }
 
@@ -26792,7 +26840,7 @@ impl<'a> TSFunctionType<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, type_parameters, this_param, params, return_type, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -26875,7 +26923,7 @@ impl<'a> TSFunctionType<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -26946,7 +26994,7 @@ impl<'a> TSConstructorType<'a> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, r#abstract, type_parameters, params, return_type, builder),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -27027,7 +27075,7 @@ impl<'a> TSConstructorType<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -27107,7 +27155,7 @@ impl<'a> TSMappedType<'a> {
                 readonly,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 
@@ -27190,7 +27238,7 @@ impl<'a> TSMappedType<'a> {
                 scope_id,
                 builder,
             ),
-            builder,
+            &builder.allocator(),
         )
     }
 }
@@ -27241,7 +27289,7 @@ impl<'a> TSTemplateLiteralType<'a> {
         T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, quasis, types, builder), builder)
+        ArenaBox::new_in(Self::new(span, quasis, types, builder), &builder.allocator())
     }
 }
 
@@ -27283,7 +27331,10 @@ impl<'a> TSAsExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, type_annotation, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, expression, type_annotation, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -27330,7 +27381,10 @@ impl<'a> TSSatisfiesExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, type_annotation, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, expression, type_annotation, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -27372,7 +27426,10 @@ impl<'a> TSTypeAssertion<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_annotation, expression, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, type_annotation, expression, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -27424,7 +27481,10 @@ impl<'a> TSImportEqualsDeclaration<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, id, module_reference, import_kind, builder), builder)
+        ArenaBox::new_in(
+            Self::new(span, id, module_reference, import_kind, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -27547,7 +27607,7 @@ impl<'a> TSExternalModuleReference<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -27581,7 +27641,7 @@ impl<'a> TSNonNullExpression<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -27628,7 +27688,7 @@ impl<'a> TSExportAssignment<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, builder), &builder.allocator())
     }
 }
 
@@ -27662,7 +27722,7 @@ impl<'a> TSNamespaceExportDeclaration<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, id, builder), builder)
+        ArenaBox::new_in(Self::new(span, id, builder), &builder.allocator())
     }
 }
 
@@ -27715,7 +27775,7 @@ impl<'a> TSInstantiationExpression<'a> {
         T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
     {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, expression, type_arguments, builder), builder)
+        ArenaBox::new_in(Self::new(span, expression, type_arguments, builder), &builder.allocator())
     }
 }
 
@@ -27757,7 +27817,7 @@ impl<'a> JSDocNullableType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), &builder.allocator())
     }
 }
 
@@ -27804,7 +27864,7 @@ impl<'a> JSDocNonNullableType<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), builder)
+        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), &builder.allocator())
     }
 }
 
@@ -27832,6 +27892,6 @@ impl JSDocUnknownType {
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, builder), builder)
+        ArenaBox::new_in(Self::new(span, builder), &builder.allocator())
     }
 }

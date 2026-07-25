@@ -298,7 +298,9 @@ fn generate_builder_methods_for_struct_impl(
         #[inline]
         pub fn #boxed_fn_name #generic_params (#fn_params, builder: &B) -> ArenaBox<'a, Self> #where_clause {
             let builder = builder.builder();
-            ArenaBox::new_in(Self::#new_fn_name(#(#args),*, builder), builder)
+            // Allocate via `&Allocator` (not `builder`), so `ArenaBox::new_in` shares a
+            // monomorphization with every other `&Allocator`-based allocation
+            ArenaBox::new_in(Self::#new_fn_name(#(#args),*, builder), &builder.allocator())
         }
     }
 }
