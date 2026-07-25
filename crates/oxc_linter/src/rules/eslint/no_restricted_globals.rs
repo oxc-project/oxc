@@ -9,7 +9,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{
+        ArrayValidation, InstanceType, Schema, SchemaObject, SingleOrVec, SubschemaValidation,
+    },
+};
 use serde::de::Error;
 use serde_json::Value;
 
@@ -38,8 +43,7 @@ impl Deref for NoRestrictedGlobals {
     }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone)]
 pub struct NoRestrictedGlobalsConfig {
     /// Objects in the format
     /// `{ "name": "event", "message": "Use local parameter instead." }`, which define what globals
@@ -63,6 +67,87 @@ impl Default for NoRestrictedGlobalsConfig {
             check_global_object: false,
             global_objects: default_globals_objects(),
         }
+    }
+}
+
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(untagged)]
+#[expect(dead_code)] // only for schemars
+enum RestrictedGlobal {
+    Name(CompactStr),
+    Config(RestrictedGlobalConfig),
+}
+
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[expect(dead_code)] // only for schemars
+struct RestrictedGlobalConfig {
+    /// The restricted global variable name.
+    name: CompactStr,
+    /// A custom message to display.
+    message: Option<CompactStr>,
+}
+
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[expect(dead_code)] // only for schemars
+struct NoRestrictedGlobalsOptions {
+    /// Globals that are restricted from use.
+    globals: Vec<RestrictedGlobal>,
+    /// Whether to check restricted globals accessed through global objects.
+    #[serde(default)]
+    check_global_object: bool,
+    /// Additional global object names to check when `checkGlobalObject` is enabled.
+    #[serde(default)]
+    global_objects: Vec<CompactStr>,
+}
+
+struct NoRestrictedGlobalsRuleConfig;
+
+impl JsonSchema for NoRestrictedGlobalsRuleConfig {
+    fn schema_name() -> String {
+        "NoRestrictedGlobalsRuleConfig".into()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        SchemaObject {
+            subschemas: Some(Box::new(SubschemaValidation {
+                any_of: Some(vec![
+                    SchemaObject {
+                        instance_type: Some(InstanceType::Array.into()),
+                        array: Some(Box::new(ArrayValidation {
+                            items: None,
+                            additional_items: Some(Box::new(
+                                r#gen.subschema_for::<RestrictedGlobal>(),
+                            )),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }
+                    .into(),
+                    SchemaObject {
+                        instance_type: Some(InstanceType::Array.into()),
+                        array: Some(Box::new(ArrayValidation {
+                            items: Some(SingleOrVec::Vec(vec![
+                                r#gen.subschema_for::<NoRestrictedGlobalsOptions>(),
+                            ])),
+                            min_items: Some(1),
+                            max_items: Some(1),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }
+                    .into(),
+                ]),
+                ..Default::default()
+            })),
+            ..Default::default()
+        }
+        .into()
     }
 }
 
@@ -98,7 +183,7 @@ declare_oxc_lint!(
     NoRestrictedGlobals,
     eslint,
     restriction,
-    config = NoRestrictedGlobalsConfig,
+    config = NoRestrictedGlobalsRuleConfig,
     version = "0.4.0",
     short_description = "Specify global variable names that should not be used in your application.",
 );
