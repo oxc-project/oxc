@@ -2,6 +2,14 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_builder.rs`.
 
 //! AST node builder methods.
+//!
+//! Each method is generic over `B: GetAstBuilder`, so it can be called with a builder
+//! directly, or with a type which holds one (e.g. parser or traverse context).
+//!
+//! Before forwarding the builder to another build method, methods first call `builder.builder()`
+//! to obtain the concrete [`AstBuild`]er. This way, everything below the outermost call is
+//! monomorphized over the [`AstBuild`] type (of which there are few), rather than over every
+//! `B: GetAstBuilder` the method is called with (of which there may be many).
 
 #![expect(clippy::default_trait_access)]
 
@@ -110,7 +118,7 @@ impl<'a> Expression<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build an [`Expression::NullLiteral`].
@@ -121,7 +129,7 @@ impl<'a> Expression<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NullLiteral(NullLiteral::boxed(span, builder))
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
     }
 
     /// Build an [`Expression::NumericLiteral`].
@@ -141,7 +149,7 @@ impl<'a> Expression<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`Expression::BigIntLiteral`].
@@ -164,7 +172,7 @@ impl<'a> Expression<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`Expression::RegExpLiteral`].
@@ -182,7 +190,7 @@ impl<'a> Expression<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> Self {
-        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder))
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
     }
 
     /// Build an [`Expression::StringLiteral`].
@@ -203,7 +211,7 @@ impl<'a> Expression<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Expression::StringLiteral`] with `lone_surrogates`.
@@ -231,7 +239,7 @@ impl<'a> Expression<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -254,7 +262,7 @@ impl<'a> Expression<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build an [`Expression::Identifier`].
@@ -269,7 +277,7 @@ impl<'a> Expression<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierReference::boxed(span, name, builder))
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build an [`Expression::Identifier`] with `reference_id`.
@@ -294,7 +302,7 @@ impl<'a> Expression<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -306,7 +314,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Super(Super::boxed(span, builder))
+        Self::Super(Super::boxed(span, builder.builder()))
     }
 
     /// Build an [`Expression::ArrayExpression`].
@@ -325,7 +333,7 @@ impl<'a> Expression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
     }
 
     /// Build an [`Expression::ArrowFunctionExpression`].
@@ -365,7 +373,7 @@ impl<'a> Expression<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -422,7 +430,7 @@ impl<'a> Expression<'a> {
                 scope_id,
                 pure,
                 pife,
-                builder,
+                builder.builder(),
             ),
         )
     }
@@ -445,7 +453,11 @@ impl<'a> Expression<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentExpression(AssignmentExpression::boxed(
-            span, operator, left, right, builder,
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
         ))
     }
 
@@ -462,7 +474,7 @@ impl<'a> Expression<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder))
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
     }
 
     /// Build an [`Expression::BinaryExpression`].
@@ -482,7 +494,13 @@ impl<'a> Expression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::BinaryExpression(BinaryExpression::boxed(span, left, operator, right, builder))
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::CallExpression`].
@@ -514,7 +532,7 @@ impl<'a> Expression<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -550,7 +568,7 @@ impl<'a> Expression<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -567,7 +585,7 @@ impl<'a> Expression<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ChainExpression(ChainExpression::boxed(span, expression, builder))
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`Expression::ClassExpression`].
@@ -620,7 +638,7 @@ impl<'a> Expression<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -677,7 +695,7 @@ impl<'a> Expression<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -699,7 +717,11 @@ impl<'a> Expression<'a> {
         builder: &B,
     ) -> Self {
         Self::ConditionalExpression(ConditionalExpression::boxed(
-            span, test, consequent, alternate, builder,
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
         ))
     }
 
@@ -753,7 +775,7 @@ impl<'a> Expression<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -823,7 +845,7 @@ impl<'a> Expression<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -844,7 +866,13 @@ impl<'a> Expression<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> Self {
-        Self::ImportExpression(ImportExpression::boxed(span, source, options, phase, builder))
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::LogicalExpression`].
@@ -864,7 +892,13 @@ impl<'a> Expression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::LogicalExpression(LogicalExpression::boxed(span, left, operator, right, builder))
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::NewExpression`].
@@ -888,7 +922,13 @@ impl<'a> Expression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::NewExpression`] with `pure`.
@@ -920,7 +960,7 @@ impl<'a> Expression<'a> {
             type_arguments,
             arguments,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -940,7 +980,7 @@ impl<'a> Expression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
     }
 
     /// Build an [`Expression::ParenthesizedExpression`].
@@ -956,7 +996,11 @@ impl<'a> Expression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(span, expression, builder))
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::SequenceExpression`].
@@ -975,7 +1019,7 @@ impl<'a> Expression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
     }
 
     /// Build an [`Expression::TaggedTemplateExpression`].
@@ -1003,7 +1047,7 @@ impl<'a> Expression<'a> {
             tag,
             type_arguments,
             quasi,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -1015,7 +1059,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 
     /// Build an [`Expression::UnaryExpression`].
@@ -1033,7 +1077,7 @@ impl<'a> Expression<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 
     /// Build an [`Expression::UpdateExpression`].
@@ -1053,7 +1097,13 @@ impl<'a> Expression<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> Self {
-        Self::UpdateExpression(UpdateExpression::boxed(span, operator, prefix, argument, builder))
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::YieldExpression`].
@@ -1071,7 +1121,7 @@ impl<'a> Expression<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder))
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
     }
 
     /// Build an [`Expression::PrivateInExpression`].
@@ -1089,7 +1139,7 @@ impl<'a> Expression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
     }
 
     /// Build an [`Expression::ImportMeta`].
@@ -1100,7 +1150,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ImportMeta(ImportMeta::boxed(span, builder))
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
     }
 
     /// Build an [`Expression::NewTarget`].
@@ -1111,7 +1161,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NewTarget(NewTarget::boxed(span, builder))
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
     }
 
     /// Build an [`Expression::JSXElement`].
@@ -1141,7 +1191,7 @@ impl<'a> Expression<'a> {
             opening_element,
             children,
             closing_element,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -1170,7 +1220,7 @@ impl<'a> Expression<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -1189,7 +1239,12 @@ impl<'a> Expression<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::TSSatisfiesExpression`].
@@ -1211,7 +1266,7 @@ impl<'a> Expression<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -1230,7 +1285,12 @@ impl<'a> Expression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::TSNonNullExpression`].
@@ -1246,7 +1306,7 @@ impl<'a> Expression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`Expression::TSInstantiationExpression`].
@@ -1271,7 +1331,7 @@ impl<'a> Expression<'a> {
             span,
             expression,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -1293,7 +1353,12 @@ impl<'a> Expression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::ComputedMemberExpression`].
@@ -1314,7 +1379,11 @@ impl<'a> Expression<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -1336,7 +1405,11 @@ impl<'a> Expression<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -1358,7 +1431,11 @@ impl<'a> Expression<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -1394,7 +1471,8 @@ impl<'a> IdentifierName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, name, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, builder), builder)
     }
 }
 
@@ -1434,7 +1512,8 @@ impl<'a> IdentifierReference<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, name, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, builder), builder)
     }
 
     /// Build an [`IdentifierReference`] with `reference_id`.
@@ -1484,10 +1563,8 @@ impl<'a> IdentifierReference<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        ArenaBox::new_in(
-            Self::new_with_reference_id(span, name, reference_id, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new_with_reference_id(span, name, reference_id, builder), builder)
     }
 }
 
@@ -1527,7 +1604,8 @@ impl<'a> BindingIdentifier<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, name, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, builder), builder)
     }
 
     /// Build a [`BindingIdentifier`] with `symbol_id`.
@@ -1577,10 +1655,8 @@ impl<'a> BindingIdentifier<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        ArenaBox::new_in(
-            Self::new_with_symbol_id(span, name, symbol_id, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new_with_symbol_id(span, name, symbol_id, builder), builder)
     }
 }
 
@@ -1623,7 +1699,8 @@ impl ThisExpression {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -1666,7 +1743,8 @@ impl<'a> ArrayExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, elements, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, elements, builder), builder)
     }
 }
 
@@ -1684,7 +1762,7 @@ impl<'a> ArrayExpressionElement<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::SpreadElement(SpreadElement::boxed(span, argument, builder))
+        Self::SpreadElement(SpreadElement::boxed(span, argument, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::Elision`].
@@ -1695,7 +1773,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_elision<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Elision(Elision::boxed(span, builder))
+        Self::Elision(Elision::boxed(span, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::BooleanLiteral`].
@@ -1707,7 +1785,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::NullLiteral`].
@@ -1718,7 +1796,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NullLiteral(NullLiteral::boxed(span, builder))
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::NumericLiteral`].
@@ -1738,7 +1816,7 @@ impl<'a> ArrayExpressionElement<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::BigIntLiteral`].
@@ -1761,7 +1839,7 @@ impl<'a> ArrayExpressionElement<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::RegExpLiteral`].
@@ -1779,7 +1857,7 @@ impl<'a> ArrayExpressionElement<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> Self {
-        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder))
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::StringLiteral`].
@@ -1800,7 +1878,7 @@ impl<'a> ArrayExpressionElement<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::StringLiteral`] with `lone_surrogates`.
@@ -1828,7 +1906,7 @@ impl<'a> ArrayExpressionElement<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -1851,7 +1929,7 @@ impl<'a> ArrayExpressionElement<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::Identifier`].
@@ -1866,7 +1944,7 @@ impl<'a> ArrayExpressionElement<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierReference::boxed(span, name, builder))
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::Identifier`] with `reference_id`.
@@ -1891,7 +1969,7 @@ impl<'a> ArrayExpressionElement<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -1903,7 +1981,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Super(Super::boxed(span, builder))
+        Self::Super(Super::boxed(span, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::ArrayExpression`].
@@ -1922,7 +2000,7 @@ impl<'a> ArrayExpressionElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::ArrowFunctionExpression`].
@@ -1962,7 +2040,7 @@ impl<'a> ArrayExpressionElement<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2019,7 +2097,7 @@ impl<'a> ArrayExpressionElement<'a> {
                 scope_id,
                 pure,
                 pife,
-                builder,
+                builder.builder(),
             ),
         )
     }
@@ -2042,7 +2120,11 @@ impl<'a> ArrayExpressionElement<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentExpression(AssignmentExpression::boxed(
-            span, operator, left, right, builder,
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
         ))
     }
 
@@ -2059,7 +2141,7 @@ impl<'a> ArrayExpressionElement<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder))
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::BinaryExpression`].
@@ -2079,7 +2161,13 @@ impl<'a> ArrayExpressionElement<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::BinaryExpression(BinaryExpression::boxed(span, left, operator, right, builder))
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::CallExpression`].
@@ -2111,7 +2199,7 @@ impl<'a> ArrayExpressionElement<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2147,7 +2235,7 @@ impl<'a> ArrayExpressionElement<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2164,7 +2252,7 @@ impl<'a> ArrayExpressionElement<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ChainExpression(ChainExpression::boxed(span, expression, builder))
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::ClassExpression`].
@@ -2217,7 +2305,7 @@ impl<'a> ArrayExpressionElement<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2274,7 +2362,7 @@ impl<'a> ArrayExpressionElement<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2296,7 +2384,11 @@ impl<'a> ArrayExpressionElement<'a> {
         builder: &B,
     ) -> Self {
         Self::ConditionalExpression(ConditionalExpression::boxed(
-            span, test, consequent, alternate, builder,
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
         ))
     }
 
@@ -2350,7 +2442,7 @@ impl<'a> ArrayExpressionElement<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2420,7 +2512,7 @@ impl<'a> ArrayExpressionElement<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2441,7 +2533,13 @@ impl<'a> ArrayExpressionElement<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> Self {
-        Self::ImportExpression(ImportExpression::boxed(span, source, options, phase, builder))
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::LogicalExpression`].
@@ -2461,7 +2559,13 @@ impl<'a> ArrayExpressionElement<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::LogicalExpression(LogicalExpression::boxed(span, left, operator, right, builder))
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::NewExpression`].
@@ -2485,7 +2589,13 @@ impl<'a> ArrayExpressionElement<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::NewExpression`] with `pure`.
@@ -2517,7 +2627,7 @@ impl<'a> ArrayExpressionElement<'a> {
             type_arguments,
             arguments,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2537,7 +2647,7 @@ impl<'a> ArrayExpressionElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::ParenthesizedExpression`].
@@ -2553,7 +2663,11 @@ impl<'a> ArrayExpressionElement<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(span, expression, builder))
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::SequenceExpression`].
@@ -2572,7 +2686,7 @@ impl<'a> ArrayExpressionElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::TaggedTemplateExpression`].
@@ -2600,7 +2714,7 @@ impl<'a> ArrayExpressionElement<'a> {
             tag,
             type_arguments,
             quasi,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2612,7 +2726,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::UnaryExpression`].
@@ -2630,7 +2744,7 @@ impl<'a> ArrayExpressionElement<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::UpdateExpression`].
@@ -2650,7 +2764,13 @@ impl<'a> ArrayExpressionElement<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> Self {
-        Self::UpdateExpression(UpdateExpression::boxed(span, operator, prefix, argument, builder))
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::YieldExpression`].
@@ -2668,7 +2788,7 @@ impl<'a> ArrayExpressionElement<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder))
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::PrivateInExpression`].
@@ -2686,7 +2806,7 @@ impl<'a> ArrayExpressionElement<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::ImportMeta`].
@@ -2697,7 +2817,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ImportMeta(ImportMeta::boxed(span, builder))
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::NewTarget`].
@@ -2708,7 +2828,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NewTarget(NewTarget::boxed(span, builder))
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::JSXElement`].
@@ -2738,7 +2858,7 @@ impl<'a> ArrayExpressionElement<'a> {
             opening_element,
             children,
             closing_element,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2767,7 +2887,7 @@ impl<'a> ArrayExpressionElement<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2786,7 +2906,12 @@ impl<'a> ArrayExpressionElement<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::TSSatisfiesExpression`].
@@ -2808,7 +2933,7 @@ impl<'a> ArrayExpressionElement<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2827,7 +2952,12 @@ impl<'a> ArrayExpressionElement<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::TSNonNullExpression`].
@@ -2843,7 +2973,7 @@ impl<'a> ArrayExpressionElement<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::TSInstantiationExpression`].
@@ -2868,7 +2998,7 @@ impl<'a> ArrayExpressionElement<'a> {
             span,
             expression,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -2890,7 +3020,12 @@ impl<'a> ArrayExpressionElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::ComputedMemberExpression`].
@@ -2911,7 +3046,11 @@ impl<'a> ArrayExpressionElement<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -2933,7 +3072,11 @@ impl<'a> ArrayExpressionElement<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -2955,7 +3098,11 @@ impl<'a> ArrayExpressionElement<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -2983,7 +3130,8 @@ impl Elision {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -3026,7 +3174,8 @@ impl<'a> ObjectExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, properties, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, properties, builder), builder)
     }
 }
 
@@ -3055,7 +3204,14 @@ impl<'a> ObjectPropertyKind<'a> {
         builder: &B,
     ) -> Self {
         Self::ObjectProperty(ObjectProperty::boxed(
-            span, kind, key, value, method, shorthand, computed, builder,
+            span,
+            kind,
+            key,
+            value,
+            method,
+            shorthand,
+            computed,
+            builder.builder(),
         ))
     }
 
@@ -3072,7 +3228,7 @@ impl<'a> ObjectPropertyKind<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::SpreadProperty(SpreadElement::boxed(span, argument, builder))
+        Self::SpreadProperty(SpreadElement::boxed(span, argument, builder.builder()))
     }
 }
 
@@ -3138,9 +3294,10 @@ impl<'a> ObjectProperty<'a> {
         computed: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, kind, key, value, method, shorthand, computed, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -3162,7 +3319,7 @@ impl<'a> PropertyKey<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::StaticIdentifier(IdentifierName::boxed(span, name, builder))
+        Self::StaticIdentifier(IdentifierName::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`PropertyKey::PrivateIdentifier`].
@@ -3181,7 +3338,7 @@ impl<'a> PropertyKey<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::PrivateIdentifier(PrivateIdentifier::boxed(span, name, builder))
+        Self::PrivateIdentifier(PrivateIdentifier::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`PropertyKey::BooleanLiteral`].
@@ -3193,7 +3350,7 @@ impl<'a> PropertyKey<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build a [`PropertyKey::NullLiteral`].
@@ -3204,7 +3361,7 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NullLiteral(NullLiteral::boxed(span, builder))
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
     }
 
     /// Build a [`PropertyKey::NumericLiteral`].
@@ -3224,7 +3381,7 @@ impl<'a> PropertyKey<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`PropertyKey::BigIntLiteral`].
@@ -3247,7 +3404,7 @@ impl<'a> PropertyKey<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`PropertyKey::RegExpLiteral`].
@@ -3265,7 +3422,7 @@ impl<'a> PropertyKey<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> Self {
-        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder))
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
     }
 
     /// Build a [`PropertyKey::StringLiteral`].
@@ -3286,7 +3443,7 @@ impl<'a> PropertyKey<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`PropertyKey::StringLiteral`] with `lone_surrogates`.
@@ -3314,7 +3471,7 @@ impl<'a> PropertyKey<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3337,7 +3494,7 @@ impl<'a> PropertyKey<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build a [`PropertyKey::Identifier`].
@@ -3352,7 +3509,7 @@ impl<'a> PropertyKey<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierReference::boxed(span, name, builder))
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`PropertyKey::Identifier`] with `reference_id`.
@@ -3377,7 +3534,7 @@ impl<'a> PropertyKey<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3389,7 +3546,7 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Super(Super::boxed(span, builder))
+        Self::Super(Super::boxed(span, builder.builder()))
     }
 
     /// Build a [`PropertyKey::ArrayExpression`].
@@ -3408,7 +3565,7 @@ impl<'a> PropertyKey<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
     }
 
     /// Build a [`PropertyKey::ArrowFunctionExpression`].
@@ -3448,7 +3605,7 @@ impl<'a> PropertyKey<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3505,7 +3662,7 @@ impl<'a> PropertyKey<'a> {
                 scope_id,
                 pure,
                 pife,
-                builder,
+                builder.builder(),
             ),
         )
     }
@@ -3528,7 +3685,11 @@ impl<'a> PropertyKey<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentExpression(AssignmentExpression::boxed(
-            span, operator, left, right, builder,
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
         ))
     }
 
@@ -3545,7 +3706,7 @@ impl<'a> PropertyKey<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder))
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
     }
 
     /// Build a [`PropertyKey::BinaryExpression`].
@@ -3565,7 +3726,13 @@ impl<'a> PropertyKey<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::BinaryExpression(BinaryExpression::boxed(span, left, operator, right, builder))
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::CallExpression`].
@@ -3597,7 +3764,7 @@ impl<'a> PropertyKey<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3633,7 +3800,7 @@ impl<'a> PropertyKey<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3650,7 +3817,7 @@ impl<'a> PropertyKey<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ChainExpression(ChainExpression::boxed(span, expression, builder))
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`PropertyKey::ClassExpression`].
@@ -3703,7 +3870,7 @@ impl<'a> PropertyKey<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3760,7 +3927,7 @@ impl<'a> PropertyKey<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3782,7 +3949,11 @@ impl<'a> PropertyKey<'a> {
         builder: &B,
     ) -> Self {
         Self::ConditionalExpression(ConditionalExpression::boxed(
-            span, test, consequent, alternate, builder,
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
         ))
     }
 
@@ -3836,7 +4007,7 @@ impl<'a> PropertyKey<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3906,7 +4077,7 @@ impl<'a> PropertyKey<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -3927,7 +4098,13 @@ impl<'a> PropertyKey<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> Self {
-        Self::ImportExpression(ImportExpression::boxed(span, source, options, phase, builder))
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::LogicalExpression`].
@@ -3947,7 +4124,13 @@ impl<'a> PropertyKey<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::LogicalExpression(LogicalExpression::boxed(span, left, operator, right, builder))
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::NewExpression`].
@@ -3971,7 +4154,13 @@ impl<'a> PropertyKey<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::NewExpression`] with `pure`.
@@ -4003,7 +4192,7 @@ impl<'a> PropertyKey<'a> {
             type_arguments,
             arguments,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -4023,7 +4212,7 @@ impl<'a> PropertyKey<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
     }
 
     /// Build a [`PropertyKey::ParenthesizedExpression`].
@@ -4039,7 +4228,11 @@ impl<'a> PropertyKey<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(span, expression, builder))
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::SequenceExpression`].
@@ -4058,7 +4251,7 @@ impl<'a> PropertyKey<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
     }
 
     /// Build a [`PropertyKey::TaggedTemplateExpression`].
@@ -4086,7 +4279,7 @@ impl<'a> PropertyKey<'a> {
             tag,
             type_arguments,
             quasi,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -4098,7 +4291,7 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 
     /// Build a [`PropertyKey::UnaryExpression`].
@@ -4116,7 +4309,7 @@ impl<'a> PropertyKey<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 
     /// Build a [`PropertyKey::UpdateExpression`].
@@ -4136,7 +4329,13 @@ impl<'a> PropertyKey<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> Self {
-        Self::UpdateExpression(UpdateExpression::boxed(span, operator, prefix, argument, builder))
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::YieldExpression`].
@@ -4154,7 +4353,7 @@ impl<'a> PropertyKey<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder))
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
     }
 
     /// Build a [`PropertyKey::PrivateInExpression`].
@@ -4172,7 +4371,7 @@ impl<'a> PropertyKey<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
     }
 
     /// Build a [`PropertyKey::ImportMeta`].
@@ -4183,7 +4382,7 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ImportMeta(ImportMeta::boxed(span, builder))
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
     }
 
     /// Build a [`PropertyKey::NewTarget`].
@@ -4194,7 +4393,7 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NewTarget(NewTarget::boxed(span, builder))
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
     }
 
     /// Build a [`PropertyKey::JSXElement`].
@@ -4224,7 +4423,7 @@ impl<'a> PropertyKey<'a> {
             opening_element,
             children,
             closing_element,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -4253,7 +4452,7 @@ impl<'a> PropertyKey<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -4272,7 +4471,12 @@ impl<'a> PropertyKey<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::TSSatisfiesExpression`].
@@ -4294,7 +4498,7 @@ impl<'a> PropertyKey<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -4313,7 +4517,12 @@ impl<'a> PropertyKey<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::TSNonNullExpression`].
@@ -4329,7 +4538,7 @@ impl<'a> PropertyKey<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`PropertyKey::TSInstantiationExpression`].
@@ -4354,7 +4563,7 @@ impl<'a> PropertyKey<'a> {
             span,
             expression,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -4376,7 +4585,12 @@ impl<'a> PropertyKey<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::ComputedMemberExpression`].
@@ -4397,7 +4611,11 @@ impl<'a> PropertyKey<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -4419,7 +4637,11 @@ impl<'a> PropertyKey<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -4441,7 +4663,11 @@ impl<'a> PropertyKey<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -4496,7 +4722,8 @@ impl<'a> TemplateLiteral<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, quasis, expressions, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, quasis, expressions, builder), builder)
     }
 }
 
@@ -4553,7 +4780,8 @@ impl<'a> TaggedTemplateExpression<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, tag, type_arguments, quasi, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, tag, type_arguments, quasi, builder), builder)
     }
 }
 
@@ -4626,7 +4854,11 @@ impl<'a> MemberExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -4648,7 +4880,11 @@ impl<'a> MemberExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -4670,7 +4906,11 @@ impl<'a> MemberExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -4722,7 +4962,8 @@ impl<'a> ComputedMemberExpression<'a> {
         optional: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, object, expression, optional, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, object, expression, optional, builder), builder)
     }
 }
 
@@ -4773,7 +5014,8 @@ impl<'a> StaticMemberExpression<'a> {
         optional: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, object, property, optional, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, object, property, optional, builder), builder)
     }
 }
 
@@ -4824,7 +5066,8 @@ impl<'a> PrivateFieldExpression<'a> {
         optional: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, object, field, optional, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, object, field, optional, builder), builder)
     }
 }
 
@@ -4889,9 +5132,10 @@ impl<'a> CallExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, callee, type_arguments, arguments, optional, builder),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -4959,9 +5203,10 @@ impl<'a> CallExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_pure(span, callee, type_arguments, arguments, optional, pure, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -5022,10 +5267,8 @@ impl<'a> NewExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        ArenaBox::new_in(
-            Self::new(span, callee, type_arguments, arguments, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, callee, type_arguments, arguments, builder), builder)
     }
 
     /// Build a [`NewExpression`] with `pure`.
@@ -5087,9 +5330,10 @@ impl<'a> NewExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_pure(span, callee, type_arguments, arguments, pure, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -5117,7 +5361,8 @@ impl ImportMeta {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -5144,7 +5389,8 @@ impl NewTarget {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -5177,7 +5423,8 @@ impl<'a> SpreadElement<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, argument, builder), builder)
     }
 }
 
@@ -5195,7 +5442,7 @@ impl<'a> Argument<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::SpreadElement(SpreadElement::boxed(span, argument, builder))
+        Self::SpreadElement(SpreadElement::boxed(span, argument, builder.builder()))
     }
 
     /// Build an [`Argument::BooleanLiteral`].
@@ -5207,7 +5454,7 @@ impl<'a> Argument<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build an [`Argument::NullLiteral`].
@@ -5218,7 +5465,7 @@ impl<'a> Argument<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NullLiteral(NullLiteral::boxed(span, builder))
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
     }
 
     /// Build an [`Argument::NumericLiteral`].
@@ -5238,7 +5485,7 @@ impl<'a> Argument<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`Argument::BigIntLiteral`].
@@ -5261,7 +5508,7 @@ impl<'a> Argument<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`Argument::RegExpLiteral`].
@@ -5279,7 +5526,7 @@ impl<'a> Argument<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> Self {
-        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder))
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
     }
 
     /// Build an [`Argument::StringLiteral`].
@@ -5300,7 +5547,7 @@ impl<'a> Argument<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Argument::StringLiteral`] with `lone_surrogates`.
@@ -5328,7 +5575,7 @@ impl<'a> Argument<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5351,7 +5598,7 @@ impl<'a> Argument<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build an [`Argument::Identifier`].
@@ -5366,7 +5613,7 @@ impl<'a> Argument<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierReference::boxed(span, name, builder))
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build an [`Argument::Identifier`] with `reference_id`.
@@ -5391,7 +5638,7 @@ impl<'a> Argument<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5403,7 +5650,7 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Super(Super::boxed(span, builder))
+        Self::Super(Super::boxed(span, builder.builder()))
     }
 
     /// Build an [`Argument::ArrayExpression`].
@@ -5422,7 +5669,7 @@ impl<'a> Argument<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
     }
 
     /// Build an [`Argument::ArrowFunctionExpression`].
@@ -5462,7 +5709,7 @@ impl<'a> Argument<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5519,7 +5766,7 @@ impl<'a> Argument<'a> {
                 scope_id,
                 pure,
                 pife,
-                builder,
+                builder.builder(),
             ),
         )
     }
@@ -5542,7 +5789,11 @@ impl<'a> Argument<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentExpression(AssignmentExpression::boxed(
-            span, operator, left, right, builder,
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
         ))
     }
 
@@ -5559,7 +5810,7 @@ impl<'a> Argument<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder))
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
     }
 
     /// Build an [`Argument::BinaryExpression`].
@@ -5579,7 +5830,13 @@ impl<'a> Argument<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::BinaryExpression(BinaryExpression::boxed(span, left, operator, right, builder))
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::CallExpression`].
@@ -5611,7 +5868,7 @@ impl<'a> Argument<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5647,7 +5904,7 @@ impl<'a> Argument<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5664,7 +5921,7 @@ impl<'a> Argument<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ChainExpression(ChainExpression::boxed(span, expression, builder))
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`Argument::ClassExpression`].
@@ -5717,7 +5974,7 @@ impl<'a> Argument<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5774,7 +6031,7 @@ impl<'a> Argument<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5796,7 +6053,11 @@ impl<'a> Argument<'a> {
         builder: &B,
     ) -> Self {
         Self::ConditionalExpression(ConditionalExpression::boxed(
-            span, test, consequent, alternate, builder,
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
         ))
     }
 
@@ -5850,7 +6111,7 @@ impl<'a> Argument<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5920,7 +6181,7 @@ impl<'a> Argument<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -5941,7 +6202,13 @@ impl<'a> Argument<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> Self {
-        Self::ImportExpression(ImportExpression::boxed(span, source, options, phase, builder))
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::LogicalExpression`].
@@ -5961,7 +6228,13 @@ impl<'a> Argument<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::LogicalExpression(LogicalExpression::boxed(span, left, operator, right, builder))
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::NewExpression`].
@@ -5985,7 +6258,13 @@ impl<'a> Argument<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::NewExpression`] with `pure`.
@@ -6017,7 +6296,7 @@ impl<'a> Argument<'a> {
             type_arguments,
             arguments,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6037,7 +6316,7 @@ impl<'a> Argument<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
     }
 
     /// Build an [`Argument::ParenthesizedExpression`].
@@ -6053,7 +6332,11 @@ impl<'a> Argument<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(span, expression, builder))
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::SequenceExpression`].
@@ -6072,7 +6355,7 @@ impl<'a> Argument<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
     }
 
     /// Build an [`Argument::TaggedTemplateExpression`].
@@ -6100,7 +6383,7 @@ impl<'a> Argument<'a> {
             tag,
             type_arguments,
             quasi,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6112,7 +6395,7 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 
     /// Build an [`Argument::UnaryExpression`].
@@ -6130,7 +6413,7 @@ impl<'a> Argument<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 
     /// Build an [`Argument::UpdateExpression`].
@@ -6150,7 +6433,13 @@ impl<'a> Argument<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> Self {
-        Self::UpdateExpression(UpdateExpression::boxed(span, operator, prefix, argument, builder))
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::YieldExpression`].
@@ -6168,7 +6457,7 @@ impl<'a> Argument<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder))
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
     }
 
     /// Build an [`Argument::PrivateInExpression`].
@@ -6186,7 +6475,7 @@ impl<'a> Argument<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
     }
 
     /// Build an [`Argument::ImportMeta`].
@@ -6197,7 +6486,7 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ImportMeta(ImportMeta::boxed(span, builder))
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
     }
 
     /// Build an [`Argument::NewTarget`].
@@ -6208,7 +6497,7 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NewTarget(NewTarget::boxed(span, builder))
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
     }
 
     /// Build an [`Argument::JSXElement`].
@@ -6238,7 +6527,7 @@ impl<'a> Argument<'a> {
             opening_element,
             children,
             closing_element,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6267,7 +6556,7 @@ impl<'a> Argument<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6286,7 +6575,12 @@ impl<'a> Argument<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::TSSatisfiesExpression`].
@@ -6308,7 +6602,7 @@ impl<'a> Argument<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6327,7 +6621,12 @@ impl<'a> Argument<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::TSNonNullExpression`].
@@ -6343,7 +6642,7 @@ impl<'a> Argument<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`Argument::TSInstantiationExpression`].
@@ -6368,7 +6667,7 @@ impl<'a> Argument<'a> {
             span,
             expression,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6390,7 +6689,12 @@ impl<'a> Argument<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::ComputedMemberExpression`].
@@ -6411,7 +6715,11 @@ impl<'a> Argument<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -6433,7 +6741,11 @@ impl<'a> Argument<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -6455,7 +6767,11 @@ impl<'a> Argument<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -6501,7 +6817,8 @@ impl<'a> UpdateExpression<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, operator, prefix, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, operator, prefix, argument, builder), builder)
     }
 }
 
@@ -6542,7 +6859,8 @@ impl<'a> UnaryExpression<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, operator, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, operator, argument, builder), builder)
     }
 }
 
@@ -6587,7 +6905,8 @@ impl<'a> BinaryExpression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, left, operator, right, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, left, operator, right, builder), builder)
     }
 }
 
@@ -6628,7 +6947,8 @@ impl<'a> PrivateInExpression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
     }
 }
 
@@ -6673,7 +6993,8 @@ impl<'a> LogicalExpression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, left, operator, right, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, left, operator, right, builder), builder)
     }
 }
 
@@ -6724,7 +7045,8 @@ impl<'a> ConditionalExpression<'a> {
         alternate: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, test, consequent, alternate, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, test, consequent, alternate, builder), builder)
     }
 }
 
@@ -6769,7 +7091,8 @@ impl<'a> AssignmentExpression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, operator, left, right, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, operator, left, right, builder), builder)
     }
 }
 
@@ -6790,7 +7113,7 @@ impl<'a> AssignmentTarget<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder))
+        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build an [`AssignmentTarget::AssignmentTargetIdentifier`] with `reference_id`.
@@ -6815,7 +7138,7 @@ impl<'a> AssignmentTarget<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6834,7 +7157,12 @@ impl<'a> AssignmentTarget<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`AssignmentTarget::TSSatisfiesExpression`].
@@ -6856,7 +7184,7 @@ impl<'a> AssignmentTarget<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -6873,7 +7201,7 @@ impl<'a> AssignmentTarget<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`AssignmentTarget::TSTypeAssertion`].
@@ -6891,7 +7219,12 @@ impl<'a> AssignmentTarget<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`AssignmentTarget::ComputedMemberExpression`].
@@ -6912,7 +7245,11 @@ impl<'a> AssignmentTarget<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -6934,7 +7271,11 @@ impl<'a> AssignmentTarget<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -6956,7 +7297,11 @@ impl<'a> AssignmentTarget<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -6979,7 +7324,12 @@ impl<'a> AssignmentTarget<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
+        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
+            span,
+            elements,
+            rest,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`AssignmentTarget::ObjectAssignmentTarget`].
@@ -7001,7 +7351,12 @@ impl<'a> AssignmentTarget<'a> {
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
+        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
+            span,
+            properties,
+            rest,
+            builder.builder(),
+        ))
     }
 }
 
@@ -7022,7 +7377,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder))
+        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`SimpleAssignmentTarget::AssignmentTargetIdentifier`] with `reference_id`.
@@ -7047,7 +7402,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -7066,7 +7421,12 @@ impl<'a> SimpleAssignmentTarget<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`SimpleAssignmentTarget::TSSatisfiesExpression`].
@@ -7088,7 +7448,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -7105,7 +7465,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`SimpleAssignmentTarget::TSTypeAssertion`].
@@ -7123,7 +7483,12 @@ impl<'a> SimpleAssignmentTarget<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`SimpleAssignmentTarget::ComputedMemberExpression`].
@@ -7144,7 +7509,11 @@ impl<'a> SimpleAssignmentTarget<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -7166,7 +7535,11 @@ impl<'a> SimpleAssignmentTarget<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -7188,7 +7561,11 @@ impl<'a> SimpleAssignmentTarget<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -7213,7 +7590,12 @@ impl<'a> AssignmentTargetPattern<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
+        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
+            span,
+            elements,
+            rest,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`AssignmentTargetPattern::ObjectAssignmentTarget`].
@@ -7235,7 +7617,12 @@ impl<'a> AssignmentTargetPattern<'a> {
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
+        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
+            span,
+            properties,
+            rest,
+            builder.builder(),
+        ))
     }
 }
 
@@ -7289,7 +7676,8 @@ impl<'a> ArrayAssignmentTarget<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, elements, rest, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, elements, rest, builder), builder)
     }
 }
 
@@ -7343,7 +7731,8 @@ impl<'a> ObjectAssignmentTarget<'a> {
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, properties, rest, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, properties, rest, builder), builder)
     }
 }
 
@@ -7380,7 +7769,8 @@ impl<'a> AssignmentTargetRest<'a> {
         target: AssignmentTarget<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, target, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, target, builder), builder)
     }
 }
 
@@ -7401,7 +7791,10 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentTargetWithDefault(AssignmentTargetWithDefault::boxed(
-            span, binding, init, builder,
+            span,
+            binding,
+            init,
+            builder.builder(),
         ))
     }
 
@@ -7421,7 +7814,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder))
+        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::AssignmentTargetIdentifier`] with `reference_id`.
@@ -7446,7 +7839,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -7465,7 +7858,12 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::TSSatisfiesExpression`].
@@ -7487,7 +7885,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -7504,7 +7902,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::TSTypeAssertion`].
@@ -7522,7 +7920,12 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::ComputedMemberExpression`].
@@ -7543,7 +7946,11 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -7565,7 +7972,11 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -7587,7 +7998,11 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -7610,7 +8025,12 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
+        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
+            span,
+            elements,
+            rest,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::ObjectAssignmentTarget`].
@@ -7632,7 +8052,12 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
+        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
+            span,
+            properties,
+            rest,
+            builder.builder(),
+        ))
     }
 }
 
@@ -7673,7 +8098,8 @@ impl<'a> AssignmentTargetWithDefault<'a> {
         init: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, binding, init, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, binding, init, builder), builder)
     }
 }
 
@@ -7694,7 +8120,10 @@ impl<'a> AssignmentTargetProperty<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentTargetPropertyIdentifier(AssignmentTargetPropertyIdentifier::boxed(
-            span, binding, init, builder,
+            span,
+            binding,
+            init,
+            builder.builder(),
         ))
     }
 
@@ -7716,7 +8145,11 @@ impl<'a> AssignmentTargetProperty<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentTargetPropertyProperty(AssignmentTargetPropertyProperty::boxed(
-            span, name, binding, computed, builder,
+            span,
+            name,
+            binding,
+            computed,
+            builder.builder(),
         ))
     }
 }
@@ -7763,7 +8196,8 @@ impl<'a> AssignmentTargetPropertyIdentifier<'a> {
         init: Option<Expression<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, binding, init, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, binding, init, builder), builder)
     }
 }
 
@@ -7814,7 +8248,8 @@ impl<'a> AssignmentTargetPropertyProperty<'a> {
         computed: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, name, binding, computed, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, binding, computed, builder), builder)
     }
 }
 
@@ -7857,7 +8292,8 @@ impl<'a> SequenceExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, expressions, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expressions, builder), builder)
     }
 }
 
@@ -7884,7 +8320,8 @@ impl Super {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -7917,7 +8354,8 @@ impl<'a> AwaitExpression<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, argument, builder), builder)
     }
 }
 
@@ -7954,7 +8392,8 @@ impl<'a> ChainExpression<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -7988,7 +8427,7 @@ impl<'a> ChainElement<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8024,7 +8463,7 @@ impl<'a> ChainElement<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8041,7 +8480,7 @@ impl<'a> ChainElement<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`ChainElement::ComputedMemberExpression`].
@@ -8062,7 +8501,11 @@ impl<'a> ChainElement<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -8084,7 +8527,11 @@ impl<'a> ChainElement<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -8106,7 +8553,11 @@ impl<'a> ChainElement<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -8140,7 +8591,8 @@ impl<'a> ParenthesizedExpression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -8157,7 +8609,7 @@ impl<'a> Statement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        Self::BlockStatement(BlockStatement::boxed(span, body, builder))
+        Self::BlockStatement(BlockStatement::boxed(span, body, builder.builder()))
     }
 
     /// Build a [`Statement::BlockStatement`] with `scope_id`.
@@ -8178,7 +8630,12 @@ impl<'a> Statement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        Self::BlockStatement(BlockStatement::boxed_with_scope_id(span, body, scope_id, builder))
+        Self::BlockStatement(BlockStatement::boxed_with_scope_id(
+            span,
+            body,
+            scope_id,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`Statement::BreakStatement`].
@@ -8194,7 +8651,7 @@ impl<'a> Statement<'a> {
         label: Option<LabelIdentifier<'a>>,
         builder: &B,
     ) -> Self {
-        Self::BreakStatement(BreakStatement::boxed(span, label, builder))
+        Self::BreakStatement(BreakStatement::boxed(span, label, builder.builder()))
     }
 
     /// Build a [`Statement::ContinueStatement`].
@@ -8210,7 +8667,7 @@ impl<'a> Statement<'a> {
         label: Option<LabelIdentifier<'a>>,
         builder: &B,
     ) -> Self {
-        Self::ContinueStatement(ContinueStatement::boxed(span, label, builder))
+        Self::ContinueStatement(ContinueStatement::boxed(span, label, builder.builder()))
     }
 
     /// Build a [`Statement::DebuggerStatement`].
@@ -8221,7 +8678,7 @@ impl<'a> Statement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_debugger_statement<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::DebuggerStatement(DebuggerStatement::boxed(span, builder))
+        Self::DebuggerStatement(DebuggerStatement::boxed(span, builder.builder()))
     }
 
     /// Build a [`Statement::DoWhileStatement`].
@@ -8239,7 +8696,7 @@ impl<'a> Statement<'a> {
         test: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::DoWhileStatement(DoWhileStatement::boxed(span, body, test, builder))
+        Self::DoWhileStatement(DoWhileStatement::boxed(span, body, test, builder.builder()))
     }
 
     /// Build a [`Statement::EmptyStatement`].
@@ -8250,7 +8707,7 @@ impl<'a> Statement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_empty_statement<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::EmptyStatement(EmptyStatement::boxed(span, builder))
+        Self::EmptyStatement(EmptyStatement::boxed(span, builder.builder()))
     }
 
     /// Build a [`Statement::ExpressionStatement`].
@@ -8266,7 +8723,7 @@ impl<'a> Statement<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ExpressionStatement(ExpressionStatement::boxed(span, expression, builder))
+        Self::ExpressionStatement(ExpressionStatement::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`Statement::ForInStatement`].
@@ -8286,7 +8743,7 @@ impl<'a> Statement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ForInStatement(ForInStatement::boxed(span, left, right, body, builder))
+        Self::ForInStatement(ForInStatement::boxed(span, left, right, body, builder.builder()))
     }
 
     /// Build a [`Statement::ForInStatement`] with `scope_id`.
@@ -8309,7 +8766,12 @@ impl<'a> Statement<'a> {
         builder: &B,
     ) -> Self {
         Self::ForInStatement(ForInStatement::boxed_with_scope_id(
-            span, left, right, body, scope_id, builder,
+            span,
+            left,
+            right,
+            body,
+            scope_id,
+            builder.builder(),
         ))
     }
 
@@ -8332,7 +8794,14 @@ impl<'a> Statement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ForOfStatement(ForOfStatement::boxed(span, r#await, left, right, body, builder))
+        Self::ForOfStatement(ForOfStatement::boxed(
+            span,
+            r#await,
+            left,
+            right,
+            body,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`Statement::ForOfStatement`] with `scope_id`.
@@ -8357,7 +8826,13 @@ impl<'a> Statement<'a> {
         builder: &B,
     ) -> Self {
         Self::ForOfStatement(ForOfStatement::boxed_with_scope_id(
-            span, r#await, left, right, body, scope_id, builder,
+            span,
+            r#await,
+            left,
+            right,
+            body,
+            scope_id,
+            builder.builder(),
         ))
     }
 
@@ -8380,7 +8855,7 @@ impl<'a> Statement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ForStatement(ForStatement::boxed(span, init, test, update, body, builder))
+        Self::ForStatement(ForStatement::boxed(span, init, test, update, body, builder.builder()))
     }
 
     /// Build a [`Statement::ForStatement`] with `scope_id`.
@@ -8405,7 +8880,13 @@ impl<'a> Statement<'a> {
         builder: &B,
     ) -> Self {
         Self::ForStatement(ForStatement::boxed_with_scope_id(
-            span, init, test, update, body, scope_id, builder,
+            span,
+            init,
+            test,
+            update,
+            body,
+            scope_id,
+            builder.builder(),
         ))
     }
 
@@ -8426,7 +8907,7 @@ impl<'a> Statement<'a> {
         alternate: Option<Statement<'a>>,
         builder: &B,
     ) -> Self {
-        Self::IfStatement(IfStatement::boxed(span, test, consequent, alternate, builder))
+        Self::IfStatement(IfStatement::boxed(span, test, consequent, alternate, builder.builder()))
     }
 
     /// Build a [`Statement::LabeledStatement`].
@@ -8444,7 +8925,7 @@ impl<'a> Statement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> Self {
-        Self::LabeledStatement(LabeledStatement::boxed(span, label, body, builder))
+        Self::LabeledStatement(LabeledStatement::boxed(span, label, body, builder.builder()))
     }
 
     /// Build a [`Statement::ReturnStatement`].
@@ -8460,7 +8941,7 @@ impl<'a> Statement<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::ReturnStatement(ReturnStatement::boxed(span, argument, builder))
+        Self::ReturnStatement(ReturnStatement::boxed(span, argument, builder.builder()))
     }
 
     /// Build a [`Statement::SwitchStatement`].
@@ -8481,7 +8962,7 @@ impl<'a> Statement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
     {
-        Self::SwitchStatement(SwitchStatement::boxed(span, discriminant, cases, builder))
+        Self::SwitchStatement(SwitchStatement::boxed(span, discriminant, cases, builder.builder()))
     }
 
     /// Build a [`Statement::SwitchStatement`] with `scope_id`.
@@ -8509,7 +8990,7 @@ impl<'a> Statement<'a> {
             discriminant,
             cases,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8526,7 +9007,7 @@ impl<'a> Statement<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ThrowStatement(ThrowStatement::boxed(span, argument, builder))
+        Self::ThrowStatement(ThrowStatement::boxed(span, argument, builder.builder()))
     }
 
     /// Build a [`Statement::TryStatement`].
@@ -8551,7 +9032,7 @@ impl<'a> Statement<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
     {
-        Self::TryStatement(TryStatement::boxed(span, block, handler, finalizer, builder))
+        Self::TryStatement(TryStatement::boxed(span, block, handler, finalizer, builder.builder()))
     }
 
     /// Build a [`Statement::WhileStatement`].
@@ -8569,7 +9050,7 @@ impl<'a> Statement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> Self {
-        Self::WhileStatement(WhileStatement::boxed(span, test, body, builder))
+        Self::WhileStatement(WhileStatement::boxed(span, test, body, builder.builder()))
     }
 
     /// Build a [`Statement::WithStatement`].
@@ -8587,7 +9068,7 @@ impl<'a> Statement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> Self {
-        Self::WithStatement(WithStatement::boxed(span, object, body, builder))
+        Self::WithStatement(WithStatement::boxed(span, object, body, builder.builder()))
     }
 
     /// Build a [`Statement::WithStatement`] with `scope_id`.
@@ -8608,7 +9089,11 @@ impl<'a> Statement<'a> {
         builder: &B,
     ) -> Self {
         Self::WithStatement(WithStatement::boxed_with_scope_id(
-            span, object, body, scope_id, builder,
+            span,
+            object,
+            body,
+            scope_id,
+            builder.builder(),
         ))
     }
 
@@ -8637,7 +9122,7 @@ impl<'a> Statement<'a> {
             kind,
             declarations,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8691,7 +9176,7 @@ impl<'a> Statement<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8761,7 +9246,7 @@ impl<'a> Statement<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8815,7 +9300,7 @@ impl<'a> Statement<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8872,7 +9357,7 @@ impl<'a> Statement<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8904,7 +9389,7 @@ impl<'a> Statement<'a> {
             type_parameters,
             type_annotation,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8939,7 +9424,7 @@ impl<'a> Statement<'a> {
             type_annotation,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -8976,7 +9461,7 @@ impl<'a> Statement<'a> {
             extends,
             body,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9016,7 +9501,7 @@ impl<'a> Statement<'a> {
             body,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9039,7 +9524,14 @@ impl<'a> Statement<'a> {
         declare: bool,
         builder: &B,
     ) -> Self {
-        Self::TSEnumDeclaration(TSEnumDeclaration::boxed(span, id, body, r#const, declare, builder))
+        Self::TSEnumDeclaration(TSEnumDeclaration::boxed(
+            span,
+            id,
+            body,
+            r#const,
+            declare,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`Statement::TSModuleDeclaration`].
@@ -9062,7 +9554,12 @@ impl<'a> Statement<'a> {
         builder: &B,
     ) -> Self {
         Self::TSModuleDeclaration(TSModuleDeclaration::boxed(
-            span, id, body, kind, declare, builder,
+            span,
+            id,
+            body,
+            kind,
+            declare,
+            builder.builder(),
         ))
     }
 
@@ -9088,7 +9585,13 @@ impl<'a> Statement<'a> {
         builder: &B,
     ) -> Self {
         Self::TSModuleDeclaration(TSModuleDeclaration::boxed_with_scope_id(
-            span, id, body, kind, declare, scope_id, builder,
+            span,
+            id,
+            body,
+            kind,
+            declare,
+            scope_id,
+            builder.builder(),
         ))
     }
 
@@ -9114,7 +9617,7 @@ impl<'a> Statement<'a> {
             global_span,
             body,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9143,7 +9646,7 @@ impl<'a> Statement<'a> {
             body,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9169,7 +9672,7 @@ impl<'a> Statement<'a> {
             id,
             module_reference,
             import_kind,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9204,7 +9707,7 @@ impl<'a> Statement<'a> {
             phase,
             with_clause,
             import_kind,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9236,7 +9739,7 @@ impl<'a> Statement<'a> {
             source,
             with_clause,
             export_kind,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9253,7 +9756,11 @@ impl<'a> Statement<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         builder: &B,
     ) -> Self {
-        Self::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(span, declaration, builder))
+        Self::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+            span,
+            declaration,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`Statement::ExportNamedDeclaration`].
@@ -9288,7 +9795,7 @@ impl<'a> Statement<'a> {
             source,
             export_kind,
             with_clause,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9305,7 +9812,7 @@ impl<'a> Statement<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSExportAssignment(TSExportAssignment::boxed(span, expression, builder))
+        Self::TSExportAssignment(TSExportAssignment::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`Statement::TSNamespaceExportDeclaration`].
@@ -9321,7 +9828,11 @@ impl<'a> Statement<'a> {
         id: IdentifierName<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNamespaceExportDeclaration(TSNamespaceExportDeclaration::boxed(span, id, builder))
+        Self::TSNamespaceExportDeclaration(TSNamespaceExportDeclaration::boxed(
+            span,
+            id,
+            builder.builder(),
+        ))
     }
 }
 
@@ -9404,7 +9915,8 @@ impl<'a> BlockStatement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, body, builder), builder)
     }
 
     /// Build a [`BlockStatement`] with `scope_id`.
@@ -9454,7 +9966,8 @@ impl<'a> BlockStatement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder)
     }
 }
 
@@ -9484,7 +9997,7 @@ impl<'a> Declaration<'a> {
             kind,
             declarations,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9538,7 +10051,7 @@ impl<'a> Declaration<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9608,7 +10121,7 @@ impl<'a> Declaration<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9662,7 +10175,7 @@ impl<'a> Declaration<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9719,7 +10232,7 @@ impl<'a> Declaration<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9751,7 +10264,7 @@ impl<'a> Declaration<'a> {
             type_parameters,
             type_annotation,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9786,7 +10299,7 @@ impl<'a> Declaration<'a> {
             type_annotation,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9823,7 +10336,7 @@ impl<'a> Declaration<'a> {
             extends,
             body,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9863,7 +10376,7 @@ impl<'a> Declaration<'a> {
             body,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9886,7 +10399,14 @@ impl<'a> Declaration<'a> {
         declare: bool,
         builder: &B,
     ) -> Self {
-        Self::TSEnumDeclaration(TSEnumDeclaration::boxed(span, id, body, r#const, declare, builder))
+        Self::TSEnumDeclaration(TSEnumDeclaration::boxed(
+            span,
+            id,
+            body,
+            r#const,
+            declare,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`Declaration::TSModuleDeclaration`].
@@ -9909,7 +10429,12 @@ impl<'a> Declaration<'a> {
         builder: &B,
     ) -> Self {
         Self::TSModuleDeclaration(TSModuleDeclaration::boxed(
-            span, id, body, kind, declare, builder,
+            span,
+            id,
+            body,
+            kind,
+            declare,
+            builder.builder(),
         ))
     }
 
@@ -9935,7 +10460,13 @@ impl<'a> Declaration<'a> {
         builder: &B,
     ) -> Self {
         Self::TSModuleDeclaration(TSModuleDeclaration::boxed_with_scope_id(
-            span, id, body, kind, declare, scope_id, builder,
+            span,
+            id,
+            body,
+            kind,
+            declare,
+            scope_id,
+            builder.builder(),
         ))
     }
 
@@ -9961,7 +10492,7 @@ impl<'a> Declaration<'a> {
             global_span,
             body,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -9990,7 +10521,7 @@ impl<'a> Declaration<'a> {
             body,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -10016,7 +10547,7 @@ impl<'a> Declaration<'a> {
             id,
             module_reference,
             import_kind,
-            builder,
+            builder.builder(),
         ))
     }
 }
@@ -10074,7 +10605,8 @@ impl<'a> VariableDeclaration<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, VariableDeclarator<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, kind, declarations, declare, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, kind, declarations, declare, builder), builder)
     }
 }
 
@@ -10137,7 +10669,8 @@ impl EmptyStatement {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -10170,7 +10703,8 @@ impl<'a> ExpressionStatement<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -10215,7 +10749,8 @@ impl<'a> IfStatement<'a> {
         alternate: Option<Statement<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, test, consequent, alternate, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, test, consequent, alternate, builder), builder)
     }
 }
 
@@ -10256,7 +10791,8 @@ impl<'a> DoWhileStatement<'a> {
         test: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, body, test, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, body, test, builder), builder)
     }
 }
 
@@ -10297,7 +10833,8 @@ impl<'a> WhileStatement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, test, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, test, body, builder), builder)
     }
 }
 
@@ -10354,7 +10891,8 @@ impl<'a> ForStatement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, init, test, update, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, init, test, update, body, builder), builder)
     }
 
     /// Build a [`ForStatement`] with `scope_id`.
@@ -10413,9 +10951,10 @@ impl<'a> ForStatement<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, init, test, update, body, scope_id, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -10446,7 +10985,7 @@ impl<'a> ForStatementInit<'a> {
             kind,
             declarations,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -10459,7 +10998,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::NullLiteral`].
@@ -10470,7 +11009,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NullLiteral(NullLiteral::boxed(span, builder))
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::NumericLiteral`].
@@ -10490,7 +11029,7 @@ impl<'a> ForStatementInit<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::BigIntLiteral`].
@@ -10513,7 +11052,7 @@ impl<'a> ForStatementInit<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::RegExpLiteral`].
@@ -10531,7 +11070,7 @@ impl<'a> ForStatementInit<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> Self {
-        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder))
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::StringLiteral`].
@@ -10552,7 +11091,7 @@ impl<'a> ForStatementInit<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::StringLiteral`] with `lone_surrogates`.
@@ -10580,7 +11119,7 @@ impl<'a> ForStatementInit<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -10603,7 +11142,7 @@ impl<'a> ForStatementInit<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::Identifier`].
@@ -10618,7 +11157,7 @@ impl<'a> ForStatementInit<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierReference::boxed(span, name, builder))
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::Identifier`] with `reference_id`.
@@ -10643,7 +11182,7 @@ impl<'a> ForStatementInit<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -10655,7 +11194,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Super(Super::boxed(span, builder))
+        Self::Super(Super::boxed(span, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::ArrayExpression`].
@@ -10674,7 +11213,7 @@ impl<'a> ForStatementInit<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::ArrowFunctionExpression`].
@@ -10714,7 +11253,7 @@ impl<'a> ForStatementInit<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -10771,7 +11310,7 @@ impl<'a> ForStatementInit<'a> {
                 scope_id,
                 pure,
                 pife,
-                builder,
+                builder.builder(),
             ),
         )
     }
@@ -10794,7 +11333,11 @@ impl<'a> ForStatementInit<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentExpression(AssignmentExpression::boxed(
-            span, operator, left, right, builder,
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
         ))
     }
 
@@ -10811,7 +11354,7 @@ impl<'a> ForStatementInit<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder))
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::BinaryExpression`].
@@ -10831,7 +11374,13 @@ impl<'a> ForStatementInit<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::BinaryExpression(BinaryExpression::boxed(span, left, operator, right, builder))
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::CallExpression`].
@@ -10863,7 +11412,7 @@ impl<'a> ForStatementInit<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -10899,7 +11448,7 @@ impl<'a> ForStatementInit<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -10916,7 +11465,7 @@ impl<'a> ForStatementInit<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ChainExpression(ChainExpression::boxed(span, expression, builder))
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::ClassExpression`].
@@ -10969,7 +11518,7 @@ impl<'a> ForStatementInit<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11026,7 +11575,7 @@ impl<'a> ForStatementInit<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11048,7 +11597,11 @@ impl<'a> ForStatementInit<'a> {
         builder: &B,
     ) -> Self {
         Self::ConditionalExpression(ConditionalExpression::boxed(
-            span, test, consequent, alternate, builder,
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
         ))
     }
 
@@ -11102,7 +11655,7 @@ impl<'a> ForStatementInit<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11172,7 +11725,7 @@ impl<'a> ForStatementInit<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11193,7 +11746,13 @@ impl<'a> ForStatementInit<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> Self {
-        Self::ImportExpression(ImportExpression::boxed(span, source, options, phase, builder))
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::LogicalExpression`].
@@ -11213,7 +11772,13 @@ impl<'a> ForStatementInit<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::LogicalExpression(LogicalExpression::boxed(span, left, operator, right, builder))
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::NewExpression`].
@@ -11237,7 +11802,13 @@ impl<'a> ForStatementInit<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::NewExpression`] with `pure`.
@@ -11269,7 +11840,7 @@ impl<'a> ForStatementInit<'a> {
             type_arguments,
             arguments,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11289,7 +11860,7 @@ impl<'a> ForStatementInit<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::ParenthesizedExpression`].
@@ -11305,7 +11876,11 @@ impl<'a> ForStatementInit<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(span, expression, builder))
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::SequenceExpression`].
@@ -11324,7 +11899,7 @@ impl<'a> ForStatementInit<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::TaggedTemplateExpression`].
@@ -11352,7 +11927,7 @@ impl<'a> ForStatementInit<'a> {
             tag,
             type_arguments,
             quasi,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11364,7 +11939,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::UnaryExpression`].
@@ -11382,7 +11957,7 @@ impl<'a> ForStatementInit<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::UpdateExpression`].
@@ -11402,7 +11977,13 @@ impl<'a> ForStatementInit<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> Self {
-        Self::UpdateExpression(UpdateExpression::boxed(span, operator, prefix, argument, builder))
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::YieldExpression`].
@@ -11420,7 +12001,7 @@ impl<'a> ForStatementInit<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder))
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::PrivateInExpression`].
@@ -11438,7 +12019,7 @@ impl<'a> ForStatementInit<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::ImportMeta`].
@@ -11449,7 +12030,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ImportMeta(ImportMeta::boxed(span, builder))
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::NewTarget`].
@@ -11460,7 +12041,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NewTarget(NewTarget::boxed(span, builder))
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::JSXElement`].
@@ -11490,7 +12071,7 @@ impl<'a> ForStatementInit<'a> {
             opening_element,
             children,
             closing_element,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11519,7 +12100,7 @@ impl<'a> ForStatementInit<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11538,7 +12119,12 @@ impl<'a> ForStatementInit<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::TSSatisfiesExpression`].
@@ -11560,7 +12146,7 @@ impl<'a> ForStatementInit<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11579,7 +12165,12 @@ impl<'a> ForStatementInit<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::TSNonNullExpression`].
@@ -11595,7 +12186,7 @@ impl<'a> ForStatementInit<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::TSInstantiationExpression`].
@@ -11620,7 +12211,7 @@ impl<'a> ForStatementInit<'a> {
             span,
             expression,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11642,7 +12233,12 @@ impl<'a> ForStatementInit<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::ComputedMemberExpression`].
@@ -11663,7 +12259,11 @@ impl<'a> ForStatementInit<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -11685,7 +12285,11 @@ impl<'a> ForStatementInit<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -11707,7 +12311,11 @@ impl<'a> ForStatementInit<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -11760,7 +12368,8 @@ impl<'a> ForInStatement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, left, right, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, left, right, body, builder), builder)
     }
 
     /// Build a [`ForInStatement`] with `scope_id`.
@@ -11814,9 +12423,10 @@ impl<'a> ForInStatement<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, left, right, body, scope_id, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -11847,7 +12457,7 @@ impl<'a> ForStatementLeft<'a> {
             kind,
             declarations,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11867,7 +12477,7 @@ impl<'a> ForStatementLeft<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder))
+        Self::AssignmentTargetIdentifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`ForStatementLeft::AssignmentTargetIdentifier`] with `reference_id`.
@@ -11892,7 +12502,7 @@ impl<'a> ForStatementLeft<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11911,7 +12521,12 @@ impl<'a> ForStatementLeft<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementLeft::TSSatisfiesExpression`].
@@ -11933,7 +12548,7 @@ impl<'a> ForStatementLeft<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -11950,7 +12565,7 @@ impl<'a> ForStatementLeft<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`ForStatementLeft::TSTypeAssertion`].
@@ -11968,7 +12583,12 @@ impl<'a> ForStatementLeft<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementLeft::ComputedMemberExpression`].
@@ -11989,7 +12609,11 @@ impl<'a> ForStatementLeft<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -12011,7 +12635,11 @@ impl<'a> ForStatementLeft<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -12033,7 +12661,11 @@ impl<'a> ForStatementLeft<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -12056,7 +12688,12 @@ impl<'a> ForStatementLeft<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(span, elements, rest, builder))
+        Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
+            span,
+            elements,
+            rest,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementLeft::ObjectAssignmentTarget`].
@@ -12078,7 +12715,12 @@ impl<'a> ForStatementLeft<'a> {
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
-        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(span, properties, rest, builder))
+        Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
+            span,
+            properties,
+            rest,
+            builder.builder(),
+        ))
     }
 }
 
@@ -12135,7 +12777,8 @@ impl<'a> ForOfStatement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, r#await, left, right, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, r#await, left, right, body, builder), builder)
     }
 
     /// Build a [`ForOfStatement`] with `scope_id`.
@@ -12194,9 +12837,10 @@ impl<'a> ForOfStatement<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, r#await, left, right, body, scope_id, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -12234,7 +12878,8 @@ impl<'a> ContinueStatement<'a> {
         label: Option<LabelIdentifier<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, label, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, label, builder), builder)
     }
 }
 
@@ -12271,7 +12916,8 @@ impl<'a> BreakStatement<'a> {
         label: Option<LabelIdentifier<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, label, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, label, builder), builder)
     }
 }
 
@@ -12308,7 +12954,8 @@ impl<'a> ReturnStatement<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, argument, builder), builder)
     }
 }
 
@@ -12355,7 +13002,8 @@ impl<'a> WithStatement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, object, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, object, body, builder), builder)
     }
 
     /// Build a [`WithStatement`] with `scope_id`.
@@ -12404,10 +13052,8 @@ impl<'a> WithStatement<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(
-            Self::new_with_scope_id(span, object, body, scope_id, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new_with_scope_id(span, object, body, scope_id, builder), builder)
     }
 }
 
@@ -12460,7 +13106,8 @@ impl<'a> SwitchStatement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, discriminant, cases, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, discriminant, cases, builder), builder)
     }
 
     /// Build a [`SwitchStatement`] with `scope_id`.
@@ -12515,9 +13162,10 @@ impl<'a> SwitchStatement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, SwitchCase<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, discriminant, cases, scope_id, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -12586,7 +13234,8 @@ impl<'a> LabeledStatement<'a> {
         body: Statement<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, label, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, label, body, builder), builder)
     }
 }
 
@@ -12619,7 +13268,8 @@ impl<'a> ThrowStatement<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, argument, builder), builder)
     }
 }
 
@@ -12680,7 +13330,8 @@ impl<'a> TryStatement<'a> {
         T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, block, handler, finalizer, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, block, handler, finalizer, builder), builder)
     }
 }
 
@@ -12733,7 +13384,8 @@ impl<'a> CatchClause<'a> {
     where
         T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, param, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, param, body, builder), builder)
     }
 
     /// Build a [`CatchClause`] with `scope_id`.
@@ -12788,10 +13440,8 @@ impl<'a> CatchClause<'a> {
     where
         T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
     {
-        ArenaBox::new_in(
-            Self::new_with_scope_id(span, param, body, scope_id, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new_with_scope_id(span, param, body, scope_id, builder), builder)
     }
 }
 
@@ -12845,7 +13495,8 @@ impl DebuggerStatement {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -12866,7 +13517,7 @@ impl<'a> BindingPattern<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::BindingIdentifier(BindingIdentifier::boxed(span, name, builder))
+        Self::BindingIdentifier(BindingIdentifier::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`BindingPattern::BindingIdentifier`] with `symbol_id`.
@@ -12888,7 +13539,10 @@ impl<'a> BindingPattern<'a> {
         S1: Into<Ident<'a>>,
     {
         Self::BindingIdentifier(BindingIdentifier::boxed_with_symbol_id(
-            span, name, symbol_id, builder,
+            span,
+            name,
+            symbol_id,
+            builder.builder(),
         ))
     }
 
@@ -12911,7 +13565,7 @@ impl<'a> BindingPattern<'a> {
         T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
-        Self::ObjectPattern(ObjectPattern::boxed(span, properties, rest, builder))
+        Self::ObjectPattern(ObjectPattern::boxed(span, properties, rest, builder.builder()))
     }
 
     /// Build a [`BindingPattern::ArrayPattern`].
@@ -12933,7 +13587,7 @@ impl<'a> BindingPattern<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
-        Self::ArrayPattern(ArrayPattern::boxed(span, elements, rest, builder))
+        Self::ArrayPattern(ArrayPattern::boxed(span, elements, rest, builder.builder()))
     }
 
     /// Build a [`BindingPattern::AssignmentPattern`].
@@ -12951,7 +13605,7 @@ impl<'a> BindingPattern<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AssignmentPattern(AssignmentPattern::boxed(span, left, right, builder))
+        Self::AssignmentPattern(AssignmentPattern::boxed(span, left, right, builder.builder()))
     }
 }
 
@@ -12992,7 +13646,8 @@ impl<'a> AssignmentPattern<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
     }
 }
 
@@ -13046,7 +13701,8 @@ impl<'a> ObjectPattern<'a> {
         T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, properties, rest, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, properties, rest, builder), builder)
     }
 }
 
@@ -13130,7 +13786,8 @@ impl<'a> ArrayPattern<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, elements, rest, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, elements, rest, builder), builder)
     }
 }
 
@@ -13167,7 +13824,8 @@ impl<'a> BindingRestElement<'a> {
         argument: BindingPattern<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, argument, builder), builder)
     }
 }
 
@@ -13270,6 +13928,7 @@ impl<'a> Function<'a> {
         T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -13285,7 +13944,7 @@ impl<'a> Function<'a> {
                 body,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -13399,6 +14058,7 @@ impl<'a> Function<'a> {
         T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id_and_pure_and_pife(
                 span,
@@ -13417,7 +14077,7 @@ impl<'a> Function<'a> {
                 pife,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -13477,7 +14137,8 @@ impl<'a> FormalParameters<'a> {
         T1: IntoIn<'a, ArenaVec<'a, FormalParameter<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, kind, items, rest, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, kind, items, rest, builder), builder)
     }
 }
 
@@ -13583,10 +14244,8 @@ impl<'a> FormalParameterRest<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        ArenaBox::new_in(
-            Self::new(span, decorators, rest, type_annotation, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, decorators, rest, type_annotation, builder), builder)
     }
 }
 
@@ -13640,7 +14299,8 @@ impl<'a> FunctionBody<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, directives, statements, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, directives, statements, builder), builder)
     }
 }
 
@@ -13721,6 +14381,7 @@ impl<'a> ArrowFunctionExpression<'a> {
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -13732,7 +14393,7 @@ impl<'a> ArrowFunctionExpression<'a> {
                 body,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -13824,6 +14485,7 @@ impl<'a> ArrowFunctionExpression<'a> {
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id_and_pure_and_pife(
                 span,
@@ -13838,7 +14500,7 @@ impl<'a> ArrowFunctionExpression<'a> {
                 pife,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -13880,7 +14542,8 @@ impl<'a> YieldExpression<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, delegate, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, delegate, argument, builder), builder)
     }
 }
 
@@ -13981,6 +14644,7 @@ impl<'a> Class<'a> {
         T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -13996,7 +14660,7 @@ impl<'a> Class<'a> {
                 declare,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -14100,6 +14764,7 @@ impl<'a> Class<'a> {
         T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -14116,7 +14781,7 @@ impl<'a> Class<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -14156,7 +14821,8 @@ impl<'a> ClassBody<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ClassElement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, body, builder), builder)
     }
 }
 
@@ -14173,7 +14839,7 @@ impl<'a> ClassElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        Self::StaticBlock(StaticBlock::boxed(span, body, builder))
+        Self::StaticBlock(StaticBlock::boxed(span, body, builder.builder()))
     }
 
     /// Build a [`ClassElement::StaticBlock`] with `scope_id`.
@@ -14194,7 +14860,7 @@ impl<'a> ClassElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        Self::StaticBlock(StaticBlock::boxed_with_scope_id(span, body, scope_id, builder))
+        Self::StaticBlock(StaticBlock::boxed_with_scope_id(span, body, scope_id, builder.builder()))
     }
 
     /// Build a [`ClassElement::MethodDefinition`].
@@ -14244,7 +14910,7 @@ impl<'a> ClassElement<'a> {
             r#override,
             optional,
             accessibility,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -14304,7 +14970,7 @@ impl<'a> ClassElement<'a> {
             definite,
             readonly,
             accessibility,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -14355,7 +15021,7 @@ impl<'a> ClassElement<'a> {
             r#override,
             definite,
             accessibility,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -14388,7 +15054,7 @@ impl<'a> ClassElement<'a> {
             type_annotation,
             readonly,
             r#static,
-            builder,
+            builder.builder(),
         ))
     }
 }
@@ -14483,6 +15149,7 @@ impl<'a> MethodDefinition<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -14498,7 +15165,7 @@ impl<'a> MethodDefinition<'a> {
                 accessibility,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -14608,6 +15275,7 @@ impl<'a> PropertyDefinition<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -14626,7 +15294,7 @@ impl<'a> PropertyDefinition<'a> {
                 accessibility,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -14662,7 +15330,8 @@ impl<'a> PrivateIdentifier<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, name, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, builder), builder)
     }
 }
 
@@ -14702,7 +15371,8 @@ impl<'a> StaticBlock<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, body, builder), builder)
     }
 
     /// Build a [`StaticBlock`] with `scope_id`.
@@ -14752,7 +15422,8 @@ impl<'a> StaticBlock<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new_with_scope_id(span, body, scope_id, builder), builder)
     }
 }
 
@@ -14788,7 +15459,7 @@ impl<'a> ModuleDeclaration<'a> {
             phase,
             with_clause,
             import_kind,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -14820,7 +15491,7 @@ impl<'a> ModuleDeclaration<'a> {
             source,
             with_clause,
             export_kind,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -14837,7 +15508,11 @@ impl<'a> ModuleDeclaration<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         builder: &B,
     ) -> Self {
-        Self::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(span, declaration, builder))
+        Self::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+            span,
+            declaration,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ModuleDeclaration::ExportNamedDeclaration`].
@@ -14872,7 +15547,7 @@ impl<'a> ModuleDeclaration<'a> {
             source,
             export_kind,
             with_clause,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -14889,7 +15564,7 @@ impl<'a> ModuleDeclaration<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSExportAssignment(TSExportAssignment::boxed(span, expression, builder))
+        Self::TSExportAssignment(TSExportAssignment::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`ModuleDeclaration::TSNamespaceExportDeclaration`].
@@ -14905,7 +15580,11 @@ impl<'a> ModuleDeclaration<'a> {
         id: IdentifierName<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNamespaceExportDeclaration(TSNamespaceExportDeclaration::boxed(span, id, builder))
+        Self::TSNamespaceExportDeclaration(TSNamespaceExportDeclaration::boxed(
+            span,
+            id,
+            builder.builder(),
+        ))
     }
 }
 
@@ -14999,6 +15678,7 @@ impl<'a> AccessorProperty<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -15014,7 +15694,7 @@ impl<'a> AccessorProperty<'a> {
                 accessibility,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -15060,7 +15740,8 @@ impl<'a> ImportExpression<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, source, options, phase, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, source, options, phase, builder), builder)
     }
 }
 
@@ -15127,9 +15808,10 @@ impl<'a> ImportDeclaration<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, specifiers, source, phase, with_clause, import_kind, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -15152,7 +15834,13 @@ impl<'a> ImportDeclarationSpecifier<'a> {
         import_kind: ImportOrExportKind,
         builder: &B,
     ) -> Self {
-        Self::ImportSpecifier(ImportSpecifier::boxed(span, imported, local, import_kind, builder))
+        Self::ImportSpecifier(ImportSpecifier::boxed(
+            span,
+            imported,
+            local,
+            import_kind,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ImportDeclarationSpecifier::ImportDefaultSpecifier`].
@@ -15168,7 +15856,7 @@ impl<'a> ImportDeclarationSpecifier<'a> {
         local: BindingIdentifier<'a>,
         builder: &B,
     ) -> Self {
-        Self::ImportDefaultSpecifier(ImportDefaultSpecifier::boxed(span, local, builder))
+        Self::ImportDefaultSpecifier(ImportDefaultSpecifier::boxed(span, local, builder.builder()))
     }
 
     /// Build an [`ImportDeclarationSpecifier::ImportNamespaceSpecifier`].
@@ -15184,7 +15872,11 @@ impl<'a> ImportDeclarationSpecifier<'a> {
         local: BindingIdentifier<'a>,
         builder: &B,
     ) -> Self {
-        Self::ImportNamespaceSpecifier(ImportNamespaceSpecifier::boxed(span, local, builder))
+        Self::ImportNamespaceSpecifier(ImportNamespaceSpecifier::boxed(
+            span,
+            local,
+            builder.builder(),
+        ))
     }
 }
 
@@ -15235,7 +15927,8 @@ impl<'a> ImportSpecifier<'a> {
         import_kind: ImportOrExportKind,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, imported, local, import_kind, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, imported, local, import_kind, builder), builder)
     }
 }
 
@@ -15272,7 +15965,8 @@ impl<'a> ImportDefaultSpecifier<'a> {
         local: BindingIdentifier<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, local, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, local, builder), builder)
     }
 }
 
@@ -15309,7 +16003,8 @@ impl<'a> ImportNamespaceSpecifier<'a> {
         local: BindingIdentifier<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, local, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, local, builder), builder)
     }
 }
 
@@ -15361,7 +16056,8 @@ impl<'a> WithClause<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ImportAttribute<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, keyword, with_entries, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, keyword, with_entries, builder), builder)
     }
 }
 
@@ -15395,7 +16091,7 @@ impl<'a> ImportAttributeKey<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierName::new(span, name, builder))
+        Self::Identifier(IdentifierName::new(span, name, builder.builder()))
     }
 
     /// Build an [`ImportAttributeKey::StringLiteral`].
@@ -15414,7 +16110,7 @@ impl<'a> ImportAttributeKey<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::new(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ImportAttributeKey::StringLiteral`] with `lone_surrogates`.
@@ -15440,7 +16136,7 @@ impl<'a> ImportAttributeKey<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 }
@@ -15510,9 +16206,10 @@ impl<'a> ExportNamedDeclaration<'a> {
         T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, declaration, specifiers, source, export_kind, with_clause, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -15550,7 +16247,8 @@ impl<'a> ExportDefaultDeclaration<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, declaration, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, declaration, builder), builder)
     }
 }
 
@@ -15612,9 +16310,10 @@ impl<'a> ExportAllDeclaration<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, exported, source, with_clause, export_kind, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -15697,7 +16396,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -15767,7 +16466,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -15821,7 +16520,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -15878,7 +16577,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -15915,7 +16614,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             extends,
             body,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -15955,7 +16654,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             body,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -15968,7 +16667,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::NullLiteral`].
@@ -15979,7 +16678,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NullLiteral(NullLiteral::boxed(span, builder))
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::NumericLiteral`].
@@ -15999,7 +16698,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::BigIntLiteral`].
@@ -16022,7 +16721,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::RegExpLiteral`].
@@ -16040,7 +16739,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> Self {
-        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder))
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::StringLiteral`].
@@ -16061,7 +16760,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::StringLiteral`] with `lone_surrogates`.
@@ -16089,7 +16788,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16112,7 +16811,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::Identifier`].
@@ -16127,7 +16826,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierReference::boxed(span, name, builder))
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::Identifier`] with `reference_id`.
@@ -16152,7 +16851,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16164,7 +16863,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Super(Super::boxed(span, builder))
+        Self::Super(Super::boxed(span, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::ArrayExpression`].
@@ -16183,7 +16882,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::ArrowFunctionExpression`].
@@ -16223,7 +16922,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16280,7 +16979,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
                 scope_id,
                 pure,
                 pife,
-                builder,
+                builder.builder(),
             ),
         )
     }
@@ -16303,7 +17002,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentExpression(AssignmentExpression::boxed(
-            span, operator, left, right, builder,
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
         ))
     }
 
@@ -16320,7 +17023,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder))
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::BinaryExpression`].
@@ -16340,7 +17043,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::BinaryExpression(BinaryExpression::boxed(span, left, operator, right, builder))
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::CallExpression`].
@@ -16372,7 +17081,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16408,7 +17117,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16425,7 +17134,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ChainExpression(ChainExpression::boxed(span, expression, builder))
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::ClassExpression`].
@@ -16478,7 +17187,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16535,7 +17244,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16557,7 +17266,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         builder: &B,
     ) -> Self {
         Self::ConditionalExpression(ConditionalExpression::boxed(
-            span, test, consequent, alternate, builder,
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
         ))
     }
 
@@ -16611,7 +17324,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16681,7 +17394,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16702,7 +17415,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> Self {
-        Self::ImportExpression(ImportExpression::boxed(span, source, options, phase, builder))
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::LogicalExpression`].
@@ -16722,7 +17441,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::LogicalExpression(LogicalExpression::boxed(span, left, operator, right, builder))
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::NewExpression`].
@@ -16746,7 +17471,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::NewExpression`] with `pure`.
@@ -16778,7 +17509,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             type_arguments,
             arguments,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16798,7 +17529,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::ParenthesizedExpression`].
@@ -16814,7 +17545,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(span, expression, builder))
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::SequenceExpression`].
@@ -16833,7 +17568,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::TaggedTemplateExpression`].
@@ -16861,7 +17596,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             tag,
             type_arguments,
             quasi,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -16873,7 +17608,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::UnaryExpression`].
@@ -16891,7 +17626,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::UpdateExpression`].
@@ -16911,7 +17646,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> Self {
-        Self::UpdateExpression(UpdateExpression::boxed(span, operator, prefix, argument, builder))
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::YieldExpression`].
@@ -16929,7 +17670,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder))
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::PrivateInExpression`].
@@ -16947,7 +17688,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::ImportMeta`].
@@ -16958,7 +17699,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ImportMeta(ImportMeta::boxed(span, builder))
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::NewTarget`].
@@ -16969,7 +17710,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NewTarget(NewTarget::boxed(span, builder))
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::JSXElement`].
@@ -16999,7 +17740,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             opening_element,
             children,
             closing_element,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -17028,7 +17769,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -17047,7 +17788,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::TSSatisfiesExpression`].
@@ -17069,7 +17815,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -17088,7 +17834,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::TSNonNullExpression`].
@@ -17104,7 +17855,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::TSInstantiationExpression`].
@@ -17129,7 +17880,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             span,
             expression,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -17151,7 +17902,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::ComputedMemberExpression`].
@@ -17172,7 +17928,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -17194,7 +17954,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -17216,7 +17980,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -17232,7 +18000,7 @@ impl<'a> ModuleExportName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::IdentifierName(IdentifierName::new(span, name, builder))
+        Self::IdentifierName(IdentifierName::new(span, name, builder.builder()))
     }
 
     /// Build a [`ModuleExportName::IdentifierReference`].
@@ -17249,7 +18017,7 @@ impl<'a> ModuleExportName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::IdentifierReference(IdentifierReference::new(span, name, builder))
+        Self::IdentifierReference(IdentifierReference::new(span, name, builder.builder()))
     }
 
     /// Build a [`ModuleExportName::IdentifierReference`] with `reference_id`.
@@ -17272,7 +18040,7 @@ impl<'a> ModuleExportName<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -17292,7 +18060,7 @@ impl<'a> ModuleExportName<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::new(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
     }
 
     /// Build a [`ModuleExportName::StringLiteral`] with `lone_surrogates`.
@@ -17318,7 +18086,7 @@ impl<'a> ModuleExportName<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 }
@@ -17371,7 +18139,8 @@ impl<'a> V8IntrinsicExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, name, arguments, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, arguments, builder), builder)
     }
 }
 
@@ -17404,7 +18173,8 @@ impl BooleanLiteral {
         value: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, value, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, value, builder), builder)
     }
 }
 
@@ -17431,7 +18201,8 @@ impl NullLiteral {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -17476,7 +18247,8 @@ impl<'a> NumericLiteral<'a> {
         base: NumberBase,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, value, raw, base, builder), builder)
     }
 }
 
@@ -17529,7 +18301,8 @@ impl<'a> StringLiteral<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, value, raw, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, value, raw, builder), builder)
     }
 
     /// Build a [`StringLiteral`] with `lone_surrogates`.
@@ -17584,9 +18357,10 @@ impl<'a> StringLiteral<'a> {
     where
         S1: Into<Str<'a>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_lone_surrogates(span, value, raw, lone_surrogates, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -17644,7 +18418,8 @@ impl<'a> BigIntLiteral<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, value, raw, base, builder), builder)
     }
 }
 
@@ -17685,7 +18460,8 @@ impl<'a> RegExpLiteral<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, regex, raw, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, regex, raw, builder), builder)
     }
 }
 
@@ -17746,9 +18522,10 @@ impl<'a> JSXElement<'a> {
         T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, opening_element, children, closing_element, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -17808,10 +18585,8 @@ impl<'a> JSXOpeningElement<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
     {
-        ArenaBox::new_in(
-            Self::new(span, name, type_arguments, attributes, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, type_arguments, attributes, builder), builder)
     }
 }
 
@@ -17844,7 +18619,8 @@ impl<'a> JSXClosingElement<'a> {
         name: JSXElementName<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, name, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, builder), builder)
     }
 }
 
@@ -17901,9 +18677,10 @@ impl<'a> JSXFragment<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, opening_fragment, children, closing_fragment, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -17945,7 +18722,7 @@ impl<'a> JSXElementName<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::Identifier(JSXIdentifier::boxed(span, name, builder))
+        Self::Identifier(JSXIdentifier::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`JSXElementName::IdentifierReference`].
@@ -17964,7 +18741,7 @@ impl<'a> JSXElementName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder))
+        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`JSXElementName::IdentifierReference`] with `reference_id`.
@@ -17989,7 +18766,7 @@ impl<'a> JSXElementName<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18008,7 +18785,7 @@ impl<'a> JSXElementName<'a> {
         name: JSXIdentifier<'a>,
         builder: &B,
     ) -> Self {
-        Self::NamespacedName(JSXNamespacedName::boxed(span, namespace, name, builder))
+        Self::NamespacedName(JSXNamespacedName::boxed(span, namespace, name, builder.builder()))
     }
 
     /// Build a [`JSXElementName::MemberExpression`].
@@ -18026,7 +18803,12 @@ impl<'a> JSXElementName<'a> {
         property: JSXIdentifier<'a>,
         builder: &B,
     ) -> Self {
-        Self::MemberExpression(JSXMemberExpression::boxed(span, object, property, builder))
+        Self::MemberExpression(JSXMemberExpression::boxed(
+            span,
+            object,
+            property,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXElementName::ThisExpression`].
@@ -18037,7 +18819,7 @@ impl<'a> JSXElementName<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 }
 
@@ -18078,7 +18860,8 @@ impl<'a> JSXNamespacedName<'a> {
         name: JSXIdentifier<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, namespace, name, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, namespace, name, builder), builder)
     }
 }
 
@@ -18119,7 +18902,8 @@ impl<'a> JSXMemberExpression<'a> {
         property: JSXIdentifier<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, object, property, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, object, property, builder), builder)
     }
 }
 
@@ -18140,7 +18924,7 @@ impl<'a> JSXMemberExpressionObject<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder))
+        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`JSXMemberExpressionObject::IdentifierReference`] with `reference_id`.
@@ -18165,7 +18949,7 @@ impl<'a> JSXMemberExpressionObject<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18184,7 +18968,12 @@ impl<'a> JSXMemberExpressionObject<'a> {
         property: JSXIdentifier<'a>,
         builder: &B,
     ) -> Self {
-        Self::MemberExpression(JSXMemberExpression::boxed(span, object, property, builder))
+        Self::MemberExpression(JSXMemberExpression::boxed(
+            span,
+            object,
+            property,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXMemberExpressionObject::ThisExpression`].
@@ -18195,7 +18984,7 @@ impl<'a> JSXMemberExpressionObject<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 }
 
@@ -18232,7 +19021,8 @@ impl<'a> JSXExpressionContainer<'a> {
         expression: JSXExpression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -18245,7 +19035,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_empty_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::EmptyExpression(JSXEmptyExpression::boxed(span, builder))
+        Self::EmptyExpression(JSXEmptyExpression::boxed(span, builder.builder()))
     }
 
     /// Build a [`JSXExpression::BooleanLiteral`].
@@ -18257,7 +19047,7 @@ impl<'a> JSXExpression<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build a [`JSXExpression::NullLiteral`].
@@ -18268,7 +19058,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NullLiteral(NullLiteral::boxed(span, builder))
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
     }
 
     /// Build a [`JSXExpression::NumericLiteral`].
@@ -18288,7 +19078,7 @@ impl<'a> JSXExpression<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`JSXExpression::BigIntLiteral`].
@@ -18311,7 +19101,7 @@ impl<'a> JSXExpression<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`JSXExpression::RegExpLiteral`].
@@ -18329,7 +19119,7 @@ impl<'a> JSXExpression<'a> {
         raw: Option<Str<'a>>,
         builder: &B,
     ) -> Self {
-        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder))
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
     }
 
     /// Build a [`JSXExpression::StringLiteral`].
@@ -18350,7 +19140,7 @@ impl<'a> JSXExpression<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`JSXExpression::StringLiteral`] with `lone_surrogates`.
@@ -18378,7 +19168,7 @@ impl<'a> JSXExpression<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18401,7 +19191,7 @@ impl<'a> JSXExpression<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build a [`JSXExpression::Identifier`].
@@ -18416,7 +19206,7 @@ impl<'a> JSXExpression<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierReference::boxed(span, name, builder))
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`JSXExpression::Identifier`] with `reference_id`.
@@ -18441,7 +19231,7 @@ impl<'a> JSXExpression<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18453,7 +19243,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::Super(Super::boxed(span, builder))
+        Self::Super(Super::boxed(span, builder.builder()))
     }
 
     /// Build a [`JSXExpression::ArrayExpression`].
@@ -18472,7 +19262,7 @@ impl<'a> JSXExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     {
-        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder))
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
     }
 
     /// Build a [`JSXExpression::ArrowFunctionExpression`].
@@ -18512,7 +19302,7 @@ impl<'a> JSXExpression<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18569,7 +19359,7 @@ impl<'a> JSXExpression<'a> {
                 scope_id,
                 pure,
                 pife,
-                builder,
+                builder.builder(),
             ),
         )
     }
@@ -18592,7 +19382,11 @@ impl<'a> JSXExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::AssignmentExpression(AssignmentExpression::boxed(
-            span, operator, left, right, builder,
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
         ))
     }
 
@@ -18609,7 +19403,7 @@ impl<'a> JSXExpression<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder))
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
     }
 
     /// Build a [`JSXExpression::BinaryExpression`].
@@ -18629,7 +19423,13 @@ impl<'a> JSXExpression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::BinaryExpression(BinaryExpression::boxed(span, left, operator, right, builder))
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::CallExpression`].
@@ -18661,7 +19461,7 @@ impl<'a> JSXExpression<'a> {
             type_arguments,
             arguments,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18697,7 +19497,7 @@ impl<'a> JSXExpression<'a> {
             arguments,
             optional,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18714,7 +19514,7 @@ impl<'a> JSXExpression<'a> {
         expression: ChainElement<'a>,
         builder: &B,
     ) -> Self {
-        Self::ChainExpression(ChainExpression::boxed(span, expression, builder))
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`JSXExpression::ClassExpression`].
@@ -18767,7 +19567,7 @@ impl<'a> JSXExpression<'a> {
             body,
             r#abstract,
             declare,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18824,7 +19624,7 @@ impl<'a> JSXExpression<'a> {
             r#abstract,
             declare,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18846,7 +19646,11 @@ impl<'a> JSXExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::ConditionalExpression(ConditionalExpression::boxed(
-            span, test, consequent, alternate, builder,
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
         ))
     }
 
@@ -18900,7 +19704,7 @@ impl<'a> JSXExpression<'a> {
             params,
             return_type,
             body,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18970,7 +19774,7 @@ impl<'a> JSXExpression<'a> {
             scope_id,
             pure,
             pife,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -18991,7 +19795,13 @@ impl<'a> JSXExpression<'a> {
         phase: Option<ImportPhase>,
         builder: &B,
     ) -> Self {
-        Self::ImportExpression(ImportExpression::boxed(span, source, options, phase, builder))
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::LogicalExpression`].
@@ -19011,7 +19821,13 @@ impl<'a> JSXExpression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::LogicalExpression(LogicalExpression::boxed(span, left, operator, right, builder))
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::NewExpression`].
@@ -19035,7 +19851,13 @@ impl<'a> JSXExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
         T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::NewExpression(NewExpression::boxed(span, callee, type_arguments, arguments, builder))
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::NewExpression`] with `pure`.
@@ -19067,7 +19889,7 @@ impl<'a> JSXExpression<'a> {
             type_arguments,
             arguments,
             pure,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19087,7 +19909,7 @@ impl<'a> JSXExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
     {
-        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder))
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
     }
 
     /// Build a [`JSXExpression::ParenthesizedExpression`].
@@ -19103,7 +19925,11 @@ impl<'a> JSXExpression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(span, expression, builder))
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::SequenceExpression`].
@@ -19122,7 +19948,7 @@ impl<'a> JSXExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder))
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
     }
 
     /// Build a [`JSXExpression::TaggedTemplateExpression`].
@@ -19150,7 +19976,7 @@ impl<'a> JSXExpression<'a> {
             tag,
             type_arguments,
             quasi,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19162,7 +19988,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 
     /// Build a [`JSXExpression::UnaryExpression`].
@@ -19180,7 +20006,7 @@ impl<'a> JSXExpression<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 
     /// Build a [`JSXExpression::UpdateExpression`].
@@ -19200,7 +20026,13 @@ impl<'a> JSXExpression<'a> {
         argument: SimpleAssignmentTarget<'a>,
         builder: &B,
     ) -> Self {
-        Self::UpdateExpression(UpdateExpression::boxed(span, operator, prefix, argument, builder))
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::YieldExpression`].
@@ -19218,7 +20050,7 @@ impl<'a> JSXExpression<'a> {
         argument: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
-        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder))
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
     }
 
     /// Build a [`JSXExpression::PrivateInExpression`].
@@ -19236,7 +20068,7 @@ impl<'a> JSXExpression<'a> {
         right: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder))
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
     }
 
     /// Build a [`JSXExpression::ImportMeta`].
@@ -19247,7 +20079,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ImportMeta(ImportMeta::boxed(span, builder))
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
     }
 
     /// Build a [`JSXExpression::NewTarget`].
@@ -19258,7 +20090,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::NewTarget(NewTarget::boxed(span, builder))
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
     }
 
     /// Build a [`JSXExpression::JSXElement`].
@@ -19288,7 +20120,7 @@ impl<'a> JSXExpression<'a> {
             opening_element,
             children,
             closing_element,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19317,7 +20149,7 @@ impl<'a> JSXExpression<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19336,7 +20168,12 @@ impl<'a> JSXExpression<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSAsExpression(TSAsExpression::boxed(span, expression, type_annotation, builder))
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::TSSatisfiesExpression`].
@@ -19358,7 +20195,7 @@ impl<'a> JSXExpression<'a> {
             span,
             expression,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19377,7 +20214,12 @@ impl<'a> JSXExpression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeAssertion(TSTypeAssertion::boxed(span, type_annotation, expression, builder))
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::TSNonNullExpression`].
@@ -19393,7 +20235,7 @@ impl<'a> JSXExpression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder))
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
     }
 
     /// Build a [`JSXExpression::TSInstantiationExpression`].
@@ -19418,7 +20260,7 @@ impl<'a> JSXExpression<'a> {
             span,
             expression,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19440,7 +20282,12 @@ impl<'a> JSXExpression<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
-        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(span, name, arguments, builder))
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::ComputedMemberExpression`].
@@ -19461,7 +20308,11 @@ impl<'a> JSXExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
-            span, object, expression, optional, builder,
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -19483,7 +20334,11 @@ impl<'a> JSXExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::StaticMemberExpression(StaticMemberExpression::boxed(
-            span, object, property, optional, builder,
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
         ))
     }
 
@@ -19505,7 +20360,11 @@ impl<'a> JSXExpression<'a> {
         builder: &B,
     ) -> Self {
         Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
-            span, object, field, optional, builder,
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
         ))
     }
 }
@@ -19533,7 +20392,8 @@ impl JSXEmptyExpression {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -19553,7 +20413,7 @@ impl<'a> JSXAttributeItem<'a> {
         value: Option<JSXAttributeValue<'a>>,
         builder: &B,
     ) -> Self {
-        Self::Attribute(JSXAttribute::boxed(span, name, value, builder))
+        Self::Attribute(JSXAttribute::boxed(span, name, value, builder.builder()))
     }
 
     /// Build a [`JSXAttributeItem::SpreadAttribute`].
@@ -19569,7 +20429,7 @@ impl<'a> JSXAttributeItem<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::SpreadAttribute(JSXSpreadAttribute::boxed(span, argument, builder))
+        Self::SpreadAttribute(JSXSpreadAttribute::boxed(span, argument, builder.builder()))
     }
 }
 
@@ -19610,7 +20470,8 @@ impl<'a> JSXAttribute<'a> {
         value: Option<JSXAttributeValue<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, name, value, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, value, builder), builder)
     }
 }
 
@@ -19643,7 +20504,8 @@ impl<'a> JSXSpreadAttribute<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, argument, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, argument, builder), builder)
     }
 }
 
@@ -19660,7 +20522,7 @@ impl<'a> JSXAttributeName<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::Identifier(JSXIdentifier::boxed(span, name, builder))
+        Self::Identifier(JSXIdentifier::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`JSXAttributeName::NamespacedName`].
@@ -19678,7 +20540,7 @@ impl<'a> JSXAttributeName<'a> {
         name: JSXIdentifier<'a>,
         builder: &B,
     ) -> Self {
-        Self::NamespacedName(JSXNamespacedName::boxed(span, namespace, name, builder))
+        Self::NamespacedName(JSXNamespacedName::boxed(span, namespace, name, builder.builder()))
     }
 }
 
@@ -19701,7 +20563,7 @@ impl<'a> JSXAttributeValue<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`JSXAttributeValue::StringLiteral`] with `lone_surrogates`.
@@ -19729,7 +20591,7 @@ impl<'a> JSXAttributeValue<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19746,7 +20608,11 @@ impl<'a> JSXAttributeValue<'a> {
         expression: JSXExpression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ExpressionContainer(JSXExpressionContainer::boxed(span, expression, builder))
+        Self::ExpressionContainer(JSXExpressionContainer::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXAttributeValue::Element`].
@@ -19771,7 +20637,13 @@ impl<'a> JSXAttributeValue<'a> {
         T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
-        Self::Element(JSXElement::boxed(span, opening_element, children, closing_element, builder))
+        Self::Element(JSXElement::boxed(
+            span,
+            opening_element,
+            children,
+            closing_element,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXAttributeValue::Fragment`].
@@ -19799,7 +20671,7 @@ impl<'a> JSXAttributeValue<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 }
@@ -19835,7 +20707,8 @@ impl<'a> JSXIdentifier<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, name, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, name, builder), builder)
     }
 }
 
@@ -19858,7 +20731,7 @@ impl<'a> JSXChild<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::Text(JSXText::boxed(span, value, raw, builder))
+        Self::Text(JSXText::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`JSXChild::Element`].
@@ -19883,7 +20756,13 @@ impl<'a> JSXChild<'a> {
         T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
     {
-        Self::Element(JSXElement::boxed(span, opening_element, children, closing_element, builder))
+        Self::Element(JSXElement::boxed(
+            span,
+            opening_element,
+            children,
+            closing_element,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXChild::Fragment`].
@@ -19911,7 +20790,7 @@ impl<'a> JSXChild<'a> {
             opening_fragment,
             children,
             closing_fragment,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -19928,7 +20807,11 @@ impl<'a> JSXChild<'a> {
         expression: JSXExpression<'a>,
         builder: &B,
     ) -> Self {
-        Self::ExpressionContainer(JSXExpressionContainer::boxed(span, expression, builder))
+        Self::ExpressionContainer(JSXExpressionContainer::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXChild::Spread`].
@@ -19944,7 +20827,7 @@ impl<'a> JSXChild<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::Spread(JSXSpreadChild::boxed(span, expression, builder))
+        Self::Spread(JSXSpreadChild::boxed(span, expression, builder.builder()))
     }
 }
 
@@ -19977,7 +20860,8 @@ impl<'a> JSXSpreadChild<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -20024,7 +20908,8 @@ impl<'a> JSXText<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        ArenaBox::new_in(Self::new(span, value, raw, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, value, raw, builder), builder)
     }
 }
 
@@ -20076,7 +20961,8 @@ impl<'a> TSThisParameter<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, this_span, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, this_span, type_annotation, builder), builder)
     }
 }
 
@@ -20132,7 +21018,8 @@ impl<'a> TSEnumDeclaration<'a> {
         declare: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, id, body, r#const, declare, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, id, body, r#const, declare, builder), builder)
     }
 }
 
@@ -20214,7 +21101,7 @@ impl<'a> TSEnumMemberName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierName::boxed(span, name, builder))
+        Self::Identifier(IdentifierName::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`TSEnumMemberName::String`].
@@ -20235,7 +21122,7 @@ impl<'a> TSEnumMemberName<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::String(StringLiteral::boxed(span, value, raw, builder))
+        Self::String(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSEnumMemberName::String`] with `lone_surrogates`.
@@ -20263,7 +21150,7 @@ impl<'a> TSEnumMemberName<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20285,7 +21172,7 @@ impl<'a> TSEnumMemberName<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::ComputedString(StringLiteral::boxed(span, value, raw, builder))
+        Self::ComputedString(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSEnumMemberName::ComputedString`] with `lone_surrogates`.
@@ -20313,7 +21200,7 @@ impl<'a> TSEnumMemberName<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20336,7 +21223,12 @@ impl<'a> TSEnumMemberName<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::ComputedTemplateString(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::ComputedTemplateString(TemplateLiteral::boxed(
+            span,
+            quasis,
+            expressions,
+            builder.builder(),
+        ))
     }
 }
 
@@ -20369,7 +21261,8 @@ impl<'a> TSTypeAnnotation<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
     }
 }
 
@@ -20402,7 +21295,8 @@ impl<'a> TSLiteralType<'a> {
         literal: TSLiteral<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, literal, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, literal, builder), builder)
     }
 }
 
@@ -20416,7 +21310,7 @@ impl<'a> TSLiteral<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
-        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder))
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
     }
 
     /// Build a [`TSLiteral::NumericLiteral`].
@@ -20436,7 +21330,7 @@ impl<'a> TSLiteral<'a> {
         base: NumberBase,
         builder: &B,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`TSLiteral::BigIntLiteral`].
@@ -20459,7 +21353,7 @@ impl<'a> TSLiteral<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
     }
 
     /// Build a [`TSLiteral::StringLiteral`].
@@ -20480,7 +21374,7 @@ impl<'a> TSLiteral<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSLiteral::StringLiteral`] with `lone_surrogates`.
@@ -20508,7 +21402,7 @@ impl<'a> TSLiteral<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20531,7 +21425,7 @@ impl<'a> TSLiteral<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
     {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder))
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 
     /// Build a [`TSLiteral::UnaryExpression`].
@@ -20549,7 +21443,7 @@ impl<'a> TSLiteral<'a> {
         argument: Expression<'a>,
         builder: &B,
     ) -> Self {
-        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder))
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
     }
 }
 
@@ -20562,7 +21456,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_any_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSAnyKeyword(TSAnyKeyword::boxed(span, builder))
+        Self::TSAnyKeyword(TSAnyKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSBigIntKeyword`].
@@ -20573,7 +21467,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_big_int_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSBigIntKeyword(TSBigIntKeyword::boxed(span, builder))
+        Self::TSBigIntKeyword(TSBigIntKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSBooleanKeyword`].
@@ -20584,7 +21478,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_boolean_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSBooleanKeyword(TSBooleanKeyword::boxed(span, builder))
+        Self::TSBooleanKeyword(TSBooleanKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSIntrinsicKeyword`].
@@ -20595,7 +21489,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_intrinsic_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSIntrinsicKeyword(TSIntrinsicKeyword::boxed(span, builder))
+        Self::TSIntrinsicKeyword(TSIntrinsicKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSNeverKeyword`].
@@ -20606,7 +21500,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_never_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSNeverKeyword(TSNeverKeyword::boxed(span, builder))
+        Self::TSNeverKeyword(TSNeverKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSNullKeyword`].
@@ -20617,7 +21511,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_null_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSNullKeyword(TSNullKeyword::boxed(span, builder))
+        Self::TSNullKeyword(TSNullKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSNumberKeyword`].
@@ -20628,7 +21522,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_number_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSNumberKeyword(TSNumberKeyword::boxed(span, builder))
+        Self::TSNumberKeyword(TSNumberKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSObjectKeyword`].
@@ -20639,7 +21533,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_object_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSObjectKeyword(TSObjectKeyword::boxed(span, builder))
+        Self::TSObjectKeyword(TSObjectKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSStringKeyword`].
@@ -20650,7 +21544,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_string_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSStringKeyword(TSStringKeyword::boxed(span, builder))
+        Self::TSStringKeyword(TSStringKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSSymbolKeyword`].
@@ -20661,7 +21555,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_symbol_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSSymbolKeyword(TSSymbolKeyword::boxed(span, builder))
+        Self::TSSymbolKeyword(TSSymbolKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSUndefinedKeyword`].
@@ -20672,7 +21566,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_undefined_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSUndefinedKeyword(TSUndefinedKeyword::boxed(span, builder))
+        Self::TSUndefinedKeyword(TSUndefinedKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSUnknownKeyword`].
@@ -20683,7 +21577,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_unknown_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSUnknownKeyword(TSUnknownKeyword::boxed(span, builder))
+        Self::TSUnknownKeyword(TSUnknownKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSVoidKeyword`].
@@ -20694,7 +21588,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_void_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSVoidKeyword(TSVoidKeyword::boxed(span, builder))
+        Self::TSVoidKeyword(TSVoidKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSArrayType`].
@@ -20710,7 +21604,7 @@ impl<'a> TSType<'a> {
         element_type: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSArrayType(TSArrayType::boxed(span, element_type, builder))
+        Self::TSArrayType(TSArrayType::boxed(span, element_type, builder.builder()))
     }
 
     /// Build a [`TSType::TSConditionalType`].
@@ -20738,7 +21632,7 @@ impl<'a> TSType<'a> {
             extends_type,
             true_type,
             false_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20770,7 +21664,7 @@ impl<'a> TSType<'a> {
             true_type,
             false_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20804,7 +21698,7 @@ impl<'a> TSType<'a> {
             type_parameters,
             params,
             return_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20841,7 +21735,7 @@ impl<'a> TSType<'a> {
             params,
             return_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20876,7 +21770,7 @@ impl<'a> TSType<'a> {
             this_param,
             params,
             return_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20914,7 +21808,7 @@ impl<'a> TSType<'a> {
             params,
             return_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20947,7 +21841,7 @@ impl<'a> TSType<'a> {
             options,
             qualifier,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20970,7 +21864,7 @@ impl<'a> TSType<'a> {
             span,
             object_type,
             index_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -20990,7 +21884,7 @@ impl<'a> TSType<'a> {
     where
         T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
     {
-        Self::TSInferType(TSInferType::boxed(span, type_parameter, builder))
+        Self::TSInferType(TSInferType::boxed(span, type_parameter, builder.builder()))
     }
 
     /// Build a [`TSType::TSIntersectionType`].
@@ -21009,7 +21903,7 @@ impl<'a> TSType<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        Self::TSIntersectionType(TSIntersectionType::boxed(span, types, builder))
+        Self::TSIntersectionType(TSIntersectionType::boxed(span, types, builder.builder()))
     }
 
     /// Build a [`TSType::TSLiteralType`].
@@ -21025,7 +21919,7 @@ impl<'a> TSType<'a> {
         literal: TSLiteral<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSLiteralType(TSLiteralType::boxed(span, literal, builder))
+        Self::TSLiteralType(TSLiteralType::boxed(span, literal, builder.builder()))
     }
 
     /// Build a [`TSType::TSMappedType`].
@@ -21059,7 +21953,7 @@ impl<'a> TSType<'a> {
             type_annotation,
             optional,
             readonly,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -21097,7 +21991,7 @@ impl<'a> TSType<'a> {
             optional,
             readonly,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -21123,7 +22017,7 @@ impl<'a> TSType<'a> {
             label,
             element_type,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -21146,7 +22040,12 @@ impl<'a> TSType<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        Self::TSTemplateLiteralType(TSTemplateLiteralType::boxed(span, quasis, types, builder))
+        Self::TSTemplateLiteralType(TSTemplateLiteralType::boxed(
+            span,
+            quasis,
+            types,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSType::TSThisType`].
@@ -21157,7 +22056,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_this_type<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSThisType(TSThisType::boxed(span, builder))
+        Self::TSThisType(TSThisType::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSType::TSTupleType`].
@@ -21176,7 +22075,7 @@ impl<'a> TSType<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
     {
-        Self::TSTupleType(TSTupleType::boxed(span, element_types, builder))
+        Self::TSTupleType(TSTupleType::boxed(span, element_types, builder.builder()))
     }
 
     /// Build a [`TSType::TSTypeLiteral`].
@@ -21195,7 +22094,7 @@ impl<'a> TSType<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
     {
-        Self::TSTypeLiteral(TSTypeLiteral::boxed(span, members, builder))
+        Self::TSTypeLiteral(TSTypeLiteral::boxed(span, members, builder.builder()))
     }
 
     /// Build a [`TSType::TSTypeOperatorType`].
@@ -21213,7 +22112,12 @@ impl<'a> TSType<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeOperatorType(TSTypeOperator::boxed(span, operator, type_annotation, builder))
+        Self::TSTypeOperatorType(TSTypeOperator::boxed(
+            span,
+            operator,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSType::TSTypePredicate`].
@@ -21241,7 +22145,7 @@ impl<'a> TSType<'a> {
             parameter_name,
             asserts,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -21263,7 +22167,7 @@ impl<'a> TSType<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Self::TSTypeQuery(TSTypeQuery::boxed(span, expr_name, type_arguments, builder))
+        Self::TSTypeQuery(TSTypeQuery::boxed(span, expr_name, type_arguments, builder.builder()))
     }
 
     /// Build a [`TSType::TSTypeReference`].
@@ -21284,7 +22188,12 @@ impl<'a> TSType<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Self::TSTypeReference(TSTypeReference::boxed(span, type_name, type_arguments, builder))
+        Self::TSTypeReference(TSTypeReference::boxed(
+            span,
+            type_name,
+            type_arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSType::TSUnionType`].
@@ -21299,7 +22208,7 @@ impl<'a> TSType<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        Self::TSUnionType(TSUnionType::boxed(span, types, builder))
+        Self::TSUnionType(TSUnionType::boxed(span, types, builder.builder()))
     }
 
     /// Build a [`TSType::TSParenthesizedType`].
@@ -21315,7 +22224,11 @@ impl<'a> TSType<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSParenthesizedType(TSParenthesizedType::boxed(span, type_annotation, builder))
+        Self::TSParenthesizedType(TSParenthesizedType::boxed(
+            span,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSType::JSDocNullableType`].
@@ -21333,7 +22246,12 @@ impl<'a> TSType<'a> {
         postfix: bool,
         builder: &B,
     ) -> Self {
-        Self::JSDocNullableType(JSDocNullableType::boxed(span, type_annotation, postfix, builder))
+        Self::JSDocNullableType(JSDocNullableType::boxed(
+            span,
+            type_annotation,
+            postfix,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSType::JSDocNonNullableType`].
@@ -21355,7 +22273,7 @@ impl<'a> TSType<'a> {
             span,
             type_annotation,
             postfix,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -21367,7 +22285,7 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_js_doc_unknown_type<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::JSDocUnknownType(JSDocUnknownType::boxed(span, builder))
+        Self::JSDocUnknownType(JSDocUnknownType::boxed(span, builder.builder()))
     }
 }
 
@@ -21424,9 +22342,10 @@ impl<'a> TSConditionalType<'a> {
         false_type: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, check_type, extends_type, true_type, false_type, builder),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -21486,6 +22405,7 @@ impl<'a> TSConditionalType<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -21496,7 +22416,7 @@ impl<'a> TSConditionalType<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -21536,7 +22456,8 @@ impl<'a> TSUnionType<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, types, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, types, builder), builder)
     }
 }
 
@@ -21575,7 +22496,8 @@ impl<'a> TSIntersectionType<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, types, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, types, builder), builder)
     }
 }
 
@@ -21608,7 +22530,8 @@ impl<'a> TSParenthesizedType<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
     }
 }
 
@@ -21649,7 +22572,8 @@ impl<'a> TSTypeOperator<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, operator, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, operator, type_annotation, builder), builder)
     }
 }
 
@@ -21682,7 +22606,8 @@ impl<'a> TSArrayType<'a> {
         element_type: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, element_type, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, element_type, builder), builder)
     }
 }
 
@@ -21723,7 +22648,8 @@ impl<'a> TSIndexedAccessType<'a> {
         index_type: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, object_type, index_type, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, object_type, index_type, builder), builder)
     }
 }
 
@@ -21766,7 +22692,8 @@ impl<'a> TSTupleType<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, element_types, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, element_types, builder), builder)
     }
 }
 
@@ -21817,7 +22744,8 @@ impl<'a> TSNamedTupleMember<'a> {
         optional: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, label, element_type, optional, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, label, element_type, optional, builder), builder)
     }
 }
 
@@ -21850,7 +22778,8 @@ impl<'a> TSOptionalType<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
     }
 }
 
@@ -21883,7 +22812,8 @@ impl<'a> TSRestType<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_annotation, builder), builder)
     }
 }
 
@@ -21901,7 +22831,7 @@ impl<'a> TSTupleElement<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSOptionalType(TSOptionalType::boxed(span, type_annotation, builder))
+        Self::TSOptionalType(TSOptionalType::boxed(span, type_annotation, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSRestType`].
@@ -21917,7 +22847,7 @@ impl<'a> TSTupleElement<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSRestType(TSRestType::boxed(span, type_annotation, builder))
+        Self::TSRestType(TSRestType::boxed(span, type_annotation, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSAnyKeyword`].
@@ -21928,7 +22858,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_any_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSAnyKeyword(TSAnyKeyword::boxed(span, builder))
+        Self::TSAnyKeyword(TSAnyKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSBigIntKeyword`].
@@ -21939,7 +22869,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_big_int_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSBigIntKeyword(TSBigIntKeyword::boxed(span, builder))
+        Self::TSBigIntKeyword(TSBigIntKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSBooleanKeyword`].
@@ -21950,7 +22880,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_boolean_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSBooleanKeyword(TSBooleanKeyword::boxed(span, builder))
+        Self::TSBooleanKeyword(TSBooleanKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSIntrinsicKeyword`].
@@ -21961,7 +22891,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_intrinsic_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSIntrinsicKeyword(TSIntrinsicKeyword::boxed(span, builder))
+        Self::TSIntrinsicKeyword(TSIntrinsicKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSNeverKeyword`].
@@ -21972,7 +22902,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_never_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSNeverKeyword(TSNeverKeyword::boxed(span, builder))
+        Self::TSNeverKeyword(TSNeverKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSNullKeyword`].
@@ -21983,7 +22913,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_null_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSNullKeyword(TSNullKeyword::boxed(span, builder))
+        Self::TSNullKeyword(TSNullKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSNumberKeyword`].
@@ -21994,7 +22924,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_number_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSNumberKeyword(TSNumberKeyword::boxed(span, builder))
+        Self::TSNumberKeyword(TSNumberKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSObjectKeyword`].
@@ -22005,7 +22935,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_object_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSObjectKeyword(TSObjectKeyword::boxed(span, builder))
+        Self::TSObjectKeyword(TSObjectKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSStringKeyword`].
@@ -22016,7 +22946,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_string_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSStringKeyword(TSStringKeyword::boxed(span, builder))
+        Self::TSStringKeyword(TSStringKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSSymbolKeyword`].
@@ -22027,7 +22957,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_symbol_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSSymbolKeyword(TSSymbolKeyword::boxed(span, builder))
+        Self::TSSymbolKeyword(TSSymbolKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSUndefinedKeyword`].
@@ -22038,7 +22968,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_undefined_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSUndefinedKeyword(TSUndefinedKeyword::boxed(span, builder))
+        Self::TSUndefinedKeyword(TSUndefinedKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSUnknownKeyword`].
@@ -22049,7 +22979,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_unknown_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSUnknownKeyword(TSUnknownKeyword::boxed(span, builder))
+        Self::TSUnknownKeyword(TSUnknownKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSVoidKeyword`].
@@ -22060,7 +22990,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_void_keyword<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSVoidKeyword(TSVoidKeyword::boxed(span, builder))
+        Self::TSVoidKeyword(TSVoidKeyword::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSArrayType`].
@@ -22076,7 +23006,7 @@ impl<'a> TSTupleElement<'a> {
         element_type: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSArrayType(TSArrayType::boxed(span, element_type, builder))
+        Self::TSArrayType(TSArrayType::boxed(span, element_type, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSConditionalType`].
@@ -22104,7 +23034,7 @@ impl<'a> TSTupleElement<'a> {
             extends_type,
             true_type,
             false_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22136,7 +23066,7 @@ impl<'a> TSTupleElement<'a> {
             true_type,
             false_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22170,7 +23100,7 @@ impl<'a> TSTupleElement<'a> {
             type_parameters,
             params,
             return_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22207,7 +23137,7 @@ impl<'a> TSTupleElement<'a> {
             params,
             return_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22242,7 +23172,7 @@ impl<'a> TSTupleElement<'a> {
             this_param,
             params,
             return_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22280,7 +23210,7 @@ impl<'a> TSTupleElement<'a> {
             params,
             return_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22313,7 +23243,7 @@ impl<'a> TSTupleElement<'a> {
             options,
             qualifier,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22336,7 +23266,7 @@ impl<'a> TSTupleElement<'a> {
             span,
             object_type,
             index_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22356,7 +23286,7 @@ impl<'a> TSTupleElement<'a> {
     where
         T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
     {
-        Self::TSInferType(TSInferType::boxed(span, type_parameter, builder))
+        Self::TSInferType(TSInferType::boxed(span, type_parameter, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSIntersectionType`].
@@ -22375,7 +23305,7 @@ impl<'a> TSTupleElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        Self::TSIntersectionType(TSIntersectionType::boxed(span, types, builder))
+        Self::TSIntersectionType(TSIntersectionType::boxed(span, types, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSLiteralType`].
@@ -22391,7 +23321,7 @@ impl<'a> TSTupleElement<'a> {
         literal: TSLiteral<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSLiteralType(TSLiteralType::boxed(span, literal, builder))
+        Self::TSLiteralType(TSLiteralType::boxed(span, literal, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSMappedType`].
@@ -22425,7 +23355,7 @@ impl<'a> TSTupleElement<'a> {
             type_annotation,
             optional,
             readonly,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22463,7 +23393,7 @@ impl<'a> TSTupleElement<'a> {
             optional,
             readonly,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22489,7 +23419,7 @@ impl<'a> TSTupleElement<'a> {
             label,
             element_type,
             optional,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22512,7 +23442,12 @@ impl<'a> TSTupleElement<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        Self::TSTemplateLiteralType(TSTemplateLiteralType::boxed(span, quasis, types, builder))
+        Self::TSTemplateLiteralType(TSTemplateLiteralType::boxed(
+            span,
+            quasis,
+            types,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSTupleElement::TSThisType`].
@@ -22523,7 +23458,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_ts_this_type<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::TSThisType(TSThisType::boxed(span, builder))
+        Self::TSThisType(TSThisType::boxed(span, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSTupleType`].
@@ -22542,7 +23477,7 @@ impl<'a> TSTupleElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSTupleElement<'a>>>,
     {
-        Self::TSTupleType(TSTupleType::boxed(span, element_types, builder))
+        Self::TSTupleType(TSTupleType::boxed(span, element_types, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSTypeLiteral`].
@@ -22561,7 +23496,7 @@ impl<'a> TSTupleElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
     {
-        Self::TSTypeLiteral(TSTypeLiteral::boxed(span, members, builder))
+        Self::TSTypeLiteral(TSTypeLiteral::boxed(span, members, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSTypeOperatorType`].
@@ -22579,7 +23514,12 @@ impl<'a> TSTupleElement<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSTypeOperatorType(TSTypeOperator::boxed(span, operator, type_annotation, builder))
+        Self::TSTypeOperatorType(TSTypeOperator::boxed(
+            span,
+            operator,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSTupleElement::TSTypePredicate`].
@@ -22607,7 +23547,7 @@ impl<'a> TSTupleElement<'a> {
             parameter_name,
             asserts,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22629,7 +23569,7 @@ impl<'a> TSTupleElement<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Self::TSTypeQuery(TSTypeQuery::boxed(span, expr_name, type_arguments, builder))
+        Self::TSTypeQuery(TSTypeQuery::boxed(span, expr_name, type_arguments, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSTypeReference`].
@@ -22650,7 +23590,12 @@ impl<'a> TSTupleElement<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Self::TSTypeReference(TSTypeReference::boxed(span, type_name, type_arguments, builder))
+        Self::TSTypeReference(TSTypeReference::boxed(
+            span,
+            type_name,
+            type_arguments,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSTupleElement::TSUnionType`].
@@ -22665,7 +23610,7 @@ impl<'a> TSTupleElement<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        Self::TSUnionType(TSUnionType::boxed(span, types, builder))
+        Self::TSUnionType(TSUnionType::boxed(span, types, builder.builder()))
     }
 
     /// Build a [`TSTupleElement::TSParenthesizedType`].
@@ -22681,7 +23626,11 @@ impl<'a> TSTupleElement<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> Self {
-        Self::TSParenthesizedType(TSParenthesizedType::boxed(span, type_annotation, builder))
+        Self::TSParenthesizedType(TSParenthesizedType::boxed(
+            span,
+            type_annotation,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSTupleElement::JSDocNullableType`].
@@ -22699,7 +23648,12 @@ impl<'a> TSTupleElement<'a> {
         postfix: bool,
         builder: &B,
     ) -> Self {
-        Self::JSDocNullableType(JSDocNullableType::boxed(span, type_annotation, postfix, builder))
+        Self::JSDocNullableType(JSDocNullableType::boxed(
+            span,
+            type_annotation,
+            postfix,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSTupleElement::JSDocNonNullableType`].
@@ -22721,7 +23675,7 @@ impl<'a> TSTupleElement<'a> {
             span,
             type_annotation,
             postfix,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -22733,7 +23687,7 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_js_doc_unknown_type<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::JSDocUnknownType(JSDocUnknownType::boxed(span, builder))
+        Self::JSDocUnknownType(JSDocUnknownType::boxed(span, builder.builder()))
     }
 }
 
@@ -22760,7 +23714,8 @@ impl TSAnyKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22787,7 +23742,8 @@ impl TSStringKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22814,7 +23770,8 @@ impl TSBooleanKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22841,7 +23798,8 @@ impl TSNumberKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22868,7 +23826,8 @@ impl TSNeverKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22895,7 +23854,8 @@ impl TSIntrinsicKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22922,7 +23882,8 @@ impl TSUnknownKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22949,7 +23910,8 @@ impl TSNullKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -22976,7 +23938,8 @@ impl TSUndefinedKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -23003,7 +23966,8 @@ impl TSVoidKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -23030,7 +23994,8 @@ impl TSSymbolKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -23057,7 +24022,8 @@ impl TSThisType {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -23084,7 +24050,8 @@ impl TSObjectKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -23111,7 +24078,8 @@ impl TSBigIntKeyword {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
 
@@ -23163,7 +24131,8 @@ impl<'a> TSTypeReference<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, type_name, type_arguments, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_name, type_arguments, builder), builder)
     }
 }
 
@@ -23184,7 +24153,7 @@ impl<'a> TSTypeName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder))
+        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`TSTypeName::IdentifierReference`] with `reference_id`.
@@ -23209,7 +24178,7 @@ impl<'a> TSTypeName<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -23228,7 +24197,7 @@ impl<'a> TSTypeName<'a> {
         right: IdentifierName<'a>,
         builder: &B,
     ) -> Self {
-        Self::QualifiedName(TSQualifiedName::boxed(span, left, right, builder))
+        Self::QualifiedName(TSQualifiedName::boxed(span, left, right, builder.builder()))
     }
 
     /// Build a [`TSTypeName::ThisExpression`].
@@ -23239,7 +24208,7 @@ impl<'a> TSTypeName<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 }
 
@@ -23280,7 +24249,8 @@ impl<'a> TSQualifiedName<'a> {
         right: IdentifierName<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
     }
 }
 
@@ -23323,7 +24293,8 @@ impl<'a> TSTypeParameterInstantiation<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, params, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, params, builder), builder)
     }
 }
 
@@ -23389,9 +24360,10 @@ impl<'a> TSTypeParameter<'a> {
         r#const: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, name, constraint, default, r#in, out, r#const, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -23435,7 +24407,8 @@ impl<'a> TSTypeParameterDeclaration<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, params, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, params, builder), builder)
     }
 }
 
@@ -23498,9 +24471,10 @@ impl<'a> TSTypeAliasDeclaration<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, id, type_parameters, type_annotation, declare, builder),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -23566,6 +24540,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -23576,7 +24551,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -23676,9 +24651,10 @@ impl<'a> TSInterfaceDeclaration<'a> {
         T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
         T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, id, type_parameters, extends, body, declare, builder),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -23753,6 +24729,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
         T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
         T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -23764,7 +24741,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -23804,7 +24781,8 @@ impl<'a> TSInterfaceBody<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, body, builder), builder)
     }
 }
 
@@ -23871,9 +24849,10 @@ impl<'a> TSPropertySignature<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, computed, optional, readonly, key, type_annotation, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -23908,7 +24887,7 @@ impl<'a> TSSignature<'a> {
             type_annotation,
             readonly,
             r#static,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -23943,7 +24922,7 @@ impl<'a> TSSignature<'a> {
             readonly,
             key,
             type_annotation,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -23978,7 +24957,7 @@ impl<'a> TSSignature<'a> {
             this_param,
             params,
             return_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -24016,7 +24995,7 @@ impl<'a> TSSignature<'a> {
             params,
             return_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -24047,7 +25026,7 @@ impl<'a> TSSignature<'a> {
             type_parameters,
             params,
             return_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -24081,7 +25060,7 @@ impl<'a> TSSignature<'a> {
             params,
             return_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -24128,7 +25107,7 @@ impl<'a> TSSignature<'a> {
             this_param,
             params,
             return_type,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -24178,7 +25157,7 @@ impl<'a> TSSignature<'a> {
             params,
             return_type,
             scope_id,
-            builder,
+            builder.builder(),
         ))
     }
 }
@@ -24243,9 +25222,10 @@ impl<'a> TSIndexSignature<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
         T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, parameters, type_annotation, readonly, r#static, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -24315,9 +25295,10 @@ impl<'a> TSCallSignatureDeclaration<'a> {
         T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, type_parameters, this_param, params, return_type, builder),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -24389,6 +25370,7 @@ impl<'a> TSCallSignatureDeclaration<'a> {
         T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -24399,7 +25381,7 @@ impl<'a> TSCallSignatureDeclaration<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -24489,6 +25471,7 @@ impl<'a> TSMethodSignature<'a> {
         T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -24502,7 +25485,7 @@ impl<'a> TSMethodSignature<'a> {
                 return_type,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -24594,6 +25577,7 @@ impl<'a> TSMethodSignature<'a> {
         T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -24608,7 +25592,7 @@ impl<'a> TSMethodSignature<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -24671,10 +25655,8 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
-        ArenaBox::new_in(
-            Self::new(span, type_parameters, params, return_type, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_parameters, params, return_type, builder), builder)
     }
 
     /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`.
@@ -24738,9 +25720,10 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, type_parameters, params, return_type, scope_id, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -24853,9 +25836,10 @@ impl<'a> TSTypePredicate<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, parameter_name, asserts, type_annotation, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -24873,7 +25857,7 @@ impl<'a> TSTypePredicateName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierName::boxed(span, name, builder))
+        Self::Identifier(IdentifierName::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`TSTypePredicateName::This`].
@@ -24884,7 +25868,7 @@ impl<'a> TSTypePredicateName<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::This(TSThisType::boxed(span, builder))
+        Self::This(TSThisType::boxed(span, builder.builder()))
     }
 }
 
@@ -24941,7 +25925,8 @@ impl<'a> TSModuleDeclaration<'a> {
         declare: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, id, body, kind, declare, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, id, body, kind, declare, builder), builder)
     }
 
     /// Build a [`TSModuleDeclaration`] with `scope_id`.
@@ -25000,9 +25985,10 @@ impl<'a> TSModuleDeclaration<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, id, body, kind, declare, scope_id, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -25018,7 +26004,7 @@ impl<'a> TSModuleDeclarationName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(BindingIdentifier::new(span, name, builder))
+        Self::Identifier(BindingIdentifier::new(span, name, builder.builder()))
     }
 
     /// Build a [`TSModuleDeclarationName::Identifier`] with `symbol_id`.
@@ -25037,7 +26023,12 @@ impl<'a> TSModuleDeclarationName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(BindingIdentifier::new_with_symbol_id(span, name, symbol_id, builder))
+        Self::Identifier(BindingIdentifier::new_with_symbol_id(
+            span,
+            name,
+            symbol_id,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSModuleDeclarationName::StringLiteral`].
@@ -25056,7 +26047,7 @@ impl<'a> TSModuleDeclarationName<'a> {
     where
         S1: Into<Str<'a>>,
     {
-        Self::StringLiteral(StringLiteral::new(span, value, raw, builder))
+        Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lone_surrogates`.
@@ -25082,7 +26073,7 @@ impl<'a> TSModuleDeclarationName<'a> {
             value,
             raw,
             lone_surrogates,
-            builder,
+            builder.builder(),
         ))
     }
 }
@@ -25108,7 +26099,12 @@ impl<'a> TSModuleDeclarationBody<'a> {
         builder: &B,
     ) -> Self {
         Self::TSModuleDeclaration(TSModuleDeclaration::boxed(
-            span, id, body, kind, declare, builder,
+            span,
+            id,
+            body,
+            kind,
+            declare,
+            builder.builder(),
         ))
     }
 
@@ -25134,7 +26130,13 @@ impl<'a> TSModuleDeclarationBody<'a> {
         builder: &B,
     ) -> Self {
         Self::TSModuleDeclaration(TSModuleDeclaration::boxed_with_scope_id(
-            span, id, body, kind, declare, scope_id, builder,
+            span,
+            id,
+            body,
+            kind,
+            declare,
+            scope_id,
+            builder.builder(),
         ))
     }
 
@@ -25157,7 +26159,7 @@ impl<'a> TSModuleDeclarationBody<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        Self::TSModuleBlock(TSModuleBlock::boxed(span, directives, body, builder))
+        Self::TSModuleBlock(TSModuleBlock::boxed(span, directives, body, builder.builder()))
     }
 }
 
@@ -25209,7 +26211,8 @@ impl<'a> TSGlobalDeclaration<'a> {
         declare: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, global_span, body, declare, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, global_span, body, declare, builder), builder)
     }
 
     /// Build a [`TSGlobalDeclaration`] with `scope_id`.
@@ -25263,9 +26266,10 @@ impl<'a> TSGlobalDeclaration<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, global_span, body, declare, scope_id, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -25320,7 +26324,8 @@ impl<'a> TSModuleBlock<'a> {
         T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, directives, body, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, directives, body, builder), builder)
     }
 }
 
@@ -25363,7 +26368,8 @@ impl<'a> TSTypeLiteral<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, TSSignature<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, members, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, members, builder), builder)
     }
 }
 
@@ -25406,7 +26412,8 @@ impl<'a> TSInferType<'a> {
     where
         T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, type_parameter, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_parameter, builder), builder)
     }
 }
 
@@ -25458,7 +26465,8 @@ impl<'a> TSTypeQuery<'a> {
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        ArenaBox::new_in(Self::new(span, expr_name, type_arguments, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expr_name, type_arguments, builder), builder)
     }
 }
 
@@ -25492,7 +26500,7 @@ impl<'a> TSTypeQueryExprName<'a> {
             options,
             qualifier,
             type_arguments,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -25512,7 +26520,7 @@ impl<'a> TSTypeQueryExprName<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder))
+        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`TSTypeQueryExprName::IdentifierReference`] with `reference_id`.
@@ -25537,7 +26545,7 @@ impl<'a> TSTypeQueryExprName<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -25556,7 +26564,7 @@ impl<'a> TSTypeQueryExprName<'a> {
         right: IdentifierName<'a>,
         builder: &B,
     ) -> Self {
-        Self::QualifiedName(TSQualifiedName::boxed(span, left, right, builder))
+        Self::QualifiedName(TSQualifiedName::boxed(span, left, right, builder.builder()))
     }
 
     /// Build a [`TSTypeQueryExprName::ThisExpression`].
@@ -25567,7 +26575,7 @@ impl<'a> TSTypeQueryExprName<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
-        Self::ThisExpression(ThisExpression::boxed(span, builder))
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
     }
 }
 
@@ -25631,9 +26639,10 @@ impl<'a> TSImportType<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, source, options, qualifier, type_arguments, builder),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -25651,7 +26660,7 @@ impl<'a> TSImportTypeQualifier<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::Identifier(IdentifierName::boxed(span, name, builder))
+        Self::Identifier(IdentifierName::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`TSImportTypeQualifier::QualifiedName`].
@@ -25669,7 +26678,7 @@ impl<'a> TSImportTypeQualifier<'a> {
         right: IdentifierName<'a>,
         builder: &B,
     ) -> Self {
-        Self::QualifiedName(TSImportTypeQualifiedName::boxed(span, left, right, builder))
+        Self::QualifiedName(TSImportTypeQualifiedName::boxed(span, left, right, builder.builder()))
     }
 }
 
@@ -25710,7 +26719,8 @@ impl<'a> TSImportTypeQualifiedName<'a> {
         right: IdentifierName<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, left, right, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, left, right, builder), builder)
     }
 }
 
@@ -25779,9 +26789,10 @@ impl<'a> TSFunctionType<'a> {
         T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, type_parameters, this_param, params, return_type, builder),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -25853,6 +26864,7 @@ impl<'a> TSFunctionType<'a> {
         T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -25863,7 +26875,7 @@ impl<'a> TSFunctionType<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -25931,9 +26943,10 @@ impl<'a> TSConstructorType<'a> {
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, r#abstract, type_parameters, params, return_type, builder),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -26003,6 +27016,7 @@ impl<'a> TSConstructorType<'a> {
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -26013,7 +27027,7 @@ impl<'a> TSConstructorType<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -26081,6 +27095,7 @@ impl<'a> TSMappedType<'a> {
         readonly: Option<TSMappedTypeModifierOperator>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
                 span,
@@ -26092,7 +27107,7 @@ impl<'a> TSMappedType<'a> {
                 readonly,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 
@@ -26162,6 +27177,7 @@ impl<'a> TSMappedType<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
                 span,
@@ -26174,7 +27190,7 @@ impl<'a> TSMappedType<'a> {
                 scope_id,
                 builder,
             ),
-            builder.builder(),
+            builder,
         )
     }
 }
@@ -26224,7 +27240,8 @@ impl<'a> TSTemplateLiteralType<'a> {
         T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
         T2: IntoIn<'a, ArenaVec<'a, TSType<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, quasis, types, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, quasis, types, builder), builder)
     }
 }
 
@@ -26265,7 +27282,8 @@ impl<'a> TSAsExpression<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, type_annotation, builder), builder)
     }
 }
 
@@ -26311,7 +27329,8 @@ impl<'a> TSSatisfiesExpression<'a> {
         type_annotation: TSType<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, type_annotation, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, type_annotation, builder), builder)
     }
 }
 
@@ -26352,7 +27371,8 @@ impl<'a> TSTypeAssertion<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, type_annotation, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_annotation, expression, builder), builder)
     }
 }
 
@@ -26403,10 +27423,8 @@ impl<'a> TSImportEqualsDeclaration<'a> {
         import_kind: ImportOrExportKind,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(
-            Self::new(span, id, module_reference, import_kind, builder),
-            builder.builder(),
-        )
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, id, module_reference, import_kind, builder), builder)
     }
 }
 
@@ -26424,7 +27442,11 @@ impl<'a> TSModuleReference<'a> {
         expression: StringLiteral<'a>,
         builder: &B,
     ) -> Self {
-        Self::ExternalModuleReference(TSExternalModuleReference::boxed(span, expression, builder))
+        Self::ExternalModuleReference(TSExternalModuleReference::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSModuleReference::IdentifierReference`].
@@ -26443,7 +27465,7 @@ impl<'a> TSModuleReference<'a> {
     where
         S1: Into<Ident<'a>>,
     {
-        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder))
+        Self::IdentifierReference(IdentifierReference::boxed(span, name, builder.builder()))
     }
 
     /// Build a [`TSModuleReference::IdentifierReference`] with `reference_id`.
@@ -26468,7 +27490,7 @@ impl<'a> TSModuleReference<'a> {
             span,
             name,
             reference_id,
-            builder,
+            builder.builder(),
         ))
     }
 
@@ -26487,7 +27509,7 @@ impl<'a> TSModuleReference<'a> {
         right: IdentifierName<'a>,
         builder: &B,
     ) -> Self {
-        Self::QualifiedName(TSQualifiedName::boxed(span, left, right, builder))
+        Self::QualifiedName(TSQualifiedName::boxed(span, left, right, builder.builder()))
     }
 }
 
@@ -26524,7 +27546,8 @@ impl<'a> TSExternalModuleReference<'a> {
         expression: StringLiteral<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -26557,7 +27580,8 @@ impl<'a> TSNonNullExpression<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -26603,7 +27627,8 @@ impl<'a> TSExportAssignment<'a> {
         expression: Expression<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, expression, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, builder), builder)
     }
 }
 
@@ -26636,7 +27661,8 @@ impl<'a> TSNamespaceExportDeclaration<'a> {
         id: IdentifierName<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, id, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, id, builder), builder)
     }
 }
 
@@ -26688,7 +27714,8 @@ impl<'a> TSInstantiationExpression<'a> {
     where
         T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
     {
-        ArenaBox::new_in(Self::new(span, expression, type_arguments, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, expression, type_arguments, builder), builder)
     }
 }
 
@@ -26729,7 +27756,8 @@ impl<'a> JSDocNullableType<'a> {
         postfix: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), builder)
     }
 }
 
@@ -26775,7 +27803,8 @@ impl<'a> JSDocNonNullableType<'a> {
         postfix: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, type_annotation, postfix, builder), builder)
     }
 }
 
@@ -26802,6 +27831,7 @@ impl JSDocUnknownType {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn boxed<'a, B: GetAstBuilder<'a>>(span: Span, builder: &B) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(Self::new(span, builder), builder.builder())
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, builder), builder)
     }
 }
