@@ -65,7 +65,13 @@ fn test_function_return_optimization() {
     ); // function f(){try{a()}catch{}}
 
     test("function f(){g:return}", "function f(){}");
+    test("function f(){g:{return}}", "function f(){}");
     test("function f(){g:if(a()){return;}else{return;} return;}", "function f(){g:a()}");
+    test("function f(){g:{if(a()){return;}else{return;} return;}}", "function f(){g:a()}");
+    test(
+        "function f(){g:{a();if(b()){return;}else{return;} return;}}",
+        "function f(){g:a(),b()}",
+    );
     test(
         "function f(){try{g:if(a()){throw 9;} return;}finally{return}}",
         "function f(){try{g:if(a())throw 9; return}finally{return}}",
@@ -119,8 +125,14 @@ fn test_while_continue_optimization() {
     ); // for(;;)try{a()}catch{}
 
     test("while(true){g:continue}", "for(;;);");
+    test("while(true){g:{continue}}", "for(;;);");
     // This case could be improved.
     test("while(true){g:if(a()){continue;}else{continue;} continue;}", "for (;;)g:a();");
+    test("while(true){g:{if(a()){continue;}else{continue;} continue;}}", "for(;;)g:a();");
+    test(
+        "while(true){g:{a();if(b()){continue;}else{continue;} continue;}}",
+        "for(;;)g:a(),b();",
+    );
 }
 
 #[test]
@@ -227,9 +239,18 @@ fn test_for_continue_optimization() {
     ); // for(x=0;x<y;x++)try{a()}catch{}
 
     test("for(x=0;x<y;x++){g:continue}", "for(x=0;x<y;x++);");
+    test("for(x=0;x<y;x++){g:{continue}}", "for(x=0;x<y;x++);");
     test(
         "for(x=0;x<y;x++){g:if(a()){continue;}else{continue;} continue;}",
         "for(x=0;x<y;x++)g:a();",
+    );
+    test(
+        "for(x=0;x<y;x++){g:{if(a()){continue;}else{continue;} continue;}}",
+        "for(x=0;x<y;x++)g:a();",
+    );
+    test(
+        "for(x=0;x<y;x++){g:{a();if(b()){continue;}else{continue;} continue;}}",
+        "for(x=0;x<y;x++)g:a(),b();",
     );
 }
 
