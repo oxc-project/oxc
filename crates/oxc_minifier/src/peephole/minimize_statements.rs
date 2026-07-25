@@ -2041,7 +2041,7 @@ impl<'a> PeepholeOptimizations {
     /// without changing control flow.
     fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match stmt {
-            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do while` body.
+            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
                 matches!(
                     ctx.ancestors().nth(1),
@@ -2054,7 +2054,7 @@ impl<'a> PeepholeOptimizations {
                     )
                 )
             }
-            // unlabeled `break;` that terminates a `do while` body if test is false.
+            // unlabeled `break;` that terminates a `do...while` body if test is false.
             Statement::BreakStatement(stmt) if stmt.label.is_none() => {
                 match ctx.ancestors().nth(1) {
                     Some(Ancestor::DoWhileStatementBody(do_while)) => {
