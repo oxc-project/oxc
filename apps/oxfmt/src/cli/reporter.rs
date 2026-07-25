@@ -1,6 +1,9 @@
+use std::path::PathBuf;
+
 use oxc_diagnostics::{
     Error, GraphicalReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
+    with_file_url,
 };
 
 // This reporter is used with stderr and displays diagnostics only in a graphical way.
@@ -10,17 +13,26 @@ use oxc_diagnostics::{
 pub struct DefaultReporter {
     handler: GraphicalReportHandler,
     diagnostics: Vec<Error>,
+    jetbrains_cwd: Option<PathBuf>,
 }
 
-impl Default for DefaultReporter {
-    fn default() -> Self {
-        Self { handler: GraphicalReportHandler::new(), diagnostics: Vec::new() }
+impl DefaultReporter {
+    pub fn new(cwd: PathBuf) -> Self {
+        let is_jetbrains =
+            std::env::var("TERMINAL_EMULATOR").is_ok_and(|value| value == "JetBrains-JediTerm");
+        Self {
+            handler: GraphicalReportHandler::new(),
+            diagnostics: Vec::new(),
+            jetbrains_cwd: is_jetbrains.then_some(cwd),
+        }
     }
 }
 
 impl DiagnosticReporter for DefaultReporter {
     fn render_error(&mut self, error: Error) -> Option<String> {
         // Collect diagnostics for rendering in finish() at once
+        let error =
+            if let Some(cwd) = &self.jetbrains_cwd { with_file_url(error, cwd) } else { error };
         self.diagnostics.push(error);
         None
     }

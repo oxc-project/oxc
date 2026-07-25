@@ -10,25 +10,14 @@ mod stylish;
 mod unix;
 mod xml_utils;
 
-use std::{
-    borrow::Cow,
-    error::Error as StdError,
-    fmt,
-    path::{Path, PathBuf},
-    str::FromStr,
-    time::Duration,
-};
+use std::{path::PathBuf, str::FromStr, time::Duration};
 
 use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
-use miette::{
-    Diagnostic, Labels, MietteError, MietteSpanContents, Related, SourceCode, SourceSpan,
-    SpanContents,
-};
-use oxc_diagnostics::{Error, to_file_url};
+use oxc_diagnostics::{Error, with_file_url};
 use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
 use rustc_hash::FxHashSet;
 use sarif::SarifOutputFormatter;
@@ -232,107 +221,7 @@ impl DiagnosticReporter for JetBrainsReporter {
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        let Some(filename) = error.source_code().and_then(SourceCode::name) else {
-            return self.reporter.render_error(error);
-        };
-        let Some(filename) = jetbrains_file_url(filename, &self.cwd) else {
-            return self.reporter.render_error(error);
-        };
-        self.reporter.render_error(Error::new(FileUrlDiagnostic { diagnostic: error, filename }))
-    }
-}
-
-fn jetbrains_file_url(filename: &str, cwd: &Path) -> Option<String> {
-    if filename.starts_with("file:") {
-        return None;
-    }
-    let path = Path::new(filename);
-    let path = if path.is_absolute() { Cow::Borrowed(path) } else { Cow::Owned(cwd.join(path)) };
-    to_file_url(path)
-}
-
-#[derive(Debug)]
-struct FileUrlDiagnostic {
-    diagnostic: Error,
-    filename: String,
-}
-
-impl fmt::Display for FileUrlDiagnostic {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.diagnostic, f)
-    }
-}
-
-impl StdError for FileUrlDiagnostic {
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        self.diagnostic.source()
-    }
-}
-
-impl Diagnostic for FileUrlDiagnostic {
-    fn code(&self) -> Option<Cow<'_, str>> {
-        self.diagnostic.code()
-    }
-
-    fn severity(&self) -> Option<miette::Severity> {
-        self.diagnostic.severity()
-    }
-
-    fn help(&self) -> Option<Cow<'_, str>> {
-        self.diagnostic.help()
-    }
-
-    fn note(&self) -> Option<Cow<'_, str>> {
-        self.diagnostic.note()
-    }
-
-    fn url(&self) -> Option<Cow<'_, str>> {
-        self.diagnostic.url()
-    }
-
-    fn source_code(&self) -> Option<&dyn SourceCode> {
-        Some(self)
-    }
-
-    fn labels(&self) -> Labels {
-        self.diagnostic.labels()
-    }
-
-    fn related(&self) -> Related<'_> {
-        self.diagnostic.related()
-    }
-
-    fn diagnostic_source(&self) -> Option<&dyn Diagnostic> {
-        self.diagnostic.diagnostic_source()
-    }
-}
-
-impl SourceCode for FileUrlDiagnostic {
-    fn read_span<'a>(
-        &'a self,
-        span: &SourceSpan,
-        context_lines_before: usize,
-        context_lines_after: usize,
-    ) -> Result<MietteSpanContents<'a>, MietteError> {
-        let source = self.diagnostic.source_code().expect("diagnostic source should exist");
-        let contents = source.read_span(span, context_lines_before, context_lines_after)?;
-        let language = contents.language().map(ToOwned::to_owned);
-        let mut contents = MietteSpanContents::new_named(
-            Cow::Borrowed(&self.filename),
-            contents.data(),
-            *contents.span(),
-            contents.line(),
-            contents.column(),
-            contents.line_count(),
-        );
-        if let Some(language) = language {
-            contents = contents.with_language(language);
-        }
-        Ok(contents)
-    }
-
-    fn name(&self) -> Option<&str> {
-        Some(&self.filename)
+        self.reporter.render_error(with_file_url(error, &self.cwd))
     }
 }
 
