@@ -56,6 +56,12 @@ pub trait DiagnosticReporter {
         true
     }
 
+    /// Format a source name when [`DiagnosticService`](crate::service::DiagnosticService) needs
+    /// to include it in a synthetic diagnostic.
+    fn format_source_name(&self, name: &str) -> String {
+        name.to_string()
+    }
+
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting
     /// of this diagnostic.

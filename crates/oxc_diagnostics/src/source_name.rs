@@ -7,6 +7,19 @@ use miette::{
 
 use crate::{Error, service::to_file_url};
 
+/// Convert a diagnostic source name into an absolute file URL.
+///
+/// Returns [`None`] if the name is already a file URL or cannot be converted.
+pub fn file_url(filename: &str, cwd: &Path) -> Option<String> {
+    if filename.starts_with("file:") {
+        return None;
+    }
+
+    let path = Path::new(filename);
+    let path = if path.is_absolute() { Cow::Borrowed(path) } else { Cow::Owned(cwd.join(path)) };
+    to_file_url(path)
+}
+
 /// Replace a diagnostic's source name with an absolute file URL.
 ///
 /// Returns the diagnostic unchanged if it has no source name or the source name is already a URL.
@@ -14,13 +27,7 @@ pub fn with_file_url(error: Error, cwd: &Path) -> Error {
     let Some(filename) = error.source_code().and_then(SourceCode::name) else {
         return error;
     };
-    if filename.starts_with("file:") {
-        return error;
-    }
-
-    let path = Path::new(filename);
-    let path = if path.is_absolute() { Cow::Borrowed(path) } else { Cow::Owned(cwd.join(path)) };
-    let Some(filename) = to_file_url(path) else {
+    let Some(filename) = file_url(filename, cwd) else {
         return error;
     };
 

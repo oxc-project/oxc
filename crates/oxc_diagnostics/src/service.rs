@@ -185,6 +185,7 @@ impl DiagnosticService {
                         let mut diagnostic =
                             OxcDiagnostic::warn("File is too long to fit on the screen");
                         if let Some(path) = path {
+                            let path = self.reporter.format_source_name(&path);
                             diagnostic =
                                 diagnostic.with_help(format!("{path} seems like a minified file"));
                         }
@@ -334,15 +335,14 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{borrow::Cow, path::PathBuf, sync::Arc};
 
+    use super::DiagnosticService;
     use crate::{
-        Error, OxcDiagnostic,
+        Error, NamedSource, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
         service::to_file_url,
     };
-
-    use super::DiagnosticService;
 
     fn with_schema(path: &str) -> String {
         const EXPECTED_SCHEMA: &str = if cfg!(windows) { "file:///" } else { "file://" };
@@ -426,12 +426,16 @@ mod tests {
                 self.fallback_enabled
             }
 
+            fn format_source_name(&self, name: &str) -> String {
+                format!("formatted:{name}")
+            }
+
             fn render_error(&mut self, error: Error) -> Option<String> {
                 let message = error.to_string();
                 if message == "original diagnostic" {
                     Some(format!("{}\n", "x".repeat(1200)))
                 } else {
-                    Some(format!("{message}\n"))
+                    Some(format!("{}\n", error.help().unwrap_or(Cow::Owned(message))))
                 }
             }
         }
@@ -445,5 +449,18 @@ mod tests {
         let output = String::from_utf8(output).unwrap();
 
         assert_eq!(output, format!("{}\n", "x".repeat(1200)));
+
+        let (mut service, sender) =
+            DiagnosticService::new(Box::new(LongLineReporter { fallback_enabled: true }));
+        let diagnostic = OxcDiagnostic::warn("original diagnostic")
+            .with_source_code(Arc::new(NamedSource::new("src/file.js", "source")));
+        sender.send(vec![diagnostic]).unwrap();
+        drop(sender);
+
+        let mut output = Vec::new();
+        service.run(&mut output);
+        let output = String::from_utf8(output).unwrap();
+
+        assert_eq!(output, "formatted:src/file.js seems like a minified file\n");
     }
 }

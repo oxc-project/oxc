@@ -58,7 +58,7 @@ use std::{
 pub mod reporter;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService};
-pub use crate::source_name::with_file_url;
+pub use crate::source_name::{file_url, with_file_url};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;

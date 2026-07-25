@@ -17,7 +17,7 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
-use oxc_diagnostics::{Error, with_file_url};
+use oxc_diagnostics::{Error, file_url, with_file_url};
 use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
 use rustc_hash::FxHashSet;
 use sarif::SarifOutputFormatter;
@@ -218,6 +218,10 @@ impl DiagnosticReporter for JetBrainsReporter {
 
     fn supports_minified_file_fallback(&self) -> bool {
         self.reporter.supports_minified_file_fallback()
+    }
+
+    fn format_source_name(&self, name: &str) -> String {
+        file_url(name, &self.cwd).unwrap_or_else(|| name.to_string())
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
