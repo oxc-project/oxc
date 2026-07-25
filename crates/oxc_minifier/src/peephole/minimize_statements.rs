@@ -106,28 +106,13 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Drop a trailing unconditional jump statement if applicable
-        if let Some(last_stmt) = stmts.last() {
-            match last_stmt {
-                // "while (x) { y(); continue; }" => "while (x) { y(); }"
-                // "for(;;) { y(); continue; }" => "for(;;) { y(); }"
-                // "for(a in x) { y(); continue; }" => "for(a in x) { y(); }"
-                // "for(a of x) { y(); continue; }" => "for(a of x) { y(); }"
-                Statement::ContinueStatement(s) if s.label.is_none() => {
-                    if ctx.ancestors().nth(1).is_some_and(Self::is_ancestor_loop_statement_body) {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
-                }
-                // "function f() { x(); return; }" => "function f() { x(); }"
-                // "f = () => { x(); return; }" => "f = () => { x(); }"
-                Statement::ReturnStatement(s)
-                    if s.argument.is_none() && ctx.parent().is_function_body() =>
-                {
-                    let dropped = stmts.pop().unwrap();
-                    ctx.drop_statement(&dropped);
-                }
-                _ => {}
-            }
+        // "while (x) { y(); continue; }" => "while (x) { y(); }"
+        // "function f() { x(); return; }" => "function f() { x(); }"
+        if let Some(last_stmt) = stmts.last()
+            && Self::can_remove_termination_statement(last_stmt, ctx)
+        {
+            let dropped = stmts.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
 
         // Merge certain statements in reverse order
@@ -856,21 +841,11 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                let optimize_implicit_jump = match &if_stmt.consequent {
-                    // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
-                    // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                    Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                        ctx.ancestors().nth(1).is_some_and(Self::is_ancestor_loop_statement_body)
-                    }
-                    // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
-                    // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
-                    Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
-                        ctx.parent().is_function_body()
-                    }
-                    _ => false,
-                };
-
-                if optimize_implicit_jump {
+                // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
+                // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
+                // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
+                // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
+                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
                     // If so, inverting the branch condition and nesting statements after
@@ -2062,14 +2037,27 @@ impl<'a> PeepholeOptimizations {
         Some(false)
     }
 
-    #[inline]
-    fn is_ancestor_loop_statement_body(ancestor: Ancestor) -> bool {
-        matches!(
-            ancestor,
-            Ancestor::ForStatementBody(_)
-                | Ancestor::ForInStatementBody(_)
-                | Ancestor::ForOfStatementBody(_)
-                | Ancestor::WhileStatementBody(_)
-        )
+    /// Returns `true` when a trailing termination statement can be removed
+    /// without changing control flow.
+    fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match stmt {
+            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
+            Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
+                matches!(
+                    ctx.ancestors().nth(1),
+                    Some(
+                        Ancestor::ForStatementBody(_)
+                            | Ancestor::ForInStatementBody(_)
+                            | Ancestor::ForOfStatementBody(_)
+                            | Ancestor::WhileStatementBody(_)
+                    )
+                )
+            }
+            // bare `return;` in function-body scope.
+            Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
+                ctx.parent().is_function_body()
+            }
+            _ => false,
+        }
     }
 }
