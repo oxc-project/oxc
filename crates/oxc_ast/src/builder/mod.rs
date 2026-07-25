@@ -93,7 +93,16 @@ mod custom;
 ///
 /// * Version for parser which counts AST nodes (to accurately pre-allocate `Vec`s in `SemanticBuilder`).
 /// * Version for transformer/minifier which assigns unique [`NodeId`]s to all AST nodes.
-pub trait AstBuild<'a>: GetAllocator<'a> {
+///
+/// [`AstBuild`] types must also implement:
+///
+/// * [`GetAstBuilder`] - referring to itself
+/// * [`GetAllocator`]
+///
+/// These bounds mean that any type returned by [`GetAstBuilder::builder`] can be passed to
+/// any other method which accepts any `&B where B: GetAstBuilder<'a>` or `&A where A: GetAllocator<'a>`
+/// (i.e. other AST builder methods).
+pub trait AstBuild<'a>: GetAstBuilder<'a, Builder = Self> + GetAllocator<'a> {
     /// Get [`NodeId`] to assign to an AST node.
     fn node_id(&self) -> NodeId;
 }
@@ -101,7 +110,7 @@ pub trait AstBuild<'a>: GetAllocator<'a> {
 /// Trait for types which provide access to an [`AstBuild`]er.
 ///
 /// Implemented by the [`AstBuild`]ers themselves (returning `self`), and by types which hold one
-/// (e.g. parser or traverse context). AST node builder methods are generic over `A: GetAstBuilder<'a>`,
+/// (e.g. parser or traverse context). AST node builder methods are generic over `B: GetAstBuilder<'a>`,
 /// so they can be called with a builder directly, or with a type which holds one.
 pub trait GetAstBuilder<'a> {
     /// The [`AstBuild`]er type that this provides access to.
@@ -128,14 +137,6 @@ impl<'a> AstBuilder<'a> {
     }
 }
 
-impl<'a> GetAllocator<'a> for AstBuilder<'a> {
-    /// Get the memory [`Allocator`] to allocate AST types in.
-    #[inline]
-    fn allocator(&self) -> &'a Allocator {
-        self.allocator
-    }
-}
-
 impl<'a> AstBuild<'a> for AstBuilder<'a> {
     /// Get [`NodeId`] to assign to an AST node.
     ///
@@ -146,13 +147,20 @@ impl<'a> AstBuild<'a> for AstBuilder<'a> {
     }
 }
 
-/// [`AstBuilder`] implements [`GetAstBuilder`] so it can be passed directly to AST build methods.
 impl<'a> GetAstBuilder<'a> for AstBuilder<'a> {
     type Builder = Self;
 
     #[inline]
     fn builder(&self) -> &Self {
         self
+    }
+}
+
+impl<'a> GetAllocator<'a> for AstBuilder<'a> {
+    /// Get the memory [`Allocator`] to allocate AST types in.
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
     }
 }
 
