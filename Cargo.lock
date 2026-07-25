@@ -2890,7 +2890,6 @@ dependencies = [
  "tower-lsp-server",
  "tracing",
  "tracing-subscriber",
- "url",
 ]
 
 [[package]]

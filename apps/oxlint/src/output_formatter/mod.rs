@@ -10,20 +10,32 @@ mod stylish;
 mod unix;
 mod xml_utils;
 
-use std::{path::PathBuf, str::FromStr, time::Duration};
+use std::{
+    borrow::Cow,
+    error::Error as StdError,
+    fmt,
+    path::{Path, PathBuf},
+    str::FromStr,
+    time::Duration,
+};
 
 use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use miette::{
+    Diagnostic, Labels, MietteError, MietteSpanContents, Related, SourceCode, SourceSpan,
+    SpanContents,
+};
+use oxc_diagnostics::{Error, to_file_url};
 use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
 use rustc_hash::FxHashSet;
 use sarif::SarifOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
 
-use oxc_diagnostics::reporter::DiagnosticReporter;
+use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
 
 use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
@@ -128,6 +140,11 @@ impl LintCommandInfo {
 /// An Interface for the different output formats.
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
+    /// Whether diagnostics should use file URLs when running in a JetBrains terminal.
+    fn supports_jetbrains_file_urls(&self) -> bool {
+        true
+    }
+
     /// Print all available rules by oxlint
     fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
         None
@@ -145,6 +162,7 @@ trait InternalFormatter {
 
 pub struct OutputFormatter {
     internal: Box<dyn InternalFormatter>,
+    jetbrains_cwd: Option<PathBuf>,
 }
 
 impl OutputFormatter {
@@ -153,12 +171,17 @@ impl OutputFormatter {
     }
 
     pub fn new_with_cwd(format: OutputFormat, cwd: PathBuf) -> Self {
-        Self { internal: Self::get_internal_formatter(format, cwd) }
+        let internal = Self::get_internal_formatter(format);
+        let is_jetbrains =
+            std::env::var("TERMINAL_EMULATOR").is_ok_and(|value| value == "JetBrains-JediTerm");
+        let jetbrains_cwd =
+            (is_jetbrains && internal.supports_jetbrains_file_urls()).then_some(cwd);
+        Self { internal, jetbrains_cwd }
     }
 
-    fn get_internal_formatter(format: OutputFormat, cwd: PathBuf) -> Box<dyn InternalFormatter> {
+    fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
         match format {
-            OutputFormat::Json => Box::new(JsonOutputFormatter::new(cwd)),
+            OutputFormat::Json => Box::<JsonOutputFormatter>::default(),
             OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
             OutputFormat::Github => Box::new(GithubOutputFormatter),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
@@ -185,7 +208,131 @@ impl OutputFormatter {
     /// Returns the [`DiagnosticReporter`] which then will be used by [`DiagnosticService`](oxc_diagnostics::DiagnosticService)
     /// See [`InternalFormatter::get_diagnostic_reporter`] for more details.
     pub fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        self.internal.get_diagnostic_reporter()
+        let reporter = self.internal.get_diagnostic_reporter();
+        if let Some(cwd) = &self.jetbrains_cwd {
+            Box::new(JetBrainsReporter { reporter, cwd: cwd.clone() })
+        } else {
+            reporter
+        }
+    }
+}
+
+struct JetBrainsReporter {
+    reporter: Box<dyn DiagnosticReporter>,
+    cwd: PathBuf,
+}
+
+impl DiagnosticReporter for JetBrainsReporter {
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+        self.reporter.finish(result)
+    }
+
+    fn supports_minified_file_fallback(&self) -> bool {
+        self.reporter.supports_minified_file_fallback()
+    }
+
+    fn render_error(&mut self, error: Error) -> Option<String> {
+        let Some(filename) = error.source_code().and_then(SourceCode::name) else {
+            return self.reporter.render_error(error);
+        };
+        let Some(filename) = jetbrains_file_url(filename, &self.cwd) else {
+            return self.reporter.render_error(error);
+        };
+        self.reporter.render_error(Error::new(FileUrlDiagnostic { diagnostic: error, filename }))
+    }
+}
+
+fn jetbrains_file_url(filename: &str, cwd: &Path) -> Option<String> {
+    if filename.starts_with("file:") {
+        return None;
+    }
+    let path = Path::new(filename);
+    let path = if path.is_absolute() { Cow::Borrowed(path) } else { Cow::Owned(cwd.join(path)) };
+    to_file_url(path)
+}
+
+#[derive(Debug)]
+struct FileUrlDiagnostic {
+    diagnostic: Error,
+    filename: String,
+}
+
+impl fmt::Display for FileUrlDiagnostic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.diagnostic, f)
+    }
+}
+
+impl StdError for FileUrlDiagnostic {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        self.diagnostic.source()
+    }
+}
+
+impl Diagnostic for FileUrlDiagnostic {
+    fn code(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.code()
+    }
+
+    fn severity(&self) -> Option<miette::Severity> {
+        self.diagnostic.severity()
+    }
+
+    fn help(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.help()
+    }
+
+    fn note(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.note()
+    }
+
+    fn url(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.url()
+    }
+
+    fn source_code(&self) -> Option<&dyn SourceCode> {
+        Some(self)
+    }
+
+    fn labels(&self) -> Labels {
+        self.diagnostic.labels()
+    }
+
+    fn related(&self) -> Related<'_> {
+        self.diagnostic.related()
+    }
+
+    fn diagnostic_source(&self) -> Option<&dyn Diagnostic> {
+        self.diagnostic.diagnostic_source()
+    }
+}
+
+impl SourceCode for FileUrlDiagnostic {
+    fn read_span<'a>(
+        &'a self,
+        span: &SourceSpan,
+        context_lines_before: usize,
+        context_lines_after: usize,
+    ) -> Result<MietteSpanContents<'a>, MietteError> {
+        let source = self.diagnostic.source_code().expect("diagnostic source should exist");
+        let contents = source.read_span(span, context_lines_before, context_lines_after)?;
+        let language = contents.language().map(ToOwned::to_owned);
+        let mut contents = MietteSpanContents::new_named(
+            Cow::Borrowed(&self.filename),
+            contents.data(),
+            *contents.span(),
+            contents.line(),
+            contents.column(),
+            contents.line_count(),
+        );
+        if let Some(language) = language {
+            contents = contents.with_language(language);
+        }
+        Ok(contents)
+    }
+
+    fn name(&self) -> Option<&str> {
+        Some(&self.filename)
     }
 }
 

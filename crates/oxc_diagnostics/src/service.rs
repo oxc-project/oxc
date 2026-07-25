@@ -122,18 +122,9 @@ impl DiagnosticService {
         source_text: &str,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Error> {
-        // TODO: This causes snapshots to fail when running tests through a JetBrains terminal.
-        let is_jetbrains =
-            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
-
         let path_ref = path.as_ref();
-        let path_display = if is_jetbrains { from_file_path(path_ref) } else { None }
-            .unwrap_or_else(|| {
-                let relative_path =
-                    path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
-                let normalized_path = relative_path.cow_replace('\\', "/");
-                normalized_path.to_string()
-            });
+        let relative_path = path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
+        let path_display = relative_path.cow_replace('\\', "/").into_owned();
 
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         diagnostics
@@ -249,7 +240,8 @@ impl DiagnosticService {
     }
 }
 
-// The following from_file_path and strict_canonicalize implementations are from tower-lsp-community/tower-lsp-server
+// The following file URL conversion and strict_canonicalize implementations are from
+// tower-lsp-community/tower-lsp-server
 // available under the MIT License or Apache 2.0 License.
 //
 // Copyright (c) 2023 Eyal Kalderon
@@ -265,7 +257,7 @@ const ASCII_SET: AsciiSet =
         // we do not want path separators to be percent-encoded
         .remove(b'/');
 
-fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
+pub fn to_file_url<A: AsRef<Path>>(path: A) -> Option<String> {
     let path = path.as_ref();
 
     let fragment = if path.is_absolute() {
@@ -347,7 +339,7 @@ mod tests {
     use crate::{
         Error, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
-        service::from_file_path,
+        service::to_file_url,
     };
 
     use super::DiagnosticService;
@@ -388,7 +380,7 @@ mod tests {
         ];
 
         for (path, expected) in paths.iter().zip(expected) {
-            let uri = from_file_path(path).unwrap();
+            let uri = to_file_url(path).unwrap();
             assert_eq!(uri.clone(), expected);
         }
     }
@@ -413,7 +405,7 @@ mod tests {
         ];
 
         for (path, expected) in paths.iter().zip(expected) {
-            let uri = from_file_path(path).unwrap();
+            let uri = to_file_url(path).unwrap();
             assert_eq!(uri, expected);
         }
     }
