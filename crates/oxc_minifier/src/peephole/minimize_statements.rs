@@ -5,7 +5,7 @@ use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
+    constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
@@ -2041,7 +2041,7 @@ impl<'a> PeepholeOptimizations {
     /// without changing control flow.
     fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match stmt {
-            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
+            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
                 matches!(
                     ctx.ancestors().nth(1),
@@ -2050,8 +2050,18 @@ impl<'a> PeepholeOptimizations {
                             | Ancestor::ForInStatementBody(_)
                             | Ancestor::ForOfStatementBody(_)
                             | Ancestor::WhileStatementBody(_)
+                            | Ancestor::DoWhileStatementBody(_)
                     )
                 )
+            }
+            // unlabeled `break;` that terminates a `do while` body if test is false.
+            Statement::BreakStatement(stmt) if stmt.label.is_none() => {
+                match ctx.ancestors().nth(1) {
+                    Some(Ancestor::DoWhileStatementBody(do_while)) => {
+                        do_while.test().get_side_free_boolean_value(ctx) == Some(false)
+                    }
+                    _ => false,
+                }
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
