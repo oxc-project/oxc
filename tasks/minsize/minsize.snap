@@ -7,7 +7,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 287.63 kB  | 89.19 kB   | 90.07 kB   | 30.90 kB   | 31.95 kB   |          2 | jquery.js  
 
-342.15 kB  | 116.94 kB  | 118.14 kB  | 43.18 kB   | 44.37 kB   |          2 | vue.js     
+342.15 kB  | 116.92 kB  | 118.14 kB  | 43.17 kB   | 44.37 kB   |          2 | vue.js     
 
 544.10 kB  | 70.91 kB   | 72.48 kB   | 25.73 kB   | 26.20 kB   |          2 | lodash.js  
 

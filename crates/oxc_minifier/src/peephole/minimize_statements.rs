@@ -80,9 +80,7 @@ impl<'a> PeepholeOptimizations {
             // kept block ending in a jump, an if/else or try/catch where
             // every branch jumps — makes the rest of the list unreachable.
             // https://github.com/rolldown/rolldown/issues/10184
-            if !is_control_flow_dead
-                && stmts.last().is_some_and(Self::statement_never_completes_normally)
-            {
+            if !is_control_flow_dead && stmts.is_terminated() {
                 is_control_flow_dead = true;
             }
         }
@@ -430,65 +428,6 @@ impl<'a> PeepholeOptimizations {
             return left.content_eq(right);
         }
         false
-    }
-
-    /// Whether control never falls through to the statement after this one in
-    /// the same statement list (terser's `aborts`).
-    ///
-    /// Any abrupt completion qualifies, whatever its target: a `break` or
-    /// `continue` transfers control past the end of the enclosing statement
-    /// list, never to the next statement in it.
-    ///
-    /// Conservative on purpose:
-    /// - A labeled statement completes normally when its body breaks out of
-    ///   its own label (`a: { break a; }`), so it never counts.
-    /// - Loops and switches count as completing normally; `while (true)`
-    ///   without `break` is handled by loop-specific folds instead.
-    fn statement_never_completes_normally(stmt: &Statement<'a>) -> bool {
-        match stmt {
-            Statement::ReturnStatement(_)
-            | Statement::ThrowStatement(_)
-            | Statement::BreakStatement(_)
-            | Statement::ContinueStatement(_) => true,
-            Statement::BlockStatement(block) => Self::block_never_completes_normally(block),
-            Statement::IfStatement(if_stmt) => {
-                if_stmt.alternate.as_ref().is_some_and(Self::statement_never_completes_normally)
-                    && Self::statement_never_completes_normally(&if_stmt.consequent)
-            }
-            Statement::TryStatement(try_stmt) => {
-                // A finalizer that aborts overrides however the other
-                // blocks complete. Otherwise the try block must abort, and
-                // so must the catch block when present (an exception
-                // thrown before the try block's jump lands there).
-                try_stmt.finalizer.as_ref().is_some_and(|f| Self::block_never_completes_normally(f))
-                    || (Self::block_never_completes_normally(&try_stmt.block)
-                        && try_stmt
-                            .handler
-                            .as_ref()
-                            .is_none_or(|h| Self::block_never_completes_normally(&h.body)))
-            }
-            _ => false,
-        }
-    }
-
-    fn block_never_completes_normally(block: &BlockStatement<'a>) -> bool {
-        // A minimized dead zone keeps only hoisting survivors after the jump:
-        // `function` declarations and the initializer-less `var` stub
-        // re-emitted by `KeepVar`. Their bindings initialize at scope entry
-        // and nothing after an aborting statement ever runs, so skip them
-        // from the back before testing how the block completes.
-        block
-            .body
-            .iter()
-            .rev()
-            .find(|stmt| match stmt {
-                Statement::FunctionDeclaration(_) => false,
-                Statement::VariableDeclaration(decl) => {
-                    !(decl.kind.is_var() && decl.declarations.iter().all(|d| d.init.is_none()))
-                }
-                _ => true,
-            })
-            .is_some_and(Self::statement_never_completes_normally)
     }
 
     /// For variable declarations:
