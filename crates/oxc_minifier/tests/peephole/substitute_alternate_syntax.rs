@@ -757,6 +757,8 @@ fn test_fold_number_constructor() {
     test("x = Number(true)", "x = 1");
     test("x = Number(false)", "x = 0");
     test("x = Number('foo')", "x = NaN");
+    test_same("x = Number(void f())");
+    test_same("x = Number([f(), 1])");
 }
 
 #[test]

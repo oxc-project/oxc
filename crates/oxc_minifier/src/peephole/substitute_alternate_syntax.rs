@@ -1136,10 +1136,12 @@ impl<'a> PeepholeOptimizations {
                 span,
                 match arg {
                     None => 0.0,
-                    Some(arg) => match arg.to_number(ctx) {
-                        Some(n) => n,
-                        None => return,
-                    },
+                    Some(arg) => {
+                        match arg.to_number(ctx).filter(|_| !arg.may_have_side_effects(ctx)) {
+                            Some(n) => n,
+                            None => return,
+                        }
+                    }
                 },
                 None,
                 NumberBase::Decimal,
