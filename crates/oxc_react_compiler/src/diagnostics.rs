@@ -122,30 +122,6 @@ pub fn has_critical_errors(diagnostics: &[OxcDiagnostic]) -> bool {
         .any(|d| d.severity == Severity::Error && !ErrorCategory::PreserveManualMemo.matches(d))
 }
 
-/// Format a thrown diagnostic as a string matching the TS
-/// `CompilerError.toString()` output, used for the `data` field of
-/// `CompileUnexpectedThrow` events: `"<Heading>: <reason>. <description>."`.
-/// The reason is the message minus the deterministic prefix added by
-/// [`ErrorCategory::diagnostic`].
-pub fn to_string_for_event(diagnostic: &OxcDiagnostic) -> String {
-    let category = ErrorCategory::of(diagnostic);
-    let heading = match category {
-        Some("IncompatibleLibrary" | "PreserveManualMemo" | "UnsupportedSyntax") => {
-            "Compilation Skipped"
-        }
-        Some(heading @ ("Invariant" | "Todo")) => heading,
-        _ => "Error",
-    };
-    let reason = category
-        .and_then(|c| diagnostic.message.strip_prefix(&format!("[ReactCompiler] {c}: ")))
-        .unwrap_or(&diagnostic.message);
-    let mut buf = format!("{heading}: {reason}");
-    if let Some(help) = &diagnostic.help {
-        buf.push_str(&format!(". {help}."));
-    }
-    buf
-}
-
 /// Owned copy of a diagnostic for the log accumulator, labelling the enclosing
 /// function (`fn_span`) when the diagnostic carries no location of its own.
 #[cold]

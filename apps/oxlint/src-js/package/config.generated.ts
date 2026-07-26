@@ -107,8 +107,8 @@ export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -149,6 +149,8 @@ export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type Namespaces = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+export type NoRestrictedGlobalsConfigEnum = string | RestrictedGlobal | NoRestrictedGlobalsObjectConfig;
+export type GlobalNameOrObject = string | RestrictedGlobal;
 export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
 export type PossiblePaths = string | RestrictedPath;
 export type PossiblePatterns = string | RestrictedPattern;
@@ -988,7 +990,7 @@ export interface DummyRuleMap {
   "jest/prefer-hooks-on-top"?: RuleNoConfig;
   "jest/prefer-importing-jest-globals"?: RuleNoConfig | [AllowWarnDeny, PreferImportingJestGlobalsConfig];
   "jest/prefer-jest-mocked"?: RuleNoConfig;
-  "jest/prefer-lowercase-title"?: DummyRule;
+  "jest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, PreferLowercaseTitleConfig];
   "jest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "jest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "jest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -1179,7 +1181,8 @@ export interface DummyRuleMap {
   "no-redeclare"?: RuleNoConfig | [AllowWarnDeny, NoRedeclare];
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
-  "no-restricted-globals"?: DummyRule;
+  "no-restricted-globals"?:
+    RuleNoConfig | [AllowWarnDeny, NoRestrictedGlobalsConfigEnum, ...NoRestrictedGlobalsConfigEnum[]];
   "no-restricted-imports"?:
     RuleNoConfig | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
   "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
@@ -1686,7 +1689,7 @@ export interface DummyRuleMap {
   "vitest/prefer-hooks-on-top"?: RuleNoConfig;
   "vitest/prefer-import-in-mock"?: RuleNoConfig | [AllowWarnDeny, PreferImportInMockConfig];
   "vitest/prefer-importing-vitest-globals"?: RuleNoConfig;
-  "vitest/prefer-lowercase-title"?: DummyRule;
+  "vitest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, PreferLowercaseTitleConfig];
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "vitest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "vitest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -2405,6 +2408,96 @@ export interface PreferImportingJestGlobalsConfig {
    * Jest function types to enforce importing for.
    */
   types?: JestFnType[];
+}
+export interface PreferLowercaseTitleConfig {
+  /**
+   * This array option allows specifying prefixes, which contain capitals that titles
+   * can start with. This can be useful when writing tests for API endpoints, where
+   * you'd like to prefix with the HTTP method.
+   * By default, nothing is allowed (the equivalent of `{ "allowedPrefixes": [] }`).
+   *
+   * Example of **correct** code for the `{ "allowedPrefixes": ["GET"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "allowedPrefixes": ["GET"] }] * /
+   * describe('GET /live');
+   * ```
+   */
+  allowedPrefixes?: string[];
+  /**
+   * This array option controls which Jest or Vitest functions are checked by this rule. There
+   * are four possible values:
+   * - `"describe"`
+   * - `"test"`
+   * - `"it"`
+   * - `"bench"`
+   *
+   * By default, none of these options are enabled (the equivalent of
+   * `{ "ignore": [] }`).
+   *
+   * Example of **correct** code for the `{ "ignore": ["describe"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["describe"] }] * /
+   * describe('Uppercase description');
+   * ```
+   *
+   * Example of **correct** code for the `{ "ignore": ["test"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["test"] }] * /
+   * test('Uppercase description');
+   * ```
+   *
+   * Example of **correct** code for the `{ "ignore": ["it"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["it"] }] * /
+   * it('Uppercase description');
+   * ```
+   */
+  ignore?: string[];
+  /**
+   * This option can be set to allow only the top-level `describe` blocks to have a
+   * title starting with an upper-case letter.
+   *
+   * Example of **correct** code for the `{ "ignoreTopLevelDescribe": true }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignoreTopLevelDescribe": true }] * /
+   * describe('MyClass', () => {
+   * describe('#myMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   */
+  ignoreTopLevelDescribe?: boolean;
+  /**
+   * This option can be set to only validate that the first character of a test name is lowercased.
+   *
+   * Example of **correct** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
+   * ```js
+   * /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] * /
+   * describe('myClass', () => {
+   * describe('myMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   *
+   * Example of **incorrect** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
+   * ```js
+   * /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] * /
+   * describe('MyClass', () => {
+   * describe('MyMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   */
+  lowercaseFirstCharacterOnly?: boolean;
 }
 export interface RequireHookConfig {
   /**
@@ -3488,6 +3581,38 @@ export interface RestrictDefaultExports {
    * ```
    */
   namespaceFrom?: boolean;
+}
+/**
+ * A restricted global with an optional custom message.
+ */
+export interface RestrictedGlobal {
+  /**
+   * A custom message shown when the restricted global is used.
+   */
+  message?: string;
+  /**
+   * The name of the restricted global.
+   */
+  name: string;
+}
+/**
+ * Object form of the configuration, which additionally allows detecting
+ * restricted globals accessed via global objects.
+ */
+export interface NoRestrictedGlobalsObjectConfig {
+  /**
+   * Whether to also detect restricted globals accessed via global objects. Default is `false`.
+   */
+  checkGlobalObject?: boolean;
+  /**
+   * Additional global object names to check when `checkGlobalObject` is enabled.
+   * By default, the rule checks these global objects: `globalThis`, `self`, and `window`.
+   */
+  globalObjects?: string[];
+  /**
+   * The restricted globals, as names or `{ "name", "message" }` objects.
+   */
+  globals: GlobalNameOrObject[];
 }
 export interface RestrictedPath {
   allowImportNames?: string[];

@@ -39,6 +39,7 @@ mod to_integer_index;
 #[cfg(feature = "constant_evaluation")]
 pub mod constant_evaluation;
 mod global_context;
+mod number_literal;
 #[cfg(feature = "side_effects")]
 pub mod side_effects;
 
@@ -47,6 +48,7 @@ pub use self::{
     bound_names::BoundNames,
     global_context::{GlobalContext, WithoutGlobalReferenceInformation},
     is_simple_parameter_list::IsSimpleParameterList,
+    number_literal::with_number_literal,
     private_bound_identifiers::PrivateBoundIdentifiers,
     prop_name::PropName,
     string_char_at::{StringCharAt, StringCharAtResult},

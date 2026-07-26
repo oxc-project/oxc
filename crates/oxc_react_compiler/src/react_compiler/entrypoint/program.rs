@@ -1056,8 +1056,7 @@ fn try_compile_function<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
-    // Check for suppressions that affect this function. Suppression errors are
-    // returned (not thrown), so they do NOT trigger CompileUnexpectedThrow.
+    // Check for suppressions that affect this function before entering the pipeline.
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
         if !affecting.is_empty() {
@@ -1075,7 +1074,6 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
-        source.fn_ast_span,
     )
 }
 
