@@ -29,7 +29,7 @@ impl IsTerminated for BlockStatement<'_> {
 
 impl IsTerminated for ArenaVec<'_, Statement<'_>> {
     fn is_terminated(&self) -> bool {
-        self.iter().last().is_some_and(Statement::is_terminated)
+        self.last().is_some_and(Statement::is_terminated)
     }
 }
 
