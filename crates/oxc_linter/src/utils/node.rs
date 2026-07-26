@@ -4,11 +4,6 @@ use oxc_str::static_ident;
 
 use crate::{config::GlobalValue, context::LintContext};
 
-/// Returns whether `ident` is a reference to the global CommonJS `exports` binding.
-pub fn is_global_exports_reference(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    ident.name == static_ident!("exports") && ctx.is_reference_to_global_variable(ident)
-}
-
 /// Returns whether `ident` is a reference to the global CommonJS `module` binding.
 pub fn is_global_module_reference(ident: &IdentifierReference, ctx: &LintContext) -> bool {
     ident.name == static_ident!("module") && ctx.is_reference_to_global_variable(ident)
