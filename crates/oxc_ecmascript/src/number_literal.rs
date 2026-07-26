@@ -1,6 +1,10 @@
 use cow_utils::CowUtils;
 
 /// Call `f` with the shortest JavaScript source representation of a non-negative finite number.
+///
+/// # Panics
+///
+/// Panics if the float formatter produces malformed scientific notation.
 // Adapted from Terser's `get_minified_number`:
 // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
 #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]

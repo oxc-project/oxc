@@ -9,6 +9,7 @@ use std::{borrow::Cow, cmp, slice};
 
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
+use oxc_ecmascript::with_number_literal;
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -26,7 +27,6 @@ mod cjs_module_lexer;
 mod comment;
 mod context;
 mod r#gen;
-mod number_literal;
 mod operator;
 mod options;
 #[cfg(feature = "sourcemap")]
@@ -35,7 +35,6 @@ mod str;
 
 use binary_expr_visitor::BinaryExpressionVisitor;
 use comment::CommentsMap;
-use number_literal::with_number_literal;
 use operator::Operator;
 #[cfg(feature = "sourcemap")]
 use sourcemap_builder::SourcemapBuilder;
