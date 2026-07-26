@@ -82,10 +82,7 @@ impl StdinRunner {
             return CliRunResult::InvalidOptionConfig;
         }
 
-        // Use `block_in_place()` to avoid nested async runtime access
-        if let Err(err) =
-            tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads))
-        {
+        if let Err(err) = utils::run_blocking(|| self.external_formatter.init(num_of_threads)) {
             utils::print_and_flush(
                 stderr,
                 &format!("Failed to setup external formatter.\n{err}\n"),
@@ -156,8 +153,7 @@ impl StdinRunner {
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter));
 
-        // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| source_formatter.format(&source_text, strategy)) {
+        match utils::run_blocking(|| source_formatter.format(&source_text, strategy)) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded

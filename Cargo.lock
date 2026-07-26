@@ -2819,6 +2819,7 @@ dependencies = [
  "cow-utils",
  "editorconfig-parser",
  "fast-glob",
+ "futures",
  "ignore",
  "json-strip-comments",
  "mimalloc-safe",

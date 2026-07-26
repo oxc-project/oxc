@@ -14,7 +14,6 @@ use crate::{
         JsInitExternalFormatterCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
         create_js_config_loader, utils,
     },
-    lsp::run_lsp,
 };
 
 /// NAPI based JS CLI entry point.
@@ -97,9 +96,19 @@ pub async fn run_cli(
     utils::init_tracing();
     let result = match command.mode {
         Mode::Lsp => {
-            run_lsp(js_config_loader, external_formatter.clone()).await;
+            #[cfg(not(target_family = "wasm"))]
+            let exit_code = {
+                crate::lsp::run_lsp(js_config_loader, external_formatter.clone()).await;
+                0
+            };
+            #[cfg(target_family = "wasm")]
+            #[expect(clippy::print_stderr)]
+            let exit_code = {
+                eprintln!("LSP mode is not supported on this platform.");
+                1
+            };
 
-            ("lsp".to_string(), Some(0))
+            ("lsp".to_string(), Some(exit_code))
         }
         Mode::Stdin(_) => {
             init_miette();

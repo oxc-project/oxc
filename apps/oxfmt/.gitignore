@@ -2,3 +2,11 @@
 /dist/
 /conformance/fixtures/externals/
 *.node
+
+# Generated napi wasi glue (regenerate with `pnpm build-napi-wasi`).
+# Whether to track these like napi/parser does is a Phase 1 decision.
+/src-js/oxfmt.wasi.cjs
+/src-js/oxfmt.wasi-browser.js
+/src-js/wasi-worker.mjs
+/src-js/wasi-worker-browser.mjs
+/src-js/browser.js

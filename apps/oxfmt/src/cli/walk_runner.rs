@@ -101,9 +101,8 @@ impl WalkRunner {
             return CliRunResult::InvalidOptionConfig;
         }
 
-        // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        if let Err(err) = tokio::task::block_in_place(|| {
+        if let Err(err) = utils::run_blocking(|| {
             self.external_formatter
                 .as_ref()
                 .expect("External formatter must be set when `napi` feature is enabled")

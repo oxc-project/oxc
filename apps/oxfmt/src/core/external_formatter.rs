@@ -10,7 +10,7 @@ use std::sync::{Arc, RwLock};
 
 use napi::{
     Status,
-    bindgen_prelude::{FnArgs, Promise, block_on},
+    bindgen_prelude::{FnArgs, Promise},
     threadsafe_function::ThreadsafeFunction,
 };
 use serde_json::Value;
@@ -24,6 +24,7 @@ use crate::core::embed::{
     self, FormatEmbeddedDocWithConfigCallback, FormatEmbeddedWithConfigCallback,
     FormatFileWithConfigCallback, TailwindWithConfigCallback,
 };
+use crate::core::utils::block_on;
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument; signals JS to perform any one-time setup before formatting.

@@ -14,8 +14,8 @@ pub use config::{
     ConfigResolver, NestedConfigCtx, ResolveOutcome, resolve_editorconfig_path,
     resolve_file_scope_config,
 };
-// `config_discovery` is consumed only by LSP code paths (napi-gated).
-#[cfg(feature = "napi")]
+// `config_discovery` is consumed only by LSP code paths (napi-gated, not on wasm).
+#[cfg(all(feature = "napi", not(target_family = "wasm")))]
 pub use config::config_discovery;
 #[cfg(feature = "napi")]
 pub use config::{

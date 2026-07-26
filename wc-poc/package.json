@@ -1,0 +1,17 @@
+{
+  "name": "_wc-poc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@webcontainer/api": "^1.6.4",
+    "playwright": "^1.61.1"
+  }
+}
