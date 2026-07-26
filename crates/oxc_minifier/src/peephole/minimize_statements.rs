@@ -11,7 +11,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 
-use crate::{TraverseCtx, keep_var::KeepVar};
+use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
@@ -1000,13 +1000,15 @@ impl<'a> PeepholeOptimizations {
                         return ControlFlow::Break(());
                     }
                 }
+            }
 
+            if if_stmt.consequent.is_terminated() {
                 if if_stmt.alternate.is_some() {
                     // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                     result.push(Statement::IfStatement(if_stmt));
                     loop {
                         if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                            && if_stmt.consequent.is_jump_statement()
+                            && if_stmt.consequent.is_terminated()
                             && let Some(stmt) = if_stmt.alternate.take()
                         {
                             if let Statement::BlockStatement(block_stmt) = stmt {

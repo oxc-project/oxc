@@ -47,6 +47,7 @@
 mod compression_pass;
 mod compressor;
 pub(crate) mod generated;
+mod is_terminated;
 mod keep_var;
 mod minifier_traverse;
 mod options;
