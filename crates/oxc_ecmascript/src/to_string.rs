@@ -4,9 +4,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    GlobalContext, ToBoolean,
-    array_join::ArrayJoin,
-    constant_evaluation::{DetermineValueType, ValueType},
+    DetermineValueType, GlobalContext, ToBoolean, ValueType, array_join::ArrayJoin,
     to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
 };
 

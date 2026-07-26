@@ -199,32 +199,11 @@ pub fn rename_variables<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
 ) -> IdentHashSet<'a> {
-    rename_variables_with_parent(func, env, None)
-}
-
-fn rename_variables_with_parent<'a>(
-    func: &mut ReactiveFunction<'a>,
-    env: &mut Environment<'a>,
-    parent_names: Option<&IdentHashSet<'a>>,
-) -> IdentHashSet<'a> {
     let globals = collect_referenced_globals(&func.body, env);
 
     // Phase 1: Use ReactiveFunctionVisitor to compute the rename mapping.
     // This collects DeclarationId -> IdentifierName without mutating env.
     let mut scopes = Scopes::new(globals.clone());
-    // If parent names are provided (for outlined functions), pre-populate
-    // the scope stack so that parameter names don't collide with parent
-    // variables. In the TS compiler, outlined functions are placed in the
-    // parent function body and processed within the parent's scope context.
-    if let Some(parent) = parent_names {
-        scopes.enter();
-        for name in parent {
-            // Sentinel value: `stack` is used purely as a set (only key presence is
-            // read via `lookup().is_some()`), so any id works here.
-            scopes.stack.last_mut().unwrap().insert(*name, DeclarationId::from_usize(0));
-            scopes.names.insert(*name);
-        }
-    }
     rename_variables_impl(func, &Visitor { env }, &mut scopes);
 
     // Phase 2: Apply the computed renames to all identifiers in env.

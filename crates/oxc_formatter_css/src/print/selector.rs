@@ -453,9 +453,6 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
                 write_complex_selector(&selector.complex_selector, f);
             }
         }
-        PseudoClassSelectorArgKind::CompoundSelector(compound) => {
-            write_compound_selector(compound, f);
-        }
         PseudoClassSelectorArgKind::CompoundSelectorList(list) => {
             write_compound_selector_list(list, f);
         }

@@ -10,9 +10,8 @@
 
 use oxc_allocator::GetAllocator;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
-use oxc_span::Span;
 
-use crate::diagnostics::{ErrorCategory, to_string_for_event};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
@@ -91,9 +90,6 @@ use crate::options::CompilerOutputMode;
 /// Run the compilation pipeline on a single function.
 ///
 /// On failure, returns the diagnostics of the failed compilation attempt.
-/// An error thrown by a pass (in TS: an exception escaping the pass) that is
-/// not an Invariant additionally surfaces a `CompileUnexpectedThrow`
-/// diagnostic, matching TS `tryCompileFunction`'s catch block.
 #[allow(clippy::too_many_arguments)]
 pub fn compile_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
@@ -103,32 +99,19 @@ pub fn compile_fn<'a>(
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
-    fn_span: Option<Span>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
     match run_pipeline(ast, func, scope, fn_type, mode, env_config, context) {
         Ok(result) => result,
-        Err(thrown) => {
-            if !ErrorCategory::Invariant.matches(&thrown) {
-                let mut diagnostic = OxcDiagnostic::error(format!(
-                    "[ReactCompiler] Unexpected error: {}",
-                    to_string_for_event(&thrown)
-                ));
-                if let Some(span) = fn_span {
-                    diagnostic = diagnostic.with_label(span);
-                }
-                context.diagnostics.push(diagnostic);
-            }
-            Err(Diagnostics::from(thrown))
-        }
+        Err(diagnostic) => Err(Diagnostics::from(diagnostic)),
     }
 }
 
 /// The pass pipeline: creates an Environment, runs BuildHIR (lowering), the
 /// HIR/reactive-scope passes, and codegen.
 ///
-/// `Err(OxcDiagnostic)` is an error thrown by a pass (a TS exception);
+/// `Err(OxcDiagnostic)` is a diagnostic that immediately bails out of a pass.
 /// Invariant and end-of-pipeline accumulated errors return as
-/// `Ok(Err(diagnostics))` since they must not surface `CompileUnexpectedThrow`.
+/// `Ok(Err(diagnostics))`.
 #[allow(clippy::too_many_arguments)]
 fn run_pipeline<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
@@ -169,7 +152,7 @@ fn run_pipeline<'a>(
         return Ok(Ok(None));
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -180,7 +163,7 @@ fn run_pipeline<'a>(
 
     inline_immediately_invoked_function_expressions(&mut hir, &mut env);
 
-    merge_consecutive_blocks(&mut hir, &mut env.functions);
+    merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator);
 
     // TODO: port assertConsistentIdentifiers
     // TODO: port assertTerminalSuccessorsExist
@@ -221,7 +204,7 @@ fn run_pipeline<'a>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 

@@ -11,6 +11,7 @@
 //!
 //! Ported from TypeScript `src/Optimization/DeadCodeElimination.ts`.
 
+use oxc_allocator::Vec as ArenaVec;
 use oxc_index::IndexSlice;
 use oxc_str::IdentHashSet;
 use rustc_hash::FxHashSet;
@@ -189,11 +190,11 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
 }
 
 /// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).
-fn rewrite_instruction(
-    func: &mut HirFunction,
+fn rewrite_instruction<'a>(
+    func: &mut HirFunction<'a>,
     instr_id: InstructionId,
     state: &State,
-    env: &Environment,
+    env: &Environment<'a>,
 ) {
     let instr = &mut func.instructions[instr_id.index()];
 
@@ -232,7 +233,7 @@ fn rewrite_instruction(
                         match prop {
                             ObjectPropertyOrSpread::Property(p) => {
                                 if is_id_or_name_used(state, &env.identifiers, p.place.identifier) {
-                                    next_properties.get_or_insert_with(Vec::new).push(prop.clone());
+                                    next_properties.get_or_insert_with(Vec::new).push(*prop);
                                 }
                             }
                             ObjectPropertyOrSpread::Spread(s) => {
@@ -245,7 +246,7 @@ fn rewrite_instruction(
                         }
                     }
                     if let Some(props) = next_properties {
-                        obj.properties = props;
+                        obj.properties = ArenaVec::from_iter_in(props, &env.allocator);
                     }
                 }
             }
@@ -257,7 +258,7 @@ fn rewrite_instruction(
             // This is a const/let declaration where the variable is accessed later,
             // but where the value is always overwritten before being read.
             // Rewrite to DeclareLocal so the initializer value can be DCE'd.
-            let new_lvalue = lvalue.clone();
+            let new_lvalue = *lvalue;
             let new_span = *span;
             instr.value = InstructionValue::DeclareLocal { lvalue: new_lvalue, span: new_span };
         }

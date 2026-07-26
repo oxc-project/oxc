@@ -8,8 +8,6 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneUnusedLabels.ts`.
 
-use std::mem::take;
-
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -79,7 +77,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
             // Note: In TS, there's a check for `last.terminal.target === null`
             // to pop a trailing break, but since target is always a BlockId (number),
             // that check is always false, so the trailing break is never removed.
-            let flattened = take(block);
+            // ReplaceMany keeps a std `Vec`; drain the arena block into one.
+            let flattened = block.drain(..).collect::<Vec<_>>();
             return Ok(Transformed::ReplaceMany(flattened));
         }
 

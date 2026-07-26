@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
 use oxc_semantic::ScopeFlags;
@@ -134,7 +134,7 @@ impl<'a> PeepholeOptimizations {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
             let new_consequent = Statement::new_block_statement_with_scope_id(
                 if_stmt.consequent.span(),
-                ArenaVec::from_value_in(if_stmt.consequent.take_in(ctx), ctx),
+                [if_stmt.consequent.take_in(ctx)],
                 scope_id,
                 ctx,
             );

@@ -11,23 +11,30 @@
 
 use std::{
     cell::Cell,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 use crate::{Allocator, arena::Arena};
 
-/// Number of chunks all [`Arena`]s have requested from the system allocator, in total.
+/// Whether the next call to the system allocator is an [`Arena`] chunk being allocated
+/// or deallocated.
 ///
-/// This is a global counter, not a per-arena one, because short-lived arenas
-/// (e.g. the arena backing `oxc_semantic`'s `Scoping`) are often created and dropped inside
-/// the operation being measured, so their counters cannot be read after the operation completes.
-static NUM_CHUNK_ALLOC: AtomicUsize = AtomicUsize::new(0);
+/// Chunk operations are marked so that `tasks/track_memory_allocations`'s global allocator
+/// wrapper can exclude them from its heap metrics: chunk sizes are quantized and
+/// platform-dependent (whether an arena needs one more chunk depends on byte totals, which
+/// vary across architectures with type layout — see #22621), so counting them would make
+/// the snapshots platform-dependent.
+///
+/// This is a marker, not a counter: [`start_chunk_operation`] is called immediately before
+/// the chunk's `alloc`/`dealloc` call, and the global allocator wrapper consumes the marker
+/// while that call is on the stack. There are no allocations in between, but another
+/// *thread* allocating at that exact moment could steal the marker; the tracking task's
+/// measured workload is single-threaded, so this cannot happen in practice.
+static CHUNK_OPERATION_PENDING: AtomicBool = AtomicBool::new(false);
 
-/// Record that a chunk was allocated from the system allocator.
-pub fn record_chunk_allocation() {
-    // Counter maxes out at `usize::MAX`, but if there's that many allocations,
-    // the exact number is not important
-    NUM_CHUNK_ALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |count| count.saturating_add(1));
+/// Mark that the next system allocator call is an [`Arena`] chunk operation.
+pub fn start_chunk_operation() {
+    CHUNK_OPERATION_PENDING.store(true, Ordering::Relaxed);
 }
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
@@ -91,9 +98,12 @@ impl Allocator {
         self.arena().get_allocation_stats()
     }
 
-    /// Get number of chunks all [`Arena`]s have requested from the system allocator, in total.
+    /// Consume the pending chunk-operation marker (see [`CHUNK_OPERATION_PENDING`]).
+    ///
+    /// Returns `true` if the system allocator call currently on the stack is an [`Arena`]
+    /// chunk being allocated or deallocated.
     #[doc(hidden)]
-    pub fn global_chunk_allocation_count() -> usize {
-        NUM_CHUNK_ALLOC.load(Ordering::Relaxed)
+    pub fn take_pending_chunk_operation() -> bool {
+        CHUNK_OPERATION_PENDING.swap(false, Ordering::Relaxed)
     }
 }

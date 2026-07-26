@@ -572,9 +572,9 @@ impl Gen for SwitchCase<'_> {
         }
         p.print_colon();
 
-        // Force multi-line if a legal orphan is pending; the inline path skips the flush.
+        // Force multi-line if an orphan comment is pending; the inline path skips the flush.
         let single_line = self.consequent.len() == 1
-            && !p.has_legal_orphans_before(self.consequent[0].span().start);
+            && !p.has_orphan_comments_before(self.consequent[0].span().start);
         if single_line {
             p.print_body(&self.consequent[0], ctx);
             return;
@@ -807,7 +807,7 @@ impl Gen for FunctionBody<'_> {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
         let single_line = if self.is_empty() {
-            !p.has_legal_orphans_before(self.span.end)
+            !p.has_orphan_comments_before(self.span.end)
                 && comments_at_end
                     .as_ref()
                     .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
@@ -2807,7 +2807,7 @@ impl Gen for StaticBlock<'_> {
         p.add_source_mapping(self.span);
         p.print_str("static");
         p.print_soft_space();
-        let single_line = self.body.is_empty() && !p.has_legal_orphans_before(self.span.end);
+        let single_line = self.body.is_empty() && !p.has_orphan_comments_before(self.span.end);
         p.print_curly_braces(self.span, single_line, |p| {
             p.print_stmts_with_orphan_flush(&self.body, self.span.end, ctx);
         });

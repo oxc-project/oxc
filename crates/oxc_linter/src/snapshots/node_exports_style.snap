@@ -1,0 +1,256 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports = {foo: 1}
+   · ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports.foo = 1
+   · ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:18]
+ 1 │ module.exports = exports = {foo: 1}
+   ·                  ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports = module.exports = {foo: 1}
+   · ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports = {foo: 1}
+   · ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports.foo = 1
+   · ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:18]
+ 1 │ module.exports = exports = {foo: 1}
+   ·                  ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports = module.exports = {foo: 1}
+   · ───────
+   ╰────
+  help: Use `module.exports` instead.
+
+  ⚠ node(exports-style): Unexpected assignment to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports = {foo: 1}
+   · ───────
+   ╰────
+  help: Do not modify `exports` itself.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = {foo: 1}
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports.foo = 1
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { a: 1 }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { a: 1, b: 2 }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { // before a
+   · ──────────────
+ 2 │             a: 1, // between a and b
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:5]
+ 1 │ foo(module.exports = {foo: 1})
+   ·     ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:10]
+ 1 │ if(foo){ module.exports = { foo: 1};} else { module.exports = {foo: 2};}
+   ·          ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:46]
+ 1 │ if(foo){ module.exports = { foo: 1};} else { module.exports = {foo: 2};}
+   ·                                              ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:18]
+ 1 │ function bar() { module.exports = { foo: 1 }; }
+   ·                  ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { get a() {} }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { set a(a) {} }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { a }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { ...a }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { ['a' + 'b']: 1 }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { 'foo': 1 }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { foo(a) {} }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { *foo(a) {} }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = { async foo(a) {} }
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports.foo()
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:5]
+ 1 │ a = module.exports.foo + module.exports['bar']
+   ·     ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:26]
+ 1 │ a = module.exports.foo + module.exports['bar']
+   ·                          ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ module.exports = exports = {foo: 1}
+   · ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected assignment to `exports`.
+   ╭─[exports_style.tsx:1:18]
+ 1 │ module.exports = exports = {foo: 1}
+   ·                  ───────
+   ╰────
+  help: Do not modify `exports` itself.
+
+  ⚠ node(exports-style): Unexpected assignment to `exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ exports = module.exports = {foo: 1}
+   · ───────
+   ╰────
+  help: Do not modify `exports` itself.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:11]
+ 1 │ exports = module.exports = {foo: 1}
+   ·           ──────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected assignment to `exports`.
+   ╭─[exports_style.tsx:1:38]
+ 1 │ module.exports = exports = {foo: 1}; exports = obj
+   ·                                      ───────
+   ╰────
+  help: Do not modify `exports` itself.
+
+  ⚠ node(exports-style): Unexpected assignment to `exports`.
+   ╭─[exports_style.tsx:1:38]
+ 1 │ exports = module.exports = {foo: 1}; exports = obj
+   ·                                      ───────
+   ╰────
+  help: Do not modify `exports` itself.

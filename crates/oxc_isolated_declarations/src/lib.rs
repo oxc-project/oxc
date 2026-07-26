@@ -96,7 +96,6 @@ impl<'a> IsolatedDeclarations<'a> {
             FxHashSet::default()
         };
         let source_type = SourceType::d_ts();
-        let directives = ArenaVec::new_in(&self);
         let stmts = self.transform_program(program);
         let program = Program::new(
             SPAN,
@@ -107,7 +106,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 &self,
             ),
             None,
-            directives,
+            [],
             stmts,
             &self,
         );
@@ -427,10 +426,15 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         if need_empty_export_marker {
-            let specifiers = ArenaVec::new_in(self);
             let kind = ImportOrExportKind::Value;
             new_stmts.push(Statement::new_export_named_declaration(
-                SPAN, None, specifiers, None, kind, NONE, self,
+                SPAN,
+                None,
+                [],
+                None,
+                kind,
+                NONE,
+                self,
             ));
         } else if self.scope.is_ts_module_block() {
             // If we are in a module block and we don't need to add `export {}`, in that case we need to remove `export` keyword from all ExportNamedDeclaration

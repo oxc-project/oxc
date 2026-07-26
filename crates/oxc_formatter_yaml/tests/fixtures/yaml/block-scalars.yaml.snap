@@ -1,0 +1,55 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+clip: |
+  one
+
+  two
+
+
+strip: >-
+  folded
+  text
+keep: |+
+  kept
+
+indented: |2
+    explicit indent
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+clip: |
+  one
+
+  two
+
+strip: >-
+  folded
+  text
+keep: |+
+  kept
+
+indented: |2
+    explicit indent
+
+-------------------
+{ printWidth: 100 }
+-------------------
+clip: |
+  one
+
+  two
+
+strip: >-
+  folded
+  text
+keep: |+
+  kept
+
+indented: |2
+    explicit indent
+
+===================== End =====================

@@ -42,6 +42,6 @@ export type { OxlintOverride };
  * @param config - Oxlint configuration
  * @returns Config unchanged
  */
-export function defineConfig<T extends OxlintConfig>(config: T): T {
+export function defineConfig<T extends OxlintConfig>(config: T & OxlintConfig): T {
   return config;
 }

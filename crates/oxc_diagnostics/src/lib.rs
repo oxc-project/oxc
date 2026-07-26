@@ -173,7 +173,7 @@ impl<'a> IntoIterator for &'a Diagnostics {
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[must_use]
 pub struct OxcDiagnostic {
-    inner: OxcDiagnosticInner,
+    inner: Box<OxcDiagnosticInner>,
 }
 
 impl Deref for OxcDiagnostic {
@@ -274,31 +274,28 @@ impl Diagnostic for OxcDiagnostic {
 impl OxcDiagnostic {
     /// Create new an error-level [`OxcDiagnostic`].
     pub fn error<T: Into<Cow<'static, str>>>(message: T) -> Self {
-        Self {
-            inner: OxcDiagnosticInner {
-                message: message.into(),
-                labels: Labels::None,
-                note: None,
-                help: None,
-                severity: Severity::Error,
-                code: OxcCode::default(),
-                url: None,
-            },
-        }
+        Self::new(Severity::Error, message.into())
     }
 
     /// Create new a warning-level [`OxcDiagnostic`].
     pub fn warn<T: Into<Cow<'static, str>>>(message: T) -> Self {
+        Self::new(Severity::Warning, message.into())
+    }
+
+    // Outlined so the `Box` allocation + field initialization exists once in the binary
+    // instead of being inlined into every diagnostic construction site.
+    #[inline(never)]
+    fn new(severity: Severity, message: Cow<'static, str>) -> Self {
         Self {
-            inner: OxcDiagnosticInner {
-                message: message.into(),
+            inner: Box::new(OxcDiagnosticInner {
+                message,
                 labels: Labels::None,
                 help: None,
                 note: None,
-                severity: Severity::Warning,
+                severity,
                 code: OxcCode::default(),
                 url: None,
-            },
+            }),
         }
     }
 
@@ -462,6 +459,6 @@ impl OxcDiagnostic {
 
     /// Consumes the diagnostic and returns the inner owned data.
     pub fn inner_owned(self) -> OxcDiagnosticInner {
-        self.inner
+        *self.inner
     }
 }

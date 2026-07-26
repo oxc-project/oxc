@@ -10,6 +10,7 @@
 
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::CloneIn;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_str::format_ident;
 
@@ -147,7 +148,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         span: None, // GeneratedSource — matches TS createTemporaryPlace
                     };
                     let original = place;
-                    renamed.push((original, temporary.clone()));
+                    renamed.push((original, temporary));
                     temporary
                 });
 
@@ -184,7 +185,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         if let Some(extras) = extra_instructions {
             // Clone the original instruction and build the replacement list
             let mut all_instructions = Vec::new();
-            all_instructions.push(ReactiveStatement::Instruction(instruction.clone()));
+            all_instructions
+                .push(ReactiveStatement::Instruction(instruction.clone_in(self.env.allocator)));
             for extra in extras {
                 all_instructions.push(ReactiveStatement::Instruction(extra));
             }

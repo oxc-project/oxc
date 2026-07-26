@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.75.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7b045cd minfier: Drop last break from last switch case (#24673) (Armano)
+- dd18383 linter/node: Implement no-top-level-await rule (#24634) (Connor Shea)
+- 16a65f2 linter/react: Implement function-component-definition rule (#24471) (Cole Ellison)
+- 7f1f585 linter: Reuse `jest/padding-around-test-blocks` for `vitest/padding-around-test-blocks` (#24519) (Mikhail Baev)
+- 99978a8 linter/import/consistent-type-specifier-style: Support `prefer-top-level-if-only-type-imports` option (#24502) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8694167 linter/eslint/prefer-destructuring: Handle typed declarations (#24616) (camc314)
+
+### ⚡ Performance
+
+- 7be5cf0 oxlint/lsp: Only invoke lint on code actions when document is not opened (#24676) (Sysix)
+- d3f07a0 diagnostics: Box OxcDiagnosticInner to reduce binary size (#24665) (Boshen)
+- 90ae040 linter/reporter/stylish: Compute diagnostic Info once per diagnostic (#24525) (connorshea)
+
 ## [1.74.0] - 2026-07-13
 
 ### 🚀 Features

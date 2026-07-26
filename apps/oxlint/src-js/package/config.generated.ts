@@ -107,8 +107,8 @@ export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -173,6 +173,7 @@ export type Location = "start" | "anywhere";
  * The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.
  */
 export type CallbackReturn = string[];
+export type ExportsStyleMode = "module.exports" | "exports";
 /**
  * The rule takes a single string option: the name of the error parameter.
  *
@@ -903,6 +904,7 @@ export interface DummyRuleMap {
   "grouped-accessor-pairs"?:
     RuleNoConfig | [AllowWarnDeny, PairOrder] | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
+  "id-denylist"?: RuleNoConfig | [AllowWarnDeny, string, ...string[]];
   "id-length"?: RuleNoConfig | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: RuleNoConfig | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
   "import/consistent-type-specifier-style"?: RuleNoConfig | [AllowWarnDeny, Mode];
@@ -988,7 +990,7 @@ export interface DummyRuleMap {
   "jest/prefer-hooks-on-top"?: RuleNoConfig;
   "jest/prefer-importing-jest-globals"?: RuleNoConfig | [AllowWarnDeny, PreferImportingJestGlobalsConfig];
   "jest/prefer-jest-mocked"?: RuleNoConfig;
-  "jest/prefer-lowercase-title"?: DummyRule;
+  "jest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, PreferLowercaseTitleConfig];
   "jest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "jest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "jest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -1229,6 +1231,8 @@ export interface DummyRuleMap {
   "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfigJson];
   "no-with"?: RuleNoConfig;
   "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
+  "node/exports-style"?:
+    RuleNoConfig | [AllowWarnDeny, ExportsStyleMode] | [AllowWarnDeny, ExportsStyleMode, ExportsStyleOptions];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
@@ -1237,6 +1241,7 @@ export interface DummyRuleMap {
   "node/no-path-concat"?: RuleNoConfig;
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
   "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
+  "node/no-top-level-await"?: RuleNoConfig | [AllowWarnDeny, NoTopLevelAwaitConfig];
   "object-shorthand"?:
     RuleNoConfig | [AllowWarnDeny, ShorthandType] | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
@@ -1245,6 +1250,7 @@ export interface DummyRuleMap {
   "oxc/bad-bitwise-operator"?: RuleNoConfig;
   "oxc/bad-char-at-comparison"?: RuleNoConfig;
   "oxc/bad-comparison-sequence"?: RuleNoConfig;
+  "oxc/bad-match-all-arg"?: RuleNoConfig;
   "oxc/bad-min-max-func"?: RuleNoConfig;
   "oxc/bad-object-literal-comparison"?: RuleNoConfig;
   "oxc/bad-replace-all-arg"?: RuleNoConfig;
@@ -1271,7 +1277,7 @@ export interface DummyRuleMap {
   "prefer-destructuring"?:
     | RuleNoConfig
     | [AllowWarnDeny, PreferDestructuringOption]
-    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringRenamedPropertiesConfig];
+    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringEnforcementConfig];
   "prefer-exponentiation-operator"?: RuleNoConfig;
   "prefer-named-capture-group"?: RuleNoConfig;
   "prefer-numeric-literals"?: RuleNoConfig;
@@ -1683,7 +1689,7 @@ export interface DummyRuleMap {
   "vitest/prefer-hooks-on-top"?: RuleNoConfig;
   "vitest/prefer-import-in-mock"?: RuleNoConfig | [AllowWarnDeny, PreferImportInMockConfig];
   "vitest/prefer-importing-vitest-globals"?: RuleNoConfig;
-  "vitest/prefer-lowercase-title"?: DummyRule;
+  "vitest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, PreferLowercaseTitleConfig];
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "vitest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "vitest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -2402,6 +2408,96 @@ export interface PreferImportingJestGlobalsConfig {
    * Jest function types to enforce importing for.
    */
   types?: JestFnType[];
+}
+export interface PreferLowercaseTitleConfig {
+  /**
+   * This array option allows specifying prefixes, which contain capitals that titles
+   * can start with. This can be useful when writing tests for API endpoints, where
+   * you'd like to prefix with the HTTP method.
+   * By default, nothing is allowed (the equivalent of `{ "allowedPrefixes": [] }`).
+   *
+   * Example of **correct** code for the `{ "allowedPrefixes": ["GET"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "allowedPrefixes": ["GET"] }] * /
+   * describe('GET /live');
+   * ```
+   */
+  allowedPrefixes?: string[];
+  /**
+   * This array option controls which Jest or Vitest functions are checked by this rule. There
+   * are four possible values:
+   * - `"describe"`
+   * - `"test"`
+   * - `"it"`
+   * - `"bench"`
+   *
+   * By default, none of these options are enabled (the equivalent of
+   * `{ "ignore": [] }`).
+   *
+   * Example of **correct** code for the `{ "ignore": ["describe"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["describe"] }] * /
+   * describe('Uppercase description');
+   * ```
+   *
+   * Example of **correct** code for the `{ "ignore": ["test"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["test"] }] * /
+   * test('Uppercase description');
+   * ```
+   *
+   * Example of **correct** code for the `{ "ignore": ["it"] }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignore": ["it"] }] * /
+   * it('Uppercase description');
+   * ```
+   */
+  ignore?: string[];
+  /**
+   * This option can be set to allow only the top-level `describe` blocks to have a
+   * title starting with an upper-case letter.
+   *
+   * Example of **correct** code for the `{ "ignoreTopLevelDescribe": true }` option:
+   * ```js
+   * /* jest/prefer-lowercase-title: ["error", { "ignoreTopLevelDescribe": true }] * /
+   * describe('MyClass', () => {
+   * describe('#myMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   */
+  ignoreTopLevelDescribe?: boolean;
+  /**
+   * This option can be set to only validate that the first character of a test name is lowercased.
+   *
+   * Example of **correct** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
+   * ```js
+   * /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] * /
+   * describe('myClass', () => {
+   * describe('myMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   *
+   * Example of **incorrect** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
+   * ```js
+   * /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] * /
+   * describe('MyClass', () => {
+   * describe('MyMethod', () => {
+   * it('does things', () => {
+   * //
+   * });
+   * });
+   * });
+   * ```
+   */
+  lowercaseFirstCharacterOnly?: boolean;
 }
 export interface RequireHookConfig {
   /**
@@ -4061,6 +4157,12 @@ export interface NoWarningCommentsConfigJson {
   location?: Location;
   terms?: string[];
 }
+export interface ExportsStyleOptions {
+  /**
+   * If this option is set to `true`, `module.exports = exports = obj` are allowed.
+   */
+  allowBatchAssign?: boolean;
+}
 export interface NoMixedRequiresOptions {
   allowCall?: boolean;
   grouping?: boolean;
@@ -4080,6 +4182,14 @@ export interface NoSyncConfig {
    * Function names to ignore.
    */
   ignores?: string[];
+}
+export interface NoTopLevelAwaitConfig {
+  /**
+   * If `true`, top-level `await` is allowed in files that start with a
+   * hashbang (`#!`), which marks them as executable scripts rather than
+   * importable modules.
+   */
+  ignoreBin?: boolean;
 }
 export interface ObjectShorthandOptions {
   avoidExplicitReturnArrows?: boolean;
@@ -4183,7 +4293,8 @@ export interface PreferDestructuringAssignmentConfig {
   AssignmentExpression?: PreferDestructuringTargetOption;
   VariableDeclarator?: PreferDestructuringTargetOption;
 }
-export interface PreferDestructuringRenamedPropertiesConfig {
+export interface PreferDestructuringEnforcementConfig {
+  enforceForDeclarationWithTypeAnnotation?: boolean;
   enforceForRenamedProperties?: boolean;
 }
 export interface PreferPromiseRejectErrors {

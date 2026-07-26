@@ -13,7 +13,9 @@
 
 use std::cmp::Ordering;
 
-use crate::react_compiler_utils::FxIndexSet;
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+
+use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -33,7 +35,7 @@ use crate::react_compiler_hir::visitors::each_terminal_operand_ids;
 use crate::react_compiler_lowering::get_reverse_postordered_blocks;
 use crate::react_compiler_lowering::mark_instruction_ids;
 use crate::react_compiler_lowering::mark_predecessors;
-use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::OrderedMap;
 
 // =============================================================================
 // getScopes
@@ -178,18 +180,19 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
 // handleRewrite
 // =============================================================================
 
-struct RewriteContext {
+struct RewriteContext<'a> {
     next_block_id: BlockId,
     next_preds: Vec<BlockId>,
     instr_slice_idx: usize,
-    rewrites: Vec<BasicBlock>,
+    rewrites: Vec<BasicBlock<'a>>,
+    alloc: &'a Allocator,
 }
 
-fn handle_rewrite(
+fn handle_rewrite<'a>(
     terminal_info: &TerminalRewriteInfo,
     idx: usize,
-    source_block: &BasicBlock,
-    context: &mut RewriteContext,
+    source_block: &BasicBlock<'a>,
+    context: &mut RewriteContext<'a>,
 ) {
     let terminal: Terminal = match terminal_info {
         TerminalRewriteInfo::StartScope { block_id, fallthrough_id, instr_id, scope_id } => {
@@ -210,18 +213,28 @@ fn handle_rewrite(
     };
 
     let curr_block_id = context.next_block_id;
-    let mut preds = FxIndexSet::default();
+    let mut preds = ArenaOrderedSet::new_in(context.alloc);
     for &p in &context.next_preds {
         preds.insert(p);
     }
 
+    // Only the first rewrite should reuse source block phis
+    let phis = if context.rewrites.is_empty() {
+        source_block.phis.clone_in(context.alloc)
+    } else {
+        ArenaVec::new_in(&context.alloc)
+    };
+    let instructions = ArenaVec::from_iter_in(
+        source_block.instructions[context.instr_slice_idx..idx].iter().copied(),
+        &context.alloc,
+    );
+
     context.rewrites.push(BasicBlock {
         kind: source_block.kind,
         id: curr_block_id,
-        instructions: source_block.instructions[context.instr_slice_idx..idx].to_vec(),
+        instructions,
         preds,
-        // Only the first rewrite should reuse source block phis
-        phis: if context.rewrites.is_empty() { source_block.phis.clone() } else { Vec::new() },
+        phis,
         terminal,
     });
 
@@ -243,13 +256,16 @@ fn handle_rewrite(
 /// to fallthroughs. Given a function whose reactive scope ranges have been
 /// correctly aligned and merged, this pass rewrites blocks to introduce
 /// ReactiveScopeTerminals and their fallthrough blocks.
-pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Environment) {
+pub fn build_reactive_scope_terminals_hir<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+) {
     // Step 1: Collect rewrites
     let mut queued_rewrites = collect_scope_rewrites(func, env);
 
     // Step 2: Apply rewrites by splitting blocks
     let mut rewritten_final_blocks: FxHashMap<BlockId, BlockId> = FxHashMap::default();
-    let mut next_blocks: FxIndexMap<BlockId, BasicBlock> = FxIndexMap::default();
+    let mut next_blocks: OrderedMap<BlockId, BasicBlock<'a>> = OrderedMap::default();
 
     // Reverse so we can pop from the end while traversing in ascending order
     queued_rewrites.reverse();
@@ -261,6 +277,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
             rewrites: Vec::new(),
             next_preds: preds_vec,
             instr_slice_idx: 0,
+            alloc: env.allocator,
         };
 
         // Handle queued terminal rewrites at their nearest instruction ID
@@ -284,7 +301,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
         }
 
         if !context.rewrites.is_empty() {
-            let mut final_preds = FxIndexSet::default();
+            let mut final_preds = ArenaOrderedSet::new_in(env.allocator);
             for &p in &context.next_preds {
                 final_preds.insert(p);
             }
@@ -292,9 +309,12 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
                 id: context.next_block_id,
                 kind: block.kind,
                 preds: final_preds,
-                terminal: block.terminal.clone(),
-                instructions: block.instructions[context.instr_slice_idx..].to_vec(),
-                phis: Vec::new(),
+                terminal: block.terminal.clone_in(env.allocator),
+                instructions: ArenaVec::from_iter_in(
+                    block.instructions[context.instr_slice_idx..].iter().copied(),
+                    &env.allocator,
+                ),
+                phis: ArenaVec::new_in(&env.allocator),
             };
             let final_block_id = final_block.id;
             context.rewrites.push(final_block);
@@ -303,7 +323,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
             }
             rewritten_final_blocks.insert(block.id, final_block_id);
         } else {
-            next_blocks.insert(block.id, block.clone());
+            next_blocks.insert(block.id, block.clone_in(env.allocator));
         }
     }
 
@@ -328,7 +348,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
     }
 
     // Step 4: Fixup HIR to restore RPO, correct predecessors, renumber instructions
-    func.body.blocks = get_reverse_postordered_blocks(&func.body);
+    func.body.blocks = get_reverse_postordered_blocks(&func.body, env.allocator);
     mark_predecessors(&mut func.body);
     mark_instruction_ids(&mut func.body, &mut func.instructions);
 
@@ -356,8 +376,7 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
     // reference as scope.range see the update automatically. We simulate
     // this by only syncing identifiers whose mutableRange matches the
     // scope's pre-update range.
-    let original_scope_ranges: Vec<MutableRange> =
-        env.scopes.iter().map(|s| s.range.clone()).collect();
+    let original_scope_ranges: Vec<MutableRange> = env.scopes.iter().map(|s| s.range).collect();
 
     for (_block_id, block) in &func.body.blocks {
         match &block.terminal {

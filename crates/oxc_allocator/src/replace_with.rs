@@ -232,6 +232,7 @@ impl<'a, T: Dummy<'a>> Drop for PanicGuard<'a, T> {
 /// This is the cold panic-path body of `PanicGuard::drop`, factored out as a free function that takes
 /// `ptr` *by value* so it can be `#[inline(never)]` while `PanicGuard::drop` stays an inlinable
 /// forwarder (see the comment there for why that matters).
+#[cold]
 #[inline(never)]
 fn write_dummy<'a, T: Dummy<'a>>(ptr: NonNull<T>) {
     // `replacer` panicked. Build a fresh dummy in its own dedicated `'static` allocator.

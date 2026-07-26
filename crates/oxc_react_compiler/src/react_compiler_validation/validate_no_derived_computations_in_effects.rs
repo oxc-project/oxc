@@ -13,10 +13,9 @@
 use crate::react_compiler_utils::{FxIndexSet, IdentIndexMap};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::IdentBuildHasher;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_index::IndexSlice;
-use oxc_str::{Ident, IdentHashSet};
+use oxc_str::{Ident, IdentBuildHasher, IdentHashSet};
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::BasicBlock;

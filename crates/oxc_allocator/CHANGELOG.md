@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 🚀 Features
+
+- f08b152 allocator: Implement `FromIn` for array to `Vec` conversion (#24620) (overlookmotel)
+- 2338c13 track-memory-allocations: Track heap deallocs, alloc bytes, and peak growth (#24619) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 40c2f43 allocator: `Vec::from_array_in` do not allocate zero-length array (#24628) (overlookmotel)
+
+### ⚡ Performance
+
+- c35d8ab allocator: Mark `ReplaceWith` panic path cold (#24515) (camc314)
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
 ## [0.140.0] - 2026-07-13
 
 ### 🐛 Bug Fixes

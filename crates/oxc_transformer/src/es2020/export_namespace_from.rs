@@ -98,7 +98,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                     let export_named_decl = ExportNamedDeclaration::boxed(
                         span,
                         None,
-                        ArenaVec::from_value_in(export_specifier, ctx),
+                        [export_specifier],
                         None,
                         export_kind,
                         NONE,

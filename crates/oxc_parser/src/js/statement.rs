@@ -355,9 +355,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // [+Await]
         let r#await = if self.at(Kind::Await) {
             if !self.ctx.has_await() {
-                // For `ModuleKind::Unambiguous`, defer the error until we know whether
-                // this is a Module (where for-await is valid at top-level) or Script.
-                self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
+                let error = diagnostics::for_await_statement(self.cur_token().span());
+                if self.ctx.has_top_level() {
+                    // For `ModuleKind::Unambiguous`, defer the error until we know whether
+                    // this is a Module (where for-await is valid at top-level) or Script.
+                    self.error_on_script(error);
+                } else {
+                    // A module only permits await at top level, so an await loop inside a
+                    // non-async function is always invalid.
+                    self.error(error);
+                }
             }
             self.bump_any();
             true
@@ -679,7 +686,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Some(expr)
         };
         if !self.ctx.has_return() {
-            self.error(diagnostics::return_statement_only_in_function_body(Span::sized(span, 6)));
+            let span = Span::sized(span, 6);
+            // Class static blocks enable `NewTarget` but disable `Return`.
+            // Other contexts that allow `new.target` cannot directly contain
+            // a return statement without entering a function body first.
+            if self.ctx.has_new_target() {
+                self.error(diagnostics::return_statement_in_class_static_block(span));
+            } else {
+                self.error(diagnostics::return_statement_only_in_function_body(span));
+            }
         }
         Statement::new_return_statement(self.end_span(span), argument, self)
     }
@@ -754,9 +769,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
                 // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                self.error(diagnostics::using_declaration_not_allowed_in_switch_bare_case(
-                    stmt.span(),
-                ));
+                self.error(if var_decl.kind.is_await() {
+                    diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
+                        stmt.span(),
+                    )
+                } else {
+                    diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
+                });
             }
             consequent.push(stmt);
         }

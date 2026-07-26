@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Comments, FormatElement, VecBuffer,
+        Buffer, Comments, FormatElement, JsFormatContext, ScratchBuffer,
         prelude::{tag::GroupMode, *},
     },
     utils::{
@@ -47,8 +47,6 @@ impl FormatJsxChildList {
         };
 
         let mut force_multiline = layout.is_multiline();
-        let mut flat = FlatBuilder::new(force_multiline, f.allocator());
-        let mut multiline = MultilineBuilder::new(multiline_layout, f.allocator());
 
         let mut children = jsx_split_children(children, f.context().comments());
 
@@ -63,6 +61,9 @@ impl FormatJsxChildList {
                 force_multiline,
             });
         }
+
+        let mut flat = FlatBuilder::new(force_multiline);
+        let mut multiline = MultilineBuilder::new(multiline_layout);
 
         let mut is_next_child_suppressed = false;
         let mut last: Option<&JsxChild> = None;
@@ -553,12 +554,14 @@ enum MultilineLayout {
 #[derive(Debug)]
 struct MultilineBuilder<'a> {
     layout: MultilineLayout,
-    result: ArenaVec<'a, FormatElement<'a>>,
+    /// Heap accumulator; the flat and multiline builders write alternately,
+    /// so each owns its own (see [`ScratchBuffer::writer`]).
+    result: ScratchBuffer<'a>,
 }
 
 impl<'a> MultilineBuilder<'a> {
-    fn new(layout: MultilineLayout, allocator: &'a Allocator) -> Self {
-        Self { layout, result: ArenaVec::new_in(&allocator) }
+    fn new(layout: MultilineLayout) -> Self {
+        Self { layout, result: ScratchBuffer::new() }
     }
 
     /// Formats an element that does not require a separator
@@ -596,29 +599,24 @@ impl<'a> MultilineBuilder<'a> {
         separator: Option<&dyn Format<'a, JsFormatContext<'a>>>,
         f: &mut JsFormatter<'_, 'a>,
     ) {
-        let elements = std::mem::replace(&mut self.result, ArenaVec::new_in(f));
+        let mut buffer = self.result.writer(f.state_mut());
+        match self.layout {
+            MultilineLayout::Fill => {
+                // Make sure that the separator and content only ever write a single element
+                buffer.write_element(FormatElement::Tag(Tag::StartEntry));
+                write!(buffer, [content]);
+                buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        self.result = {
-            let mut buffer = VecBuffer::new_with_vec(f.state_mut(), elements);
-            match self.layout {
-                MultilineLayout::Fill => {
-                    // Make sure that the separator and content only ever write a single element
+                if let Some(separator) = separator {
                     buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-                    write!(buffer, [content]);
+                    write!(buffer, [separator]);
                     buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-                    if let Some(separator) = separator {
-                        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-                        write!(buffer, [separator]);
-                        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-                    }
-                }
-                MultilineLayout::NoFill => {
-                    write!(buffer, [content, separator]);
                 }
             }
-            buffer.into_vec()
-        };
+            MultilineLayout::NoFill => {
+                write!(buffer, [content, separator]);
+            }
+        }
     }
 
     /// Writes a separator into the last entry if it is an entry.
@@ -643,13 +641,13 @@ impl<'a> MultilineBuilder<'a> {
 #[derive(Debug)]
 pub struct FormatMultilineChildren<'a> {
     layout: MultilineLayout,
-    elements: RefCell<ArenaVec<'a, FormatElement<'a>>>,
+    elements: RefCell<ScratchBuffer<'a>>,
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatMultilineChildren<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| {
-            if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f)) {
+            if let Some(elements) = f.intern_elements(&mut self.elements.borrow_mut()) {
                 match self.layout {
                     MultilineLayout::Fill => f.write_elements([
                         FormatElement::Tag(Tag::StartFill),
@@ -695,13 +693,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatMultilineChildren<'a> {
 
 #[derive(Debug)]
 struct FlatBuilder<'a> {
-    result: ArenaVec<'a, FormatElement<'a>>,
+    /// Heap accumulator; see [`MultilineBuilder::result`].
+    result: ScratchBuffer<'a>,
     disabled: bool,
 }
 
 impl<'a> FlatBuilder<'a> {
-    fn new(disabled: bool, allocator: &'a Allocator) -> Self {
-        Self { result: ArenaVec::new_in(&allocator), disabled }
+    fn new(disabled: bool) -> Self {
+        Self { result: ScratchBuffer::new(), disabled }
     }
 
     fn write(
@@ -713,20 +712,13 @@ impl<'a> FlatBuilder<'a> {
             return;
         }
 
-        let result = std::mem::replace(&mut self.result, ArenaVec::new_in(f));
-
-        self.result = {
-            let elements = result;
-            let mut buffer = VecBuffer::new_with_vec(f.state_mut(), elements);
-
-            write!(buffer, [content]);
-
-            buffer.into_vec()
-        }
+        let mut buffer = self.result.writer(f.state_mut());
+        write!(buffer, [content]);
     }
 
     fn disable(&mut self) {
         self.disabled = true;
+        self.result.discard();
     }
 
     fn finish(self) -> FormatFlatChildren<'a> {
@@ -741,12 +733,12 @@ impl<'a> FlatBuilder<'a> {
 
 #[derive(Debug)]
 pub struct FormatFlatChildren<'a> {
-    elements: RefCell<ArenaVec<'a, FormatElement<'a>>>,
+    elements: RefCell<ScratchBuffer<'a>>,
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatFlatChildren<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f)) {
+        if let Some(elements) = f.intern_elements(&mut self.elements.borrow_mut()) {
             f.write_element(elements);
         }
     }

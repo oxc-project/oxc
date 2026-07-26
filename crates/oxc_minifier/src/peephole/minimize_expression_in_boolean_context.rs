@@ -117,11 +117,7 @@ impl<'a> PeepholeOptimizations {
                 let reference_id = ident.reference_id();
                 let span = ident.span;
                 if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
-                    && ctx
-                        .state
-                        .symbol_values
-                        .get_symbol_value(symbol_id)
-                        .is_some_and(|sv| sv.boolean_falsy)
+                    && ctx.state.symbols.value(symbol_id).is_some_and(|sv| sv.boolean_falsy)
                 {
                     let new_expr = Expression::new_boolean_literal(span, false, ctx);
                     ctx.replace_expression(expr, new_expr);

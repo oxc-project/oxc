@@ -185,7 +185,7 @@ impl<'a> ModuleImportsStore<'a> {
 
         let args = {
             let arg = Argument::new_string_literal(SPAN, source, None, ctx);
-            ArenaVec::from_value_in(arg, ctx)
+            [arg]
         };
         let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
         let id = local.create_binding_pattern(ctx);
@@ -193,7 +193,7 @@ impl<'a> ModuleImportsStore<'a> {
         let decl = {
             let init = Expression::new_call_expression(SPAN, callee, NONE, args, false, ctx);
             let decl = VariableDeclarator::new(SPAN, var_kind, id, NONE, Some(init), false, ctx);
-            ArenaVec::from_value_in(decl, ctx)
+            [decl]
         };
         Statement::new_variable_declaration(SPAN, var_kind, decl, false, ctx)
     }

@@ -1268,9 +1268,6 @@ rebuilt        : ScopeId(3): ["_WithTypes", "d"]
 Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
 rebuilt        : ScopeId(4): ["_d"]
-Symbol reference IDs mismatch for "a":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 
 * namespace/export-type-only/input.ts
 Bindings mismatch:

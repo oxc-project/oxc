@@ -34,7 +34,7 @@ pub fn find_rule_impl_block<'a>(
             _ => None,
         };
         if ident.is_some_and(|id| id == rule_struct_name)
-            && imp.trait_.as_ref().is_some_and(|(_, path, _)| path.is_ident("Rule"))
+            && imp.trait_.as_ref().is_some_and(|(path, _)| path.is_ident("Rule"))
         {
             return Some(imp);
         }

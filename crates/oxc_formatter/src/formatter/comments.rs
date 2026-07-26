@@ -235,6 +235,10 @@ impl<'a> Comments<'a> {
     }
 
     /// Returns comments that occur before the first instance of a specific character.
+    ///
+    /// Lexical byte scan: the range starting at `start` must contain only trivia and punctuation
+    /// (e.g. an expression end up to its enclosing delimiter).
+    /// A range covering code would false-match the character inside a string literal or nested syntax.
     pub(crate) fn comments_before_character(&self, mut start: u32, character: u8) -> &'a [Comment] {
         let comments = self.comments_after(start);
 

@@ -170,7 +170,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::new_in(ctx), // This is replaced at the end
+            [], // This is replaced at the end
             false,
             ctx,
         );
@@ -189,13 +189,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             ));
 
             let callee = self.refresh_reg.to_expression(ctx);
-            let arguments = ArenaVec::from_array_in(
-                [
-                    Argument::from(binding.create_read_expression(ctx)),
-                    Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
-                ],
-                ctx,
-            );
+            let arguments = [
+                Argument::from(binding.create_read_expression(ctx)),
+                Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
+            ];
             Statement::new_expression_statement(
                 SPAN,
                 Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
@@ -655,24 +652,16 @@ impl<'a> ReactRefresh<'a> {
 
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
-            let formal_parameters = FormalParameters::new(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ArenaVec::new_in(ctx),
-                NONE,
-                ctx,
-            );
+            let formal_parameters =
+                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
             let function_body = FunctionBody::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
-                ArenaVec::from_value_in(
-                    Statement::new_return_statement(
-                        SPAN,
-                        Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
-                        ctx,
-                    ),
+                [],
+                [Statement::new_return_statement(
+                    SPAN,
+                    Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
                     ctx,
-                ),
+                )],
                 ctx,
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
@@ -701,7 +690,7 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             self.refresh_sig.to_expression(ctx),
             NONE,
-            ArenaVec::new_in(ctx),
+            [],
             false,
             ctx,
         );
@@ -714,7 +703,7 @@ impl<'a> ReactRefresh<'a> {
                 SPAN,
                 binding.create_read_expression(ctx),
                 NONE,
-                ArenaVec::new_in(ctx),
+                [],
                 false,
                 ctx,
             ),

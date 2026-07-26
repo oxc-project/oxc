@@ -457,6 +457,7 @@ impl<'a> PeepholeOptimizations {
                         RegexUnsupportedPatterns {
                             look_behind_assertions: true,
                             named_capture_groups: true,
+                            duplicate_named_capture_groups: true,
                             unicode_property_escapes: true,
                             pattern_modifiers: true,
                         };

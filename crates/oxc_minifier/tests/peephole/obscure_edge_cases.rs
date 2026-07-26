@@ -303,18 +303,24 @@ fn test_loop_optimization_edge_cases() {
 #[test]
 fn test_switch_statement_edge_cases() {
     // Test switch with constant discriminant - might be optimized in future
-    test_same("switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); break; }");
+    test_same("switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); }");
     // Could be optimized to just: b();
 
     test_same("switch ('test') { case 'foo': a(); break; case 'test': b(); break; default: c(); }");
     // Could be optimized to just: b();
 
     // Test switch with no matching case
-    test_same("switch (5) { case 1: a(); break; case 2: b(); break; }");
+    test(
+        "switch (5) { case 1: a(); break; case 2: b(); break; }",
+        "switch (5) { case 1: a(); break; case 2: b(); }",
+    );
     // Could be optimized to empty
 
     // Test switch with default
-    test_same("switch (5) { case 1: a(); break; default: b(); break; }");
+    test(
+        "switch (5) { case 1: a(); break; default: b(); break; }",
+        "switch (5) { case 1: a(); break; default: b(); }",
+    );
     // Could be optimized to just: b();
 
     // Test switch with fall-through - more complex, keep as same for safety
@@ -657,4 +663,13 @@ fn test_annotation_comments_preserved_in_dynamic_import() {
         "export async function init() { const bar = 'some-url'.slice(0); return await import(/* @vite-ignore */ /* webpackIgnore: true */ bar); }",
         "export async function init() { let bar = 'some-url'; return await import(/* @vite-ignore */ /* webpackIgnore: true */ 'some-url'); }",
     );
+}
+
+#[test]
+fn test_exponentiation_negative_bigint_base() {
+    // `0n + -1n` folds to a negative BigInt literal. As the base of `**` it must stay
+    // parenthesized, otherwise the output `-1n ** 2n` is a SyntaxError.
+    test("x = (0n + -1n) ** 2n", "x = (-1n) ** 2n");
+    // A positive BigInt base needs no parentheses.
+    test_same("x = 2n ** 3n");
 }

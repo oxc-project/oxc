@@ -16,26 +16,10 @@ use crate::IndentWidth;
 
 use self::tag::{LabelId, Tag, TagKind};
 
-#[cfg(debug_assertions)]
-const _: () = {
-    if cfg!(target_pointer_width = "64") {
-        assert!(
-            size_of::<FormatElement>() == 40,
-            "`FormatElement` size exceeds 40 bytes, expected 40 bytes in 64-bit platforms"
-        );
-    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
-        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
-        //
-        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
-        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
-        assert!(
-            size_of::<FormatElement>() == 24,
-            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 32-bit platforms"
-        );
-    }
-};
-
-#[cfg(not(debug_assertions))]
+// `FormatElement` must have the same layout in debug and release builds.
+//
+// So that memory measurements taken with `debug-assertions` enabled (`cargo allocs` runs with the `coverage` profile) reflect release layouts.
+// That is why `GroupId` and `LabelId` keep their debug names in side tables instead of inline fields.
 const _: () = {
     if cfg!(target_pointer_width = "64") {
         assert!(
@@ -45,8 +29,8 @@ const _: () = {
     } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
         // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
         //
-        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
-        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
+        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment,
+        // because some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
         assert!(
             size_of::<FormatElement>() == 16,
             "`FormatElement` size exceeds 16 bytes, expected 16 bytes in 32-bit platforms"
@@ -134,6 +118,8 @@ pub enum LineMode {
     Hard,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
+    /// See [crate::builders::exact_line_breaks] for documentation.
+    ExactLineBreaks(std::num::NonZeroU32),
     /// See [crate::builders::literal_line_break] for documentation.
     Literal,
 }
@@ -144,7 +130,10 @@ impl LineMode {
     }
 
     pub const fn will_break(self) -> bool {
-        matches!(self, LineMode::Hard | LineMode::Empty | LineMode::Literal)
+        matches!(
+            self,
+            LineMode::Hard | LineMode::Empty | LineMode::ExactLineBreaks(_) | LineMode::Literal
+        )
     }
 }
 

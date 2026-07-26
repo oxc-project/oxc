@@ -1,0 +1,17 @@
+# Explicit-key comment placement: by column between the key and the `:`,
+# and as the value's middle comment after the `:`.
+? # between ? and key
+  - seq key
+: # after the colon (value middle comment)
+  - value
+    # deeper than the PREVIOUS item = its collection value's end comment
+plain: separator
+? deep
+    # deeper than the item, before `:` = key end comment
+: 1
+? same
+# at the item column = leads the `: ` line
+: 2
+? bare-no-value # same-line comment keeps the explicit form
+? normalized
+: implicit stays

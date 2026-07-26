@@ -102,7 +102,7 @@ fn constant_propagation_impl<'a>(
          * If terminals have changed then blocks may have become newly unreachable.
          * Re-run minification of the graph (incl reordering instruction ids)
          */
-        func.body.blocks = get_reverse_postordered_blocks(&func.body);
+        func.body.blocks = get_reverse_postordered_blocks(&func.body, env.allocator);
         remove_unreachable_for_updates(&mut func.body);
         remove_dead_do_while_statements(&mut func.body);
         remove_unnecessary_try_catch(&mut func.body);
@@ -126,7 +126,7 @@ fn constant_propagation_impl<'a>(
          * Finally, merge together any blocks that are now guaranteed to execute
          * consecutively
          */
-        merge_consecutive_blocks(func, &mut env.functions);
+        merge_consecutive_blocks(func, &mut env.functions, env.allocator);
 
         // TODO: port assertConsistentIdentifiers(fn) and assertTerminalSuccessorsExist(fn)
         // from TS HIR validation. These are debug assertions that verify structural
@@ -159,7 +159,7 @@ fn apply_constant_propagation<'a>(
         }
 
         let block = &func.body.blocks[&block_id];
-        let instr_ids = block.instructions.clone();
+        let instr_ids = block.instructions.iter().copied().collect::<Vec<_>>();
         let block_kind = block.kind;
         let instr_count = instr_ids.len();
 
@@ -280,21 +280,21 @@ fn evaluate_instruction<'a>(
             Some(Constant::Primitive { value: *value, span: *span })
         }
         InstructionValue::LoadGlobal { binding, span } => {
-            Some(Constant::LoadGlobal { binding: binding.clone(), span: *span })
+            Some(Constant::LoadGlobal { binding: *binding, span: *span })
         }
         InstructionValue::ComputedLoad { object, property, span } => {
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
                     PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
-                        let object = object.clone();
+                        let object = *object;
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
                         func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyLoad { object, property: new_property, span };
                     }
                     PrimitiveValue::Number(n) => {
-                        let object = object.clone();
+                        let object = *object;
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
                         func.instructions[instr_id.index()].value =
@@ -313,8 +313,8 @@ fn evaluate_instruction<'a>(
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
                     PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
-                        let object = object.clone();
-                        let store_value = value.clone();
+                        let object = *object;
+                        let store_value = *value;
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
                         func.instructions[instr_id.index()].value =
@@ -326,8 +326,8 @@ fn evaluate_instruction<'a>(
                             };
                     }
                     PrimitiveValue::Number(n) => {
-                        let object = object.clone();
-                        let store_value = value.clone();
+                        let object = *object;
+                        let store_value = *value;
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
                         func.instructions[instr_id.index()].value =
@@ -624,7 +624,7 @@ fn process_inner_function<'a>(
     env: &mut Environment<'a>,
     constants: &mut Constants<'a>,
 ) {
-    let mut inner = replace(&mut env.functions[func_id], placeholder_function());
+    let mut inner = replace(&mut env.functions[func_id], placeholder_function(env.allocator));
     constant_propagation_impl(&mut inner, env, constants);
     env.functions[func_id] = inner;
 }

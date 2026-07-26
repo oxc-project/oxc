@@ -44,7 +44,7 @@
 //! TODO(improve-on-babel): When flags is empty, we could output `RegExp("(?<=x)")` instead of `RegExp("(?<=x)", "")`.
 //! (actually these would be improvements on ESBuild, not Babel)
 
-use oxc_allocator::{ArenaVec, GetAllocator};
+use oxc_allocator::GetAllocator;
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
@@ -103,6 +103,7 @@ impl RegExp {
             unsupported_patterns: RegexUnsupportedPatterns {
                 look_behind_assertions,
                 named_capture_groups,
+                duplicate_named_capture_groups: false,
                 unicode_property_escapes,
                 pattern_modifiers: false,
             },
@@ -165,18 +166,15 @@ impl<'a> RegExp {
             ctx.create_ident_expr(SPAN, regexp, symbol_id, ReferenceFlags::read())
         };
 
-        let arguments = ArenaVec::from_array_in(
-            [
-                Argument::new_string_literal(SPAN, pattern_text, None, ctx),
-                Argument::new_string_literal(
-                    SPAN,
-                    Str::from_str_in(flags.to_inline_string().as_str(), ctx),
-                    None,
-                    ctx,
-                ),
-            ],
-            ctx,
-        );
+        let arguments = [
+            Argument::new_string_literal(SPAN, pattern_text, None, ctx),
+            Argument::new_string_literal(
+                SPAN,
+                Str::from_str_in(flags.to_inline_string().as_str(), ctx),
+                None,
+                ctx,
+            ),
+        ];
 
         *expr = Expression::new_new_expression(regexp.span, callee, NONE, arguments, ctx);
     }

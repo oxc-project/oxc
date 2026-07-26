@@ -28,7 +28,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
-use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith};
+use oxc_allocator::{ArenaBox, ReplaceWith};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -145,32 +145,19 @@ impl<'a> NullishCoalescingOperator {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
             // so the temporary variable can be injected in correct scope
             let id = binding.create_binding_pattern(ctx);
-            let param = FormalParameter::new(
-                SPAN,
-                ArenaVec::new_in(ctx),
-                id,
-                NONE,
-                NONE,
-                false,
-                None,
-                false,
-                false,
-                ctx,
-            );
+            let param =
+                FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
             let params = FormalParameters::new(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
-                ArenaVec::from_value_in(param, ctx),
+                [param],
                 NONE,
                 ctx,
             );
             let body = FunctionBody::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
-                ArenaVec::from_value_in(
-                    Statement::new_expression_statement(SPAN, new_expr, ctx),
-                    ctx,
-                ),
+                [],
+                [Statement::new_expression_statement(SPAN, new_expr, ctx)],
                 ctx,
             );
             let arrow_function =
@@ -188,14 +175,7 @@ impl<'a> NullishCoalescingOperator {
                     ctx,
                 );
             // `(x) => x;` -> `((x) => x)();`
-            new_expr = Expression::new_call_expression(
-                SPAN,
-                arrow_function,
-                NONE,
-                ArenaVec::new_in(ctx),
-                false,
-                ctx,
-            );
+            new_expr = Expression::new_call_expression(SPAN, arrow_function, NONE, [], false, ctx);
         } else {
             ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
         }

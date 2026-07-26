@@ -15,7 +15,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_ast::ast::*;
-use oxc_ast::builder::AstBuilder;
+use oxc_ast::builder::{AstBuilder, NONE};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -1056,8 +1056,7 @@ fn try_compile_function<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
-    // Check for suppressions that affect this function. Suppression errors are
-    // returned (not thrown), so they do NOT trigger CompileUnexpectedThrow.
+    // Check for suppressions that affect this function before entering the pipeline.
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
         if !affecting.is_empty() {
@@ -1075,7 +1074,6 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
-        source.fn_ast_span,
     )
 }
 
@@ -2120,10 +2118,10 @@ fn ox_build_function<'a>(
         codegen.generator,
         codegen.is_async,
         false,
-        None::<ArenaBox<TSTypeParameterDeclaration>>,
-        None::<ArenaBox<TSThisParameter>>,
+        NONE,
+        NONE,
         codegen.params.clone_in_with_semantic_ids(ast.allocator()),
-        None::<ArenaBox<TSTypeAnnotation>>,
+        NONE,
         Some(codegen.body.clone_in_with_semantic_ids(ast.allocator())),
         ast,
     )
@@ -2137,18 +2135,16 @@ fn ox_build_compiled_expression<'a>(
     original_kind: OriginalFnKind,
 ) -> Expression<'a> {
     match original_kind {
-        OriginalFnKind::ArrowFunctionExpression => {
-            Expression::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
-                SPAN,
-                false,
-                codegen.is_async,
-                None::<ArenaBox<TSTypeParameterDeclaration>>,
-                codegen.params.clone_in_with_semantic_ids(ast.allocator()),
-                None::<ArenaBox<TSTypeAnnotation>>,
-                codegen.body.clone_in_with_semantic_ids(ast.allocator()),
-                ast,
-            ))
-        }
+        OriginalFnKind::ArrowFunctionExpression => Expression::new_arrow_function_expression(
+            SPAN,
+            false,
+            codegen.is_async,
+            NONE,
+            codegen.params.clone_in_with_semantic_ids(ast.allocator()),
+            NONE,
+            codegen.body.clone_in_with_semantic_ids(ast.allocator()),
+            ast,
+        ),
         _ => Expression::FunctionExpression(ox_build_function(
             ast,
             codegen,
@@ -2218,18 +2214,18 @@ fn ox_build_gated_const_decl<'a>(
         SPAN,
         VariableDeclarationKind::Const,
         BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
-        None::<ArenaBox<TSTypeAnnotation>>,
+        NONE,
         Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
         false,
         ast,
     );
-    Statement::VariableDeclaration(VariableDeclaration::boxed(
+    Statement::new_variable_declaration(
         SPAN,
         VariableDeclarationKind::Const,
-        ArenaVec::from_value_in(declarator, ast),
+        [declarator],
         false,
         ast,
-    ))
+    )
 }
 
 /// The one visitor type behind every oxc-AST traversal of the transform phase,
@@ -2314,15 +2310,15 @@ impl<'a> OxcVisitor<'a, '_> {
                     Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
                     _ => unreachable!(),
                 };
-                *stmt = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
+                *stmt = Statement::new_export_named_declaration(
                     SPAN,
                     Some(decl),
-                    ArenaVec::new_in(ast),
+                    [],
                     None,
                     ImportOrExportKind::Value,
-                    None::<ArenaBox<WithClause>>,
+                    NONE,
                     ast,
-                ));
+                );
             } else {
                 *stmt = const_decl;
             }
@@ -2338,13 +2334,13 @@ impl<'a> OxcVisitor<'a, '_> {
                 *stmt = ox_build_gated_const_decl(ast, gating_expression, id.as_str());
                 *export_default_name = Some(id);
             } else {
-                *stmt = Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+                *stmt = Statement::new_export_default_declaration(
                     SPAN,
                     ExportDefaultDeclarationKind::from(
                         gating_expression.clone_in_with_semantic_ids(ast.allocator()),
                     ),
                     ast,
-                ));
+                );
             }
             *done = true;
             return true;
@@ -2382,10 +2378,10 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                         func.generator,
                         func.r#async,
                         false,
-                        None::<ArenaBox<TSTypeParameterDeclaration>>,
-                        None::<ArenaBox<TSThisParameter>>,
+                        NONE,
+                        NONE,
                         func.params.clone_in_with_semantic_ids(ast.allocator()),
-                        None::<ArenaBox<TSTypeAnnotation>>,
+                        NONE,
                         func.body.clone_in_with_semantic_ids(ast.allocator()),
                         ast,
                     );
@@ -2451,11 +2447,11 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
             && let Some(name) = export_default_name.take()
         {
             let ident = Expression::new_identifier(SPAN, name, self.ast);
-            let export = Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+            let export = Statement::new_export_default_declaration(
                 SPAN,
                 ExportDefaultDeclarationKind::from(ident),
                 self.ast,
-            ));
+            );
             // Find the const decl we just inserted (it has name `name`); insert after.
             let pos = stmts.iter().position(|s| {
                 matches!(s, Statement::VariableDeclaration(d)
@@ -2503,8 +2499,8 @@ fn ox_gating_call<'a>(ast: &AstBuilder<'a>, callee_name: &str) -> Expression<'a>
     Expression::new_call_expression(
         SPAN,
         Expression::new_identifier(SPAN, ox_atom(ast, callee_name), ast),
-        None::<ArenaBox<TSTypeParameterInstantiation>>,
-        ArenaVec::new_in(ast),
+        NONE,
+        [],
         false,
         ast,
     )
@@ -2745,7 +2741,7 @@ fn ox_add_imports_to_program<'a>(
                 Some(specifiers),
                 source,
                 None,
-                None::<ArenaBox<WithClause>>,
+                NONE,
                 ImportOrExportKind::Value,
                 ast,
             );
@@ -2760,25 +2756,12 @@ fn ox_add_imports_to_program<'a>(
                     BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, &spec.name), ast);
                 props.push(BindingProperty::new(SPAN, key, value, false, false, ast));
             }
-            let object_pattern = BindingPattern::new_object_pattern(
-                SPAN,
-                props,
-                None::<ArenaBox<BindingRestElement>>,
-                ast,
-            );
+            let object_pattern = BindingPattern::new_object_pattern(SPAN, props, NONE, ast);
             let require_call = Expression::new_call_expression(
                 SPAN,
                 Expression::new_identifier(SPAN, "require", ast),
-                None::<ArenaBox<TSTypeParameterInstantiation>>,
-                ArenaVec::from_value_in(
-                    Argument::from(Expression::new_string_literal(
-                        SPAN,
-                        ox_atom(ast, module_name),
-                        None,
-                        ast,
-                    )),
-                    ast,
-                ),
+                NONE,
+                [Argument::new_string_literal(SPAN, ox_atom(ast, module_name), None, ast)],
                 false,
                 ast,
             );
@@ -2786,7 +2769,7 @@ fn ox_add_imports_to_program<'a>(
                 SPAN,
                 VariableDeclarationKind::Const,
                 object_pattern,
-                None::<ArenaBox<TSTypeAnnotation>>,
+                NONE,
                 Some(require_call),
                 false,
                 ast,
@@ -2794,7 +2777,7 @@ fn ox_add_imports_to_program<'a>(
             let decl = VariableDeclaration::boxed(
                 SPAN,
                 VariableDeclarationKind::Const,
-                ArenaVec::from_value_in(declarator, ast),
+                [declarator],
                 false,
                 ast,
             );
@@ -2814,19 +2797,15 @@ fn ox_make_import_specifier<'a>(
     ast: &AstBuilder<'a>,
     spec: &super::imports::NonLocalImportSpecifier,
 ) -> ImportDeclarationSpecifier<'a> {
-    let imported = ModuleExportName::IdentifierName(IdentifierName::new(
-        SPAN,
-        ox_atom(ast, &spec.imported),
-        ast,
-    ));
+    let imported = ModuleExportName::new_identifier_name(SPAN, ox_atom(ast, &spec.imported), ast);
     let local = BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
-    ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier::boxed(
+    ImportDeclarationSpecifier::new_import_specifier(
         SPAN,
         imported,
         local,
         ImportOrExportKind::Value,
         ast,
-    ))
+    )
 }
 
 /// Whether an import declaration is a non-namespaced value import. Mirrors
@@ -2874,23 +2853,16 @@ pub fn compile_program<'a>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    let eslint_rules: Option<Vec<String>> =
-        if options.environment.validate_exhaustive_memoization_dependencies
-            && options.environment.validate_hooks_usage
-        {
-            // Don't check for ESLint suppressions if both validations are enabled
-            None
-        } else {
-            Some(options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
-            }))
-        };
+    let eslint_rules = options
+        .eslint_suppression_rules
+        .clone()
+        .unwrap_or_else(|| DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect());
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
         &program.comments,
         program.source_text,
-        eslint_rules.as_deref(),
+        Some(&eslint_rules),
         options.flow_suppressions,
     );
 

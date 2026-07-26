@@ -94,6 +94,17 @@ static SKIP_TEST_CASES: &[&str] = &[
     "language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue",
 ];
 
+static SKIP_MINIFIER_TEST_CASES: &[&str] = &[
+    // The minifier assumes no TDZ violations and no side effects from extending a class.
+    // See `oxc_minifier/docs/ASSUMPTIONS.md`.
+    "language/statements/class/name-binding/in-extends-expression-assigned.js",
+    "language/statements/class/name-binding/in-extends-expression-grouped.js",
+    "language/statements/class/definition/constructable-but-no-prototype.js",
+    "language/statements/class/definition/prototype-getter.js",
+    "language/statements/class/definition/prototype-setter.js",
+    "language/statements/class/subclass/superclass-arrow-function.js",
+];
+
 static SKIP_ESID: &[&str] = &["sec-privatefieldget", "sec-privatefieldset"];
 
 /// The JSON payload sent to the Node.js runtime server for each execution.
@@ -263,6 +274,10 @@ fn run_variants(
     // Unable to minify non-strict code, which may contain syntaxes the minifier does
     // not support (e.g. `with`).
     if file.meta.flags.contains(&TestFlag::NoStrict) {
+        return TestResult::Passed;
+    }
+
+    if SKIP_MINIFIER_TEST_CASES.contains(&test262_path) {
         return TestResult::Passed;
     }
 

@@ -138,11 +138,9 @@ impl Tool for FakeTool {
 
     fn get_code_actions_or_commands(
         &self,
-        uri: &Uri,
-        _range: &Range,
-        _context: &CodeActionContext,
+        params: &crate::CodeActionParams,
     ) -> Vec<CodeActionOrCommand> {
-        if uri.as_str().ends_with("code_action.config") {
+        if params.uri.as_str().ends_with("code_action.config") {
             return vec![CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Code Action title".to_string(),
                 kind: Some(CodeActionKind::QUICKFIX),

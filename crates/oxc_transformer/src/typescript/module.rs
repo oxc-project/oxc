@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
@@ -170,19 +170,16 @@ impl<'a> TypeScriptModule {
                     str_lit.lone_surrogates,
                     ctx,
                 );
-                let arguments = ArenaVec::from_value_in(Argument::StringLiteral(str_lit), ctx);
+                let argument = Argument::StringLiteral(str_lit);
                 (
                     VariableDeclarationKind::Const,
-                    Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
+                    Expression::new_call_expression(SPAN, callee, NONE, [argument], false, ctx),
                 )
             }
         };
-        let decls = ArenaVec::from_value_in(
-            VariableDeclarator::new(SPAN, kind, binding, NONE, Some(init), false, ctx),
-            ctx,
-        );
+        let decl = VariableDeclarator::new(SPAN, kind, binding, NONE, Some(init), false, ctx);
 
-        Some(Declaration::new_variable_declaration(SPAN, kind, decls, false, ctx))
+        Some(Declaration::new_variable_declaration(SPAN, kind, [decl], false, ctx))
     }
 
     #[expect(clippy::self_only_used_in_recursion)]

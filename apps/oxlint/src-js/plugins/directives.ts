@@ -6,7 +6,7 @@
  * - Oxlint: `oxlint-disable`, `oxlint-disable-line`, `oxlint-disable-next-line`, `oxlint-enable`
  *
  * The pattern matching mirrors the Rust implementation in
- * `crates/oxc_linter/src/disable_directives.rs` (`match_disable_directive`, `match_enable_directive`).
+ * `crates/oxc_linter/src/disable_directives.rs` (`match_directive`).
  * This ensures consistent behavior between the Rust linter and JS plugins.
  *
  * @see <https://oxc.rs/docs/guide/usage/linter/ignore-comments.html#inline-ignore-comments>
@@ -28,57 +28,54 @@ interface Directive {
   type: DirectiveType;
   node: Comment;
   value: string;
-  justification?: string;
+  justification: string;
 }
 
-const LABEL_PATTERN =
-  /^\s*(?<label>(?:eslint|oxlint)-(?:disable(?:(?:-next)?-line)?|enable))(?:\s|$)/u;
-const LINE_DIRECTIVE_PATTERN = /^(?:eslint|oxlint)-disable-(?:-next)?-line$/u;
+// Captures the whole directive label (e.g. `oxlint-disable-line`) and its type (`disable-line`)
+const LABEL_PATTERN = /^\s*((?:eslint|oxlint)-(disable(?:(?:-next)?-line)?|enable))(?:\s|$)/u;
 const JUSTIFICATION_SEP_PATTERN = /\s-{2,}\s/u;
 
-export function getDisableDirectives() {
+export function getDisableDirectives(): { problems: Problem[]; directives: Directive[] } {
   const problems: Problem[] = [];
   const directives: Directive[] = [];
 
-  getAllComments().forEach((comment) => {
-    if (comment.type === "Shebang") return;
+  const comments = getAllComments();
 
-    let match = LABEL_PATTERN.exec(comment.value);
-    if (!match?.groups?.label) return;
+  // Skip `Shebang` comment
+  let i = comments.length > 0 && comments[0].type === "Shebang" ? 1 : 0;
 
-    // Only some comment types are supported as line comments
-    if (comment.type === "Line" && LINE_DIRECTIVE_PATTERN.test(match.groups.label)) return;
+  for (; i < comments.length; i++) {
+    const comment = comments[i];
 
-    const { label } = match.groups;
+    const match = LABEL_PATTERN.exec(comment.value);
+    if (match === null) continue;
+
+    const label = match[1];
+    const type = match[2] as DirectiveType;
 
     // Validate directive does not span multiple lines
-    if (
-      (label === "eslint-disable-line" || label === "oxlint-disable-line") &&
-      comment.loc.start.line !== comment.loc.end.line
-    ) {
+    if (type === "disable-line" && comment.loc.start.line !== comment.loc.end.line) {
       problems.push({
         ruleId: null,
         message: `${label} comment should not span multiple lines.`,
         loc: comment.loc,
       });
-      return;
+      continue;
     }
 
+    // Split text after the directive into rule list and justification (`rules -- justification`)
     const rest = comment.value.slice(match[0].length).trim();
-    match = JUSTIFICATION_SEP_PATTERN.exec(rest);
+    const sepMatch = JUSTIFICATION_SEP_PATTERN.exec(rest);
 
-    const [value, justification] = match
-      ? [rest.slice(0, match.index).trim(), rest.slice(match.index + match[0].length).trim()]
-      : [rest, ""];
+    let value = rest;
+    let justification = "";
+    if (sepMatch !== null) {
+      value = rest.slice(0, sepMatch.index).trim();
+      justification = rest.slice(sepMatch.index + sepMatch[0].length).trim();
+    }
 
-    directives.push({
-      // oxlint- and eslint- are each 7 characters
-      type: label.slice(7) as DirectiveType,
-      node: comment,
-      value,
-      justification,
-    });
-  });
+    directives.push({ type, node: comment, value, justification });
+  }
 
   return { problems, directives };
 }

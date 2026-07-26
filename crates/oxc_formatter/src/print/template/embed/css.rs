@@ -150,7 +150,9 @@ pub(super) fn format_css_doc<'a>(
                     let has_comment = has_newline && {
                         let comments = f.context().comments();
                         let leading = comments.comments_before(expr.span().start);
-                        let trailing = comments.comments_before_character(expr.span().start, b'}');
+                        // Scan from the expression's END so a `}` inside its own source
+                        // (string, object, nested template) doesn't cut the lookup short.
+                        let trailing = comments.comments_before_character(expr.span().end, b'}');
                         !leading.is_empty() || !trailing.is_empty()
                     };
 

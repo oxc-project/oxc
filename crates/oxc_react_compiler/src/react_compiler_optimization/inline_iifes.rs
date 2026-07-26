@@ -40,7 +40,8 @@
 //!
 //! Analogous to TS `Inference/InlineImmediatelyInvokedFunctionExpressions.ts`.
 
-use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_str::format_ident;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -127,22 +128,25 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     inlined_functions.insert(callee_id);
 
                     // Capture the lvalue from the call instruction
-                    let call_lvalue = func.instructions[instr_id.index()].lvalue.clone();
+                    let call_lvalue = func.instructions[instr_id.index()].lvalue;
                     let block_terminal_id = func.body.blocks[&block_id].terminal.evaluation_order();
                     let block_terminal_span = func.body.blocks[&block_id].terminal.span().cloned();
                     let block_kind = func.body.blocks[&block_id].kind;
 
                     // Create a new block which will contain code following the IIFE call
                     let continuation_block_id = env.next_block_id();
-                    let continuation_instructions: Vec<InstructionId> =
-                        func.body.blocks[&block_id].instructions[ii + 1..].to_vec();
-                    let continuation_terminal = func.body.blocks[&block_id].terminal.clone();
+                    let continuation_instructions: ArenaVec<InstructionId> = ArenaVec::from_iter_in(
+                        func.body.blocks[&block_id].instructions[ii + 1..].iter().copied(),
+                        &env.allocator,
+                    );
+                    let continuation_terminal =
+                        func.body.blocks[&block_id].terminal.clone_in(env.allocator);
                     let continuation_block = BasicBlock {
                         id: continuation_block_id,
                         instructions: continuation_instructions,
                         kind: block_kind,
-                        phis: Vec::new(),
-                        preds: FxIndexSet::default(),
+                        phis: ArenaVec::new_in(&env.allocator),
+                        preds: ArenaOrderedSet::new_in(env.allocator),
                         terminal: continuation_terminal,
                     };
                     func.body.blocks.insert(continuation_block_id, continuation_block);
@@ -166,9 +170,9 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
 
                         // Take blocks and instructions from inner function
                         let inner_func = &mut env.functions[inner_func_id];
-                        let inner_blocks: Vec<(BlockId, BasicBlock)> =
+                        let inner_blocks: Vec<(BlockId, BasicBlock<'a>)> =
                             inner_func.body.blocks.drain(..).collect();
-                        let inner_instructions: Vec<Instruction> =
+                        let inner_instructions: Vec<Instruction<'a>> =
                             inner_func.instructions.drain(..).collect();
 
                         // Append inner instructions first, then remap block instruction IDs
@@ -189,9 +193,9 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                                 let load_instr = Instruction {
                                     id: EvaluationOrder::UNSET,
                                     span: *ret_span,
-                                    lvalue: call_lvalue.clone(),
+                                    lvalue: call_lvalue,
                                     value: InstructionValue::LoadLocal {
-                                        place: value.clone(),
+                                        place: *value,
                                         span: *ret_span,
                                     },
                                     effects: None,
@@ -215,7 +219,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         }
                     } else {
                         // Multi-return path: uses LabelTerminal
-                        let result = call_lvalue.clone();
+                        let result = call_lvalue;
 
                         // Set block terminal to Label
                         func.body.blocks.get_mut(&block_id).unwrap().terminal = Terminal::Label {
@@ -236,9 +240,9 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
 
                         // Take blocks and instructions from inner function
                         let inner_func = &mut env.functions[inner_func_id];
-                        let inner_blocks: Vec<(BlockId, BasicBlock)> =
+                        let inner_blocks: Vec<(BlockId, BasicBlock<'a>)> =
                             inner_func.body.blocks.drain(..).collect();
-                        let inner_instructions: Vec<Instruction> =
+                        let inner_instructions: Vec<Instruction<'a>> =
                             inner_func.instructions.drain(..).collect();
 
                         // Append inner instructions first, then remap block instruction IDs
@@ -292,10 +296,10 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
 
         // If terminals have changed then blocks may have become newly unreachable.
         // Re-run minification of the graph (incl reordering instruction ids).
-        func.body.blocks = get_reverse_postordered_blocks(&func.body);
+        func.body.blocks = get_reverse_postordered_blocks(&func.body, env.allocator);
         mark_instruction_ids(&mut func.body, &mut func.instructions);
         mark_predecessors(&mut func.body);
-        merge_consecutive_blocks(func, &mut env.functions);
+        merge_consecutive_blocks(func, &mut env.functions, env.allocator);
     }
 }
 
@@ -329,8 +333,8 @@ fn has_single_exit_return_terminal(func: &HirFunction<'_>) -> bool {
 /// * Replace the terminal with a Goto to <return_target>
 fn rewrite_block<'a>(
     env: &mut Environment<'a>,
-    instructions: &mut Vec<Instruction<'a>>,
-    block: &mut BasicBlock,
+    instructions: &mut ArenaVec<'a, Instruction<'a>>,
+    block: &mut BasicBlock<'a>,
     return_target: BlockId,
     return_value: &Place,
 ) {
@@ -341,8 +345,8 @@ fn rewrite_block<'a>(
             span: *ret_span,
             lvalue: store_lvalue,
             value: InstructionValue::StoreLocal {
-                lvalue: LValue { kind: InstructionKind::Reassign, place: return_value.clone() },
-                value: value.clone(),
+                lvalue: LValue { kind: InstructionKind::Reassign, place: *return_value },
+                value: *value,
                 span: *ret_span,
             },
             effects: None,
@@ -374,7 +378,7 @@ fn declare_temporary<'a>(
         span: GENERATED_SOURCE,
         lvalue: declare_lvalue,
         value: InstructionValue::DeclareLocal {
-            lvalue: LValue { place: result.clone(), kind: InstructionKind::Let },
+            lvalue: LValue { place: *result, kind: InstructionKind::Let },
             span: result.span,
         },
         effects: None,

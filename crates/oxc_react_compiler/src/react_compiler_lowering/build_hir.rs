@@ -15,6 +15,7 @@ use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 
 use oxc_allocator::CloneIn;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast as oxc;
 use oxc_ast::ast::BinaryOperator;
 use oxc_diagnostics::OxcDiagnostic;
@@ -85,14 +86,14 @@ fn lower_value_to_temporary<'a>(
     if let InstructionValue::LoadLocal { ref place, .. } = value {
         let ident = &builder.environment().identifiers[place.identifier];
         if ident.name.is_none() {
-            return Ok(place.clone());
+            return Ok(*place);
         }
     }
     let span = value.span().cloned();
     let place = build_temporary_place(builder, span);
     builder.push(Instruction {
         id: EvaluationOrder::UNSET,
-        lvalue: place.clone(),
+        lvalue: place,
         value,
         span,
         effects: None,
@@ -637,8 +638,10 @@ fn lower_inner<'a>(
         identifier_spans,
     );
 
+    let alloc = builder.environment().allocator;
+
     // Build context places from the captured refs
-    let mut context: Vec<Place> = Vec::new();
+    let mut context = ArenaVec::new_in(&alloc);
     for (&symbol_id, ctx_span) in &context_map {
         let identifier = builder.resolve_binding(scope.symbol_ident(symbol_id), symbol_id)?;
         context.push(Place {
@@ -650,7 +653,7 @@ fn lower_inner<'a>(
     }
 
     // Process parameters.
-    let mut hir_params: Vec<ParamPattern> = Vec::new();
+    let mut hir_params = ArenaVec::new_in(&alloc);
     for param in &params.items {
         if param.initializer.is_none()
             && let oxc::BindingPattern::BindingIdentifier(ident) = &param.pattern
@@ -711,7 +714,7 @@ fn lower_inner<'a>(
         let param_span = param.span;
         let place = build_temporary_place(&mut builder, Some(param_span));
         promote_temporary(&mut builder, place.identifier);
-        hir_params.push(ParamPattern::Place(place.clone()));
+        hir_params.push(ParamPattern::Place(place));
         let value = if let Some(initializer) = &param.initializer {
             lower_default_to_temp(&mut builder, param_span, initializer, place)?
         } else {
@@ -733,7 +736,7 @@ fn lower_inner<'a>(
     if let Some(rest) = &params.rest {
         let rest_span = rest.span;
         let place = build_temporary_place(&mut builder, Some(rest_span));
-        hir_params.push(ParamPattern::Spread(SpreadPattern { place: place.clone() }));
+        hir_params.push(ParamPattern::Spread(SpreadPattern { place }));
         lower_binding_assignment(
             &mut builder,
             rest_span,
@@ -745,7 +748,7 @@ fn lower_inner<'a>(
     }
 
     // Lower the body
-    let mut directives: Vec<Str<'a>> = Vec::new();
+    let mut directives = ArenaVec::new_in(&alloc);
     match body {
         FunctionBody::Expression(expr) => {
             let fallthrough = builder.reserve(BlockKind::Block);
@@ -762,7 +765,8 @@ fn lower_inner<'a>(
             );
         }
         FunctionBody::Block(block) => {
-            directives = block.directives.iter().map(|d| d.expression.value).collect();
+            directives =
+                ArenaVec::from_iter_in(block.directives.iter().map(|d| d.expression.value), &alloc);
             // A function body shares the function's scope (the scope cell lives on
             // the function node, not the block), so pass it as the scope override.
             lower_block_statement_with_scope(&mut builder, &block.statements, function_scope)?;
@@ -786,6 +790,7 @@ fn lower_inner<'a>(
 
     // Build the HIR
     let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
+    let instructions = ArenaVec::from_iter_in(instructions, &env.allocator);
 
     // Create the returns place
     let returns =
@@ -915,11 +920,7 @@ fn lower_member_expression_impl<'a>(
                 None => lower_expression_to_temporary(builder, &m.object)?,
             };
             let prop_literal = PropertyLiteral::String(m.property.name);
-            let value = InstructionValue::PropertyLoad {
-                object: object.clone(),
-                property: prop_literal,
-                span,
-            };
+            let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
@@ -935,11 +936,7 @@ fn lower_member_expression_impl<'a>(
             // A numeric computed index is treated as a PropertyLoad (matches TS).
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
-                let value = InstructionValue::PropertyLoad {
-                    object: object.clone(),
-                    property: prop_literal,
-                    span,
-                };
+                let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
@@ -947,11 +944,7 @@ fn lower_member_expression_impl<'a>(
                 });
             }
             let property = lower_expression_to_temporary(builder, &m.expression)?;
-            let value = InstructionValue::ComputedLoad {
-                object: object.clone(),
-                property: property.clone(),
-                span,
-            };
+            let value = InstructionValue::ComputedLoad { object, property, span };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
@@ -1093,11 +1086,7 @@ fn lower_member_expression_from_simple_target<'a>(
             let span = Some(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
             let prop_literal = PropertyLiteral::String(m.property.name);
-            let value = InstructionValue::PropertyLoad {
-                object: object.clone(),
-                property: prop_literal,
-                span,
-            };
+            let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
@@ -1109,11 +1098,7 @@ fn lower_member_expression_from_simple_target<'a>(
             let object = lower_expression_to_temporary(builder, &m.object)?;
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
-                let value = InstructionValue::PropertyLoad {
-                    object: object.clone(),
-                    property: prop_literal,
-                    span,
-                };
+                let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
@@ -1121,11 +1106,7 @@ fn lower_member_expression_from_simple_target<'a>(
                 });
             }
             let property = lower_expression_to_temporary(builder, &m.expression)?;
-            let value = InstructionValue::ComputedLoad {
-                object: object.clone(),
-                property: property.clone(),
-                span,
-            };
+            let value = InstructionValue::ComputedLoad { object, property, span };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
@@ -1155,8 +1136,9 @@ fn lower_member_expression_from_simple_target<'a>(
 fn lower_arguments<'a>(
     builder: &mut HirBuilder<'a, '_>,
     args: &[oxc::Argument<'a>],
-) -> Result<Vec<PlaceOrSpread>, OxcDiagnostic> {
-    let mut result = Vec::new();
+) -> Result<ArenaVec<'a, PlaceOrSpread>, OxcDiagnostic> {
+    let alloc = builder.environment().allocator;
+    let mut result = ArenaVec::new_in(&alloc);
     for arg in args {
         match arg {
             oxc::Argument::SpreadElement(spread) => {
@@ -1331,7 +1313,8 @@ fn lower_binding_assignment<'a>(
             }
         }
         oxc::BindingPattern::ArrayPattern(pattern) => {
-            let mut items: Vec<ArrayPatternElement> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut items = ArenaVec::new_in(&alloc);
             let mut followups: Vec<(Place, &oxc::BindingPattern)> = Vec::new();
 
             for element in &pattern.elements {
@@ -1360,7 +1343,7 @@ fn lower_binding_assignment<'a>(
                                 Some(IdentifierForAssignment::Global { .. }) => {
                                     let temp = build_temporary_place(builder, Some(id.span));
                                     promote_temporary(builder, temp.identifier);
-                                    items.push(ArrayPatternElement::Place(temp.clone()));
+                                    items.push(ArrayPatternElement::Place(temp));
                                     followups.push((temp, element.as_ref().unwrap()));
                                 }
                                 None => {
@@ -1370,14 +1353,14 @@ fn lower_binding_assignment<'a>(
                         } else {
                             let temp = build_temporary_place(builder, Some(id.span));
                             promote_temporary(builder, temp.identifier);
-                            items.push(ArrayPatternElement::Place(temp.clone()));
+                            items.push(ArrayPatternElement::Place(temp));
                             followups.push((temp, element.as_ref().unwrap()));
                         }
                     }
                     Some(other) => {
                         let temp = build_temporary_place(builder, Some(other.span()));
                         promote_temporary(builder, temp.identifier);
-                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        items.push(ArrayPatternElement::Place(temp));
                         followups.push((temp, other));
                     }
                 }
@@ -1407,7 +1390,7 @@ fn lower_binding_assignment<'a>(
                                     let temp = build_temporary_place(builder, Some(rest.span));
                                     promote_temporary(builder, temp.identifier);
                                     items.push(ArrayPatternElement::Spread(SpreadPattern {
-                                        place: temp.clone(),
+                                        place: temp,
                                     }));
                                     followups.push((temp, &rest.argument));
                                 }
@@ -1416,18 +1399,14 @@ fn lower_binding_assignment<'a>(
                         } else {
                             let temp = build_temporary_place(builder, Some(rest.span));
                             promote_temporary(builder, temp.identifier);
-                            items.push(ArrayPatternElement::Spread(SpreadPattern {
-                                place: temp.clone(),
-                            }));
+                            items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
                             followups.push((temp, &rest.argument));
                         }
                     }
                     _ => {
                         let temp = build_temporary_place(builder, Some(rest.span));
                         promote_temporary(builder, temp.identifier);
-                        items.push(ArrayPatternElement::Spread(SpreadPattern {
-                            place: temp.clone(),
-                        }));
+                        items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
                         followups.push((temp, &rest.argument));
                     }
                 }
@@ -1455,7 +1434,8 @@ fn lower_binding_assignment<'a>(
             Ok(Some(temporary))
         }
         oxc::BindingPattern::ObjectPattern(pattern) => {
-            let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut properties = ArenaVec::new_in(&alloc);
             let mut followups: Vec<(Place, &oxc::BindingPattern)> = Vec::new();
 
             for prop in &pattern.properties {
@@ -1512,7 +1492,7 @@ fn lower_binding_assignment<'a>(
                             properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
                                 key,
                                 property_type: ObjectPropertyType::Property,
-                                place: temp.clone(),
+                                place: temp,
                             }));
                             followups.push((temp, &prop.value));
                         }
@@ -1523,7 +1503,7 @@ fn lower_binding_assignment<'a>(
                         properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
                             key,
                             property_type: ObjectPropertyType::Property,
-                            place: temp.clone(),
+                            place: temp,
                         }));
                         followups.push((temp, other));
                     }
@@ -1563,7 +1543,7 @@ fn lower_binding_assignment<'a>(
                             let temp = build_temporary_place(builder, Some(rest.span));
                             promote_temporary(builder, temp.identifier);
                             properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
-                                place: temp.clone(),
+                                place: temp,
                             }));
                             followups.push((temp, &rest.argument));
                         }
@@ -1641,13 +1621,13 @@ fn lower_default_to_temp<'a>(
     let continuation_block = builder.reserve(builder.current_block_kind());
     let continuation_id = continuation_block.id;
 
-    let temp_consequent = temp.clone();
+    let temp_consequent = temp;
     let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
         let default_value = lower_reorderable_expression(builder, default)?;
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
+                lvalue: LValue { place: temp_consequent, kind: InstructionKind::Const },
                 value: default_value,
                 span: Some(pat_span),
             },
@@ -1660,14 +1640,14 @@ fn lower_default_to_temp<'a>(
         })
     });
 
-    let temp_alternate = temp.clone();
-    let value_alternate = value.clone();
+    let temp_alternate = temp;
+    let value_alternate = value;
     let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
-                value: value_alternate.clone(),
+                lvalue: LValue { place: temp_alternate, kind: InstructionKind::Const },
+                value: value_alternate,
                 span: Some(pat_span),
             },
         )?;
@@ -1894,7 +1874,8 @@ fn lower_assignment_target<'a>(
             lower_member_assignment_target(builder, span, kind, simple, value)
         }
         oxc::AssignmentTarget::ArrayAssignmentTarget(pattern) => {
-            let mut items: Vec<ArrayPatternElement> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut items = ArenaVec::new_in(&alloc);
             let mut followups: Vec<(Place, FollowupTarget)> = Vec::new();
 
             // force_temporaries: when kind is Reassign and any element is
@@ -1951,7 +1932,7 @@ fn lower_assignment_target<'a>(
                                 Some(IdentifierForAssignment::Global { .. }) => {
                                     let temp = build_temporary_place(builder, Some(id.span));
                                     promote_temporary(builder, temp.identifier);
-                                    items.push(ArrayPatternElement::Place(temp.clone()));
+                                    items.push(ArrayPatternElement::Place(temp));
                                     followups.push((
                                         temp,
                                         FollowupTarget::MaybeDefault(element.as_ref().unwrap()),
@@ -1964,7 +1945,7 @@ fn lower_assignment_target<'a>(
                         } else {
                             let temp = build_temporary_place(builder, Some(id.span));
                             promote_temporary(builder, temp.identifier);
-                            items.push(ArrayPatternElement::Place(temp.clone()));
+                            items.push(ArrayPatternElement::Place(temp));
                             followups.push((
                                 temp,
                                 FollowupTarget::MaybeDefault(element.as_ref().unwrap()),
@@ -1974,7 +1955,7 @@ fn lower_assignment_target<'a>(
                     Some(other) => {
                         let temp = build_temporary_place(builder, Some(other.span()));
                         promote_temporary(builder, temp.identifier);
-                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        items.push(ArrayPatternElement::Place(temp));
                         followups.push((temp, FollowupTarget::MaybeDefault(other)));
                     }
                 }
@@ -2005,7 +1986,7 @@ fn lower_assignment_target<'a>(
                                     let temp = build_temporary_place(builder, Some(rest.span));
                                     promote_temporary(builder, temp.identifier);
                                     items.push(ArrayPatternElement::Spread(SpreadPattern {
-                                        place: temp.clone(),
+                                        place: temp,
                                     }));
                                     followups.push((temp, FollowupTarget::Target(&rest.target)));
                                 }
@@ -2014,18 +1995,14 @@ fn lower_assignment_target<'a>(
                         } else {
                             let temp = build_temporary_place(builder, Some(rest.span));
                             promote_temporary(builder, temp.identifier);
-                            items.push(ArrayPatternElement::Spread(SpreadPattern {
-                                place: temp.clone(),
-                            }));
+                            items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
                             followups.push((temp, FollowupTarget::Target(&rest.target)));
                         }
                     }
                     _ => {
                         let temp = build_temporary_place(builder, Some(rest.span));
                         promote_temporary(builder, temp.identifier);
-                        items.push(ArrayPatternElement::Spread(SpreadPattern {
-                            place: temp.clone(),
-                        }));
+                        items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
                         followups.push((temp, FollowupTarget::Target(&rest.target)));
                     }
                 }
@@ -2046,7 +2023,8 @@ fn lower_assignment_target<'a>(
             Ok(Some(temporary))
         }
         oxc::AssignmentTarget::ObjectAssignmentTarget(pattern) => {
-            let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut properties = ArenaVec::new_in(&alloc);
             let mut followups: Vec<(Place, FollowupTarget)> = Vec::new();
 
             let force_temporaries = if kind == InstructionKind::Reassign {
@@ -2106,7 +2084,7 @@ fn lower_assignment_target<'a>(
                             properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
                                 key,
                                 property_type: ObjectPropertyType::Property,
-                                place: temp.clone(),
+                                place: temp,
                             }));
                             followups.push((
                                 temp,
@@ -2157,7 +2135,7 @@ fn lower_assignment_target<'a>(
                             properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
                                 key,
                                 property_type: ObjectPropertyType::Property,
-                                place: temp.clone(),
+                                place: temp,
                             }));
                             followups.push((temp, FollowupTarget::Identifier(id)));
                         }
@@ -2216,7 +2194,7 @@ fn lower_assignment_target<'a>(
                                         ObjectProperty {
                                             key,
                                             property_type: ObjectPropertyType::Property,
-                                            place: temp.clone(),
+                                            place: temp,
                                         },
                                     ));
                                     followups
@@ -2229,7 +2207,7 @@ fn lower_assignment_target<'a>(
                                 properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
                                     key,
                                     property_type: ObjectPropertyType::Property,
-                                    place: temp.clone(),
+                                    place: temp,
                                 }));
                                 followups.push((temp, FollowupTarget::MaybeDefault(other)));
                             }
@@ -2272,7 +2250,7 @@ fn lower_assignment_target<'a>(
                             let temp = build_temporary_place(builder, Some(rest.span));
                             promote_temporary(builder, temp.identifier);
                             properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
-                                place: temp.clone(),
+                                place: temp,
                             }));
                             followups.push((temp, FollowupTarget::Target(&rest.target)));
                         }
@@ -2479,13 +2457,13 @@ fn lower_assignment_target_default<'a>(
     let continuation_block = builder.reserve(builder.current_block_kind());
     let continuation_id = continuation_block.id;
 
-    let temp_consequent = temp.clone();
+    let temp_consequent = temp;
     let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
         let default_value = lower_reorderable_expression(builder, default)?;
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
+                lvalue: LValue { place: temp_consequent, kind: InstructionKind::Const },
                 value: default_value,
                 span: Some(span),
             },
@@ -2498,14 +2476,14 @@ fn lower_assignment_target_default<'a>(
         })
     });
 
-    let temp_alternate = temp.clone();
-    let value_alternate = value.clone();
+    let temp_alternate = temp;
+    let value_alternate = value;
     let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
-                value: value_alternate.clone(),
+                lvalue: LValue { place: temp_alternate, kind: InstructionKind::Const },
+                value: value_alternate,
                 span: Some(span),
             },
         )?;
@@ -2678,7 +2656,7 @@ fn lower_optional_member_expression_impl<'a>(
             lower_value_to_temporary(
                 builder,
                 InstructionValue::StoreLocal {
-                    lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                    lvalue: LValue { kind: InstructionKind::Const, place },
                     value: temp,
                     span,
                 },
@@ -2716,7 +2694,7 @@ fn lower_optional_member_expression_impl<'a>(
                 object = Some(lower_expression_to_temporary(builder, other)?);
             }
         }
-        let test_place = object.as_ref().unwrap().clone();
+        let test_place = *object.as_ref().unwrap();
         Ok(Terminal::Branch {
             test: test_place,
             consequent: consequent.id,
@@ -2731,12 +2709,12 @@ fn lower_optional_member_expression_impl<'a>(
 
     // Block to evaluate if the receiver is non-null/undefined.
     builder.try_enter_reserved(consequent, |builder| {
-        let lowered = lower_member_expression_impl(builder, member, Some(obj.clone()))?;
+        let lowered = lower_member_expression_impl(builder, member, Some(obj))?;
         let temp = lower_value_to_temporary(builder, lowered.value)?;
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                lvalue: LValue { kind: InstructionKind::Const, place },
                 value: temp,
                 span,
             },
@@ -2787,7 +2765,7 @@ fn lower_optional_call_expression_impl<'a>(
             lower_value_to_temporary(
                 builder,
                 InstructionValue::StoreLocal {
-                    lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                    lvalue: LValue { kind: InstructionKind::Const, place },
                     value: temp,
                     span,
                 },
@@ -2845,8 +2823,8 @@ fn lower_optional_call_expression_impl<'a>(
         }
 
         let test_place = match callee_info.as_ref().unwrap() {
-            CalleeInfo::CallExpression { callee } => callee.clone(),
-            CalleeInfo::MethodCall { property, .. } => property.clone(),
+            CalleeInfo::CallExpression { callee } => *callee,
+            CalleeInfo::MethodCall { property, .. } => *property,
         };
 
         Ok(Terminal::Branch {
@@ -2868,8 +2846,8 @@ fn lower_optional_call_expression_impl<'a>(
             CalleeInfo::CallExpression { callee } => {
                 builder.push(Instruction {
                     id: EvaluationOrder::UNSET,
-                    lvalue: temp.clone(),
-                    value: InstructionValue::CallExpression { callee: callee.clone(), args, span },
+                    lvalue: temp,
+                    value: InstructionValue::CallExpression { callee: *callee, args, span },
                     span,
                     effects: None,
                 });
@@ -2877,10 +2855,10 @@ fn lower_optional_call_expression_impl<'a>(
             CalleeInfo::MethodCall { receiver, property } => {
                 builder.push(Instruction {
                     id: EvaluationOrder::UNSET,
-                    lvalue: temp.clone(),
+                    lvalue: temp,
                     value: InstructionValue::MethodCall {
-                        receiver: receiver.clone(),
-                        property: property.clone(),
+                        receiver: *receiver,
+                        property: *property,
                         args,
                         span,
                     },
@@ -2893,7 +2871,7 @@ fn lower_optional_call_expression_impl<'a>(
         lower_value_to_temporary(
             builder,
             InstructionValue::StoreLocal {
-                lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                lvalue: LValue { kind: InstructionKind::Const, place },
                 value: temp,
                 span,
             },
@@ -2917,7 +2895,7 @@ fn lower_optional_call_expression_impl<'a>(
         continuation_block,
     );
 
-    Ok(InstructionValue::LoadLocal { place: place.clone(), span: place.span })
+    Ok(InstructionValue::LoadLocal { place, span: place.span })
 }
 
 // =============================================================================
@@ -3475,8 +3453,8 @@ fn lower_expression<'a>(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
-                        value: left_place.clone(),
+                        lvalue: LValue { kind: InstructionKind::Const, place },
+                        value: left_place,
                         span: left_place.span,
                     },
                 )?;
@@ -3494,7 +3472,7 @@ fn lower_expression<'a>(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                        lvalue: LValue { kind: InstructionKind::Const, place },
                         value: right,
                         span: right_span,
                     },
@@ -3523,7 +3501,7 @@ fn lower_expression<'a>(
             let left_value = lower_expression_to_temporary(builder, &logical.left)?;
             builder.push(Instruction {
                 id: EvaluationOrder::UNSET,
-                lvalue: left_place.clone(),
+                lvalue: left_place,
                 value: InstructionValue::LoadLocal { place: left_value, span },
                 effects: None,
                 span,
@@ -3541,7 +3519,7 @@ fn lower_expression<'a>(
                 continuation_block,
             );
 
-            Ok(InstructionValue::LoadLocal { place: place.clone(), span: place.span })
+            Ok(InstructionValue::LoadLocal { place, span: place.span })
         }
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_)
@@ -3577,7 +3555,7 @@ fn lower_expression<'a>(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                        lvalue: LValue { kind: InstructionKind::Const, place },
                         value: consequent,
                         span,
                     },
@@ -3597,7 +3575,7 @@ fn lower_expression<'a>(
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
-                        lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                        lvalue: LValue { kind: InstructionKind::Const, place },
                         value: alternate,
                         span,
                     },
@@ -3634,7 +3612,7 @@ fn lower_expression<'a>(
                 continuation_block,
             );
 
-            Ok(InstructionValue::LoadLocal { place: place.clone(), span: place.span })
+            Ok(InstructionValue::LoadLocal { place, span: place.span })
         }
         oxc::Expression::SequenceExpression(seq) => {
             let span = Some(seq.span);
@@ -3661,7 +3639,7 @@ fn lower_expression<'a>(
                     lower_value_to_temporary(
                         builder,
                         InstructionValue::StoreLocal {
-                            lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
+                            lvalue: LValue { kind: InstructionKind::Const, place },
                             value: last,
                             span,
                         },
@@ -3694,13 +3672,15 @@ fn lower_expression<'a>(
         }
         oxc::Expression::TemplateLiteral(tmpl) => {
             let span = Some(tmpl.span);
+            let alloc = builder.environment().allocator;
             let subexprs: Vec<Place> = tmpl
                 .expressions
                 .iter()
                 .map(|e| lower_expression_to_temporary(builder, e))
                 .collect::<Result<Vec<_>, _>>()?;
-            let quasis: Vec<TemplateQuasi> =
-                tmpl.quasis.iter().map(template_quasi_from_oxc).collect();
+            let subexprs = ArenaVec::from_iter_in(subexprs, &alloc);
+            let quasis =
+                ArenaVec::from_iter_in(tmpl.quasis.iter().map(template_quasi_from_oxc), &alloc);
             Ok(InstructionValue::TemplateLiteral { subexprs, quasis, span })
         }
         oxc::Expression::TaggedTemplateExpression(tagged) => {
@@ -3726,14 +3706,18 @@ fn lower_expression<'a>(
             // Evaluation order: the tag is evaluated first, then each interpolated
             // subexpression left-to-right.
             let tag = lower_expression_to_temporary(builder, &tagged.tag)?;
+            let alloc = builder.environment().allocator;
             let subexprs: Vec<Place> = tagged
                 .quasi
                 .expressions
                 .iter()
                 .map(|e| lower_expression_to_temporary(builder, e))
                 .collect::<Result<Vec<_>, _>>()?;
-            let quasis: Vec<TemplateQuasi> =
-                tagged.quasi.quasis.iter().map(template_quasi_from_oxc).collect();
+            let subexprs = ArenaVec::from_iter_in(subexprs, &alloc);
+            let quasis = ArenaVec::from_iter_in(
+                tagged.quasi.quasis.iter().map(template_quasi_from_oxc),
+                &alloc,
+            );
             Ok(InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, span })
         }
         oxc::Expression::AwaitExpression(await_expr) => {
@@ -3804,7 +3788,8 @@ fn lower_expression<'a>(
             // the keyword span, matching Babel's `Import` node span.
             let import_keyword_span = Some(oxc_span::Span::new(imp.span.start, imp.span.start + 6));
             let callee = lower_import_keyword_to_temporary(builder, &import_keyword_span)?;
-            let mut args: Vec<PlaceOrSpread> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut args = ArenaVec::new_in(&alloc);
             let source = lower_expression_to_temporary(builder, &imp.source)?;
             args.push(PlaceOrSpread::Place(source));
             if let Some(options) = &imp.options {
@@ -3857,7 +3842,7 @@ fn lower_expression<'a>(
                         builder,
                         InstructionValue::BinaryExpression {
                             operator: binary_op,
-                            left: prev_value.clone(),
+                            left: prev_value,
                             right: one,
                             span: member_span,
                         },
@@ -3889,10 +3874,7 @@ fn lower_expression<'a>(
 
                     // Return previous for postfix, newValuePlace for prefix
                     let result_place = if update.prefix { new_value_place } else { prev_value };
-                    Ok(InstructionValue::LoadLocal {
-                        place: result_place.clone(),
-                        span: result_place.span,
-                    })
+                    Ok(InstructionValue::LoadLocal { place: result_place, span: result_place.span })
                 }
                 oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                     let symbol = builder.scope().resolve_reference(ident);
@@ -4020,7 +4002,8 @@ fn lower_expression<'a>(
         }
         oxc::Expression::ObjectExpression(obj) => {
             let span = Some(obj.span);
-            let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut properties = ArenaVec::new_in(&alloc);
             for prop in &obj.properties {
                 match prop {
                     oxc::ObjectPropertyKind::ObjectProperty(p) => {
@@ -4058,7 +4041,8 @@ fn lower_expression<'a>(
         }
         oxc::Expression::ArrayExpression(arr) => {
             let span = Some(arr.span);
-            let mut elements: Vec<ArrayElement> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut elements = ArenaVec::new_in(&alloc);
             for element in &arr.elements {
                 match element {
                     oxc::ArrayExpressionElement::Elision(_) => {
@@ -4147,28 +4131,22 @@ fn lower_assignment_expression<'a>(
                             let temp = lower_value_to_temporary(
                                 builder,
                                 InstructionValue::StoreContext {
-                                    lvalue: LValue {
-                                        kind: InstructionKind::Reassign,
-                                        place: place.clone(),
-                                    },
+                                    lvalue: LValue { kind: InstructionKind::Reassign, place },
                                     value: right,
                                     span: place.span,
                                 },
                             )?;
-                            Ok(InstructionValue::LoadLocal { place: temp.clone(), span: temp.span })
+                            Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
                         } else {
                             let temp = lower_value_to_temporary(
                                 builder,
                                 InstructionValue::StoreLocal {
-                                    lvalue: LValue {
-                                        kind: InstructionKind::Reassign,
-                                        place: place.clone(),
-                                    },
+                                    lvalue: LValue { kind: InstructionKind::Reassign, place },
                                     value: right,
                                     span: place.span,
                                 },
                             )?;
-                            Ok(InstructionValue::LoadLocal { place: temp.clone(), span: temp.span })
+                            Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
                         }
                     }
                     _ => {
@@ -4181,7 +4159,7 @@ fn lower_assignment_expression<'a>(
                                 span: Some(ident_span),
                             },
                         )?;
-                        Ok(InstructionValue::LoadLocal { place: temp.clone(), span: temp.span })
+                        Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
                     }
                 }
             }
@@ -4248,7 +4226,7 @@ fn lower_assignment_expression<'a>(
                     }
                     _ => unreachable!(),
                 };
-                Ok(InstructionValue::LoadLocal { place: temp.clone(), span: temp.span })
+                Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
             }
             _ => {
                 // Destructuring assignment
@@ -4258,13 +4236,11 @@ fn lower_assignment_expression<'a>(
                     assign.left.span(),
                     InstructionKind::Reassign,
                     &assign.left,
-                    right.clone(),
+                    right,
                     AssignmentStyle::Destructure,
                 )?;
                 match result {
-                    Some(place) => {
-                        Ok(InstructionValue::LoadLocal { place: place.clone(), span: place.span })
-                    }
+                    Some(place) => Ok(InstructionValue::LoadLocal { place, span: place.span }),
                     None => Ok(InstructionValue::LoadLocal { place: right, span }),
                 }
             }
@@ -4333,10 +4309,7 @@ fn lower_assignment_expression<'a>(
                             lower_value_to_temporary(
                                 builder,
                                 InstructionValue::StoreContext {
-                                    lvalue: LValue {
-                                        kind: InstructionKind::Reassign,
-                                        place: place.clone(),
-                                    },
+                                    lvalue: LValue { kind: InstructionKind::Reassign, place },
                                     value: binary_place,
                                     span,
                                 },
@@ -4346,10 +4319,7 @@ fn lower_assignment_expression<'a>(
                             lower_value_to_temporary(
                                 builder,
                                 InstructionValue::StoreLocal {
-                                    lvalue: LValue {
-                                        kind: InstructionKind::Reassign,
-                                        place: place.clone(),
-                                    },
+                                    lvalue: LValue { kind: InstructionKind::Reassign, place },
                                     value: binary_place,
                                     span,
                                 },
@@ -4363,7 +4333,7 @@ fn lower_assignment_expression<'a>(
                             builder,
                             InstructionValue::StoreGlobal { name, value: binary_place, span },
                         )?;
-                        Ok(InstructionValue::LoadLocal { place: temp.clone(), span: temp.span })
+                        Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
                     }
                 }
             }
@@ -4432,7 +4402,8 @@ fn lower_jsx_element_expr<'a>(
     let tag = lower_jsx_element_name(builder, &jsx_element.opening_element.name)?;
 
     // Lower attributes (props)
-    let mut props: Vec<JsxAttribute> = Vec::new();
+    let alloc = builder.environment().allocator;
+    let mut props = ArenaVec::new_in(&alloc);
     for attr_item in &jsx_element.opening_element.attributes {
         match attr_item {
             oxc::JSXAttributeItem::SpreadAttribute(spread) => {
@@ -4597,14 +4568,16 @@ fn lower_jsx_element_expr<'a>(
     }
 
     // Lower children
-    let children: Vec<Place> = jsx_element
-        .children
-        .iter()
-        .map(|child| lower_jsx_element(builder, child))
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .flatten()
-        .collect();
+    let children = ArenaVec::from_iter_in(
+        jsx_element
+            .children
+            .iter()
+            .map(|child| lower_jsx_element(builder, child))
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .flatten(),
+        &alloc,
+    );
 
     if is_fbt {
         builder.fbt_depth -= 1;
@@ -4629,14 +4602,17 @@ fn lower_jsx_fragment_expr<'a>(
     let span = Some(jsx_fragment.span);
 
     // Lower children
-    let children: Vec<Place> = jsx_fragment
-        .children
-        .iter()
-        .map(|child| lower_jsx_element(builder, child))
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .flatten()
-        .collect();
+    let alloc = builder.environment().allocator;
+    let children = ArenaVec::from_iter_in(
+        jsx_fragment
+            .children
+            .iter()
+            .map(|child| lower_jsx_element(builder, child))
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .flatten(),
+        &alloc,
+    );
 
     Ok(InstructionValue::JsxFragment { children, span })
 }
@@ -5913,7 +5889,7 @@ fn lower_statement<'a>(
             )?;
 
             let assign_result =
-                lower_for_in_of_left(builder, &for_in.left, left_span, next_property.clone())?;
+                lower_for_in_of_left(builder, &for_in.left, left_span, next_property)?;
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(next_property);
             let test = lower_value_to_temporary(
@@ -5979,7 +5955,7 @@ fn lower_statement<'a>(
             // Init block: GetIterator, goto test
             let iterator = lower_value_to_temporary(
                 builder,
-                InstructionValue::GetIterator { collection: value.clone(), span: value.span },
+                InstructionValue::GetIterator { collection: value, span: value.span },
             )?;
             builder.terminate_with_continuation(
                 Terminal::Goto {
@@ -6003,7 +5979,7 @@ fn lower_statement<'a>(
             )?;
 
             let assign_result =
-                lower_for_in_of_left(builder, &for_of.left, left_span, advance_iterator.clone())?;
+                lower_for_in_of_left(builder, &for_of.left, left_span, advance_iterator)?;
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(advance_iterator);
             let test = lower_value_to_temporary(
@@ -6030,7 +6006,8 @@ fn lower_statement<'a>(
             // Iterate through cases in reverse order so that previous blocks can
             // fallthrough to successors
             let mut fallthrough = continuation_id;
-            let mut cases: Vec<Case> = Vec::new();
+            let alloc = builder.environment().allocator;
+            let mut cases = ArenaVec::new_in(&alloc);
             let mut has_default = false;
 
             for ii in (0..switch_stmt.cases.len()).rev() {
@@ -6157,7 +6134,7 @@ fn lower_statement<'a>(
                     lower_value_to_temporary(
                         builder,
                         InstructionValue::DeclareLocal {
-                            lvalue: LValue { kind: InstructionKind::Catch, place: place.clone() },
+                            lvalue: LValue { kind: InstructionKind::Catch, place },
                             span: param_span,
                         },
                     )?;
@@ -6168,7 +6145,7 @@ fn lower_statement<'a>(
             };
 
             // Create the handler (catch) block
-            let handler_binding_for_block = handler_binding_info.clone();
+            let handler_binding_for_block = handler_binding_info;
             let handler_span = handler_clause.span;
             // Use the catch param's span for the assignment, matching TS: handlerBinding.path.node.span
             let handler_param_span = handler_clause.param.as_ref().map(|p| p.pattern.span());
@@ -6179,7 +6156,7 @@ fn lower_statement<'a>(
                         handler_param_span.unwrap_or(handler_span),
                         InstructionKind::Catch,
                         pattern,
-                        place.clone(),
+                        *place,
                         AssignmentStyle::Assignment,
                     )?;
                 }

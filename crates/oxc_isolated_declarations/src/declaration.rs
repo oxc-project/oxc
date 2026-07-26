@@ -121,7 +121,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.scope.enter_scope(ScopeFlags::TsModuleBlock, &Cell::default());
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
-        TSModuleBlock::boxed(SPAN, ArenaVec::new_in(self), stmts, self)
+        TSModuleBlock::boxed(SPAN, [], stmts, self)
     }
 
     pub(crate) fn transform_ts_module_declaration(

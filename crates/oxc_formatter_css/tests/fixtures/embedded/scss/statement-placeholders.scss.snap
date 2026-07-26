@@ -25,6 +25,10 @@ html {
 
 `PLACEHOLDER-8`
 
+:disabled {
+  cursor: not-allowed;
+}
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -51,6 +55,10 @@ html {
 
 `PLACEHOLDER-8`
 
+:disabled {
+  cursor: not-allowed;
+}
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -75,5 +83,9 @@ html {
 }
 
 `PLACEHOLDER-8`
+
+:disabled {
+  cursor: not-allowed;
+}
 
 ===================== End =====================

@@ -62,6 +62,7 @@ pub(crate) mod eslint {
     pub mod getter_return;
     pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
+    pub mod id_denylist;
     pub mod id_length;
     pub mod id_match;
     pub mod init_declarations;
@@ -671,6 +672,7 @@ pub(crate) mod oxc {
     pub mod bad_bitwise_operator;
     pub mod bad_char_at_comparison;
     pub mod bad_comparison_sequence;
+    pub mod bad_match_all_arg;
     pub mod bad_min_max_func;
     pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;
@@ -845,6 +847,7 @@ pub(crate) mod vitest {
 /// <https://github.com/eslint-community/eslint-plugin-n>
 pub(crate) mod node {
     pub mod callback_return;
+    pub mod exports_style;
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
@@ -853,6 +856,7 @@ pub(crate) mod node {
     pub mod no_path_concat;
     pub mod no_process_env;
     pub mod no_sync;
+    pub mod no_top_level_await;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>

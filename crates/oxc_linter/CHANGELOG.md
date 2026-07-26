@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.75.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- dd18383 linter/node: Implement no-top-level-await rule (#24634) (Connor Shea)
+- 16a65f2 linter/react: Implement function-component-definition rule (#24471) (Cole Ellison)
+- 7f1f585 linter: Reuse `jest/padding-around-test-blocks` for `vitest/padding-around-test-blocks` (#24519) (Mikhail Baev)
+- 99978a8 linter/import/consistent-type-specifier-style: Support `prefer-top-level-if-only-type-imports` option (#24502) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0184ad6 linter/unicorn/no-useless-undefined: Preserve valid parameter defaults (#24686) (camc314)
+- 8694167 linter/eslint/prefer-destructuring: Handle typed declarations (#24616) (camc314)
+- 477cf0f linter/eslint/no-throw-literal: Handle assigned errors (#24561) (Cole Ellison)
+- ac9200a linter: Detect React components from returned JSX (#24521) (camc314)
+- c0a6522 linter/eslint/no-useless-computed-key: Allow TS syntax in computed keys (#24524) (Cole Ellison)
+
+### ⚡ Performance
+
+- 346eed1 linter/unicorn/prefer-event-target: Only run on `Class` and `NewExpression` nodes (#24685) (Mikhail Baev)
+
+### 📚 Documentation
+
+- e6f7174 linter/valid-expect: Fix correct example being identical to incorrect one (#24468) (mkan0141)
+
 ## [1.74.0] - 2026-07-13
 
 ### 🚀 Features

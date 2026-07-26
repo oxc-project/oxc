@@ -3,13 +3,10 @@ mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
 mod url_encoding;
-mod value;
-mod value_type;
 
+pub use crate::{ConstantValue, DetermineValueType, ValueType};
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
-pub use value::ConstantValue;
-pub use value_type::{DetermineValueType, ValueType};
 
 use std::borrow::Cow;
 

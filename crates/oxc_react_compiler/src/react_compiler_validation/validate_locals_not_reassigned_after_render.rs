@@ -122,7 +122,7 @@ fn get_context_reassignment(
                             if let Some(reassignment_place) =
                                 reassigning_functions.get(&context_place.identifier)
                             {
-                                reassignment = Some(reassignment_place.clone());
+                                reassignment = Some(*reassignment_place);
                                 break;
                             }
                         }
@@ -151,24 +151,22 @@ fn get_context_reassignment(
                         } else {
                             // Propagate reassignment info on the lvalue
                             reassigning_functions
-                                .insert(instr.lvalue.identifier, reassignment_place.clone());
+                                .insert(instr.lvalue.identifier, *reassignment_place);
                         }
                     }
                 }
 
                 InstructionValue::StoreLocal { lvalue, value, .. } => {
                     if let Some(reassignment_place) = reassigning_functions.get(&value.identifier) {
-                        let reassignment_place = reassignment_place.clone();
-                        reassigning_functions
-                            .insert(lvalue.place.identifier, reassignment_place.clone());
+                        let reassignment_place = *reassignment_place;
+                        reassigning_functions.insert(lvalue.place.identifier, reassignment_place);
                         reassigning_functions.insert(instr.lvalue.identifier, reassignment_place);
                     }
                 }
 
                 InstructionValue::LoadLocal { place, .. } => {
                     if let Some(reassignment_place) = reassigning_functions.get(&place.identifier) {
-                        reassigning_functions
-                            .insert(instr.lvalue.identifier, reassignment_place.clone());
+                        reassigning_functions.insert(instr.lvalue.identifier, *reassignment_place);
                     }
                 }
 
@@ -184,7 +182,7 @@ fn get_context_reassignment(
                     if is_function_expression
                         && context_variables.contains(&lvalue.place.identifier)
                     {
-                        return Some(lvalue.place.clone());
+                        return Some(lvalue.place);
                     }
 
                     // In the outer function, track context variables
@@ -194,9 +192,8 @@ fn get_context_reassignment(
 
                     // Propagate reassigning function info through StoreContext
                     if let Some(reassignment_place) = reassigning_functions.get(&value.identifier) {
-                        let reassignment_place = reassignment_place.clone();
-                        reassigning_functions
-                            .insert(lvalue.place.identifier, reassignment_place.clone());
+                        let reassignment_place = *reassignment_place;
+                        reassigning_functions.insert(lvalue.place.identifier, reassignment_place);
                         reassigning_functions.insert(instr.lvalue.identifier, reassignment_place);
                     }
                 }
@@ -208,21 +205,21 @@ fn get_context_reassignment(
                     let operands: PlaceList = match &instr.value {
                         InstructionValue::CallExpression { callee, .. } => {
                             if env.has_no_alias_signature(callee.identifier) {
-                                smallvec![callee.clone()]
+                                smallvec![*callee]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
                         }
                         InstructionValue::MethodCall { receiver, property, .. } => {
                             if env.has_no_alias_signature(property.identifier) {
-                                smallvec![receiver.clone(), property.clone()]
+                                smallvec![*receiver, *property]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
                         }
                         InstructionValue::TaggedTemplateExpression { tag, .. } => {
                             if env.has_no_alias_signature(tag.identifier) {
-                                smallvec![tag.clone()]
+                                smallvec![*tag]
                             } else {
                                 each_instruction_value_operand(&instr.value, env)
                             }
@@ -249,8 +246,7 @@ fn get_context_reassignment(
                                 // If the operand is not frozen but does reassign, then the
                                 // lvalues of the instruction could also be reassigning
                                 for lvalue_id in each_instruction_lvalue_ids(instr) {
-                                    reassigning_functions
-                                        .insert(lvalue_id, reassignment_place.clone());
+                                    reassigning_functions.insert(lvalue_id, reassignment_place);
                                 }
                             }
                         }
@@ -262,7 +258,7 @@ fn get_context_reassignment(
         // Check terminal operands for reassigning functions
         for operand in each_terminal_operand(&block.terminal) {
             if let Some(reassignment_place) = reassigning_functions.get(&operand.identifier) {
-                return Some(reassignment_place.clone());
+                return Some(*reassignment_place);
             }
         }
     }

@@ -27,6 +27,11 @@ pub trait FixtureFormatter {
     /// The typed format-option struct for this language.
     type Options: Clone;
 
+    /// When `true` (default), every fixture also asserts idempotency:
+    /// formatting the first pass's output must reproduce it byte-for-byte.
+    /// Opt out only while known non-idempotent fixtures are being fixed.
+    const CHECK_IDEMPOTENCY: bool = true;
+
     /// Build typed options from a parsed `options.json` fragment.
     fn parse_options(json: &OptionSet) -> Self::Options;
 
@@ -140,6 +145,21 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
 
         let options = F::parse_options(&option_json);
         let formatted = F::format(source_text, path, &options);
+
+        // Idempotency: formatting the formatter's own output must be a no-op.
+        if F::CHECK_IDEMPOTENCY {
+            let reformatted = F::format(&formatted, path, &options);
+            assert_eq!(
+                reformatted,
+                formatted,
+                "\n💥 Formatting is not idempotent!\n\
+                 fixture: {}\noptions: {options_line}\n\
+                 ============ first pass ============\n{formatted}\n\
+                 ============ second pass ===========\n{reformatted}",
+                path.display()
+            );
+        }
+
         snapshot.push_str(&formatted);
         snapshot.push('\n');
     }

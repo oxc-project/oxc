@@ -852,7 +852,7 @@ fn promote_all_instances_scope_identifiers(
     let decl_ids: Vec<IdentifierId> =
         scope_data.declarations.iter().map(|(_, d)| d.identifier).collect();
     let dep_ids: Vec<IdentifierId> = scope_data.dependencies.iter().map(|d| d.identifier).collect();
-    let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.clone();
+    let reassign_ids: Vec<IdentifierId> = scope_data.reassignments.iter().copied().collect();
 
     for id in decl_ids {
         let identifier = &env.identifiers[id];

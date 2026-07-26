@@ -86,13 +86,22 @@ impl<'a> MatchDetector<'a> {
                     CollectionResult::Incomplete
                 }
             }
-            Pat::Ident(ident) => {
+            Pat::Guard(guard) => {
+                if let Pat::TupleStruct(ts) = guard.pat.as_ref() {
+                    if let Some(variant) = astkind_variant_from_path(&ts.path) {
+                        self.node_types.insert(variant);
+                        return CollectionResult::Complete;
+                    }
+                    return CollectionResult::Incomplete;
+                }
+                let Pat::Ident(ident) = guard.pat.as_ref() else {
+                    return CollectionResult::Incomplete;
+                };
                 if ident.subpat.is_some() {
                     return CollectionResult::Incomplete;
                 }
                 // Look for a `member_expr if member_expr.is_member_expression_kind() => {` arm
-                if let Some((_, guard_expr)) = &arm.guard
-                    && let Expr::MethodCall(method_call) = &**guard_expr
+                if let Expr::MethodCall(method_call) = &*guard.guard
                     && method_call.method == "is_member_expression_kind"
                     && method_call.args.is_empty()
                 {

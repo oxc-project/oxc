@@ -690,7 +690,7 @@ function deserializeImportMeta(pos) {
       range: [start, end],
     },
     importStart = deserializeI32(pos),
-    importEnd = importStart + 6,
+    importEnd = deserializeI32(pos + 4) === 0 ? 0 : importStart + 6,
     importIdent = {
       type: "Identifier",
       decorators: [],
@@ -702,7 +702,7 @@ function deserializeImportMeta(pos) {
       range: [importStart, importEnd],
     },
     metaEnd = deserializeI32(pos + 4),
-    metaStart = metaEnd - 4,
+    metaStart = metaEnd === 0 ? 0 : metaEnd - 4,
     metaIdent = {
       type: "Identifier",
       decorators: [],
@@ -730,7 +730,7 @@ function deserializeNewTarget(pos) {
       range: [start, end],
     },
     newStart = deserializeI32(pos),
-    newEnd = newStart + 3,
+    newEnd = deserializeI32(pos + 4) === 0 ? 0 : newStart + 3,
     newIdent = {
       type: "Identifier",
       decorators: [],
@@ -742,7 +742,7 @@ function deserializeNewTarget(pos) {
       range: [newStart, newEnd],
     },
     targetEnd = deserializeI32(pos + 4),
-    targetStart = targetEnd - 6,
+    targetStart = targetEnd === 0 ? 0 : targetEnd - 6,
     targetIdent = {
       type: "Identifier",
       decorators: [],

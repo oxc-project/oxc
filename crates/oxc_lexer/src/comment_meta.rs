@@ -7,6 +7,7 @@ pub const CONTENT_NO_SIDE_EFFECTS: u8 = 5;
 pub const CONTENT_WEBPACK: u8 = 6;
 pub const CONTENT_VITE: u8 = 7;
 pub const CONTENT_COVERAGE_IGNORE: u8 = 8;
+pub const CONTENT_COVERAGE_IGNORE_FILE: u8 = 9;
 pub const META_MULTILINE: u8 = 0x10;
 
 #[inline]
@@ -21,6 +22,7 @@ pub fn content_from_ordinal(o: u8) -> oxc_ast::ast::CommentContent {
         CONTENT_WEBPACK => CommentContent::Webpack,
         CONTENT_VITE => CommentContent::Vite,
         CONTENT_COVERAGE_IGNORE => CommentContent::CoverageIgnore,
+        CONTENT_COVERAGE_IGNORE_FILE => CommentContent::CoverageIgnoreFile,
         _ => CommentContent::None,
     }
 }
@@ -115,7 +117,11 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
                 || rest.starts_with(b"node:coverage")
                 || rest.starts_with(b"istanbul ignore")
             {
-                return CONTENT_COVERAGE_IGNORE;
+                return if is_coverage_ignore_file(rest) {
+                    CONTENT_COVERAGE_IGNORE_FILE
+                } else {
+                    CONTENT_COVERAGE_IGNORE
+                };
             }
             return if lic { CONTENT_LEGAL } else { CONTENT_NONE };
         }
@@ -132,6 +138,17 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
     }
 
     if lic { CONTENT_LEGAL } else { CONTENT_NONE }
+}
+
+fn is_coverage_ignore_file(source: &[u8]) -> bool {
+    fn starts_with_directive(source: &[u8], directive: &[u8]) -> bool {
+        source
+            .strip_prefix(directive)
+            .is_some_and(|rest| rest.first().is_none_or(u8::is_ascii_whitespace))
+    }
+
+    starts_with_directive(source, b"v8 ignore file")
+        || starts_with_directive(source, b"istanbul ignore file")
 }
 
 #[inline]
@@ -154,4 +171,38 @@ pub fn meta_byte_exact(src: &[u8], start: u32, end: u32, is_block: bool) -> u8 {
     let ord = classify(b, is_block, lic) & 0x0F;
     let ml = is_block && has_nl_cr(b);
     ord | if ml { META_MULTILINE } else { 0 }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        CONTENT_COVERAGE_IGNORE, CONTENT_COVERAGE_IGNORE_FILE, classify, content_from_ordinal,
+    };
+    use oxc_ast::ast::CommentContent;
+
+    #[test]
+    fn coverage_ignore_file() {
+        for (source, is_block) in [
+            (b"v8 ignore file".as_slice(), true),
+            (b"v8 ignore file".as_slice(), false),
+            (b"v8 ignore file -- @preserve".as_slice(), true),
+            (b"istanbul ignore file".as_slice(), true),
+            (b"istanbul ignore file -- generated".as_slice(), false),
+        ] {
+            assert_eq!(classify(source, is_block, false), CONTENT_COVERAGE_IGNORE_FILE);
+            assert_eq!(
+                content_from_ordinal(CONTENT_COVERAGE_IGNORE_FILE),
+                CommentContent::CoverageIgnoreFile
+            );
+        }
+
+        for source in [
+            b"v8 ignore next".as_slice(),
+            b"v8 ignore filename",
+            b"c8 ignore file",
+            b"istanbul ignore next",
+        ] {
+            assert_eq!(classify(source, true, false), CONTENT_COVERAGE_IGNORE);
+        }
+    }
 }

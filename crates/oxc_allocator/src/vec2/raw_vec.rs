@@ -131,10 +131,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// If all these values came from a `Vec` created in allocator `a`, then these requirements
     /// are guaranteed to be fulfilled.
     #[inline(always)]
-    pub unsafe fn from_raw_parts_in(ptr: *mut T, len: usize, cap: usize, alloc: &'a A) -> Self {
-        // SAFETY: Caller guarantees `ptr` was allocated, which implies it's not null
-        let ptr = unsafe { NonNull::new_unchecked(ptr) };
-
+    pub unsafe fn from_raw_parts_in(ptr: NonNull<T>, len: usize, cap: usize, alloc: &'a A) -> Self {
         // Caller guarantees `cap` and `len` are `<= u32::MAX`, so `as u32` cannot truncate them
         #[expect(clippy::cast_possible_truncation)]
         let len = len as u32;

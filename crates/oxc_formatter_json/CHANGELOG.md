@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.60.0] - 2026-07-20
+
+### 🚀 Features
+
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🐛 Bug Fixes

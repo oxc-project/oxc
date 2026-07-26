@@ -285,7 +285,7 @@ pub fn post_dominator_frontier(
 }
 
 /// Walks up the post-dominator tree to collect all blocks that post-dominate `target_id`.
-pub fn post_dominators_of(
+fn post_dominators_of(
     func: &HirFunction,
     post_dominators: &PostDominator,
     target_id: BlockId,

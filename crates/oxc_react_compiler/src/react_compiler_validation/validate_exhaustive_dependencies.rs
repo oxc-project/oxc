@@ -3,6 +3,7 @@ use std::mem::{replace, take};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use oxc_str::Ident;
@@ -74,6 +75,7 @@ pub fn validate_exhaustive_dependencies(
         &mut temporaries,
         &mut Some(&mut callbacks),
         false,
+        env.allocator,
     )?;
 
     // Set has_invalid_deps on StartMemoize instructions that had validation errors
@@ -130,7 +132,6 @@ enum InferredDependency<'a> {
     Local {
         identifier: IdentifierId,
         path: Vec<DependencyPathEntry<'a>>,
-        #[allow(dead_code)]
         context: bool,
         span: Option<Span>,
     },
@@ -389,7 +390,7 @@ fn add_dependency<'a>(
             }
         }
         Temporary::Global { binding } => {
-            let inferred = InferredDependency::Global { binding: binding.clone() };
+            let inferred = InferredDependency::Global { binding: *binding };
             let key = dep_to_key(&inferred);
             if dep_keys.insert(key) {
                 dependencies.push(inferred);
@@ -448,6 +449,7 @@ fn visit_candidate_dependency<'a>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn collect_dependencies<'a>(
     func: &HirFunction<'a>,
     identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
@@ -456,6 +458,7 @@ fn collect_dependencies<'a>(
     temporaries: &mut FxHashMap<IdentifierId, Temporary<'a>>,
     callbacks: &mut Option<&mut Callbacks<'_, 'a>>,
     is_function_expression: bool,
+    alloc: &'a Allocator,
 ) -> Result<Temporary<'a>, OxcDiagnostic> {
     let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
@@ -500,7 +503,7 @@ fn collect_dependencies<'a>(
                             });
                         }
                         Temporary::Global { binding } => {
-                            deps.push(InferredDependency::Global { binding: binding.clone() });
+                            deps.push(InferredDependency::Global { binding: *binding });
                         }
                     }
                 }
@@ -522,10 +525,8 @@ fn collect_dependencies<'a>(
                         );
                     }
                     InferredDependency::Global { binding } => {
-                        temporaries.insert(
-                            phi.place.identifier,
-                            Temporary::Global { binding: binding.clone() },
-                        );
+                        temporaries
+                            .insert(phi.place.identifier, Temporary::Global { binding: *binding });
                     }
                 }
             } else {
@@ -543,7 +544,7 @@ fn collect_dependencies<'a>(
 
             match &instr.value {
                 InstructionValue::LoadGlobal { binding, .. } => {
-                    temporaries.insert(lvalue_id, Temporary::Global { binding: binding.clone() });
+                    temporaries.insert(lvalue_id, Temporary::Global { binding: *binding });
                 }
                 InstructionValue::LoadContext { place, .. }
                 | InstructionValue::LoadLocal { place, .. } => {
@@ -713,6 +714,7 @@ fn collect_dependencies<'a>(
                         temporaries,
                         &mut None,
                         true,
+                        alloc,
                     )?;
                     temporaries.insert(lvalue_id, function_deps.clone());
                     add_dependency(&function_deps, &mut dependencies, &mut dep_keys, &locals);
@@ -722,7 +724,9 @@ fn collect_dependencies<'a>(
                         // onStartMemoize — mirrors TS behavior of clearing dependencies and locals
                         *cb.start_memo = Some(StartMemoInfo {
                             manual_memo_id: *manual_memo_id,
-                            deps: deps.clone(),
+                            deps: deps
+                                .as_ref()
+                                .map(|v| v.iter().map(|d| d.clone_in(alloc)).collect()),
                             deps_span: *deps_span,
                         });
                         // Save current state and clear, matching TS which clears the shared
@@ -885,7 +889,10 @@ fn collect_dependencies<'a>(
                                                         },
                                                         constant: false,
                                                     },
-                                                    path: path.clone(),
+                                                    path: ArenaVec::from_iter_in(
+                                                        path.iter().copied(),
+                                                        &alloc,
+                                                    ),
                                                     span: *span,
                                                 },
                                                 InferredDependency::Global { binding } => {
@@ -893,7 +900,7 @@ fn collect_dependencies<'a>(
                                                         root: ManualMemoDependencyRoot::Global {
                                                             identifier_name: binding.name(),
                                                         },
-                                                        path: Vec::new(),
+                                                        path: ArenaVec::new_in(&alloc),
                                                         span: None,
                                                     }
                                                 }
@@ -987,7 +994,10 @@ fn collect_dependencies<'a>(
                                                         },
                                                         constant: false,
                                                     },
-                                                    path: path.clone(),
+                                                    path: ArenaVec::from_iter_in(
+                                                        path.iter().copied(),
+                                                        &alloc,
+                                                    ),
                                                     span: *span,
                                                 },
                                                 InferredDependency::Global { binding } => {
@@ -995,7 +1005,7 @@ fn collect_dependencies<'a>(
                                                         root: ManualMemoDependencyRoot::Global {
                                                             identifier_name: binding.name(),
                                                         },
-                                                        path: Vec::new(),
+                                                        path: ArenaVec::new_in(&alloc),
                                                         span: None,
                                                     }
                                                 }

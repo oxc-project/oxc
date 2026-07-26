@@ -1,4 +1,4 @@
-ts compatibility: 628/666 (94.29%), 19 files skipped
+ts compatibility: 621/659 (94.23%), 15 files skipped
 
 # Failed
 
@@ -59,8 +59,4 @@ ts compatibility: 628/666 (94.29%), 19 files skipped
 - typescript/definite/without-annotation.ts
 - typescript/interface2/module.ts
 - typescript/namespace/invalid-await.ts
-- typescript/trailing-comma/trailing.ts
 - typescript/type-parameters-arguments/const.ts
-- typescript/typescript-only/decorator-auto-accessors-abstract-class.ts
-- typescript/typescript-only/decorator-auto-accessors-declara-class.ts
-- typescript/typescript-only/decorator-auto-accessors-mixed-modifiers.ts

@@ -10,6 +10,7 @@
 //!
 //! Analogous to TS `Optimization/PruneMaybeThrows.ts`.
 
+use oxc_allocator::Allocator;
 use oxc_index::{IndexSlice, IndexVec};
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -26,20 +27,21 @@ use crate::react_compiler_lowering::{
 use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
 
 /// Prune `MaybeThrow` terminals for blocks that cannot throw, then clean up the CFG.
-pub fn prune_maybe_throws(
-    func: &mut HirFunction,
-    functions: &mut IndexSlice<FunctionId, [HirFunction]>,
+pub fn prune_maybe_throws<'a>(
+    func: &mut HirFunction<'a>,
+    functions: &mut IndexSlice<FunctionId, [HirFunction<'a>]>,
+    alloc: &'a Allocator,
 ) -> Result<(), OxcDiagnostic> {
     let terminal_mapping = prune_maybe_throws_impl(func);
     if let Some(terminal_mapping) = terminal_mapping {
         // If terminals have changed then blocks may have become newly unreachable.
         // Re-run minification of the graph (incl reordering instruction ids).
-        func.body.blocks = get_reverse_postordered_blocks(&func.body);
+        func.body.blocks = get_reverse_postordered_blocks(&func.body, alloc);
         remove_unreachable_for_updates(&mut func.body);
         remove_dead_do_while_statements(&mut func.body);
         remove_unnecessary_try_catch(&mut func.body);
         mark_instruction_ids(&mut func.body, &mut func.instructions);
-        merge_consecutive_blocks(func, functions);
+        merge_consecutive_blocks(func, functions, alloc);
 
         // Rewrite phi operands to reference the updated predecessor blocks
         for block in func.body.blocks.values_mut() {

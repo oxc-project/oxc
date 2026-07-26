@@ -3,21 +3,29 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
-use oxc_minifier::CompressOptions;
-use oxc_minifier::Compressor;
+use oxc_compat::EngineTargets;
+use oxc_minifier::{CompressOptions, Compressor, TreeShakeOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 #[track_caller]
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
+    run_with_iterations(source_text, source_type, options).0
+}
+
+#[track_caller]
+fn run_with_iterations(
+    source_text: &str,
+    source_type: SourceType,
+    options: Option<CompressOptions>,
+) -> (String, u8) {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = &mut ret.program;
-    if let Some(options) = options {
-        Compressor::new(&allocator).dead_code_elimination(program, options);
-    }
-    Codegen::new().build(program).code
+    let iterations = options
+        .map_or(0, |options| Compressor::new(&allocator).dead_code_elimination(program, options));
+    (Codegen::new().build(program).code, iterations)
 }
 
 #[track_caller]
@@ -26,11 +34,30 @@ fn test(source_text: &str, expected: &str) {
     let f = "('production' == 'development')";
     let source_text = source_text.cow_replace("true", t);
     let source_text = source_text.cow_replace("false", f);
+    test_with_options_source_type(
+        &source_text,
+        expected,
+        SourceType::default(),
+        CompressOptions::dce(),
+    );
+}
 
-    let source_type = SourceType::default();
-    let result = run(&source_text, source_type, Some(CompressOptions::dce()));
-    let expected = run(expected, source_type, None);
-    assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
+#[track_caller]
+fn test_with_iterations(source_text: &str, expected: &str, expected_iterations: u8) {
+    let t = "('production' == 'production')";
+    let f = "('production' == 'development')";
+    let source_text = source_text.cow_replace("true", t);
+    let source_text = source_text.cow_replace("false", f);
+    let iterations = test_with_options_source_type(
+        &source_text,
+        expected,
+        SourceType::default(),
+        CompressOptions::dce(),
+    );
+    assert_eq!(
+        iterations, expected_iterations,
+        "\niteration count for source\n{source_text}\nexpect\n{expected_iterations}\ngot\n{iterations}"
+    );
 }
 
 #[track_caller]
@@ -39,11 +66,56 @@ fn test_same(source_text: &str) {
 }
 
 #[track_caller]
+fn test_source_type(source_text: &str, expected: &str, source_type: SourceType) {
+    test_with_options_source_type(source_text, expected, source_type, CompressOptions::dce());
+}
+
+#[track_caller]
+fn test_same_source_type(source_text: &str, source_type: SourceType) {
+    test_source_type(source_text, source_text, source_type);
+}
+
+#[track_caller]
 fn test_with_options(source_text: &str, expected: &str, options: CompressOptions) {
-    let source_type = SourceType::default();
-    let result = run(source_text, source_type, Some(options));
+    test_with_options_source_type(source_text, expected, SourceType::default(), options);
+}
+
+#[track_caller]
+fn options_for_target(target: &str) -> CompressOptions {
+    CompressOptions {
+        target: EngineTargets::from_target(target).unwrap(),
+        ..CompressOptions::dce()
+    }
+}
+
+#[track_caller]
+fn test_with_target(source_text: &str, expected: &str, target: &str) {
+    test_with_options(source_text, expected, options_for_target(target));
+}
+
+#[track_caller]
+fn test_same_with_target(source_text: &str, target: &str) {
+    test_with_target(source_text, source_text, target);
+}
+
+#[track_caller]
+fn test_with_options_source_type(
+    source_text: &str,
+    expected: &str,
+    source_type: SourceType,
+    options: CompressOptions,
+) -> u8 {
+    let (result, iterations) = run_with_iterations(source_text, source_type, Some(options.clone()));
     let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
+
+    // Check idempotency.
+    let second = run(&result, source_type, Some(options));
+    assert_eq!(
+        result, second,
+        "\nidempotency for source\n{source_text}\ngot\n{result}\nthen\n{second}"
+    );
+    iterations
 }
 
 #[test]
@@ -208,7 +280,7 @@ fn dce_var_hoisting() {
 
 // Dropping a dead-after-throw statement (`module.exports = x`) removes the
 // only reference to `x`. Without recording that as a mutation, the peephole
-// loop terminates before `flush_pass_dirty` prunes the dropped reference,
+// loop terminates before `flush_pass_changes` prunes the dropped reference,
 // leaving the unused-declarator pass to see a stale reference and keep
 // `var x = {}`.
 #[test]
@@ -242,6 +314,78 @@ fn pure_comment_re_evaluated_after_string_concat_fold() {
         "var r = new RegExp('foo' + 'bar'); foo(r)",
         "var r = /* @__PURE__ */ new RegExp(\"foobar\");\nfoo(r)",
     );
+}
+
+#[test]
+fn keep_regexp_feature_detection() {
+    // https://github.com/rolldown/rolldown/issues/10279
+    test_same(
+        r"export function supportsUnicodeRegExp() {
+            try {
+                new RegExp('\\p{Ll}', 'u');
+                return true;
+            } catch {
+                return false;
+            }
+        }",
+    );
+
+    // Patterns supported by all ECMAScript targets remain removable.
+    test("new RegExp('a', 'g')", "");
+
+    test_with_target("new RegExp('a', 'u')", "", "es2015");
+    test_same_with_target(r"new RegExp('\\p{Ll}', 'u')", "es2017");
+    test_with_target(r"new RegExp('\\p{Ll}', 'u')", "", "es2018");
+
+    // A shadowed `RegExp` may have arbitrary constructor side effects.
+    test_same("function f(RegExp) { new RegExp('a', 'g') } export { f }");
+}
+
+#[test]
+fn keep_regexp_literal_with_flags() {
+    test("new RegExp(/x/)", "");
+    test_same("new RegExp(/x/, 'i')");
+    test_same("new RegExp(/x/, 'u')");
+    test_same_with_target("new RegExp(/x/, '!')", "esnext");
+    test_same_with_target("new RegExp(/x/, 'gg')", "esnext");
+    test_same_with_target("new RegExp(/x/, 'uv')", "esnext");
+    test_same_with_target("new RegExp(/x/, 'i')", "chrome48");
+    test_with_target("new RegExp(/x/, 'i')", "", "chrome49");
+    test_with_target("new RegExp(/x/, 'i')", "", "es2015");
+    test_with_target("new RegExp(/x/, 'u')", "", "es2015");
+    test_same_with_target("new RegExp(/x/, 'v')", "es2015");
+    test_with_target("new RegExp(/x/, 'v')", "", "es2024");
+}
+
+#[test]
+fn keep_regexp_for_incomplete_engine_feature_data() {
+    test_same_with_target("new RegExp('(?i:a)')", "safari16");
+    test_same_with_target("new RegExp('(?<a>x)|(?<a>y)')", "deno1");
+    test_with_target("new RegExp('(?i:a)')", "", "chrome125");
+    test_with_target("new RegExp('(?<a>x)|(?<a>y)')", "", "chrome126");
+
+    // Browser-only targets contain an implicit `esnext`; every configured engine must still
+    // satisfy the feature version, regardless of feature-table iteration order.
+    test_same_with_target("new RegExp('a', 'u')", "chrome49");
+    test_with_target("new RegExp('a', 'u')", "", "chrome50");
+}
+
+#[test]
+fn regexp_named_group_targets() {
+    test_with_target("new RegExp('(?<a>x)')", "", "es2018");
+    test_same_with_target("new RegExp('(?<a>x)|(?<a>y)')", "es2024");
+    test_with_target("new RegExp('(?<a>x)|(?<a>y)')", "", "es2025");
+}
+
+#[test]
+fn keep_regexp_with_lone_surrogates() {
+    test_same(r"new RegExp('[\uD801-\uD800]')");
+}
+
+#[test]
+fn keep_regexp_with_invalid_flags_for_modern_target() {
+    test_same_with_target("new RegExp('a', 'gg')", "esnext");
+    test_same_with_target("new RegExp('a', 'uv')", "esnext");
 }
 
 #[test]
@@ -391,6 +535,11 @@ console.log([
 ])
         ",
     );
+}
+
+#[test]
+fn dropped_direct_eval_converges_after_liveness_refresh() {
+    test_with_iterations("if (false) eval('x'); function f() { f() }", "", 2);
 }
 
 #[test]
@@ -769,5 +918,141 @@ fn dce_remove_unreachable_after_terminating_statement() {
     // that really terminates — `if` without `else` doesn't.
     test_same(
         "export function f(c) {\n\t{\n\t\tif (c) return g();\n\t\tfunction g() {\n\t\t\treturn 1;\n\t\t}\n\t}\n\treturn tail();\n}",
+    );
+}
+
+// #13105: dead recursive/cyclic function declarations must also drop in
+// dce-only mode (rolldown's per-module treeshake preprocess). Self-recursive
+// function-valued declarators use a local removal-site check; mutual
+// declarator and class cycles are kept because graph candidacy is function
+// declarations only.
+#[test]
+fn dce_recursive_unused_functions() {
+    test("function f() { f() }", "");
+    test("function c() { d() } function d() { c() }", "");
+    test("var f = function() { f() }", "");
+    test("const f = () => f()", "");
+    // Cycle whose only external reference sits in dead code: needs the mid-loop
+    // recompute trigger (pass 2), not just the initial compute.
+    test("if (false) c(); function c() { d() } function d() { c() }", "");
+    // Declarator and class cycles are kept (functions-only candidacy).
+    test_same("const a = () => b();\nconst b = () => a();");
+    test_same("class A {\n\tm() {\n\t\tnew B();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}");
+    // Live references keep the cycle live.
+    test_same("function f() {\n\tf();\n}\nconsole.log(f);");
+    test_same("export function f() {\n\tf();\n}");
+    // Removing a dead cycle can zero an exported sibling redeclaration's
+    // ordinary read count; stable export observability protects its writes.
+    test(
+        "export var f; var f = 0; function d1() { console.log(f); d2() } function d2() { d1() } f = 1;",
+        "export var f;\nvar f = 0;\nf = 1;",
+    );
+    // For-head bindings need no special lifecycle state.
+    test(
+        "var f = 1; function d1() { f; d2() } function d2() { d1() } if (false) for (var f of xs) {} export {};",
+        "export {};",
+    );
+}
+
+#[test]
+fn dce_remove_unused_class_identifier_heritage_under_assumptions() {
+    // ASSUMPTIONS.md excludes TDZ violations and side effects from extending a class.
+    test(
+        "export var Base = class {}; export var Keep = class extends Base {}; var REMOVE = class extends Base {};",
+        "export var Base = class {}; export var Keep = class extends Base {};",
+    );
+}
+
+#[test]
+#[ignore = "TODO: extend recursive reachability to mutual declarators and classes"]
+fn dce_recursive_unused_mutual_declarators_and_classes() {
+    test("const a = () => b(); const b = () => a();", "");
+    test("class A { m() { new B() } } class B { m() { new A() } }", "");
+}
+
+#[test]
+fn dce_recursive_unused_functions_in_commonjs_and_script() {
+    test_source_type("var f = function() { f() }", "", SourceType::cjs());
+    test_source_type(
+        "function c() { d() } function d() { c() } console.log('k');",
+        "console.log('k');",
+        SourceType::cjs(),
+    );
+    test_source_type("{ function f() { f() } }", "", SourceType::cjs());
+    test_source_type(
+        "if (false) g(); function g() { f() } function f() { f() }",
+        "",
+        SourceType::cjs(),
+    );
+    test_source_type(
+        "function outer() { function c() { d() } function d() { c() } return 1 }",
+        "function outer() { return 1 }",
+        SourceType::script(),
+    );
+    test_source_type(
+        "function outer() { const f = () => f(); return 1 }",
+        "function outer() { return 1 }",
+        SourceType::script(),
+    );
+
+    test_same_source_type("function f() { f() }", SourceType::script());
+    test_same_source_type("var f = () => f()", SourceType::script());
+    test_same_source_type("{ function f() { f() } }", SourceType::script());
+    test_same_source_type("function f() { f() } module.exports = f;", SourceType::cjs());
+}
+
+#[test]
+fn dce_keeps_sloppy_duplicate_block_functions() {
+    let source =
+        "{ function f() { return 1 } } { function f() { return f } } console.log(typeof f());";
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        test_same_source_type(source, source_type);
+    }
+    test_same_source_type(
+        "{ function f() { return f } } { function f() { return f } } console.log(typeof f());",
+        SourceType::ts().with_script(true),
+    );
+
+    // Strict block functions have no Annex B var alias and remain removable.
+    test_source_type("'use strict'; { function f() { f() } }", "'use strict';", SourceType::cjs());
+    test_source_type(
+        "'use strict'; { function f() { f() } }",
+        "'use strict';",
+        SourceType::ts().with_script(true),
+    );
+}
+
+#[test]
+fn dce_keeps_script_root_var_in_nested_statement_after_cycle_removed() {
+    let source = "function outer() { function d1() { return x + d2() } function d2() { return d1() } return 1 } outer(); switch (1) { case 1: var x = 42; }";
+    // Script globals can be rebound through global-object properties without a
+    // resolved write reference, so the call cannot reuse a pure summary.
+    let expected = "function outer() { return 1 } outer(); switch (1) { case 1: var x = 42; }";
+    test_source_type(source, expected, SourceType::script());
+
+    // CommonJS top-level vars are wrapper-local, so ordinary counts may remove them.
+    test_source_type("{ var x = 42; }", "", SourceType::cjs());
+}
+
+#[test]
+fn dce_keeps_implicitly_observable_bindings() {
+    let options = CompressOptions {
+        treeshake: TreeShakeOptions {
+            property_write_side_effects: false,
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::dce()
+    };
+
+    let annex_source = "function outer() { { function f() {} } { function f() {} f.x = 1; function d1() { consume(f); d2() } function d2() { d1() } } console.log(f.x); } outer();";
+    let annex_expected = "function outer() { { function f() {} } { function f() {} f.x = 1; } console.log(f.x); } outer();";
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        test_with_options_source_type(annex_source, annex_expected, source_type, options.clone());
+    }
+
+    test_with_options(
+        "{ using resource = { [Symbol.dispose]() { console.log(this.x) } }; resource.x = 1; function d1() { consume(resource); d2() } function d2() { d1() } }",
+        "{ using resource = { [Symbol.dispose]() { console.log(this.x) } }; resource.x = 1; }",
+        options,
     );
 }

@@ -763,7 +763,7 @@ function deserializeImportMeta(pos) {
       parent,
     }),
     importStart = deserializeI32(pos),
-    importEnd = importStart + 6,
+    importEnd = deserializeI32(pos + 4) === 0 ? 0 : importStart + 6,
     importIdent = {
       __proto__: NodeProto,
       type: "Identifier",
@@ -777,7 +777,7 @@ function deserializeImportMeta(pos) {
       parent,
     },
     metaEnd = deserializeI32(pos + 4),
-    metaStart = metaEnd - 4,
+    metaStart = metaEnd === 0 ? 0 : metaEnd - 4,
     metaIdent = {
       __proto__: NodeProto,
       type: "Identifier",
@@ -811,7 +811,7 @@ function deserializeNewTarget(pos) {
       parent,
     }),
     newStart = deserializeI32(pos),
-    newEnd = newStart + 3,
+    newEnd = deserializeI32(pos + 4) === 0 ? 0 : newStart + 3,
     newIdent = {
       __proto__: NodeProto,
       type: "Identifier",
@@ -825,7 +825,7 @@ function deserializeNewTarget(pos) {
       parent,
     },
     targetEnd = deserializeI32(pos + 4),
-    targetStart = targetEnd - 6,
+    targetStart = targetEnd === 0 ? 0 : targetEnd - 6,
     targetIdent = {
       __proto__: NodeProto,
       type: "Identifier",

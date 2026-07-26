@@ -4,8 +4,9 @@ use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
-use crate::react_compiler_utils::FxIndexSet;
 use crate::react_compiler_utils::IdentIndexMap;
+use crate::react_compiler_utils::OrderedMap;
+use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
 use crate::scope::DeclKind;
 use crate::scope::ImportBindingKind;
 use crate::scope::ScopeId;
@@ -13,6 +14,7 @@ use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_str::{Ident, format_ident};
@@ -20,7 +22,12 @@ use oxc_str::{Ident, format_ident};
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 
 type BuildResult<'a> = Result<
-    (HIR, Vec<Instruction<'a>>, IdentIndexMap<'a, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
+    (
+        HIR<'a>,
+        Vec<Instruction<'a>>,
+        IdentIndexMap<'a, SymbolId>,
+        FxIndexMap<SymbolId, IdentifierId>,
+    ),
     OxcDiagnostic,
 >;
 
@@ -124,7 +131,7 @@ fn new_block(id: BlockId, kind: BlockKind) -> WipBlock {
 // ---------------------------------------------------------------------------
 
 pub struct HirBuilder<'a, 'b> {
-    completed: FxIndexMap<BlockId, BasicBlock>,
+    completed: OrderedMap<BlockId, BasicBlock<'a>>,
     current: WipBlock,
     entry: BlockId,
     scopes: Vec<Scope<'a>>,
@@ -185,7 +192,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let entry = env.next_block_id();
         let kind = entry_block_kind.unwrap_or(BlockKind::Block);
         HirBuilder {
-            completed: FxIndexMap::default(),
+            completed: OrderedMap::default(),
             current: new_block(entry, kind),
             entry,
             scopes: Vec::new(),
@@ -337,16 +344,17 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Kept non-generic (and out-of-line) so the block-completion machinery compiles
     /// once instead of being duplicated into every generic `try_enter*` instantiation.
     #[inline(never)]
-    fn complete_block(&mut self, wip: WipBlock, terminal: Terminal) {
+    fn complete_block(&mut self, wip: WipBlock, terminal: Terminal<'a>) {
+        let alloc = self.env.allocator;
         self.completed.insert(
             wip.id,
             BasicBlock {
                 kind: wip.kind,
                 id: wip.id,
-                instructions: wip.instructions,
+                instructions: ArenaVec::from_iter_in(wip.instructions, &alloc),
                 terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
+                preds: ArenaOrderedSet::new_in(alloc),
+                phis: ArenaVec::new_in(&alloc),
             },
         );
     }
@@ -355,7 +363,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     ///
     /// If `next_block_kind` is `Some`, a new current block is created with that kind.
     /// Returns the BlockId of the completed block.
-    pub fn terminate(&mut self, terminal: Terminal, next_block_kind: Option<BlockKind>) -> BlockId {
+    pub fn terminate(
+        &mut self,
+        terminal: Terminal<'a>,
+        next_block_kind: Option<BlockKind>,
+    ) -> BlockId {
         // The placeholder block created here (`BlockId::PLACEHOLDER`) is only used when
         // next_block_kind is None, meaning this is the final terminate() call.
         // It will never be read or completed because build() consumes self
@@ -375,7 +387,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Terminate the current block with the given terminal, and set
     /// a previously reserved block as the new current block.
-    pub fn terminate_with_continuation(&mut self, terminal: Terminal, continuation: WipBlock) {
+    pub fn terminate_with_continuation(&mut self, terminal: Terminal<'a>, continuation: WipBlock) {
         let wip = std::mem::replace(&mut self.current, continuation);
         self.complete_block(wip, terminal);
     }
@@ -392,7 +404,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn try_enter_reserved(
         &mut self,
         wip: WipBlock,
-        f: impl FnOnce(&mut Self) -> Result<Terminal, OxcDiagnostic>,
+        f: impl FnOnce(&mut Self) -> Result<Terminal<'a>, OxcDiagnostic>,
     ) -> Result<(), OxcDiagnostic> {
         let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self)?;
@@ -405,7 +417,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn try_enter(
         &mut self,
         kind: BlockKind,
-        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal, OxcDiagnostic>,
+        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal<'a>, OxcDiagnostic>,
     ) -> Result<BlockId, OxcDiagnostic> {
         let wip = self.reserve(kind);
         let wip_id = wip.id;
@@ -589,7 +601,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         let mut instructions = std::mem::take(&mut self.instruction_table);
 
-        let rpo_blocks = get_reverse_postordered_blocks(&hir);
+        let rpo_blocks = get_reverse_postordered_blocks(&hir, self.env.allocator);
 
         // Check for unreachable blocks that contain FunctionExpression instructions.
         // These could contain hoisted declarations that we can't safely remove.
@@ -890,14 +902,17 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 /// Blocks not reachable through successors are removed. Blocks that are
 /// only reachable as fallthroughs (not through real successor edges) are
 /// replaced with empty blocks that have an Unreachable terminal.
-pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlock> {
+pub fn get_reverse_postordered_blocks<'a>(
+    hir: &HIR<'a>,
+    alloc: &'a Allocator,
+) -> OrderedMap<BlockId, BasicBlock<'a>> {
     let mut visited: FxHashSet<BlockId> = FxHashSet::default();
     let mut used: FxHashSet<BlockId> = FxHashSet::default();
     let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
     let mut postorder: Vec<BlockId> = Vec::new();
 
     fn visit(
-        hir: &HIR,
+        hir: &HIR<'_>,
         block_id: BlockId,
         is_used: bool,
         visited: &mut FxHashSet<BlockId>,
@@ -946,24 +961,24 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
 
     visit(hir, hir.entry, true, &mut visited, &mut used, &mut used_fallthroughs, &mut postorder);
 
-    let mut blocks = FxIndexMap::default();
+    let mut blocks = OrderedMap::default();
     for block_id in postorder.into_iter().rev() {
         let block = hir.blocks.get(&block_id).unwrap();
         if used.contains(&block_id) {
-            blocks.insert(block_id, block.clone());
+            blocks.insert(block_id, block.clone_in(alloc));
         } else if used_fallthroughs.contains(&block_id) {
             blocks.insert(
                 block_id,
                 BasicBlock {
                     kind: block.kind,
                     id: block_id,
-                    instructions: Vec::new(),
+                    instructions: ArenaVec::new_in(&alloc),
                     terminal: Terminal::Unreachable {
                         id: block.terminal.evaluation_order(),
                         span: block.terminal.span().copied(),
                     },
-                    preds: block.preds.clone(),
-                    phis: Vec::new(),
+                    preds: block.preds.clone_in(alloc),
+                    phis: ArenaVec::new_in(&alloc),
                 },
             );
         }

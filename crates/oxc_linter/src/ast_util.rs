@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
@@ -16,7 +17,10 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
-use crate::{LintContext, utils::get_function_nearest_jsdoc_node};
+use crate::{
+    LintContext,
+    utils::{get_function_nearest_jsdoc_node, is_regexp_callee},
+};
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -311,6 +315,57 @@ pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<R
         flags |= flag;
     }
     Some(flags)
+}
+
+pub fn resolve_regex_flags<'a>(
+    expr: &'a Expression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(RegExpFlags, Span)> {
+    resolve_regex_flags_impl(expr, ctx, &mut SmallVec::new())
+}
+
+fn resolve_regex_flags_impl<'a>(
+    expr: &'a Expression<'a>,
+    ctx: &LintContext<'a>,
+    resolved_symbols: &mut SmallVec<[SymbolId; 4]>,
+) -> Option<(RegExpFlags, Span)> {
+    match expr.without_parentheses() {
+        Expression::RegExpLiteral(regexp_literal) => {
+            Some((regexp_literal.regex.flags, regexp_literal.span))
+        }
+        Expression::NewExpression(new_expr) => {
+            if is_regexp_callee(&new_expr.callee, ctx) {
+                extract_regex_flags(&new_expr.arguments).map(|flags| (flags, new_expr.span))
+            } else {
+                None
+            }
+        }
+        Expression::CallExpression(call_expr) => {
+            if is_regexp_callee(&call_expr.callee, ctx) {
+                extract_regex_flags(&call_expr.arguments).map(|flags| (flags, call_expr.span))
+            } else {
+                None
+            }
+        }
+        Expression::Identifier(ident) => {
+            let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
+            if resolved_symbols.contains(&symbol_id) {
+                return None;
+            }
+
+            resolved_symbols.push(symbol_id);
+            let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+            let decl = ctx.nodes().get_node(declaration_id);
+            let result = decl
+                .kind()
+                .as_variable_declarator()
+                .and_then(|var_decl| var_decl.init.as_ref())
+                .and_then(|init| resolve_regex_flags_impl(init, ctx, resolved_symbols));
+            resolved_symbols.pop();
+            result
+        }
+        _ => None,
+    }
 }
 
 pub fn is_method_call<'a>(

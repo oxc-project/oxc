@@ -59,20 +59,16 @@ pub fn prune_unused_labels_hir(func: &mut HirFunction) {
             "Unexpected block predecessors when merging label blocks"
         );
 
-        // Collect instructions from next and fallthrough
-        let next_instructions = func.body.blocks[next_id].instructions.clone();
-        let fallthrough_instructions = func.body.blocks[fallthrough_id].instructions.clone();
-        let fallthrough_terminal = func.body.blocks[fallthrough_id].terminal.clone();
+        // Remove merged blocks, taking ownership of their contents to avoid cloning
+        // the arena-allocated instructions and terminal.
+        let next_block = func.body.blocks.shift_remove(next_id).unwrap();
+        let fallthrough_block = func.body.blocks.shift_remove(fallthrough_id).unwrap();
 
         // Merge into the label block
         let label_block = func.body.blocks.get_mut(&label_id).unwrap();
-        label_block.instructions.extend(next_instructions);
-        label_block.instructions.extend(fallthrough_instructions);
-        label_block.terminal = fallthrough_terminal;
-
-        // Remove merged blocks
-        func.body.blocks.shift_remove(next_id);
-        func.body.blocks.shift_remove(fallthrough_id);
+        label_block.instructions.extend(next_block.instructions);
+        label_block.instructions.extend(fallthrough_block.instructions);
+        label_block.terminal = fallthrough_block.terminal;
 
         rewrites.insert(*fallthrough_id, label_id);
     }

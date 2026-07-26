@@ -319,10 +319,10 @@ fn expand_fbt_scope_range(env: &mut Environment, scope_id: ScopeId, operand_id: 
         return;
     }
     env.scopes[scope_id].range.start = new_start;
-    let new_range = env.scopes[scope_id].range.clone();
+    let new_range = env.scopes[scope_id].range;
     for ident in &mut env.identifiers {
         if ident.scope == Some(scope_id) && ident.mutable_range.id == old_range_id {
-            ident.mutable_range = new_range.clone();
+            ident.mutable_range = new_range;
         }
     }
 }

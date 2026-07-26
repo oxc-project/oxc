@@ -1,0 +1,65 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/static-instance-accessor-pairs.ts
+---
+```
+==================== .D.TS ====================
+
+export declare class InstanceGetterStaticSetter {
+	get value();
+	static set value(value: string);
+}
+export declare class StaticGetterInstanceSetter {
+	static get value();
+	set value(value: number);
+}
+export declare class InstanceGetterStaticUntypedSetter {
+	get value(): string;
+	static set value(value);
+}
+export declare class StaticGetterInstanceUntypedSetter {
+	static get value(): number;
+	set value(value);
+}
+
+
+==================== Errors ====================
+
+  x TS9009: At least one accessor must have an explicit return type annotation
+  | with --isolatedDeclarations.
+   ,-[4:7]
+ 3 | export class InstanceGetterStaticSetter {
+ 4 |   get value() {
+   :       ^^^^^
+ 5 |     return;
+   `----
+
+  x TS9009: At least one accessor must have an explicit return type annotation
+  | with --isolatedDeclarations.
+    ,-[12:14]
+ 11 | export class StaticGetterInstanceSetter {
+ 12 |   static get value() {
+    :              ^^^^^
+ 13 |     return;
+    `----
+
+  x TS9009: At least one accessor must have an explicit return type annotation
+  | with --isolatedDeclarations.
+    ,-[23:14]
+ 22 |   }
+ 23 |   static set value(value) {}
+    :              ^^^^^
+ 24 | }
+    `----
+
+  x TS9009: At least one accessor must have an explicit return type annotation
+  | with --isolatedDeclarations.
+    ,-[30:7]
+ 29 |   }
+ 30 |   set value(value) {}
+    :       ^^^^^
+ 31 | }
+    `----
+
+
+```

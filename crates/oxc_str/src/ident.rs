@@ -12,14 +12,16 @@ use std::{
 
 use oxc_allocator::{
     Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
-    IdentBuildHasher, ident_hash,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{CompactStr, Str};
+use crate::{
+    CompactStr, Str,
+    ident_hasher::{IdentBuildHasher, ident_hash},
+};
 
 /// A packed representation of `len` and `hash` for `Ident` - 64-bit platforms version.
 ///
@@ -601,12 +603,9 @@ macro_rules! static_ident {
 #[macro_export]
 macro_rules! format_ident {
     ($alloc:expr, $($arg:tt)*) => {{
-        use ::std::{write, fmt::Write};
-        use $crate::{Ident, __internal::ArenaStringBuilder};
-
-        let mut s = ArenaStringBuilder::new_in($alloc);
-        write!(s, $($arg)*).unwrap();
-        Ident::from(s)
+        let mut s = $crate::__internal::ArenaStringBuilder::new_in($alloc);
+        ::std::fmt::Write::write_fmt(&mut s, ::std::format_args!($($arg)*)).unwrap();
+        $crate::Ident::from(s)
     }}
 }
 
@@ -615,6 +614,7 @@ mod test {
     use std::hash::BuildHasher;
 
     use oxc_allocator::Allocator;
+    use oxc_data_structures::types::implements;
 
     use super::*;
 
@@ -628,16 +628,13 @@ mod test {
 
     #[test]
     fn ident_send_sync() {
-        fn assert_send<T: Send>() {}
-        fn assert_sync<T: Sync>() {}
-        assert_send::<Ident<'_>>();
-        assert_sync::<Ident<'_>>();
+        assert!(implements!(Ident: Send));
+        assert!(implements!(Ident: Sync));
     }
 
     #[test]
     fn ident_copy() {
-        fn assert_copy<T: Copy>() {}
-        assert_copy::<Ident<'_>>();
+        assert!(implements!(Ident: Copy));
     }
 
     #[test]

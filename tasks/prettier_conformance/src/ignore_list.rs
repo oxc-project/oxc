@@ -103,13 +103,22 @@ pub const IGNORE_TESTS: &[&str] = &[
     "range",
     // IDE cursor
     "cursor",
-    // Invalid
+    // Invalid (some of them are recoverable, though)
     "js/call/invalid",
+    // Trailing comma after rest element
+    "typescript/trailing-comma/invalid.ts",
+    // Invalid modifier combos (`readonly accessor`, optional accessor, ambient initializer)
+    "typescript/decorator-auto-accessors/decorator-auto-accessors-abstract-class.ts",
+    "typescript/decorator-auto-accessors/decorator-auto-accessors-declare-class.ts",
+    "typescript/decorator-auto-accessors/decorator-auto-accessors-mixed-modifiers.ts",
     // Ambiguous await
     "js/top-level-await",
     "jsx/top-level-await",
     "typescript/top-level-await",
     "js/ternaries/parenthesis/await-expression.js",
+    // Top-level `await (1)` with no import/export: Prettier always parses `.js` as ESM (await expression),
+    // while our unambiguous detection leans to script (call expression), whose output is valid under both
+    "js/await/like-call.js",
     // ES5 vs ES6+ identifier: Prettier uses ES5 validation, OXC uses ES6+
     // Characters outside BMP (like U+102A7) are valid ES6+ identifiers but not ES5
     "js/quotes/objects.js",
@@ -117,4 +126,12 @@ pub const IGNORE_TESTS: &[&str] = &[
     "typescript/decorators-ts/angular.ts",
     // postcss-conditionals (archived: https://github.com/andyjansson/postcss-conditionals).
     "css/atrule/if-else.css",
+    // Prettier's yaml parser rejects these (https://github.com/eemeli/yaml/issues/646),
+    // so no snapshot exists (`3-style.yml` is even marked `errors` in its format.test.js).
+    // oxc-yaml-parser parses them fine, but there is nothing to compare against.
+    "yaml/mapping/3-style.yml",
+    "yaml/spec/spec-example-2-11-mapping-between-sequences.yml",
+    // Pragma support (`@format` insertion / require)
+    "yaml/insert-pragma/",
+    "yaml/require-pragma/",
 ];

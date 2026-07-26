@@ -1,0 +1,50 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE (spec-example-7-20 / 9-4 shapes): a multiline pair breaks the
+# flow collection normally (trailing comma, bracket on its own line) instead
+# of Prettier's flat-with-newline form.
+- [? foo
+    bar
+  : baz]
+- { ? matches
+    %
+  : 20 }
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE (spec-example-7-20 / 9-4 shapes): a multiline pair breaks the
+# flow collection normally (trailing comma, bracket on its own line) instead
+# of Prettier's flat-with-newline form.
+- [
+    ? foo
+      bar
+    : baz,
+  ]
+- {
+    ? matches
+      %
+    : 20,
+  }
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE (spec-example-7-20 / 9-4 shapes): a multiline pair breaks the
+# flow collection normally (trailing comma, bracket on its own line) instead
+# of Prettier's flat-with-newline form.
+- [
+    ? foo
+      bar
+    : baz,
+  ]
+- {
+    ? matches
+      %
+    : 20,
+  }
+
+===================== End =====================

@@ -12,6 +12,8 @@
 //! inferMutationAliasingRanges, rewriteInstructionKindsBasedOnReassignment,
 //! and inferReactiveScopeVariables on each inner function.
 
+use oxc_allocator::CloneIn;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics::ErrorCategory;
@@ -20,14 +22,14 @@ use crate::react_compiler_inference::infer_mutation_aliasing_effects::infer_muta
 use crate::react_compiler_inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges;
 use crate::react_compiler_inference::infer_reactive_scope_variables::infer_reactive_scope_variables;
 use crate::react_compiler_optimization::dead_code_elimination;
+use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 use crate::react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment;
-use crate::react_compiler_utils::FxIndexMap;
 use rustc_hash::FxHashSet;
 use std::mem::replace;
 
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HIR, HirFunction, IdentifierId,
-    InstructionValue, Place, ReactFunctionType,
+    AliasingEffect, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
+    InstructionValue,
 };
 
 /// Analyse all nested function expressions and object methods in `func`.
@@ -68,7 +70,8 @@ where
     // Process each inner function
     for func_id in inner_func_ids {
         // Take the inner function out of the arena to avoid borrow conflicts
-        let mut inner_func = replace(&mut env.functions[func_id], placeholder_function());
+        let mut inner_func =
+            replace(&mut env.functions[func_id], placeholder_function(env.allocator));
 
         lower_with_mutation_aliasing(&mut inner_func, env, debug_logger)?;
 
@@ -137,7 +140,10 @@ where
     // inferReactiveScopeVariables on the inner function
     infer_reactive_scope_variables(func, env)?;
 
-    func.aliasing_effects = Some(function_effects.clone());
+    func.aliasing_effects = Some(ArenaVec::from_iter_in(
+        function_effects.iter().map(|e| e.clone_in(env.allocator)),
+        &env.allocator,
+    ));
 
     // Phase 2: Populate the Effect of each context variable to use in inferring
     // the outer function. Corresponds to TS Phase 2 in lowerWithMutationAliasing.
@@ -187,30 +193,4 @@ where
     debug_logger(func, env);
 
     Ok(())
-}
-
-/// Create a placeholder HirFunction for temporarily swapping an inner function
-/// out of `env.functions` via `std::mem::replace`. The placeholder is never
-/// read — the real function is swapped back immediately after processing.
-fn placeholder_function<'a>() -> HirFunction<'a> {
-    HirFunction {
-        span: None,
-        id: None,
-        name_hint: None,
-        fn_type: ReactFunctionType::Other,
-        params: Vec::new(),
-        returns: Place {
-            identifier: IdentifierId::from_usize(0),
-            effect: Effect::Unknown,
-            reactive: false,
-            span: None,
-        },
-        context: Vec::new(),
-        body: HIR { entry: BlockId::ENTRY, blocks: FxIndexMap::default() },
-        instructions: Vec::new(),
-        generator: false,
-        is_async: false,
-        directives: Vec::new(),
-        aliasing_effects: None,
-    }
 }

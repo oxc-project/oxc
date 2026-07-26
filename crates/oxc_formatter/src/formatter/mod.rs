@@ -47,7 +47,7 @@ pub mod buffer {
 
 pub use oxc_formatter_core::{
     Argument, Arguments, Buffer, BufferExtensions, Format, FormatElement, FormatOptions,
-    FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized, SourceText,
+    FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized, ScratchBuffer, SourceText,
     UniqueGroupIdBuilder, VecBuffer,
 };
 

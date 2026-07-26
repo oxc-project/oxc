@@ -46,11 +46,19 @@ pub mod regular_expression {
 }
 
 pub mod span {
-    //! Source text Span and string types.
+    //! Source text Span.
     //!
     //! See the [`oxc_span` module-level documentation](oxc_span) for more information.
     #[doc(inline)]
     pub use oxc_span::*;
+}
+
+pub mod str {
+    //! String types.
+    //!
+    //! See the [`oxc_str` module-level documentation](oxc_str) for more information.
+    #[doc(inline)]
+    pub use oxc_str::*;
 }
 
 pub mod syntax {

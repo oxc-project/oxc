@@ -237,13 +237,7 @@ impl<'a> ClassProperties<'a> {
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             let rest_element =
                 BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-            params_rest = Some(FormalParameterRest::boxed(
-                SPAN,
-                ArenaVec::new_in(ctx),
-                rest_element,
-                NONE,
-                ctx,
-            ));
+            params_rest = Some(FormalParameterRest::boxed(SPAN, [], rest_element, NONE, ctx));
             stmts.push(Statement::new_expression_statement(
                 SPAN,
                 create_super_call(&args_binding, ctx),
@@ -256,7 +250,7 @@ impl<'a> ClassProperties<'a> {
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::FormalParameter,
-            ArenaVec::new_in(ctx),
+            [],
             params_rest,
             ctx,
         );
@@ -330,23 +324,17 @@ impl<'a> ClassProperties<'a> {
             {
                 let rest_element =
                     BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-                let rest = FormalParameterRest::boxed(
-                    SPAN,
-                    ArenaVec::new_in(ctx),
-                    rest_element,
-                    NONE,
-                    ctx,
-                );
+                let rest = FormalParameterRest::boxed(SPAN, [], rest_element, NONE, ctx);
                 FormalParameters::boxed(
                     SPAN,
                     FormalParameterKind::ArrowFormalParameters,
-                    ArenaVec::new_in(ctx),
+                    [],
                     Some(rest),
                     ctx,
                 )
             },
             NONE,
-            FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), body, ctx),
+            FunctionBody::boxed(SPAN, [], body, ctx),
             super_func_scope_id,
             false,
             false,
@@ -357,18 +345,15 @@ impl<'a> ClassProperties<'a> {
         let super_func_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    super_binding.create_binding_pattern(ctx),
-                    NONE,
-                    Some(super_func),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                VariableDeclarationKind::Var,
+                super_binding.create_binding_pattern(ctx),
+                NONE,
+                Some(super_func),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         );
@@ -416,13 +401,7 @@ impl<'a> ClassProperties<'a> {
             false,
             NONE,
             NONE,
-            FormalParameters::boxed(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ArenaVec::new_in(ctx),
-                NONE,
-                ctx,
-            ),
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx),
             NONE,
             Some(FunctionBody::boxed(SPAN, directives, body_stmts, ctx)),
             super_func_scope_id,
@@ -623,7 +602,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
                     ctx,
                 ),
                 NONE,
-                ArenaVec::from_value_in(Argument::from(super_call), ctx),
+                [Argument::from(super_call)],
                 false,
                 ctx,
             )

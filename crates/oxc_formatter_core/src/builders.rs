@@ -8,8 +8,8 @@ use std::num::NonZeroU8;
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
-    GroupId, VecBuffer,
+    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, FormatState,
+    Formatter, GroupId, HeapVecBuffer,
     format::write,
     format_element::{
         self, LineMode, PrintMode, TextWidth,
@@ -52,22 +52,51 @@ pub const fn soft_line_break_or_space() -> Line {
     Line::new(LineMode::SoftOrSpace)
 }
 
+/// Exactly `count` line breaks (`count >= 1`), exempt from the printer's newline collapsing.
+///
+/// For blank runs inside verbatim values (block scalars, block strings),
+/// where the number of line breaks IS the value and must not be normalized.
+/// From a mid-line position the first break ends the current line, leaving `count - 1` blank lines;
+/// from the start of a line all `count` breaks become blank lines.
+///
+/// Unlike [hard_line_break]:
+/// - the breaks always print, regardless of the current line or a preceding blank line
+/// - consecutive calls accumulate, nothing is collapsed or capped
+///
+/// The blank lines themselves carry no indention;
+/// the NEXT line starts at the current indention (same re-arming as [hard_line_break]).
+///
+/// # Panics
+/// When `count == 0` or `count > u32::MAX`.
+/// Both are unreachable from source-derived callers: a source of N bytes cannot hold more than N line breaks,
+/// and sources are capped at `u32::MAX` by `oxc_span::Span`.
+#[inline]
+pub fn exact_line_breaks(count: usize) -> Line {
+    let count = u32::try_from(count).expect("line break count must fit in u32");
+    let count = std::num::NonZeroU32::new(count).expect("line break count must be >= 1");
+    Line::new(LineMode::ExactLineBreaks(count))
+}
+
 /// A forced line break that starts the next line at the marked root indention (Prettier's `literalline`).
 ///
 /// Unlike [hard_line_break]:
-/// - trailing whitespace on the current line is preserved (never trimmed)
+/// - pending whitespace on the current line materializes as-is (never dropped)
 /// - the newline always prints, even on an empty line
 /// - the next line starts at the [mark_as_root] indention (column 0 when unmarked)
 ///   instead of the current indention
 ///
-/// Used for verbatim multi-line content whose line structure is built element by element
-/// (e.g. YAML block scalars). For verbatim content held as ONE string,
+/// Used for verbatim multi-line content whose line structure is built element by element (e.g. YAML block scalars).
+/// For verbatim content held as ONE string,
 /// a multiline [text] already prints its embedded newlines with these semantics.
 ///
 /// Known divergence from Prettier:
-/// a [hard_line_break] directly after a COLUMN-0 literal line is absorbed
-/// by the printer's "only print a newline if the line isn't already empty" rule (Prettier prints both newlines).
-/// Use [empty_line] when the extra structural newline is required, it prints exactly one newline in this state.
+/// a [hard_line_break] directly after a literal line is absorbed by
+/// the printer's "only print a newline if the line isn't already empty" rule
+/// (the root indention stays pending until content claims it, so the line counts as empty;
+/// Prettier writes the indention eagerly and prints both newlines, relying on its end-of-line trimming,
+/// which this printer does not have — to drop the indention again).
+/// Use [empty_line] when the extra structural newline is required (it prints exactly one newline in this state),
+/// or [exact_line_breaks] for a precise verbatim run.
 #[inline]
 pub const fn literal_line_break() -> Line {
     Line::new(LineMode::Literal)
@@ -881,19 +910,32 @@ impl<'fmt, 'ast, C> BestFitting<'fmt, 'ast, C> {
     }
 }
 
+/// Stages one [`BestFitting`] variant and moves it into the arena exactly-sized.
+///
+/// This is the single place encoding the variant shape the printer's [`format_element::BestFittingElement`] relies on:
+/// an entry-tag-wrapped, exactly-sized arena slice.
+/// The content is staged on the heap so only that final slice lands in the arena (see [`HeapVecBuffer`]).
+pub fn best_fitting_variant<'ast, C>(
+    state: &mut FormatState<'ast, C>,
+    content: impl FnOnce(&mut HeapVecBuffer<'_, 'ast, C>),
+) -> &'ast [FormatElement<'ast>] {
+    let mut buffer = HeapVecBuffer::new(state);
+    buffer.write_element(FormatElement::Tag(StartEntry));
+    content(&mut buffer);
+    buffer.write_element(FormatElement::Tag(EndEntry));
+    buffer.take_into_arena_slice()
+}
+
 impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        let mut buffer = VecBuffer::new(f.state_mut());
         let variants = self.variants.items();
 
         let mut formatted_variants = Vec::with_capacity(variants.len());
 
         for variant in variants {
-            buffer.write_element(FormatElement::Tag(StartEntry));
-            buffer.write_fmt(Arguments::from(variant));
-            buffer.write_element(FormatElement::Tag(EndEntry));
-
-            formatted_variants.push(buffer.take_vec().into_arena_slice());
+            formatted_variants.push(best_fitting_variant(f.state_mut(), |buffer| {
+                buffer.write_fmt(Arguments::from(variant));
+            }));
         }
 
         let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);

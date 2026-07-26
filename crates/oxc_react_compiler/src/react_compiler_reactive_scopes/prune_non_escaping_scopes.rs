@@ -8,8 +8,6 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneNonEscapingScopes.ts`.
 
-use std::mem::take;
-
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -1097,7 +1095,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
             Ok(Transformed::Keep)
         } else {
             self.pruned_scopes.insert(scope_id);
-            Ok(Transformed::ReplaceMany(take(&mut scope.instructions)))
+            // ReplaceMany keeps a std `Vec`; drain the arena block into one.
+            Ok(Transformed::ReplaceMany(scope.instructions.drain(..).collect()))
         }
     }
 

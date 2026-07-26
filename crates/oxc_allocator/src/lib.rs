@@ -52,7 +52,6 @@ mod fixed_size;
 mod from_raw_parts;
 pub mod hash_map;
 pub mod hash_set;
-pub mod ident_hasher;
 #[cfg(feature = "pool")]
 mod pool;
 mod replace_with;
@@ -79,7 +78,6 @@ pub use clone_in::{CloneIn, CloneInSemanticIds};
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::{HashMap, HashMap as ArenaHashMap};
 pub use hash_set::{HashSet, HashSet as ArenaHashSet};
-pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 #[cfg(feature = "pool")]
 pub use pool::*;
 pub use replace_with::ReplaceWith;

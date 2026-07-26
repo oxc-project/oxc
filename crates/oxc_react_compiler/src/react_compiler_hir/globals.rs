@@ -20,7 +20,6 @@ use crate::react_compiler_hir::object_shape::*;
 use crate::react_compiler_hir::type_config::AliasingEffectConfig;
 use crate::react_compiler_hir::type_config::AliasingSignatureConfig;
 use crate::react_compiler_hir::type_config::ApplyArgConfig;
-use crate::react_compiler_hir::type_config::ApplyArgHoleKind;
 use crate::react_compiler_hir::type_config::BuiltInTypeRef;
 use crate::react_compiler_hir::type_config::TypeConfig;
 use crate::react_compiler_hir::type_config::TypeReferenceConfig;
@@ -56,7 +55,7 @@ impl<'a> GlobalRegistry<'a> {
     }
 
     pub fn get(&self, key: &str) -> Option<&Global<'a>> {
-        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key).map(shrink_global)))
+        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key)))
     }
 
     pub fn insert(&mut self, key: Ident<'a>, value: Global<'a>) {
@@ -81,15 +80,10 @@ impl<'a> GlobalRegistry<'a> {
 
     /// Consume the registry and return the inner map.
     /// Only valid in builder mode (no base).
-    pub fn into_inner(self) -> IdentHashMap<'a, Global<'a>> {
+    fn into_inner(self) -> IdentHashMap<'a, Global<'a>> {
         debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode GlobalRegistry");
         self.entries
     }
-}
-
-/// Coerce a static global reference to the arena lifetime (covariant).
-fn shrink_global<'a, 'b>(global: &'b Global<'static>) -> &'b Global<'a> {
-    global
 }
 
 impl Default for GlobalRegistry<'_> {
@@ -133,21 +127,13 @@ pub fn base_globals() -> &'static IdentHashMap<'static, Global<'static>> {
 // installTypeConfig — converts TypeConfig to internal Type
 // =============================================================================
 
-/// Like `install_type_config` but collects validation errors.
-pub fn install_type_config_with_errors<'a>(
+/// Convert a `TypeConfig` into an internal `Type`, collecting validation errors.
+/// Ported from TS `installTypeConfig`.
+pub fn install_type_config<'a>(
     shapes: &mut ShapeRegistry<'a>,
     type_config: &TypeConfig,
     module_name: &str,
     errors: &mut Vec<String>,
-) -> Global<'a> {
-    install_type_config_inner(shapes, type_config, module_name, &mut Some(errors))
-}
-
-fn install_type_config_inner<'a>(
-    shapes: &mut ShapeRegistry<'a>,
-    type_config: &TypeConfig,
-    module_name: &str,
-    errors: &mut Option<&mut Vec<String>>,
 ) -> Global<'a> {
     match type_config {
         TypeConfig::TypeReference(TypeReferenceConfig { name }) => match name {
@@ -162,7 +148,7 @@ fn install_type_config_inner<'a>(
         TypeConfig::Function(func_config) => {
             // Compute return type first to avoid double-borrow of shapes
             let return_type =
-                install_type_config_inner(shapes, &func_config.return_type, module_name, errors);
+                install_type_config(shapes, &func_config.return_type, module_name, errors);
             add_function(
                 shapes,
                 Vec::new(),
@@ -189,7 +175,7 @@ fn install_type_config_inner<'a>(
         TypeConfig::Hook(hook_config) => {
             // Compute return type first to avoid double-borrow of shapes
             let return_type =
-                install_type_config_inner(shapes, &hook_config.return_type, module_name, errors);
+                install_type_config(shapes, &hook_config.return_type, module_name, errors);
             add_hook(
                 shapes,
                 HookSignatureBuilder {
@@ -215,32 +201,24 @@ fn install_type_config_inner<'a>(
                     props
                         .iter()
                         .map(|(key, value)| {
-                            let ty = install_type_config_inner(
-                                shapes,
-                                value,
-                                module_name,
-                                errors,
-                            );
+                            let ty = install_type_config(shapes, value, module_name, errors);
                             // Validate hook-name vs hook-type consistency (matching TS installTypeConfig)
-                            if let Some(errs) = errors {
-                                let expect_hook = is_hook_name(key);
-                                let is_hook = match &ty {
-                                    Type::Function { shape_id: Some(id), .. } => {
-                                        shapes.get(id)
-                                            .and_then(|shape| shape.function_type.as_ref())
-                                            .and_then(|ft| ft.hook_kind.as_ref())
-                                            .is_some()
-                                    }
-                                    _ => false,
-                                };
-                                if expect_hook != is_hook {
-                                    errs.push(format!(
-                                        "Expected type for object property '{}' from module '{}' {} based on the property name",
-                                        key,
-                                        module_name,
-                                        if expect_hook { "to be a hook" } else { "not to be a hook" }
-                                    ));
-                                }
+                            let expect_hook = is_hook_name(key);
+                            let is_hook = match &ty {
+                                Type::Function { shape_id: Some(id), .. } => shapes
+                                    .get(id)
+                                    .and_then(|shape| shape.function_type.as_ref())
+                                    .and_then(|ft| ft.hook_kind.as_ref())
+                                    .is_some(),
+                                _ => false,
+                            };
+                            if expect_hook != is_hook {
+                                errors.push(format!(
+                                    "Expected type for object property '{}' from module '{}' {} based on the property name",
+                                    key,
+                                    module_name,
+                                    if expect_hook { "to be a hook" } else { "not to be a hook" }
+                                ));
                             }
                             (shapes.alloc_ident(key), ty)
                         })
@@ -404,7 +382,7 @@ fn add_object_from_def<'a>(
 /// defined at module level in ObjectShape.ts.
 #[cold]
 #[inline(never)]
-pub fn build_builtin_shapes() -> ShapeRegistry<'static> {
+fn build_builtin_shapes() -> ShapeRegistry<'static> {
     let mut shapes = ShapeRegistry::new();
     for def in BUILTIN_SHAPE_DEFS {
         add_object_from_def(&mut shapes, Some(def.id), def.props);
@@ -534,7 +512,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
                                 mutates_function: false,
                                 args: &[
                                     ApplyArgConfig::Place("@item"),
-                                    ApplyArgConfig::Hole { kind: ApplyArgHoleKind::Hole },
+                                    ApplyArgConfig::Hole,
                                     ApplyArgConfig::Place("@receiver"),
                                 ],
                                 into: "@callbackReturn",
@@ -1271,7 +1249,7 @@ pub fn get_reanimated_module_type<'a>(shapes: &mut ShapeRegistry<'a>) -> Type<'a
 /// (like Object.keys, Array.isArray) register new shapes.
 #[cold]
 #[inline(never)]
-pub fn build_default_globals(shapes: &mut ShapeRegistry<'static>) -> GlobalRegistry<'static> {
+fn build_default_globals(shapes: &mut ShapeRegistry<'static>) -> GlobalRegistry<'static> {
     let mut globals = GlobalRegistry::new();
 
     // React APIs — returns the list so we can reuse them for the React namespace

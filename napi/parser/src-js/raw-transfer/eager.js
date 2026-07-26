@@ -210,7 +210,6 @@ function deserializeToken(pos, int32, sourceText, isJs) {
   // `Kind` is byte at index 8 in `Token`.
   // `Kind` has 12 variants numbered from 0 to 11.
   // We have to mask the bottom byte (`& 0xFF`), so may as well mask off bits which can't be set in `Kind` at same time.
-  // This may allow V8 to generate more efficient code for `TOKEN_TYPES[kind]`.
   const kind = kindAndFlags & TOKEN_KIND_MASK;
 
   if (kind === REGEXP_KIND) {

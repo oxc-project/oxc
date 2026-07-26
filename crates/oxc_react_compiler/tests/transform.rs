@@ -68,6 +68,43 @@ fn skips_non_react_code() {
     assert!(!result.changed, "non-React code must not be transformed");
 }
 
+#[test]
+fn default_suppressions_bail_out() {
+    let fixtures = [
+        (
+            "eslint-disable-next-line",
+            include_str!("../fixtures/default-suppression-eslint-next-line.js"),
+            1,
+        ),
+        (
+            "eslint-disable block range",
+            include_str!("../fixtures/default-suppression-eslint-block-range.js"),
+            1,
+        ),
+        ("Flow", include_str!("../fixtures/default-suppression-flow.js"), 1),
+    ];
+
+    // Babel 1.0.0 currently treats a block disable as open-ended. The block fixture
+    // therefore covers the disable/enable syntax without asserting post-enable behavior.
+    for (kind, source, expected_errors) in fixtures {
+        let allocator = Allocator::default();
+        let (_program, result) =
+            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+        assert!(!result.changed, "{kind} suppression must prevent compilation");
+        assert!(
+            result.diagnostics.has_errors(),
+            "{kind} suppression must report the compiler bail-out: {:?}",
+            result.diagnostics
+        );
+        assert_eq!(
+            result.diagnostics.len(),
+            expected_errors,
+            "{kind} suppression should affect the same functions as the Babel plugin"
+        );
+    }
+}
+
 /// TypeScript-only constructs (`declare global`, `import =`, `export =`,
 /// overload signatures, `#field in obj`) round-trip without panicking while the
 /// component still compiles.
@@ -407,6 +444,56 @@ fn diagnostics_preserve_compiler_severity() {
         !result.diagnostics.has_errors(),
         "fbt warning must not be reported as an error: {:?}",
         result.diagnostics
+    );
+}
+
+/// A warning-level function bail-out must not be promoted to a fatal error:
+/// sibling functions should still compile and downstream transforms should run.
+#[test]
+fn incompatible_library_bailout_remains_a_warning() {
+    let source = "\
+import { useReactTable } from '@tanstack/react-table';\n\
+function Table() {\n\
+  const table = useReactTable({});\n\
+  return <div>{table}</div>;\n\
+}\n\
+export function Component(props: { text: string }) {\n\
+  return <span>{props.text}</span>;\n\
+}\n";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "the unaffected component should compile");
+    assert!(
+        result.diagnostics.has_warnings(),
+        "the incompatible library should report a warning: {:?}",
+        result.diagnostics
+    );
+    assert!(
+        !result.diagnostics.has_errors(),
+        "a warning-level function bail-out must not become fatal: {:?}",
+        result.diagnostics
+    );
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(
+        result.diagnostics[0].message.contains("[ReactCompiler] IncompatibleLibrary"),
+        "expected the original compiler diagnostic: {:?}",
+        result.diagnostics
+    );
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .all(|diagnostic| !diagnostic.message.contains("Unexpected error")),
+        "the bail-out must not create a synthetic error: {:?}",
+        result.diagnostics
+    );
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("react/compiler-runtime"),
+        "expected the unaffected component to be transformed:\n{output}"
     );
 }
 

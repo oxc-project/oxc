@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::constant_evaluation::DetermineValueType;
+use crate::DetermineValueType;
 
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 

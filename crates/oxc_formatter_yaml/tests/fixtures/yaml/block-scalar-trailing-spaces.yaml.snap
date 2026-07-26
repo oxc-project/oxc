@@ -1,0 +1,54 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# The LAST content line drops its trailing spaces even when a kept blank
+# follows (the raw-text blank emission bypasses the printer's end-of-line
+# trimming); intermediate lines keep theirs - they are part of the value.
+last-line-before-kept-blank: |
+  mid  
+  last  
+
+after: 1
+# Keep chomping is verbatim: the last content line keeps its trailing spaces.
+keep-is-verbatim: |+
+  kept  
+
+tail: 2
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# The LAST content line drops its trailing spaces even when a kept blank
+# follows (the raw-text blank emission bypasses the printer's end-of-line
+# trimming); intermediate lines keep theirs - they are part of the value.
+last-line-before-kept-blank: |
+  mid  
+  last
+
+after: 1
+# Keep chomping is verbatim: the last content line keeps its trailing spaces.
+keep-is-verbatim: |+
+  kept  
+
+tail: 2
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# The LAST content line drops its trailing spaces even when a kept blank
+# follows (the raw-text blank emission bypasses the printer's end-of-line
+# trimming); intermediate lines keep theirs - they are part of the value.
+last-line-before-kept-blank: |
+  mid  
+  last
+
+after: 1
+# Keep chomping is verbatim: the last content line keeps its trailing spaces.
+keep-is-verbatim: |+
+  kept  
+
+tail: 2
+
+===================== End =====================
