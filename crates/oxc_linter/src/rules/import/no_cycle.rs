@@ -1,7 +1,7 @@
 use std::{
     ffi::OsStr,
-    path::{Component, Path},
-    sync::Arc,
+    path::{Component, Path, PathBuf},
+    sync::{Arc, LazyLock},
 };
 
 use cow_utils::CowUtils;
@@ -18,6 +18,14 @@ use crate::{
     module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
     rule::{DefaultRuleConfig, Rule},
 };
+
+/// The working directory, used to relativize the paths in a cycle description.
+///
+/// `std::env::current_dir` is a `getcwd` syscall, which is not cheap (on macOS it reconstructs the
+/// path by walking up the vnode chain). The working directory does not change during a lint run, so
+/// resolve it once for the process, and only on the first `no-cycle` diagnostic — a run that reports
+/// no cycles never pays for it, and never panics if the directory is unreadable.
+static CWD: LazyLock<PathBuf> = LazyLock::new(|| std::env::current_dir().unwrap());
 
 fn no_cycle_diagnostic(
     span: Span,
@@ -150,7 +158,6 @@ impl Rule for NoCycle {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
-        let cwd = std::env::current_dir().unwrap();
 
         let needle = &module_record.resolved_absolute_path;
         let mut direct_imports = module_record
@@ -194,7 +201,7 @@ impl Rule for NoCycle {
                 });
 
             if visitor_result.result {
-                ctx.diagnostic(no_cycle_diagnostic(span, &stack, &cwd));
+                ctx.diagnostic(no_cycle_diagnostic(span, &stack, &CWD));
             }
         }
     }
