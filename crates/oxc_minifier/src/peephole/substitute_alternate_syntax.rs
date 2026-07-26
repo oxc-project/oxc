@@ -1396,7 +1396,9 @@ impl<'a> PeepholeOptimizations {
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
-        let Some(val) = t.to_js_string(ctx) else { return };
+        let Some(val) = t.to_js_string(ctx).filter(|_| !t.may_have_side_effects(ctx)) else {
+            return;
+        };
         let new_value =
             Expression::new_string_literal(t.span(), Str::from_cow_in(&val, ctx), None, ctx);
         ctx.replace_expression(expr, new_value);
