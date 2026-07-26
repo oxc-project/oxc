@@ -4,15 +4,12 @@ use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
     Buffer, arena_cow_str,
-    builders::{hard_line_break, soft_line_break_or_space, text},
+    builders::{exact_line_breaks, hard_line_break, soft_line_break_or_space, text},
     write,
 };
 use oxc_span::Span;
 
-use crate::{
-    options::ProseWrap,
-    print::{YamlFormatter, arena_newlines},
-};
+use crate::{options::ProseWrap, print::YamlFormatter};
 
 /// Which flow scalar shape is being folded (affects word-merge rules and quoting).
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -90,10 +87,6 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
 
 /// Prettier's `printFlowScalarContent`:
 /// each reflow group becomes a `fill(join(line, words))`, groups joined by hardlines.
-///
-/// Empty groups (blank lines) are emitted as raw `\n` text,
-/// so consecutive breaks survive the printer's newline collapsing (same technique as block scalars);
-/// a following hardline only re-arms indentation.
 pub fn write_flow_scalar_content<'a>(
     kind: FlowScalarKind,
     content: &'a str,
@@ -134,8 +127,7 @@ pub fn write_flow_scalar_content<'a>(
         if blanks > 0 {
             // N blank groups = N separators before this group
             // (plus the one separating it from the previous non-empty group, if any).
-            write!(f, text(arena_newlines(blanks + usize::from(wrote_any), f)));
-            write!(f, hard_line_break());
+            write!(f, exact_line_breaks(blanks + usize::from(wrote_any)));
         } else if wrote_any {
             write!(f, hard_line_break());
         }
@@ -153,8 +145,7 @@ pub fn write_flow_scalar_content<'a>(
         // (a single empty group — e.g. the empty string `""` — emits nothing).
         let separators = if wrote_any { blanks } else { blanks - 1 };
         if separators > 0 {
-            write!(f, text(arena_newlines(separators, f)));
-            write!(f, hard_line_break());
+            write!(f, exact_line_breaks(separators));
         }
     }
 }
@@ -212,7 +203,7 @@ fn flow_scalar_line_contents<'s>(
     }
 
     if prose_wrap == ProseWrap::Never {
-        lines = lines.into_iter().map(|words| vec![Cow::Owned(words.join(" "))]).collect();
+        lines = join_lines_for_never_wrap(lines);
     }
     lines
 }
@@ -221,6 +212,18 @@ fn flow_scalar_line_contents<'s>(
 /// split on single spaces that are not at a boundary and not adjacent to another space,
 /// so multi-space runs stay inside one "word".
 /// Empty input yields no words; anything else yields at least one.
+///
+/// `proseWrap: never`: each line's words join into one unbreakable word.
+/// A blank line stays an EMPTY group, joining would turn it into a one-word `""` group,
+/// whose fill materializes the pending indention on the blank line (nothing trims it away).
+/// (Zero- and one-word lines pass through unchanged, sparing the rebuild.)
+pub fn join_lines_for_never_wrap(lines: Vec<Vec<Cow<'_, str>>>) -> Vec<Vec<Cow<'_, str>>> {
+    lines
+        .into_iter()
+        .map(|words| if words.len() <= 1 { words } else { vec![Cow::Owned(words.join(" "))] })
+        .collect()
+}
+
 pub fn split_with_single_space(text: &str) -> impl Iterator<Item = &str> {
     let bytes = text.as_bytes();
     let mut start = 0;

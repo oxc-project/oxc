@@ -7,8 +7,8 @@ use oxc_yaml_parser::ast::{Content, MappingItem, Node};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, is_own_line, write_single_comment,
-        write_trailing_same_line_comment,
+        Gap, classify_gap, flush_leading_comments, is_own_line, pending_same_line_comment,
+        write_single_comment, write_trailing_same_line_comment,
     },
     options::ProseWrap,
     print::{YamlFormatter, column_of, format_with, to_span, write_node, write_node_or_suppressed},
@@ -40,15 +40,18 @@ pub fn write_mapping_item<'a>(
     let is_empty_value = value_content.is_none();
 
     if is_empty_key && is_empty_value {
-        write!(f, ": ");
-        // A same-line comment follows WITHOUT another space (`: # c`):
-        // Prettier suppresses the line-suffix space for an empty mappingValue.
-        if let Some(span) = f.context().comments().peek()
-            && span.start >= item.span.end
-            && f.context()
-                .source_text()
-                .all_bytes_match(item.span.end, span.start, |b| matches!(b, b' ' | b'\t'))
-        {
+        // The `: `'s own space is the separation for what follows:
+        // a same-line comment
+        // (`: # c`, Prettier suppresses the line-suffix space for an empty mappingValue)
+        // or the rest of a flow collection (`{ : }`).
+        // In a block mapping with no comment nothing follows, don't leave it at the line end.
+        let same_line_comment = pending_same_line_comment(item.span.end, f);
+        if in_flow != FlowParent::No || same_line_comment.is_some() {
+            write!(f, ": ");
+        } else {
+            write!(f, ":");
+        }
+        if let Some(span) = same_line_comment {
             f.context().comments().take_before(span.end);
             let comment = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
                 write_single_comment(span, f);
@@ -72,12 +75,7 @@ pub fn write_mapping_item<'a>(
         // with no `:`, a same-line comment (`? key # c`, whitespace-only gap) attaches to the key content and keeps the explicit form.
         // After `key:` the gap contains the `:`, the comment belongs to the value side, and the implicit form stays
         // (the caller emits it as a line suffix).
-        let key_content_trailing_comment = f.context().comments().peek().is_some_and(|span| {
-            span.start >= key_end
-                && f.context()
-                    .source_text()
-                    .all_bytes_match(key_end, span.start, |b| matches!(b, b' ' | b'\t'))
-        });
+        let key_content_trailing_comment = pending_same_line_comment(key_end, f).is_some();
         if in_flow == FlowParent::No
             && is_absolutely_single_line(key_content, f)
             && !parent_tag_is_set

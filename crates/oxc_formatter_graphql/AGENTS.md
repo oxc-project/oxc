@@ -63,8 +63,7 @@ Prettier prints `StringValue` from `graphql-js`'s _cooked_ value and re-encodes 
 - escape decoding for regular strings (incl. surrogate pairs)
 - Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`)
 
-Blank-line runs inside block strings are part of the string VALUE;
-the printer collapses consecutive line breaks, so they are emitted as raw `\n` text plus a `hard_line_break()` that only re-arms indentation (see `write_block_string_break`).
+Blank-line runs inside block strings are part of the string VALUE and are emitted with `exact_line_breaks()`. Values are written pre-trimmed, the core printer never trims.
 
 ### Notable layout rules
 

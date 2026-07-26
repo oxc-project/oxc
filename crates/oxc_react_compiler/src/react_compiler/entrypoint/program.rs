@@ -1056,8 +1056,7 @@ fn try_compile_function<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
-    // Check for suppressions that affect this function. Suppression errors are
-    // returned (not thrown), so they do NOT trigger CompileUnexpectedThrow.
+    // Check for suppressions that affect this function before entering the pipeline.
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
         if !affecting.is_empty() {
@@ -1075,7 +1074,6 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
-        source.fn_ast_span,
     )
 }
 
@@ -2137,18 +2135,16 @@ fn ox_build_compiled_expression<'a>(
     original_kind: OriginalFnKind,
 ) -> Expression<'a> {
     match original_kind {
-        OriginalFnKind::ArrowFunctionExpression => {
-            Expression::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
-                SPAN,
-                false,
-                codegen.is_async,
-                NONE,
-                codegen.params.clone_in_with_semantic_ids(ast.allocator()),
-                NONE,
-                codegen.body.clone_in_with_semantic_ids(ast.allocator()),
-                ast,
-            ))
-        }
+        OriginalFnKind::ArrowFunctionExpression => Expression::new_arrow_function_expression(
+            SPAN,
+            false,
+            codegen.is_async,
+            NONE,
+            codegen.params.clone_in_with_semantic_ids(ast.allocator()),
+            NONE,
+            codegen.body.clone_in_with_semantic_ids(ast.allocator()),
+            ast,
+        ),
         _ => Expression::FunctionExpression(ox_build_function(
             ast,
             codegen,
@@ -2223,13 +2219,13 @@ fn ox_build_gated_const_decl<'a>(
         false,
         ast,
     );
-    Statement::VariableDeclaration(VariableDeclaration::boxed(
+    Statement::new_variable_declaration(
         SPAN,
         VariableDeclarationKind::Const,
         [declarator],
         false,
         ast,
-    ))
+    )
 }
 
 /// The one visitor type behind every oxc-AST traversal of the transform phase,
@@ -2314,7 +2310,7 @@ impl<'a> OxcVisitor<'a, '_> {
                     Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
                     _ => unreachable!(),
                 };
-                *stmt = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
+                *stmt = Statement::new_export_named_declaration(
                     SPAN,
                     Some(decl),
                     [],
@@ -2322,7 +2318,7 @@ impl<'a> OxcVisitor<'a, '_> {
                     ImportOrExportKind::Value,
                     NONE,
                     ast,
-                ));
+                );
             } else {
                 *stmt = const_decl;
             }
@@ -2338,13 +2334,13 @@ impl<'a> OxcVisitor<'a, '_> {
                 *stmt = ox_build_gated_const_decl(ast, gating_expression, id.as_str());
                 *export_default_name = Some(id);
             } else {
-                *stmt = Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+                *stmt = Statement::new_export_default_declaration(
                     SPAN,
                     ExportDefaultDeclarationKind::from(
                         gating_expression.clone_in_with_semantic_ids(ast.allocator()),
                     ),
                     ast,
-                ));
+                );
             }
             *done = true;
             return true;
@@ -2451,11 +2447,11 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
             && let Some(name) = export_default_name.take()
         {
             let ident = Expression::new_identifier(SPAN, name, self.ast);
-            let export = Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+            let export = Statement::new_export_default_declaration(
                 SPAN,
                 ExportDefaultDeclarationKind::from(ident),
                 self.ast,
-            ));
+            );
             // Find the const decl we just inserted (it has name `name`); insert after.
             let pos = stmts.iter().position(|s| {
                 matches!(s, Statement::VariableDeclaration(d)
@@ -2765,12 +2761,7 @@ fn ox_add_imports_to_program<'a>(
                 SPAN,
                 Expression::new_identifier(SPAN, "require", ast),
                 NONE,
-                [Argument::from(Expression::new_string_literal(
-                    SPAN,
-                    ox_atom(ast, module_name),
-                    None,
-                    ast,
-                ))],
+                [Argument::new_string_literal(SPAN, ox_atom(ast, module_name), None, ast)],
                 false,
                 ast,
             );
@@ -2806,19 +2797,15 @@ fn ox_make_import_specifier<'a>(
     ast: &AstBuilder<'a>,
     spec: &super::imports::NonLocalImportSpecifier,
 ) -> ImportDeclarationSpecifier<'a> {
-    let imported = ModuleExportName::IdentifierName(IdentifierName::new(
-        SPAN,
-        ox_atom(ast, &spec.imported),
-        ast,
-    ));
+    let imported = ModuleExportName::new_identifier_name(SPAN, ox_atom(ast, &spec.imported), ast);
     let local = BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
-    ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier::boxed(
+    ImportDeclarationSpecifier::new_import_specifier(
         SPAN,
         imported,
         local,
         ImportOrExportKind::Value,
         ast,
-    ))
+    )
 }
 
 /// Whether an import declaration is a non-namespaced value import. Mirrors

@@ -310,11 +310,11 @@ fn remove_unused_use_strict_directive() {
 }
 
 // Legal comments anchored to a removed `"use strict"` directive are rescued
-// by the same `print_legal_orphans_before` flush used for #19750: the
+// by the same preserved-comment orphan flush used for #19750: the
 // directive's `span.start` is gone, but the orphan re-anchors at the next
 // surviving statement. Pin that for the legal-comment subset of #19748.
-// Non-legal comments above a removed directive are not covered:
-// `print_legal_orphans_before` is gated on `Comment::is_legal()` by design.
+// Normal comments above a removed directive are not covered; only comments
+// with file-level meaning are preserved when their anchor is removed.
 
 #[test]
 fn preserve_legal_comment_above_removed_use_strict() {

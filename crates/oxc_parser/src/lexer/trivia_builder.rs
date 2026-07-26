@@ -331,7 +331,11 @@ impl<'a> TriviaBuilder<'a> {
                     || rest.starts_with(b"node:coverage")
                     || rest.starts_with(b"istanbul ignore")
                 {
-                    comment.content = CommentContent::CoverageIgnore;
+                    comment.content = if is_coverage_ignore_file(rest) {
+                        CommentContent::CoverageIgnoreFile
+                    } else {
+                        CommentContent::CoverageIgnore
+                    };
                     return;
                 }
                 // Fall through to check license/preserve
@@ -399,6 +403,17 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
     }
 
     false
+}
+
+fn is_coverage_ignore_file(source: &[u8]) -> bool {
+    fn starts_with_directive(source: &[u8], directive: &[u8]) -> bool {
+        source
+            .strip_prefix(directive)
+            .is_some_and(|rest| rest.first().is_none_or(u8::is_ascii_whitespace))
+    }
+
+    starts_with_directive(source, b"v8 ignore file")
+        || starts_with_directive(source, b"istanbul ignore file")
 }
 
 #[cfg(test)]
@@ -789,6 +804,14 @@ function bar() {}";
             ("/* #__PURE__ */", CommentContent::Pure),
             ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* turbopackOptional: true */", CommentContent::Turbopack),
+            ("/* v8 ignore next */", CommentContent::CoverageIgnore),
+            ("/* v8 ignore filename */", CommentContent::CoverageIgnore),
+            ("/* c8 ignore file */", CommentContent::CoverageIgnore),
+            ("/* v8 ignore file */", CommentContent::CoverageIgnoreFile),
+            ("// v8 ignore file", CommentContent::CoverageIgnoreFile),
+            ("/* v8 ignore file -- @preserve */", CommentContent::CoverageIgnoreFile),
+            ("/* istanbul ignore file */", CommentContent::CoverageIgnoreFile),
+            ("// istanbul ignore file -- generated", CommentContent::CoverageIgnoreFile),
         ];
 
         for (source_text, expected) in data {

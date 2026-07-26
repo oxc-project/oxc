@@ -164,7 +164,10 @@ impl<'a> Printer<'a> {
                             }
                             return Ok(());
                         }
-                        LineMode::Hard | LineMode::Empty | LineMode::Literal => {
+                        LineMode::Hard
+                        | LineMode::Empty
+                        | LineMode::ExactLineBreaks(_)
+                        | LineMode::Literal => {
                             self.state.measured_group_fits = false;
                         }
                     }
@@ -175,23 +178,44 @@ impl<'a> Printer<'a> {
                     return Ok(());
                 }
 
+                if let LineMode::ExactLineBreaks(count) = line_mode {
+                    // Exactly `count` breaks, exempt from the collapsing and capping below (see `exact_line_breaks`).
+                    // From mid-line the first break ends the current line;
+                    // the rest (all of them from the start of a line) are blank lines, which carry no indention of their own.
+                    let count = count.get();
+                    // A blank line is left behind from the start of a line always,
+                    // mid-line only when a break remains after the line-ending one.
+                    let leaves_blank = count > 1 || self.state.line_width == 0;
+                    for _ in 0..count {
+                        self.print_char('\n');
+                    }
+                    self.state.has_empty_line = leaves_blank;
+                    self.state.pending_space = false;
+                    self.state.pending_indent = indent_stack.indention();
+                    return Ok(());
+                }
+
                 if line_mode == &LineMode::Literal {
                     // Prettier's literal line (`doc.literal` in `printDocToString`):
                     // pending indention/space materialize as-is (a literal line never trims),
-                    // the newline always prints (even on an empty line),
-                    // and the next line starts at the marked root indention,
-                    // written eagerly (Prettier writes `indent.root.value` together with the newline)
-                    // so that a following hard line still sees a non-empty line to trim and break.
+                    // the newline always prints (even on an empty line), and the next line starts at the marked root indention.
+                    // The root indention stays PENDING.
+                    // (Prettier writes it eagerly and relies on its end-of-line trimming to drop it again
+                    // when a line break follows; this printer never trims, so it must not write indention that no content claims.
+                    // See the [literal_line_break] divergence note)
                     self.flush_pending_indention_and_space();
                     self.print_char('\n');
-                    self.print_indention(indent_stack.root());
+                    self.state.pending_indent = indent_stack.root();
                     self.state.has_empty_line = false;
                     return Ok(());
                 }
 
-                // Only print a newline if the current line isn't already empty
+                // Only print a newline if the current line isn't already empty.
+                //
+                // NOTE: no end-of-line trimming happens here (unlike Prettier's `printDocToString`):
+                // the pending space/indent mechanisms never materialize at a line end,
+                // and Text/Token content is the emitter's responsibility to keep trimmed.
                 if self.state.line_width > 0 {
-                    self.state.buffer.trim_trailing_ascii_whitespace();
                     self.print_char('\n');
                     self.state.has_empty_line = false;
                 }
@@ -1097,7 +1121,10 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                             self.state.pending_space = true;
                         }
                         LineMode::Soft => {}
-                        LineMode::Hard | LineMode::Empty | LineMode::Literal => {
+                        LineMode::Hard
+                        | LineMode::Empty
+                        | LineMode::ExactLineBreaks(_)
+                        | LineMode::Literal => {
                             // Even in flat mode, content that _directly_ contains a hard or empty
                             // line is considered to fit when a hard break is reached, since that
                             // break is always going to exist, regardless of the print mode.
@@ -1458,10 +1485,10 @@ mod tests {
         Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
         Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer,
         builders::{
-            align, block_indent, dedent_to_root, empty_line, group, hard_line_break,
-            if_group_breaks, if_group_fits_on_line, indent, line_suffix, literal_line_break,
-            mark_as_root, soft_block_indent, soft_line_break, soft_line_break_or_space, space,
-            text, token,
+            align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
+            hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
+            literal_line_break, mark_as_root, soft_block_indent, soft_line_break,
+            soft_line_break_or_space, space, text, token,
         },
         format_args,
         printer::PrintWidth,
@@ -1504,6 +1531,125 @@ mod tests {
         let document = Document::new(elements, Vec::default());
         document.propagate_expand();
         Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
+    }
+
+    #[test]
+    fn exact_line_breaks_are_never_collapsed() {
+        let allocator = Allocator::default();
+        // Mid-line: the first break ends the line, the rest are blank lines
+        let formatted =
+            format_simple(&allocator, &format_args!(token("a"), exact_line_breaks(3), token("b")));
+        assert_eq!("a\n\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn exact_line_breaks_print_from_the_start_of_a_line() {
+        let allocator = Allocator::default();
+        // From the start of a line every break becomes a blank line
+        // (a hard_line_break would print nothing in this state).
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(token("a"), hard_line_break(), exact_line_breaks(1), token("b")),
+        );
+        assert_eq!("a\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn consecutive_exact_line_breaks_accumulate() {
+        let allocator = Allocator::default();
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(token("a"), exact_line_breaks(2), exact_line_breaks(2), token("b")),
+        );
+        // 2 breaks (line ending + 1 blank), then 2 more blanks.
+        assert_eq!("a\n\n\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn exact_line_breaks_clear_the_pending_space() {
+        let allocator = Allocator::default();
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(token("a"), space(), exact_line_breaks(1), token("b")),
+        );
+        assert_eq!("a\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn empty_line_after_mid_line_single_exact_break_adds_a_blank() {
+        let allocator = Allocator::default();
+        // Mid-line count=1 leaves no blank behind: the empty_line may still add one.
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(token("a"), exact_line_breaks(1), empty_line(), token("b")),
+        );
+        assert_eq!("a\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn empty_line_after_blank_leaving_exact_breaks_is_capped() {
+        let allocator = Allocator::default();
+        // Mid-line count=2 leaves a blank: the empty_line is capped.
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(token("a"), exact_line_breaks(2), empty_line(), token("b")),
+        );
+        assert_eq!("a\n\nb", formatted.as_code());
+
+        // From the start of a line even count=1 leaves a blank
+        // (no break is consumed as a line ending), so the empty_line is capped too.
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                hard_line_break(),
+                exact_line_breaks(1),
+                empty_line(),
+                token("b")
+            ),
+        );
+        assert_eq!("a\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn exact_line_breaks_flush_pending_line_suffixes() {
+        let allocator = Allocator::default();
+        // The YAML shape `key: | # comment` + a blank-run block scalar: the pending
+        // line suffix must flush onto the current line, not leak past the breaks.
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                line_suffix(&format_args!(space(), token("# c"))),
+                exact_line_breaks(2),
+                token("b")
+            ),
+        );
+        assert_eq!("a # c\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn hard_line_break_after_exact_line_breaks_is_absorbed() {
+        let allocator = Allocator::default();
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(token("a"), exact_line_breaks(2), hard_line_break(), token("b")),
+        );
+        assert_eq!("a\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn exact_line_breaks_blank_lines_carry_no_indention() {
+        let allocator = Allocator::default();
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                block_indent(&format_args!(token("b"), exact_line_breaks(2), token("c"))),
+                token("d")
+            ),
+        );
+        assert_eq!("a\n  b\n\n  c\nd", formatted.as_code());
     }
 
     #[test]
@@ -1680,9 +1826,10 @@ a",
 
     /// Composes the document shape of Prettier's YAML block scalar printing
     /// (`language-yaml/print/block.js`): content indented via `align`,
-    /// line boundaries as `mark_as_root(&literal_line_break())` so continuation lines
-    /// keep the block's base indention, an empty content line as a hard line,
-    /// and the keep-chomping (`|+`) trailing newline as `dedent_to_root(&literal_line_break())`.
+    /// non-blank line boundaries as `mark_as_root(&literal_line_break())`,
+    /// so continuation lines keep the block's base indention,
+    /// blank runs as `exact_line_breaks` (no indention on the blank line),
+    /// and the keep-chomping (`|+`) trailing newline as raw verbatim text.
     #[test]
     fn yaml_block_scalar_shaped_document() {
         let allocator = Allocator::default();
@@ -1695,10 +1842,9 @@ a",
                     &format_args!(
                         hard_line_break(),
                         token("hello world"),
-                        mark_as_root(&literal_line_break()),
-                        hard_line_break(),
+                        exact_line_breaks(2),
                         token("next"),
-                        dedent_to_root(&literal_line_break())
+                        dedent_to_root(&text("\n"))
                     )
                 )
             ),

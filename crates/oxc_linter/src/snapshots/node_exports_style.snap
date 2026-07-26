@@ -227,6 +227,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Do not modify `exports` itself.
 
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:11]
+ 1 │ exports = module.exports = {foo: 1}
+   ·           ──────────────
+   ╰────
+  help: Use `exports` instead.
+
   ⚠ node(exports-style): Unexpected assignment to `exports`.
    ╭─[exports_style.tsx:1:1]
  1 │ exports = module.exports = {foo: 1}
@@ -235,9 +242,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not modify `exports` itself.
 
   ⚠ node(exports-style): Unexpected access to `module.exports`.
-   ╭─[exports_style.tsx:1:11]
- 1 │ exports = module.exports = {foo: 1}
-   ·           ──────────────
+   ╭─[exports_style.tsx:1:1]
+ 1 │ (module).exports = {foo: 1}
+   · ────────────────
+   ╰────
+  help: Use `exports` instead.
+
+  ⚠ node(exports-style): Unexpected access to `module.exports`.
+   ╭─[exports_style.tsx:1:1]
+ 1 │ (module as any).exports = {foo: 1}
+   · ───────────────────────
    ╰────
   help: Use `exports` instead.
 

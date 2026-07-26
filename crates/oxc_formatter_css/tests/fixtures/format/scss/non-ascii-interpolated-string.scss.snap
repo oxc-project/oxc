@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Non-ASCII (Cyrillic) content in interpolated strings with embedded quotes
+// must survive byte-for-byte (issue #24841); bytes were re-encoded as Latin-1.
+
+@function write-error($value) {
+  @error 'error with значение: "#{$value}"';
+}
+
+.a {
+  content: 'значение "#{$v}"';
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Non-ASCII (Cyrillic) content in interpolated strings with embedded quotes
+// must survive byte-for-byte (issue #24841); bytes were re-encoded as Latin-1.
+
+@function write-error($value) {
+  @error 'error with значение: "#{$value}"';
+}
+
+.a {
+  content: 'значение "#{$v}"';
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Non-ASCII (Cyrillic) content in interpolated strings with embedded quotes
+// must survive byte-for-byte (issue #24841); bytes were re-encoded as Latin-1.
+
+@function write-error($value) {
+  @error 'error with значение: "#{$value}"';
+}
+
+.a {
+  content: 'значение "#{$v}"';
+}
+
+===================== End =====================

@@ -1436,6 +1436,8 @@ fn test_compress_is_loose_boolean() {
     test("v = x != !0", "v = x != 1");
     test("v = x == !1", "v = x == 0");
     test("v = x != !1", "v = x != 0");
+    test_same("v = ![f()] == x");
+    test_same("v = x == ![f()]");
 }
 
 #[test]
@@ -1444,6 +1446,22 @@ fn try_minimize_binary() {
     test("f(!a === !1)", "f(!!a)");
     test("f(!a === true)", "f(!a)");
     test("f(!a === false)", "f(!!a)");
+
+    test("f((a & 1) != 0)", "f(!!(a & 1))");
+    test("f((a & 2) == 0)", "f(!(a & 2))");
+    test("f((a | 1) !== 0)", "f(!!(a | 1))");
+    test("f((a ^ 2) === 0)", "f(!(a ^ 2))");
+    test("f((a >>> b) !== 0)", "f(!!(a >>> b))");
+    test("f(0 === (a & 4))", "f(!(a & 4))");
+
+    // Arithmetic can produce `NaN`, whose truthiness differs from comparison with zero.
+    test_same("f((a + b) != 0)");
+    test_same("f((a * 2) == 0)");
+    test("f(+a === 0)", "f(+a == 0)");
+    // Unknown bitwise operands can be BigInts, so their comparison must remain unchanged.
+    test_same("f((a & b) !== 0)");
+    test_same("f((a & 1n) !== 0)");
+    test_same("f((a & 1) != 1)");
 }
 
 #[test]

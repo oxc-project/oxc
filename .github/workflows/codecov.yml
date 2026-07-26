@@ -37,14 +37,16 @@ jobs:
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
 
       - run: rustup component add llvm-tools-preview
-      - uses: taiki-e/install-action@ed67fa35ac944f3a9b33f12c4dd43b6f31a47e20 # v2.83.3
+      - uses: taiki-e/install-action@7572810d7dd469b651bb7793945692cf78da5dd7 # v2.85.0
         with:
           tool: cargo-llvm-cov
 
       - name: Run
         env:
-          # Increase stack size to 10MB, avoid `oxc_formatter` from stack overflowing when printing long assignment expressions.
+          # Increase stack size to 100MiB, avoid `oxc_formatter` from stack overflowing when printing long assignment expressions.
           RUST_MIN_STACK: 104857600
+          # Limit concurrent compiler processes to avoid exhausting the 8GiB runner.
+          CARGO_BUILD_JOBS: 2
         run: cargo codecov --lcov --output-path lcov.info
 
       - name: Upload Artifact

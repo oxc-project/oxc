@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE: a comment indented deeper than the value it follows never
+# rewrites that value's layout; Prettier breaks `key: value` onto two lines
+# (`key:\n  value`) when such a comment follows it.
+Properties:
+  Type: application
+    # over-indented comment
+  Other: 1
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE: a comment indented deeper than the value it follows never
+# rewrites that value's layout; Prettier breaks `key: value` onto two lines
+# (`key:\n  value`) when such a comment follows it.
+Properties:
+  Type: application
+    # over-indented comment
+  Other: 1
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE: a comment indented deeper than the value it follows never
+# rewrites that value's layout; Prettier breaks `key: value` onto two lines
+# (`key:\n  value`) when such a comment follows it.
+Properties:
+  Type: application
+    # over-indented comment
+  Other: 1
+
+===================== End =====================

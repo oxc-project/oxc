@@ -792,13 +792,18 @@ impl CallExpression<'_> {
         }
     }
 
-    /// Returns `true` if this looks like a call to `require` in CommonJS (has a single string argument):
+    /// Returns the required module's [`StringLiteral`] if this looks like a call to `require` in
+    /// CommonJS (a single string literal argument), or [`None`] otherwise.
+    ///
     /// ```js
-    /// require('string') // => true
-    /// require('string', 'string') // => false
-    /// require() // => false
-    /// require(123) // => false
+    /// require('string') // => Some("string")
+    /// require('string', 'string') // => None
+    /// require() // => None
+    /// require(123) // => None
     /// ```
+    ///
+    /// The callee is matched with [`Expression::is_specific_id`], which looks through parentheses
+    /// and TypeScript wrappers such as `as`, `satisfies`, and `!`.
     pub fn common_js_require(&self) -> Option<&StringLiteral<'_>> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;

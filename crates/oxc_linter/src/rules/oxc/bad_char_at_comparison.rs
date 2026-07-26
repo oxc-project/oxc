@@ -2,7 +2,6 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::BinaryOperator;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -53,34 +52,16 @@ declare_oxc_lint!(
 
 impl Rule for BadCharAtComparison {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        if !is_method_call(call_expr, None, Some(&["charAt"]), Some(1), Some(1)) {
-            return;
-        }
-
-        let AstKind::BinaryExpression(binary_expr) = ctx.nodes().parent_kind(node.id()) else {
-            return;
-        };
-        if !matches!(
-            binary_expr.operator,
-            BinaryOperator::Equality
-                | BinaryOperator::Inequality
-                | BinaryOperator::StrictEquality
-                | BinaryOperator::StrictInequality
-        ) {
-            return;
-        }
-
-        let comparison_with = if binary_expr.left.span() == call_expr.span {
-            &binary_expr.right
-        } else {
-            &binary_expr.left
-        };
-
-        if let Expression::StringLiteral(string_lit) = comparison_with
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && is_method_call(call_expr, None, Some(&["charAt"]), Some(1), Some(1))
+            && let AstKind::BinaryExpression(binary_expr) = ctx.nodes().parent_kind(node.id())
+            && binary_expr.operator.is_equality()
+            && let Expression::StringLiteral(string_lit) =
+                if binary_expr.left.span() == call_expr.span {
+                    &binary_expr.right
+                } else {
+                    &binary_expr.left
+                }
             && !is_string_valid(string_lit.value.as_str())
         {
             ctx.diagnostic(bad_char_at_comparison_diagnostic(

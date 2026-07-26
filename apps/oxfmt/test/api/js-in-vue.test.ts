@@ -103,4 +103,35 @@ const a = \`
     expect(result2.code).toBe(result.code);
     expect(result2.errors).toStrictEqual([]);
   });
+
+  // gql-in-js-in-vue: the `oxc_formatter_graphql` IR's blank runs
+  // (`exact_line_breaks`, part of the block string's VALUE) must survive the IR→Doc conversion
+  // back to the Prettier host (encoded as that many hardlines, which Prettier never collapses).
+  it("should preserve gql block-string blank lines through a .vue script", async () => {
+    const input = `
+<script setup>
+const q = graphql\`
+  """
+  First paragraph.
+
+
+  Second paragraph after two blanks.
+  """
+  type Query {
+    hello: String
+  }
+\`;
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    // Format again to verify idempotency
+    const result2 = await format("a.vue", result.code);
+
+    expect(result.code).toContain("First paragraph.\n\n\n  Second paragraph after two blanks.");
+    expect(result.code).toMatchSnapshot();
+    expect(result.errors).toStrictEqual([]);
+    expect(result2.code).toBe(result.code);
+    expect(result2.errors).toStrictEqual([]);
+  });
 });
