@@ -1436,6 +1436,8 @@ fn test_compress_is_loose_boolean() {
     test("v = x != !0", "v = x != 1");
     test("v = x == !1", "v = x == 0");
     test("v = x != !1", "v = x != 0");
+    test_same("v = ![f()] == x");
+    test_same("v = x == ![f()]");
 }
 
 #[test]

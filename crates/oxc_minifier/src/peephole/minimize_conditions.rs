@@ -145,7 +145,9 @@ impl<'a> PeepholeOptimizations {
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return;
         }
-        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
+        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx)
+            && !e.left.may_have_side_effects(ctx)
+        {
             let new_left = Expression::new_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
@@ -156,7 +158,9 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_expression(&mut e.left, new_left);
             return;
         }
-        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
+        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx)
+            && !e.right.may_have_side_effects(ctx)
+        {
             let new_right = Expression::new_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
