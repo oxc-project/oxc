@@ -1002,27 +1002,25 @@ impl<'a> PeepholeOptimizations {
                 }
             }
 
-            if if_stmt.consequent.is_terminated() {
-                if if_stmt.alternate.is_some() {
-                    // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
-                    result.push(Statement::IfStatement(if_stmt));
-                    loop {
-                        if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                            && if_stmt.consequent.is_terminated()
-                            && let Some(stmt) = if_stmt.alternate.take()
-                        {
-                            if let Statement::BlockStatement(block_stmt) = stmt {
-                                Self::handle_block(result, block_stmt, ctx);
-                            } else {
-                                result.push(stmt);
-                                ctx.notice_change();
-                            }
-                            continue;
+            if if_stmt.consequent.is_terminated() && if_stmt.alternate.is_some() {
+                // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
+                result.push(Statement::IfStatement(if_stmt));
+                loop {
+                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                        && if_stmt.consequent.is_terminated()
+                        && let Some(stmt) = if_stmt.alternate.take()
+                    {
+                        if let Statement::BlockStatement(block_stmt) = stmt {
+                            Self::handle_block(result, block_stmt, ctx);
+                        } else {
+                            result.push(stmt);
+                            ctx.notice_change();
                         }
-                        break;
+                        continue;
                     }
-                    return ControlFlow::Continue(());
+                    break;
                 }
+                return ControlFlow::Continue(());
             }
         }
 

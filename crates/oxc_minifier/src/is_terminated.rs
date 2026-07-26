@@ -5,7 +5,7 @@ pub trait IsTerminated {
     fn is_terminated(&self) -> bool;
 }
 
-impl<'a> IsTerminated for Statement<'a> {
+impl IsTerminated for Statement<'_> {
     fn is_terminated(&self) -> bool {
         match self {
             Statement::IfStatement(stmt) => stmt.is_terminated(),
@@ -15,26 +15,26 @@ impl<'a> IsTerminated for Statement<'a> {
     }
 }
 
-impl<'a> IsTerminated for IfStatement<'a> {
+impl IsTerminated for IfStatement<'_> {
     fn is_terminated(&self) -> bool {
         self.consequent.is_terminated() && self.alternate.is_terminated()
     }
 }
 
-impl<'a> IsTerminated for BlockStatement<'a> {
+impl IsTerminated for BlockStatement<'_> {
     fn is_terminated(&self) -> bool {
         self.body.is_terminated()
     }
 }
 
-impl<'a> IsTerminated for ArenaVec<'a, Statement<'a>> {
+impl IsTerminated for ArenaVec<'_, Statement<'_>> {
     fn is_terminated(&self) -> bool {
-        self.iter().last().is_some_and(|stmt| stmt.is_terminated())
+        self.iter().last().is_some_and(Statement::is_terminated)
     }
 }
 
-impl<'a> IsTerminated for Option<Statement<'a>> {
+impl IsTerminated for Option<Statement<'_>> {
     fn is_terminated(&self) -> bool {
-        self.as_ref().map_or(false, |stmt| stmt.is_terminated())
+        self.as_ref().is_some_and(Statement::is_terminated)
     }
 }
