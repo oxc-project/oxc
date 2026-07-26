@@ -662,10 +662,14 @@ impl<'a> PeepholeOptimizations {
         if let Expression::UnaryExpression(left) = &e.left
             && left.operator.is_typeof()
             && e.operator.is_equality()
+            && !e.left.may_have_side_effects(ctx)
         {
             let right_ty = e.right.value_type(ctx);
 
-            if !right_ty.is_undetermined() && right_ty != ValueType::String {
+            if !right_ty.is_undetermined()
+                && right_ty != ValueType::String
+                && !e.right.may_have_side_effects(ctx)
+            {
                 let new_expr = Expression::new_boolean_literal(
                     e.span,
                     e.operator == BinaryOperator::Inequality

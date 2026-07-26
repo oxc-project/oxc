@@ -1304,6 +1304,13 @@ fn test_fold_invalid_typeof_comparison() {
 }
 
 #[test]
+fn test_fold_keep_side_effects_in_typeof_comparison() {
+    fold_same("typeof f() == 1");
+    fold("typeof f() === 'asd'", "typeof f() == 'asd'");
+    fold_same("typeof x === [f()]");
+}
+
+#[test]
 fn test_issue_8782() {
     fold("+(void unknown())", "+void unknown()");
 }
