@@ -88,11 +88,7 @@ impl Rule for ThrowNewError {
 }
 
 fn is_data_tagged_error(callee: &Expression<'_>) -> bool {
-    let Expression::StaticMemberExpression(member) = callee else {
-        return false;
-    };
-
-    member.property.name == "TaggedError" && member.object.is_specific_id("Data")
+    callee.is_specific_member_access("Data", "TaggedError")
 }
 
 #[test]
