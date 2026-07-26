@@ -80,7 +80,7 @@ impl<'a> PeepholeOptimizations {
             // kept block ending in a jump, an if/else or try/catch where
             // every branch jumps — makes the rest of the list unreachable.
             // https://github.com/rolldown/rolldown/issues/10184
-            if !is_control_flow_dead && stmts.is_terminated() {
+            if !is_control_flow_dead && stmts.last().is_some_and(Statement::is_terminated) {
                 is_control_flow_dead = true;
             }
         }
