@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -159,6 +160,17 @@ impl Rule for NoCycle {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
+        // Almost every module in a real codebase is in no cycle at all, and answering that for the
+        // whole module costs one traversal instead of one per direct import. See `can_be_in_cycle`.
+        //
+        // Only worth it when `max_depth` is unbounded, which is the default: the per-import walks
+        // then explore the whole reachable subgraph anyway, so the prefilter replaces work rather
+        // than adding to it. With a small `max_depth` the walks are shallow and an unbounded
+        // prefilter could cost more than it saves.
+        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
+            return;
+        }
+
         let needle = &module_record.resolved_absolute_path;
         let mut direct_imports = module_record
             .loaded_modules()
@@ -208,6 +220,62 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    /// Can `root` be part of a dependency cycle at all?
+    ///
+    /// `run_once` runs one full graph walk per direct import, and on real codebases nearly every
+    /// one of those walks explores `root`'s entire reachable subgraph only to conclude "no cycle".
+    /// But `root` is in a cycle if and only if *some* module reachable from it imports it back, so
+    /// a single traversal of that subgraph answers the question for every direct import at once.
+    /// Where the walks visit the union of their subgraphs once per import, this visits it once.
+    ///
+    /// Returning `true` only gates the existing walks, which still decide what is reported and
+    /// reconstruct the path for the diagnostic. So this must never return `false` when a walk would
+    /// have found a cycle, and it doesn't: it traverses the same edges under the same filter, and
+    /// is unbounded where the walks are bounded by `max_depth`.
+    fn can_be_in_cycle(&self, root: &ModuleRecord) -> bool {
+        // Keyed on `Arc` pointer identity, like `ModuleGraphVisitor::traversed`, to avoid cloning a
+        // `PathBuf` per node. `root` is deliberately absent: an edge back to it is the answer, not
+        // a node to expand.
+        let mut visited = FxHashSet::<usize>::default();
+        let mut stack = Vec::<Arc<ModuleRecord>>::new();
+
+        if self.visit_dependencies(root, root, &mut visited, &mut stack) {
+            return true;
+        }
+        while let Some(module_record) = stack.pop() {
+            if self.visit_dependencies(&module_record, root, &mut visited, &mut stack) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Push `module_record`'s not-yet-visited traversable dependencies onto `stack`, returning
+    /// `true` if any of them is `root` itself — i.e. if this module closes a cycle back to `root`.
+    fn visit_dependencies(
+        &self,
+        module_record: &ModuleRecord,
+        root: &ModuleRecord,
+        visited: &mut FxHashSet<usize>,
+        stack: &mut Vec<Arc<ModuleRecord>>,
+    ) -> bool {
+        for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+                continue;
+            }
+            // Compared by path, not pointer, because that is what the walks report a cycle on:
+            // a file split into multiple sections has one record per section but one path.
+            if loaded_module_record.resolved_absolute_path == root.resolved_absolute_path {
+                return true;
+            }
+            if visited.insert(Arc::as_ptr(&loaded_module_record) as usize) {
+                stack.push(loaded_module_record);
+            }
+        }
+        false
+    }
+
     fn should_traverse_module(
         &self,
         key: &CompactStr,
