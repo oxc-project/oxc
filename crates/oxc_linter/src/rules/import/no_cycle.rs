@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    path::{Component, Path, PathBuf},
+    path::{Component, Path},
     sync::Arc,
 };
 
@@ -19,7 +19,11 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+fn no_cycle_diagnostic(
+    span: Span,
+    stack: &[(CompactStr, Arc<ModuleRecord>)],
+    cwd: &Path,
+) -> OxcDiagnostic {
     let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
         .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
@@ -37,13 +41,14 @@ fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnost
         .with_label(span.primary_label("this module references itself"))
 }
 
-fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+fn format_cycle(stack: &[(CompactStr, Arc<ModuleRecord>)], cwd: &Path) -> String {
     let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
 
-    for (i, (specifier, path)) in stack.iter().enumerate() {
-        let relative_path = path
+    for (i, (specifier, module)) in stack.iter().enumerate() {
+        let relative_path = module
+            .resolved_absolute_path
             .strip_prefix(cwd)
-            .unwrap_or(path)
+            .unwrap_or(&module.resolved_absolute_path)
             .to_string_lossy()
             .cow_replace('\\', "/")
             .into_owned();
@@ -145,6 +150,7 @@ impl Rule for NoCycle {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+        let cwd = std::env::current_dir().unwrap();
 
         let needle = &module_record.resolved_absolute_path;
         let mut direct_imports = module_record
@@ -161,8 +167,7 @@ impl Rule for NoCycle {
 
             let requested_module = module_record.requested_modules[&key][0];
             let span = requested_module.span;
-            let mut stack =
-                vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
+            let mut stack = vec![(key.clone(), Arc::clone(&loaded_module_record))];
 
             if loaded_module_record.resolved_absolute_path == *needle {
                 ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
@@ -174,7 +179,7 @@ impl Rule for NoCycle {
                 .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
-                        stack.push((key.clone(), val.resolved_absolute_path.clone()));
+                        stack.push((key.clone(), Arc::clone(val)));
                     }
                     ModuleGraphVisitorEvent::Leave => {
                         stack.pop();
@@ -189,11 +194,7 @@ impl Rule for NoCycle {
                 });
 
             if visitor_result.result {
-                ctx.diagnostic(no_cycle_diagnostic(
-                    span,
-                    &stack,
-                    &std::env::current_dir().unwrap(),
-                ));
+                ctx.diagnostic(no_cycle_diagnostic(span, &stack, &cwd));
             }
         }
     }
@@ -217,27 +218,37 @@ impl NoCycle {
         }
 
         if self.ignore_types {
-            let import_entries = parent
-                .import_entries
-                .iter()
-                .filter(|entry| entry.module_request.name() == key)
-                .collect::<Vec<_>>();
+            // Equivalent to collecting both entry lists and testing `!is_empty() && all(is_type)`,
+            // without materializing either `Vec`. This runs once per graph edge considered.
+            let mut has_entry = false;
+            let mut all_types = true;
 
-            let indirect_export_entries = parent
-                .indirect_export_entries
-                .iter()
-                .filter(|entry| {
+            for entry in
+                parent.import_entries.iter().filter(|entry| entry.module_request.name() == key)
+            {
+                has_entry = true;
+                if !entry.is_type {
+                    all_types = false;
+                    break;
+                }
+            }
+
+            if all_types {
+                for entry in parent.indirect_export_entries.iter().filter(|entry| {
                     entry
                         .module_request
                         .as_ref()
                         .is_some_and(|module_request| module_request.name() == key)
-                })
-                .collect::<Vec<_>>();
+                }) {
+                    has_entry = true;
+                    if !entry.is_type {
+                        all_types = false;
+                        break;
+                    }
+                }
+            }
 
-            if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
-                && import_entries.iter().all(|entry| entry.is_type)
-                && indirect_export_entries.iter().all(|entry| entry.is_type)
-            {
+            if has_entry && all_types {
                 return false;
             }
         }
