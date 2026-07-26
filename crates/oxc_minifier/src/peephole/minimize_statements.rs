@@ -1002,7 +1002,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
 
-            if if_stmt.consequent.is_terminated() && if_stmt.alternate.is_some() {
+            if if_stmt.alternate.is_some() && if_stmt.consequent.is_terminated() {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 result.push(Statement::IfStatement(if_stmt));
                 loop {
