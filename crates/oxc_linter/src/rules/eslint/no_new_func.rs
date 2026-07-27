@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::IdentifierReference, ast::MemberExpression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, IdentifierReference, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
@@ -85,7 +88,7 @@ impl Rule for NoNewFunc {
 }
 
 fn get_function_constructor_reference<'a>(
-    callee: &'a oxc_ast::ast::Expression<'a>,
+    callee: &'a Expression<'a>,
 ) -> Option<&'a IdentifierReference<'a>> {
     callee.get_identifier_reference().or_else(|| {
         let member_expr = member_expression_through_chain(callee)?;
@@ -96,11 +99,11 @@ fn get_function_constructor_reference<'a>(
 }
 
 fn member_expression_through_chain<'a>(
-    expr: &'a oxc_ast::ast::Expression<'a>,
+    expr: &'a Expression<'a>,
 ) -> Option<&'a MemberExpression<'a>> {
     match expr.get_inner_expression() {
         expr if expr.is_member_expression() => expr.as_member_expression(),
-        oxc_ast::ast::Expression::ChainExpression(chain) => chain.expression.member_expression(),
+        Expression::ChainExpression(chain) => chain.expression.member_expression(),
         _ => None,
     }
 }
