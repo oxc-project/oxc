@@ -46,38 +46,30 @@ test('one', () => {
 ";
 
 pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    let AstKind::ReturnStatement(return_stmt) = node.kind() else { return };
-    let Some(call_expr) = returned_expect_call(return_stmt) else { return };
-
-    if !is_in_test_context(node, ctx) {
-        return;
+    if let AstKind::ReturnStatement(return_stmt) = node.kind()
+        && let Some(call_expr) = returned_expect_call(return_stmt)
+        && is_in_test_context(node, ctx)
+    {
+        ctx.diagnostic(no_test_return_statement_diagnostic(Span::new(
+            return_stmt.span.start,
+            call_expr.span.start - 1,
+        )));
     }
-
-    ctx.diagnostic(no_test_return_statement_diagnostic(Span::new(
-        return_stmt.span.start,
-        call_expr.span.start - 1,
-    )));
 }
 
 fn returned_expect_call<'a>(
     return_stmt: &'a ReturnStatement<'a>,
 ) -> Option<&'a CallExpression<'a>> {
-    let Expression::CallExpression(call_expr) = return_stmt.argument.as_ref()? else {
-        return None;
-    };
-    let mem_expr = call_expr.callee.as_member_expression()?;
-    let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
-        return None;
-    };
-    let Expression::Identifier(ident) = &mem_call_expr.callee else {
-        return None;
-    };
-
-    if ident.name != "expect" {
-        return None;
+    if let Expression::CallExpression(call_expr) = return_stmt.argument.as_ref()?
+        && let Expression::CallExpression(mem_call_expr) =
+            call_expr.callee.as_member_expression()?.object()
+        && let Expression::Identifier(ident) = &mem_call_expr.callee
+        && ident.name == "expect"
+    {
+        return Some(call_expr);
     }
 
-    Some(call_expr)
+    None
 }
 
 fn is_in_test_context<'a>(return_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
