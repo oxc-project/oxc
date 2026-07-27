@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/oxc/uninvoked_array_callback.rs
+  s_1574c7e0f1f72c::t_253ee0f792c2fe 52-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "427076febf3932a00ea6b48b7ead7854baa52c03",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
