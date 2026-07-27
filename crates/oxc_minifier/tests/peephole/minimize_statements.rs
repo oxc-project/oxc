@@ -184,7 +184,7 @@ fn test_handle_switch_statement() {
     ); // a === 3 && b && c();
     test(
         "switch (a) { case 3: { if(b) {c(); break;} else { d(); break;} }}",
-        "switch (a) { case 3: if(b) {c(); break;} else { d(); break;} }",
+        "switch (a) { case 3: if(b) {c(); break;} d(); }",
     ); // if (a === 3) b ? c() : d();
     test("switch (a) { case 3: { for (;;) break } }", "if (a === 3) for (;;) break;");
     test("switch (a) { case 3: { for (b of c) break; } }", "if (a === 3) for (b of c) break;");
