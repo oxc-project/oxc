@@ -2,17 +2,16 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
     external_formatter::HtmlEmbedMeta,
     format_args,
-    formatter::{
-        FormatElement, buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatTrailingComments,
+    formatter::{FormatElement, prelude::*},
+    print::template::{
+        FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
     },
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
 
@@ -196,94 +195,15 @@ pub(super) fn format_html_doc<'a>(
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(expr) = expressions.get(idx)
                         {
-                            // Format `${expr}` directly (like css-in-js, see `css.rs`)
-                            // instead of using `FormatTemplateExpression` which adds
-                            // `soft_block_indent` that causes double-indentation
-                            // for e.g. `ConditionalExpression`.
-                            //
-                            // Detect comments between expr and `}` for wrapping.
-                            // Use `expr.span().end` (not `.start`) to only find
-                            // comments BETWEEN the expr and `}`, not INSIDE the expression.
-                            let has_comment = {
-                                let comments = f.context().comments();
-                                !comments.comments_before(expr.span().start).is_empty()
-                                    || !comments
-                                        .comments_before_character(expr.span().end, b'}')
-                                        .is_empty()
-                            };
-
-                            if has_comment {
-                                // Intern with explicit comment handling
-                                // (same pattern as `FormatTemplateExpression`):
-                                // 1. `FormatNodeWithoutTrailingComments` sets
-                                //    `view_limit` to hide trailing comments
-                                // 2. After `view_limit` is restored,
-                                //    format trailing comments explicitly via `FormatTrailingComments`
-                                //
-                                // This ensures trailing comments between expr and `}`
-                                // stay with this expression and don't shift to the next.
-                                let trailing_comments = f
-                                    .context()
-                                    .comments()
-                                    .comments_before_character(expr.span().end, b'}');
-                                let has_trailing = !trailing_comments.is_empty();
-
-                                let interned = f.intern(&format_once(|f| {
-                                    FormatNodeWithoutTrailingComments(expr).fmt(f);
-                                    // After `view_limit` is restored by `FormatNodeWithoutTrailingComments`,
-                                    // trailing comments are visible again for `FormatTrailingComments` to consume.
-                                    let trailing = f
-                                        .context()
-                                        .comments()
-                                        .comments_before_character(expr.span().end, b'}');
-                                    FormatTrailingComments::Comments(trailing).fmt(f);
-                                }));
-
-                                // When source has newlines around the expression,
-                                // use `RemoveSoftLinesBuffer` to keep it flat while
-                                // preserving hard line breaks (from comments).
-                                // Otherwise let it break naturally based on line width.
-                                let has_newline = has_trailing
-                                    && (f
-                                        .source_text()
-                                        .has_line_terminator_before(expr.span().start)
-                                        || f.source_text()
-                                            .has_line_terminator_after(expr.span().end));
-
-                                let format_expr = format_with(|f| {
-                                    let Some(element) = &interned else { return };
-                                    write!(
-                                        f,
-                                        [
-                                            indent(&format_args!(
-                                                soft_line_break(),
-                                                format_with(|f| {
-                                                    if has_newline {
-                                                        let mut buffer =
-                                                            RemoveSoftLinesBuffer::new(f);
-                                                        buffer.write_element(element.clone());
-                                                    } else {
-                                                        f.write_element(element.clone());
-                                                    }
-                                                }),
-                                                line_suffix_boundary()
-                                            )),
-                                            soft_line_break()
-                                        ]
-                                    );
-                                });
-                                write!(f, [group(&format_args!("${", format_expr, "}"))]);
-                            } else {
-                                write!(
-                                    f,
-                                    [group(&format_args!(
-                                        "${",
-                                        *expr,
-                                        line_suffix_boundary(),
-                                        "}"
-                                    ))]
-                                );
-                            }
+                            // Prettier prints embedded `${expr}` with `printEmbeddedTemplateExpressions()`:
+                            // the plain-template expression logic minus source-indentation preservation.
+                            // Default options (zero indention) are exactly that (same as graphql.rs).
+                            let te = TemplateExpression::Expression(expr);
+                            FormatTemplateExpression::new(
+                                &te,
+                                FormatTemplateExpressionOptions::default(),
+                            )
+                            .fmt(f);
                         }
                     }
                 }

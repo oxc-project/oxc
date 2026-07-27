@@ -36,6 +36,8 @@ const NOTE_MQ_OP_SPACING =
   "Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)";
 const NOTE_INLINE_COMMENT_WIDTH =
   "Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it.";
+const NOTE_EMBEDDED_EXPRESSION_INDENT =
+  "We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently";
 
 const categories: Category[] = [
   {
@@ -69,6 +71,7 @@ const categories: Category[] = [
     notes: {
       "externals/prettier/js/multiparser-graphql/graphql-tag.js":
         "Prettier moves `query Test { # c` own-line comment to next line, we keep",
+      "edge-cases/gql-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
   {
@@ -90,6 +93,7 @@ const categories: Category[] = [
     notes: {
       "externals/prettier/js/multiparser-css/styled-components.js":
         "`Xxx.extend` not recognized as tag",
+      "edge-cases/css-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
   {
@@ -114,6 +118,7 @@ const categories: Category[] = [
         "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md",
       "externals/webawesome/page/page.styles.ts":
         "Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md",
+      "edge-cases/html-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
   {
@@ -303,7 +308,10 @@ function collectFixtures(sources: Source[]): Fixture[] {
   for (const source of sources) {
     if (!existsSync(source.dir)) continue;
 
-    for (const entry of readdirSync(source.dir, { withFileTypes: true, recursive: true })) {
+    for (const entry of readdirSync(source.dir, {
+      withFileTypes: true,
+      recursive: true,
+    })) {
       if (!entry.isFile()) continue;
       if (source.ext && !entry.name.endsWith(source.ext)) continue;
 
@@ -346,7 +354,12 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
       }
     }
 
-    optionSetResults.push({ options, passed, total: fixtures.length, failures });
+    optionSetResults.push({
+      options,
+      passed,
+      total: fixtures.length,
+      failures,
+    });
   }
 
   return { name: category.name, optionSetResults };
@@ -393,7 +406,11 @@ function writeReport(results: CategoryResult[]) {
     // Collect all failures per fixture across option sets
     const failuresByFixture = new Map<
       string,
-      { optionIndex: number; options: Record<string, unknown>; failure: Failure }[]
+      {
+        optionIndex: number;
+        options: Record<string, unknown>;
+        failure: Failure;
+      }[]
     >();
     for (let i = 0; i < result.optionSetResults.length; i++) {
       for (const failure of result.optionSetResults[i].failures) {
@@ -402,7 +419,11 @@ function writeReport(results: CategoryResult[]) {
           entries = [];
           failuresByFixture.set(failure.name, entries);
         }
-        entries.push({ optionIndex: i + 1, options: result.optionSetResults[i].options, failure });
+        entries.push({
+          optionIndex: i + 1,
+          options: result.optionSetResults[i].options,
+          failure,
+        });
       }
     }
 
@@ -448,7 +469,11 @@ function writeDiffFile(
   diffsDir: string,
   categoryName: string,
   fixtureName: string,
-  entries: { optionIndex: number; options: Record<string, unknown>; failure: Failure }[],
+  entries: {
+    optionIndex: number;
+    options: Record<string, unknown>;
+    failure: Failure;
+  }[],
 ) {
   const safeName = fixtureName.replaceAll("/", "__");
   const dir = join(diffsDir, categoryName);
