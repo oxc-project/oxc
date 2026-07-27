@@ -7,9 +7,10 @@ use oxc_graphql_parser::ast::Document;
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, flush_trailing_inside_comments,
-        is_suppressed_before, write_dangling_comments, write_suppressed_node,
-        write_trailing_same_line_comment,
+        Gap, classify_gap, flush_leading_comments, flush_overlooked_inside_comments,
+        flush_trailing_comment_before, flush_trailing_comment_before_break,
+        flush_trailing_inside_comments, is_suppressed_before, write_dangling_comments,
+        write_suppressed_node, write_trailing_same_line_comment,
     },
     context::GraphqlFormatContext,
 };
@@ -45,6 +46,30 @@ where
     T: Fn(&mut GraphqlFormatter<'_, 'a>),
 {
     FormatWith::new(formatter)
+}
+
+/// [`flush_trailing_comment_before`] bounded at the next significant source token after `prev_end`:
+/// the claim boundary for comments in front of formatter literals the AST carries no node for
+/// (`:`, `repeatable`, the schema `{`, etc..., same as `oxc_formatter`), where punctuation positions are resolved by source scans.
+/// Bounding at the literal keeps a comment that trails the literal itself (`g: # c`) from being pulled backwards across it.
+///
+/// The scan only runs with a comment pending; comment-free documents pay one peek.
+fn flush_trailing_before_literal(prev_end: u32, f: &mut GraphqlFormatter<'_, '_>) {
+    if f.context().comments().peek().is_none() {
+        return;
+    }
+    let upper = span::next_token_start_after(&f.context().source_text(), prev_end);
+    flush_trailing_comment_before(upper, f);
+}
+
+/// [`flush_trailing_before_literal`]'s sibling for callers whose next element already begins
+/// with a line break (expanded separators): claims without the boundary, see [`flush_trailing_comment_before_break`].
+fn flush_trailing_before_literal_break(prev_end: u32, f: &mut GraphqlFormatter<'_, '_>) {
+    if f.context().comments().peek().is_none() {
+        return;
+    }
+    let upper = span::next_token_start_after(&f.context().source_text(), prev_end);
+    flush_trailing_comment_before_break(upper, f);
 }
 
 /// How consecutive sequence items are separated.
@@ -116,6 +141,8 @@ where
         } else {
             flush_leading_comments(start, f);
             write_item(i, f);
+            // Drain positions no inner printer claims (e.g. between a type and its `!`)
+            flush_overlooked_inside_comments(end, f);
         }
         prev_end = Some(end);
     }

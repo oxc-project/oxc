@@ -7,11 +7,17 @@ use oxc_formatter_core::{
 };
 use oxc_graphql_parser::ast::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet};
 
-use crate::comments::flush_trailing_inside_comments;
+use crate::comments::{
+    flush_trailing_comment_before, flush_trailing_comment_before_break,
+    flush_trailing_inside_comments,
+};
 
 use super::{
-    GraphqlFormatter, SeparatorKind, common, common::DirectivesStyle, format_with,
-    span::close_delim_start, write_sequence,
+    GraphqlFormatter, SeparatorKind, common,
+    common::DirectivesStyle,
+    flush_trailing_before_literal, format_with,
+    span::{close_delim_start, to_span},
+    write_sequence,
 };
 
 /// `{ selections... }`, always multi-line.
@@ -29,6 +35,7 @@ pub(super) fn write_selection_set<'a>(
         return;
     }
 
+    flush_trailing_comment_before_break(selections[0].span().start, f);
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, selections, SeparatorKind::Hard, true, |i, f| {
             write_selection(&selections[i], f);
@@ -52,13 +59,15 @@ fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     let content = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         if let Some(alias) = field.alias.as_ref() {
             common::write_name(alias, f);
+            flush_trailing_before_literal(to_span(alias.span).end, f);
             write!(f, ": ");
         }
         common::write_name(&field.name, f);
-        common::write_arguments(&field.arguments, f);
+        common::write_arguments(field.arguments.as_ref(), f);
         common::write_directives(&field.directives, DirectivesStyle::Attached, f);
         if let Some(selection_set) = field.selection_set.as_ref() {
             write!(f, space());
+            flush_trailing_comment_before(to_span(selection_set.span).start, f);
             write_selection_set(selection_set, f);
         }
     });
@@ -68,19 +77,20 @@ fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
 fn write_fragment_spread<'a>(spread: &'a FragmentSpread<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "...");
     common::write_name(&spread.name, f);
-    common::write_arguments(&spread.arguments, f);
+    common::write_arguments(spread.arguments.as_ref(), f);
     common::write_directives(&spread.directives, DirectivesStyle::Attached, f);
 }
 
 fn write_inline_fragment<'a>(inline: &'a InlineFragment<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "...");
     if let Some(type_condition) = inline.type_condition.as_ref() {
-        write!(f, " on ");
-        common::write_named_type(type_condition, f);
+        common::write_spaced_keyword(to_span(type_condition.span).start, "on ", f);
+        common::write_named_type(&type_condition.named_type, f);
     }
     common::write_directives(&inline.directives, DirectivesStyle::Attached, f);
     if let Some(selection_set) = inline.selection_set.as_ref() {
         write!(f, space());
+        flush_trailing_comment_before(to_span(selection_set.span).start, f);
         write_selection_set(selection_set, f);
     }
 }

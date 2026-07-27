@@ -25,17 +25,25 @@
 
 ## gql-in-js
 
-### Option 1: 12/12 (100.00%)
+### Option 1: 11/12 (91.67%)
 
 ```json
 {"printWidth":80}
 ```
 
-### Option 2: 12/12 (100.00%)
+| File | Note |
+| :--- | :--- |
+| [externals/prettier/js/multiparser-graphql/graphql-tag.js](diffs/gql-in-js/externals__prettier__js__multiparser-graphql__graphql-tag.js.md) | Prettier moves `query Test { # c` own-line comment to next line, we keep |
+
+### Option 2: 11/12 (91.67%)
 
 ```json
 {"printWidth":100}
 ```
+
+| File | Note |
+| :--- | :--- |
+| [externals/prettier/js/multiparser-graphql/graphql-tag.js](diffs/gql-in-js/externals__prettier__js__multiparser-graphql__graphql-tag.js.md) | Prettier moves `query Test { # c` own-line comment to next line, we keep |
 
 ## css-in-js
 

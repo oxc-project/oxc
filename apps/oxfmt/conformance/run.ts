@@ -68,7 +68,10 @@ const categories: Category[] = [
       { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {},
+    notes: {
+      "externals/prettier/js/multiparser-graphql/graphql-tag.js":
+        "Prettier moves `query Test { # c` own-line comment to next line, we keep",
+    },
   },
   {
     name: "css-in-js",
