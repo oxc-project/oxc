@@ -176,12 +176,9 @@ fn test_do_continue_optimization() {
         "do try{if(a())continue;continue}catch{}while(!0);",
     ); // do try{a()}catch{}while(!0);
 
-    test("do{g:continue}while(true)", "do g:continue;while(!0);"); // do;while(!0)
+    test("do{g:continue}while(true)", "do;while(!0);");
     // This case could be improved.
-    test(
-        "do{g:if(a()){continue;}else{continue;} continue;}while(true)",
-        "do g:if(a())continue;else continue;while(!0);",
-    ); // do g:a();while(!0);
+    test("do{g:if(a()){continue;}else{continue;} continue;}while(true)", "do g:a();while(!0);");
 
     test("do { foo(); continue; } while(false)", "do foo();while(!1)");
     test("do { foo(); break; } while(false)", "do foo();while(!1)");
