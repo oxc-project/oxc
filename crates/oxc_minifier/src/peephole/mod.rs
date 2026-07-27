@@ -357,7 +357,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::minimize_statements(stmts, ctx);
+        Self::minimize_statements(stmts, Self::get_parent_type(ctx), ctx);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -365,6 +365,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::try_minify_statements(stmt, ctx);
+
         if ctx.is_tree_shake_only() {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),

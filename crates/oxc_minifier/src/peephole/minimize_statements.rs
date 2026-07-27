@@ -29,7 +29,84 @@ fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
             && decl.declarations.iter().all(|d| d.init.is_none() && d.type_annotation.is_none()))
 }
 
+#[derive(Debug, Clone)]
+pub enum ParentType {
+    None = 0,
+    Function = 1,
+    Loop = 1 << 1,
+    // Switch = 1 << 2,
+}
+
 impl<'a> PeepholeOptimizations {
+    pub fn get_parent_type(ctx: &mut TraverseCtx<'a>) -> ParentType {
+        if ctx.parent().is_function_body() {
+            return ParentType::Function;
+        }
+        if matches!(
+            ctx.ancestors().nth(1),
+            Some(
+                Ancestor::ForStatementBody(_)
+                    | Ancestor::ForInStatementBody(_)
+                    | Ancestor::ForOfStatementBody(_)
+                    | Ancestor::WhileStatementBody(_)
+            )
+        ) {
+            return ParentType::Loop;
+        }
+        ParentType::None
+    }
+
+    pub fn try_minify_statements(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        match stmt {
+            Statement::IfStatement(if_stmt) => {
+                Self::handle_stmts(&mut if_stmt.consequent, ParentType::None, ctx);
+                if let Some(alternate) = &mut if_stmt.alternate {
+                    Self::handle_stmts(alternate, ParentType::None, ctx);
+                }
+            }
+            Statement::ForStatement(for_stmt) => {
+                Self::handle_stmts(&mut for_stmt.body, ParentType::Loop, ctx);
+            }
+            Statement::ForInStatement(for_in_stmt) => {
+                Self::handle_stmts(&mut for_in_stmt.body, ParentType::Loop, ctx);
+            }
+            Statement::ForOfStatement(for_of_stmt) => {
+                Self::handle_stmts(&mut for_of_stmt.body, ParentType::Loop, ctx);
+            }
+            Statement::LabeledStatement(label_stmt) => {
+                Self::handle_stmts(&mut label_stmt.body, ParentType::None, ctx);
+            }
+            _ => return,
+        }
+    }
+
+    fn handle_stmts(stmt: &mut Statement<'a>, parent_type: ParentType, ctx: &mut TraverseCtx<'a>) {
+        if matches!(
+            stmt,
+            Statement::IfStatement(_)
+                | Statement::ForStatement(_)
+                | Statement::ForInStatement(_)
+                | Statement::ForOfStatement(_)
+                | Statement::DoWhileStatement(_)
+                | Statement::WhileStatement(_)
+                | Statement::TryStatement(_)
+                | Statement::ContinueStatement(_)
+        ) {
+            let mut stmts = ArenaVec::from_value_in(stmt.take_in(ctx), ctx);
+            Self::minimize_statements(&mut stmts, parent_type, ctx);
+            *stmt = match stmts.len() {
+                0 => Statement::new_empty_statement(stmt.span(), ctx),
+                1 => stmts[0].take_in(ctx),
+                _ => Statement::new_block_statement_with_scope_id(
+                    stmt.span(),
+                    stmts,
+                    ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                    ctx,
+                ),
+            };
+        }
+    }
+
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
     ///
     /// See also
@@ -47,7 +124,11 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    pub fn minimize_statements(
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        parent_type: ParentType,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
@@ -73,7 +154,9 @@ impl<'a> PeepholeOptimizations {
                 }
                 continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
-            if Self::minimize_statement(stmt, i, &mut old_stmts, stmts, ctx).is_break() {
+            if Self::minimize_statement(stmt, i, &mut old_stmts, stmts, parent_type.clone(), ctx)
+                .is_break()
+            {
                 break;
             }
             // A statement that never completes normally — a direct jump, a
@@ -105,7 +188,7 @@ impl<'a> PeepholeOptimizations {
 
         // Drop a trailing unconditional jump statement if applicable
         if let Some(last_stmt) = stmts.last()
-            && Self::can_remove_termination_statement(last_stmt, ctx)
+            && Self::can_remove_termination_statement(last_stmt, parent_type)
         {
             let dropped = stmts.pop().unwrap();
             ctx.drop_statement(&dropped);
@@ -341,6 +424,7 @@ impl<'a> PeepholeOptimizations {
         i: usize,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
+        parent_type: ParentType,
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         match stmt {
@@ -355,7 +439,8 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
+                if Self::handle_if_statement(i, stmts, if_stmt, result, parent_type, ctx).is_break()
+                {
                     return ControlFlow::Break(());
                 }
             }
@@ -375,7 +460,7 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_for_of_statement(for_of_stmt, result, ctx);
             }
             Statement::LabeledStatement(label_stmt) => {
-                Self::handle_labeled_statement(label_stmt, result, ctx);
+                Self::handle_labeled_statement(label_stmt, result, parent_type, ctx);
             }
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
@@ -805,7 +890,7 @@ impl<'a> PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-
+        parent_type: ParentType,
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
@@ -841,7 +926,8 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
+                if Self::can_remove_termination_statement(&if_stmt.consequent, parent_type.clone())
+                {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
                     // If so, inverting the branch condition and nesting statements after
@@ -855,12 +941,9 @@ impl<'a> PeepholeOptimizations {
                     //   if (a(() => b)) return; let b;
                     //   if (a(() => b)) { let b; }
                     //
-                    let mut can_move_branch_condition_outside_scope = true;
-                    if let Some(alternate) = &if_stmt.alternate
-                        && Self::statement_cares_about_scope(alternate)
-                    {
-                        can_move_branch_condition_outside_scope = false;
-                    }
+                    let mut can_move_branch_condition_outside_scope =
+                        !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope);
+
                     if let Some(stmts) = stmts.get(i + 1..) {
                         for stmt in stmts {
                             if Self::statement_cares_about_scope(stmt) {
@@ -878,7 +961,7 @@ impl<'a> PeepholeOptimizations {
                             ArenaVec::from_iter_in(drained_stmts, ctx)
                         };
 
-                        Self::minimize_statements(&mut body, ctx);
+                        Self::minimize_statements(&mut body, parent_type, ctx);
                         let span = if body.is_empty() {
                             if_stmt.consequent.span()
                         } else {
@@ -906,11 +989,14 @@ impl<'a> PeepholeOptimizations {
                 }
             }
 
-            if if_stmt.alternate.is_some() && if_stmt.consequent.is_terminated() {
+            if !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
+                && if_stmt.consequent.is_terminated()
+            {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 result.push(Statement::IfStatement(if_stmt));
                 loop {
                     if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                        && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
                         && if_stmt.consequent.is_terminated()
                         && let Some(stmt) = if_stmt.alternate.take()
                     {
@@ -1243,13 +1329,14 @@ impl<'a> PeepholeOptimizations {
     fn handle_labeled_statement(
         mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
+        parent_type: ParentType,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
-            Self::minimize_statements(&mut block_stmt.body, ctx);
+            Self::minimize_statements(&mut block_stmt.body, parent_type, ctx);
         } else if !Self::statement_cares_about_scope(&labeled_stmt.body) {
             let mut stmts = ArenaVec::from_value_in(labeled_stmt.body.take_in(ctx), ctx);
-            Self::minimize_statements(&mut stmts, ctx);
+            Self::minimize_statements(&mut stmts, parent_type, ctx);
             labeled_stmt.body = match stmts.len() {
                 0 => Statement::new_empty_statement(labeled_stmt.body.span(), ctx),
                 1 => stmts[0].take_in(ctx),
@@ -2064,23 +2151,15 @@ impl<'a> PeepholeOptimizations {
     /// safely removed:
     /// - Unlabeled `continue` statements that terminate a loop body
     /// - Bare `return` statements that terminate a function body
-    fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    fn can_remove_termination_statement(stmt: &Statement<'a>, parent_type: ParentType) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                matches!(
-                    ctx.ancestors().nth(1),
-                    Some(
-                        Ancestor::ForStatementBody(_)
-                            | Ancestor::ForInStatementBody(_)
-                            | Ancestor::ForOfStatementBody(_)
-                            | Ancestor::WhileStatementBody(_)
-                    )
-                )
+                matches!(parent_type, ParentType::Loop)
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
-                ctx.parent().is_function_body()
+                matches!(parent_type, ParentType::Function)
             }
             _ => false,
         }

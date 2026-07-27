@@ -1,10 +1,10 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
+use crate::TraverseCtx;
+use crate::is_terminated::IsTerminated;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
-
-use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -14,7 +14,6 @@ impl<'a> PeepholeOptimizations {
         if_stmt: &mut IfStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
@@ -41,9 +40,7 @@ impl<'a> PeepholeOptimizations {
                 return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             }
         } else if Self::is_statement_empty(&if_stmt.consequent) {
-            if if_stmt.alternate.is_none()
-                || if_stmt.alternate.as_ref().is_some_and(Self::is_statement_empty)
-            {
+            if if_stmt.alternate.as_ref().is_none_or(Self::is_statement_empty) {
                 // "if (a) {}" => "a;"
                 let mut expr = if_stmt.test.take_in(ctx);
                 Self::remove_unused_expression(&mut expr, ctx);
@@ -128,7 +125,7 @@ impl<'a> PeepholeOptimizations {
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent
-            && if2.consequent.is_jump_statement()
+            && if2.consequent.is_terminated()
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());

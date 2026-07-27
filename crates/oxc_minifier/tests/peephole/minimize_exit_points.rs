@@ -83,6 +83,14 @@ fn test_function_return_optimization() {
         "function f(){try{g:if(a()){throw 9;} return;}finally{return}}",
         "function f(){try{g:if(a())throw 9; return}finally{return}}",
     ); // function f(){try{g:if(a())throw 9}finally{}}
+    test(
+        "function g(a,b){if(a){}else if(b){return()=>typeof f}else function f(){}}",
+        "function g(a,b){if(!a)if(b)return()=>typeof f;else function f(){}}",
+    );
+    test(
+        "function f(a,b,c){if(a){}else if(b){x();return}else if(c){y();return}z()}",
+        "function f(a,b,c){if(!a){if(b){x();return}if(c){y();return}}z()}",
+    );
 }
 
 #[test]
@@ -123,8 +131,8 @@ fn test_while_continue_optimization() {
         "for(;;)if(d(),!a()&&b()){c();continue}",
     ); // for(;;)d(),!a()&&b()&&c();
 
-    test("while(true)while(a())continue;", "for(;;)for(;a();)continue;"); // for(;;)for(;a(););
-    test("while(true)for(x in a())continue", "for(;;)for(x in a())continue;"); // for(;;)for(x in a());
+    test("while(true)while(a())continue;", "for(;;)for(;a(););");
+    test("while(true)for(x in a())continue", "for(;;)for(x in a());");
 
     test("while(true)while(a())break;", "for(;;)for(;a();)break");
     test("while(true)for(x in a())break", "for(;;)for(x in a())break");
@@ -231,8 +239,8 @@ fn test_for_continue_optimization() {
     test("for(x=0;x<y;x++){if(a()){continue;}else{continue;} continue;}", "for(x=0;x<y;x++)a()");
     test("for(x=0;x<y;x++){if(a()){continue;}else{continue;} b();}", "for(x=0;x<y;x++)a();");
 
-    test("for(x=0;x<y;x++)while(a())continue;", "for(x=0;x<y;x++)for(;a();)continue;"); // for(x=0;x<y;x++)for(;a(););
-    test("for(x=0;x<y;x++)for(x in a())continue", "for(x=0;x<y;x++)for(x in a())continue;"); // for(x=0;x<y;x++)for(x in a());
+    test("for(x=0;x<y;x++)while(a())continue;", "for(x=0;x<y;x++)for(;a(););");
+    test("for(x=0;x<y;x++)for(x in a())continue", "for(x=0;x<y;x++)for(x in a());");
 
     test("for(x=0;x<y;x++)while(a())break;", "for(x=0;x<y;x++)for(;a();)break");
     test_same("for(x=0;x<y;x++)for(x in a())break");
