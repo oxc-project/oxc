@@ -297,12 +297,18 @@ impl FuncStyle {
         ctx: &LintContext<'a>,
     ) {
         let FuncStyle(_, config) = self;
-        if config.allow_arrow_functions || arrow_contains_this_or_super(arrow) {
+        if config.allow_arrow_functions {
             return;
         }
 
         let parent = ctx.nodes().parent_node(node.id());
         if let AstKind::VariableDeclarator(decl) = parent.kind() {
+            if config.allow_type_annotation && decl.type_annotation.is_some() {
+                return;
+            }
+            if arrow_contains_this_or_super(arrow) {
+                return;
+            }
             self.check_variable_declarator(decl.span, decl.type_annotation.is_some(), node, ctx);
         }
     }
