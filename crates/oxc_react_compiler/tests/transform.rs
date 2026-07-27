@@ -447,6 +447,56 @@ fn diagnostics_preserve_compiler_severity() {
     );
 }
 
+/// A warning-level function bail-out must not be promoted to a fatal error:
+/// sibling functions should still compile and downstream transforms should run.
+#[test]
+fn incompatible_library_bailout_remains_a_warning() {
+    let source = "\
+import { useReactTable } from '@tanstack/react-table';\n\
+function Table() {\n\
+  const table = useReactTable({});\n\
+  return <div>{table}</div>;\n\
+}\n\
+export function Component(props: { text: string }) {\n\
+  return <span>{props.text}</span>;\n\
+}\n";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "the unaffected component should compile");
+    assert!(
+        result.diagnostics.has_warnings(),
+        "the incompatible library should report a warning: {:?}",
+        result.diagnostics
+    );
+    assert!(
+        !result.diagnostics.has_errors(),
+        "a warning-level function bail-out must not become fatal: {:?}",
+        result.diagnostics
+    );
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(
+        result.diagnostics[0].message.contains("[ReactCompiler] IncompatibleLibrary"),
+        "expected the original compiler diagnostic: {:?}",
+        result.diagnostics
+    );
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .all(|diagnostic| !diagnostic.message.contains("Unexpected error")),
+        "the bail-out must not create a synthetic error: {:?}",
+        result.diagnostics
+    );
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("react/compiler-runtime"),
+        "expected the unaffected component to be transformed:\n{output}"
+    );
+}
+
 /// The transform only rewrites the compiled functions, so top-level comments
 /// survive; comments inside a compiled function are pruned because their anchor no
 /// longer resolves to a statement (see `prune_inner_comments`).

@@ -61,7 +61,8 @@ impl ServerFormatterBuilder {
         };
 
         // If `configPath` is explicitly set, load it eagerly as the single config for all files.
-        let explicit_config_path = options.config_path.filter(|s| !s.is_empty()).map(PathBuf::from);
+        let use_nested_config = options.use_nested_configs();
+        let explicit_config_path = options.explicit_config_path().map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
@@ -79,6 +80,7 @@ impl ServerFormatterBuilder {
             JsConfigLoaderCb::clone(&self.js_config_loader),
             prettierignore_glob,
             explicit_config_path,
+            use_nested_config,
         )
     }
 }
@@ -134,9 +136,12 @@ pub struct ServerFormatter {
     js_config_loader: JsConfigLoaderCb,
     /// `.prettierignore` glob (workspace-level, shared across all scopes).
     prettierignore_glob: Option<Gitignore>,
-    /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
-    /// config discovery; all files use this single config.
+    /// Explicit `fmt.configPath` from LSP settings.
+    /// When set, all files use this single config.
     explicit_config_path: Option<PathBuf>,
+    /// Whether nested config discovery is active.
+    /// Disabled by an explicit `fmt.configPath` or `fmt.disableNestedConfig` in LSP settings.
+    use_nested_config: bool,
     /// Current config snapshot. Swapped wholesale on watched-file changes.
     state: RwLock<Arc<FormatterState>>,
 }
@@ -167,17 +172,18 @@ impl Tool for ServerFormatter {
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
         let options = deserialize_lsp_options(options);
 
-        let mut patterns: Vec<Pattern> =
-            if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-                vec![normalize_user_config_path_to_watch_pattern(config_path)]
-            } else {
-                // Watch for config files in all subdirectories (nested config support)
-                config_discovery()
-                    .config_file_names()
-                    .into_iter()
-                    .map(|name| format!("**/{name}"))
-                    .collect()
-            };
+        let mut patterns: Vec<Pattern> = if let Some(config_path) = options.explicit_config_path() {
+            vec![normalize_user_config_path_to_watch_pattern(config_path)]
+        } else {
+            // Watch subdirectories too for nested config support;
+            // with `disableNestedConfig`, only the workspace-root config is used
+            let prefix = if options.use_nested_configs() { "**/" } else { "" };
+            config_discovery()
+                .config_file_names()
+                .into_iter()
+                .map(|name| format!("{prefix}{name}"))
+                .collect()
+        };
 
         patterns.push(".editorconfig".to_string());
         patterns
@@ -273,6 +279,7 @@ impl ServerFormatter {
         js_config_loader: JsConfigLoaderCb,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
+        use_nested_config: bool,
     ) -> Self {
         let state =
             Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
@@ -282,6 +289,7 @@ impl ServerFormatter {
             js_config_loader,
             prettierignore_glob,
             explicit_config_path,
+            use_nested_config,
             state: RwLock::new(Arc::new(state)),
         }
     }
@@ -353,9 +361,8 @@ impl ServerFormatter {
         // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
         let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
 
-        // Explicit config path applies uniformly to every file;
-        // passing `None` tells `resolve_file_scope_config` to bypass nested probing.
-        let nested_ctx = self.explicit_config_path.is_none().then_some(&state.nested_ctx);
+        // Passing `None` tells `resolve_file_scope_config` to bypass nested probing
+        let nested_ctx = self.use_nested_config.then_some(&state.nested_ctx);
         let resolver = match resolve_file_scope_config(path, &state.root_resolver, nested_ctx) {
             Ok(r) => r,
             Err(err) => {

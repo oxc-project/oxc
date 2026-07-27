@@ -335,6 +335,7 @@ fn test_template_string_to_string() {
     test("x = `hello ${'foo'}`", "x = 'hello foo'");
     test("x = `${2} bananas`", "x = '2 bananas'");
     test("x = `This is ${true}`", "x = 'This is true'");
+    test_same("x = `a${void f()}b`");
 }
 
 #[test]
@@ -757,6 +758,8 @@ fn test_fold_number_constructor() {
     test("x = Number(true)", "x = 1");
     test("x = Number(false)", "x = 0");
     test("x = Number('foo')", "x = NaN");
+    test_same("x = Number(void f())");
+    test_same("x = Number([f(), 1])");
 }
 
 #[test]

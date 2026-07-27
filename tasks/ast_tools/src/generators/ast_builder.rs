@@ -75,6 +75,14 @@ impl Generator for AstBuilderGenerator {
 
         let output = quote! {
             //! AST node builder methods.
+            //!
+            //! Each method is generic over `B: GetAstBuilder`, so it can be called with a builder
+            //! directly, or with a type which holds one (e.g. parser or traverse context).
+            //!
+            //! Before forwarding the builder to another build method, methods first call `builder.builder()`
+            //! to obtain the concrete [`AstBuild`]er. This way, everything below the outermost call is
+            //! monomorphized over the [`AstBuild`] type (of which there are few), rather than over every
+            //! `B: GetAstBuilder` the method is called with (of which there may be many).
 
             //!@@line_break
             #![expect(clippy::default_trait_access)]
@@ -289,7 +297,10 @@ fn generate_builder_methods_for_struct_impl(
         #params_docs
         #[inline]
         pub fn #boxed_fn_name #generic_params (#fn_params, builder: &B) -> ArenaBox<'a, Self> #where_clause {
-            ArenaBox::new_in(Self::#new_fn_name(#(#args),*, builder), builder.builder())
+            let builder = builder.builder();
+            // Allocate via `&Allocator` (not `builder`), so `ArenaBox::new_in` shares a
+            // monomorphization with every other `&Allocator`-based allocation
+            ArenaBox::new_in(Self::#new_fn_name(#(#args),*, builder), &builder.allocator())
         }
     }
 }
@@ -595,7 +606,7 @@ fn generate_builder_method_for_enum_variant_impl(
         #params_docs
         #[inline]
         pub fn #fn_name #generic_params (#(#fn_params),*, builder: &B) -> Self #where_clause {
-            Self::#variant_ident(#struct_ident::#inner_fn_name(#(#args),*, builder))
+            Self::#variant_ident(#struct_ident::#inner_fn_name(#(#args),*, builder.builder()))
         }
     }
 }

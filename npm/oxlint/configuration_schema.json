@@ -30,12 +30,12 @@
       "markdownDescription": "Environments enable and disable collections of global variables."
     },
     "extends": {
-      "description": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones.",
+      "description": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones.",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones."
+      "markdownDescription": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones."
     },
     "globals": {
       "description": "Enabled or disabled specific global variables.",
@@ -3373,7 +3373,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5138,7 +5155,25 @@
           ]
         },
         "no-restricted-globals": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-restricted-imports": {
           "anyOf": [
@@ -9949,7 +9984,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vitest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -11391,6 +11443,24 @@
         "type": "string"
       },
       "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
+    },
+    "GlobalNameOrObject": {
+      "anyOf": [
+        {
+          "description": "The name of a restricted global.",
+          "type": "string",
+          "markdownDescription": "The name of a restricted global."
+        },
+        {
+          "description": "A restricted global with an optional custom message.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/RestrictedGlobal"
+            }
+          ],
+          "markdownDescription": "A restricted global with an optional custom message."
+        }
+      ]
     },
     "GlobalValue": {
       "type": "string",
@@ -15188,6 +15258,58 @@
       },
       "additionalProperties": false
     },
+    "NoRestrictedGlobalsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedGlobal"
+        },
+        {
+          "$ref": "#/definitions/NoRestrictedGlobalsObjectConfig"
+        }
+      ]
+    },
+    "NoRestrictedGlobalsConfigValue": {
+      "additionalItems": {
+        "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+      }
+    },
+    "NoRestrictedGlobalsObjectConfig": {
+      "description": "Object form of the configuration, which additionally allows detecting\nrestricted globals accessed via global objects.",
+      "type": "object",
+      "required": [
+        "globals"
+      ],
+      "properties": {
+        "checkGlobalObject": {
+          "description": "Whether to also detect restricted globals accessed via global objects. Default is `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also detect restricted globals accessed via global objects. Default is `false`."
+        },
+        "globalObjects": {
+          "description": "Additional global object names to check when `checkGlobalObject` is enabled.\nBy default, the rule checks these global objects: `globalThis`, `self`, and `window`.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional global object names to check when `checkGlobalObject` is enabled.\nBy default, the rule checks these global objects: `globalThis`, `self`, and `window`."
+        },
+        "globals": {
+          "description": "The restricted globals, as names or `{ \"name\", \"message\" }` objects.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GlobalNameOrObject"
+          },
+          "markdownDescription": "The restricted globals, as names or `{ \"name\", \"message\" }` objects."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Object form of the configuration, which additionally allows detecting\nrestricted globals accessed via global objects."
+    },
     "NoRestrictedImportsConfig": {
       "type": "object",
       "properties": {
@@ -17330,6 +17452,42 @@
       },
       "additionalProperties": false
     },
+    "PreferLowercaseTitleConfig": {
+      "type": "object",
+      "properties": {
+        "allowedPrefixes": {
+          "description": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with. This can be useful when writing tests for API endpoints, where\nyou'd like to prefix with the HTTP method.\nBy default, nothing is allowed (the equivalent of `{ \"allowedPrefixes\": [] }`).\n\nExample of **correct** code for the `{ \"allowedPrefixes\": [\"GET\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"allowedPrefixes\": [\"GET\"] }] */\ndescribe('GET /live');\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with. This can be useful when writing tests for API endpoints, where\nyou'd like to prefix with the HTTP method.\nBy default, nothing is allowed (the equivalent of `{ \"allowedPrefixes\": [] }`).\n\nExample of **correct** code for the `{ \"allowedPrefixes\": [\"GET\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"allowedPrefixes\": [\"GET\"] }] */\ndescribe('GET /live');\n```"
+        },
+        "ignore": {
+          "description": "This array option controls which Jest or Vitest functions are checked by this rule. There\nare four possible values:\n- `\"describe\"`\n- `\"test\"`\n- `\"it\"`\n- `\"bench\"`\n\nBy default, none of these options are enabled (the equivalent of\n`{ \"ignore\": [] }`).\n\nExample of **correct** code for the `{ \"ignore\": [\"describe\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"describe\"] }] */\ndescribe('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"test\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"test\"] }] */\ntest('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"it\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"it\"] }] */\nit('Uppercase description');\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option controls which Jest or Vitest functions are checked by this rule. There\nare four possible values:\n- `\"describe\"`\n- `\"test\"`\n- `\"it\"`\n- `\"bench\"`\n\nBy default, none of these options are enabled (the equivalent of\n`{ \"ignore\": [] }`).\n\nExample of **correct** code for the `{ \"ignore\": [\"describe\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"describe\"] }] */\ndescribe('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"test\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"test\"] }] */\ntest('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"it\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"it\"] }] */\nit('Uppercase description');\n```"
+        },
+        "ignoreTopLevelDescribe": {
+          "description": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.\n\nExample of **correct** code for the `{ \"ignoreTopLevelDescribe\": true }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignoreTopLevelDescribe\": true }] */\ndescribe('MyClass', () => {\ndescribe('#myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.\n\nExample of **correct** code for the `{ \"ignoreTopLevelDescribe\": true }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignoreTopLevelDescribe\": true }] */\ndescribe('MyClass', () => {\ndescribe('#myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```"
+        },
+        "lowercaseFirstCharacterOnly": {
+          "description": "This option can be set to only validate that the first character of a test name is lowercased.\n\nExample of **correct** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('myClass', () => {\ndescribe('myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```\n\nExample of **incorrect** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('MyClass', () => {\ndescribe('MyMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to only validate that the first character of a test name is lowercased.\n\nExample of **correct** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('myClass', () => {\ndescribe('myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```\n\nExample of **incorrect** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('MyClass', () => {\ndescribe('MyMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```"
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferNullishCoalescingConfig": {
       "type": "object",
       "properties": {
@@ -18340,6 +18498,27 @@
         }
       },
       "additionalProperties": false
+    },
+    "RestrictedGlobal": {
+      "description": "A restricted global with an optional custom message.",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "message": {
+          "description": "A custom message shown when the restricted global is used.",
+          "type": "string",
+          "markdownDescription": "A custom message shown when the restricted global is used."
+        },
+        "name": {
+          "description": "The name of the restricted global.",
+          "type": "string",
+          "markdownDescription": "The name of the restricted global."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "A restricted global with an optional custom message."
     },
     "RestrictedPath": {
       "type": "object",

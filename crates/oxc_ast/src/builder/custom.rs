@@ -2,6 +2,12 @@
 //!
 //! All delegate to generated builder methods, but take less params (with common defaults),
 //! add additional functionality, or are shortcuts for common patterns.
+//!
+//! Like the generated methods, each first calls [`GetAstBuilder::builder`] to obtain the concrete
+//! [`AstBuild`]er before forwarding it on, so callees are monomorphized over the `AstBuild` type,
+//! rather than over every `B: GetAstBuilder`.
+//!
+//! [`AstBuild`]: super::AstBuild
 
 use std::{alloc::Layout, mem::MaybeUninit, slice, str};
 
@@ -18,6 +24,7 @@ impl<'a> Expression<'a> {
     /// Build an [`Expression`] representing the number `0`.
     #[inline]
     pub fn new_number_0<B: GetAstBuilder<'a>>(builder: &B) -> Self {
+        let builder = builder.builder();
         Expression::new_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal, builder)
     }
 
@@ -27,6 +34,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_void_0<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        let builder = builder.builder();
         let argument = Expression::new_number_0(builder);
         Expression::new_unary_expression(span, UnaryOperator::Void, argument, builder)
     }
@@ -37,6 +45,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn new_nan<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        let builder = builder.builder();
         Expression::new_numeric_literal(span, f64::NAN, None, NumberBase::Decimal, builder)
     }
 }
@@ -45,6 +54,7 @@ impl<'a> Directive<'a> {
     /// Build a `"use strict"` [`Directive`].
     #[inline]
     pub fn new_use_strict<B: GetAstBuilder<'a>>(builder: &B) -> Self {
+        let builder = builder.builder();
         let use_strict = Str::from("use strict");
         Directive::new(
             SPAN,
@@ -67,6 +77,7 @@ impl<'a> FormalParameter<'a> {
         pattern: BindingPattern<'a>,
         builder: &B,
     ) -> Self {
+        let builder = builder.builder();
         FormalParameter::new(span, [], pattern, NONE, NONE, false, None, false, false, builder)
     }
 }
@@ -93,6 +104,7 @@ impl<'a> Function<'a> {
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -151,6 +163,7 @@ impl<'a> Function<'a> {
         T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
     {
+        let builder = builder.builder();
         Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -189,6 +202,7 @@ impl<'a> ExportNamedDeclaration<'a> {
     where
         T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
     {
+        let builder = builder.builder();
         ExportNamedDeclaration::boxed(
             span,
             None,
@@ -212,6 +226,7 @@ impl<'a> ExportNamedDeclaration<'a> {
         declaration: Declaration<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
         ExportNamedDeclaration::boxed(
             span,
             Some(declaration),
@@ -241,7 +256,8 @@ impl<'a> TemplateElement<'a> {
         tail: bool,
         builder: &B,
     ) -> Self {
-        value.raw = escape_template_element_raw(value.raw, builder.builder().allocator());
+        let builder = builder.builder();
+        value.raw = escape_template_element_raw(value.raw, builder.allocator());
         TemplateElement::new(span, value, tail, builder)
     }
 
@@ -263,7 +279,8 @@ impl<'a> TemplateElement<'a> {
         lone_surrogates: bool,
         builder: &B,
     ) -> Self {
-        value.raw = escape_template_element_raw(value.raw, builder.builder().allocator());
+        let builder = builder.builder();
+        value.raw = escape_template_element_raw(value.raw, builder.allocator());
         TemplateElement::new_with_lone_surrogates(span, value, tail, lone_surrogates, builder)
     }
 }

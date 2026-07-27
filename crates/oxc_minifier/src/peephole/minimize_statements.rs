@@ -3,13 +3,13 @@ use std::{iter, ops::ControlFlow};
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::VisitJs;
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
@@ -378,6 +378,9 @@ impl<'a> PeepholeOptimizations {
             Statement::ForOfStatement(for_of_stmt) => {
                 Self::handle_for_of_statement(for_of_stmt, result, ctx);
             }
+            Statement::LabeledStatement(label_stmt) => {
+                Self::handle_labeled_statement(label_stmt, result, ctx);
+            }
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
         }
@@ -706,6 +709,17 @@ impl<'a> PeepholeOptimizations {
         is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
     }
 
+    /// Check if a switch case can be inlined by verifying:
+    /// - The test expression has no side effects
+    /// - All statements can be safely inlined (no unlabeled breaks)
+    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
+        if !case.test.as_ref().is_none_or(Expression::is_literal) {
+            return false;
+        }
+
+        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
+    }
+
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -795,6 +809,55 @@ impl<'a> PeepholeOptimizations {
         {
             let dropped = last_case.consequent.pop().unwrap();
             ctx.drop_statement(&dropped);
+        }
+
+        if !ctx.is_tree_shake_only()
+            && switch_stmt.cases.len() == 1
+            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
+            && let Some(mut case) = switch_stmt.cases.pop()
+        {
+            ctx.notice_change();
+
+            let block_stmt = if case.consequent.len() == 1
+                && matches!(case.consequent[0], Statement::BlockStatement(_))
+            {
+                case.consequent.pop().unwrap()
+            } else {
+                Statement::new_block_statement_with_scope_id(
+                    case.span,
+                    case.consequent.take_in(ctx),
+                    switch_stmt.scope_id(),
+                    ctx,
+                )
+            };
+
+            if let Some(test) = case.test {
+                result.push(Statement::new_if_statement(
+                    switch_stmt.span,
+                    Expression::new_binary_expression(
+                        SPAN,
+                        switch_stmt.discriminant.take_in(ctx),
+                        BinaryOperator::StrictEquality,
+                        test,
+                        ctx,
+                    ),
+                    block_stmt,
+                    None,
+                    ctx,
+                ));
+                return;
+            }
+
+            if !switch_stmt.discriminant.is_literal() {
+                result.push(Statement::new_expression_statement(
+                    switch_stmt.discriminant.span(),
+                    switch_stmt.discriminant.take_in(ctx),
+                    ctx,
+                ));
+            }
+
+            result.push(block_stmt);
+            return;
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));
@@ -1242,6 +1305,33 @@ impl<'a> PeepholeOptimizations {
             }
         }
         result.push(Statement::ForOfStatement(for_of_stmt));
+    }
+
+    fn handle_labeled_statement(
+        mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
+            Self::minimize_statements(&mut block_stmt.body, ctx);
+        } else if !Self::statement_cares_about_scope(&labeled_stmt.body) {
+            let mut stmts = ArenaVec::from_value_in(labeled_stmt.body.take_in(ctx), ctx);
+            Self::minimize_statements(&mut stmts, ctx);
+            labeled_stmt.body = match stmts.len() {
+                0 => Statement::new_empty_statement(labeled_stmt.body.span(), ctx),
+                1 => stmts[0].take_in(ctx),
+                _ => {
+                    ctx.notice_change();
+                    Statement::new_block_statement_with_scope_id(
+                        labeled_stmt.span,
+                        stmts,
+                        ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                        ctx,
+                    )
+                }
+            };
+        }
+        result.push(Statement::LabeledStatement(labeled_stmt));
     }
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
@@ -2058,6 +2148,42 @@ impl<'a> PeepholeOptimizations {
                 ctx.parent().is_function_body()
             }
             _ => false,
+        }
+    }
+}
+
+#[derive(Default)]
+struct FindNestedBreak {
+    found_unlabelled_break: bool,
+}
+
+impl FindNestedBreak {
+    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+        let mut visitor = Self::default();
+        visitor.visit_switch_case(node);
+        visitor.found_unlabelled_break
+    }
+}
+
+impl<'a> VisitJs<'a> for FindNestedBreak {
+    fn visit_expression(&mut self, _it: &Expression<'a>) {
+        // do nothing
+    }
+
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.found_unlabelled_break || it.is_declaration() || it.is_iteration_statement() {
+            return;
+        }
+        match it {
+            Statement::ThrowStatement(_)
+            | Statement::SwitchStatement(_)
+            | Statement::ContinueStatement(_)
+            | Statement::ReturnStatement(_)
+            | Statement::ExpressionStatement(_) => {}
+            Statement::BreakStatement(it) if it.label.is_none() => {
+                self.found_unlabelled_break = true;
+            }
+            _ => walk_js::walk_statement(self, it),
         }
     }
 }

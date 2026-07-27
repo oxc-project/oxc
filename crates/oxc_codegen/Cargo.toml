@@ -23,6 +23,7 @@ doctest = true
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["code_buffer", "slice_iter", "stack"] }
+oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_sourcemap = { workspace = true, optional = true }
@@ -32,8 +33,6 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
-dragonbox_ecma = { workspace = true }
-itoa = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
