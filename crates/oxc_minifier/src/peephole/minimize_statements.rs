@@ -104,31 +104,11 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Drop a trailing unconditional jump statement if applicable
-        if let Some(last_stmt) = stmts.last() {
-            match last_stmt {
-                // "while (x) { y(); continue; }" => "while (x) { y(); }"
-                Statement::ContinueStatement(s) if s.label.is_none() => {
-                    if matches!(
-                        ctx.ancestors().nth(1),
-                        Some(
-                            Ancestor::ForStatementBody(_)
-                                | Ancestor::ForInStatementBody(_)
-                                | Ancestor::ForOfStatementBody(_),
-                        )
-                    ) {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
-                }
-                // "function f() { x(); return; }" => "function f() { x(); }"
-                Statement::ReturnStatement(s) if s.argument.is_none() => {
-                    if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
-                }
-                _ => {}
-            }
+        if let Some(last_stmt) = stmts.last()
+            && Self::can_remove_termination_statement(last_stmt, ctx)
+        {
+            let dropped = stmts.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
 
         // Merge certain statements in reverse order
@@ -861,25 +841,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                let optimize_implicit_jump = match &if_stmt.consequent {
-                    // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
-                    // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                    Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                        ctx.ancestors().nth(1).is_some_and(|v| {
-                            v.is_for_statement()
-                                || v.is_for_in_statement()
-                                || v.is_for_of_statement()
-                        })
-                    }
-                    // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
-                    // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
-                    Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
-                        ctx.parent().is_function_body()
-                    }
-                    _ => false,
-                };
-
-                if optimize_implicit_jump {
+                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
                     // If so, inverting the branch condition and nesting statements after
@@ -2096,6 +2058,32 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
+    }
+
+    /// Returns `true` if the statement is an unconditional termination that can be
+    /// safely removed:
+    /// - Unlabeled `continue` statements that terminate a loop body
+    /// - Bare `return` statements that terminate a function body
+    fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match stmt {
+            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
+            Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
+                matches!(
+                    ctx.ancestors().nth(1),
+                    Some(
+                        Ancestor::ForStatementBody(_)
+                            | Ancestor::ForInStatementBody(_)
+                            | Ancestor::ForOfStatementBody(_)
+                            | Ancestor::WhileStatementBody(_)
+                    )
+                )
+            }
+            // bare `return;` in function-body scope.
+            Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
+                ctx.parent().is_function_body()
+            }
+            _ => false,
+        }
     }
 }
 
