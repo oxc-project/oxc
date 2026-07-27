@@ -106,8 +106,6 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Drop a trailing unconditional jump statement if applicable
-        // "while (x) { y(); continue; }" => "while (x) { y(); }"
-        // "function f() { x(); return; }" => "function f() { x(); }"
         if let Some(last_stmt) = stmts.last()
             && Self::can_remove_termination_statement(last_stmt, ctx)
         {
@@ -904,10 +902,6 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
-                // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
-                // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
                 if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
@@ -2127,8 +2121,10 @@ impl<'a> PeepholeOptimizations {
         Some(false)
     }
 
-    /// Returns `true` when a trailing termination statement can be removed
-    /// without changing control flow.
+    /// Returns `true` if the statement is an unconditional termination that can be
+    /// safely removed:
+    /// - Unlabeled `continue` statements that terminate a loop body
+    /// - Bare `return` statements that terminate a function body
     fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
