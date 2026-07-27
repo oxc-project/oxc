@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_new_func.rs
+  s_8c2aa655ebd0b6::t_aadc82d3c656cf 1-4,91,102,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "386ab0f738f0387c1c24dd4843d41a2956620e8f",
+  "prompts": {},
+  "sessions": {
+    "s_8c2aa655ebd0b6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa30f-8618-76b0-84f4-a121fbc48e22",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
