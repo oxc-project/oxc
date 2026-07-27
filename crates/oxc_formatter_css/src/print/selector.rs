@@ -531,8 +531,11 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
 }
 
 /// Normalize an `An+B` expression:
-/// exactly one space around each `+` (none before a leading `+`),
+/// exactly one space around each `+` between terms,
 /// digit-led segments lowercased, all other whitespace kept as-is (a glued `-` stays glued).
+///
+/// NOTE: We keep a leading sign stays glued, since the An+B grammar forbids whitespace after it.
+/// But Prettier formats as `+ 3n`, output is a semantics-breaking artifact.
 fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     if !bytes.iter().any(|&b| b == b'+' || b.is_ascii_uppercase()) {
@@ -540,6 +543,7 @@ fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     }
 
     let mut out = String::with_capacity(raw.len() + 4);
+    let mut seen_term = false;
     let mut i = 0;
     while i < bytes.len() {
         let b = bytes[i];
@@ -547,7 +551,7 @@ fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
             while out.ends_with(' ') {
                 out.pop();
             }
-            if !out.is_empty() {
+            if seen_term {
                 out.push(' ');
             }
             out.push('+');
@@ -555,13 +559,14 @@ fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
             while i < bytes.len() && bytes[i].is_ascii_whitespace() {
                 i += 1;
             }
-            if i < bytes.len() {
+            if seen_term && i < bytes.len() {
                 out.push(' ');
             }
         } else if b.is_ascii_whitespace() {
             out.push(b as char);
             i += 1;
         } else {
+            seen_term = true;
             let start = i;
             while i < bytes.len() && !bytes[i].is_ascii_whitespace() && bytes[i] != b'+' {
                 i += 1;

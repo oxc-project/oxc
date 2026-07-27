@@ -230,6 +230,11 @@ Notable divergences are:
     - An artifact of its generic at-rule params indent
   - Ours matches how selector lists indent everywhere else
     - This is layout-only, deprecated syntax, triggers only on width overflow
+- A leading `+` in an `An+B` argument stays glued to its term (`:nth-child(+3n - 2)` keeps `+3n`)
+  - Prettier prints `+ 3n` (postcss-selector-parser tokenizes every `+` as a combinator),
+    but the An+B grammar forbids whitespace between a leading sign and its term,
+    so Prettier's output no longer parses as a selector
+    (= a semantics-breaking artifact, it also breaks formatter idempotency: the second pass fails to parse)
 - SCSS: `@forward` with `show`/`hide` members AND a `with (...)` config
   - Prettier parses the whole prelude as ONE comma list, so the config's forced break spills into the member commas
     (`show b,\n  c with (` even when the head fits) and the config body lands one level deeper (+4 body / +2 `)`)
