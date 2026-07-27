@@ -1,0 +1,41 @@
+crates/oxc_ast/src/serialize/js.rs
+  s_d93658c461c0bd::t_e2c76001cefa54 814,817-819,821,823,825
+crates/oxc_linter/src/utils/react.rs
+  s_d93658c461c0bd::t_85a9122e100e4d 8-9,13,1009-1016,1019-1022,1084-1090,1096
+crates/oxc_minifier/src/peephole/substitute_alternate_syntax.rs
+  s_d93658c461c0bd::t_fb6928e876702a 206-211,213,1960-1964
+crates/oxc_transformer/src/es2017/async_to_generator.rs
+  s_d93658c461c0bd::t_4f8fd96da64bcc 56,72-74,532-533
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_d93658c461c0bd::t_a434c1817b7d70 46,588,592
+crates/oxc_transformer/src/jsx/refresh.rs
+  s_d93658c461c0bd::t_b08303f149dce2 30-33,413-418
+napi/parser/src-js/generated/lazy/constructors.js
+  s_0eae81ddfc1ea3::t_0e6592b1d35aa6 4733-4829,4857,4877
+crates/oxc_linter/src/rules/oxc/missing_throw.rs
+  s_0eae81ddfc1ea3::t_a29eec72089d1f 62-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "dc1762670972417acfac8c0c26363546242e12d9",
+  "prompts": {},
+  "sessions": {
+    "s_0eae81ddfc1ea3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8041-2626-73d2-9ae3-45377bc4dff3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_d93658c461c0bd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa3d7-a1e5-73a0-a4c0-3bf9084729da",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
