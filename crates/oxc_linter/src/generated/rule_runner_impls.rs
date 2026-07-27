@@ -4149,7 +4149,7 @@ impl RuleRunner for crate::rules::oxc::bad_bitwise_operator::BadBitwiseOperator 
 
 impl RuleRunner for crate::rules::oxc::bad_char_at_comparison::BadCharAtComparison {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
