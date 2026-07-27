@@ -552,9 +552,13 @@ impl<'a> AssignmentLike<'a, '_> {
                 // Determine if the chain is eligible based on the following checks:
                 // 1. For variable declarators: only continue if this isn't the final assignment in the chain
                 (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
-                // 2. For assignment expressions: continue unless this is the final assignment in an expression statement
+                // 2. For assignment expressions: continue unless this is the final assignment
+                // in an expression statement or concise arrow body.
                 matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
-                    if !right_is_tail || !matches!(parent_assignment.parent(), AstNodes::ExpressionStatement(_))
+                    if !right_is_tail || !matches!(
+                        parent_assignment.parent(),
+                        AstNodes::ArrowFunctionExpression(_) | AstNodes::ExpressionStatement(_)
+                    )
                 )
             } else {
                 false

@@ -1053,8 +1053,11 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
-            if in_statement {
+            let in_statement_like_position = matches!(
+                call.parent(),
+                AstNodes::ArrowFunctionExpression(_) | AstNodes::ExpressionStatement(_)
+            );
+            if in_statement_like_position {
                 match arguments.len() {
                     1 => true,
                     2 => matches!(arguments.first(), Some(Argument::ArrayExpression(_))),
