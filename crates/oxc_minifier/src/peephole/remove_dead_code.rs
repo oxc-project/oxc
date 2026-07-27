@@ -273,14 +273,6 @@ impl<'a> PeepholeOptimizations {
 
     pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
-        // We need to check if it is in arrow function with `expression: true`.
-        // This is the only scenario where we can't remove it even if `ExpressionStatement`.
-        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1)
-            && *body.expression()
-        {
-            return;
-        }
-
         if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
             let new_stmt = Statement::new_empty_statement(expr_stmt.span, ctx);
             ctx.replace_statement(stmt, new_stmt);
@@ -432,9 +424,10 @@ impl<'a> PeepholeOptimizations {
                     Self::try_save_pure_function(
                         f.id.as_ref(),
                         &f.params,
-                        body,
                         f.r#async,
                         f.generator,
+                        body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)),
+                        body.is_empty(),
                         ctx,
                     );
                 }
@@ -447,9 +440,19 @@ impl<'a> PeepholeOptimizations {
                                 Self::try_save_pure_function(
                                     Some(id),
                                     &a.params,
-                                    &a.body,
                                     a.r#async,
                                     false,
+                                    a.get_expression().map_or_else(
+                                        || {
+                                            a.get_function_body().is_none_or(|body| {
+                                                body.statements
+                                                    .iter()
+                                                    .any(|stmt| stmt.may_have_side_effects(ctx))
+                                            })
+                                        },
+                                        |expression| expression.may_have_side_effects(ctx),
+                                    ),
+                                    a.body.is_empty(),
                                     ctx,
                                 );
                             }
@@ -458,9 +461,12 @@ impl<'a> PeepholeOptimizations {
                                     Self::try_save_pure_function(
                                         Some(id),
                                         &f.params,
-                                        body,
                                         f.r#async,
                                         f.generator,
+                                        body.statements
+                                            .iter()
+                                            .any(|stmt| stmt.may_have_side_effects(ctx)),
+                                        body.is_empty(),
                                         ctx,
                                     );
                                 }
@@ -477,9 +483,10 @@ impl<'a> PeepholeOptimizations {
     fn try_save_pure_function(
         id: Option<&BindingIdentifier<'a>>,
         params: &FormalParameters<'a>,
-        body: &FunctionBody<'a>,
         r#async: bool,
         generator: bool,
+        body_has_side_effects: bool,
+        returns_undefined: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if r#async || generator {
@@ -495,7 +502,7 @@ impl<'a> PeepholeOptimizations {
         }) {
             return;
         }
-        if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {
+        if body_has_side_effects {
             return;
         }
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
@@ -521,7 +528,7 @@ impl<'a> PeepholeOptimizations {
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
             ctx.state.symbols.set_function_summary(
                 symbol_id,
-                if body.is_empty() {
+                if returns_undefined {
                     FunctionSummary::SideEffectFreeReturnsUndefined
                 } else {
                     FunctionSummary::SideEffectFree

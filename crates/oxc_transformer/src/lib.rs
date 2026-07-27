@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
@@ -15,7 +15,7 @@ use oxc_react_compiler::{PluginOptions, compile as react_compiler_compile};
 use oxc_semantic::Scoping;
 #[cfg(feature = "react_compiler")]
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::GetSpan;
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 // Core
@@ -507,6 +507,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.common.exit_function_body(body, ctx);
     }
 
+    fn enter_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.enter_arrow_function_body(body, ctx);
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.exit_arrow_function_body(body, ctx);
+    }
+
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_jsx_element(node, ctx);
@@ -624,38 +640,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.common.exit_arrow_function_expression(arrow, ctx);
-
-        // Some plugins may add new statements to the ArrowFunctionExpression's body,
-        // which can cause issues with the `() => x;` case, as it only allows a single statement.
-        // To address this, we wrap the last statement in a return statement and set the expression to false.
-        // This transforms the arrow function into the form `() => { return x; };`.
-        let statements = &mut arrow.body.statements;
-        if arrow.expression && statements.len() > 1 {
-            arrow.expression = false;
-
-            // Reverse looping to find the expression statement, because other plugins could
-            // insert new statements after the expression statement.
-            // `() => x;`
-            // ->
-            // ```
-            // () => {
-            //    var new_insert_variable;
-            //    return x;
-            //    function new_insert_function() {}
-            // };
-            // ```
-            for stmt in statements.iter_mut().rev() {
-                if !matches!(stmt, Statement::ExpressionStatement(_)) {
-                    continue;
-                }
-                stmt.replace_with(|stmt| {
-                    let Statement::ExpressionStatement(expr_stmt) = stmt else { unreachable!() };
-                    Statement::new_return_statement(SPAN, Some(expr_stmt.unbox().expression), ctx)
-                });
-                return;
-            }
-            unreachable!("At least one statement should be expression statement")
-        }
     }
 
     fn exit_statements(

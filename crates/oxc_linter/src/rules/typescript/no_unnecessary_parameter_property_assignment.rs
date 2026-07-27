@@ -191,9 +191,15 @@ fn get_assignments_inside_expression<'a>(
         Expression::CallExpression(call) => {
             // Immediately Invoked Function Expression (IIFE)
 
+            if let Expression::ArrowFunctionExpression(expr) = call.callee.without_parentheses()
+                && let Some(Expression::AssignmentExpression(assignment)) = expr.get_expression()
+            {
+                assignments.push(assignment);
+            }
+
             let function_body = match call.callee.without_parentheses() {
-                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
-                Expression::FunctionExpression(expr) => expr.body.as_ref(),
+                Expression::ArrowFunctionExpression(expr) => expr.get_function_body(),
+                Expression::FunctionExpression(expr) => expr.body.as_deref(),
                 _ => None,
             };
 

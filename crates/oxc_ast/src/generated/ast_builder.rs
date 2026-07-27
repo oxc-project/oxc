@@ -342,32 +342,28 @@ impl<'a> Expression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
-            expression,
             r#async,
             type_parameters,
             params,
@@ -383,12 +379,11 @@ impl<'a> Expression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
@@ -398,15 +393,13 @@ impl<'a> Expression<'a> {
         T1,
         T2,
         T3,
-        T4,
     >(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -416,12 +409,10 @@ impl<'a> Expression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,
@@ -2015,32 +2006,28 @@ impl<'a> ArrayExpressionElement<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
-            expression,
             r#async,
             type_parameters,
             params,
@@ -2056,12 +2043,11 @@ impl<'a> ArrayExpressionElement<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
@@ -2071,15 +2057,13 @@ impl<'a> ArrayExpressionElement<'a> {
         T1,
         T2,
         T3,
-        T4,
     >(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -2089,12 +2073,10 @@ impl<'a> ArrayExpressionElement<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,
@@ -3580,32 +3562,28 @@ impl<'a> PropertyKey<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
-            expression,
             r#async,
             type_parameters,
             params,
@@ -3621,12 +3599,11 @@ impl<'a> PropertyKey<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
@@ -3636,15 +3613,13 @@ impl<'a> PropertyKey<'a> {
         T1,
         T2,
         T3,
-        T4,
     >(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -3654,12 +3629,10 @@ impl<'a> PropertyKey<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,
@@ -5690,32 +5663,28 @@ impl<'a> Argument<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
-            expression,
             r#async,
             type_parameters,
             params,
@@ -5731,12 +5700,11 @@ impl<'a> Argument<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
@@ -5746,15 +5714,13 @@ impl<'a> Argument<'a> {
         T1,
         T2,
         T3,
-        T4,
     >(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -5764,12 +5730,10 @@ impl<'a> Argument<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,
@@ -11246,32 +11210,28 @@ impl<'a> ForStatementInit<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
-            expression,
             r#async,
             type_parameters,
             params,
@@ -11287,12 +11247,11 @@ impl<'a> ForStatementInit<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
@@ -11302,15 +11261,13 @@ impl<'a> ForStatementInit<'a> {
         T1,
         T2,
         T3,
-        T4,
     >(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -11320,12 +11277,10 @@ impl<'a> ForStatementInit<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,
@@ -14337,6 +14292,1351 @@ impl<'a> FunctionBody<'a> {
     }
 }
 
+impl<'a> ArrowFunctionBody<'a> {
+    /// Build an [`ArrowFunctionBody::FunctionBody`].
+    ///
+    /// This node contains a [`FunctionBody`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `directives`
+    /// * `statements`
+    #[inline]
+    pub fn new_function_body<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        directives: T1,
+        statements: T2,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
+    {
+        Self::FunctionBody(FunctionBody::boxed(span, directives, statements, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::BooleanLiteral`].
+    ///
+    /// This node contains a [`BooleanLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The boolean value itself
+    #[inline]
+    pub fn new_boolean_literal<B: GetAstBuilder<'a>>(span: Span, value: bool, builder: &B) -> Self {
+        Self::BooleanLiteral(BooleanLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::NullLiteral`].
+    ///
+    /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    #[inline]
+    pub fn new_null_literal<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NullLiteral(NullLiteral::boxed(span, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::NumericLiteral`].
+    ///
+    /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the number, converted into base 10
+    /// * `raw`: The number as it appears in source code
+    /// * `base`: The base representation used by the literal in source code
+    #[inline]
+    pub fn new_numeric_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: f64,
+        raw: Option<Str<'a>>,
+        base: NumberBase,
+        builder: &B,
+    ) -> Self {
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::BigIntLiteral`].
+    ///
+    /// This node contains a [`BigIntLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: Bigint value in base 10 with no underscores
+    /// * `raw`: The bigint as it appears in source code
+    /// * `base`: The base representation used by the literal in source code
+    #[inline]
+    pub fn new_big_int_literal<B: GetAstBuilder<'a>, S1>(
+        span: Span,
+        value: S1,
+        raw: Option<Str<'a>>,
+        base: BigintBase,
+        builder: &B,
+    ) -> Self
+    where
+        S1: Into<Str<'a>>,
+    {
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::RegExpLiteral`].
+    ///
+    /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// * `raw`: The regular expression as it appears in source code
+    #[inline]
+    pub fn new_reg_exp_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        regex: RegExp<'a>,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::RegExpLiteral(RegExpLiteral::boxed(span, regex, raw, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::StringLiteral`].
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn new_string_literal<B: GetAstBuilder<'a>, S1>(
+        span: Span,
+        value: S1,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self
+    where
+        S1: Into<Str<'a>>,
+    {
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn new_string_literal_with_lone_surrogates<B: GetAstBuilder<'a>, S1>(
+        span: Span,
+        value: S1,
+        raw: Option<Str<'a>>,
+        lone_surrogates: bool,
+        builder: &B,
+    ) -> Self
+    where
+        S1: Into<Str<'a>>,
+    {
+        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::TemplateLiteral`].
+    ///
+    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `quasis`
+    /// * `expressions`
+    #[inline]
+    pub fn new_template_literal<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        quasis: T1,
+        expressions: T2,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::Identifier`].
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    #[inline]
+    pub fn new_identifier<B: GetAstBuilder<'a>, S1>(span: Span, name: S1, builder: &B) -> Self
+    where
+        S1: Into<Ident<'a>>,
+    {
+        Self::Identifier(IdentifierReference::boxed(span, name, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::Identifier`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn new_identifier_with_reference_id<B: GetAstBuilder<'a>, S1>(
+        span: Span,
+        name: S1,
+        reference_id: ReferenceId,
+        builder: &B,
+    ) -> Self
+    where
+        S1: Into<Ident<'a>>,
+    {
+        Self::Identifier(IdentifierReference::boxed_with_reference_id(
+            span,
+            name,
+            reference_id,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::Super`].
+    ///
+    /// This node contains a [`Super`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_super<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::Super(Super::boxed(span, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::ArrayExpression`].
+    ///
+    /// This node contains an [`ArrayExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `elements`
+    #[inline]
+    pub fn new_array_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        elements: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    {
+        Self::ArrayExpression(ArrayExpression::boxed(span, elements, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::ArrowFunctionExpression`].
+    ///
+    /// This node contains an [`ArrowFunctionExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `async`
+    /// * `type_parameters`
+    /// * `params`
+    /// * `return_type`
+    /// * `body`
+    #[inline]
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
+        span: Span,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: ArrowFunctionBody<'a>,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
+            span,
+            r#async,
+            type_parameters,
+            params,
+            return_type,
+            body,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`.
+    ///
+    /// This node contains an [`ArrowFunctionExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `async`
+    /// * `type_parameters`
+    /// * `params`
+    /// * `return_type`
+    /// * `body`
+    /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[inline]
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
+        B: GetAstBuilder<'a>,
+        T1,
+        T2,
+        T3,
+    >(
+        span: Span,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: ArrowFunctionBody<'a>,
+        scope_id: ScopeId,
+        pure: bool,
+        pife: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Self::ArrowFunctionExpression(
+            ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
+                span,
+                r#async,
+                type_parameters,
+                params,
+                return_type,
+                body,
+                scope_id,
+                pure,
+                pife,
+                builder.builder(),
+            ),
+        )
+    }
+
+    /// Build an [`ArrowFunctionBody::AssignmentExpression`].
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        operator: AssignmentOperator,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed(
+            span,
+            operator,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::AwaitExpression`].
+    ///
+    /// This node contains an [`AwaitExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `argument`
+    #[inline]
+    pub fn new_await_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        argument: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::AwaitExpression(AwaitExpression::boxed(span, argument, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::BinaryExpression`].
+    ///
+    /// This node contains a [`BinaryExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `operator`
+    /// * `right`
+    #[inline]
+    pub fn new_binary_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        operator: BinaryOperator,
+        right: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::BinaryExpression(BinaryExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::CallExpression`].
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    #[inline]
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: T2,
+        optional: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::CallExpression(CallExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::CallExpression`] with `pure`.
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: T2,
+        optional: bool,
+        pure: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::CallExpression(CallExpression::boxed_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            pure,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ChainExpression`].
+    ///
+    /// This node contains a [`ChainExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expression`
+    #[inline]
+    pub fn new_chain_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        expression: ChainElement<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ChainExpression(ChainExpression::boxed(span, expression, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::ClassExpression`].
+    ///
+    /// This node contains a [`Class`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `decorators`: Decorators applied to the class.
+    /// * `id`: Class identifier, AKA the name
+    /// * `type_parameters`
+    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
+    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `implements`: Interface implementation clause for TypeScript classes.
+    /// * `body`
+    /// * `abstract`: Whether the class is abstract
+    /// * `declare`: Whether the class was `declare`ed
+    #[inline]
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+        span: Span,
+        r#type: ClassType,
+        decorators: T1,
+        id: Option<BindingIdentifier<'a>>,
+        type_parameters: T2,
+        super_class: Option<Expression<'a>>,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
+        r#abstract: bool,
+        declare: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+    {
+        Self::ClassExpression(Class::boxed(
+            span,
+            r#type,
+            decorators,
+            id,
+            type_parameters,
+            super_class,
+            super_type_arguments,
+            implements,
+            body,
+            r#abstract,
+            declare,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ClassExpression`] with `scope_id`.
+    ///
+    /// This node contains a [`Class`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `decorators`: Decorators applied to the class.
+    /// * `id`: Class identifier, AKA the name
+    /// * `type_parameters`
+    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
+    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `implements`: Interface implementation clause for TypeScript classes.
+    /// * `body`
+    /// * `abstract`: Whether the class is abstract
+    /// * `declare`: Whether the class was `declare`ed
+    /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[inline]
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+        span: Span,
+        r#type: ClassType,
+        decorators: T1,
+        id: Option<BindingIdentifier<'a>>,
+        type_parameters: T2,
+        super_class: Option<Expression<'a>>,
+        super_type_arguments: T3,
+        implements: T4,
+        body: T5,
+        r#abstract: bool,
+        declare: bool,
+        scope_id: ScopeId,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
+        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+    {
+        Self::ClassExpression(Class::boxed_with_scope_id(
+            span,
+            r#type,
+            decorators,
+            id,
+            type_parameters,
+            super_class,
+            super_type_arguments,
+            implements,
+            body,
+            r#abstract,
+            declare,
+            scope_id,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ConditionalExpression`].
+    ///
+    /// This node contains a [`ConditionalExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `test`
+    /// * `consequent`
+    /// * `alternate`
+    #[inline]
+    pub fn new_conditional_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        test: Expression<'a>,
+        consequent: Expression<'a>,
+        alternate: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ConditionalExpression(ConditionalExpression::boxed(
+            span,
+            test,
+            consequent,
+            alternate,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::FunctionExpression`].
+    ///
+    /// This node contains a [`Function`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `id`: The function identifier. [`None`] for anonymous function expressions.
+    /// * `generator`: Is this a generator function?
+    /// * `async`
+    /// * `declare`
+    /// * `type_parameters`
+    /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    /// * `params`: Function parameters.
+    /// * `return_type`: The TypeScript return type annotation.
+    /// * `body`: The function body.
+    #[inline]
+    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+        span: Span,
+        r#type: FunctionType,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
+    {
+        Self::FunctionExpression(Function::boxed(
+            span,
+            r#type,
+            id,
+            generator,
+            r#async,
+            declare,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            body,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::FunctionExpression`] with `scope_id` and `pure` and `pife`.
+    ///
+    /// This node contains a [`Function`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `id`: The function identifier. [`None`] for anonymous function expressions.
+    /// * `generator`: Is this a generator function?
+    /// * `async`
+    /// * `declare`
+    /// * `type_parameters`
+    /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    /// * `params`: Function parameters.
+    /// * `return_type`: The TypeScript return type annotation.
+    /// * `body`: The function body.
+    /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    #[inline]
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
+        B: GetAstBuilder<'a>,
+        T1,
+        T2,
+        T3,
+        T4,
+        T5,
+    >(
+        span: Span,
+        r#type: FunctionType,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        scope_id: ScopeId,
+        pure: bool,
+        pife: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
+    {
+        Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
+            span,
+            r#type,
+            id,
+            generator,
+            r#async,
+            declare,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            body,
+            scope_id,
+            pure,
+            pife,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ImportExpression`].
+    ///
+    /// This node contains an [`ImportExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `source`
+    /// * `options`
+    /// * `phase`
+    #[inline]
+    pub fn new_import_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        source: Expression<'a>,
+        options: Option<Expression<'a>>,
+        phase: Option<ImportPhase>,
+        builder: &B,
+    ) -> Self {
+        Self::ImportExpression(ImportExpression::boxed(
+            span,
+            source,
+            options,
+            phase,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::LogicalExpression`].
+    ///
+    /// This node contains a [`LogicalExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `operator`
+    /// * `right`
+    #[inline]
+    pub fn new_logical_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        operator: LogicalOperator,
+        right: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::LogicalExpression(LogicalExpression::boxed(
+            span,
+            left,
+            operator,
+            right,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::NewExpression`].
+    ///
+    /// This node contains a [`NewExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: T2,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::NewExpression(NewExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::NewExpression`] with `pure`.
+    ///
+    /// This node contains a [`NewExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `pure`
+    #[inline]
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: T2,
+        pure: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::NewExpression(NewExpression::boxed_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            pure,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ObjectExpression`].
+    ///
+    /// This node contains an [`ObjectExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `properties`: Properties declared in the object
+    #[inline]
+    pub fn new_object_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        properties: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, ObjectPropertyKind<'a>>>,
+    {
+        Self::ObjectExpression(ObjectExpression::boxed(span, properties, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::ParenthesizedExpression`].
+    ///
+    /// This node contains a [`ParenthesizedExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expression`
+    #[inline]
+    pub fn new_parenthesized_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        expression: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ParenthesizedExpression(ParenthesizedExpression::boxed(
+            span,
+            expression,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::SequenceExpression`].
+    ///
+    /// This node contains a [`SequenceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expressions`
+    #[inline]
+    pub fn new_sequence_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        expressions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::SequenceExpression(SequenceExpression::boxed(span, expressions, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::TaggedTemplateExpression`].
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    #[inline]
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: T1,
+        quasi: TemplateLiteral<'a>,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ThisExpression`].
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_this_expression<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ThisExpression(ThisExpression::boxed(span, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::UnaryExpression`].
+    ///
+    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `argument`
+    #[inline]
+    pub fn new_unary_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        operator: UnaryOperator,
+        argument: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::UnaryExpression(UnaryExpression::boxed(span, operator, argument, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::UpdateExpression`].
+    ///
+    /// This node contains an [`UpdateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `prefix`
+    /// * `argument`
+    #[inline]
+    pub fn new_update_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        operator: UpdateOperator,
+        prefix: bool,
+        argument: SimpleAssignmentTarget<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::UpdateExpression(UpdateExpression::boxed(
+            span,
+            operator,
+            prefix,
+            argument,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::YieldExpression`].
+    ///
+    /// This node contains a [`YieldExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `delegate`
+    /// * `argument`
+    #[inline]
+    pub fn new_yield_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        delegate: bool,
+        argument: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::YieldExpression(YieldExpression::boxed(span, delegate, argument, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::PrivateInExpression`].
+    ///
+    /// This node contains a [`PrivateInExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_private_in_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: PrivateIdentifier<'a>,
+        right: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::PrivateInExpression(PrivateInExpression::boxed(span, left, right, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::ImportMeta`].
+    ///
+    /// This node contains an [`ImportMeta`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_import_meta<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::ImportMeta(ImportMeta::boxed(span, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::NewTarget`].
+    ///
+    /// This node contains a [`NewTarget`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn new_new_target<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+        Self::NewTarget(NewTarget::boxed(span, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::JSXElement`].
+    ///
+    /// This node contains a [`JSXElement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `opening_element`: Opening tag of the element.
+    /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
+    #[inline]
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+        span: Span,
+        opening_element: T1,
+        children: T2,
+        closing_element: T3,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+    {
+        Self::JSXElement(JSXElement::boxed(
+            span,
+            opening_element,
+            children,
+            closing_element,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::JSXFragment`].
+    ///
+    /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `opening_fragment`: `<>`
+    /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
+    #[inline]
+    pub fn new_jsx_fragment<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        opening_fragment: JSXOpeningFragment,
+        children: T1,
+        closing_fragment: JSXClosingFragment,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
+    {
+        Self::JSXFragment(JSXFragment::boxed(
+            span,
+            opening_fragment,
+            children,
+            closing_fragment,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::TSAsExpression`].
+    ///
+    /// This node contains a [`TSAsExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expression`
+    /// * `type_annotation`
+    #[inline]
+    pub fn new_ts_as_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        expression: Expression<'a>,
+        type_annotation: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::TSAsExpression(TSAsExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::TSSatisfiesExpression`].
+    ///
+    /// This node contains a [`TSSatisfiesExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expression`: The value expression being constrained.
+    /// * `type_annotation`: The type `expression` must satisfy.
+    #[inline]
+    pub fn new_ts_satisfies_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        expression: Expression<'a>,
+        type_annotation: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::TSSatisfiesExpression(TSSatisfiesExpression::boxed(
+            span,
+            expression,
+            type_annotation,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::TSTypeAssertion`].
+    ///
+    /// This node contains a [`TSTypeAssertion`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `expression`
+    #[inline]
+    pub fn new_ts_type_assertion<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        expression: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::TSTypeAssertion(TSTypeAssertion::boxed(
+            span,
+            type_annotation,
+            expression,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::TSNonNullExpression`].
+    ///
+    /// This node contains a [`TSNonNullExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expression`
+    #[inline]
+    pub fn new_ts_non_null_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        expression: Expression<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::TSNonNullExpression(TSNonNullExpression::boxed(span, expression, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::TSInstantiationExpression`].
+    ///
+    /// This node contains a [`TSInstantiationExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expression`
+    /// * `type_arguments`
+    #[inline]
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        expression: Expression<'a>,
+        type_arguments: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+    {
+        Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
+            span,
+            expression,
+            type_arguments,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::V8IntrinsicExpression`].
+    ///
+    /// This node contains a [`V8IntrinsicExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `arguments`
+    #[inline]
+    pub fn new_v8_intrinsic_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        name: IdentifierName<'a>,
+        arguments: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::V8IntrinsicExpression(V8IntrinsicExpression::boxed(
+            span,
+            name,
+            arguments,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::ComputedMemberExpression`].
+    ///
+    /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `object`
+    /// * `expression`
+    /// * `optional`
+    #[inline]
+    pub fn new_computed_member_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        object: Expression<'a>,
+        expression: Expression<'a>,
+        optional: bool,
+        builder: &B,
+    ) -> Self {
+        Self::ComputedMemberExpression(ComputedMemberExpression::boxed(
+            span,
+            object,
+            expression,
+            optional,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::StaticMemberExpression`].
+    ///
+    /// This node contains a [`StaticMemberExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `object`
+    /// * `property`
+    /// * `optional`
+    #[inline]
+    pub fn new_static_member_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        object: Expression<'a>,
+        property: IdentifierName<'a>,
+        optional: bool,
+        builder: &B,
+    ) -> Self {
+        Self::StaticMemberExpression(StaticMemberExpression::boxed(
+            span,
+            object,
+            property,
+            optional,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::PrivateFieldExpression`].
+    ///
+    /// This node contains a [`PrivateFieldExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `object`
+    /// * `field`
+    /// * `optional`
+    #[inline]
+    pub fn new_private_field_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        object: Expression<'a>,
+        field: PrivateIdentifier<'a>,
+        optional: bool,
+        builder: &B,
+    ) -> Self {
+        Self::PrivateFieldExpression(PrivateFieldExpression::boxed(
+            span,
+            object,
+            field,
+            optional,
+            builder.builder(),
+        ))
+    }
+}
+
 impl<'a> ArrowFunctionExpression<'a> {
     /// Build an [`ArrowFunctionExpression`].
     ///
@@ -14345,39 +15645,35 @@ impl<'a> ArrowFunctionExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         let builder = builder.builder();
         ArrowFunctionExpression {
             node_id: Cell::new(builder.node_id()),
             span,
-            expression,
             r#async,
             type_parameters: type_parameters.into_in(builder.allocator()),
             params: params.into_in(builder.allocator()),
             return_type: return_type.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            body,
             scope_id: Default::default(),
             pure: Default::default(),
             pife: Default::default(),
@@ -14391,41 +15687,29 @@ impl<'a> ArrowFunctionExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new(
-                span,
-                expression,
-                r#async,
-                type_parameters,
-                params,
-                return_type,
-                body,
-                builder,
-            ),
+            Self::new(span, r#async, type_parameters, params, return_type, body, builder),
             &builder.allocator(),
         )
     }
@@ -14437,24 +15721,22 @@ impl<'a> ArrowFunctionExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -14464,18 +15746,16 @@ impl<'a> ArrowFunctionExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         let builder = builder.builder();
         ArrowFunctionExpression {
             node_id: Cell::new(builder.node_id()),
             span,
-            expression,
             r#async,
             type_parameters: type_parameters.into_in(builder.allocator()),
             params: params.into_in(builder.allocator()),
             return_type: return_type.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            body,
             scope_id: Cell::new(Some(scope_id)),
             pure,
             pife,
@@ -14489,24 +15769,22 @@ impl<'a> ArrowFunctionExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn boxed_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -14516,13 +15794,11 @@ impl<'a> ArrowFunctionExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,
@@ -16930,32 +18206,28 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
-            expression,
             r#async,
             type_parameters,
             params,
@@ -16971,12 +18243,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
@@ -16986,15 +18257,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         T1,
         T2,
         T3,
-        T4,
     >(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -17004,12 +18273,10 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,
@@ -19313,32 +20580,28 @@ impl<'a> JSXExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3>(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
-            expression,
             r#async,
             type_parameters,
             params,
@@ -19354,12 +20617,11 @@ impl<'a> JSXExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
-    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `body`
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
@@ -19369,15 +20631,13 @@ impl<'a> JSXExpression<'a> {
         T1,
         T2,
         T3,
-        T4,
     >(
         span: Span,
-        expression: bool,
         r#async: bool,
         type_parameters: T1,
         params: T2,
         return_type: T3,
-        body: T4,
+        body: ArrowFunctionBody<'a>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
@@ -19387,12 +20647,10 @@ impl<'a> JSXExpression<'a> {
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
         T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
     {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
-                expression,
                 r#async,
                 type_parameters,
                 params,

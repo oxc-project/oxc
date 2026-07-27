@@ -118,11 +118,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     );
                 });
 
-                let format_body = FormatMaybeCachedFunctionBody {
-                    body,
-                    expression: arrow.expression(),
-                    mode: self.options.cache_mode,
-                };
+                let format_body =
+                    FormatMaybeCachedArrowFunctionBody { body, mode: self.options.cache_mode };
 
                 // With arrays, arrow self and objects, they have a natural line breaking strategy:
                 // Arrays and objects become blocks:
@@ -181,7 +178,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 if body_has_soft_line_break {
                     write!(f, [space(), format_body]);
                 } else {
-                    let should_add_parens = arrow.expression && should_add_parens(body);
+                    let should_add_parens = body.as_expression().is_some_and(should_add_parens);
 
                     let is_last_call_arg = matches!(
                         self.options.call_argument_layout,
@@ -273,11 +270,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 
         loop {
             if is_non_grouped_or_grouped_last_argument
-                && current.expression()
-                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
-                    current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                && let AstNodes::ArrowFunctionExpression(next) =
-                    &expr_stmt.expression().as_ast_nodes()
+                && let AstNodes::ArrowFunctionExpression(next) = current.body().as_ast_nodes()
             {
                 should_break = should_break || Self::should_break_chain(current);
 
@@ -636,9 +629,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         });
 
         let format_tail_body_inner = format_with(|f| {
-            let format_tail_body = FormatMaybeCachedFunctionBody {
+            let format_tail_body = FormatMaybeCachedArrowFunctionBody {
                 body: tail_body,
-                expression: tail.expression(),
                 mode: self.options.cache_mode,
             };
 
@@ -653,7 +645,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     write!(f, [token("("), format_tail_body, token(")")]);
                 }
             } else {
-                let should_add_parens = tail.expression && should_add_parens(tail_body);
+                let should_add_parens = tail_body.as_expression().is_some_and(should_add_parens);
                 if should_add_parens {
                     // Known divergence from Prettier: with a signature that exactly fills the line,
                     // Prettier breaks it because the hug layout's literal space is counted
@@ -761,18 +753,13 @@ fn has_own_line_comment_before_body<'a>(
     f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
 }
 
-fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
-    let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
-    else {
-        unreachable!()
-    };
-
+fn should_add_parens(expression: &AstNode<'_, Expression<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
+    if matches!(&**expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(stmt.expression()).as_ref(),
+            ExpressionLeftSide::leftmost(expression).as_ref(),
             Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)
@@ -840,13 +827,26 @@ fn format_signature<'a, 'b>(
     })
 }
 
-/// Formats a function body with additional caching depending on [`mode`](Self::mode).
+/// Formats an arrow function body with additional caching depending on [`mode`](Self::mode).
+pub struct FormatMaybeCachedArrowFunctionBody<'a, 'b> {
+    /// The body to format.
+    pub body: &'b AstNode<'a, ArrowFunctionBody<'a>>,
+
+    /// If the body should be cached or if the formatter should try to retrieve it from the cache.
+    pub mode: FunctionCacheMode,
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatMaybeCachedArrowFunctionBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let content = format_with(|f| self.body.fmt(f));
+        FormatContentWithCacheMode::new(self.body.span(), content, self.mode).fmt(f);
+    }
+}
+
+/// Formats a function block body with additional caching depending on [`mode`](Self::mode).
 pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
     /// The body to format.
     pub body: &'b AstNode<'a, FunctionBody<'a>>,
-
-    /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    pub expression: bool,
 
     /// If the body should be cached or if the formatter should try to retrieve it from the cache.
     pub mode: FunctionCacheMode,
@@ -854,15 +854,7 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatMaybeCachedFunctionBody<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let content = format_with(|f| {
-            if self.expression
-                && let AstNodes::ExpressionStatement(s) =
-                    &self.body.statements().first().unwrap().as_ast_nodes()
-            {
-                return s.expression().fmt(f);
-            }
-            self.body.fmt(f);
-        });
+        let content = format_with(|f| self.body.fmt(f));
         FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f);
     }
 }

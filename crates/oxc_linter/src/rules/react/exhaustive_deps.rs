@@ -9,15 +9,18 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind, AstType,
     ast::{
-        Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
-        ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
-        StaticMemberExpression, VariableDeclarationKind, VariableDeclarator,
+        Argument, ArrayExpressionElement, ArrowFunctionBody, ArrowFunctionExpression,
+        BindingPattern, CallExpression, ChainElement, Expression, FormalParameters, Function,
+        FunctionBody, IdentifierReference, StaticMemberExpression, VariableDeclarationKind,
+        VariableDeclarator,
     },
     match_expression,
 };
 use oxc_ast_visit::{
     VisitJs,
-    walk_js::{walk_arrow_function_expression, walk_function, walk_function_body},
+    walk_js::{
+        walk_arrow_function_body, walk_arrow_function_expression, walk_function, walk_function_body,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -475,7 +478,7 @@ impl Rule for ExhaustiveDeps {
             found_dependencies.visit_formal_parameters(callback_node.parameters());
 
             if let Some(function_body) = callback_node.body() {
-                found_dependencies.visit_function_body(function_body);
+                function_body.visit(&mut found_dependencies);
             }
 
             (found_dependencies.found_dependencies, found_dependencies.refs_inside_cleanups)
@@ -515,7 +518,7 @@ impl Rule for ExhaustiveDeps {
                 let contains_set_state_call = {
                     let mut finder = ExhaustiveDepsVisitor::new(ctx.semantic());
                     if let Some(function_body) = callback_node.body() {
-                        finder.visit_function_body_root(function_body);
+                        function_body.visit_root(&mut finder);
                     }
                     finder.set_state_call
                 };
@@ -793,6 +796,28 @@ enum CallbackNode<'a> {
     ArrowFunction(&'a ArrowFunctionExpression<'a>),
 }
 
+#[derive(Clone, Copy)]
+enum CallbackBody<'a, 'b> {
+    Function(&'b FunctionBody<'a>),
+    Arrow(&'b ArrowFunctionBody<'a>),
+}
+
+impl<'a> CallbackBody<'a, '_> {
+    fn visit(self, visitor: &mut ExhaustiveDepsVisitor<'a, '_>) {
+        match self {
+            Self::Function(body) => visitor.visit_function_body(body),
+            Self::Arrow(body) => visitor.visit_arrow_function_body(body),
+        }
+    }
+
+    fn visit_root(self, visitor: &mut ExhaustiveDepsVisitor<'a, '_>) {
+        match self {
+            Self::Function(body) => walk_function_body(visitor, body),
+            Self::Arrow(body) => walk_arrow_function_body(visitor, body),
+        }
+    }
+}
+
 impl<'a> CallbackNode<'a> {
     fn is_async(&self) -> bool {
         match self {
@@ -808,10 +833,10 @@ impl<'a> CallbackNode<'a> {
         }
     }
 
-    fn body(&self) -> Option<&FunctionBody<'a>> {
+    fn body(&self) -> Option<CallbackBody<'a, '_>> {
         match self {
-            CallbackNode::Function(func) => func.body.as_deref(),
-            CallbackNode::ArrowFunction(func) => Some(&func.body),
+            CallbackNode::Function(func) => func.body.as_deref().map(CallbackBody::Function),
+            CallbackNode::ArrowFunction(func) => Some(CallbackBody::Arrow(&func.body)),
         }
     }
 }
@@ -1082,8 +1107,12 @@ fn is_stable_value<'a, 'b>(
             {
                 // if the variables is a function, check whether the function is stable
                 let function_body = match init.get_inner_expression() {
-                    Expression::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
-                    Expression::FunctionExpression(func) => func.body.as_ref(),
+                    Expression::ArrowFunctionExpression(arrow_func) => {
+                        Some(CallbackBody::Arrow(&arrow_func.body))
+                    }
+                    Expression::FunctionExpression(func) => {
+                        func.body.as_deref().map(CallbackBody::Function)
+                    }
                     _ => None,
                 };
                 if let Some(function_body) = function_body {
@@ -1167,8 +1196,10 @@ fn is_stable_value<'a, 'b>(
         }
         AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {
             let function_body = match node.kind() {
-                AstKind::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
-                AstKind::Function(func) => func.body.as_ref(),
+                AstKind::ArrowFunctionExpression(arrow_func) => {
+                    Some(CallbackBody::Arrow(&arrow_func.body))
+                }
+                AstKind::Function(func) => func.body.as_deref().map(CallbackBody::Function),
                 _ => unreachable!(),
             };
 
@@ -1181,7 +1212,7 @@ fn is_stable_value<'a, 'b>(
 }
 
 fn is_function_stable<'a, 'b>(
-    function_body: &'b FunctionBody<'a>,
+    function_body: CallbackBody<'a, 'b>,
     function_symbol_id: Option<SymbolId>,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
@@ -1189,7 +1220,7 @@ fn is_function_stable<'a, 'b>(
 ) -> bool {
     let deps = {
         let mut collector = ExhaustiveDepsVisitor::new(ctx.semantic());
-        collector.visit_function_body(function_body);
+        function_body.visit(&mut collector);
         collector.found_dependencies
     };
 
@@ -1255,10 +1286,6 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
             found_dependencies: FxHashSet::default(),
             refs_inside_cleanups: vec![],
         }
-    }
-
-    fn visit_function_body_root(&mut self, function_body: &FunctionBody<'a>) {
-        walk_function_body(self, function_body);
     }
 
     fn iter_destructure_bindings<F>(&self, mut cb: F) -> Option<bool>

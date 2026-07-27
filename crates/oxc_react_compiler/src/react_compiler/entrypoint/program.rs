@@ -1200,13 +1200,11 @@ fn try_make_compile_source<'b, 'a>(
             (&f.params, FnBody::Block(block), f.span, body_directive_values(block))
         }
         FunctionNode::Arrow(a) => {
-            let (body, directives) = if a.expression {
-                // Expression-bodied arrow: the single body statement is an
-                // `ExpressionStatement` wrapping the expression.
-                let expr = a.get_expression().expect("expression-bodied arrow has an expression");
+            let (body, directives) = if let Some(expr) = a.get_expression() {
                 (FnBody::Expression(expr), Vec::new())
             } else {
-                (FnBody::Block(&a.body), body_directive_values(&a.body))
+                let block = a.get_function_body().unwrap();
+                (FnBody::Block(block), body_directive_values(block))
             };
             (&a.params, body, a.span, directives)
         }
@@ -1611,8 +1609,12 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         };
 
         if !skip_body {
-            for stmt in &arrow.body.statements {
-                self.walk_statement(stmt);
+            if let Some(expression) = arrow.get_expression() {
+                self.walk_expression(expression);
+            } else {
+                for stmt in &arrow.get_function_body().unwrap().statements {
+                    self.walk_statement(stmt);
+                }
             }
         }
 
@@ -1932,7 +1934,9 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
             }
             AstKind::ArrowFunctionExpression(arrow) => {
                 let name = declarator_name_for(nodes, node.id());
-                if name.is_none() && arrow.body.directives.is_empty() {
+                if name.is_none()
+                    && arrow.get_function_body().is_none_or(|body| body.directives.is_empty())
+                {
                     continue;
                 }
                 (FunctionNode::Arrow(arrow), name, OriginalFnKind::ArrowFunctionExpression)
@@ -2137,12 +2141,13 @@ fn ox_build_compiled_expression<'a>(
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => Expression::new_arrow_function_expression(
             SPAN,
-            false,
             codegen.is_async,
             NONE,
             codegen.params.clone_in_with_semantic_ids(ast.allocator()),
             NONE,
-            codegen.body.clone_in_with_semantic_ids(ast.allocator()),
+            ArrowFunctionBody::FunctionBody(
+                codegen.body.clone_in_with_semantic_ids(ast.allocator()),
+            ),
             ast,
         ),
         _ => Expression::FunctionExpression(ox_build_function(
@@ -2199,9 +2204,9 @@ fn ox_replace_arrow<'a>(
         arrow.return_type = None;
     }
     arrow.params = params;
-    arrow.body = codegen.body.clone_in_with_semantic_ids(ast.allocator());
+    arrow.body =
+        ArrowFunctionBody::FunctionBody(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
     arrow.r#async = codegen.is_async;
-    arrow.expression = false;
 }
 
 /// Build `const <name> = <gating_expression>;`

@@ -1410,8 +1410,10 @@ impl RuleRunner for crate::rules::eslint::radix::Radix {
 }
 
 impl RuleRunner for crate::rules::eslint::require_await::RequireAwait {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::FunctionBody]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::FunctionBody,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

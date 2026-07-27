@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
-use oxc_ast::ast::{BindingPattern, Expression, FunctionBody};
+use oxc_ast::ast::{BindingPattern, Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -14,7 +14,7 @@ use crate::{
     fixer::RuleFix,
     rule::{DefaultRuleConfig, Rule},
     rules::shared::prefer_expect_assertions::{
-        DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
+        CallbackBody, DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
         resolve_expect_local_name, should_check,
     },
     utils::collect_possible_jest_call_node,
@@ -101,7 +101,7 @@ impl PreferExpectAssertionsRuleImpl for PreferExpectAssertions {
         ctx.diagnostic_with_suggestions(have_expect_assertions(span, prefix), suggestions);
     }
 
-    fn should_check_node(&self, body: &FunctionBody<'_>, is_async: bool, prefix: &str) -> bool {
+    fn should_check_node(&self, body: CallbackBody<'_>, is_async: bool, prefix: &str) -> bool {
         should_check(self.0.as_ref(), body, is_async, prefix)
     }
 }

@@ -312,25 +312,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
 
-        let expression = !self.at(Kind::LCurly);
-        let body = if expression {
+        let body = if self.at(Kind::LCurly) {
+            ArrowFunctionBody::FunctionBody(self.parse_function_body())
+        } else {
             // Remove TopLevel context for arrow function expression body
-            let span = self.start_span();
             let expr = self.context_remove(Context::TopLevel, |p| {
                 p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
             });
-            let span = self.end_span(span);
-            let expr_stmt = Statement::new_expression_statement(span, expr, self);
-            FunctionBody::boxed(span, [], [expr_stmt], self)
-        } else {
-            self.parse_function_body()
+            ArrowFunctionBody::from(expr)
         };
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
         Expression::new_arrow_function_expression(
             self.end_span(span),
-            expression,
             r#async,
             type_parameters,
             params,

@@ -19,8 +19,8 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
     utils::{
-        expression_contains_jsx, function_body_contains_jsx, function_contains_jsx, is_hoc_call,
-        is_react_component_name,
+        arrow_function_body_contains_jsx, expression_contains_jsx, function_contains_jsx,
+        is_hoc_call, is_react_component_name,
     },
 };
 
@@ -299,7 +299,7 @@ fn is_hoc_component(call: &CallExpression, ctx: &LintContext) -> bool {
                 !is_passthrough_function(func) && function_contains_jsx(func)
             }
             Argument::ArrowFunctionExpression(arrow) => {
-                !is_passthrough_arrow(arrow) && function_body_contains_jsx(&arrow.body)
+                !is_passthrough_arrow(arrow) && arrow_function_body_contains_jsx(&arrow.body)
             }
             _ => false,
         })
@@ -346,7 +346,9 @@ fn is_passthrough_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> bool {
     // Expression arrow: `() => <Comp {...props} />`
     arrow.get_expression().is_some_and(is_simple_jsx_passthrough)
         // Block body with single return: `() => { return <Comp {...props} />; }`
-        || is_single_return_passthrough(&arrow.body.statements)
+        || arrow
+            .get_function_body()
+            .is_some_and(|body| is_single_return_passthrough(&body.statements))
 }
 
 /// Check if statements consist of a single return with a simple JSX passthrough
@@ -391,7 +393,7 @@ fn is_function_returning_null(expr: &Expression) -> bool {
                 return expr.is_null();
             }
             // `() => { return null; }`
-            arrow.body.statements.iter().any(|stmt| {
+            arrow.get_function_body().unwrap().statements.iter().any(|stmt| {
                 matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
             })
         }

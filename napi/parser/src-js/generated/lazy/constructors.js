@@ -4730,6 +4730,103 @@ export class FunctionBody {
 
 const DebugFunctionBody = class FunctionBody {};
 
+function constructArrowFunctionBody(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return constructBoxBooleanLiteral(pos + 8, ast);
+    case 1:
+      return constructBoxNullLiteral(pos + 8, ast);
+    case 2:
+      return constructBoxNumericLiteral(pos + 8, ast);
+    case 3:
+      return constructBoxBigIntLiteral(pos + 8, ast);
+    case 4:
+      return constructBoxRegExpLiteral(pos + 8, ast);
+    case 5:
+      return constructBoxStringLiteral(pos + 8, ast);
+    case 6:
+      return constructBoxTemplateLiteral(pos + 8, ast);
+    case 7:
+      return constructBoxIdentifierReference(pos + 8, ast);
+    case 8:
+      return constructBoxSuper(pos + 8, ast);
+    case 9:
+      return constructBoxArrayExpression(pos + 8, ast);
+    case 10:
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
+    case 11:
+      return constructBoxAssignmentExpression(pos + 8, ast);
+    case 12:
+      return constructBoxAwaitExpression(pos + 8, ast);
+    case 13:
+      return constructBoxBinaryExpression(pos + 8, ast);
+    case 14:
+      return constructBoxCallExpression(pos + 8, ast);
+    case 15:
+      return constructBoxChainExpression(pos + 8, ast);
+    case 16:
+      return constructBoxClass(pos + 8, ast);
+    case 17:
+      return constructBoxConditionalExpression(pos + 8, ast);
+    case 18:
+      return constructBoxFunction(pos + 8, ast);
+    case 19:
+      return constructBoxImportExpression(pos + 8, ast);
+    case 20:
+      return constructBoxLogicalExpression(pos + 8, ast);
+    case 21:
+      return constructBoxNewExpression(pos + 8, ast);
+    case 22:
+      return constructBoxObjectExpression(pos + 8, ast);
+    case 23:
+      return constructBoxParenthesizedExpression(pos + 8, ast);
+    case 24:
+      return constructBoxSequenceExpression(pos + 8, ast);
+    case 25:
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
+    case 26:
+      return constructBoxThisExpression(pos + 8, ast);
+    case 27:
+      return constructBoxUnaryExpression(pos + 8, ast);
+    case 28:
+      return constructBoxUpdateExpression(pos + 8, ast);
+    case 29:
+      return constructBoxYieldExpression(pos + 8, ast);
+    case 30:
+      return constructBoxPrivateInExpression(pos + 8, ast);
+    case 31:
+      return constructBoxImportMeta(pos + 8, ast);
+    case 32:
+      return constructBoxNewTarget(pos + 8, ast);
+    case 33:
+      return constructBoxJSXElement(pos + 8, ast);
+    case 34:
+      return constructBoxJSXFragment(pos + 8, ast);
+    case 35:
+      return constructBoxTSAsExpression(pos + 8, ast);
+    case 36:
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+    case 37:
+      return constructBoxTSTypeAssertion(pos + 8, ast);
+    case 38:
+      return constructBoxTSNonNullExpression(pos + 8, ast);
+    case 39:
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
+    case 40:
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
+    case 48:
+      return constructBoxComputedMemberExpression(pos + 8, ast);
+    case 49:
+      return constructBoxStaticMemberExpression(pos + 8, ast);
+    case 50:
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 64:
+      return constructBoxFunctionBody(pos + 8, ast);
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ArrowFunctionBody`);
+  }
+}
+
 export class ArrowFunctionExpression {
   type = "ArrowFunctionExpression";
   #internal;
@@ -4755,14 +4852,9 @@ export class ArrowFunctionExpression {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
-  get expression() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 48, internal.ast);
-  }
-
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 49, internal.ast);
+    return constructBool(internal.pos + 56, internal.ast);
   }
 
   get typeParameters() {
@@ -4782,7 +4874,7 @@ export class ArrowFunctionExpression {
 
   get body() {
     const internal = this.#internal;
-    return constructBoxFunctionBody(internal.pos + 40, internal.ast);
+    return constructArrowFunctionBody(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -4790,7 +4882,6 @@ export class ArrowFunctionExpression {
       type: "ArrowFunctionExpression",
       start: this.start,
       end: this.end,
-      expression: this.expression,
       async: this.async,
       typeParameters: this.typeParameters,
       params: this.params,

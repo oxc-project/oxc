@@ -40,9 +40,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
     }
 
     fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) =
-            self.parent().parent().parent()
-            && arrow.expression
+        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent()
+            && arrow.is_expression()
         {
             f.context().comments().comments_before(arrow.span.end)
         } else if let AstNodes::ConditionalExpression(conditional) = self.parent() {
@@ -94,7 +93,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             AstNodes::ArrayExpression(_)
             | AstNodes::JSXAttribute(_)
             | AstNodes::JSXExpressionContainer(_)
-            | AstNodes::ConditionalExpression(_) => WrapState::NoWrap,
+            | AstNodes::ConditionalExpression(_)
+            | AstNodes::ExpressionStatement(_) => WrapState::NoWrap,
             AstNodes::StaticMemberExpression(member) => {
                 if member.optional {
                     WrapState::NoWrap
@@ -107,15 +107,6 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                 WrapState::NoWrap
             }
             AstNodes::NewExpression(new) if new.is_argument_span(self.span()) => WrapState::NoWrap,
-            AstNodes::ExpressionStatement(stmt) => {
-                // `() => <div></div>`
-                //        ^^^^^^^^^^^
-                if stmt.is_arrow_function_body() {
-                    WrapState::WrapOnBreak
-                } else {
-                    WrapState::NoWrap
-                }
-            }
             AstNodes::ComputedMemberExpression(member) => {
                 if member.optional {
                     WrapState::NoWrap
@@ -123,6 +114,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                     WrapState::WrapOnBreak
                 }
             }
+            // `() => <div></div>`
+            //        ^^^^^^^^^^^
             _ => WrapState::WrapOnBreak,
         }
     }
@@ -259,7 +252,7 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         parent = stmt.grand_parent();
     }
     let maybe_jsx_expression_container = match parent {
-        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent() {
+        AstNodes::ArrowFunctionExpression(arrow) if arrow.is_expression() => match arrow.parent() {
             AstNodes::CallExpression(call) => call.parent(),
             _ => return false,
         },

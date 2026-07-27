@@ -550,16 +550,10 @@ pub fn lower<'a>(
             )
         }
         FunctionNode::Arrow(arrow) => {
-            let body = if arrow.expression {
-                match arrow.body.statements.first() {
-                    Some(oxc::Statement::ExpressionStatement(es)) => {
-                        FunctionBody::Expression(&es.expression)
-                    }
-                    _ => FunctionBody::Block(arrow.body.as_ref()),
-                }
-            } else {
-                FunctionBody::Block(arrow.body.as_ref())
-            };
+            let body = arrow.get_expression().map_or_else(
+                || FunctionBody::Block(arrow.get_function_body().unwrap()),
+                FunctionBody::Expression,
+            );
             (arrow.params.as_ref(), body, false, arrow.r#async, arrow.span, None)
         }
     };
@@ -2936,16 +2930,10 @@ fn lower_function<'a>(
     // Extract function parts from the AST node
     let (params, body, id, generator, is_async, func_span) = match func {
         FunctionNode::Arrow(arrow) => {
-            let body = if arrow.expression {
-                match arrow.body.statements.first() {
-                    Some(oxc::Statement::ExpressionStatement(es)) => {
-                        FunctionBody::Expression(&es.expression)
-                    }
-                    _ => FunctionBody::Block(arrow.body.as_ref()),
-                }
-            } else {
-                FunctionBody::Block(arrow.body.as_ref())
-            };
+            let body = arrow.get_expression().map_or_else(
+                || FunctionBody::Block(arrow.get_function_body().unwrap()),
+                FunctionBody::Expression,
+            );
             (arrow.params.as_ref(), body, None, false, arrow.r#async, arrow.span)
         }
         FunctionNode::Function(f) => {
@@ -4985,22 +4973,19 @@ fn collect_fbt_sub_tags_from_expr(
             );
         }
         oxc::Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                {
-                    collect_fbt_sub_tags_from_expr(
-                        builder,
-                        &es.expression,
-                        tag_name,
-                        enum_spans,
-                        plural_spans,
-                        pronoun_spans,
-                    );
-                }
+            if let Some(expression) = arrow.get_expression() {
+                collect_fbt_sub_tags_from_expr(
+                    builder,
+                    expression,
+                    tag_name,
+                    enum_spans,
+                    plural_spans,
+                    pronoun_spans,
+                );
             } else {
                 collect_fbt_sub_tags_from_stmts(
                     builder,
-                    &arrow.body.statements,
+                    &arrow.get_function_body().unwrap().statements,
                     tag_name,
                     enum_spans,
                     plural_spans,
@@ -5451,15 +5436,10 @@ fn is_reorderable_expression(
             }
         }
         oxc::Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                match arrow.body.statements.first() {
-                    Some(oxc::Statement::ExpressionStatement(es)) => {
-                        is_reorderable_expression(builder, &es.expression, false)
-                    }
-                    _ => arrow.body.statements.is_empty(),
-                }
+            if let Some(expression) = arrow.get_expression() {
+                is_reorderable_expression(builder, expression, false)
             } else {
-                arrow.body.statements.is_empty()
+                arrow.get_function_body().unwrap().statements.is_empty()
             }
         }
         oxc::Expression::CallExpression(call) => {

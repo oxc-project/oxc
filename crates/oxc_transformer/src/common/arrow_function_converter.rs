@@ -104,7 +104,12 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
+use crate::{
+    EnvOptions,
+    utils::ast_builder::{
+        arrow_function_body_as_function_body_mut, wrap_expression_in_arrow_function_iife,
+    },
+};
 use crate::{context::TraverseCtx, state::TransformState};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
@@ -291,9 +296,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             if Self::in_class_property_definition_value(ctx) {
                 let this_var = self.this_var_stack.pop();
                 let super_methods = self.super_methods_stack.pop();
+                let scope_id = arrow.scope_id();
+                let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
                 self.insert_variable_statement_at_the_top_of_statements(
-                    arrow.scope_id(),
-                    &mut arrow.body.statements,
+                    scope_id,
+                    &mut body.statements,
                     this_var,
                     None,
                     Some(super_methods),
@@ -316,8 +323,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         }
     }
 
-    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, _ctx: &mut TraverseCtx<'a>) {
-        // This covers exiting either a `Function` or an `ArrowFunctionExpression`
+    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.is_async_only() && matches!(ctx.parent(), Ancestor::FunctionBody(_)) {
+            self.arguments_needs_transform_stack.pop();
+        }
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        _body: &mut ArrowFunctionBody<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.is_async_only() {
             self.arguments_needs_transform_stack.pop();
         }
@@ -645,17 +661,15 @@ impl<'a> ArrowFunctionConverter<'a> {
         let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
         *flags &= !ScopeFlags::Arrow;
 
-        let mut body = arrow_function_expr.body;
-
-        if arrow_function_expr.expression {
-            assert_eq!(body.statements.len(), 1);
-            let stmt = body.statements.pop().unwrap();
-            let Statement::ExpressionStatement(stmt) = stmt else { unreachable!() };
-            let stmt = stmt.unbox();
-            let return_statement =
-                Statement::new_return_statement(stmt.span, Some(stmt.expression), ctx);
-            body.statements.push(return_statement);
-        }
+        let body = match arrow_function_expr.body {
+            ArrowFunctionBody::FunctionBody(body) => body,
+            body => {
+                let expression = body.into_expression();
+                let span = expression.span();
+                let return_statement = Statement::new_return_statement(span, Some(expression), ctx);
+                FunctionBody::boxed(span, [], [return_statement], ctx)
+            }
+        };
 
         Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             arrow_function_expr.span,
@@ -984,10 +998,17 @@ impl<'a> ArrowFunctionConverter<'a> {
             NONE,
             ctx,
         );
-        let statement = Statement::new_expression_statement(SPAN, init, ctx);
-        let body = FunctionBody::new(SPAN, [], [statement], ctx);
         let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
-            SPAN, true, false, NONE, params, NONE, body, scope_id, false, false, ctx,
+            SPAN,
+            false,
+            NONE,
+            params,
+            NONE,
+            ArrowFunctionBody::from(init),
+            scope_id,
+            false,
+            false,
+            ctx,
         );
         VariableDeclarator::new(
             SPAN,

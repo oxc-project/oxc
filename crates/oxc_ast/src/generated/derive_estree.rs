@@ -1370,16 +1370,71 @@ impl ESTree for FunctionBody<'_> {
     }
 }
 
+impl ESTree for ArrowFunctionBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::FunctionBody(it) => it.serialize(serializer),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
+        }
+    }
+}
+
 impl ESTree for ArrowFunctionExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ArrowFunctionExpression"));
-        state.serialize_field("expression", &self.expression);
+        state.serialize_field(
+            "expression",
+            &crate::serialize::js::ArrowFunctionExpressionExpression(self),
+        );
         state.serialize_field("async", &self.r#async);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &self.params);
         state.serialize_ts_field("returnType", &self.return_type);
-        state.serialize_field("body", &crate::serialize::js::ArrowFunctionExpressionBody(self));
+        state.serialize_field("body", &self.body);
         state.serialize_field("id", &crate::serialize::basic::Null(self));
         state.serialize_field("generator", &crate::serialize::basic::False(self));
         state.serialize_span(self.span);

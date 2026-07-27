@@ -4846,15 +4846,39 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
     }
 }
 
+impl<'a> AstNode<'a, ArrowFunctionBody<'a>> {
+    #[inline]
+    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+        let parent = self.parent;
+        let node = match self.inner {
+            ArrowFunctionBody::FunctionBody(s) => {
+                AstNodes::FunctionBody(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            it @ match_expression!(ArrowFunctionBody) => {
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_expression(),
+                        parent,
+                        allocator: self.allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .as_ast_nodes();
+            }
+        };
+        self.allocator.alloc(node)
+    }
+}
+
 impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn expression(&self) -> bool {
-        self.inner.expression
     }
 
     #[inline]
@@ -4906,10 +4930,10 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, FunctionBody<'a>> {
+    pub fn body(&self) -> &AstNode<'a, ArrowFunctionBody<'a>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
-            inner: self.inner.body.as_ref(),
+            inner: &self.inner.body,
             allocator: self.allocator,
             parent: AstNodes::ArrowFunctionExpression(transmute_self(self)),
             following_span_start,

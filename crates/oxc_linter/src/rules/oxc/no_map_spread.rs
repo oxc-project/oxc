@@ -589,31 +589,26 @@ where
     F: FnMut(Spread<'a, '_>),
 {
     fn iter_spreads(ctx: &'ctx LintContext<'a>, map_cb: &Expression<'a>, cb: F) -> Option<Self> {
-        let (mut visitor, body) = match map_cb {
+        let mut visitor = match map_cb {
             Expression::ArrowFunctionExpression(f) => {
-                let v = Self {
+                let mut visitor = Self {
                     ctx,
                     cb,
                     cb_scope_id: f.scope_id(),
-                    is_in_return: f.expression,
-                    return_span: f.expression.then(|| f.body.span()),
+                    is_in_return: f.is_expression(),
+                    return_span: f.is_expression().then(|| f.body.span()),
                 };
-                (v, f.body.as_ref())
+                visitor.visit_arrow_function_body(&f.body);
+                return Some(visitor);
             }
             Expression::FunctionExpression(f) => {
-                let v = Self {
-                    ctx,
-                    cb,
-                    cb_scope_id: f.scope_id(),
-                    is_in_return: false,
-                    return_span: None,
-                };
-                let body = f.body.as_ref().map(AsRef::as_ref)?;
-                (v, body)
+                Self { ctx, cb, cb_scope_id: f.scope_id(), is_in_return: false, return_span: None }
             }
             _ => unreachable!(),
         };
 
+        let Expression::FunctionExpression(function) = map_cb else { unreachable!() };
+        let body = function.body.as_deref()?;
         visitor.visit_function_body(body);
         Some(visitor)
     }

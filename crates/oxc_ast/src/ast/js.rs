@@ -1984,6 +1984,22 @@ pub struct FunctionBody<'a> {
     pub statements: Vec<'a, Statement<'a>>,
 }
 
+/// The body of an [`ArrowFunctionExpression`].
+///
+/// Arrow functions have either a concise expression body (`() => expression`) or a block body
+/// (`() => { statements }`).
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[estree(no_ts_def)]
+pub enum ArrowFunctionBody<'a> {
+    FunctionBody(Box<'a, FunctionBody<'a>>) = 64,
+
+    // `Expression` variants added here by `#[ast]` macro
+    INHERIT(Expression<'a>),
+}
+
 /// Arrow Function Definitions
 #[ast(visit)]
 #[scope(
@@ -1993,22 +2009,22 @@ pub struct FunctionBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(add_fields(id = Null, generator = False))]
+#[estree(
+    add_fields(expression = ArrowFunctionExpressionExpression, id = Null, generator = False),
+    field_order(expression, r#async, type_parameters, params, return_type, body, id, generator, span),
+)]
 pub struct ArrowFunctionExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    pub expression: bool,
     pub r#async: bool,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    /// See `expression` for whether this arrow expression returns an expression.
     // ESTree: https://github.com/estree/estree/blob/master/es2015.md#arrowfunctionexpression
-    #[estree(via = ArrowFunctionExpressionBody)]
-    pub body: Box<'a, FunctionBody<'a>>,
+    #[estree(ts_type = "FunctionBody | Expression")]
+    pub body: ArrowFunctionBody<'a>,
     pub scope_id: Cell<Option<ScopeId>>,
     /// `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[builder(default)]

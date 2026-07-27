@@ -28,6 +28,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
+    utils::ast_builder::arrow_function_body_as_function_body_mut,
 };
 
 use super::options::{DEFAULT_REFRESH_REG, DEFAULT_REFRESH_SIG, ReactRefreshOptions};
@@ -407,14 +408,13 @@ impl<'a> ReactRefresh<'a> {
                 ctx,
             ),
             Expression::ArrowFunctionExpression(arrow) => {
-                let call_fn =
-                    self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
-
-                // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
-                if call_fn.is_some() {
-                    Self::transform_arrow_function_to_block(arrow, ctx);
+                let scope_id = arrow.scope_id();
+                if self.function_signature_keys.contains_key(&scope_id) {
+                    let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
+                    self.create_signature_call_expression(scope_id, body, ctx)
+                } else {
+                    None
                 }
-                call_fn
             }
             // hoc1(hoc2(...))
             Expression::CallExpression(_) => self.last_signature.take(),
@@ -917,36 +917,6 @@ impl<'a> ReactRefresh<'a> {
                 var_decl.address()
             };
         ctx.state.statement_injector.insert_after(&address, statement);
-    }
-
-    /// Convert arrow function expression to normal arrow function
-    ///
-    /// ```js
-    /// () => 1
-    /// ```
-    /// to
-    /// ```js
-    /// () => { return 1 }
-    /// ```
-    fn transform_arrow_function_to_block(
-        arrow: &mut ArrowFunctionExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
-        if !arrow.expression {
-            return;
-        }
-
-        arrow.expression = false;
-
-        let Some(Statement::ExpressionStatement(statement)) = arrow.body.statements.pop() else {
-            unreachable!("arrow function body is never empty")
-        };
-
-        arrow.body.statements.push(Statement::new_return_statement(
-            SPAN,
-            Some(statement.unbox().expression),
-            ctx,
-        ));
     }
 }
 

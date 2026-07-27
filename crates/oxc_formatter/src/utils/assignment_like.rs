@@ -564,14 +564,11 @@ impl<'a> AssignmentLike<'a, '_> {
             if right_is_tail {
                 match right_expression {
                     Expression::ArrowFunctionExpression(arrow) => {
-                        if arrow.expression {
-                            let Statement::ExpressionStatement(stmt) = &arrow.body.statements[0]
-                            else {
-                                unreachable!()
-                            };
-                            if matches!(&stmt.expression, Expression::ArrowFunctionExpression(_)) {
-                                return Some(AssignmentLikeLayout::ChainTailArrowFunction);
-                            }
+                        if matches!(
+                            arrow.get_expression(),
+                            Some(Expression::ArrowFunctionExpression(_))
+                        ) {
+                            return Some(AssignmentLikeLayout::ChainTailArrowFunction);
                         }
                         Some(AssignmentLikeLayout::ChainTail)
                     }

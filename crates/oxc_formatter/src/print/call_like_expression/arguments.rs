@@ -323,7 +323,7 @@ fn should_group_first_argument(
         // fit entirely on the line or break fully. Only a single arrow
         // with a block body can be grouped to collapse the braces.
         Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
+            if arrow.is_expression() {
                 return false;
             }
         }
@@ -573,7 +573,6 @@ fn can_group_arrow_function_expression_argument(
     is_arrow_recursion: bool,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    let body = &arrow_function.body;
     let return_type_annotation = &arrow_function.return_type;
 
     // Handles cases like:
@@ -590,9 +589,9 @@ fn can_group_arrow_function_expression_argument(
     let can_group_type = return_type_annotation.as_ref().is_none_or(|any_type| {
         match &any_type.type_annotation {
             TSType::TSTypeReference(_) => {
-                if arrow_function.expression {
+                let Some(body) = arrow_function.get_function_body() else {
                     return false;
-                }
+                };
                 body.statements.iter().any(|statement| match statement {
                     #[expect(clippy::match_same_arms)]
                     Statement::EmptyStatement(_) => {
@@ -1146,7 +1145,7 @@ fn is_react_hook_with_deps_array(
                 return false;
             }
 
-            if callback.expression {
+            if callback.is_expression() {
                 return false;
             }
 
@@ -1178,7 +1177,7 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
         return false;
     };
 
-    if arrow.expression {
+    if arrow.is_expression() {
         return false;
     }
 

@@ -43,6 +43,7 @@ use crate::{
     common::helper_loader::{Helper, helper_call, helper_call_expr, helper_load},
     context::TraverseCtx,
     state::TransformState,
+    utils::ast_builder::arrow_function_body_as_function_body_mut,
 };
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
@@ -584,28 +585,11 @@ impl<'a> ObjectRestSpread<'a> {
         for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 // `({ ...args }) => { args }`
-                if arrow.expression {
-                    arrow.expression = false;
-
-                    debug_assert_eq!(arrow.body.statements.len(), 1);
-
-                    let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
-                    else {
-                        unreachable!(
-                            "`arrow.expression` is true, which means it has only one ExpressionStatement."
-                        );
-                    };
-                    let return_stmt = Statement::new_return_statement(
-                        stmt.span,
-                        Some(stmt.unbox().expression),
-                        ctx,
-                    );
-                    arrow.body.statements.push(return_stmt);
-                }
+                let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
                     &mut param.pattern,
-                    &mut arrow.body.statements,
+                    &mut body.statements,
                     scope_id,
                     ctx,
                 );

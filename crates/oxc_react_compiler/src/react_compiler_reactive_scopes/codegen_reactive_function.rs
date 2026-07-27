@@ -2532,15 +2532,18 @@ fn ox_codegen_function_expression<'a>(
                 None
             };
             match single_return_arg {
-                Some(arg) => {
-                    let stmt =
-                        oxc_ast::ast::Statement::new_expression_statement(SPAN, arg, &cx.ast);
-                    let body = oxc_ast::ast::FunctionBody::boxed(SPAN, [], [stmt], &cx.ast);
-                    ox_build_arrow(cx, fn_result.params, body, fn_result.is_async, true)
-                }
-                None => {
-                    ox_build_arrow(cx, fn_result.params, fn_result.body, fn_result.is_async, false)
-                }
+                Some(arg) => ox_build_arrow(
+                    cx,
+                    fn_result.params,
+                    oxc::ArrowFunctionBody::from(arg),
+                    fn_result.is_async,
+                ),
+                None => ox_build_arrow(
+                    cx,
+                    fn_result.params,
+                    oxc::ArrowFunctionBody::FunctionBody(fn_result.body),
+                    fn_result.is_async,
+                ),
             }
         }
         _ => {
@@ -2606,12 +2609,11 @@ fn ox_codegen_function_expression<'a>(
 fn ox_build_arrow<'a>(
     cx: &OxcContext<'a, '_>,
     params: oxc_allocator::Box<'a, oxc::FormalParameters<'a>>,
-    body: oxc_allocator::Box<'a, oxc::FunctionBody<'a>>,
+    body: oxc::ArrowFunctionBody<'a>,
     is_async: bool,
-    expression: bool,
 ) -> oxc::Expression<'a> {
     oxc_ast::ast::Expression::new_arrow_function_expression(
-        SPAN, expression, is_async, NONE, params, NONE, body, &cx.ast,
+        SPAN, is_async, NONE, params, NONE, body, &cx.ast,
     )
 }
 

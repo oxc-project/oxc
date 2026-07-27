@@ -154,21 +154,14 @@ impl<'a> NullishCoalescingOperator {
                 NONE,
                 ctx,
             );
-            let body = FunctionBody::new(
-                SPAN,
-                [],
-                [Statement::new_expression_statement(SPAN, new_expr, ctx)],
-                ctx,
-            );
             let arrow_function =
                 Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
                     SPAN,
-                    true,
                     false,
                     NONE,
                     params,
                     NONE,
-                    body,
+                    ArrowFunctionBody::from(new_expr),
                     current_scope_id,
                     false,
                     false,

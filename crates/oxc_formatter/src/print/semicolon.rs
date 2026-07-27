@@ -71,7 +71,7 @@ pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) 
                     right => keeps_trailing_comment_inside_parens(right, false),
                 }
         }
-        Expression::ArrowFunctionExpression(arrow) if arrow.expression => arrow
+        Expression::ArrowFunctionExpression(arrow) if arrow.is_expression() => arrow
             .get_expression()
             .is_some_and(|body| keeps_trailing_comment_inside_parens(body, true)),
         _ => false,
@@ -91,9 +91,10 @@ pub fn write_trailing_comments_inside_parens<'a>(
     is_sequence: bool,
 ) {
     let parens_survive = match parent {
-        AstNodes::VariableDeclarator(_) | AstNodes::ReturnStatement(_) => true,
+        AstNodes::ArrowFunctionExpression(_)
+        | AstNodes::VariableDeclarator(_)
+        | AstNodes::ReturnStatement(_) => true,
         AstNodes::AssignmentExpression(_) => is_sequence,
-        AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
         _ => false,
     };
     if parens_survive
