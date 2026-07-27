@@ -110,17 +110,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             }
         };
 
-        let types = format_with(|f| {
-            let is_suppressed = leading_comments
-                .iter()
-                .rev()
-                .any(|comment| f.comments().is_suppression_comment(comment));
+        let is_suppressed = leading_comments
+            .iter()
+            .rev()
+            .any(|comment| f.comments().is_suppression_comment(comment));
+        let suppressed_node_span =
+            if is_suppressed { self.types.first().unwrap().span() } else { Span::default() };
 
-            let suppressed_node_span =
-                if is_suppressed { self.types.first().unwrap().span() } else { Span::default() };
+        let leading_soft_line_break_or_space = should_indent && !comment_info.has_comments();
 
-            let leading_soft_line_break_or_space = should_indent && !comment_info.has_comments();
-
+        // Body used by the parenthesized / complex-tuple branches: the leading
+        // break and the per-member breaks share one group, so a broken wrapper
+        // expands the union per-member (matches Prettier's layout there).
+        let types_shared_group = format_with(|f| {
             let separator = format_with(|f| {
                 if leading_soft_line_break_or_space {
                     write!(f, [soft_line_break_or_space()]);
@@ -133,13 +135,29 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             format_union_types(types, suppressed_node_span, false, f);
         });
 
+        // Body used by the plain path: its own group (Prettier's `printed`),
+        // nested inside the group that owns the leading soft line break.
+        // The split is what allows the intermediate layout where the whole
+        // union moves to the next (indented) line but stays single-line:
+        // ```ts
+        // export type Decision =
+        //   "keep_new" | "keep_old" | "merge" | "both_valid" | "dismiss";
+        // ```
+        // With a single shared group, the leading break and the per-member
+        // breaks would be all-or-nothing and the union would expand per-member.
+        let types_split_group = format_with(|f| {
+            write!(f, [if_group_breaks(&format_args!(token("|"), space()))]);
+
+            format_union_types(types, suppressed_node_span, false, f);
+        });
+
         let content = format_with(|f| {
             // it is necessary to add parentheses for unions in intersections
             // ```ts
             // type Some = B & (C | A) & D
             // ```
             if self.needs_parentheses(f) {
-                return write!(f, [indent(&types), soft_line_break()]);
+                return write!(f, [indent(&types_shared_group), soft_line_break()]);
             }
 
             let is_inside_complex_tuple_type = match self.parent() {
@@ -153,14 +171,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                     [
                         indent(&format_args!(
                             if_group_breaks(&format_args!(token("("), soft_line_break())),
-                            types
+                            types_shared_group
                         )),
                         soft_line_break(),
                         if_group_breaks(&token(")"))
                     ]
                 );
             } else {
-                write!(f, [types]);
+                if leading_soft_line_break_or_space {
+                    write!(f, [soft_line_break()]);
+                }
+                write!(f, [group(&types_split_group)]);
             }
         });
 

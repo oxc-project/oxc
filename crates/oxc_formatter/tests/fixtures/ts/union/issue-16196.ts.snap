@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 147
 ---
 ==================== Input ====================
 export type T = `${
@@ -18,15 +19,7 @@ export type T = `${
 { printWidth: 80 }
 ------------------
 export type T = `${
-  | "W"
-  | "I"
-  | "L"
-  | "L"
-  | "B"
-  | "R"
-  | "E"
-  | "A"
-  | "K"}${"!" | "!!"}`;
+  "W" | "I" | "L" | "L" | "B" | "R" | "E" | "A" | "K"}${"!" | "!!"}`;
 
 -------------------
 { printWidth: 100 }

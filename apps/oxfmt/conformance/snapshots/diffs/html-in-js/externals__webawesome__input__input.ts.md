@@ -12,70 +12,7 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -118,18 +118,27 @@
-     this.getAttribute("value") || null;
- 
-   /** The input's size. */
-   @property({ reflect: true }) size:
--    "xs" | "s" | "m" | "l" | "xl" | "small" | "medium" | "large" = "m";
-+    | "xs"
-+    | "s"
-+    | "m"
-+    | "l"
-+    | "xl"
-+    | "small"
-+    | "medium"
-+    | "large" = "m";
- 
-   @watch("size")
-   handleSizeChange() {
-     warnDeprecatedSize(this.localName, this.size);
-   }
- 
-   /** The input's visual appearance. */
-   @property({ reflect: true }) appearance:
--    "filled" | "outlined" | "filled-outlined" = "outlined";
-+    | "filled"
-+    | "outlined"
-+    | "filled-outlined" = "outlined";
- 
-   /** Draws a pill-style input with rounded edges. */
-   @property({ type: Boolean, reflect: true }) pill = false;
- 
-@@ -185,9 +194,14 @@
-   @property() step: number | "any";
- 
-   /** Controls whether and how text input is automatically capitalized as it is entered by the user. */
-   @property() autocapitalize:
--    "off" | "none" | "on" | "sentences" | "words" | "characters";
-+    | "off"
-+    | "none"
-+    | "on"
-+    | "sentences"
-+    | "words"
-+    | "characters";
- 
-   /**
-    * Indicates whether the browser's autocorrect feature is on or off. When set as an attribute, use `"off"` or `"on"`.
-    * When set as a property, use `true` or `false`.
-@@ -211,9 +225,15 @@
-   @property({ type: Boolean }) autofocus: boolean;
- 
-   /** Used to customize the label or icon of the Enter key on virtual keyboards. */
-   @property() enterkeyhint:
--    "enter" | "done" | "go" | "next" | "previous" | "search" | "send";
-+    | "enter"
-+    | "done"
-+    | "go"
-+    | "next"
-+    | "previous"
-+    | "search"
-+    | "send";
- 
-   /** Enables spell checking on the input. */
-   @property({
-     type: Boolean,
-@@ -503,28 +523,28 @@
+@@ -503,28 +503,28 @@
                    @click=${this.handlePasswordToggle}
                    tabindex="-1"
                  >
@@ -251,14 +188,7 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
 
   /** The input's size. */
   @property({ reflect: true }) size:
-    | "xs"
-    | "s"
-    | "m"
-    | "l"
-    | "xl"
-    | "small"
-    | "medium"
-    | "large" = "m";
+    "xs" | "s" | "m" | "l" | "xl" | "small" | "medium" | "large" = "m";
 
   @watch("size")
   handleSizeChange() {
@@ -267,9 +197,7 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
 
   /** The input's visual appearance. */
   @property({ reflect: true }) appearance:
-    | "filled"
-    | "outlined"
-    | "filled-outlined" = "outlined";
+    "filled" | "outlined" | "filled-outlined" = "outlined";
 
   /** Draws a pill-style input with rounded edges. */
   @property({ type: Boolean, reflect: true }) pill = false;
@@ -327,12 +255,7 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
 
   /** Controls whether and how text input is automatically capitalized as it is entered by the user. */
   @property() autocapitalize:
-    | "off"
-    | "none"
-    | "on"
-    | "sentences"
-    | "words"
-    | "characters";
+    "off" | "none" | "on" | "sentences" | "words" | "characters";
 
   /**
    * Indicates whether the browser's autocorrect feature is on or off. When set as an attribute, use `"off"` or `"on"`.
@@ -358,13 +281,7 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
 
   /** Used to customize the label or icon of the Enter key on virtual keyboards. */
   @property() enterkeyhint:
-    | "enter"
-    | "done"
-    | "go"
-    | "next"
-    | "previous"
-    | "search"
-    | "send";
+    "enter" | "done" | "go" | "next" | "previous" | "search" | "send";
 
   /** Enables spell checking on the input. */
   @property({
@@ -1289,25 +1206,7 @@ declare global {
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -220,9 +220,16 @@
-    * Tells the browser what type of data will be entered by the user, allowing it to display the appropriate virtual
-    * keyboard on supportive devices.
-    */
-   @property() inputmode:
--    "none" | "text" | "decimal" | "numeric" | "tel" | "search" | "email" | "url";
-+    | "none"
-+    | "text"
-+    | "decimal"
-+    | "numeric"
-+    | "tel"
-+    | "search"
-+    | "email"
-+    | "url";
- 
-   /**
-    * Only required for SSR. Set to `true` if you're slotting in a `label` element so the server-rendered markup
-    * includes the label before the component hydrates on the client.
-@@ -466,20 +473,20 @@
+@@ -466,20 +466,20 @@
                    @click=${this.handlePasswordToggle}
                    tabindex="-1"
                  >
@@ -1569,14 +1468,7 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
    * keyboard on supportive devices.
    */
   @property() inputmode:
-    | "none"
-    | "text"
-    | "decimal"
-    | "numeric"
-    | "tel"
-    | "search"
-    | "email"
-    | "url";
+    "none" | "text" | "decimal" | "numeric" | "tel" | "search" | "email" | "url";
 
   /**
    * Only required for SSR. Set to `true` if you're slotting in a `label` element so the server-rendered markup

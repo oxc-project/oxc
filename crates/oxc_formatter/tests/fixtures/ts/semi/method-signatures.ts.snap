@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 147
 ---
 ==================== Input ====================
 export interface MethodSignatures {
@@ -21,8 +22,7 @@ export interface MethodSignatures {
 }
 
 export type MethodSignaturesAndPropertyOnSameLine =
-  | { json(): never; ok: false }
-  | { json(): Promise<any>; ok: true }
+  { json(): never; ok: false } | { json(): Promise<any>; ok: true }
 
 --------------------------------
 { printWidth: 100, semi: false }
@@ -33,8 +33,7 @@ export interface MethodSignatures {
 }
 
 export type MethodSignaturesAndPropertyOnSameLine =
-  | { json(): never; ok: false }
-  | { json(): Promise<any>; ok: true }
+  { json(): never; ok: false } | { json(): Promise<any>; ok: true }
 
 ------------------------------
 { printWidth: 80, semi: true }
@@ -45,8 +44,7 @@ export interface MethodSignatures {
 }
 
 export type MethodSignaturesAndPropertyOnSameLine =
-  | { json(): never; ok: false }
-  | { json(): Promise<any>; ok: true };
+  { json(): never; ok: false } | { json(): Promise<any>; ok: true };
 
 -------------------------------
 { printWidth: 100, semi: true }
@@ -57,7 +55,6 @@ export interface MethodSignatures {
 }
 
 export type MethodSignaturesAndPropertyOnSameLine =
-  | { json(): never; ok: false }
-  | { json(): Promise<any>; ok: true };
+  { json(): never; ok: false } | { json(): Promise<any>; ok: true };
 
 ===================== End =====================

@@ -1,6 +1,6 @@
 ## js-in-vue
 
-### Option 1: 422/425 (99.29%)
+### Option 1: 423/425 (99.53%)
 
 ```json
 {"printWidth":80}
@@ -9,7 +9,6 @@
 | File | Note |
 | :--- | :--- |
 | [externals/prettier/vue/multiparser/lang-tsx.vue](diffs/js-in-vue/externals__prettier__vue__multiparser__lang-tsx.vue.md) | `lang=tsx` is not supported |
-| [externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue](diffs/js-in-vue/externals__vue-vben-admin__@core__ui-kit__shadcn-ui__src__components__render-content__render-content.vue.md) |  |
 | [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md) | `<T = any,>() => {}` comma in generic param is removed even in .ts(x) file |
 
 ### Option 2: 423/425 (99.53%)
@@ -73,7 +72,7 @@
 
 ## html-in-js
 
-### Option 1: 165/192 (85.94%)
+### Option 1: 185/192 (96.35%)
 
 ```json
 {"printWidth":80}
@@ -83,33 +82,13 @@
 | :--- | :--- |
 | [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md) | We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently |
 | [externals/prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/externals__prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
-| [externals/webawesome/badge/badge.ts](diffs/html-in-js/externals__webawesome__badge__badge.ts.md) |  |
-| [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md) |  |
-| [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md) |  |
 | [externals/webawesome/carousel/carousel.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.ts.md) |  |
-| [externals/webawesome/checkbox/checkbox.ts](diffs/html-in-js/externals__webawesome__checkbox__checkbox.ts.md) |  |
 | [externals/webawesome/color-picker/color-picker.ts](diffs/html-in-js/externals__webawesome__color-picker__color-picker.ts.md) |  |
-| [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md) |  |
-| [externals/webawesome/details/details.ts](diffs/html-in-js/externals__webawesome__details__details.ts.md) |  |
-| [externals/webawesome/dropdown-item/dropdown-item.ts](diffs/html-in-js/externals__webawesome__dropdown-item__dropdown-item.ts.md) |  |
-| [externals/webawesome/dropdown/dropdown.ts](diffs/html-in-js/externals__webawesome__dropdown__dropdown.ts.md) |  |
-| [externals/webawesome/format-number/format-number.ts](diffs/html-in-js/externals__webawesome__format-number__format-number.ts.md) |  |
 | [externals/webawesome/input/input.ts](diffs/html-in-js/externals__webawesome__input__input.ts.md) |  |
 | [externals/webawesome/number-input/number-input.styles.ts](diffs/html-in-js/externals__webawesome__number-input__number-input.styles.ts.md) | Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md |
-| [externals/webawesome/number-input/number-input.ts](diffs/html-in-js/externals__webawesome__number-input__number-input.ts.md) |  |
 | [externals/webawesome/page/page.styles.ts](diffs/html-in-js/externals__webawesome__page__page.styles.ts.md) | Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md |
-| [externals/webawesome/popup/popup.ts](diffs/html-in-js/externals__webawesome__popup__popup.ts.md) |  |
-| [externals/webawesome/qr-code/qr-code.ts](diffs/html-in-js/externals__webawesome__qr-code__qr-code.ts.md) |  |
-| [externals/webawesome/radio-group/radio-group.ts](diffs/html-in-js/externals__webawesome__radio-group__radio-group.ts.md) |  |
-| [externals/webawesome/radio/radio.ts](diffs/html-in-js/externals__webawesome__radio__radio.ts.md) |  |
-| [externals/webawesome/rating/rating.ts](diffs/html-in-js/externals__webawesome__rating__rating.ts.md) |  |
-| [externals/webawesome/select/select.ts](diffs/html-in-js/externals__webawesome__select__select.ts.md) |  |
-| [externals/webawesome/slider/slider.ts](diffs/html-in-js/externals__webawesome__slider__slider.ts.md) |  |
-| [externals/webawesome/switch/switch.ts](diffs/html-in-js/externals__webawesome__switch__switch.ts.md) |  |
-| [externals/webawesome/tag/tag.ts](diffs/html-in-js/externals__webawesome__tag__tag.ts.md) |  |
-| [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md) |  |
 
-### Option 2: 178/192 (92.71%)
+### Option 2: 187/192 (97.40%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -119,18 +98,9 @@
 | :--- | :--- |
 | [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md) | We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently |
 | [externals/prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/externals__prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
-| [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md) |  |
-| [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md) |  |
 | [externals/webawesome/carousel/carousel.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.ts.md) |  |
 | [externals/webawesome/color-picker/color-picker.ts](diffs/html-in-js/externals__webawesome__color-picker__color-picker.ts.md) |  |
-| [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md) |  |
-| [externals/webawesome/format-number/format-number.ts](diffs/html-in-js/externals__webawesome__format-number__format-number.ts.md) |  |
-| [externals/webawesome/icon/icon.ts](diffs/html-in-js/externals__webawesome__icon__icon.ts.md) |  |
 | [externals/webawesome/input/input.ts](diffs/html-in-js/externals__webawesome__input__input.ts.md) |  |
-| [externals/webawesome/page/page.ts](diffs/html-in-js/externals__webawesome__page__page.ts.md) |  |
-| [externals/webawesome/popup/popup.ts](diffs/html-in-js/externals__webawesome__popup__popup.ts.md) |  |
-| [externals/webawesome/slider/slider.ts](diffs/html-in-js/externals__webawesome__slider__slider.ts.md) |  |
-| [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md) |  |
 
 ## angular-in-js
 

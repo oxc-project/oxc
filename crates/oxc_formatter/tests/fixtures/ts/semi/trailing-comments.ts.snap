@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 147
 ---
 ==================== Input ====================
 // https://github.com/oxc-project/oxc/issues/23110
@@ -379,8 +380,7 @@ parenthesized = someValue /* stays */
 assigned = someValue /* moves */
 // ... also when the content breaks
 export type Union =
-  | AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaLongMember
-  | BbbbbbbbbbbbbbbbbbbbbbbbbbbbbbLongMember /* moves */
+  AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaLongMember | BbbbbbbbbbbbbbbbbbbbbbbbbbbbbbLongMember /* moves */
 
 // No source `;` at all (ASI): nothing to move the comment across
 function asiReturn() {
@@ -674,8 +674,7 @@ parenthesized = someValue /* stays */;
 assigned = someValue; /* moves */
 // ... also when the content breaks
 export type Union =
-  | AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaLongMember
-  | BbbbbbbbbbbbbbbbbbbbbbbbbbbbbbLongMember; /* moves */
+  AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaLongMember | BbbbbbbbbbbbbbbbbbbbbbbbbbbbbbLongMember; /* moves */
 
 // No source `;` at all (ASI): nothing to move the comment across
 function asiReturn() {

@@ -12,43 +12,7 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -227,9 +227,16 @@
-   @property() format: "hex" | "rgb" | "hsl" | "hsv" = "hex";
- 
-   /** Determines the size of the color picker's trigger */
-   @property({ reflect: true }) size:
--    "xs" | "s" | "m" | "l" | "xl" | "small" | "medium" | "large" = "m";
-+    | "xs"
-+    | "s"
-+    | "m"
-+    | "l"
-+    | "xl"
-+    | "small"
-+    | "medium"
-+    | "large" = "m";
- 
-   @watch("size")
-   handleSizeChange() {
-     warnDeprecatedSize(this.localName, this.size);
-@@ -947,9 +954,16 @@
- 
-   /** Returns the current value as a string in the specified format. */
-   getFormattedValue(
-     format:
--      "hex" | "hexa" | "rgb" | "rgba" | "hsl" | "hsla" | "hsv" | "hsva" = "hex",
-+      | "hex"
-+      | "hexa"
-+      | "rgb"
-+      | "rgba"
-+      | "hsl"
-+      | "hsla"
-+      | "hsv"
-+      | "hsva" = "hex",
-   ) {
-     const currentColor = this.parseColor(
-       `hsva(${this.hue}, ${this.saturation}%, ${this.brightness}%, ${this.alpha / 100})`,
-     );
-@@ -1283,27 +1297,27 @@
+@@ -1283,27 +1283,27 @@
                      >
                        <div
                          class="alpha-gradient"
@@ -86,7 +50,7 @@
                          aria-label="alpha"
                          aria-orientation="horizontal"
                          aria-valuemin="0"
-@@ -1416,35 +1430,35 @@
+@@ -1416,35 +1416,35 @@
            normalizedSwatches.length > 0
              ? html`
                  <div part="swatches" class="swatches">
@@ -382,14 +346,7 @@ export default class WaColorPicker extends WebAwesomeFormAssociatedElement {
 
   /** Determines the size of the color picker's trigger */
   @property({ reflect: true }) size:
-    | "xs"
-    | "s"
-    | "m"
-    | "l"
-    | "xl"
-    | "small"
-    | "medium"
-    | "large" = "m";
+    "xs" | "s" | "m" | "l" | "xl" | "small" | "medium" | "large" = "m";
 
   @watch("size")
   handleSizeChange() {
@@ -1109,14 +1066,7 @@ export default class WaColorPicker extends WebAwesomeFormAssociatedElement {
   /** Returns the current value as a string in the specified format. */
   getFormattedValue(
     format:
-      | "hex"
-      | "hexa"
-      | "rgb"
-      | "rgba"
-      | "hsl"
-      | "hsla"
-      | "hsv"
-      | "hsva" = "hex",
+      "hex" | "hexa" | "rgb" | "rgba" | "hsl" | "hsla" | "hsv" | "hsva" = "hex",
   ) {
     const currentColor = this.parseColor(
       `hsva(${this.hue}, ${this.saturation}%, ${this.brightness}%, ${this.alpha / 100})`,
