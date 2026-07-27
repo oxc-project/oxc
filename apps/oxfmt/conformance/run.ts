@@ -30,8 +30,6 @@ type Source = {
 };
 
 // Shared note strings for deliberate Prettier divergences (deduped).
-const NOTE_NOT_INDENT =
-  "Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)";
 const NOTE_LESS_MATH_FILL =
   "Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md";
 const NOTE_MQ_OP_SPACING =
@@ -201,16 +199,6 @@ const categories: Category[] = [
     sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      // Wrapped :not() selector-arg indent (Prettier +4 arg / +2 paren).
-      "externals/ng-zorro-antd/components/button/style/space-compact.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/date-picker/style/panel.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/date-picker/style/rtl.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/form/style/index.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/input/style/mixin.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/mention/style/patch.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/radio/style/rtl.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/select/style/status.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/style/mixins/customize.less": NOTE_NOT_INDENT,
       // Nested Less math: core fill fit-check semantics (biome vs Prettier).
       "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_LESS_MATH_FILL,
       "externals/ng-zorro-antd/components/style/themes/default.less": [
@@ -222,15 +210,8 @@ const categories: Category[] = [
         NOTE_INLINE_COMMENT_WIDTH,
       ].join("\n"),
       "externals/ng-zorro-antd/components/style/themes/dark.less": NOTE_INLINE_COMMENT_WIDTH,
-      // Both divergences above.
-      "externals/ng-zorro-antd/components/table/style/index.less": [
-        NOTE_NOT_INDENT,
-        NOTE_LESS_MATH_FILL,
-      ].join("\n"),
-      "externals/ng-zorro-antd/components/table/style/rtl.less": [
-        NOTE_NOT_INDENT,
-        NOTE_LESS_MATH_FILL,
-      ].join("\n"),
+      "externals/ng-zorro-antd/components/table/style/index.less": NOTE_LESS_MATH_FILL,
+      "externals/ng-zorro-antd/components/table/style/rtl.less": NOTE_LESS_MATH_FILL,
     },
   },
   {
@@ -261,11 +242,7 @@ const categories: Category[] = [
       "externals/gitlab/stylesheets/page_bundles/projects.scss": NOTE_MQ_OP_SPACING,
       "externals/gitlab/stylesheets/highlight/conflict_colors.scss":
         "Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824)",
-      "externals/gitlab/stylesheets/highlight/white_base.scss": NOTE_NOT_INDENT,
-      "externals/gitlab/stylesheets/framework/sidebar.scss": [
-        NOTE_NOT_INDENT,
-        "logn-expr line-break position",
-      ].join("\n"),
+      "externals/gitlab/stylesheets/framework/sidebar.scss": "long-expr line-break position",
       "externals/gitlab/stylesheets/framework/variables_overrides.scss":
         "Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md",
       "externals/gitlab/stylesheets/pages/profile.scss": NOTE_INLINE_COMMENT_WIDTH,

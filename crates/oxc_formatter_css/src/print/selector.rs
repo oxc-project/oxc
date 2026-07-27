@@ -139,12 +139,30 @@ pub(super) fn write_selector_list<'a>(
 }
 
 /// Mirrors Prettier's `selector-selector`.
-/// group, indented when long (more than 2 children).
+///
+/// group, indented when long (more than 2 simple selectors + combinators).
+/// The count is FLAT: each simple selector inside a compound counts on its own (`.x.y:not(...)` = 3),
+/// so a broken pseudo arg lands at +4 and its `)` at +2.
+///
+/// NOTE: That extra indent on combinator-less compounds is arguably a Prettier bug, not a design:
+/// upstream keeps removing it one threshold at a time (prettier/prettier#16572 for a lone pseudo, #17541 for 2 nodes),
+/// and this `> 2` is what remains as of 3.9.6.
+/// The principled condition would be "has a combinator" (indent only wrapped continuation lines),
+/// keeping pseudo args at +2 and `)` at +0.
 pub(super) fn write_complex_selector<'a>(
     complex: &ComplexSelector<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let should_indent = complex.children.len() > 2;
+    let flat_len: usize = complex
+        .children
+        .iter()
+        .map(|child| match child {
+            ComplexSelectorChild::CompoundSelector(compound) => compound.children.len(),
+            ComplexSelectorChild::Combinator(_) => 1,
+        })
+        .sum();
+    let should_indent = flat_len > 2;
+
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         for (i, child) in complex.children.iter().enumerate() {
             match child {
