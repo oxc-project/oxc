@@ -1,8 +1,7 @@
-use crate::{
-    ast_util::nth_outermost_paren_parent,
-    context::LintContext,
-    rule::{Rule, TupleRuleConfig},
-};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, Function, FunctionType, Super, ThisExpression},
@@ -12,9 +11,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags};
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+
+use crate::{
+    ast_util::nth_outermost_paren_parent,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+};
 
 fn func_style_diagnostic(span: Span, style: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected a function {style}."))
