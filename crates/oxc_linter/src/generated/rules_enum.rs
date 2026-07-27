@@ -460,6 +460,7 @@ pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as React
 pub use crate::rules::react::no_did_update_set_state::NoDidUpdateSetState as ReactNoDidUpdateSetState;
 pub use crate::rules::react::no_direct_mutation_state::NoDirectMutationState as ReactNoDirectMutationState;
 pub use crate::rules::react::no_find_dom_node::NoFindDomNode as ReactNoFindDomNode;
+pub use crate::rules::react::no_invalid_html_attribute::NoInvalidHtmlAttribute as ReactNoInvalidHtmlAttribute;
 pub use crate::rules::react::no_is_mounted::NoIsMounted as ReactNoIsMounted;
 pub use crate::rules::react::no_multi_comp::NoMultiComp as ReactNoMultiComp;
 pub use crate::rules::react::no_namespace::NoNamespace as ReactNoNamespace;
@@ -1296,6 +1297,7 @@ pub enum RuleEnum {
     ReactNoDidUpdateSetState(ReactNoDidUpdateSetState),
     ReactNoDirectMutationState(ReactNoDirectMutationState),
     ReactNoFindDomNode(ReactNoFindDomNode),
+    ReactNoInvalidHtmlAttribute(ReactNoInvalidHtmlAttribute),
     ReactNoIsMounted(ReactNoIsMounted),
     ReactNoMultiComp(ReactNoMultiComp),
     ReactNoNamespace(ReactNoNamespace),
@@ -2199,7 +2201,8 @@ const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID 
 const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
 const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_UPDATE_SET_STATE_ID + 1usize;
 const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1usize;
-const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
+const REACT_NO_INVALID_HTML_ATTRIBUTE_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
+const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_INVALID_HTML_ATTRIBUTE_ID + 1usize;
 const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
 const REACT_NO_NAMESPACE_ID: usize = REACT_NO_MULTI_COMP_ID + 1usize;
 const REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID: usize = REACT_NO_NAMESPACE_ID + 1usize;
@@ -3183,6 +3186,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => REACT_NO_DID_UPDATE_SET_STATE_ID,
             Self::ReactNoDirectMutationState(_) => REACT_NO_DIRECT_MUTATION_STATE_ID,
             Self::ReactNoFindDomNode(_) => REACT_NO_FIND_DOM_NODE_ID,
+            Self::ReactNoInvalidHtmlAttribute(_) => REACT_NO_INVALID_HTML_ATTRIBUTE_ID,
             Self::ReactNoIsMounted(_) => REACT_NO_IS_MOUNTED_ID,
             Self::ReactNoMultiComp(_) => REACT_NO_MULTI_COMP_ID,
             Self::ReactNoNamespace(_) => REACT_NO_NAMESPACE_ID,
@@ -4158,6 +4162,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::NAME,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::NAME,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::NAME,
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::NAME,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::NAME,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::NAME,
             Self::ReactNoNamespace(_) => ReactNoNamespace::NAME,
@@ -5149,6 +5154,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::CATEGORY,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::CATEGORY,
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::CATEGORY,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::CATEGORY,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::CATEGORY,
             Self::ReactNoNamespace(_) => ReactNoNamespace::CATEGORY,
@@ -6147,6 +6153,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::FIX,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::FIX,
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::FIX,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::FIX,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::FIX,
             Self::ReactNoNamespace(_) => ReactNoNamespace::FIX,
@@ -7223,6 +7230,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::documentation(),
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::documentation(),
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::documentation(),
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::documentation(),
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::documentation(),
             Self::ReactNoNamespace(_) => ReactNoNamespace::documentation(),
@@ -9064,6 +9072,10 @@ impl RuleEnum {
             }
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::config_schema(generator)
                 .or_else(|| ReactNoFindDomNode::schema(generator)),
+            Self::ReactNoInvalidHtmlAttribute(_) => {
+                ReactNoInvalidHtmlAttribute::config_schema(generator)
+                    .or_else(|| ReactNoInvalidHtmlAttribute::schema(generator))
+            }
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::config_schema(generator)
                 .or_else(|| ReactNoIsMounted::schema(generator)),
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::config_schema(generator)
@@ -10717,6 +10729,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => "react",
             Self::ReactNoDirectMutationState(_) => "react",
             Self::ReactNoFindDomNode(_) => "react",
+            Self::ReactNoInvalidHtmlAttribute(_) => "react",
             Self::ReactNoIsMounted(_) => "react",
             Self::ReactNoMultiComp(_) => "react",
             Self::ReactNoNamespace(_) => "react",
@@ -12517,6 +12530,9 @@ impl RuleEnum {
             Self::ReactNoFindDomNode(_) => {
                 Ok(Self::ReactNoFindDomNode(ReactNoFindDomNode::from_configuration(value)?))
             }
+            Self::ReactNoInvalidHtmlAttribute(_) => Ok(Self::ReactNoInvalidHtmlAttribute(
+                ReactNoInvalidHtmlAttribute::from_configuration(value)?,
+            )),
             Self::ReactNoIsMounted(_) => {
                 Ok(Self::ReactNoIsMounted(ReactNoIsMounted::from_configuration(value)?))
             }
@@ -14304,6 +14320,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
             Self::ReactNoFindDomNode(rule) => rule.to_configuration(),
+            Self::ReactNoInvalidHtmlAttribute(rule) => rule.to_configuration(),
             Self::ReactNoIsMounted(rule) => rule.to_configuration(),
             Self::ReactNoMultiComp(rule) => rule.to_configuration(),
             Self::ReactNoNamespace(rule) => rule.to_configuration(),
@@ -15158,6 +15175,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run(node, ctx),
+            Self::ReactNoInvalidHtmlAttribute(rule) => rule.run(node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
             Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
             Self::ReactNoNamespace(rule) => rule.run(node, ctx),
@@ -16022,6 +16040,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_once(ctx),
+            Self::ReactNoInvalidHtmlAttribute(rule) => rule.run_once(ctx),
             Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
             Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
             Self::ReactNoNamespace(rule) => rule.run_once(ctx),
@@ -16957,6 +16976,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoInvalidHtmlAttribute(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17868,6 +17888,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
             Self::ReactNoFindDomNode(rule) => rule.should_run(ctx),
+            Self::ReactNoInvalidHtmlAttribute(rule) => rule.should_run(ctx),
             Self::ReactNoIsMounted(rule) => rule.should_run(ctx),
             Self::ReactNoMultiComp(rule) => rule.should_run(ctx),
             Self::ReactNoNamespace(rule) => rule.should_run(ctx),
@@ -18897,6 +18918,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::IS_TSGOLINT_RULE,
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::IS_TSGOLINT_RULE,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::IS_TSGOLINT_RULE,
             Self::ReactNoNamespace(_) => ReactNoNamespace::IS_TSGOLINT_RULE,
@@ -20048,6 +20070,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::VERSION,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::VERSION,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::VERSION,
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::VERSION,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::VERSION,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::VERSION,
             Self::ReactNoNamespace(_) => ReactNoNamespace::VERSION,
@@ -21090,6 +21113,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::HAS_CONFIG,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::HAS_CONFIG,
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::HAS_CONFIG,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::HAS_CONFIG,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::HAS_CONFIG,
             Self::ReactNoNamespace(_) => ReactNoNamespace::HAS_CONFIG,
@@ -22111,6 +22135,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::INFO,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::INFO,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::INFO,
+            Self::ReactNoInvalidHtmlAttribute(_) => ReactNoInvalidHtmlAttribute::INFO,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::INFO,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::INFO,
             Self::ReactNoNamespace(_) => ReactNoNamespace::INFO,
@@ -23013,6 +23038,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(rule) => rule.types_info(),
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
             Self::ReactNoFindDomNode(rule) => rule.types_info(),
+            Self::ReactNoInvalidHtmlAttribute(rule) => rule.types_info(),
             Self::ReactNoIsMounted(rule) => rule.types_info(),
             Self::ReactNoMultiComp(rule) => rule.types_info(),
             Self::ReactNoNamespace(rule) => rule.types_info(),
@@ -23864,6 +23890,7 @@ impl RuleEnum {
             Self::ReactNoDidUpdateSetState(rule) => rule.run_info(),
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
             Self::ReactNoFindDomNode(rule) => rule.run_info(),
+            Self::ReactNoInvalidHtmlAttribute(rule) => rule.run_info(),
             Self::ReactNoIsMounted(rule) => rule.run_info(),
             Self::ReactNoMultiComp(rule) => rule.run_info(),
             Self::ReactNoNamespace(rule) => rule.run_info(),
@@ -24805,6 +24832,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoDidUpdateSetState(ReactNoDidUpdateSetState::default()),
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
         RuleEnum::ReactNoFindDomNode(ReactNoFindDomNode::default()),
+        RuleEnum::ReactNoInvalidHtmlAttribute(ReactNoInvalidHtmlAttribute::default()),
         RuleEnum::ReactNoIsMounted(ReactNoIsMounted::default()),
         RuleEnum::ReactNoMultiComp(ReactNoMultiComp::default()),
         RuleEnum::ReactNoNamespace(ReactNoNamespace::default()),
