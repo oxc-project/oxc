@@ -31,7 +31,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, ReplaceWith, UnstableAddress};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping};
@@ -329,7 +329,7 @@ pub struct ReplaceGlobalDefines<'a> {
     destructuring_keys: Option<FxHashSet<CompactStr>>,
 }
 
-impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
+impl<'a> VisitJsMut<'a> for ReplaceGlobalDefines<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         if self.ast_node_lock.is_some() {
             return;
@@ -348,7 +348,7 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
             self.mark_as_changed();
             self.ast_node_lock = Some(expr.address());
         }
-        walk_mut::walk_expression(self, expr);
+        walk_js_mut::walk_expression(self, expr);
         if self.ast_node_lock == Some(expr.address()) {
             self.ast_node_lock = None;
         }
@@ -370,7 +370,7 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
             // `AssignmentExpression` is stored in a `Box`, so has a stable memory location
             self.ast_node_lock = Some(node.unstable_address());
         }
-        walk_mut::walk_assignment_expression(self, node);
+        walk_js_mut::walk_assignment_expression(self, node);
         // `AssignmentExpression` is stored in a `Box`, so has a stable memory location
         if self.ast_node_lock == Some(node.unstable_address()) {
             self.ast_node_lock = None;
@@ -379,16 +379,13 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
 
     fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
         self.non_arrow_function_depth += 1;
-        walk_mut::walk_function(self, func, flags);
+        walk_js_mut::walk_function(self, func, flags);
         self.non_arrow_function_depth -= 1;
     }
 
     fn visit_property_definition(&mut self, property: &mut PropertyDefinition<'a>) {
         self.visit_decorators(&mut property.decorators);
         self.visit_property_key(&mut property.key);
-        if let Some(type_annotation) = &mut property.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
         if let Some(value) = &mut property.value {
             self.class_this_depth += 1;
             self.visit_expression(value);
@@ -398,16 +395,13 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
 
     fn visit_static_block(&mut self, block: &mut StaticBlock<'a>) {
         self.class_this_depth += 1;
-        walk_mut::walk_static_block(self, block);
+        walk_js_mut::walk_static_block(self, block);
         self.class_this_depth -= 1;
     }
 
     fn visit_accessor_property(&mut self, property: &mut AccessorProperty<'a>) {
         self.visit_decorators(&mut property.decorators);
         self.visit_property_key(&mut property.key);
-        if let Some(type_annotation) = &mut property.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
         if let Some(value) = &mut property.value {
             self.class_this_depth += 1;
             self.visit_expression(value);
@@ -434,7 +428,7 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
                 self.destructuring_keys = Some(keys);
             }
         }
-        walk_mut::walk_variable_declarator(self, declarator);
+        walk_js_mut::walk_variable_declarator(self, declarator);
     }
 }
 
@@ -1134,14 +1128,14 @@ struct UpdateReplacedExpression<'a> {
     scoping: &'a mut Scoping,
 }
 
-impl VisitMut<'_> for UpdateReplacedExpression<'_> {
+impl VisitJsMut<'_> for UpdateReplacedExpression<'_> {
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'_>) {
         let reference =
             Reference::new(NodeId::DUMMY, self.scoping.root_scope_id(), ReferenceFlags::Read);
         let reference_id = self.scoping.create_reference(reference);
         self.scoping.add_root_unresolved_reference(ident.name, reference_id);
         ident.set_reference_id(reference_id);
-        walk_mut::walk_identifier_reference(self, ident);
+        walk_js_mut::walk_identifier_reference(self, ident);
     }
 
     fn visit_span(&mut self, span: &mut Span) {

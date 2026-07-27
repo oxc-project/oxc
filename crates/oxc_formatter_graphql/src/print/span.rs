@@ -6,10 +6,10 @@
 //! so layout decisions use them directly, via [`Spanned`] when generic.
 //!
 //! Closing-delimiter positions are derived here too:
-//! - Braced/bracketed containers (`SelectionSet`, `ListValue`, ...) own their delimiter:
-//!   the span's last consumed token IS the 1-byte closer, see [`close_delim_start`].
-//! - Paren lists (arguments, variable definitions) are bare `AstVec`s with no wrapper node,
-//!   so the `)` is found by scanning past trivia from the last item's end, see [`find_close_after`].
+//! delimited nodes carry spans whose last consumed token IS the 1-byte closer, see [`close_delim_start`].
+//! Keyword-led productions start their spans at the keyword/punctuation itself.
+//! Tokens the grammar leaves bare (`:`, `repeatable`, the directive-definition `on`, the schema braces, union `|`) have no node;
+//! their positions are resolved by [`next_token_start_after`] source scans, same as `oxc_formatter` does for JS.
 
 use oxc_graphql_parser::ast;
 use oxc_span::Span;
@@ -80,26 +80,26 @@ pub(super) fn close_delim_start(span: ast::Span) -> u32 {
     span.end.saturating_sub(1)
 }
 
-/// Scans `source` from `from` for the first byte equal to `close`,
-/// treating GraphQL trivia (whitespace, insignificant commas, `#` line comments) as skippable.
-/// Returns `from` if not found
-/// (defensive fallback; the caller's parse succeeded so the closing byte is expected to exist).
-pub(super) fn find_close_after(source: &str, from: u32, close: u8) -> u32 {
+/// Start of the first significant byte at or after `from`,
+/// skipping GraphQL trivia (whitespace, insignificant commas, `#` line comments).
+///
+/// Locates formatter-emitted literals the AST carries no node for:
+/// a trailing-comment claim in front of such a literal must be bounded by the literal's SOURCE position,
+/// or it would pull a comment that trails the literal itself backwards across it
+/// (`g: # c` must not become `g # c` + `:`).
+pub(super) fn next_token_start_after(source: &str, from: u32) -> u32 {
     let bytes = source.as_bytes();
     let mut i = from as usize;
     while i < bytes.len() {
-        let b = bytes[i];
-        if b == close {
-            return u32::try_from(i).unwrap_or(from);
-        }
-        if b == b'#' {
-            // Line comment: skip to end of line (matching GraphQL's line terminators)
-            while i < bytes.len() && bytes[i] != b'\n' && bytes[i] != b'\r' {
-                i += 1;
+        match bytes[i] {
+            b' ' | b'\t' | b'\n' | b'\r' | b',' => i += 1,
+            b'#' => {
+                while i < bytes.len() && bytes[i] != b'\n' && bytes[i] != b'\r' {
+                    i += 1;
+                }
             }
-            continue;
+            _ => break,
         }
-        i += 1;
     }
-    from
+    u32::try_from(i).unwrap_or(from)
 }

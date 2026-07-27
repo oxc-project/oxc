@@ -225,14 +225,16 @@ Notable divergences are:
 - A COMMENTED keyframe selector list is formatted structurally (one selector per line, comments per the separator rule: `60% /* mid */,`)
   - Prettier keeps the whole list verbatim on one line, interior spacing included (`60%   /* mid */  ,   70%` survives untouched)
   - Ours prints commented and uncommented lists with the same layout; layout-only, rare trigger
-- Broken `:not(...)` selector args indent at +2
-  - Prettier lands at +4 (arg) / +2 (`)`)
-  - Layout-only, rare trigger (selector longer than line width)
-- `@nest <selector-list>` continuation lines indent at +2 (same class as the `:not(...)` entry above)
+- `@nest <selector-list>` continuation lines indent at +2
   - Prettier lands at +4 (comma-separated selectors) / +6 (wrapped selector parts)
     - An artifact of its generic at-rule params indent
   - Ours matches how selector lists indent everywhere else
     - This is layout-only, deprecated syntax, triggers only on width overflow
+- A leading `+` in an `An+B` argument stays glued to its term (`:nth-child(+3n - 2)` keeps `+3n`)
+  - Prettier prints `+ 3n` (postcss-selector-parser tokenizes every `+` as a combinator),
+    but the An+B grammar forbids whitespace between a leading sign and its term,
+    so Prettier's output no longer parses as a selector
+    (= a semantics-breaking artifact, it also breaks formatter idempotency: the second pass fails to parse)
 - SCSS: `@forward` with `show`/`hide` members AND a `with (...)` config
   - Prettier parses the whole prelude as ONE comma list, so the config's forced break spills into the member commas
     (`show b,\n  c with (` even when the head fits) and the config body lands one level deeper (+4 body / +2 `)`)
@@ -246,7 +248,6 @@ Notable divergences are:
   - The one difference: when the FIRST member alone overflows, Prettier indents it at +4 and puts
     every later member on its own line at +2 (artifacts of its nested comma-chunk fill);
     our flat fill packs the continuation members at +2 (`show\n  <wide-member>, second;`)
-  - Same class as the `:not(...)` indent entry; pinned in `module-head-seams.scss`
   - Remaining printers of this overflow class (heads that still never break): `@for` bounds
     and `@namespace` — Prettier value-parses both, so it breaks their word seams too;
     extend the same fill shape if reported

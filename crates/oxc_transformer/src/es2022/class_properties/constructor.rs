@@ -105,7 +105,7 @@ use oxc_allocator::{ArenaVec, ReplaceWith};
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_ast_visit::{VisitJsMut, VisitMut, walk_js_mut};
 use oxc_span::SPAN;
 use oxc_str::Ident;
 use oxc_syntax::{
@@ -515,7 +515,7 @@ impl<'a, 'ctx> ConstructorParamsSuperReplacer<'a, 'ctx> {
     }
 }
 
-impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
+impl<'a> VisitJsMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
     /// Replace `super()` with `_super.call(super())`.
     // `#[inline]` to make hot path for all other expressions as cheap as possible.
     #[inline]
@@ -532,7 +532,7 @@ impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
             return;
         }
 
-        walk_mut::walk_expression(self, expr);
+        walk_js_mut::walk_expression(self, expr);
     }
 
     // Stop traversing where scope of current `super` ends
@@ -708,7 +708,7 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
     }
 }
 
-impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
+impl<'a> VisitJsMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
     /// Replace `super()` with `_super()`.
     // `#[inline]` to make hot path for all other function calls as cheap as possible.
     #[inline]
@@ -718,7 +718,7 @@ impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
             self.replace_super(call_expr, span);
         }
 
-        walk_mut::walk_call_expression(self, call_expr);
+        walk_js_mut::walk_call_expression(self, call_expr);
     }
 
     // Stop traversing where scope of current `super` ends

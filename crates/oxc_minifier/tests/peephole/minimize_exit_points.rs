@@ -41,6 +41,14 @@ fn test_function_return_optimization() {
         "function f(){if(a()){b()}else{c();return;}}",
         "function f(){if(a())b();else{c();return}}",
     ); // function f(){a()?b():c()}
+    test(
+        "function f(){ if(a()) { if (a) { return } throw a; } else return 2; }",
+        "function f(){ if(a()) { if (a) return; throw a } return 2 }",
+    );
+    test(
+        "function f(){if(a()){if(b()){d();return;}else{return;}}else{return;} c();}",
+        "function f(){if(a()){if(b()){d();return}return}}",
+    ); // function f(){a()&&b()&&d()}
     test("function f(){if(a()){b();return;}else;}", "function f(){if(a()){b();return}}"); // function f(){a()&&b()}
     test("function f(){if(a()){return;}else{return;} return;}", "function f(){a();}");
     test("function f(){if(a()){return;}else{return;} b();}", "function f(){a()}");
@@ -110,6 +118,10 @@ fn test_while_continue_optimization() {
     test("while(true){if(a()){b();continue;}else;}", "for (;;) if(a()){b();continue;}"); // for(;;)a()&&b();
     test("while(true){if(a()){continue;}else{continue;} continue;}", "for(;;)a();");
     test("while(true){if(a()){continue;}else{continue;} b();}", "for(;;)a();");
+    test(
+        "while(true){d();if(a()){continue;}else if(b()){c();continue;}else{continue;}}",
+        "for(;;)if(d(),!a()&&b()){c();continue}",
+    ); // for(;;)d(),!a()&&b()&&c();
 
     test("while(true)while(a())continue;", "for(;;)for(;a();)continue;"); // for(;;)for(;a(););
     test("while(true)for(x in a())continue", "for(;;)for(x in a())continue;"); // for(;;)for(x in a());

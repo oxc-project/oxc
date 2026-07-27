@@ -28,8 +28,8 @@ catalogs:
       specifier: ^10.1.0
       version: 10.1.0
     degit:
-      specifier: 3.6.1
-      version: 3.6.1
+      specifier: 3.6.2
+      version: 3.6.2
     eslint:
       specifier: 10.7.0
       version: 10.7.0
@@ -99,7 +99,7 @@ importers:
         version: 24.1.0
       degit:
         specifier: 'catalog:'
-        version: 3.6.1
+        version: 3.6.2
       diff:
         specifier: ^9.0.0
         version: 9.0.0
@@ -385,7 +385,7 @@ importers:
     devDependencies:
       degit:
         specifier: 'catalog:'
-        version: 3.6.1
+        version: 3.6.2
 
   tasks/e2e:
     devDependencies:
@@ -3829,8 +3829,8 @@ packages:
   defu@6.1.7:
     resolution: {integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ==}
 
-  degit@3.6.1:
-    resolution: {integrity: sha512-nqWTSl9Gfz1JUzmbNOkjLgFBF1K3NCKfeSZlg7udhQCnqGvk8EPDaVvN00o9IZiMByIscx6NmXx6gUsLMcWIQg==}
+  degit@3.6.2:
+    resolution: {integrity: sha512-unWFTQ8SXifW72tPFil8/C/ZyaL9478EcOPRvl3olwr1+lKzko/DN49ZHJIqqrbdXgftl9IpcNR65uuFNXrJ2w==}
     engines: {node: '>=20.0.0'}
     hasBin: true
 
@@ -8411,7 +8411,7 @@ snapshots:
 
   defu@6.1.7: {}
 
-  degit@3.6.1: {}
+  degit@3.6.2: {}
 
   delaunator@5.0.1:
     dependencies:

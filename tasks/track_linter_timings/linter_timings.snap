@@ -16,7 +16,7 @@ eslint/eqeqeq                                              |  20604
 eslint/for-direction                                       |    557
 eslint/func-name-matching                                  |  83754
 eslint/func-names                                          |  14283
-eslint/func-style                                          |      7
+eslint/func-style                                          |  16812
 eslint/getter-return                                       |  10895
 eslint/grouped-accessor-pairs                              |  15349
 eslint/guard-for-in                                        |    105
@@ -94,7 +94,7 @@ eslint/no-multi-str                                        |  62460
 eslint/no-negated-condition                                |  17912
 eslint/no-nested-ternary                                   |   4722
 eslint/no-new                                              |   1421
-eslint/no-new-func                                         | 159324
+eslint/no-new-func                                         |  64027
 eslint/no-new-native-nonconstructor                        |   1421
 eslint/no-new-wrappers                                     |   1421
 eslint/no-nonoctal-decimal-escape                          |  62460
@@ -241,7 +241,7 @@ jest/no-restricted-jest-methods                            |      0
 jest/no-restricted-matchers                                |      0
 jest/no-standalone-expect                                  |      7
 jest/no-test-prefixes                                      |      0
-jest/no-test-return-statement                              |  76889
+jest/no-test-return-statement                              |  14199
 jest/no-unneeded-async-expect-function                     |      0
 jest/no-untyped-mock-factory                               |      0
 jest/padding-around-after-all-blocks                       |      0
@@ -688,7 +688,7 @@ vitest/no-restricted-matchers                              |      0
 vitest/no-restricted-vi-methods                            |      0
 vitest/no-standalone-expect                                |      7
 vitest/no-test-prefixes                                    |      0
-vitest/no-test-return-statement                            |  76889
+vitest/no-test-return-statement                            |  14199
 vitest/no-unneeded-async-expect-function                   |      0
 vitest/padding-around-after-all-blocks                     |      0
 vitest/padding-around-test-blocks                          |      0

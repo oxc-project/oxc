@@ -23,7 +23,7 @@ This means it is not locked to a specific GraphQL version and can parse a wide r
 On the other hand, `apollo-parser`, the upstream we selected, strictly follows its versioning and currently only supports syntax up to Oct2021.
 Therefore, we forked it as [`oxc-graphql-parser`](https://crates.io/crates/oxc-graphql-parser) and added some support ourselves, pinned via the workspace `Cargo.toml`.
 
-The fork (v0.0.5) aligns with graphql-js v17.x, which Prettier 3.9 targets:
+The fork aligns with graphql-js v17.x, which Prettier 3.9 targets:
 
 - executable descriptions (Sep2025 spec) and directive extensions (`extend directive`) are always-on
 - fragment arguments (`...F(size: $size)`) are behind the `experimental_fragment_arguments` flag
@@ -43,16 +43,30 @@ The fork (v0.0.5) aligns with graphql-js v17.x, which Prettier 3.9 targets:
 `graphql-js` does not attach comments to the AST;
 Prettier collects them from the token stream and attaches leading/trailing/dangling per node.
 
-This crate instead collects comment spans into a positional cursor and flushes them at sequence items, closing delimiters, and document tail.
+This crate instead collects comment spans into a positional cursor, drained in source order by claim points spread through the printers
+(the `flush_*` helpers in `src/comments.rs`; behavior pinned by `tests/fixtures/graphql/comments-inside-node-spans.graphql`).
+
+Placement invariant (same as `oxc_formatter`'s): a comment stays between the source tokens it sat between, and a same-line trailing comment stays on its line.
+
+Two bounded exceptions:
+
+- an own-line comment claimed right after a printed literal (`type`, `:`, `=`) inlines on that literal's line
+  - `type` + break + `# c` + break + `A` prints as `type # c` + break + `A`
+  - identical to Prettier and to `oxc_formatter`'s `const // c` + break + `a = 1`; keeping it own-line would need a column-conditional break the IR does not have
+- positions no printer claims fall back to an own-line trailing comment after the node, which may cross remaining in-span tokens (e.g. a type's `!`)
+  - `flush_overlooked_inside_comments`
+
+Where Prettier relocates a comment across tokens instead, we diverge, see "Known divergences".
+
+Two constraints the code cannot show:
+
+- the cursor is monotonic: every claim point must drain everything inside the span it just printed
+  - or a later flush point's gap range inverts and panics (issue #24927)
+- trailing claims are bounded at the literal's SOURCE position
+  - or re-formatting is not idempotent (`g: # c` must not become `g # c` + `:`)
 
 Node spans are significant-token spans (trivia is never included), so layout decisions use them directly.
-
-All span bridging lives in `src/print/span.rs`:
-
-- the usize→u32 conversion (`to_span`), the crate-local `Spanned` trait
-  - (the `oxc_span::Span` facade over the parser's own `span` fields / `span()` accessors)
-- and closing-delimiter derivation: `close_delim_start` for containers whose span ends one past their `}` / `]`
-- `find_close_after` for paren lists that have no wrapper node
+All span bridging (conversion, closing-delimiter derivation, the bare-token source scan) lives in `src/print/span.rs`.
 
 ### Strings
 
@@ -72,10 +86,17 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
   Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
 - A cooked `\r` escape in a string value is re-emitted as `\r`
   (Prettier emits a raw CR byte, which the core `text()` builder forbids; the string VALUE is identical).
-- Known divergence: a trailing comment on the same line as a description
-  (`"desc" # comment`) moves to the next flush point (Prettier keeps it inline).
-  Pre-existing behavior of the positional comment cursor, affects type-system descriptions too;
-  no conformance test covers this shape.
+
+## Known divergences
+
+Deliberate divergences from Prettier, all one class: Prettier relocates a comment (an attachment artifact of `graphql-js` node boundaries, not a layout rule),
+we keep it between its source tokens on its source line.
+
+- `"desc" type # c`: Prettier pulls the comment backwards across the keyword onto the description's line
+- `"""d"""` + break + `# c` + break + `type A`: Prettier pushes the comment forward across the keyword (`type # c` + break + `A`)
+- `type A # c` + break + `implements B`: Prettier scatters it to the line end (`type A implements B { # c`);
+  - same class: `f(x) # c` + break + `: T` is pulled inside the parens
+- `{ # c` after an opening delimiter: Prettier moves it own-line as the first child's leading (asymmetric: `test # c` / `} # c` stay inline)
 
 ## Verification
 
@@ -87,17 +108,8 @@ Run `clippy` and resolve all warnings.
 
 ### Fixtures tests
 
-Snapshot tests driven by fixture files under `tests/fixtures/graphql/`, covering what the Prettier conformance suite does not:
-
-- `# oxfmt-ignore` suppression
-- blank-line runs inside block strings
-- string escape re-encoding (incl. the `\r` divergence)
-- empty `[]` / `{}` values
-- the full set of type-system extensions
-- insignificant-comma trivia
-- trailing comments at various positions
-- etc
-
+Snapshot tests driven by fixture files under `tests/fixtures/graphql/`,
+covering what the Prettier conformance suite does not (suppression, string re-encoding, comment positions, extensions, ... — see the file names).
 `build.rs` auto-generates a test case from every `.graphql` file using the core `test_support` harness.
 Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics and BOM preservation;
 `src/comments.rs` has `classify_gap` tests (CR / CRLF endings, which `.gitattributes` keeps out of fixture files).
