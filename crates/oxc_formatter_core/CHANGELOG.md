@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.61.0] - 2026-07-27
+
+### ⚡ Performance
+
+- bb73b23 formatter_core: Bound the thread-local scratch cache (#24793) (leaysgur)
+- a5f7b15 formatter: Stage assignment-like left hand side on the heap (#24613) (leaysgur)
+- 94de05f formatter: Accumulate JSX child-list builders on the heap (#24585) (leaysgur)
+- 7810e8a formatter_core: Share one thread-cached scratch vector across staging buffers (#24583) (leaysgur)
+- c191f51 formatter_core: Stage IR buffers on the heap to reduce arena memory (#24582) (leaysgur)
+
 ## [0.59.0] - 2026-07-13
 
 ### 🚀 Features

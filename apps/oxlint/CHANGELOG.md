@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.76.0] - 2026-07-27
+
+### 🚀 Features
+
+- 8d31dfa linter: Verify eslint/no-restricted-globals config schema (#24598) (vigneshwar)
+- 7069621 linter: Verify jest/vitest prefer-lowercase-title config schema (#24724) (Bartok)
+- 016cf2a linter/oxc: Add bad-match-all-arg rule (#24900) (camc314)
+- cdc941e linter/n: Implement `exports-style` rule (#24087) (Mikhail Baev)
+- 1ad6f6c linter/eslint: Implement `id-denylist` rule (#24632) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- a065946 oxlint: Absolutize explicit CLI paths even with --no-ignore (#24646) (Bez Sahara)
+- 9213560 config: Preserve defineConfig field JSDoc (#24326) (周星星同学)
+- e80574f estree: Handle empty spans serializing `ImportMeta` and `NewTarget` (#24775) (overlookmotel)
+
+### ⚡ Performance
+
+- 4c25b91 linter/plugins: Test booleans with explicit `=== false` (#24830) (overlookmotel)
+- b7add00 linter/plugins: Remove check in loop in `getDisableDirectives` (#24833) (overlookmotel)
+
+### 📚 Documentation
+
+- 3ff2e0e linter: Clarify config extends types (#24936) (Boshen)
+
 ## [1.75.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

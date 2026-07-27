@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.61.0] - 2026-07-27
+
+### 🚀 Features
+
+- eabfe01 oxfmt/lsp: Support `oxc.fmt.disableNestedConfig` (#24965) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e037709 formatter: Stop preserving indent for embedded template exprs (#24972) (leaysgur)
+- ae1a39b formatter_css: Align wrapped selector-arg indent (#24971) (leaysgur)
+- 9213560 config: Preserve defineConfig field JSDoc (#24326) (周星星同学)
+
 ## [0.60.0] - 2026-07-20
 
 ### 🐛 Bug Fixes

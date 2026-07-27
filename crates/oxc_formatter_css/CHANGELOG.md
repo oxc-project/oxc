@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.61.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 761a882 formatter_css: Keep leading `+` in An+B to enable idempotency check (#24973) (leaysgur)
+- ae1a39b formatter_css: Align wrapped selector-arg indent (#24971) (leaysgur)
+- fb34196 formatter_css: Keep non-ASCII strings with quotes (#24870) (leaysgur)
+- 31783e9 formatter_css: Print nested SCSS map with consistent indent (#24789) (leaysgur)
+
+### 📚 Documentation
+
+- 69126a0 formatter_css,fomatter_graphql,formatter_yaml: Update AGENTS.md (#24821) (leaysgur)
+
 ## [0.60.0] - 2026-07-20
 
 ### 🐛 Bug Fixes

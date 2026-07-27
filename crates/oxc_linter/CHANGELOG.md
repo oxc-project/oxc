@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.76.0] - 2026-07-27
+
+### 🚀 Features
+
+- 8d31dfa linter: Verify eslint/no-restricted-globals config schema (#24598) (vigneshwar)
+- 7069621 linter: Verify jest/vitest prefer-lowercase-title config schema (#24724) (Bartok)
+- 016cf2a linter/oxc: Add bad-match-all-arg rule (#24900) (camc314)
+- cdc941e linter/n: Implement `exports-style` rule (#24087) (Mikhail Baev)
+- 1ad6f6c linter/eslint: Implement `id-denylist` rule (#24632) (Mikhail Baev)
+- 678bbb5 linter/typescript-eslint: Implement suggestion for `class-literal-property-style` rule (#24766) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- a5f3a0e linter: Mark missing suggestions as pending (#24956) (Mikhail Baev)
+- 17688bb linter/jsx-a11y/interactive-supports-focus: Match eslint behavior for custom components (#24780) (Cole Ellison)
+- 0aef19e linter/typescript/no-confusing-non-null-assertion: Report `in` and `instanceof` (#24825) (Mikhail Baev)
+- 361dce9 linter: Unicorn/no-array-reverse and no-array-sort replacements should be suggestions (#24848) (klem)
+- 334d884 linter/node/no-top-level-await: Clarify diagnostic (#24803) (camc314)
+- b9fc6af linter/eslint/func-names: Ignore overloads (#24801) (camc314)
+
+### ⚡ Performance
+
+- c75dc60 linter: Avoid `Vec` allocations via `bound_names` (#24959) (connorshea)
+- 9f9f39d linter/eslint/no-const-assign: Avoid `Vec` allocation per `const` declarator (#24953) (connorshea)
+- 10a621e linter/typescript/adjacent-overload-signatures: Avoid collecting vec in some cases (#24874) (connorshea)
+- ed167e1 linter/node/exports-style: Iterate once over global references (#24877) (connorshea)
+- 69908fe linter: Avoid allocations in jest/no-deprecated-functions (#24866) (Connor Shea)
+- a3585d7 linter: Speed up jest/vitest prefer-each (#24872) (Connor Shea)
+- 62fe640 linter/eslint/prefer-rest-params: Run once per file (#24873) (Connor Shea)
+- 7a7aa54 linter/eslint/no-this-before-super: Skip files without classes (#24869) (Connor Shea)
+- 4ad0c94 linter/plugins: Faster copying comments to JS allocator (#24858) (overlookmotel)
+
+### 📚 Documentation
+
+- 3ff2e0e linter: Clarify config extends types (#24936) (Boshen)
+
 ## [1.75.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

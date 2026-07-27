@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.61.0] - 2026-07-27
+
+### 📚 Documentation
+
+- 69126a0 formatter_css,fomatter_graphql,formatter_yaml: Update AGENTS.md (#24821) (leaysgur)
+
 ## [0.60.0] - 2026-07-20
 
 ### 🐛 Bug Fixes

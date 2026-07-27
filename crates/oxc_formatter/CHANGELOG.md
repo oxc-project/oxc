@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.61.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- e037709 formatter: Stop preserving indent for embedded template exprs (#24972) (leaysgur)
+- 143fd1f formatter: Align quoted `new` signature (#24883) (leaysgur)
+- d076b40 formatter: Check calee chain is_simple (#24871) (leaysgur)
+- 8eb9eca formatter/jsdoc: Respect `singleQuote` option in `@import` (#24787) (leaysgur)
+- 6f05ac4 formatter: Fix template literal formatting (#24786) (leaysgur)
+
+### ⚡ Performance
+
+- bb73b23 formatter_core: Bound the thread-local scratch cache (#24793) (leaysgur)
+- a5f7b15 formatter: Stage assignment-like left hand side on the heap (#24613) (leaysgur)
+- 94de05f formatter: Accumulate JSX child-list builders on the heap (#24585) (leaysgur)
+- c191f51 formatter_core: Stage IR buffers on the heap to reduce arena memory (#24582) (leaysgur)
+
 ## [0.60.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES
