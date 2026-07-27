@@ -146,6 +146,7 @@ fn test() {
         // See https://github.com/oxc-project/oxc/pull/1042#discussion_r1369762147
         // ("var inst = React.render(<div />, document.body);", None),
         // ("var inst = React.render(<div />, document.body);", None),
+        ("const render = () => ReactDOM.render(<div />, document.body)", None),
     ];
 
     Tester::new(NoRenderReturnValue::NAME, NoRenderReturnValue::PLUGIN, pass, fail)

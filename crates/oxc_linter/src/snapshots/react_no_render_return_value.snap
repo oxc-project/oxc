@@ -54,3 +54,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────────────
    ╰────
   help: Using the return value is a legacy feature.
+
+  ⚠ react(no-render-return-value): Do not depend on the return value from `ReactDOM.render`.
+   ╭─[no_render_return_value.tsx:1:22]
+ 1 │ const render = () => ReactDOM.render(<div />, document.body)
+   ·                      ───────────────
+   ╰────
+  help: Using the return value is a legacy feature.
