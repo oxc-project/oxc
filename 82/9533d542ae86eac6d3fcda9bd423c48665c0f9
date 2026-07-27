@@ -1,0 +1,31 @@
+tasks/linter_codegen/src/early_diverge_detector.rs
+  s_0eae81ddfc1ea3::t_b878901befc673 5,16-17,22
+tasks/linter_codegen/src/if_else_detector.rs
+  s_0eae81ddfc1ea3::t_03b022cb1baec1 5,16-17,20
+tasks/linter_codegen/src/let_else_detector.rs
+  s_0eae81ddfc1ea3::t_0db4be350a23d4 6,22-23
+tasks/linter_codegen/src/main.rs
+  s_0eae81ddfc1ea3::t_0b255f0975f664 11,186-188
+tasks/linter_codegen/src/match_detector.rs
+  s_0eae81ddfc1ea3::t_930a88a2a4cf74 6,21-22,25
+tasks/linter_codegen/src/utils.rs
+  s_0eae81ddfc1ea3::t_750b180a88165f 1-13
+crates/oxc_linter/src/rules/import/newline_after_import.rs
+  s_0eae81ddfc1ea3::t_0352bd16e30e93 215-219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "829533d542ae86eac6d3fcda9bd423c48665c0f9",
+  "prompts": {},
+  "sessions": {
+    "s_0eae81ddfc1ea3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8041-2626-73d2-9ae3-45377bc4dff3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
