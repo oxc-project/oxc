@@ -132,6 +132,14 @@ fn test_minimize_conditional_boolean_value_context() {
     // Form 4: "c ? x : false" => "c && x" only when `c` is boolean-typed
     test("let x = a === b ? c : false", "let x = a === b && c");
 
+    // A sequence branch already needs parentheses in a conditional, so using it
+    // as a logical operand does not add any bytes.
+    test("use(flag ? false : (touch(), true))", "use(!flag && (touch(), !0))");
+    test("use(flag ? (touch(), value) : true)", "use(!flag || (touch(), value))");
+    test("use(a === b ? true : (touch(), value))", "use(a === b || (touch(), value))");
+    test("use(a === b ? (touch(), value) : false)", "use(a === b && (touch(), value))");
+    test("use((prepare(), a === b) ? true : value)", "use((prepare(), a === b || value))");
+
     // Negative: forms 3/4 require a boolean-typed test, else the value changes.
     test("let x = num ? true : y", "let x = num ? !0 : y");
     test("let x = num ? y : false", "let x = num ? y : !1");
@@ -140,4 +148,5 @@ fn test_minimize_conditional_boolean_value_context() {
     test("let x = a || b ? false : c", "let x = a || b ? !1 : c");
     // Negative: `x` needing parens as a logical operand would not save bytes.
     test("let x = a ? false : b ? c : d", "let x = a ? !1 : b ? c : d");
+    test("use(flag ? false : (value = touch()))", "use(flag ? !1 : value = touch())");
 }

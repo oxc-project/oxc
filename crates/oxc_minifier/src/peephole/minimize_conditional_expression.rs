@@ -822,11 +822,12 @@ impl<'a> PeepholeOptimizations {
 
     /// Returns `true` if `expr` would need parentheses when printed as an operand
     /// of the logical operator `op` (`&&` or `||`). Used as a size guard before
-    /// folding a conditional into a logical expression.
+    /// folding a conditional into a logical expression. A sequence is excluded:
+    /// conditional tests are lifted first, while conditional branches already
+    /// require parentheses, so retaining them does not add bytes.
     fn logical_operand_needs_parens(expr: &Expression<'_>, op: LogicalOperator) -> bool {
         match expr {
-            Expression::SequenceExpression(_)
-            | Expression::AssignmentExpression(_)
+            Expression::AssignmentExpression(_)
             | Expression::YieldExpression(_)
             | Expression::ArrowFunctionExpression(_)
             | Expression::ConditionalExpression(_) => true,
