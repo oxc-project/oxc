@@ -31,6 +31,11 @@ export type {
 export type ExternalPluginsConfig = Exclude<Oxlintrc["jsPlugins"], undefined | null>;
 
 export interface OxlintConfig extends Oxlintrc {
+  /**
+   * Configuration objects to extend.
+   *
+   * Import configurations and pass them directly instead of using file paths.
+   */
   extends?: OxlintConfig[];
 }
 
