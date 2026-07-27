@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 9d7745a react-compiler: Preserve warning bailouts (#24935) (Boshen)
+
+### ⚡ Performance
+
+- 98f2ecb react_compiler: Compare value set pointers before probing in state merge (#24805) (Marius Schulz)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

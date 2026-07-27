@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 💥 BREAKING CHANGES
+
+- 1ac5ac7 ast: [**BREAKING**] Tighten bound on `AstBuild` trait (#24925) (overlookmotel)
+
+### 🚀 Features
+
+- ec08afc ast: Re-export `Ident` from `oxc_ast` crate (#24861) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- e80574f estree: Handle empty spans serializing `ImportMeta` and `NewTarget` (#24775) (overlookmotel)
+
+### ⚡ Performance
+
+- b287f29 estree: Avoid ident hash calculations when serializing (#24774) (overlookmotel)
+
+### 📚 Documentation
+
+- 4d2e2bf ast: Fix incorrect return value in `common_js_require` docs (#24945) (connorshea)
+- b539e74 estree: Document custom serializers for `ImportMeta` and `NewTarget` (#24777) (overlookmotel)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES
