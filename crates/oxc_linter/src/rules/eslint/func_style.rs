@@ -7,7 +7,7 @@ use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, Function, FunctionType, Super, ThisExpression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags};
@@ -333,7 +333,7 @@ struct ThisOrSuperFinder {
     found: bool,
 }
 
-impl<'a> Visit<'a> for ThisOrSuperFinder {
+impl<'a> VisitJs<'a> for ThisOrSuperFinder {
     fn visit_this_expression(&mut self, _it: &ThisExpression) {
         self.found = true;
     }
