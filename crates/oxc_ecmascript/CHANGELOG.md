@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 07e9acc ecmascript: Keep side effects in parent of `toString` calls (#24846) (sapphi-red)
+- 16a40ad ecmascript: Detect side effects in unused arguments to `charCodeAt` (#24845) (sapphi-red)
+- 133bb35 ecmascript: Detect side effects of `foo().#bar` correctly when PropertyReadSideEffects::None (#24769) (sapphi-red)
+
+### ⚡ Performance
+
+- a086d91 ecmascript: Avoid number literal allocations (#24889) (Dunqing)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES
