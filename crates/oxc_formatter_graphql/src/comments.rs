@@ -2,7 +2,9 @@ use std::cell::Cell;
 
 use oxc_formatter_core::{
     Buffer, LINE_TERMINATORS, SourceText, arena_cow_str,
-    builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    builders::{
+        empty_line, expand_parent, hard_line_break, line_suffix, line_suffix_boundary, space, text,
+    },
     normalize_newlines,
     spec::is_suppression_marker,
     write,
@@ -13,8 +15,7 @@ use crate::print::{GraphqlFormatter, format_with};
 
 /// Cursor over a sorted comment-span list that hands out unprinted slices in span order.
 ///
-/// GraphQL comments are always single-line (`# ...` to end of line) and are collected
-/// from the CST's trivia tokens by `format()`.
+/// GraphQL comments are always single-line (`# ...` to end of line).
 ///
 /// `cursor` is a [`Cell`] so the API works through `&self` (mirrors `oxc_formatter_json`'s `Comments`).
 pub struct Comments<'a> {
@@ -163,10 +164,10 @@ pub fn write_dangling_comments(comments: &[Span], f: &mut GraphqlFormatter<'_, '
 /// The bound is what keeps a node from claiming a comment across later siblings:
 /// in `f(a: 1, b: 2) # c` everything shares a line, but `# c` ends past `b`'s start,
 /// so `a: 1` leaves it pending for the enclosing node's flush point.
-pub fn write_trailing_same_line_comment<'a>(
+pub fn write_trailing_same_line_comment(
     prev_end: u32,
     upper: u32,
-    f: &mut GraphqlFormatter<'_, 'a>,
+    f: &mut GraphqlFormatter<'_, '_>,
 ) {
     let Some(span) = f.context().comments().peek() else { return };
     if span.end > upper {
@@ -176,6 +177,34 @@ pub fn write_trailing_same_line_comment<'a>(
     if classify_gap(source.bytes_range(prev_end, span.start)) != Gap::None {
         return;
     }
+    take_and_write_line_suffix_comment(span, f);
+}
+
+/// If the next pending comment follows `prev_end` on the same line with only
+/// whitespace between, drain it and emit it as a trailing line-suffix comment.
+///
+/// Unlike [`write_trailing_same_line_comment`], the whitespace-only guard keeps
+/// the comment from being pulled backwards across source tokens the caller has
+/// not printed yet (e.g. `"desc" type # c` must leave the comment to the keyword's
+/// line, not attach it to the description).
+///
+/// Precondition: the caller emits a line break right after this call.
+/// `line_suffix` defers the comment to the next printed break, so any token
+/// written on the same line before that break would jump in front of the comment.
+pub fn write_adjacent_trailing_comment(prev_end: u32, f: &mut GraphqlFormatter<'_, '_>) {
+    let Some(span) = f.context().comments().peek() else { return };
+    let source = f.context().source_text();
+    if span.start < prev_end
+        || !source.all_bytes_match(prev_end, span.start, |b| b == b' ' || b == b'\t')
+    {
+        return;
+    }
+    take_and_write_line_suffix_comment(span, f);
+}
+
+/// Shared emit tail of the trailing claims: drain `span` and defer ` # ...`
+/// to the current line's end.
+fn take_and_write_line_suffix_comment<'a>(span: Span, f: &mut GraphqlFormatter<'_, 'a>) {
     f.context().comments().take_before(span.end);
     let content = format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
         write!(f, space());
@@ -184,40 +213,98 @@ pub fn write_trailing_same_line_comment<'a>(
     write!(f, [line_suffix(&content), expand_parent()]);
 }
 
+/// `true` if only whitespace precedes `position` on its source line.
+fn is_own_line(source: SourceText<'_>, position: u32) -> bool {
+    source
+        .bytes_to(position)
+        .find(|&b| b != b' ' && b != b'\t')
+        .is_none_or(|b| b == b'\n' || b == b'\r')
+}
+
+/// Claims the next pending comment when it ends at or before `upper`
+/// (the source start of what the caller prints next)
+/// and trails other content on its source line.
+/// e.g. it is a trailing comment of an already-printed token,
+/// about to be crossed forward by a formatter literal (` implements`, `": "`, `{`, ...).
+/// Own-line comments are left pending (they are leading trivia of what follows).
+///
+/// Returns whether a comment was claimed (deferred to this line's end as a `line_suffix`).
+fn claim_trailing_comment_before(upper: u32, f: &mut GraphqlFormatter<'_, '_>) -> bool {
+    let Some(span) = f.context().comments().peek() else { return false };
+    if span.end > upper || is_own_line(f.context().source_text(), span.start) {
+        return false;
+    }
+    take_and_write_line_suffix_comment(span, f);
+    true
+}
+
+/// [`claim_trailing_comment_before`] + `line_suffix_boundary`,
+/// for callers that continue with same-line tokens:
+/// the boundary hard-breaks in front of them so the claimed comment keeps its source line.
+/// Layout-neutral when nothing is claimed.
+pub fn flush_trailing_comment_before(upper: u32, f: &mut GraphqlFormatter<'_, '_>) {
+    if claim_trailing_comment_before(upper, f) {
+        write!(f, line_suffix_boundary());
+    }
+}
+
+/// [`claim_trailing_comment_before`] alone,
+/// for callers whose next element already begins with a line break (block indents, expanded separators):
+/// the suffix flushes at that break, a boundary would double it.
+pub fn flush_trailing_comment_before_break(upper: u32, f: &mut GraphqlFormatter<'_, '_>) {
+    claim_trailing_comment_before(upper, f);
+}
+
 /// Emit comments that sit between the last child of a container and its closing delimiter.
 ///
 /// Every GraphQL comment is a line comment, so each one is deferred to a `line_suffix()`
 /// (its width must not count toward the `fits` measurement of the preceding group)
 /// with `expand_parent()` so the enclosing container stays multi-line.
-/// `lower_bound` seeds the gap measurement for the first comment.
+/// `lower_bound` seeds the gap measurement for the first comment;
+/// `None` when the source gap is not measurable (the printed output has already moved past the comment's position),
+/// the comment then goes on its own line.
 fn write_trailing_inside_comments<'a>(
     comments: &[Span],
-    lower_bound: u32,
+    lower_bound: Option<u32>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
     let mut prev_end = lower_bound;
     for &span in comments {
+        // Positional-cursor invariant; see `flush_overlooked_inside_comments`
+        debug_assert!(prev_end.is_none_or(|pe| pe <= span.start));
         let gap_start = prev_end;
         let content = format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
-            let gap = source.bytes_range(gap_start, span.start);
-            write_gap(gap, f);
+            if let Some(gap_start) = gap_start {
+                write_gap(source.bytes_range(gap_start, span.start), f);
+            } else {
+                write!(f, hard_line_break());
+            }
             write_single_comment(span, f);
         });
         write!(f, [line_suffix(&content), expand_parent()]);
-        prev_end = span.end;
+        prev_end = Some(span.end);
     }
 }
 
-/// Drains comments before `upper_bound` (typically a closing-delimiter position) and
-/// writes them via [`write_trailing_inside_comments`].
+/// Fallback flush for comments still pending inside a just-printed node's span:
+/// positions no printer claims (e.g. between a type and its `!`, or after the last argument's directives).
+/// Draining them here keeps the positional cursor monotonic,
+/// a later flush point would sit AFTER these comments in the source, making its gap range inverted (start > end).
+pub fn flush_overlooked_inside_comments(upper_bound: u32, f: &mut GraphqlFormatter<'_, '_>) {
+    let leftover = f.context().comments().take_before(upper_bound);
+    write_trailing_inside_comments(leftover, None, f);
+}
+
+/// Drains comments before `upper_bound` (typically a closing-delimiter position)
+/// and writes them via [`write_trailing_inside_comments`].
 pub fn flush_trailing_inside_comments(
     lower_bound: u32,
     upper_bound: u32,
     f: &mut GraphqlFormatter<'_, '_>,
 ) {
     let trailing = f.context().comments().take_before(upper_bound);
-    write_trailing_inside_comments(trailing, lower_bound, f);
+    write_trailing_inside_comments(trailing, Some(lower_bound), f);
 }
 
 /// Returns `true` if `span` is an ignore marker (`# oxfmt-ignore` / `# prettier-ignore`).

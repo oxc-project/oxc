@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId};
 use oxc_span::Span;
@@ -122,7 +123,7 @@ impl Rule for NoParamReassign {
         };
 
         let symbol_table = ctx.scoping();
-        for ident in param.pattern.get_binding_identifiers() {
+        param.pattern.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
 
             let declaration_id = symbol_table.symbol_declaration(symbol_id);
@@ -154,7 +155,7 @@ impl Rule for NoParamReassign {
                     ctx.diagnostic(assignment_to_param_property_diagnostic(name, span));
                 }
             }
-        }
+        });
     }
 }
 

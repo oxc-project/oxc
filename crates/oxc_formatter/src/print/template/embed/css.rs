@@ -1,12 +1,13 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
 use oxc_formatter_core::IndentWidth;
-use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    format_args,
     formatter::{FormatElement, format_element::TextWidth, prelude::*},
+    print::template::{
+        FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
+    },
     write,
 };
 
@@ -141,39 +142,12 @@ pub(super) fn format_css_doc<'a>(
                     let Some(&expr) = expressions.get(index as usize) else {
                         continue;
                     };
-                    // Prettier's `printTemplateExpression()` adds indent+softline when:
-                    // - the original source has newlines in the interpolation
-                    // - AND the expression is a comment-bearing node or Identifier/etc
-                    // For CSS embed, the relevant case is comments inside `${...}`.
-                    let has_newline = f.source_text().has_line_terminator_before(expr.span().start)
-                        || f.source_text().has_line_terminator_after(expr.span().end);
-                    let has_comment = has_newline && {
-                        let comments = f.context().comments();
-                        let leading = comments.comments_before(expr.span().start);
-                        // Scan from the expression's END so a `}` inside its own source
-                        // (string, object, nested template) doesn't cut the lookup short.
-                        let trailing = comments.comments_before_character(expr.span().end, b'}');
-                        !leading.is_empty() || !trailing.is_empty()
-                    };
-
-                    let format_expr = format_with(|f| {
-                        if has_comment {
-                            write!(
-                                f,
-                                [
-                                    indent(&format_args!(
-                                        soft_line_break(),
-                                        expr,
-                                        line_suffix_boundary()
-                                    )),
-                                    soft_line_break()
-                                ]
-                            );
-                        } else {
-                            write!(f, [expr, line_suffix_boundary()]);
-                        }
-                    });
-                    write!(f, [group(&format_args!("${", format_expr, "}"))]);
+                    // Prettier prints embedded `${expr}` with `printEmbeddedTemplateExpressions()`:
+                    // the plain-template expression logic minus source-indentation preservation.
+                    // Default options (zero indention) are exactly that (same as graphql.rs).
+                    let te = TemplateExpression::Expression(expr);
+                    FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default())
+                        .fmt(f);
                 }
                 // A sentinel inside a string / `url()` is always inline `${expr}`.
                 // Same scan as html.rs: `split_on_placeholders` yields alternating

@@ -93,7 +93,7 @@ use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
+use oxc_ast_visit::{VisitJsMut, walk_js_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
@@ -1267,7 +1267,7 @@ impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
     }
 }
 
-impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
+impl<'a> VisitJsMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn visit_class(&mut self, class: &mut Class<'a>) {
         // Only need to transform `super()` in:
         //

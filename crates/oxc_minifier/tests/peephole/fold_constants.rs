@@ -1015,14 +1015,34 @@ fn test_fold_add() {
 }
 
 #[test]
+fn test_fold_numeric_expression_only_if_shorter() {
+    // https://github.com/oxc-project/oxc/issues/24863
+    fold_same("0.1 + 0.05");
+    fold_same("0.7 + 0.1");
+    fold_same("0.3 - 0.1");
+    fold("0.1 + (0.2 - 0.1) * 0.5", "0.1 + 0.05");
+    fold("0.7 + (0.9 - 0.7) * 0.5", "0.8");
+    fold_same("1e3 + 1e-10");
+    fold("1e12 + 1e12", "2e12");
+    fold("1e12 - 1e12", "0");
+
+    // Compare against the original expression, not the longer value of a nested operand.
+    fold_same("0 + (0.1 + 0.05)");
+
+    // Do not evaluate across an operand with side effects.
+    fold_same("f() + 0.05");
+}
+
+#[test]
 fn test_fold_sub() {
     fold("x = 10 - 20", "x = -10");
 }
 
 #[test]
 fn test_fold_multiply() {
-    fold_same("x = 2.25 * 3");
+    fold("x = 2.25 * 3", "x = 6.75");
     fold_same("z = x * y");
+    fold_same("x = f() * 2");
     fold_same("x = y * 5");
     fold("x = null * undefined", "x = NaN");
     fold("x = null * 1", "x = 0");
@@ -1035,7 +1055,7 @@ fn test_fold_multiply() {
     fold("x = 255 * 255", "x = 65025");
     fold("x = -255 * 255", "x = -65025");
     fold("x = -255 * -255", "x = 65025");
-    fold_same("x = 256 * 255");
+    fold("x = 256 * 255", "x = 65280");
 }
 
 #[test]
@@ -1301,6 +1321,13 @@ fn test_fold_invalid_typeof_comparison() {
     fold("typeof foo != undefined", "!0");
     fold("typeof foo === 'string'", "typeof foo == 'string'");
     fold("typeof foo === 'number'", "typeof foo == 'number'");
+}
+
+#[test]
+fn test_fold_keep_side_effects_in_typeof_comparison() {
+    fold_same("typeof f() == 1");
+    fold("typeof f() === 'asd'", "typeof f() == 'asd'");
+    fold_same("typeof x === [f()]");
 }
 
 #[test]

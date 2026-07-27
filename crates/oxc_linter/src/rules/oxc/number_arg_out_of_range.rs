@@ -57,14 +57,10 @@ declare_oxc_lint!(
 
 impl Rule for NumberArgOutOfRange {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(expr) = node.kind() else {
-            return;
-        };
-        let Some(member) = expr.callee.get_member_expr() else {
-            return;
-        };
-
-        if let Some(Argument::NumericLiteral(literal)) = expr.arguments.first() {
+        if let AstKind::CallExpression(expr) = node.kind()
+            && let Some(member) = expr.callee.get_member_expr()
+            && let Some(Argument::NumericLiteral(literal)) = expr.arguments.first()
+        {
             let value = literal.value;
             match member.static_property_name() {
                 Some(name @ "toString") if !(2.0_f64..=36.0_f64).contains(&value) => {

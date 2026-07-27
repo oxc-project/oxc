@@ -3,15 +3,15 @@ use std::{iter, ops::ControlFlow};
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::VisitJs;
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 
-use crate::{TraverseCtx, keep_var::KeepVar};
+use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
@@ -80,9 +80,7 @@ impl<'a> PeepholeOptimizations {
             // kept block ending in a jump, an if/else or try/catch where
             // every branch jumps — makes the rest of the list unreachable.
             // https://github.com/rolldown/rolldown/issues/10184
-            if !is_control_flow_dead
-                && stmts.last().is_some_and(Self::statement_never_completes_normally)
-            {
+            if !is_control_flow_dead && stmts.last().is_some_and(Statement::is_terminated) {
                 is_control_flow_dead = true;
             }
         }
@@ -106,8 +104,6 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Drop a trailing unconditional jump statement if applicable
-        // "while (x) { y(); continue; }" => "while (x) { y(); }"
-        // "function f() { x(); return; }" => "function f() { x(); }"
         if let Some(last_stmt) = stmts.last()
             && Self::can_remove_termination_statement(last_stmt, ctx)
         {
@@ -378,6 +374,9 @@ impl<'a> PeepholeOptimizations {
             Statement::ForOfStatement(for_of_stmt) => {
                 Self::handle_for_of_statement(for_of_stmt, result, ctx);
             }
+            Statement::LabeledStatement(label_stmt) => {
+                Self::handle_labeled_statement(label_stmt, result, ctx);
+            }
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
         }
@@ -412,65 +411,6 @@ impl<'a> PeepholeOptimizations {
             return left.content_eq(right);
         }
         false
-    }
-
-    /// Whether control never falls through to the statement after this one in
-    /// the same statement list (terser's `aborts`).
-    ///
-    /// Any abrupt completion qualifies, whatever its target: a `break` or
-    /// `continue` transfers control past the end of the enclosing statement
-    /// list, never to the next statement in it.
-    ///
-    /// Conservative on purpose:
-    /// - A labeled statement completes normally when its body breaks out of
-    ///   its own label (`a: { break a; }`), so it never counts.
-    /// - Loops and switches count as completing normally; `while (true)`
-    ///   without `break` is handled by loop-specific folds instead.
-    fn statement_never_completes_normally(stmt: &Statement<'a>) -> bool {
-        match stmt {
-            Statement::ReturnStatement(_)
-            | Statement::ThrowStatement(_)
-            | Statement::BreakStatement(_)
-            | Statement::ContinueStatement(_) => true,
-            Statement::BlockStatement(block) => Self::block_never_completes_normally(block),
-            Statement::IfStatement(if_stmt) => {
-                if_stmt.alternate.as_ref().is_some_and(Self::statement_never_completes_normally)
-                    && Self::statement_never_completes_normally(&if_stmt.consequent)
-            }
-            Statement::TryStatement(try_stmt) => {
-                // A finalizer that aborts overrides however the other
-                // blocks complete. Otherwise the try block must abort, and
-                // so must the catch block when present (an exception
-                // thrown before the try block's jump lands there).
-                try_stmt.finalizer.as_ref().is_some_and(|f| Self::block_never_completes_normally(f))
-                    || (Self::block_never_completes_normally(&try_stmt.block)
-                        && try_stmt
-                            .handler
-                            .as_ref()
-                            .is_none_or(|h| Self::block_never_completes_normally(&h.body)))
-            }
-            _ => false,
-        }
-    }
-
-    fn block_never_completes_normally(block: &BlockStatement<'a>) -> bool {
-        // A minimized dead zone keeps only hoisting survivors after the jump:
-        // `function` declarations and the initializer-less `var` stub
-        // re-emitted by `KeepVar`. Their bindings initialize at scope entry
-        // and nothing after an aborting statement ever runs, so skip them
-        // from the back before testing how the block completes.
-        block
-            .body
-            .iter()
-            .rev()
-            .find(|stmt| match stmt {
-                Statement::FunctionDeclaration(_) => false,
-                Statement::VariableDeclaration(decl) => {
-                    !(decl.kind.is_var() && decl.declarations.iter().all(|d| d.init.is_none()))
-                }
-                _ => true,
-            })
-            .is_some_and(Self::statement_never_completes_normally)
     }
 
     /// For variable declarations:
@@ -706,6 +646,17 @@ impl<'a> PeepholeOptimizations {
         is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
     }
 
+    /// Check if a switch case can be inlined by verifying:
+    /// - The test expression has no side effects
+    /// - All statements can be safely inlined (no unlabeled breaks)
+    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
+        if !case.test.as_ref().is_none_or(Expression::is_literal) {
+            return false;
+        }
+
+        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
+    }
+
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -797,6 +748,55 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
 
+        if !ctx.is_tree_shake_only()
+            && switch_stmt.cases.len() == 1
+            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
+            && let Some(mut case) = switch_stmt.cases.pop()
+        {
+            ctx.notice_change();
+
+            let block_stmt = if case.consequent.len() == 1
+                && matches!(case.consequent[0], Statement::BlockStatement(_))
+            {
+                case.consequent.pop().unwrap()
+            } else {
+                Statement::new_block_statement_with_scope_id(
+                    case.span,
+                    case.consequent.take_in(ctx),
+                    switch_stmt.scope_id(),
+                    ctx,
+                )
+            };
+
+            if let Some(test) = case.test {
+                result.push(Statement::new_if_statement(
+                    switch_stmt.span,
+                    Expression::new_binary_expression(
+                        SPAN,
+                        switch_stmt.discriminant.take_in(ctx),
+                        BinaryOperator::StrictEquality,
+                        test,
+                        ctx,
+                    ),
+                    block_stmt,
+                    None,
+                    ctx,
+                ));
+                return;
+            }
+
+            if !switch_stmt.discriminant.is_literal() {
+                result.push(Statement::new_expression_statement(
+                    switch_stmt.discriminant.span(),
+                    switch_stmt.discriminant.take_in(ctx),
+                    ctx,
+                ));
+            }
+
+            result.push(block_stmt);
+            return;
+        }
+
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
@@ -841,10 +841,6 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
-                // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
-                // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
                 if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
@@ -908,27 +904,27 @@ impl<'a> PeepholeOptimizations {
                         return ControlFlow::Break(());
                     }
                 }
+            }
 
-                if if_stmt.alternate.is_some() {
-                    // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
-                    result.push(Statement::IfStatement(if_stmt));
-                    loop {
-                        if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                            && if_stmt.consequent.is_jump_statement()
-                            && let Some(stmt) = if_stmt.alternate.take()
-                        {
-                            if let Statement::BlockStatement(block_stmt) = stmt {
-                                Self::handle_block(result, block_stmt, ctx);
-                            } else {
-                                result.push(stmt);
-                                ctx.notice_change();
-                            }
-                            continue;
+            if if_stmt.alternate.is_some() && if_stmt.consequent.is_terminated() {
+                // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
+                result.push(Statement::IfStatement(if_stmt));
+                loop {
+                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                        && if_stmt.consequent.is_terminated()
+                        && let Some(stmt) = if_stmt.alternate.take()
+                    {
+                        if let Statement::BlockStatement(block_stmt) = stmt {
+                            Self::handle_block(result, block_stmt, ctx);
+                        } else {
+                            result.push(stmt);
+                            ctx.notice_change();
                         }
-                        break;
+                        continue;
                     }
-                    return ControlFlow::Continue(());
+                    break;
                 }
+                return ControlFlow::Continue(());
             }
         }
 
@@ -1242,6 +1238,33 @@ impl<'a> PeepholeOptimizations {
             }
         }
         result.push(Statement::ForOfStatement(for_of_stmt));
+    }
+
+    fn handle_labeled_statement(
+        mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
+            Self::minimize_statements(&mut block_stmt.body, ctx);
+        } else if !Self::statement_cares_about_scope(&labeled_stmt.body) {
+            let mut stmts = ArenaVec::from_value_in(labeled_stmt.body.take_in(ctx), ctx);
+            Self::minimize_statements(&mut stmts, ctx);
+            labeled_stmt.body = match stmts.len() {
+                0 => Statement::new_empty_statement(labeled_stmt.body.span(), ctx),
+                1 => stmts[0].take_in(ctx),
+                _ => {
+                    ctx.notice_change();
+                    Statement::new_block_statement_with_scope_id(
+                        labeled_stmt.span,
+                        stmts,
+                        ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                        ctx,
+                    )
+                }
+            };
+        }
+        result.push(Statement::LabeledStatement(labeled_stmt));
     }
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
@@ -2037,8 +2060,10 @@ impl<'a> PeepholeOptimizations {
         Some(false)
     }
 
-    /// Returns `true` when a trailing termination statement can be removed
-    /// without changing control flow.
+    /// Returns `true` if the statement is an unconditional termination that can be
+    /// safely removed:
+    /// - Unlabeled `continue` statements that terminate a loop body
+    /// - Bare `return` statements that terminate a function body
     fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
@@ -2068,6 +2093,42 @@ impl<'a> PeepholeOptimizations {
                 ctx.parent().is_function_body()
             }
             _ => false,
+        }
+    }
+}
+
+#[derive(Default)]
+struct FindNestedBreak {
+    found_unlabelled_break: bool,
+}
+
+impl FindNestedBreak {
+    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+        let mut visitor = Self::default();
+        visitor.visit_switch_case(node);
+        visitor.found_unlabelled_break
+    }
+}
+
+impl<'a> VisitJs<'a> for FindNestedBreak {
+    fn visit_expression(&mut self, _it: &Expression<'a>) {
+        // do nothing
+    }
+
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.found_unlabelled_break || it.is_declaration() || it.is_iteration_statement() {
+            return;
+        }
+        match it {
+            Statement::ThrowStatement(_)
+            | Statement::SwitchStatement(_)
+            | Statement::ContinueStatement(_)
+            | Statement::ReturnStatement(_)
+            | Statement::ExpressionStatement(_) => {}
+            Statement::BreakStatement(it) if it.label.is_none() => {
+                self.found_unlabelled_break = true;
+            }
+            _ => walk_js::walk_statement(self, it),
         }
     }
 }

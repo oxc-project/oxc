@@ -5,6 +5,7 @@ use oxc_ast::{
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{ContentEq, GetSpan, Span};
@@ -263,7 +264,9 @@ fn collect_lexical_declaration_symbols(stmt: &Statement, symbols: &mut FxHashSet
     if let Statement::VariableDeclaration(decl) = stmt
         && decl.kind.is_lexical()
     {
-        symbols.extend(decl.declarations.iter().flat_map(|decl| decl.id.get_symbol_ids()));
+        decl.bound_names(&mut |ident| {
+            symbols.insert(ident.symbol_id());
+        });
     }
 }
 
