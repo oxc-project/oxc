@@ -1,6 +1,6 @@
 use std::iter;
 
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
@@ -15,10 +15,12 @@ pub fn arrow_function_body_as_function_body_mut<'a, 'b>(
     ctx: &TraverseCtx<'a>,
 ) -> &'b mut FunctionBody<'a> {
     if body.is_expression() {
-        let expression = body.take_in(ctx).into_expression();
-        let span = expression.span();
-        let statement = Statement::new_return_statement(span, Some(expression), ctx);
-        *body = ArrowFunctionBody::FunctionBody(FunctionBody::boxed(span, [], [statement], ctx));
+        body.replace_with(|body| {
+            let expression = body.into_expression();
+            let span = expression.span();
+            let statement = Statement::new_return_statement(span, Some(expression), ctx);
+            ArrowFunctionBody::FunctionBody(FunctionBody::boxed(span, [], [statement], ctx))
+        });
     }
     body.as_function_body_mut().unwrap()
 }
