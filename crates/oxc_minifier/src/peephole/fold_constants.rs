@@ -354,12 +354,16 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Multiplication
             | BinaryOperator::Exponential
             | BinaryOperator::Remainder => {
-                let shorter_multiplication = if e.operator == BinaryOperator::Multiplication {
-                    Self::try_fold_shorter_numeric_expression(e, ctx)
-                } else {
-                    None
+                let shorter_numeric_expression = match e.operator {
+                    BinaryOperator::Multiplication => {
+                        Self::try_fold_shorter_numeric_expression(e, ctx)
+                    }
+                    BinaryOperator::Remainder => {
+                        Self::try_fold_safe_integer_numeric_expression(e, ctx)
+                    }
+                    _ => None,
                 };
-                shorter_multiplication.or_else(|| {
+                shorter_numeric_expression.or_else(|| {
                     Self::extract_numeric_values(e, ctx)
                         .filter(|(left, right)| {
                             *left == 0.0
@@ -378,9 +382,12 @@ impl<'a> PeepholeOptimizations {
                         .and_then(|_| ctx.eval_binary(e))
                 })
             }
-            BinaryOperator::Division => Self::extract_numeric_values(e, ctx)
-                .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
-                .and_then(|_| ctx.eval_binary(e)),
+            BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
+                .or_else(|| {
+                    Self::extract_numeric_values(e, ctx)
+                        .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
+                        .and_then(|_| ctx.eval_binary(e))
+                }),
             BinaryOperator::ShiftLeft => {
                 Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
@@ -476,6 +483,17 @@ impl<'a> PeepholeOptimizations {
         let original_len = Self::binary_numeric_expression_size_lower_bound(e)?;
         let result = e.evaluate_value(ctx)?.into_number()?;
         (Self::number_literal_source_len(result)? <= original_len)
+            .then(|| ctx.value_to_expr(e.span, ConstantValue::Number(result)))
+    }
+
+    fn try_fold_safe_integer_numeric_expression(
+        e: &BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        Self::extract_numeric_values(e, ctx)?;
+        let result = e.evaluate_value(ctx)?.into_number()?;
+        let is_safe_integer = result.fract() == 0.0 && result.abs() <= 9_007_199_254_740_991.0;
+        (is_safe_integer && Self::folded_numeric_expression_is_shorter(e, result) == Some(true))
             .then(|| ctx.value_to_expr(e.span, ConstantValue::Number(result)))
     }
 

@@ -121,7 +121,7 @@ fn test_mathematical_expression_edge_cases() {
     test("return 2 + 3", "return 5");
     test("return 10 - 4", "return 6");
     test("return 3 * 7", "return 21");
-    test_same("return 15 / 3"); // division might not be optimized consistently
+    test("return 15 / 3", "return 5");
 
     // Test cases that are eliminated as dead code (unused expressions)
     test("NaN + 1", ""); // eliminated as unused expression

@@ -1064,17 +1064,44 @@ fn test_fold_division() {
     fold("x = Infinity / 0", "x = Infinity");
     fold("x = 1 / 0", "x = Infinity");
     fold("x = 0 / 0", "x = NaN");
+    fold("x = 360 / 360", "x = 1");
+    fold("x = 10.5 / 0.75", "x = 14");
+    fold("x = -10.5 / 0.75", "x = -14");
+    fold("x = 0 / -1", "x = -0");
+    fold("x = -0 / 1", "x = -0");
+    fold("x = -5e-324 / 2", "x = -0");
+    fold("x = 9007199254740992 / 2", "x = 4503599627370496");
+
     fold_same("x = 2 / 4");
+    fold_same("x = 0.3 / 0.1");
+    fold_same("x = 1e-323 / 2");
+    fold_same("x = 1 / 1e-15");
+    fold_same("x = 9007199254740991 / 0.5");
+    fold_same("x = f() / 2");
+    fold_same("x = (void f()) / 1");
+    fold_same("x = ({ valueOf: f }) / 2");
+    fold_same("x = 4n / 2n");
+    fold_same("x = 4n / 2");
+    fold_same("x = 4n / 0n");
     fold_same("x = y / 2 / 4");
 }
 
 #[test]
 fn test_fold_remainder() {
-    fold_same("x = 3 % 2");
-    fold_same("x = 3 % -2");
-    fold_same("x = -1 % 3");
+    fold("x = 3 % 2", "x = 1");
+    fold("x = 3 % -2", "x = 1");
+    fold("x = -1 % 3", "x = -1");
+    fold("x = -1 % 1", "x = -0");
+    fold("x = 5.5 % 1.5", "x = 1");
     fold("x = 1 % 0", "x = NaN");
     fold("x = 0 % 0", "x = NaN");
+
+    fold_same("x = 18014398509481982 % 18014398509481984");
+    fold_same("x = 0.3 % 0.1");
+    fold_same("x = f() % 2");
+    fold_same("x = 1 % f()");
+    fold_same("x = 5n % 2n");
+    fold_same("x = 4n % 3n");
 }
 
 #[test]
