@@ -1,0 +1,21 @@
+crates/oxc_minifier/tests/peephole/minimize_exit_points.rs
+  s_c910d1aefb5493::t_1bda9abf53bfc9 52-55
+crates/oxc_minifier/src/peephole/minimize_if_statement.rs
+  s_c910d1aefb5493::t_b2633d0e3aa48b 7,131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "aa4c9fd193c57e208a3a5d45cfc71b5c5e8163f6",
+  "prompts": {},
+  "sessions": {
+    "s_c910d1aefb5493": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa421-cf7a-7231-9bc8-597966318734",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
