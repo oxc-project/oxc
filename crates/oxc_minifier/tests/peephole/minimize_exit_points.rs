@@ -49,6 +49,10 @@ fn test_function_return_optimization() {
         "function f(){if(a()){if(b()){d();return;}else{return;}}else{return;} c();}",
         "function f(){if(a()){if(b()){d();return}return}}",
     ); // function f(){a()&&b()&&d()}
+    test(
+        "function f(a,b,c){if(a){}else if(b){x();return}else if(c){y();return}z()}",
+        "function f(a,b,c){if(!a){if(b){x();return}if(c){y();return}}z()}",
+    );
     test("function f(){if(a()){b();return;}else;}", "function f(){if(a()){b();return}}"); // function f(){a()&&b()}
     test("function f(){if(a()){return;}else{return;} return;}", "function f(){a();}");
     test("function f(){if(a()){return;}else{return;} b();}", "function f(){a()}");

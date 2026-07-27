@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, is_terminated::IsTerminated};
 
 use super::PeepholeOptimizations;
 
@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent
-            && if2.consequent.is_jump_statement()
+            && if2.consequent.is_terminated()
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
