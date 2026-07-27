@@ -891,13 +891,8 @@ impl RuleRunner for crate::rules::eslint::no_new::NoNew {
 }
 
 impl RuleRunner for crate::rules::eslint::no_new_func::NoNewFunc {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::CallExpression,
-        AstType::ComputedMemberExpression,
-        AstType::NewExpression,
-        AstType::PrivateFieldExpression,
-        AstType::StaticMemberExpression,
-    ]));
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

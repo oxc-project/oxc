@@ -94,7 +94,7 @@ eslint/no-multi-str                                        |  62460
 eslint/no-negated-condition                                |  17912
 eslint/no-nested-ternary                                   |   4722
 eslint/no-new                                              |   1421
-eslint/no-new-func                                         | 159324
+eslint/no-new-func                                         |  64027
 eslint/no-new-native-nonconstructor                        |   1421
 eslint/no-new-wrappers                                     |   1421
 eslint/no-nonoctal-decimal-escape                          |  62460
