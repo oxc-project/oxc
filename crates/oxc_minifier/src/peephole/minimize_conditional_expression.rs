@@ -7,6 +7,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{ContentEq, GetSpan};
+use oxc_syntax::precedence::Precedence;
 
 use super::PeepholeOptimizations;
 
@@ -428,9 +429,10 @@ impl<'a> PeepholeOptimizations {
             // "c ? false : x" => "!c && x" (exact for any `c`)
             (Some(false), None)
                 if Self::can_fold_negated_test(&expr.test)
-                    && !Self::logical_operand_needs_parens(
+                    && !Self::logical_operand_adds_parens(
                         &expr.alternate,
                         LogicalOperator::And,
+                        Precedence::Yield,
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
@@ -447,9 +449,10 @@ impl<'a> PeepholeOptimizations {
             // "c ? x : true" => "!c || x" (exact for any `c`)
             (None, Some(true))
                 if Self::can_fold_negated_test(&expr.test)
-                    && !Self::logical_operand_needs_parens(
+                    && !Self::logical_operand_adds_parens(
                         &expr.consequent,
                         LogicalOperator::Or,
+                        Precedence::Yield,
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
@@ -467,10 +470,15 @@ impl<'a> PeepholeOptimizations {
             // non-boolean truthy `c` would be returned instead of `true`)
             (Some(true), None)
                 if expr.test.value_type(ctx).is_boolean()
-                    && !Self::logical_operand_needs_parens(&expr.test, LogicalOperator::Or)
-                    && !Self::logical_operand_needs_parens(
+                    && !Self::logical_operand_adds_parens(
+                        &expr.test,
+                        LogicalOperator::Or,
+                        Precedence::Conditional,
+                    )
+                    && !Self::logical_operand_adds_parens(
                         &expr.alternate,
                         LogicalOperator::Or,
+                        Precedence::Yield,
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
@@ -487,10 +495,15 @@ impl<'a> PeepholeOptimizations {
             // non-boolean falsy `c` would be returned instead of `false`)
             (None, Some(false))
                 if expr.test.value_type(ctx).is_boolean()
-                    && !Self::logical_operand_needs_parens(&expr.test, LogicalOperator::And)
-                    && !Self::logical_operand_needs_parens(
+                    && !Self::logical_operand_adds_parens(
+                        &expr.test,
+                        LogicalOperator::And,
+                        Precedence::Conditional,
+                    )
+                    && !Self::logical_operand_adds_parens(
                         &expr.consequent,
                         LogicalOperator::And,
+                        Precedence::Yield,
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
@@ -808,29 +821,33 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    /// Returns `true` when `minimize_not(test)` negates `test` without wrapping
-    /// it in a `!(...)`, so folding a conditional into `!test && x` / `!test || x`
-    /// does not grow the output. Equality comparisons invert their operator in
-    /// place (`a === b` -> `a !== b`); anything that is not otherwise
-    /// parenthesized as a unary operand negates to a bare `!test`.
+    /// Returns `true` when negating `test` does not add parentheses compared to
+    /// its original position as a conditional test. Equality comparisons invert
+    /// their operator in place (`a === b` -> `a !== b`); low-precedence tests
+    /// already need parentheses in a conditional, and other accepted expressions
+    /// negate to a bare `!test`.
     fn can_fold_negated_test(test: &Expression<'_>) -> bool {
-        if let Expression::BinaryExpression(e) = test {
-            return e.operator.is_equality();
+        match test {
+            Expression::BinaryExpression(e) => e.operator.is_equality(),
+            Expression::LogicalExpression(_) => false,
+            _ => true,
         }
-        !Self::test_needs_parens(test)
     }
 
-    /// Returns `true` if `expr` would need parentheses when printed as an operand
-    /// of the logical operator `op` (`&&` or `||`). Used as a size guard before
-    /// folding a conditional into a logical expression. A sequence is excluded:
-    /// conditional tests are lifted first, while conditional branches already
-    /// require parentheses, so retaining them does not add bytes.
-    fn logical_operand_needs_parens(expr: &Expression<'_>, op: LogicalOperator) -> bool {
+    /// Returns `true` if using `expr` as an operand of the logical operator `op`
+    /// (`&&` or `||`) adds parentheses compared to its original conditional position.
+    /// Sequences return `false` because both conditional tests and branches already
+    /// require parentheses around them.
+    fn logical_operand_adds_parens(
+        expr: &Expression<'_>,
+        op: LogicalOperator,
+        old_parent_precedence: Precedence,
+    ) -> bool {
         match expr {
             Expression::AssignmentExpression(_)
             | Expression::YieldExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::ConditionalExpression(_) => true,
+            | Expression::ArrowFunctionExpression(_) => old_parent_precedence < Precedence::Assign,
+            Expression::ConditionalExpression(_) => old_parent_precedence < Precedence::Conditional,
             // `??` cannot be mixed with `&&`/`||` without parens, and `||` needs
             // parens as an operand of `&&`. `&&` under `||`, and same-operator
             // nesting (flattened by `join_with_left_associative_op`), do not.

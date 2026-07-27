@@ -140,6 +140,18 @@ fn test_minimize_conditional_boolean_value_context() {
     test("use(a === b ? (touch(), value) : false)", "use(a === b && (touch(), value))");
     test("use((prepare(), a === b) ? true : value)", "use((prepare(), a === b || value))");
 
+    // Low-precedence conditional tests already need parentheses, so reusing
+    // them as logical operands does not add any bytes.
+    test("use((flag = a === b) ? false : value)", "use(!(flag = a === b) && value)");
+    test("use((flag = a === b) ? value : true)", "use(!(flag = a === b) || value)");
+    test("use((flag = a === b) ? true : value)", "use((flag = a === b) || value)");
+    test("use((flag = a === b) ? value : false)", "use((flag = a === b) && value)");
+    test("use((flag ? left : right) ? false : value)", "use(!(flag ? left : right) && value)");
+    test(
+        "use((flag ? a === b : c === d) ? true : value)",
+        "use((flag ? a === b : c === d) || value)",
+    );
+
     // Negative: forms 3/4 require a boolean-typed test, else the value changes.
     test("let x = num ? true : y", "let x = num ? !0 : y");
     test("let x = num ? y : false", "let x = num ? y : !1");
@@ -149,4 +161,5 @@ fn test_minimize_conditional_boolean_value_context() {
     // Negative: `x` needing parens as a logical operand would not save bytes.
     test("let x = a ? false : b ? c : d", "let x = a ? !1 : b ? c : d");
     test("use(flag ? false : (value = touch()))", "use(flag ? !1 : value = touch())");
+    test("use(a === b || c === d ? value : false)", "use(a === b || c === d ? value : !1)");
 }
