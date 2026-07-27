@@ -212,6 +212,11 @@ impl Rule for NewlineAfterImport {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        enum ImportLikeNode<'a> {
+            Import(Span),
+            Require(&'a CallExpression<'a>),
+        }
+
         let import_like_node = match node.kind() {
             AstKind::ImportDeclaration(import_decl) => ImportLikeNode::Import(import_decl.span),
             AstKind::TSImportEqualsDeclaration(import_decl) => {
@@ -258,11 +263,6 @@ impl Rule for NewlineAfterImport {
 enum ImportLikeKind {
     Import,
     Require,
-}
-
-enum ImportLikeNode<'a> {
-    Import(Span),
-    Require(&'a CallExpression<'a>),
 }
 
 impl ImportLikeKind {
