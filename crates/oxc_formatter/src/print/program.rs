@@ -8,7 +8,10 @@ use oxc_syntax::identifier::ZWNBSP;
 use crate::{
     Buffer, Format,
     ast_nodes::AstNode,
-    formatter::{prelude::*, trivia::FormatTrailingComments},
+    formatter::{
+        prelude::*,
+        trivia::{FormatTrailingComments, should_nestle_adjacent_doc_comments},
+    },
     ir_transform::sort_imports_chunk,
     print::semicolon::OptionalSemicolon,
     utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -19,6 +22,35 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // A comments-only program has no node for its comments to trail, so the
+        // trailing-comments path must not run: its separator would emit a
+        // leading space before the first comment (` /** … `). Oxc's own printer
+        // trims the stray space at the start of the line, but embedding hosts
+        // (js-in-xxx through the Prettier doc bridge, e.g. a comments-only
+        // `<script>` block in a `.vue` file) render it verbatim.
+        if self.hashbang().is_none() && self.directives().is_empty() && self.body().is_empty() {
+            let comments = f.context().comments().unprinted_comments();
+            let mut previous: Option<&Comment> = None;
+            for comment in comments {
+                f.context_mut().comments_mut().increment_printed_count();
+                match previous {
+                    Some(previous) if should_nestle_adjacent_doc_comments(previous, comment) => {}
+                    Some(_) => match f.lines_before(comment.span) {
+                        0 => write!(f, [space()]),
+                        1 => write!(f, [hard_line_break()]),
+                        _ => write!(f, [empty_line()]),
+                    },
+                    None => {}
+                }
+                write!(f, [comment]);
+                previous = Some(comment);
+            }
+            if previous.is_some() {
+                write!(f, [hard_line_break()]);
+            }
+            return;
+        }
+
         let format_trailing_comments = format_with(|f| {
             write!(
                 f,

@@ -86,6 +86,23 @@ input { color: red; }
   });
 
   describe("Script section (JS)", () => {
+    it("should not indent a comments-only `<script>`", async () => {
+      // A comments-only program used to go through the trailing-comments path,
+      // whose separator emitted a leading space (` /**`). Oxc's own printer trims
+      // it at the line start, but the Prettier doc bridge renders it verbatim,
+      // so the comment came out one column too far right.
+      const input = `<script lang="ts">
+/**
+ * Docs.
+ */
+</script>
+<p>x</p>
+`;
+      const result = await format("App.svelte", input, { svelte: {} });
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toContain('<script lang="ts">\n  /**\n   * Docs.\n   */\n</script>');
+    });
+
     it("should respect `oxfmt-ignore` inside `<script>`", async () => {
       // Note: `oxfmt-ignore` inside <script> applies to the next statement.
       const input = `<script>
