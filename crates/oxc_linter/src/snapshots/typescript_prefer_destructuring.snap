@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = array[0];
+   ·           ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = array[0];
+   · ──────────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.foo;
+   ·           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object['foo'];
+   ·           ─────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = object.foo;
+   ·                   ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = object['foo'];
+   ·                   ─────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = array[0];
+   ·                   ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:14]
+ 1 │ var foobar = object.bar;
+   ·              ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
