@@ -579,9 +579,7 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 AstKind::Function(f) if f.is_declaration() => break,
                 // implicit return in an arrow function
-                AstKind::ArrowFunctionExpression(f)
-                    if f.body.statements.len() == 1
-                        && !self.get_snippet(f.body.span).starts_with('{') =>
+                AstKind::ArrowFunctionExpression(f) if f.expression =>
                 {
                     return false;
                 }
@@ -671,10 +669,7 @@ impl<'a> Symbol<'_, 'a> {
                 // `Some` even if
                 // 1. there are more than one statements
                 // 2. the expression is surrounded by braces
-                AstKind::ArrowFunctionExpression(f)
-                    if f.body.statements.len() == 1
-                        && !self.get_snippet(f.body.span).starts_with('{') =>
-                {
+                AstKind::ArrowFunctionExpression(f) if f.expression => {
                     return true;
                 }
                 x if x.is_statement() => return false,
