@@ -1,0 +1,21 @@
+crates/oxc_transformer/src/es2017/async_to_generator.rs
+  s_0eae81ddfc1ea3::t_9e2ce9c4d14757 72,530
+crates/oxc_transformer/src/jsx/refresh.rs
+  s_0eae81ddfc1ea3::t_29084f743297f9 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bdb5711f3e088d434d2604f34ef95fc000b52b7b",
+  "prompts": {},
+  "sessions": {
+    "s_0eae81ddfc1ea3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8041-2626-73d2-9ae3-45377bc4dff3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
