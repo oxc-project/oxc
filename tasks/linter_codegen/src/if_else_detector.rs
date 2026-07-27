@@ -2,7 +2,7 @@ use syn::{Expr, ExprIf, Pat, Stmt};
 
 use crate::{
     CollectionResult, NodeTypeSet,
-    utils::{astkind_variant_from_path, is_node_kind_call},
+    utils::{astkind_variant_from_path, executable_stmts, is_node_kind_call},
 };
 
 /// Detects top-level `if let AstKind::... = node.kind()` patterns in the `run` method.
@@ -13,11 +13,11 @@ pub struct IfElseKindDetector {
 impl IfElseKindDetector {
     pub fn from_run_func(run_func: &syn::ImplItemFn) -> Option<NodeTypeSet> {
         // Only consider when the body has exactly one top-level statement and it's an `if`.
-        let block = &run_func.block;
-        if block.stmts.len() != 1 {
+        let stmts = executable_stmts(&run_func.block);
+        if stmts.len() != 1 {
             return None;
         }
-        let stmt = &block.stmts[0];
+        let stmt = stmts[0];
         let Stmt::Expr(Expr::If(ifexpr), _) = stmt else { return None };
         let mut detector = Self { node_types: NodeTypeSet::new() };
         let result = detector.collect_if_chain_variants(ifexpr);

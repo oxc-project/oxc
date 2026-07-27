@@ -8,7 +8,7 @@ use crate::{
     member_expression_kinds::get_member_expression_kinds,
     node_type_set::NodeTypeSet,
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
-    utils::{find_impl_function, find_rule_impl_block},
+    utils::{executable_stmts, find_impl_function, find_rule_impl_block},
 };
 use rustc_hash::FxHashSet;
 use std::{
@@ -183,8 +183,9 @@ fn detect_top_level_node_types(
     }
 
     // Detect if entire body is call to `run_on_regex_node` and return those node types
-    if run_func.block.stmts.len() == 1
-        && let syn::Stmt::Expr(syn::Expr::Call(call_expr), _) = &run_func.block.stmts[0]
+    let stmts = executable_stmts(&run_func.block);
+    if stmts.len() == 1
+        && let syn::Stmt::Expr(syn::Expr::Call(call_expr), _) = stmts[0]
         && call_expr.args.len() == 3
         && let syn::Expr::Path(path_expr) = &*call_expr.func
         && path_expr.path.is_ident("run_on_regex_node")

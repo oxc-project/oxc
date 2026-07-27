@@ -3,7 +3,7 @@ use syn::{Arm, Expr, Pat, Stmt};
 use crate::{
     CollectionResult, RuleRunnerData,
     node_type_set::NodeTypeSet,
-    utils::{astkind_variant_from_path, is_node_kind_call},
+    utils::{astkind_variant_from_path, executable_stmts, is_node_kind_call},
 };
 
 /// Detects top-level `match node.kind() { ... }` patterns in the `run` method.
@@ -18,11 +18,11 @@ impl<'a> MatchDetector<'a> {
         rule_runner_data: &'a RuleRunnerData,
     ) -> Option<NodeTypeSet> {
         // Only consider when the body's only statement is `match node.kind() { ... }`
-        let block = &run_func.block;
-        if block.stmts.len() != 1 {
+        let stmts = executable_stmts(&run_func.block);
+        if stmts.len() != 1 {
             return None;
         }
-        let first_stmt = &block.stmts[0];
+        let first_stmt = stmts[0];
         // Must be an expression statement
         let Stmt::Expr(expr, _) = first_stmt else { return None };
         // Must be a match expression
