@@ -30,12 +30,12 @@
       "markdownDescription": "Environments enable and disable collections of global variables."
     },
     "extends": {
-      "description": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones.",
+      "description": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones.",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones."
+      "markdownDescription": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones."
     },
     "globals": {
       "description": "Enabled or disabled specific global variables.",
