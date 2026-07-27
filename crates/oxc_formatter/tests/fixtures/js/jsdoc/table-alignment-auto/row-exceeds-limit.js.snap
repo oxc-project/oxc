@@ -1,0 +1,101 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * Padding this table would make every row 98 chars wide, over the 60 char
+ * budget, so `auto` drops the padding and emits a minimal separator row.
+ *
+ * | Option | Description | Default |
+ * | --- | --- | --- |
+ * | resolveExtensions | List of file extensions the resolver will try in order | [".ts", ".js"] |
+ * | preserveSymlinks | Keep symlinked paths as written instead of resolving them | false |
+ */
+const wide = 1;
+
+==================== Output ====================
+--------------------------------------------------------------------------------
+{ jsdoc: {"tableAlignment":"auto","tableAlignmentMaxWidth":60}, printWidth: 80 }
+--------------------------------------------------------------------------------
+/**
+ * Padding this table would make every row 98 chars wide, over the 60 char
+ * budget, so `auto` drops the padding and emits a minimal separator row.
+ *
+ * |Option|Description|Default|
+ * |---|---|---|
+ * |resolveExtensions|List of file extensions the resolver will try in order|[".ts", ".js"]|
+ * |preserveSymlinks|Keep symlinked paths as written instead of resolving them|false|
+ */
+const wide = 1;
+
+---------------------------------------------------------------------------------
+{ jsdoc: {"tableAlignment":"auto","tableAlignmentMaxWidth":60}, printWidth: 100 }
+---------------------------------------------------------------------------------
+/**
+ * Padding this table would make every row 98 chars wide, over the 60 char budget, so `auto` drops
+ * the padding and emits a minimal separator row.
+ *
+ * |Option|Description|Default|
+ * |---|---|---|
+ * |resolveExtensions|List of file extensions the resolver will try in order|[".ts", ".js"]|
+ * |preserveSymlinks|Keep symlinked paths as written instead of resolving them|false|
+ */
+const wide = 1;
+
+------------------------------------------------------
+{ jsdoc: {"tableAlignment":"always"}, printWidth: 80 }
+------------------------------------------------------
+/**
+ * Padding this table would make every row 98 chars wide, over the 60 char
+ * budget, so `auto` drops the padding and emits a minimal separator row.
+ *
+ * | Option            | Description                                               | Default        |
+ * | ----------------- | --------------------------------------------------------- | -------------- |
+ * | resolveExtensions | List of file extensions the resolver will try in order    | [".ts", ".js"] |
+ * | preserveSymlinks  | Keep symlinked paths as written instead of resolving them | false          |
+ */
+const wide = 1;
+
+-------------------------------------------------------
+{ jsdoc: {"tableAlignment":"always"}, printWidth: 100 }
+-------------------------------------------------------
+/**
+ * Padding this table would make every row 98 chars wide, over the 60 char budget, so `auto` drops
+ * the padding and emits a minimal separator row.
+ *
+ * | Option            | Description                                               | Default        |
+ * | ----------------- | --------------------------------------------------------- | -------------- |
+ * | resolveExtensions | List of file extensions the resolver will try in order    | [".ts", ".js"] |
+ * | preserveSymlinks  | Keep symlinked paths as written instead of resolving them | false          |
+ */
+const wide = 1;
+
+-----------------------------------------------------
+{ jsdoc: {"tableAlignment":"never"}, printWidth: 80 }
+-----------------------------------------------------
+/**
+ * Padding this table would make every row 98 chars wide, over the 60 char
+ * budget, so `auto` drops the padding and emits a minimal separator row.
+ *
+ * |Option|Description|Default|
+ * |---|---|---|
+ * |resolveExtensions|List of file extensions the resolver will try in order|[".ts", ".js"]|
+ * |preserveSymlinks|Keep symlinked paths as written instead of resolving them|false|
+ */
+const wide = 1;
+
+------------------------------------------------------
+{ jsdoc: {"tableAlignment":"never"}, printWidth: 100 }
+------------------------------------------------------
+/**
+ * Padding this table would make every row 98 chars wide, over the 60 char budget, so `auto` drops
+ * the padding and emits a minimal separator row.
+ *
+ * |Option|Description|Default|
+ * |---|---|---|
+ * |resolveExtensions|List of file extensions the resolver will try in order|[".ts", ".js"]|
+ * |preserveSymlinks|Keep symlinked paths as written instead of resolving them|false|
+ */
+const wide = 1;
+
+===================== End =====================

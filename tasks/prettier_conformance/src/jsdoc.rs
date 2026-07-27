@@ -264,6 +264,18 @@ impl JsdocTestRunner {
         {
             options.keep_unparsable_example_indent = true;
         }
+        if let Some(alignment) = json.get("table_alignment").and_then(serde_json::Value::as_str) {
+            options.table_alignment = match alignment {
+                "auto" => oxc_formatter::TableAlignment::Auto,
+                "never" => oxc_formatter::TableAlignment::Never,
+                _ => oxc_formatter::TableAlignment::Always,
+            };
+        }
+        if let Some(w) = json.get("table_alignment_max_width").and_then(serde_json::Value::as_u64)
+            && let Ok(w) = u16::try_from(w)
+        {
+            options.table_alignment_max_width = w;
+        }
         if json.get("single_quote").and_then(serde_json::Value::as_bool) == Some(true) {
             quote_style = QuoteStyle::Single;
         }

@@ -484,7 +484,11 @@ fn serialize_pipe_prefixed_paragraph(
                 index += 1;
             }
 
-            let block_lines = format_table_block(&raw_lines[start..index]);
+            let block_lines = format_table_block(
+                &raw_lines[start..index],
+                opts.table_alignment,
+                opts.table_alignment_max_width.saturating_sub(indent),
+            );
 
             for line in block_lines {
                 if indent > 0 && !line.is_empty() {

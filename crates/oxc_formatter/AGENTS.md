@@ -41,6 +41,14 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 
 - Derived from `prettier-plugin-jsdoc`, but not fully compatible
 - See `prettier_conformance/jsdoc` for the covered behavior
+- `jsdoc.tableAlignment` has no upstream counterpart. Upstream always pads Markdown table
+  columns; `"auto"` keeps the padding only while a table's rendered rows stay within
+  `jsdoc.tableAlignmentMaxWidth` (default 120), and otherwise emits that table unpadded with
+  a minimal separator row. The budget is measured on comment content — the row plus its
+  Markdown indent, not the leading `*` gutter — and the choice is made per table inside
+  `wrap::format_table_block`, so one comment can mix both forms. Defaults to `"always"`, so
+  conformance against upstream is unaffected; cover new behavior with
+  `tests/fixtures/js/jsdoc/table-alignment-auto/`, not the conformance fixtures.
 
 ### Sort Tailwind CSS
 

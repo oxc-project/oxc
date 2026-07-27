@@ -3,7 +3,7 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_formatter::{
     ArrowParentheses, BracketSameLine, BracketSpacing, JsFormatOptions, JsdocOptions,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    QuoteProperties, QuoteStyle, Semicolons, TableAlignment, TrailingCommas,
 };
 use oxc_formatter_core::{
     IndentStyle, IndentWidth, LineEnding, LineWidth,
@@ -114,7 +114,21 @@ impl FixtureFormatter for JsHarness {
                     }
                 }
                 "jsdoc" if value.is_object() => {
-                    options.jsdoc = Some(JsdocOptions::default());
+                    let mut jsdoc = JsdocOptions::default();
+                    if let Some(s) = value.get("tableAlignment").and_then(|v| v.as_str()) {
+                        jsdoc.table_alignment = match s {
+                            "auto" => TableAlignment::Auto,
+                            "never" => TableAlignment::Never,
+                            _ => TableAlignment::Always,
+                        };
+                    }
+                    if let Some(n) =
+                        value.get("tableAlignmentMaxWidth").and_then(serde_json::Value::as_u64)
+                        && let Ok(width) = u16::try_from(n)
+                    {
+                        jsdoc.table_alignment_max_width = width;
+                    }
+                    options.jsdoc = Some(jsdoc);
                 }
                 _ => {}
             }

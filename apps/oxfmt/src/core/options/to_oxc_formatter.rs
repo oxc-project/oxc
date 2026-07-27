@@ -277,7 +277,8 @@ pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImport
 /// Shared by both [`to_oxc_formatter()`] (build) and [`super::validate::validate()`] (gate).
 ///
 /// # Errors
-/// Returns an error if `lineWrappingStyle` / `commentLineStrategy` is invalid.
+/// Returns an error if `lineWrappingStyle` / `commentLineStrategy` / `tableAlignment` /
+/// `tableAlignmentMaxWidth` is invalid.
 pub(super) fn to_jsdoc(
     config: &FormatConfig,
 ) -> Result<Option<oxc_formatter::JsdocOptions>, String> {
@@ -335,6 +336,26 @@ pub(super) fn to_jsdoc(
     }
     if let Some(v) = jsdoc_config.keep_unparsable_example_indent {
         opts.keep_unparsable_example_indent = v;
+    }
+    if let Some(ref v) = jsdoc_config.table_alignment {
+        opts.table_alignment = match v.as_str() {
+            "always" => oxc_formatter::TableAlignment::Always,
+            "auto" => oxc_formatter::TableAlignment::Auto,
+            "never" => oxc_formatter::TableAlignment::Never,
+            other => {
+                return Err(format!(
+                    "Invalid jsdoc tableAlignment: {other:?}. Expected \"always\", \"auto\", or \"never\"."
+                ));
+            }
+        };
+    }
+    if let Some(v) = jsdoc_config.table_alignment_max_width {
+        if v == 0 {
+            return Err(
+                "Invalid jsdoc tableAlignmentMaxWidth: 0. Expected a positive integer.".to_string()
+            );
+        }
+        opts.table_alignment_max_width = v;
     }
 
     Ok(Some(opts))
@@ -675,5 +696,36 @@ mod tests {
         let config: FormatConfig =
             serde_json::from_str(r#"{ "jsdoc": { "lineWrappingStyle": "bogus" } }"#).unwrap();
         assert!(validate(&config).is_err_and(|e| e.contains("lineWrappingStyle")));
+
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "jsdoc": { "tableAlignment": "bogus" } }"#).unwrap();
+        assert!(validate(&config).is_err_and(|e| e.contains("tableAlignment")));
+
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "jsdoc": { "tableAlignmentMaxWidth": 0 } }"#).unwrap();
+        assert!(validate(&config).is_err_and(|e| e.contains("tableAlignmentMaxWidth")));
+    }
+
+    #[test]
+    fn test_jsdoc_table_alignment() {
+        use oxc_formatter::TableAlignment;
+
+        // Defaults preserve the existing always-align behavior.
+        let config: FormatConfig = serde_json::from_str(r#"{ "jsdoc": true }"#).unwrap();
+        let jsdoc = to_jsdoc(&config).unwrap().unwrap();
+        assert_eq!(jsdoc.table_alignment, TableAlignment::Always);
+        assert_eq!(jsdoc.table_alignment_max_width, 120);
+
+        let config: FormatConfig = serde_json::from_str(
+            r#"{ "jsdoc": { "tableAlignment": "auto", "tableAlignmentMaxWidth": 60 } }"#,
+        )
+        .unwrap();
+        let jsdoc = to_jsdoc(&config).unwrap().unwrap();
+        assert_eq!(jsdoc.table_alignment, TableAlignment::Auto);
+        assert_eq!(jsdoc.table_alignment_max_width, 60);
+
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "jsdoc": { "tableAlignment": "never" } }"#).unwrap();
+        assert_eq!(to_jsdoc(&config).unwrap().unwrap().table_alignment, TableAlignment::Never);
     }
 }

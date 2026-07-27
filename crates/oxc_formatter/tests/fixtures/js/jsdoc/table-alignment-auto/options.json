@@ -1,0 +1,5 @@
+[
+  { "jsdoc": { "tableAlignment": "auto", "tableAlignmentMaxWidth": 60 } },
+  { "jsdoc": { "tableAlignment": "always" } },
+  { "jsdoc": { "tableAlignment": "never" } }
+]

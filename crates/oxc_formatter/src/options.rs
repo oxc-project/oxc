@@ -117,6 +117,24 @@ pub enum LineWrappingStyle {
     Balance,
 }
 
+/// When to pad Markdown table columns so the `|` characters line up.
+///
+/// Oxfmt specific, no upstream `prettier-plugin-jsdoc` counterpart.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum TableAlignment {
+    /// Always pad cells and stretch the separator row to the column width.
+    #[default]
+    Always,
+    /// Align only when every padded row fits within [`JsdocOptions::table_alignment_max_width`];
+    /// otherwise drop the padding for that table. Decided per table, not per file.
+    Auto,
+    /// Never pad. Cells hold their raw content and the separator row stays minimal.
+    Never,
+}
+
+/// Default value of [`JsdocOptions::table_alignment_max_width`].
+pub const DEFAULT_TABLE_ALIGNMENT_MAX_WIDTH: u16 = 120;
+
 /// Options for JSDoc comment formatting.
 #[derive(Debug, Clone)]
 pub struct JsdocOptions {
@@ -153,6 +171,15 @@ pub struct JsdocOptions {
     /// Preserve indentation in unparsable @example code. Default: false.
     /// Maps to upstream's `jsdocKeepUnParseAbleExampleIndent`.
     pub keep_unparsable_example_indent: bool,
+    /// When to pad Markdown table columns. Default: Always.
+    /// Oxfmt specific.
+    pub table_alignment: TableAlignment,
+    /// Row width budget used by [`TableAlignment::Auto`]. Default: 120.
+    ///
+    /// Measured on the comment's content: the rendered row plus the Markdown indent it
+    /// sits at, but NOT the surrounding ` * ` gutter (the same basis the rest of the
+    /// JSDoc wrapping uses).
+    pub table_alignment_max_width: u16,
 }
 
 impl Default for JsdocOptions {
@@ -169,6 +196,8 @@ impl Default for JsdocOptions {
             line_wrapping_style: LineWrappingStyle::default(),
             description_tag: false,
             keep_unparsable_example_indent: false,
+            table_alignment: TableAlignment::default(),
+            table_alignment_max_width: DEFAULT_TABLE_ALIGNMENT_MAX_WIDTH,
         }
     }
 }

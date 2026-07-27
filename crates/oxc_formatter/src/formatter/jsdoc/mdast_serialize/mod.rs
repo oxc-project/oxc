@@ -46,6 +46,11 @@ pub fn format_description_mdast(
     let prefer_code_fences = jsdoc_opts.is_some_and(|o| o.prefer_code_fences);
     let line_wrapping_style =
         jsdoc_opts.map_or(crate::LineWrappingStyle::default(), |o| o.line_wrapping_style);
+    let table_alignment =
+        jsdoc_opts.map_or(crate::TableAlignment::default(), |o| o.table_alignment);
+    let table_alignment_max_width = jsdoc_opts
+        .map_or(crate::DEFAULT_TABLE_ALIGNMENT_MAX_WIDTH, |o| o.table_alignment_max_width)
+        as usize;
 
     // Fast path: if text has no markdown constructs requiring AST parsing,
     // use lightweight wrap_plain_paragraphs() directly.
@@ -141,6 +146,8 @@ pub fn format_description_mdast(
         description_with_dot,
         prefer_code_fences,
         line_wrapping_style,
+        table_alignment,
+        table_alignment_max_width,
         source: &protected,
         format_options,
         allocator,
@@ -159,6 +166,10 @@ pub(super) struct SerializeOptions<'a> {
     pub(super) description_with_dot: bool,
     pub(super) prefer_code_fences: bool,
     pub(super) line_wrapping_style: crate::LineWrappingStyle,
+    pub(super) table_alignment: crate::TableAlignment,
+    /// Row width budget for [`crate::TableAlignment::Auto`], measured on comment content
+    /// (the ` * ` gutter is not counted). Each table subtracts its own indent from this.
+    pub(super) table_alignment_max_width: usize,
     pub(super) source: &'a str,
     pub(super) format_options: Option<&'a JsFormatOptions>,
     pub(super) allocator: Option<&'a Allocator>,

@@ -826,6 +826,26 @@ pub struct JsdocConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_unparsable_example_indent: Option<bool>,
+    /// When to pad Markdown table columns so the `|` characters line up.
+    ///
+    /// - `"always"` — Always pad cells and stretch the separator row to the column width.
+    /// - `"auto"` — Pad only when every padded row fits within `tableAlignmentMaxWidth`, otherwise emit that table unpadded (`|a|b|`) with a minimal separator row (`|---|---|`).
+    /// - `"never"` — Never pad; every table uses the unpadded form.
+    ///
+    /// The `"auto"` decision is made per table, so a narrow and a wide table in the same comment can come out differently.
+    ///
+    /// - Default: `"always"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub table_alignment: Option<String>,
+    /// Row width budget used by `tableAlignment: "auto"`.
+    ///
+    /// Measured on the comment's content — the rendered row plus the Markdown indent it sits at,
+    /// but not the surrounding ` * ` gutter. Independent of `printWidth`, since tables are usually
+    /// allowed to run wider than prose. Ignored by the other `tableAlignment` modes.
+    ///
+    /// - Default: `120`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub table_alignment_max_width: Option<u16>,
 }
 
 // ---

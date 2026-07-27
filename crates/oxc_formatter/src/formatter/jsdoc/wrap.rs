@@ -1,3 +1,5 @@
+use crate::TableAlignment;
+
 /// Compute the width of a string matching JavaScript's `.length` (UTF-16 code units).
 /// This intentionally does NOT use `unicode_width::UnicodeWidthStr` because Prettier
 /// measures `printWidth` in JS string length (UTF-16 code units), not terminal columns.
@@ -56,11 +58,80 @@ fn parse_table_cells(line: &str) -> Vec<&str> {
     inner.split('|').map(str::trim).collect()
 }
 
+/// Render a separator cell at its minimal width: the alignment colons the source
+/// had, plus exactly three dashes. Used by the unaligned output.
+fn push_minimal_separator_cell(row: &mut String, cell: &str) {
+    if cell.starts_with(':') {
+        row.push(':');
+    }
+    row.push_str("---");
+    if cell.ends_with(':') {
+        row.push(':');
+    }
+}
+
+/// Emit a table without any column padding: cells carry their raw (trimmed) content
+/// and the separator row stays minimal (`|---|---|---|`).
+///
+/// Short rows are still filled out to `num_cols` empty cells so every row keeps the
+/// same column count, matching what the aligned path does.
+fn format_table_block_unaligned(
+    table_lines: &[&str],
+    separator_idx: usize,
+    all_cells: &[Vec<&str>],
+    num_cols: usize,
+) -> Vec<String> {
+    // Widest possible row: every cell at its longest, plus a `|` per column and one more
+    // to open the row. The separator row needs 5 per column at most (`:---:`).
+    let widest_cells: usize = (0..num_cols)
+        .map(|j| {
+            all_cells.iter().filter_map(|row| row.get(j)).map(|c| c.len()).max().unwrap_or(0).max(5)
+        })
+        .sum();
+    let row_capacity = widest_cells + num_cols + 1;
+
+    let mut lines = Vec::with_capacity(table_lines.len());
+    let mut data_row_idx = 0;
+    for idx in 0..table_lines.len() {
+        let mut row = String::with_capacity(row_capacity);
+        row.push('|');
+        if idx == separator_idx {
+            let sep_cells = parse_table_cells(table_lines[separator_idx]);
+            for j in 0..num_cols {
+                push_minimal_separator_cell(&mut row, sep_cells.get(j).copied().unwrap_or("---"));
+                row.push('|');
+            }
+        } else {
+            let cells = &all_cells[data_row_idx];
+            data_row_idx += 1;
+            for j in 0..num_cols {
+                row.push_str(cells.get(j).copied().unwrap_or(""));
+                row.push('|');
+            }
+            // A single empty column collapses to `||`, which the table-row detector
+            // rejects (it requires more than two chars), so the next format pass would
+            // break the table apart. Keep one space to stay round-trippable.
+            if row == "||" {
+                row = String::from("| |");
+            }
+        }
+        lines.push(row);
+    }
+    lines
+}
+
 /// Format a block of consecutive table lines.
-/// If the table has a valid separator row, format with column padding.
+/// If the table has a valid separator row, format according to `alignment`.
 /// Otherwise, output as-is.
 ///
-pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
+/// `max_width` is the row width budget consulted by [`TableAlignment::Auto`]; callers
+/// pass it already reduced by the indent the table will be printed at. It is ignored
+/// by the other modes.
+pub fn format_table_block(
+    table_lines: &[&str],
+    alignment: TableAlignment,
+    max_width: usize,
+) -> Vec<String> {
     let to_owned = || table_lines.iter().map(|l| String::from(*l)).collect();
 
     // Find separator row
@@ -94,6 +165,19 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
                 col_widths[j] = col_widths[j].max(str_width(cell));
             }
         }
+    }
+
+    // A padded row renders as `"| " + cell + (" | " + cell)* + " |"`, so the separators
+    // cost `2 + 3 * (num_cols - 1) + 2` and every row comes out the same width.
+    let aligned_row_width: usize = col_widths.iter().sum::<usize>() + 3 * num_cols + 1;
+
+    let align = match alignment {
+        TableAlignment::Always => true,
+        TableAlignment::Never => false,
+        TableAlignment::Auto => aligned_row_width <= max_width,
+    };
+    if !align {
+        return format_table_block_unaligned(table_lines, separator_idx, &all_cells, num_cols);
     }
 
     // Total width per row: "| " + (cell_width + " | ") * num_cols
@@ -482,6 +566,123 @@ pub fn wrap_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const TABLE: &[&str] = &[
+        "| Name | Description | Default |",
+        "|---|---|---|",
+        "| verbose | Print every step the resolver takes | false |",
+        "| cwd | Directory the resolver starts from | process.cwd() |",
+    ];
+
+    /// Width every padded row of `TABLE` comes out at: `7 + 35 + 13` of cell content
+    /// plus `3 * 3 + 1` of `|`/space separators.
+    const TABLE_ALIGNED_WIDTH: usize = 65;
+
+    #[test]
+    fn test_table_always_aligns_regardless_of_width() {
+        // `max_width` is ignored in `Always` mode, even when the table blows past it.
+        let result = format_table_block(TABLE, TableAlignment::Always, 10);
+        assert_eq!(
+            result,
+            vec![
+                "| Name    | Description                         | Default       |",
+                "| ------- | ----------------------------------- | ------------- |",
+                "| verbose | Print every step the resolver takes | false         |",
+                "| cwd     | Directory the resolver starts from  | process.cwd() |",
+            ]
+        );
+        assert!(result.iter().all(|l| str_width(l) == TABLE_ALIGNED_WIDTH));
+    }
+
+    #[test]
+    fn test_table_never_drops_alignment_regardless_of_width() {
+        // `max_width` is ignored in `Never` mode, even when the table would fit.
+        assert_eq!(
+            format_table_block(TABLE, TableAlignment::Never, 1000),
+            vec![
+                "|Name|Description|Default|",
+                "|---|---|---|",
+                "|verbose|Print every step the resolver takes|false|",
+                "|cwd|Directory the resolver starts from|process.cwd()|",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_table_auto_aligns_when_every_row_fits() {
+        let aligned = format_table_block(TABLE, TableAlignment::Always, 0);
+        // Exactly at the budget still counts as fitting.
+        assert_eq!(format_table_block(TABLE, TableAlignment::Auto, TABLE_ALIGNED_WIDTH), aligned);
+        assert_eq!(format_table_block(TABLE, TableAlignment::Auto, 120), aligned);
+    }
+
+    #[test]
+    fn test_table_auto_drops_alignment_when_a_row_overflows() {
+        let unaligned = format_table_block(TABLE, TableAlignment::Never, 0);
+        // One char under the budget is enough to give up alignment.
+        assert_eq!(
+            format_table_block(TABLE, TableAlignment::Auto, TABLE_ALIGNED_WIDTH - 1),
+            unaligned
+        );
+        assert_eq!(format_table_block(TABLE, TableAlignment::Auto, 40), unaligned);
+    }
+
+    #[test]
+    fn test_table_auto_is_decided_per_table() {
+        let narrow: &[&str] = &["| a | b |", "|---|---|", "| 1 | 2 |"];
+        assert_eq!(
+            format_table_block(narrow, TableAlignment::Auto, 40),
+            vec!["| a   | b   |", "| --- | --- |", "| 1   | 2   |"]
+        );
+        // Same options, wider table -> the other branch.
+        assert_eq!(
+            format_table_block(TABLE, TableAlignment::Auto, 40),
+            format_table_block(TABLE, TableAlignment::Never, 0)
+        );
+    }
+
+    #[test]
+    fn test_table_unaligned_keeps_alignment_markers_minimal() {
+        let table: &[&str] =
+            &["| Left | Center | Right |", "| :--- | :----: | ----: |", "| a | b | c |"];
+        assert_eq!(
+            format_table_block(table, TableAlignment::Never, 0),
+            vec!["|Left|Center|Right|", "|:---|:---:|---:|", "|a|b|c|"]
+        );
+    }
+
+    #[test]
+    fn test_table_unaligned_pads_short_rows_with_empty_cells() {
+        // Column count is normalized the same way the aligned path does it.
+        let table: &[&str] = &["| a | b | c |", "|---|---|---|", "| 1 |"];
+        assert_eq!(
+            format_table_block(table, TableAlignment::Never, 0),
+            vec!["|a|b|c|", "|---|---|---|", "|1|||"]
+        );
+    }
+
+    #[test]
+    fn test_table_unaligned_single_empty_column_stays_round_trippable() {
+        // `||` would be too short for the table-row detector, so the next pass would
+        // stop treating the block as a table.
+        let table: &[&str] = &["| Header |", "|---|", "|  |", "| x |"];
+        let out = format_table_block(table, TableAlignment::Never, 0);
+        assert_eq!(out, vec!["|Header|", "|---|", "| |", "|x|"]);
+        // Re-running over the emitted rows is a fixed point.
+        let reparsed: Vec<&str> = out.iter().map(String::as_str).collect();
+        assert_eq!(format_table_block(&reparsed, TableAlignment::Never, 0), out);
+    }
+
+    #[test]
+    fn test_table_without_separator_is_left_alone_in_every_mode() {
+        let not_a_table: &[&str] = &["| a | b |", "| c | d |"];
+        for alignment in [TableAlignment::Always, TableAlignment::Auto, TableAlignment::Never] {
+            assert_eq!(
+                format_table_block(not_a_table, alignment, 0),
+                vec!["| a | b |", "| c | d |"]
+            );
+        }
+    }
 
     #[test]
     fn test_wrap_simple_text() {
