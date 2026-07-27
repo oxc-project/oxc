@@ -16,7 +16,7 @@ eslint/eqeqeq                                              |  20604
 eslint/for-direction                                       |    557
 eslint/func-name-matching                                  |  83754
 eslint/func-names                                          |  14283
-eslint/func-style                                          |      7
+eslint/func-style                                          |  16812
 eslint/getter-return                                       |  10895
 eslint/grouped-accessor-pairs                              |  15349
 eslint/guard-for-in                                        |    105
