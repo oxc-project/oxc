@@ -2355,7 +2355,7 @@ impl RuleRunner for crate::rules::jest::no_test_prefixes::NoTestPrefixes {
 
 impl RuleRunner for crate::rules::jest::no_test_return_statement::NoTestReturnStatement {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::Function]));
+        Some(&AstTypesBitset::from_types(&[AstType::ReturnStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -4789,7 +4789,7 @@ impl RuleRunner for crate::rules::vitest::no_test_prefixes::NoTestPrefixes {
 
 impl RuleRunner for crate::rules::vitest::no_test_return_statement::NoTestReturnStatement {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::Function]));
+        Some(&AstTypesBitset::from_types(&[AstType::ReturnStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
