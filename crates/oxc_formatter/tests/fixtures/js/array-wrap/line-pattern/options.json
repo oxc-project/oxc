@@ -1,0 +1,4 @@
+[
+  { "arrayWrap": { "minElementsToWrap": 4, "linePattern": "3" } },
+  { "arrayWrap": { "linePattern": "2 1" } }
+]

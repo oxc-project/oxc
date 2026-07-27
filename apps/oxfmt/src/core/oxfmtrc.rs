@@ -220,6 +220,27 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
+    /// How to wrap array literals.
+    ///
+    /// - `"preserve"`: Keep arrays written across multiple lines expanded, one element per line;
+    ///   arrays written on a single line are collapsed when they fit within printWidth.
+    /// - `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
+    /// - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
+    ///   arrays below the threshold use `"preserve"` behavior.
+    /// - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
+    ///   repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
+    ///   `multilineArraysLinePattern`). Applies to any array literal printed across multiple
+    ///   lines, whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior,
+    ///   or too wide for printWidth. Array literals containing holes or comments, and
+    ///   destructuring patterns, always wrap one element per line.
+    ///
+    /// When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
+    /// within printWidth, regardless of how they are written in the source.
+    ///
+    /// - Languages: JS, TS, JSX, TSX
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub array_wrap: Option<ArrayWrapConfig>,
+
     /// Sort import statements.
     ///
     /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
@@ -405,6 +426,32 @@ pub enum ArrowParensConfig {
 pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ArrayWrapConfig {
+    Mode(ArrayWrapMode),
+    Options(ArrayWrapOptions),
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ArrayWrapMode {
+    Preserve,
+    Collapse,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ArrayWrapOptions {
+    /// Force one-element-per-line when element count >= this threshold.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_elements_to_wrap: Option<u32>,
+    /// Number of elements per wrapped line, as a repeating space-separated
+    /// pattern of positive integers (e.g. `"2 1"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_pattern: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]

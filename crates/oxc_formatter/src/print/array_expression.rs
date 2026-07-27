@@ -4,6 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::AstNode,
     formatter::{Buffer, prelude::*},
+    options::ArrayExpand,
     write,
 };
 
@@ -33,8 +34,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
             write!(f, format_dangling_comments(self.array.span).with_soft_block_indent());
         } else {
             let group_id = f.group_id("array");
+            let array_expand = f.options().array_expand;
             // A line comment after the last element (e.g. after a trailing hole)
-            // is printed right before the `]` and needs the array to break
+            // is printed right before the `]` and needs the array to break,
+            // regardless of the configured expand mode
             let has_trailing_line_comment = || {
                 self.array.elements().last().is_some_and(|last| {
                     f.comments()
@@ -43,10 +46,33 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
                         .any(|comment| comment.is_line())
                 })
             };
-            let should_expand = !self.options.is_force_flat_mode
-                && (should_break(self.array) || has_trailing_line_comment());
 
-            let elements = ArrayElementList::new(self.array.elements(), group_id);
+            let force_above_threshold = matches!(array_expand, ArrayExpand::ForceAboveThreshold(threshold) if self.array.elements().len() >= threshold as usize);
+
+            let preserve_multiline = !force_above_threshold
+                && matches!(
+                    array_expand,
+                    ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_)
+                )
+                && elements_have_leading_newline(self.array, f);
+
+            let should_expand = !self.options.is_force_flat_mode
+                && (match array_expand {
+                    ArrayExpand::Auto => should_break(self.array),
+                    ArrayExpand::Preserve => should_break(self.array) || preserve_multiline,
+                    ArrayExpand::Never => false,
+                    ArrayExpand::ForceAboveThreshold(_) => {
+                        force_above_threshold || should_break(self.array) || preserve_multiline
+                    }
+                } || has_trailing_line_comment());
+
+            // Preserve-based modes never use the fill layout: a fill-printed
+            // array would be re-detected as multiline and re-laid out one per
+            // line on the next run, making formatting non-idempotent
+            let force_one_per_line =
+                matches!(array_expand, ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_));
+            let elements = ArrayElementList::new(self.array.elements(), group_id)
+                .with_force_one_per_line(force_one_per_line);
 
             write!(
                 f,
@@ -58,6 +84,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
 
         write!(f, "]");
     }
+}
+
+/// Like the array pattern and assignment target sites, holes are skipped:
+/// the first present element anchors the check
+fn elements_have_leading_newline(
+    array: &AstNode<'_, ArrayExpression<'_>>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    array
+        .elements()
+        .iter()
+        .find(|e| !e.is_elision())
+        .is_some_and(|e| f.source_text().contains_newline_between(array.span.start, e.span().start))
 }
 
 /// Returns `true` for arrays containing at least two elements if:

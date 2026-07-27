@@ -1,7 +1,7 @@
 use super::{
     super::oxfmtrc::FormatConfig,
     to_core_options::to_core_options,
-    to_oxc_formatter::{to_jsdoc, to_sort_imports},
+    to_oxc_formatter::{to_array_wrap, to_jsdoc, to_sort_imports},
 };
 
 /// Validate the entire config (core + JS/TS-specific options)
@@ -15,6 +15,7 @@ use super::{
 /// Returns an error if any option value is invalid.
 pub fn validate(config: &FormatConfig) -> Result<(), String> {
     to_core_options(config)?;
+    to_array_wrap(config)?;
     to_sort_imports(config)?;
     to_jsdoc(config)?;
     Ok(())

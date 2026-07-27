@@ -12,6 +12,48 @@ Most options are the same as Prettier's options, but not all of them.
 In addition, some options are our own extensions.
 
 
+## arrayWrap
+
+type: `object | "preserve" | "collapse"`
+
+
+How to wrap array literals.
+
+- `"preserve"`: Keep arrays written across multiple lines expanded, one element per line;
+arrays written on a single line are collapsed when they fit within printWidth.
+- `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
+- `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
+arrays below the threshold use `"preserve"` behavior.
+- `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
+repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
+`multilineArraysLinePattern`). Applies to any array literal printed across multiple
+lines, whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior,
+or too wide for printWidth. Array literals containing holes or comments, and
+destructuring patterns, always wrap one element per line.
+
+When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
+within printWidth, regardless of how they are written in the source.
+
+- Languages: JS, TS, JSX, TSX
+
+
+### arrayWrap.linePattern
+
+type: `string`
+
+
+Number of elements per wrapped line, as a repeating space-separated
+pattern of positive integers (e.g. `"2 1"`).
+
+
+### arrayWrap.minElementsToWrap
+
+type: `integer`
+
+
+Force one-element-per-line when element count >= this threshold.
+
+
 ## arrowParens
 
 type: `"always" | "avoid"`
@@ -312,6 +354,48 @@ type: `object`
 
 
 Format options to apply for matched files.
+
+
+##### overrides[n].options.arrayWrap
+
+type: `object | "preserve" | "collapse"`
+
+
+How to wrap array literals.
+
+- `"preserve"`: Keep arrays written across multiple lines expanded, one element per line;
+arrays written on a single line are collapsed when they fit within printWidth.
+- `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
+- `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
+arrays below the threshold use `"preserve"` behavior.
+- `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
+repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
+`multilineArraysLinePattern`). Applies to any array literal printed across multiple
+lines, whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior,
+or too wide for printWidth. Array literals containing holes or comments, and
+destructuring patterns, always wrap one element per line.
+
+When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
+within printWidth, regardless of how they are written in the source.
+
+- Languages: JS, TS, JSX, TSX
+
+
+###### overrides[n].options.arrayWrap.linePattern
+
+type: `string`
+
+
+Number of elements per wrapped line, as a repeating space-separated
+pattern of positive integers (e.g. `"2 1"`).
+
+
+###### overrides[n].options.arrayWrap.minElementsToWrap
+
+type: `integer`
+
+
+Force one-element-per-line when element count >= this threshold.
 
 
 ##### overrides[n].options.arrowParens
