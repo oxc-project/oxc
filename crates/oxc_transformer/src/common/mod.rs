@@ -138,7 +138,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         {
             let expression = body.take_in(ctx).into_expression();
             let span = expression.span();
-            let mut statements = ArenaVec::new_in(ctx);
+            let mut statements = ArenaVec::with_capacity_in(
+                usize::from(var_statement.is_some()) + usize::from(let_statement.is_some()) + 1,
+                ctx,
+            );
             statements.extend(var_statement);
             statements.extend(let_statement);
             statements.push(Statement::new_return_statement(span, Some(expression), ctx));
