@@ -573,9 +573,7 @@ fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
             }
             let segment = &raw[start..i];
             if segment.as_bytes()[0].is_ascii_digit() {
-                for c in segment.chars() {
-                    out.push(c.to_ascii_lowercase());
-                }
+                out.push_str(&segment.cow_to_ascii_lowercase());
             } else {
                 out.push_str(segment);
             }
