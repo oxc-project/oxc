@@ -10,6 +10,7 @@ use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_css::CssVariant;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
+use oxc_formatter_yaml::YamlFormatOptions;
 use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -21,7 +22,7 @@ use super::options::{
 use super::{
     options::{
         to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql, to_oxc_formatter_json,
-        to_oxc_toml, to_sort_package_json,
+        to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
     },
     oxfmtrc::FormatConfig,
     support::FileKind,
@@ -76,6 +77,21 @@ pub enum FormatStrategy {
         config: Box<FormatConfig>,
         insert_final_newline: bool,
     },
+    /// For YAML files formatted by `oxc_formatter_yaml`.
+    OxcFormatterYaml {
+        path: Arc<Path>,
+        format_options: Box<YamlFormatOptions>,
+        insert_final_newline: bool,
+    },
+    /// For `.prettierrc` and friends: mirroring Prettier's yaml embed,
+    /// formatted by `oxc_formatter_json` when the whole text parses as JSON,
+    /// and by `oxc_formatter_yaml` otherwise.
+    OxcFormatterYamlRc {
+        path: Arc<Path>,
+        yaml_format_options: Box<YamlFormatOptions>,
+        json_format_options: Box<JsonFormatOptions>,
+        insert_final_newline: bool,
+    },
     /// For TOML files.
     OxfmtToml { path: Arc<Path>, toml_options: TomlFormatterOptions, insert_final_newline: bool },
     /// For non-JS files formatted by external formatter (Prettier).
@@ -106,6 +122,8 @@ impl FormatStrategy {
             | Self::OxcFormatterJsonPackageJson { path, .. }
             | Self::OxcFormatterGraphql { path, .. }
             | Self::OxcFormatterCss { path, .. }
+            | Self::OxcFormatterYaml { path, .. }
+            | Self::OxcFormatterYamlRc { path, .. }
             | Self::OxfmtToml { path, .. } => path,
             #[cfg(feature = "napi")]
             Self::ExternalFormatter { path, .. } => path,
@@ -163,6 +181,17 @@ impl FormatStrategy {
                 format_options: Box::new(to_oxc_formatter_css(&config, variant)?),
                 #[cfg(feature = "napi")]
                 config: Box::new(config),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterYaml { path } => Self::OxcFormatterYaml {
+                path,
+                format_options: Box::new(to_oxc_formatter_yaml(&config)?),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterYamlRc { path } => Self::OxcFormatterYamlRc {
+                path,
+                yaml_format_options: Box::new(to_oxc_formatter_yaml(&config)?),
+                json_format_options: Box::new(to_oxc_formatter_json(&config, JsonVariant::Json)?),
                 insert_final_newline,
             },
             FileKind::OxfmtToml { path } => {
@@ -278,6 +307,24 @@ impl SourceFormatter {
                     *format_options,
                     #[cfg(feature = "napi")]
                     &config,
+                ),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterYaml { path, format_options, insert_final_newline } => (
+                self.format_by_oxc_formatter_yaml(source_text, &path, *format_options),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterYamlRc {
+                path,
+                yaml_format_options,
+                json_format_options,
+                insert_final_newline,
+            } => (
+                self.format_by_oxc_formatter_yaml_rc(
+                    source_text,
+                    &path,
+                    *yaml_format_options,
+                    *json_format_options,
                 ),
                 insert_final_newline,
             ),
@@ -473,6 +520,42 @@ impl SourceFormatter {
             ))
         })?;
         Ok(printed.into_code())
+    }
+
+    /// Format YAML source using `oxc_formatter_yaml`.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_yaml", skip_all)]
+    fn format_by_oxc_formatter_yaml(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: YamlFormatOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        let allocator = self.allocator_pool.get();
+        let formatted = oxc_formatter_yaml::format(&allocator, source_text, format_options)?;
+        let printed = formatted.print().map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to print formatted YAML: {}\n{err}",
+                path.display()
+            ))
+        })?;
+        Ok(printed.into_code())
+    }
+
+    /// Format `.prettierrc` and friends the way Prettier's yaml embed does.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_yaml_rc", skip_all)]
+    fn format_by_oxc_formatter_yaml_rc(
+        &self,
+        source_text: &str,
+        path: &Path,
+        yaml_format_options: YamlFormatOptions,
+        json_format_options: JsonFormatOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        if let Ok(printed) =
+            self.format_by_oxc_formatter_json(source_text, path, json_format_options)
+        {
+            return Ok(printed);
+        }
+        self.format_by_oxc_formatter_yaml(source_text, path, yaml_format_options)
     }
 
     /// Format TOML file using `oxc_toml`.
