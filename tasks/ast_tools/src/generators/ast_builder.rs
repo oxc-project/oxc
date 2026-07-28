@@ -364,7 +364,7 @@ fn get_struct_params<'s>(
                 }
                 TypeDef::Vec(_) => {
                     vec_generic_count += 1;
-                    Some((format_ident!("T{vec_generic_count}"), GenericType::IntoIn))
+                    Some((format_ident!("V{vec_generic_count}"), GenericType::IntoIn))
                 }
                 _ => None,
             };
