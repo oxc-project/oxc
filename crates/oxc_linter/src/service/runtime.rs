@@ -1179,7 +1179,12 @@ impl Runtime {
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
 
         let mut module_record = ModuleRecord::new(path, &ret.module_record, &semantic);
-        module_record.path_id = self.intern_path(path);
+        // Only worth interning when the module graph is built: without a resolver nothing links
+        // these records together, so the distinct id `ModuleRecord::new` assigns is enough, and
+        // every run — including ones with no cross-module rules — skips the lock.
+        if self.resolver.is_some() {
+            module_record.path_id = self.intern_path(path);
+        }
         let module_record = Arc::new(module_record);
 
         let tokens = ret.tokens.into_boxed_slice();
