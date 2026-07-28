@@ -95,15 +95,19 @@ impl<'a> Function<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     #[inline]
-    pub fn boxed_plain_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn boxed_plain_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
-        params: FormalParameters<'a>,
-        body: FunctionBody<'a>,
+        params: T1,
+        body: T2,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self> {
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
+    {
         let builder = builder.builder();
         Function::boxed_with_scope_id_and_pure_and_pife(
             span,
@@ -116,7 +120,7 @@ impl<'a> Function<'a> {
             NONE,
             params,
             NONE,
-            Some(body),
+            Some(body.into_in(builder.allocator())),
             scope_id,
             false,
             false,
