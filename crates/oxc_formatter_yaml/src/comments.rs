@@ -308,17 +308,18 @@ pub fn write_suppressed_node(span: Span, f: &mut YamlFormatter<'_, '_>) {
 }
 
 /// Claims pending comments indented strictly deeper than `item_column` as the preceding item's end comments,
-/// printed one indent level in
+/// printed at the container's item-content column: `align_width` in from the items,
+/// the tab width for block mappings, the `- ` width (2) for block sequences
 /// (the placement effect of Prettier's `shouldOwnEndComment` + `mappingValue.endComments`, re-derived positionally).
 /// Returns the position after the last claimed comment so the caller can keep measuring gaps from it.
 pub fn flush_container_end_comments(
     item_column: u32,
+    align_width: u8,
     prev_end: u32,
     upper_bound: u32,
     f: &mut YamlFormatter<'_, '_>,
 ) -> u32 {
     let source = f.context().source_text();
-    let tab_width = f.options().indent_width.value();
     let mut prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
     loop {
         let Some(span) = f.context().comments().peek() else { return prev_end };
@@ -342,7 +343,7 @@ pub fn flush_container_end_comments(
             }
             write_single_comment(span, f);
         });
-        write!(f, align(tab_width, &inner));
+        write!(f, align(align_width, &inner));
         prev_end = span.end;
     }
 }
