@@ -61,7 +61,9 @@ Current divergences:
 - blank lines (prettier#15528): one unified rule:
   a blank line right after a node is preserved (normalized to one) if the source had one, never invented, identical for every node kind and context.
   Prettier's matrix (block collections only between documents; mappings only before end comments; unconditional insertion after block scalars) is not ported.
-  This also keeps `proseWrap: never` idempotent where Prettier is not (prettier#10776)
+  This also keeps `proseWrap: never` idempotent where Prettier is not (prettier#10776),
+  and covers the blank DOUBLED in front of stream-end comments when the last item carries a trailing comment
+  (the prettier#9130 shape, resurfaced: one source blank comes out as two)
 - folded scalar more-indented lines (prettier#16126): never re-flowed under `proseWrap: always`, their line breaks are literal per YAML folding,
   so Prettier's wrapping at the print width changes the parsed value and breaks idempotency
 - "broken but not broken" flow collections: Prettier sometimes emits a newline inside flow brackets while keeping them flat (no trailing comma, `]`/`}` on the content line).

@@ -311,6 +311,7 @@ pub fn write_suppressed_node(span: Span, f: &mut YamlFormatter<'_, '_>) {
 /// printed at the container's item-content column: `align_width` in from the items,
 /// the tab width for block mappings, the `- ` width (2) for block sequences
 /// (the placement effect of Prettier's `shouldOwnEndComment` + `mappingValue.endComments`, re-derived positionally).
+/// Its direct-block-scalar exclusion is the caller's gate: `ItemTail` in `print/block_collection.rs`.
 /// Returns the position after the last claimed comment so the caller can keep measuring gaps from it.
 pub fn flush_container_end_comments(
     item_column: u32,

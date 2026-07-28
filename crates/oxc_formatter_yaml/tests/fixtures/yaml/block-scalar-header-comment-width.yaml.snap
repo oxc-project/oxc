@@ -1,0 +1,39 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE (AGENTS.md "trailing comment width"): a same-line trailing comment
+# is a line_suffix and never counts toward the fits measurement, so the header
+# stays on the key line; Prettier measures it inline and breaks the pair
+# (`run:` / `| # ...`) once the comment overflows the print width.
+run: | # this trailing comment is long enough to push the header line far beyond every print width
+  set -euo pipefail
+short: | # fits
+  ok
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE (AGENTS.md "trailing comment width"): a same-line trailing comment
+# is a line_suffix and never counts toward the fits measurement, so the header
+# stays on the key line; Prettier measures it inline and breaks the pair
+# (`run:` / `| # ...`) once the comment overflows the print width.
+run: | # this trailing comment is long enough to push the header line far beyond every print width
+  set -euo pipefail
+short: | # fits
+  ok
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE (AGENTS.md "trailing comment width"): a same-line trailing comment
+# is a line_suffix and never counts toward the fits measurement, so the header
+# stays on the key line; Prettier measures it inline and breaks the pair
+# (`run:` / `| # ...`) once the comment overflows the print width.
+run: | # this trailing comment is long enough to push the header line far beyond every print width
+  set -euo pipefail
+short: | # fits
+  ok
+
+===================== End =====================

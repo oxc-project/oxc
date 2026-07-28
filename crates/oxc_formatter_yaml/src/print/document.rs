@@ -73,7 +73,10 @@ fn document_end_comment_anchor(document: &Document<'_>, f: &YamlFormatter<'_, '_
 /// or the end of its body (adjusted for a block scalar tail, whose span consumes the trailing line breaks).
 fn document_gap_anchor(document: &Document<'_>, f: &YamlFormatter<'_, '_>) -> u32 {
     document.document_end_marker.map_or_else(
-        || item_gap_anchor(document.body.content.as_deref(), document.body.span.end, f),
+        || {
+            let block = document.body.content.as_deref().and_then(last_descendant_block_scalar);
+            item_gap_anchor(block, document.body.span.end, f)
+        },
         |marker| marker.end,
     )
 }
