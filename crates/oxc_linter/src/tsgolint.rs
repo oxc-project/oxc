@@ -1406,7 +1406,6 @@ mod test {
 
         assert_eq!(message.error.message, "Some description");
         assert_eq!(message.error.severity, Severity::Warning);
-        assert_eq!(message.span, Span::new(0, 10));
         assert_eq!(
             message.error.code,
             OxcCode { scope: Some("typescript".into()), number: Some("some_rule".into()) }

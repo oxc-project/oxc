@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use tower_lsp_server::ls_types::{
     self, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
     NumberOrString, Position, Range, Uri,
@@ -118,8 +118,9 @@ pub fn message_to_lsp_diagnostic(
         )
     };
 
-    let start_position = offset_to_position(message.span.start, source_text);
-    let end_position = offset_to_position(message.span.end, source_text);
+    let span = message.span();
+    let start_position = offset_to_position(span.start, source_text);
+    let end_position = offset_to_position(span.end, source_text);
     let range = Range::new(start_position, end_position);
 
     let code = message.error.code.to_string();

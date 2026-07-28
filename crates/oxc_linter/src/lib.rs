@@ -142,7 +142,6 @@ fn cmp_diagnostics_for_runtime_optimization_assertion(
         .then_with(|| left.error.severity.cmp(&right.error.severity))
         .then_with(|| left.error.code.cmp(&right.error.code))
         .then_with(|| left.error.url.cmp(&right.error.url))
-        .then_with(|| left.span.cmp(&right.span))
         .then_with(|| left.fixes.cmp_fix_sequence(&right.fixes))
 }
 

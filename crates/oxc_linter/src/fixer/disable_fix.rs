@@ -1,4 +1,4 @@
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{Fix, FixKind, Message, oxc_code_short_canonical_name};
 use std::borrow::Cow;
@@ -12,17 +12,18 @@ enum DisableDirective {
 
 impl Message {
     pub(crate) fn add_ignore_fix(&mut self, section_offset: u32, section_source_text: &str) {
+        let span = self.span();
         // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
         // and attaching a ignore comment would not ignore the error.
         // This is because the ignore comment would need to be placed before the error offset, which is not possible.
-        if self.span.start == 0 && self.span.end == 0 {
+        if span.start == 0 && span.end == 0 {
             return;
         }
 
         let Some(rule_name) = oxc_code_short_canonical_name(&self.error.code) else { return };
 
         self.fixes.extend_fix(vec![
-            disable_for_this_line(&rule_name, self.span.start, section_offset, section_source_text),
+            disable_for_this_line(&rule_name, span.start, section_offset, section_source_text),
             disable_for_this_section(&rule_name, section_offset, section_source_text),
         ]);
     }

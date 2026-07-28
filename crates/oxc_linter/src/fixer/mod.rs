@@ -260,27 +260,16 @@ pub struct FixResult<'a> {
 pub struct Message {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
-    pub span: Span,
 }
 
 impl Message {
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
-        let span = error
-            .labels
-            .iter()
-            .find(|span| span.primary())
-            .or_else(|| error.labels.first())
-            .map(|span| Span::new(span.offset(), span.offset() + span.len()))
-            .unwrap_or_default();
-
-        Self { error, fixes, span }
+        Self { error, fixes }
     }
 
     /// move the offset of all spans to the right
     pub fn move_offset(&mut self, offset: u32) -> &mut Self {
         debug_assert!(offset != 0);
-
-        self.span = self.span.move_right(offset);
 
         for label in &mut self.error.labels {
             label.set_span_offset(label.offset().saturating_add(offset));
@@ -312,7 +301,13 @@ impl From<Message> for OxcDiagnostic {
 impl GetSpan for Message {
     #[inline]
     fn span(&self) -> Span {
-        self.span
+        self.error
+            .labels
+            .iter()
+            .find(|span| span.primary())
+            .or_else(|| self.error.labels.first())
+            .map(|span| Span::new(span.offset(), span.offset() + span.len()))
+            .unwrap_or_default()
     }
 }
 
