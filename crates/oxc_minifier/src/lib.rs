@@ -74,7 +74,8 @@ use crate::state::CompressionMode;
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 pub use property::{
     InvalidManglePropertyCacheTarget, ManglePropertiesOptions, ManglePropertyCache,
-    PropertyMangler, PropertyMapping, is_valid_property_mangle_cache_target,
+    PropertyMangleCollection, PropertyMangler, PropertyMapping,
+    is_valid_property_mangle_cache_target,
 };
 
 pub(crate) use crate::generated::traverse::Traverse;

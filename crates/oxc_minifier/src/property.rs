@@ -183,6 +183,22 @@ struct PropertyCollectState {
     occupied: FxHashSet<CompactStr>,
 }
 
+/// Property candidates and occupied names collected from one program.
+///
+/// This opaque value lets parallel callers collect with a shared options reference, then merge
+/// the results into one [`PropertyMangler`] without cloning caches or reserved-name sets per
+/// program.
+#[derive(Debug)]
+pub struct PropertyMangleCollection(PropertyCollectState);
+
+impl PropertyMangleCollection {
+    /// Collect property candidates from one program without mutating its AST.
+    pub fn from_program(options: &ManglePropertiesOptions, program: &Program<'_>) -> Self {
+        let key_annotated = key_annotated_spans(program);
+        Self(collect(options, program, &key_annotated))
+    }
+}
+
 struct PropertyCollector<'o> {
     options: &'o ManglePropertiesOptions,
     key_annotated: &'o FxHashSet<u32>,
@@ -758,25 +774,20 @@ impl PropertyMangler {
 
     /// Collect rewriteable occurrences and occupied spellings without mutating the AST.
     pub fn collect(&mut self, program: &Program<'_>) {
-        let key_annotated = key_annotated_spans(program);
-        let state = collect(&self.options, program, &key_annotated);
-        for (name, frequency) in state.frequencies {
-            let total = self.state.frequencies.entry(name).or_default();
-            *total = total.saturating_add(frequency);
-        }
-        self.state.occupied.extend(state.occupied);
+        let collection = PropertyMangleCollection::from_program(&self.options, program);
+        self.merge_collected(collection);
     }
 
-    /// Merge candidates collected by another mangler configured with equivalent options.
+    /// Merge candidates collected independently with equivalent options.
     ///
     /// This allows callers to collect programs in parallel, merge the results, and assign one
-    /// mapping. The other mangler's assigned mapping and cache, if any, are ignored.
-    pub fn merge_collected(&mut self, other: Self) {
-        for (name, frequency) in other.state.frequencies {
+    /// mapping.
+    pub fn merge_collected(&mut self, collection: PropertyMangleCollection) {
+        for (name, frequency) in collection.0.frequencies {
             let total = self.state.frequencies.entry(name).or_default();
             *total = total.saturating_add(frequency);
         }
-        self.state.occupied.extend(other.state.occupied);
+        self.state.occupied.extend(collection.0.occupied);
     }
 
     /// Assign deterministic names by descending occurrence frequency and lexical tie-break.

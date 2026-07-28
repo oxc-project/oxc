@@ -3,7 +3,7 @@ use oxc_ast_visit::VisitMut;
 use oxc_codegen::Codegen;
 use oxc_minifier::{
     CompressOptions, MangleOptions, ManglePropertiesOptions, ManglePropertyCache, Minifier,
-    MinifierOptions, PropertyMangler,
+    MinifierOptions, PropertyMangleCollection, PropertyMangler,
 };
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
@@ -469,12 +469,11 @@ fn independently_collected_programs_can_be_merged_before_assignment() {
             .parse()
             .program;
 
-    let mut collected_a = PropertyMangler::new(options("^_"));
-    collected_a.collect(&program_a);
-    let mut collected_b = PropertyMangler::new(options("^_"));
-    collected_b.collect(&program_b);
+    let options = options("^_");
+    let collected_a = PropertyMangleCollection::from_program(&options, &program_a);
+    let collected_b = PropertyMangleCollection::from_program(&options, &program_b);
 
-    let mut mangler = PropertyMangler::new(options("^_"));
+    let mut mangler = PropertyMangler::new(options);
     mangler.merge_collected(collected_a);
     mangler.merge_collected(collected_b);
     mangler.assign();
