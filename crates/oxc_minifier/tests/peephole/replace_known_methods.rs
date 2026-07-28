@@ -987,7 +987,7 @@ fn test_to_string() {
 
 #[test]
 fn test_fold_pow() {
-    test("v = Math.pow(2, 3)", "v = 2 ** 3");
+    test("v = Math.pow(2, 3)", "v = 8");
     test("v = Math.pow(a, 3)", "v = a ** 3");
     test("v = Math.pow(2, b)", "v = 2 ** b");
     test("v = Math.pow(a, b)", "v = a ** +b");
