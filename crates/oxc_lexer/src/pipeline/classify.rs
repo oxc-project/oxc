@@ -8,9 +8,9 @@ use crate::opmap::{KW_KIND_BASE, PUNCT1_KIND_UNKNOWN};
 use crate::opmap::{PUNCT1, PUNCT1_NKNOWN};
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use crate::tables::{PH_A, PH_B, PH_T0, PH_T1};
-use crate::tables::{Tables, is_digit, is_id_start, is_op_char, is_word};
+use crate::tables::{Tables, is_id_start};
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
-use crate::tables::{is_kw_init, is_kw_init_ts, is_ws};
+use crate::tables::{is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws};
 
 use super::bitmap::{bm_clear_range, bm_next0, bm_prev1, bm_set1};
 use super::find::scan_ident_esc;
@@ -58,6 +58,12 @@ pub(super) unsafe fn classify(
     let mut cs: u64 = 0;
     let mut i = 0usize;
     let mut b = 0usize;
+    // Process ceil(n/64) blocks. When n is not a multiple of 64 the final
+    // block overreads up to 63 bytes into the caller-guaranteed zeroed PAD
+    // and is masked below — this replaces the byte-at-a-time scalar tail,
+    // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
+    // near 63) and dominated small-file lexing.
+    let nb_ceil = n.div_ceil(64);
     let v_pha = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_A.as_ptr() as *const __m128i));
     let v_phb = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_B.as_ptr() as *const __m128i));
     let v_pht0 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T0.as_ptr() as *const __m128i));
@@ -78,7 +84,7 @@ pub(super) unsafe fn classify(
     let v_ones = _mm256_set1_epi8(0xffu8 as i8);
     let v_zero = _mm256_setzero_si256();
     let v_x0f = _mm256_set1_epi8(0x0f);
-    while i + 64 <= n {
+    while b < nb_ceil {
         let v0 = load256(src, i);
         let v1 = load256(src, i + 32);
         let hn0 = _mm256_and_si256(_mm256_srli_epi16::<4>(v0), v_x0f);
@@ -132,61 +138,25 @@ pub(super) unsafe fn classify(
         i += 64;
         b += 1;
     }
-    if i < n {
-        let mut w: u64 = 0;
-        let mut stw: u64 = 0;
-        let mut kwi: u64 = 0;
-        let mut opw: u64 = 0;
-        let mut dgw: u64 = 0;
-        let mut dtw: u64 = 0;
-        let mut msw: u64 = 0;
-        let mut prev_word = cw & 1;
-        let mut prev_ws = cs & 1;
-        let tail = n - i;
-        for kk in 0..tail {
-            let c = *src.add(i + kk);
-            let isw = is_word(c);
-            let isws = crate::tables::is_ws(c);
-            if isw {
-                w |= 1u64 << kk;
-            }
-            if if ts { crate::tables::is_kw_init_ts(c) } else { crate::tables::is_kw_init(c) } {
-                kwi |= 1u64 << kk;
-            }
-            if is_op_char(c) {
-                opw |= 1u64 << kk;
-            }
-            if is_digit(c) {
-                dgw |= 1u64 << kk;
-            }
-            if c == b'.' {
-                dtw |= 1u64 << kk;
-            }
-            if c == b'#' || c == b'\\' || c >= 0x80 {
-                msw |= 1u64 << kk;
-            }
-            let start = (isws && prev_ws == 0) || (isw && prev_word == 0) || (!isws && !isw);
-            if start {
-                stw |= 1u64 << kk;
-            }
-            let kd = if isws {
-                WS
-            } else if isw {
-                if is_digit(c) { NUM } else { IDENT }
-            } else {
-                t.op.punct1_ord[c as usize]
-            };
-            *kind.add(i + kk) = kd;
-            prev_word = isw as u64;
-            prev_ws = isws as u64;
-        }
-        *word.add(b) = w;
-        *st.add(b) = stw;
-        *kwinit.add(b) = kwi;
-        *opch.add(b) = opw;
-        *digit.add(b) = dgw;
-        *dot.add(b) = dtw;
-        *misc.add(b) = msw;
+    // Mask the overread positions [n, ceil) out of the last block's bitmaps.
+    // Zero PAD bytes classify as `st`=1 (non-word, non-ws => token start),
+    // which would otherwise mint spurious tokens past `n` in `compress`; the
+    // other six bitmaps are already 0 for a zero byte, but masking all seven
+    // makes the last word bit-identical to the old scalar tail's output (real
+    // bits [0, rem), zeros above) regardless of LUT contents. `kind` past `n`
+    // is never read — `compress` only visits masked `st` starts — so it needs
+    // no fixup.
+    let rem = n & 63;
+    if rem != 0 {
+        let last = nb_ceil - 1;
+        let m = (1u64 << rem) - 1;
+        *word.add(last) &= m;
+        *st.add(last) &= m;
+        *kwinit.add(last) &= m;
+        *opch.add(last) &= m;
+        *digit.add(last) &= m;
+        *dot.add(last) &= m;
+        *misc.add(last) &= m;
     }
 }
 
