@@ -14,5 +14,8 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 mod isolated_declaration;
 pub use isolated_declaration::*;
 
+mod react_compiler;
+pub use react_compiler::*;
+
 mod transformer;
 pub use transformer::*;

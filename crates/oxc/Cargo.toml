@@ -36,6 +36,7 @@ oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
 oxc_parser = { workspace = true, features = [] }
+oxc_react_compiler = { workspace = true, optional = true }
 oxc_regular_expression = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true }
@@ -61,7 +62,10 @@ full = [
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer", "oxc_transformer_plugins"]
 # Experimental React Compiler pass; off by default (pulls the heavy `oxc_react_compiler` dep).
-react_compiler = ["transformer", "oxc_transformer/react_compiler"]
+# `dep:oxc_react_compiler` backs the `oxc::react_compiler` re-export, without which
+# `TransformOptions::react_compiler` would be a field whose `PluginOptions` type callers
+# cannot name.
+react_compiler = ["transformer", "oxc_transformer/react_compiler", "dep:oxc_react_compiler"]
 minifier = ["oxc_mangler", "oxc_minifier"]
 codegen = ["oxc_codegen", "oxc_codegen/sourcemap"]
 mangler = ["oxc_mangler"]
