@@ -2,8 +2,6 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
 use crate::TraverseCtx;
-use crate::is_terminated::IsTerminated;
-use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
 use super::PeepholeOptimizations;
@@ -93,7 +91,6 @@ impl<'a> PeepholeOptimizations {
                     let new_test = unary_expr.argument.take_in(ctx);
                     ctx.replace_expression(&mut if_stmt.test, new_test);
                     std::mem::swap(&mut if_stmt.consequent, alternate);
-                    Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
                 }
                 // "if (!a) {} else if (b) {}" => "if (!a) {} if (b) {}" is handled by minimize_statements
                 // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
@@ -119,24 +116,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
         None
-    }
-
-    /// Wrap to avoid ambiguous else.
-    /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::IfStatement(if2) = &mut if_stmt.consequent
-            && if2.consequent.is_terminated()
-            && if2.alternate.is_some()
-        {
-            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-            let new_consequent = Statement::new_block_statement_with_scope_id(
-                if_stmt.consequent.span(),
-                [if_stmt.consequent.take_in(ctx)],
-                scope_id,
-                ctx,
-            );
-            ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
-        }
     }
 
     fn is_statement_empty(stmt: &Statement<'a>) -> bool {
