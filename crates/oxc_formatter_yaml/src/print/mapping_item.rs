@@ -204,42 +204,36 @@ pub fn write_mapping_item<'a>(
         return;
     }
 
-    // Separator between `:` and the value
+    // Separator between `:` and the value.
+    // A props-carrying block collection is NOT pinned:
+    // like a block scalar it takes the width-based routing below
+    // (Prettier hangs `key:\n  !!tag &a` under an overflowing key too).
     let block_collection_without_props =
         matches!(value_node.content, Content::Mapping(_) | Content::Sequence(_))
             && value_node.props.anchor.is_none()
             && value_node.props.tag.is_none();
-    let hardline_separator = block_collection_without_props
-        || has_pending_comment_before(value_start, f)
-        || (in_flow == FlowParent::No && key_trailing_same_line && is_inline(Some(value_node)));
+    let colon = if space_before_colon { " :" } else { ":" };
+    let hardline_separator =
+        block_collection_without_props || has_pending_comment_before(value_start, f);
 
-    if hardline_separator || !is_inline(Some(value_node)) {
-        // The separator is pinned:
-        // hardline (block collection / comments), or a space (block scalar & friends,
-        // whose hardlines Prettier's `conditionalGroup` keeps from re-flowing the key line).
+    if hardline_separator {
+        // The separator is pinned to a hardline (block collection / comments)
         write_key(item, f);
-        let implicit_value = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
-            if space_before_colon {
-                write!(f, space());
-            }
-            write!(f, ":");
-            if hardline_separator {
-                // Key's same-line comment must be emitted before the line break
-                write_trailing_same_line_comment(key_span_end, b":", f);
-                write!(f, hard_line_break());
-            } else {
-                write!(f, space());
-            }
+        write!(f, colon);
+        // Key's same-line comment must be emitted before the line break
+        write_trailing_same_line_comment(key_span_end, b":", f);
+        let value = format_with(|f| {
             write_node_or_suppressed(value_node, f);
         });
-        write!(f, align(tab_width, &implicit_value));
+        write!(f, align(tab_width, &format_args!(hard_line_break(), value)));
         return;
     }
 
     // Width-dependent layout via `best_fitting!`.
     // Variants are measured flat with early-exit at hardlines, so:
     // - variant 1 fits = the key + `: ` + the value's FIRST line fit
-    //   (a multiline value's own hardlines don't re-flow the key line, Prettier's `conditionalGroup` boundary)
+    //   (a multiline value's own hardlines don't re-flow the key line, Prettier's `conditionalGroup` boundary;
+    //   for a block scalar that first line is just the `| ` / `>` header, sans any line-suffix trailing comment)
     // - variant 2 fits = the key fits (Prettier's groupedKey break check)
     // Content is memoized so the comment cursor advances only once.
     let key = format_with(|f: &mut YamlFormatter<'_, 'a>| write_key(item, f)).memoized();
@@ -254,7 +248,6 @@ pub fn write_mapping_item<'a>(
         write!(f, group(&format_with(|f| write_node(value_node, f))));
     })
     .memoized();
-    let colon = if space_before_colon { " :" } else { ":" };
 
     // A definitely-single-line key never flips to the explicit form, no matter how long
     if key_absolutely_single_line && !key_trailing_same_line {

@@ -226,20 +226,28 @@ fn pending_same_line_comment_over(
 /// (`,` between flow entries, `:` after an implicit key), so syntax knowledge stays at the print site.
 /// Any other content means the comment trails a LATER node on the same line
 /// (`[a, b, c # comment` must not attach the comment to `a`).
-pub fn write_trailing_same_line_comment<'a>(
+pub fn write_trailing_same_line_comment(
     prev_end: u32,
     gap_punctuation: &[u8],
-    f: &mut YamlFormatter<'_, 'a>,
+    f: &mut YamlFormatter<'_, '_>,
 ) {
     let Some(comment) = pending_same_line_comment_over(prev_end, gap_punctuation, f) else {
         return;
     };
     f.context().comments().take_before(comment.span.end);
+    write_comment_line_suffix(comment.span, f);
+    write!(f, expand_parent());
+}
+
+/// The ` # ...` emission of a same-line trailing comment: a `line_suffix`,
+/// so it never counts toward the `fits` measurement (see the "trailing comment width" divergence).
+/// Gating and consuming are the caller's.
+pub fn write_comment_line_suffix<'a>(span: Span, f: &mut YamlFormatter<'_, 'a>) {
     let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
         write!(f, space());
-        write_single_comment(comment.span, f);
+        write_single_comment(span, f);
     });
-    write!(f, [line_suffix(&content), expand_parent()]);
+    write!(f, line_suffix(&content));
 }
 
 /// Returns `true` if `span` is an ignore marker (`# oxfmt-ignore` / `# prettier-ignore`).

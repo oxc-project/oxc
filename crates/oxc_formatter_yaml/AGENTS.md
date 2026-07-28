@@ -72,9 +72,9 @@ Current divergences:
 - comment position (spec-example-6-1): a comment stays at its syntactic position; Prettier hoists a comment after `[` onto the `key:` line
 - over-indented comments (`key: value` followed by a deeper-indented comment): the value's layout never changes for a comment;
   Prettier breaks the pair onto two lines (`key:\n  value`) — comment indentation alone must not rewrite the preceding node
-- trailing comment width (`key: | # ...`): a same-line trailing comment is a `line_suffix` and never counts toward the `fits` measurement
-  the same treatment Prettier itself gives JS/JSON line comments and yaml flow collections.
-  Prettier's yaml printer measures the one after a block scalar header inline and breaks the key line (`key:\n  | # ...`); that break is not ported
+- trailing comment width (`key: | # ...`): a same-line trailing comment never counts toward the `fits` measurement
+  the same treatment Prettier itself gives JS/JSON line comments and yaml flow collections, but not for block scalar header
+  The KEY does count: a long key overflowing on `key: |` alone breaks the pair exactly like Prettier
 
 ## Verification
 

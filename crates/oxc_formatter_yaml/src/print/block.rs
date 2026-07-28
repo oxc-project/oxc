@@ -4,14 +4,14 @@ use oxc_formatter_core::{
     Buffer,
     builders::{
         align, dedent, dedent_to_root, exact_line_breaks, hard_line_break, literal_line_break,
-        mark_as_root, soft_line_break_or_space, space, text,
+        mark_as_root, soft_line_break_or_space, text,
     },
     write,
 };
 use oxc_yaml_parser::ast::{BlockScalar, Chomping, Content, MappingItem, Node, Root};
 
 use crate::{
-    comments::write_single_comment,
+    comments::write_comment_line_suffix,
     options::ProseWrap,
     print::{
         YamlFormatter, format_with,
@@ -84,13 +84,14 @@ pub fn write_block_scalar<'a>(
     // The parser guarantees it is the ONLY comment within the scalar's span
     // (see the guarantee on `BlockScalar`), so nothing else needs draining here;
     // trailing-ness (`own_line_column: None`) pins it to the header line.
+    // No `expand_parent()`: the scalar's leading hardline already breaks the container,
+    // and expansion must not leak into the enclosing `best_fitting` measurement.
     if let Some(comment) = f.context().comments().peek()
         && comment.span.end <= block.content_start
         && comment.own_line_column.is_none()
     {
         f.context().comments().take_before(comment.span.end);
-        write!(f, space());
-        write_single_comment(comment.span, f);
+        write_comment_line_suffix(comment.span, f);
     }
 
     // Words fold to the arena lifetime: borrowed words already slice the arena-backed source,
