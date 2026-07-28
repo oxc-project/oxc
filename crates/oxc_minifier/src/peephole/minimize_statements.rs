@@ -32,7 +32,7 @@ fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
 
 bitflags! {
     #[derive(Debug, Clone)]
-    pub struct ParentType: u8 {
+    pub struct JumpType: u8 {
         const Return = 1;
         const Continue = 1 << 1;
         const Break = 1 << 2;
@@ -40,61 +40,61 @@ bitflags! {
 }
 
 impl<'a> PeepholeOptimizations {
-    pub fn get_parent_type(ctx: &mut TraverseCtx<'a>) -> ParentType {
+    pub fn get_parent_type(ctx: &TraverseCtx<'a>) -> JumpType {
         if ctx.parent().is_function_body() {
-            return ParentType::Return;
+            return JumpType::Return;
         }
 
         match ctx.ancestors().nth(1) {
             Some(Ancestor::DoWhileStatementBody(do_while)) => {
                 if do_while.test().get_side_free_boolean_value(ctx) == Some(false) {
-                    return ParentType::Continue | ParentType::Break;
+                    return JumpType::Continue | JumpType::Break;
                 }
-                ParentType::Continue
+                JumpType::Continue
             }
             Some(
                 Ancestor::ForStatementBody(_)
                 | Ancestor::ForInStatementBody(_)
                 | Ancestor::ForOfStatementBody(_)
                 | Ancestor::WhileStatementBody(_),
-            ) => ParentType::Continue,
-            _ => ParentType::empty(),
+            ) => JumpType::Continue,
+            _ => JumpType::empty(),
         }
     }
 
     pub fn try_minify_statements(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::IfStatement(if_stmt) => {
-                Self::handle_stmts(&mut if_stmt.consequent, ParentType::empty(), ctx);
+                Self::handle_stmts(&mut if_stmt.consequent, JumpType::empty(), ctx);
                 if let Some(alternate) = &mut if_stmt.alternate {
-                    Self::handle_stmts(alternate, ParentType::empty(), ctx);
+                    Self::handle_stmts(alternate, JumpType::empty(), ctx);
                 }
             }
             Statement::ForStatement(for_stmt) => {
-                Self::handle_stmts(&mut for_stmt.body, ParentType::Continue, ctx);
+                Self::handle_stmts(&mut for_stmt.body, JumpType::Continue, ctx);
             }
             Statement::ForInStatement(for_in_stmt) => {
-                Self::handle_stmts(&mut for_in_stmt.body, ParentType::Continue, ctx);
+                Self::handle_stmts(&mut for_in_stmt.body, JumpType::Continue, ctx);
             }
             Statement::ForOfStatement(for_of_stmt) => {
-                Self::handle_stmts(&mut for_of_stmt.body, ParentType::Continue, ctx);
+                Self::handle_stmts(&mut for_of_stmt.body, JumpType::Continue, ctx);
             }
             Statement::DoWhileStatement(do_while) => {
                 let parent_type = if do_while.test.get_side_free_boolean_value(ctx) == Some(false) {
-                    ParentType::Continue | ParentType::Break
+                    JumpType::Continue | JumpType::Break
                 } else {
-                    ParentType::Continue
+                    JumpType::Continue
                 };
                 Self::handle_stmts(&mut do_while.body, parent_type, ctx);
             }
             Statement::LabeledStatement(label_stmt) => {
-                Self::handle_stmts(&mut label_stmt.body, ParentType::Continue, ctx);
+                Self::handle_stmts(&mut label_stmt.body, JumpType::Continue, ctx);
             }
             _ => {}
         }
     }
 
-    fn handle_stmts(stmt: &mut Statement<'a>, parent_type: ParentType, ctx: &mut TraverseCtx<'a>) {
+    fn handle_stmts(stmt: &mut Statement<'a>, parent_type: JumpType, ctx: &mut TraverseCtx<'a>) {
         if matches!(
             stmt,
             Statement::IfStatement(_)
@@ -140,7 +140,7 @@ impl<'a> PeepholeOptimizations {
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        parent_type: ParentType,
+        parent_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut old_stmts = stmts.take_in(ctx);
@@ -438,7 +438,7 @@ impl<'a> PeepholeOptimizations {
         i: usize,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        parent_type: ParentType,
+        parent_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         match stmt {
@@ -904,7 +904,7 @@ impl<'a> PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        parent_type: ParentType,
+        parent_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
@@ -1343,7 +1343,7 @@ impl<'a> PeepholeOptimizations {
     fn handle_labeled_statement(
         mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        parent_type: ParentType,
+        parent_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
@@ -2165,19 +2165,19 @@ impl<'a> PeepholeOptimizations {
     /// safely removed:
     /// - Unlabeled `continue` statements that terminate a loop body
     /// - Bare `return` statements that terminate a function body
-    fn can_remove_termination_statement(stmt: &Statement<'a>, parent_type: ParentType) -> bool {
+    fn can_remove_termination_statement(stmt: &Statement<'a>, parent_type: JumpType) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                parent_type.contains(ParentType::Continue)
+                parent_type.contains(JumpType::Continue)
             }
             // unlabeled `break;` that terminates a `do...while` body if test is false.
             Statement::BreakStatement(stmt) if stmt.label.is_none() => {
-                parent_type.contains(ParentType::Break)
+                parent_type.contains(JumpType::Break)
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
-                parent_type.contains(ParentType::Return)
+                parent_type.contains(JumpType::Return)
             }
             _ => false,
         }
