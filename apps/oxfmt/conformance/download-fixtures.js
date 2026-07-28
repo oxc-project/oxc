@@ -1,4 +1,4 @@
-// oxlint-disable no-console
+// oxlint-disable no-console, no-await-in-loop
 
 import { exec } from "node:child_process";
 import { rmSync } from "node:fs";
@@ -61,13 +61,27 @@ const sources = [
   },
 ];
 
-await Promise.all(
-  sources.map(async ({ name, repo, version }) => {
-    const dest = join(externalsDir, name);
-    rmSync(dest, { recursive: true, force: true });
+// Group sources by repository and download each group sequentially.
+// Parallel `degit` calls for the same repo+ref share a single tarball cache path;
+// one process sees the other's partially written tarball, fails to extract it,
+// and silently falls back to `git clone` which ignores the subdirectory,
+// dumping the entire repository into the fixture directory.
+const sourcesByRepo = new Map();
+for (const source of sources) {
+  const repoKey = source.repo.split("/").slice(0, 2).join("/");
+  if (!sourcesByRepo.has(repoKey)) sourcesByRepo.set(repoKey, []);
+  sourcesByRepo.get(repoKey).push(source);
+}
 
-    console.log(`Downloading ${name}@${version} fixtures...`);
-    await execAsync(`pnpm exec degit ${repo}#${version} "${dest}"`, { cwd });
-    console.log(`Done: ${name}@${version}`);
+await Promise.all(
+  [...sourcesByRepo.values()].map(async (group) => {
+    for (const { name, repo, version } of group) {
+      const dest = join(externalsDir, name);
+      rmSync(dest, { recursive: true, force: true });
+
+      console.log(`Downloading ${name}@${version} fixtures...`);
+      await execAsync(`pnpm exec degit ${repo}#${version} "${dest}"`, { cwd });
+      console.log(`Done: ${name}@${version}`);
+    }
   }),
 );
