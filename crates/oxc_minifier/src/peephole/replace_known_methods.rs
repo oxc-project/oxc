@@ -8,10 +8,7 @@ use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
-    side_effects::MayHaveSideEffects,
-};
-use oxc_regular_expression::{
-    RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
+    side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
 
@@ -447,33 +444,16 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::RegExpLiteral(regex) => match name {
                 "source" => {
-                    const ES2015_UNSUPPORTED_FLAGS: RegExpFlags = RegExpFlags::G
-                        .union(RegExpFlags::I)
-                        .union(RegExpFlags::M)
-                        .union(RegExpFlags::S)
-                        .union(RegExpFlags::Y)
-                        .complement();
-                    const ES2015_UNSUPPORTED_PATTERNS: RegexUnsupportedPatterns =
-                        RegexUnsupportedPatterns {
-                            look_behind_assertions: true,
-                            named_capture_groups: true,
-                            duplicate_named_capture_groups: true,
-                            unicode_property_escapes: true,
-                            pattern_modifiers: true,
-                        };
-
                     if regex.regex.pattern.pattern.is_none()
                         && let Ok(pattern) = regex.parse_pattern(ctx.allocator())
                     {
                         regex.regex.pattern.pattern = Some(ArenaBox::new_in(pattern, ctx));
                     }
                     if let Some(pattern) = &regex.regex.pattern.pattern
-                        // for now, only replace regexes that are supported by ES2015 to preserve the syntax error
-                        // we can check whether each feature is supported for the target range to improve this
-                        && regex.regex.flags.intersection(ES2015_UNSUPPORTED_FLAGS).is_empty()
-                        && !has_unsupported_regular_expression_pattern(
+                        && is_regexp_syntax_supported(
                             pattern,
-                            &ES2015_UNSUPPORTED_PATTERNS,
+                            regex.regex.flags.to_inline_string().as_str(),
+                            ctx,
                         )
                     {
                         Some(Expression::new_string_literal(
