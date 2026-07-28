@@ -274,27 +274,28 @@ impl NoCycle {
         }
 
         if self.ignore_types {
-            let import_entries = parent
+            // Equivalent to collecting both entry lists and testing `!is_empty() && all(is_type)`,
+            // without materializing either `Vec`. This runs once per graph edge considered.
+            let mut types = parent
                 .import_entries
                 .iter()
                 .filter(|entry| entry.module_request.name() == key)
-                .collect::<Vec<_>>();
+                .map(|entry| entry.is_type)
+                .chain(
+                    parent
+                        .indirect_export_entries
+                        .iter()
+                        .filter(|entry| {
+                            entry
+                                .module_request
+                                .as_ref()
+                                .is_some_and(|module_request| module_request.name() == key)
+                        })
+                        .map(|entry| entry.is_type),
+                )
+                .peekable();
 
-            let indirect_export_entries = parent
-                .indirect_export_entries
-                .iter()
-                .filter(|entry| {
-                    entry
-                        .module_request
-                        .as_ref()
-                        .is_some_and(|module_request| module_request.name() == key)
-                })
-                .collect::<Vec<_>>();
-
-            if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
-                && import_entries.iter().all(|entry| entry.is_type)
-                && indirect_export_entries.iter().all(|entry| entry.is_type)
-            {
+            if types.peek().is_some() && types.all(|is_type| is_type) {
                 return false;
             }
         }
