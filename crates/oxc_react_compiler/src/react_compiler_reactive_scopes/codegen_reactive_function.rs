@@ -495,7 +495,7 @@ fn ox_convert_parameters<'a>(
     params: &[ParamPattern],
 ) -> Result<oxc_allocator::Box<'a, oxc::FormalParameters<'a>>, OxcDiagnostic> {
     let mut items: Vec<oxc::FormalParameter<'a>> = Vec::new();
-    let mut rest: Option<oxc::FormalParameterRest<'a>> = None;
+    let mut rest: Option<oxc_allocator::Box<'a, oxc::FormalParameterRest<'a>>> = None;
     for param in params {
         match param {
             ParamPattern::Place(place) => {
@@ -516,7 +516,7 @@ fn ox_convert_parameters<'a>(
             ParamPattern::Spread(spread) => {
                 let binding = ox_binding_for_identifier(cx, spread.place.identifier)?;
                 let rest_elem = oxc_ast::ast::BindingRestElement::new(SPAN, binding, &cx.ast);
-                rest = Some(oxc_ast::ast::FormalParameterRest::new(
+                rest = Some(oxc_ast::ast::FormalParameterRest::boxed(
                     SPAN,
                     [],
                     rest_elem,
@@ -648,9 +648,9 @@ fn ox_codegen_block_no_reset<'a>(
 fn ox_codegen_block_statement<'a>(
     cx: &mut OxcContext<'a, '_>,
     block: &ReactiveBlock<'a>,
-) -> Result<oxc::BlockStatement<'a>, OxcDiagnostic> {
+) -> Result<oxc_allocator::Box<'a, oxc::BlockStatement<'a>>, OxcDiagnostic> {
     let body = ox_codegen_block(cx, block)?;
-    Ok(oxc_ast::ast::BlockStatement::new(SPAN, body, &cx.ast))
+    Ok(oxc_ast::ast::BlockStatement::boxed(SPAN, body, &cx.ast))
 }
 
 // =============================================================================
@@ -933,18 +933,13 @@ fn ox_codegen_terminal<'a>(
         ReactiveTerminal::If { test, consequent, alternate, .. } => {
             let test_expr = ox_codegen_place_to_expression(cx, test)?;
             let consequent_block = ox_codegen_block_statement(cx, consequent)?;
-            let consequent = oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(
-                consequent_block,
-                &cx.ast,
-            ));
+            let consequent = oxc::Statement::BlockStatement(consequent_block);
             let alternate = if let Some(alt) = alternate {
-                let block = ox_codegen_block_statement(cx, alt)?;
-                if block.body.is_empty() {
+                let body = ox_codegen_block(cx, alt)?;
+                if body.is_empty() {
                     None
                 } else {
-                    Some(oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(
-                        block, &cx.ast,
-                    )))
+                    Some(oxc::Statement::new_block_statement(SPAN, body, &cx.ast))
                 }
             } else {
                 None
@@ -963,12 +958,19 @@ fn ox_codegen_terminal<'a>(
                     .as_ref()
                     .map(|t| ox_codegen_place_to_expression(cx, t))
                     .transpose()?;
-                let block =
-                    case.block.as_ref().map(|b| ox_codegen_block_statement(cx, b)).transpose()?;
+                let block = if let Some(block) = &case.block {
+                    let body = ox_codegen_block(cx, block)?;
+                    if body.is_empty() {
+                        None
+                    } else {
+                        Some(oxc_ast::ast::BlockStatement::boxed(SPAN, body, &cx.ast))
+                    }
+                } else {
+                    None
+                };
                 let consequent: oxc_allocator::Vec<'a, oxc::Statement<'a>> = match block {
-                    Some(b) if b.body.is_empty() => oxc_allocator::ArenaVec::new_in(&cx.ast),
                     Some(b) => oxc_allocator::ArenaVec::from_value_in(
-                        oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(b, &cx.ast)),
+                        oxc::Statement::BlockStatement(b),
                         &cx.ast,
                     ),
                     None => oxc_allocator::ArenaVec::new_in(&cx.ast),
@@ -986,8 +988,7 @@ fn ox_codegen_terminal<'a>(
         ReactiveTerminal::DoWhile { loop_block, test, .. } => {
             let test_expr = ox_codegen_instruction_value_to_expression(cx, test)?;
             let body = ox_codegen_block_statement(cx, loop_block)?;
-            let body =
-                oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(body, &cx.ast));
+            let body = oxc::Statement::BlockStatement(body);
             Ok(Some(oxc_ast::ast::Statement::new_do_while_statement(
                 SPAN, body, test_expr, &cx.ast,
             )))
@@ -995,8 +996,7 @@ fn ox_codegen_terminal<'a>(
         ReactiveTerminal::While { test, loop_block, .. } => {
             let test_expr = ox_codegen_instruction_value_to_expression(cx, test)?;
             let body = ox_codegen_block_statement(cx, loop_block)?;
-            let body =
-                oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(body, &cx.ast));
+            let body = oxc::Statement::BlockStatement(body);
             Ok(Some(oxc_ast::ast::Statement::new_while_statement(SPAN, test_expr, body, &cx.ast)))
         }
         ReactiveTerminal::For { init, test, update, loop_block, .. } => {
@@ -1007,8 +1007,7 @@ fn ox_codegen_terminal<'a>(
                 .map(|u| ox_codegen_instruction_value_to_expression(cx, u))
                 .transpose()?;
             let body = ox_codegen_block_statement(cx, loop_block)?;
-            let body =
-                oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(body, &cx.ast));
+            let body = oxc::Statement::BlockStatement(body);
             Ok(Some(oxc_ast::ast::Statement::new_for_statement(
                 SPAN,
                 init_val,
@@ -1026,7 +1025,7 @@ fn ox_codegen_terminal<'a>(
         }
         ReactiveTerminal::Label { block, .. } => {
             let body = ox_codegen_block_statement(cx, block)?;
-            Ok(Some(oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(body, &cx.ast))))
+            Ok(Some(oxc::Statement::BlockStatement(body)))
         }
         ReactiveTerminal::Try { block, handler_binding, handler, .. } => {
             let catch_param = match handler_binding.as_ref() {
@@ -1040,7 +1039,8 @@ fn ox_codegen_terminal<'a>(
             };
             let try_block = ox_codegen_block_statement(cx, block)?;
             let handler_block = ox_codegen_block_statement(cx, handler)?;
-            let handler = oxc_ast::ast::CatchClause::new(SPAN, catch_param, handler_block, &cx.ast);
+            let handler =
+                oxc_ast::ast::CatchClause::boxed(SPAN, catch_param, handler_block, &cx.ast);
             Ok(Some(oxc_ast::ast::Statement::new_try_statement(
                 SPAN,
                 try_block,
@@ -1073,7 +1073,7 @@ fn ox_codegen_for_in<'a>(
     let (lval, var_decl_kind) = ox_extract_for_in_of_lval(cx, instr_value, "for..in", span)?;
     let right = ox_codegen_instruction_value_to_expression(cx, &iterable_collection.value)?;
     let body = ox_codegen_block_statement(cx, loop_block)?;
-    let body = oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(body, &cx.ast));
+    let body = oxc::Statement::BlockStatement(body);
     let declarator = oxc_ast::ast::VariableDeclarator::new(
         SPAN,
         var_decl_kind,
@@ -1125,7 +1125,7 @@ fn ox_codegen_for_of<'a>(
 
     let right = ox_codegen_place_to_expression(cx, collection)?;
     let body = ox_codegen_block_statement(cx, loop_block)?;
-    let body = oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(body, &cx.ast));
+    let body = oxc::Statement::BlockStatement(body);
     let declarator = oxc_ast::ast::VariableDeclarator::new(
         SPAN,
         var_decl_kind,
@@ -2203,7 +2203,7 @@ fn ox_codegen_array_pattern<'a>(
 ) -> Result<oxc::BindingPattern<'a>, OxcDiagnostic> {
     let mut elements: oxc_allocator::Vec<'a, Option<oxc::BindingPattern<'a>>> =
         oxc_allocator::ArenaVec::new_in(&cx.ast);
-    let mut rest: Option<oxc::BindingRestElement<'a>> = None;
+    let mut rest: Option<oxc_allocator::Box<'a, oxc::BindingRestElement<'a>>> = None;
     for item in &pattern.items {
         match item {
             crate::react_compiler_hir::ArrayPatternElement::Place(place) => {
@@ -2211,7 +2211,7 @@ fn ox_codegen_array_pattern<'a>(
             }
             crate::react_compiler_hir::ArrayPatternElement::Spread(spread) => {
                 let inner = ox_binding_for_identifier(cx, spread.place.identifier)?;
-                rest = Some(oxc_ast::ast::BindingRestElement::new(SPAN, inner, &cx.ast));
+                rest = Some(oxc_ast::ast::BindingRestElement::boxed(SPAN, inner, &cx.ast));
             }
             crate::react_compiler_hir::ArrayPatternElement::Hole => {
                 elements.push(None);
@@ -2227,7 +2227,7 @@ fn ox_codegen_object_pattern<'a>(
 ) -> Result<oxc::BindingPattern<'a>, OxcDiagnostic> {
     let mut properties: oxc_allocator::Vec<'a, oxc::BindingProperty<'a>> =
         oxc_allocator::ArenaVec::new_in(&cx.ast);
-    let mut rest: Option<oxc::BindingRestElement<'a>> = None;
+    let mut rest: Option<oxc_allocator::Box<'a, oxc::BindingRestElement<'a>>> = None;
     for prop in &pattern.properties {
         match prop {
             ObjectPropertyOrSpread::Property(obj_prop) => {
@@ -2247,7 +2247,7 @@ fn ox_codegen_object_pattern<'a>(
             }
             ObjectPropertyOrSpread::Spread(spread) => {
                 let inner = ox_binding_for_identifier(cx, spread.place.identifier)?;
-                rest = Some(oxc_ast::ast::BindingRestElement::new(SPAN, inner, &cx.ast));
+                rest = Some(oxc_ast::ast::BindingRestElement::boxed(SPAN, inner, &cx.ast));
             }
         }
     }
@@ -2465,11 +2465,11 @@ fn ox_binding_property_to_assignment_property<'a>(
 fn ox_binding_rest_to_assignment_rest<'a>(
     cx: &OxcContext<'a, '_>,
     rest: Option<oxc_allocator::Box<'a, oxc::BindingRestElement<'a>>>,
-) -> Result<Option<oxc::AssignmentTargetRest<'a>>, OxcDiagnostic> {
+) -> Result<Option<oxc_allocator::Box<'a, oxc::AssignmentTargetRest<'a>>>, OxcDiagnostic> {
     match rest {
         Some(rest) => {
             let target = ox_binding_pattern_to_assignment_target(cx, rest.unbox().argument)?;
-            Ok(Some(oxc_ast::ast::AssignmentTargetRest::new(SPAN, target, &cx.ast)))
+            Ok(Some(oxc_ast::ast::AssignmentTargetRest::boxed(SPAN, target, &cx.ast)))
         }
         None => Ok(None),
     }
@@ -2776,17 +2776,15 @@ fn ox_codegen_jsx_expression<'a>(
 
     let is_self_closing = children.is_none();
     let opening =
-        oxc_ast::ast::JSXOpeningElement::new(SPAN, opening_name, NONE, attributes, &cx.ast);
+        oxc_ast::ast::JSXOpeningElement::boxed(SPAN, opening_name, NONE, attributes, &cx.ast);
     let closing = if is_self_closing {
         None
     } else {
         let closing_name = ox_expression_to_jsx_tag(cx, &tag_value)?;
-        Some(oxc_ast::ast::JSXClosingElement::new(SPAN, closing_name, &cx.ast))
+        Some(oxc_ast::ast::JSXClosingElement::boxed(SPAN, closing_name, &cx.ast))
     };
-    let element = oxc_ast::ast::JSXElement::new(SPAN, opening, child_nodes, closing, &cx.ast);
-    Ok(OxValue::Expression(oxc::Expression::JSXElement(oxc_allocator::ArenaBox::new_in(
-        element, &cx.ast,
-    ))))
+    let element = oxc::Expression::new_jsx_element(SPAN, opening, child_nodes, closing, &cx.ast);
+    Ok(OxValue::Expression(element))
 }
 
 fn ox_string_requires_expr_container(s: &str) -> bool {
@@ -3064,19 +3062,13 @@ fn ox_create_hook_guard<'a>(
     let mut try_stmts = oxc_allocator::ArenaVec::with_capacity_in(stmts.len() + 1, ast);
     try_stmts.push(ox_dispatcher_guard_stmt(ast, guard_name, before));
     try_stmts.extend(stmts);
-    let try_block = oxc_ast::ast::BlockStatement::new(SPAN, try_stmts, ast);
-    let finalizer = oxc_ast::ast::BlockStatement::new(
+    let try_block = oxc_ast::ast::BlockStatement::boxed(SPAN, try_stmts, ast);
+    let finalizer = oxc_ast::ast::BlockStatement::boxed(
         SPAN,
         [ox_dispatcher_guard_stmt(ast, guard_name, after)],
         ast,
     );
-    oxc_ast::ast::Statement::new_try_statement(
-        SPAN,
-        try_block,
-        None::<oxc_ast::ast::CatchClause>,
-        Some(oxc_allocator::ArenaBox::new_in(finalizer, ast)),
-        ast,
-    )
+    oxc_ast::ast::Statement::new_try_statement(SPAN, try_block, NONE, Some(finalizer), ast)
 }
 
 /// Build a call expression for `CallExpression`/`MethodCall`, matching TS
