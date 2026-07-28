@@ -1,9 +1,11 @@
 use std::cell::Cell;
 
 use oxc_formatter_core::{FormatContext, SourceText};
-use oxc_span::Span;
 
-use crate::{comments::Comments, options::YamlFormatOptions};
+use crate::{
+    comments::{Comments, SourceComment},
+    options::YamlFormatOptions,
+};
 
 /// Formatting context for YAML.
 pub struct YamlFormatContext<'a> {
@@ -22,7 +24,7 @@ impl<'a> YamlFormatContext<'a> {
     pub fn new(
         options: YamlFormatOptions,
         source_code: &'a str,
-        comments: &'a [Span],
+        comments: &'a [SourceComment],
         last_descendant_end: u32,
     ) -> Self {
         Self {

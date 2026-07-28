@@ -11,7 +11,7 @@ use oxc_formatter_core::{
 use oxc_yaml_parser::ast::{BlockScalar, Chomping, Content, MappingItem, Node, Root};
 
 use crate::{
-    comments::{Gap, classify_gap, write_single_comment},
+    comments::write_single_comment,
     options::ProseWrap,
     print::{
         YamlFormatter, format_with,
@@ -80,19 +80,18 @@ pub fn write_block_scalar<'a>(
         Chomping::Strip => write!(f, "-"),
         Chomping::Clip => {}
     }
-    // Indicator comment: same line as the header (`| # comment`)
-    if let Some(span) = f.context().comments().peek()
-        && span.end <= block.content_start
-        && classify_gap(f.context().source_text().bytes_range(block.span.start, span.start))
-            == Gap::None
+    // Indicator comment: same line as the header (`| # comment`).
+    // The parser guarantees it is the ONLY comment within the scalar's span
+    // (see the guarantee on `BlockScalar`), so nothing else needs draining here;
+    // trailing-ness (`own_line_column: None`) pins it to the header line.
+    if let Some(comment) = f.context().comments().peek()
+        && comment.span.end <= block.content_start
+        && comment.own_line_column.is_none()
     {
-        f.context().comments().take_before(span.end);
+        f.context().comments().take_before(comment.span.end);
         write!(f, space());
-        write_single_comment(span, f);
+        write_single_comment(comment.span, f);
     }
-    // Any other comments inside the header region are consumed silently
-    // (they cannot be represented in a block scalar).
-    let _ = f.context().comments().take_before(block.content_start);
 
     // Words fold to the arena lifetime: borrowed words already slice the arena-backed source,
     // only owned (merged) words need an arena copy.
@@ -159,9 +158,6 @@ pub fn write_block_scalar<'a>(
         let tab_width = f.options().indent_width.value();
         write!(f, dedent(&align(tab_width, &contents)));
     }
-
-    // Claim any comments the scanner collected inside the scalar's range
-    let _ = f.context().comments().take_before(block.span.end);
 }
 
 /// Ports Prettier's `getBlockValueLineContents`.

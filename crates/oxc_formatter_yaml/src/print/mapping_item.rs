@@ -7,8 +7,8 @@ use oxc_yaml_parser::ast::{Content, MappingItem, Node};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, is_own_line, pending_same_line_comment,
-        write_single_comment, write_trailing_same_line_comment,
+        Gap, classify_gap, flush_leading_comments, pending_same_line_comment, write_single_comment,
+        write_trailing_same_line_comment,
     },
     options::ProseWrap,
     print::{YamlFormatter, column_of, format_with, to_span, write_node, write_node_or_suppressed},
@@ -51,12 +51,12 @@ pub fn write_mapping_item<'a>(
         } else {
             write!(f, ":");
         }
-        if let Some(span) = same_line_comment {
-            f.context().comments().take_before(span.end);
-            let comment = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
-                write_single_comment(span, f);
+        if let Some(comment) = same_line_comment {
+            f.context().comments().take_before(comment.span.end);
+            let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
+                write_single_comment(comment.span, f);
             });
-            write!(f, [line_suffix(&comment), expand_parent()]);
+            write!(f, [line_suffix(&content), expand_parent()]);
         }
         return;
     }
@@ -110,11 +110,11 @@ pub fn write_mapping_item<'a>(
     // the key isn't an inline node, or the source was already explicit with a comment between `?` and the key, or between the key and `:`
     // (an implicit `key:` with a comment above the value keeps the implicit form,
     // the comment becomes the value's leading comment instead).
-    let explicit_comment_before_key =
-        key.explicit && f.context().comments().peek().is_some_and(|c| c.end <= key_node.span.start);
+    let explicit_comment_before_key = key.explicit
+        && f.context().comments().peek().is_some_and(|c| c.span.end <= key_node.span.start);
     if !is_inline(key_content)
         || explicit_comment_before_key
-        || (key.explicit && has_own_line_comment_before_value(key.span.end, value_node, f))
+        || (key.explicit && has_own_line_comment_before_value(value_node, f))
     {
         write!(f, "? ");
         // Comments between the key and `:` that are indented DEEPER than the item are the key's end comments (inside the key's align);
@@ -125,9 +125,11 @@ pub fn write_mapping_item<'a>(
         let colon = value.span.start;
         let key_and_comments = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
             write_key(item, f);
-            let source = f.context().source_text();
-            while let Some(span) = f.context().comments().peek() {
-                if span.end > colon || column_of(&source, span.start) <= item_column {
+            while let Some(comment) = f.context().comments().peek() {
+                let span = comment.span;
+                if span.end > colon
+                    || comment.own_line_column.is_none_or(|column| column <= item_column)
+                {
                     break;
                 }
                 f.context().comments().take_before(span.end);
@@ -138,8 +140,8 @@ pub fn write_mapping_item<'a>(
         write!(f, align(2, &key_and_comments));
         write!(f, hard_line_break());
         let comments = f.context().comments().take_before(colon);
-        for &span in comments {
-            write_single_comment(span, f);
+        for comment in comments {
+            write_single_comment(comment.span, f);
             write!(f, hard_line_break());
         }
         write!(f, ": ");
@@ -390,7 +392,8 @@ fn has_forced_break_when_folded(node: Option<&Node<'_>>, f: &YamlFormatter<'_, '
 /// (`key: # comment` with the value on the next line,
 /// a comment after the value like `key: value # comment` is the value's trailing comment instead.)
 fn key_has_trailing_comment(key_end: u32, value_start: u32, f: &YamlFormatter<'_, '_>) -> bool {
-    let Some(span) = f.context().comments().peek() else { return false };
+    let Some(comment) = f.context().comments().peek() else { return false };
+    let span = comment.span;
     let source = f.context().source_text();
     span.start >= key_end
         && span.end <= value_start
@@ -399,22 +402,15 @@ fn key_has_trailing_comment(key_end: u32, value_start: u32, f: &YamlFormatter<'_
 
 /// Is there any pending comment before `bound` (a leading comment of the value)?
 fn has_pending_comment_before(bound: u32, f: &YamlFormatter<'_, '_>) -> bool {
-    f.context().comments().peek().is_some_and(|c| c.end <= bound)
+    f.context().comments().peek().is_some_and(|c| c.span.end <= bound)
 }
 
 /// Own-line comment between the key and the value forces the explicit form.
-/// A comment trailing the `:` (`key: # comment`) does NOT — it leads the value.
-fn has_own_line_comment_before_value(
-    key_end: u32,
-    value: &Node<'_>,
-    f: &YamlFormatter<'_, '_>,
-) -> bool {
-    let Some(span) = f.context().comments().peek() else { return false };
-    if span.end > value.span.start {
-        return false;
-    }
-    let source = f.context().source_text();
-    // Same-line-after-key comments are trailing, not leading-of-value
-    classify_gap(source.bytes_range(key_end, span.start)) != Gap::None
-        && is_own_line(&source, span.start)
+/// A comment trailing the key's line (`? key # comment`) does NOT.
+/// It is a trailing comment (`own_line_column: None`), not leading-of-value.
+fn has_own_line_comment_before_value(value: &Node<'_>, f: &YamlFormatter<'_, '_>) -> bool {
+    f.context()
+        .comments()
+        .peek()
+        .is_some_and(|c| c.span.end <= value.span.start && c.own_line_column.is_some())
 }

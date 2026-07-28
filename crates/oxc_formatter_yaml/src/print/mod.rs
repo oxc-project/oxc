@@ -49,6 +49,10 @@ where
 }
 
 /// 0-based column of `offset` in `source` (bytes since the preceding newline).
+///
+/// Comparisons against the parser's character-counted `own_line_column` are sound:
+/// both sides' line prefixes are whitespace and ASCII indicators (`- `, `? `),
+/// where bytes == characters.
 pub fn column_of(source: &str, offset: u32) -> u32 {
     let count =
         source.as_bytes()[..offset as usize].iter().rev().take_while(|&&b| b != b'\n').count();
@@ -108,7 +112,8 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
     let is_block_collection = matches!(content, Content::Mapping(_) | Content::Sequence(_));
     // Middle comments (between the props and the node body, `&a # c`)
     // keep the props separator a space even for block collections.
-    let has_middle_comments = f.context().comments().peek().is_some_and(|c| c.end <= content_start);
+    let has_middle_comments =
+        f.context().comments().peek().is_some_and(|c| c.span.end <= content_start);
     write_props(&node.props, is_block_collection && !has_middle_comments, f);
 
     // Prettier: `[middles.len() == 1 ? "" : hardline, join(hardline, middles), hardline]`.
@@ -118,11 +123,11 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
     let middles = f.context().comments().take_before(middles_bound);
     // `i > 0` is subsumed: any later iteration implies more than one middle.
     let multiple_middles = middles.len() > 1;
-    for &span in middles {
+    for comment in middles {
         if multiple_middles {
             write!(f, hard_line_break());
         }
-        write_single_comment(span, f);
+        write_single_comment(comment.span, f);
     }
     if !middles.is_empty() {
         write!(f, hard_line_break());

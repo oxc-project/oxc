@@ -145,8 +145,8 @@ fn write_trailing_comma_and_end_comments(close_end: u32, f: &mut YamlFormatter<'
     // Comments inside the brackets after the last entry
     let close_start = close_end.saturating_sub(1);
     let comments = f.context().comments().take_before(close_start);
-    for &span in comments {
+    for comment in comments {
         write!(f, hard_line_break());
-        write_single_comment(span, f);
+        write_single_comment(comment.span, f);
     }
 }

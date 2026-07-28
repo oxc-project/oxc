@@ -19,6 +19,8 @@ plain: separator
 ? bare-no-value # same-line comment keeps the explicit form
 ? normalized
 : implicit stays
+? trailed # a key-line trailing comment with a value present
+: goes implicit
 
 ==================== Output ====================
 ------------------
@@ -40,6 +42,8 @@ plain: separator
 : 2
 ? bare-no-value # same-line comment keeps the explicit form
 normalized: implicit stays
+trailed: # a key-line trailing comment with a value present
+  goes implicit
 
 -------------------
 { printWidth: 100 }
@@ -60,5 +64,7 @@ plain: separator
 : 2
 ? bare-no-value # same-line comment keeps the explicit form
 normalized: implicit stays
+trailed: # a key-line trailing comment with a value present
+  goes implicit
 
 ===================== End =====================

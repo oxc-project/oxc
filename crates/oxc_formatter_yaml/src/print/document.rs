@@ -7,9 +7,9 @@ use oxc_yaml_parser::ast::{Directive, Document, Root};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, gap_upper_bound, is_suppressed_last_before,
-        write_blank_preserving_break, write_single_comment, write_suppressed_node,
-        write_trailing_same_line_comment,
+        Gap, SourceComment, classify_gap, flush_leading_comments, gap_upper_bound,
+        is_suppressed_last_before, write_blank_preserving_break, write_single_comment,
+        write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{
         YamlFormatter,
@@ -102,12 +102,13 @@ fn write_document_separator<'a>(
 /// See [`write_document_separator`] for the deliberate non-follow.
 fn write_end_comments(
     anchor: Option<u32>,
-    comments: &[oxc_span::Span],
+    comments: &[SourceComment],
     f: &mut YamlFormatter<'_, '_>,
 ) {
     let source = f.context().source_text();
-    for (i, &span) in comments.iter().enumerate() {
-        let prev_end = if i == 0 { anchor } else { Some(comments[i - 1].end) };
+    for (i, comment) in comments.iter().enumerate() {
+        let span = comment.span;
+        let prev_end = if i == 0 { anchor } else { Some(comments[i - 1].span.end) };
         let blank = prev_end.is_some_and(|prev_end| {
             prev_end < span.start
                 && classify_gap(source.bytes_range(prev_end, span.start)) == Gap::Blank
