@@ -873,6 +873,16 @@ impl GetSpanMut for TryStatement<'_> {
     }
 }
 
+impl GetSpanMut for TryStatementClauses<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Catch(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Finally(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CatchFinally { handler: it, .. } => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
 impl GetSpanMut for CatchClause<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

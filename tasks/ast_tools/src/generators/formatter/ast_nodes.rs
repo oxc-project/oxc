@@ -537,6 +537,10 @@ fn build_following_node_chain_until_non_option(
 }
 
 fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    if enum_def.variants.iter().any(|variant| variant.fields.len() > 1) {
+        return TokenStream::new();
+    }
+
     let enum_ident = enum_def.ident();
     let type_ty = enum_def.ty(schema);
 

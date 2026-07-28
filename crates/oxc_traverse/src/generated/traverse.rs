@@ -1026,6 +1026,21 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_try_statement_clauses(
+        &mut self,
+        node: &mut TryStatementClauses<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_try_statement_clauses(
+        &mut self,
+        node: &mut TryStatementClauses<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_catch_clause(&mut self, node: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a, State>) {
     }
     #[inline]

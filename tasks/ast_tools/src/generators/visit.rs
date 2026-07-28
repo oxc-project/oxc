@@ -545,23 +545,67 @@ impl VisitBuilder<'_> {
             .variants
             .iter()
             .filter_map(|variant| {
-                let variant_type = variant.field_type(self.schema)?;
-                let VisitAndVisitMut { visit, visit_mut } = generate_visit_type(
-                    variant_type,
-                    &Target::Reference(create_ident_tokens("it")),
-                    &variant.visit.visit_args,
-                    &create_ident_tokens("it"),
-                    &quote!(visitor),
-                    false,
-                    self.schema,
-                )?;
+                if !variant.is_named && variant.fields.len() == 1 {
+                    let variant_type = variant.field_type(self.schema).unwrap();
+                    let VisitAndVisitMut { visit, visit_mut } = generate_visit_type(
+                        variant_type,
+                        &Target::Reference(create_ident_tokens("it")),
+                        &variant.visit.visit_args,
+                        &create_ident_tokens("it"),
+                        &quote!(visitor),
+                        false,
+                        self.schema,
+                    )?;
+                    match_arm_count += 1;
+                    let variant_ident = variant.ident();
+                    let match_pattern = quote!( #enum_ident::#variant_ident(it) );
+                    let match_arm = quote!( #match_pattern => #visit, );
+                    let match_arm_mut = quote!( #match_pattern => #visit_mut, );
+                    return Some((match_arm, match_arm_mut));
+                }
+
+                let mut visits = vec![];
+                let mut visits_mut = vec![];
+                let bindings = variant
+                    .fields
+                    .iter()
+                    .enumerate()
+                    .map(|(index, field)| {
+                        if variant.is_named {
+                            field.ident()
+                        } else {
+                            create_ident_tokens(&format!("field_{index}"))
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                for (field, binding) in variant.fields.iter().zip(&bindings) {
+                    if let Some(VisitAndVisitMut { visit, visit_mut }) = generate_visit_type(
+                        field.type_def(self.schema),
+                        &Target::Reference(binding.clone()),
+                        &variant.visit.visit_args,
+                        binding,
+                        &quote!(visitor),
+                        false,
+                        self.schema,
+                    ) {
+                        visits.push(quote!(#visit;));
+                        visits_mut.push(quote!(#visit_mut;));
+                    }
+                }
+                if visits.is_empty() {
+                    return None;
+                }
 
                 match_arm_count += 1;
 
                 let variant_ident = variant.ident();
-                let match_pattern = quote!( #enum_ident::#variant_ident(it) );
-                let match_arm = quote!( #match_pattern => #visit, );
-                let match_arm_mut = quote!( #match_pattern => #visit_mut, );
+                let match_pattern = if variant.is_named {
+                    quote!( #enum_ident::#variant_ident { #(#bindings),* } )
+                } else {
+                    quote!( #enum_ident::#variant_ident(#(#bindings),*) )
+                };
+                let match_arm = quote!( #match_pattern => { #(#visits)* } );
+                let match_arm_mut = quote!( #match_pattern => { #(#visits_mut)* } );
                 Some((match_arm, match_arm_mut))
             })
             .unzip();

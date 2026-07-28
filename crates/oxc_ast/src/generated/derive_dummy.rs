@@ -1022,15 +1022,23 @@ impl<'a> Dummy<'a> for ThrowStatement<'a> {
 impl<'a> Dummy<'a> for TryStatement<'a> {
     /// Create a dummy [`TryStatement`].
     ///
-    /// Has cost of making 1 allocation (40 bytes).
+    /// Has cost of making 2 allocations (80 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
             block: Dummy::dummy(allocator),
-            handler: Dummy::dummy(allocator),
-            finalizer: Dummy::dummy(allocator),
+            clauses: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for TryStatementClauses<'a> {
+    /// Create a dummy [`TryStatementClauses`].
+    ///
+    /// Has cost of making 1 allocation (40 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Finally(Dummy::dummy(allocator))
     }
 }
 

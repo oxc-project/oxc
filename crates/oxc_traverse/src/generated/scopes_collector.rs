@@ -878,12 +878,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_try_statement(&mut self, it: &TryStatement<'a>) {
         self.visit_block_statement(&it.block);
-        if let Some(handler) = &it.handler {
-            self.visit_catch_clause(handler);
-        }
-        if let Some(finalizer) = &it.finalizer {
-            self.visit_block_statement(finalizer);
-        }
+        self.visit_try_statement_clauses(&it.clauses);
     }
 
     #[inline]

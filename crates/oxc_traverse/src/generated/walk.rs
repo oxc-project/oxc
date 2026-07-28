@@ -2037,20 +2037,35 @@ unsafe fn walk_try_statement<'a, State, Tr: Traverse<'a, State>>(
             as *mut ArenaBox<BlockStatement>)) as *mut _,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_HANDLER)
-        as *mut Option<ArenaBox<CatchClause>>)
-    {
-        ctx.retag_stack(AncestorType::TryStatementHandler);
-        walk_catch_clause(traverser, (&mut **field) as *mut _, ctx);
-    }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_FINALIZER)
-        as *mut Option<ArenaBox<BlockStatement>>)
-    {
-        ctx.retag_stack(AncestorType::TryStatementFinalizer);
-        walk_block_statement(traverser, (&mut **field) as *mut _, ctx);
-    }
+    ctx.retag_stack(AncestorType::TryStatementClauses);
+    walk_try_statement_clauses(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_CLAUSES) as *mut TryStatementClauses,
+        ctx,
+    );
     ctx.pop_stack(pop_token);
     traverser.exit_try_statement(&mut *node, ctx);
+}
+
+unsafe fn walk_try_statement_clauses<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TryStatementClauses<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_try_statement_clauses(&mut *node, ctx);
+    match &mut *node {
+        TryStatementClauses::Catch(node) => {
+            walk_catch_clause(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TryStatementClauses::Finally(node) => {
+            walk_block_statement(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TryStatementClauses::CatchFinally { handler, finalizer } => {
+            walk_catch_clause(traverser, (&mut **handler) as *mut _, ctx);
+            walk_block_statement(traverser, (&mut **finalizer) as *mut _, ctx);
+        }
+    }
+    traverser.exit_try_statement_clauses(&mut *node, ctx);
 }
 
 unsafe fn walk_catch_clause<'a, State, Tr: Traverse<'a, State>>(

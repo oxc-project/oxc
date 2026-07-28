@@ -1976,8 +1976,32 @@ impl<'new_alloc> CloneIn<'new_alloc> for TryStatement<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             block: CloneIn::clone_in_impl(&self.block, with_semantic_ids, allocator),
-            handler: CloneIn::clone_in_impl(&self.handler, with_semantic_ids, allocator),
-            finalizer: CloneIn::clone_in_impl(&self.finalizer, with_semantic_ids, allocator),
+            clauses: CloneIn::clone_in_impl(&self.clauses, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TryStatementClauses<'_> {
+    type Cloned = TryStatementClauses<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        match self {
+            Self::Catch(it) => {
+                TryStatementClauses::Catch(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
+            Self::Finally(it) => TryStatementClauses::Finally(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+            Self::CatchFinally { handler, finalizer } => TryStatementClauses::CatchFinally {
+                handler: CloneIn::clone_in_impl(handler, with_semantic_ids, allocator),
+                finalizer: CloneIn::clone_in_impl(finalizer, with_semantic_ids, allocator),
+            },
         }
     }
 }

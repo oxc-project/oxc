@@ -120,8 +120,42 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
             let ident = variant.ident();
             if variant.is_fieldless() {
                 quote!( (Self::#ident, Self::#ident) => true )
-            } else {
+            } else if variant.is_named {
+                let a_fields = variant.fields.iter().map(|field| {
+                    let field = field.ident();
+                    let binding = create_safe_ident(&format!("a_{field}"));
+                    quote!(#field: #binding)
+                });
+                let b_fields = variant.fields.iter().map(|field| {
+                    let field = field.ident();
+                    let binding = create_safe_ident(&format!("b_{field}"));
+                    quote!(#field: #binding)
+                });
+                let comparisons = variant.fields.iter().map(|field| {
+                    let field = field.ident();
+                    let a = create_safe_ident(&format!("a_{field}"));
+                    let b = create_safe_ident(&format!("b_{field}"));
+                    quote!(#a.content_eq(#b))
+                });
+                quote! {
+                    (
+                        Self::#ident { #(#a_fields),* },
+                        Self::#ident { #(#b_fields),* },
+                    ) => #(#comparisons)&&*
+                }
+            } else if variant.fields.len() == 1 {
                 quote!( (Self::#ident(a), Self::#ident(b)) => a.content_eq(b) )
+            } else {
+                let a = (0..variant.fields.len())
+                    .map(|index| create_safe_ident(&format!("a_{index}")))
+                    .collect::<Vec<_>>();
+                let b = (0..variant.fields.len())
+                    .map(|index| create_safe_ident(&format!("b_{index}")))
+                    .collect::<Vec<_>>();
+                let comparisons = a.iter().zip(&b).map(|(a, b)| quote!(#a.content_eq(#b)));
+                quote! {
+                    (Self::#ident(#(#a),*), Self::#ident(#(#b),*)) => #(#comparisons)&&*
+                }
             }
         });
 

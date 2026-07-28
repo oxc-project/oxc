@@ -809,12 +809,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
 
-        if handler.is_none() && finalizer.is_none() {
-            let range = Span::empty(block.span.end);
-            self.error(diagnostics::expect_catch_finally(range));
-        }
+        let clauses = match (handler, finalizer) {
+            (Some(handler), Some(finalizer)) => {
+                TryStatementClauses::CatchFinally { handler, finalizer }
+            }
+            (Some(handler), None) => TryStatementClauses::Catch(handler),
+            (None, Some(finalizer)) => TryStatementClauses::Finally(finalizer),
+            (None, None) => {
+                let range = Span::empty(block.span.end);
+                self.error(diagnostics::expect_catch_finally(range));
+                TryStatementClauses::Finally(BlockStatement::boxed(
+                    range,
+                    ArenaVec::new_in(self),
+                    self,
+                ))
+            }
+        };
 
-        Statement::new_try_statement(self.end_span(span), block, handler, finalizer, self)
+        Statement::new_try_statement(self.end_span(span), block, clauses, self)
     }
 
     fn parse_catch_clause(&mut self) -> ArenaBox<'a, CatchClause<'a>> {

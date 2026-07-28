@@ -112,216 +112,215 @@ pub(crate) enum AncestorType {
     LabeledStatementBody = 88,
     ThrowStatementArgument = 89,
     TryStatementBlock = 90,
-    TryStatementHandler = 91,
-    TryStatementFinalizer = 92,
-    CatchClauseParam = 93,
-    CatchClauseBody = 94,
-    CatchParameterPattern = 95,
-    CatchParameterTypeAnnotation = 96,
-    AssignmentPatternLeft = 97,
-    AssignmentPatternRight = 98,
-    ObjectPatternProperties = 99,
-    ObjectPatternRest = 100,
-    BindingPropertyKey = 101,
-    BindingPropertyValue = 102,
-    ArrayPatternElements = 103,
-    ArrayPatternRest = 104,
-    BindingRestElementArgument = 105,
-    FunctionId = 106,
-    FunctionTypeParameters = 107,
-    FunctionThisParam = 108,
-    FunctionParams = 109,
-    FunctionReturnType = 110,
-    FunctionBody = 111,
-    FormalParametersItems = 112,
-    FormalParametersRest = 113,
-    FormalParameterDecorators = 114,
-    FormalParameterPattern = 115,
-    FormalParameterTypeAnnotation = 116,
-    FormalParameterInitializer = 117,
-    FormalParameterRestDecorators = 118,
-    FormalParameterRestRest = 119,
-    FormalParameterRestTypeAnnotation = 120,
-    FunctionBodyDirectives = 121,
-    FunctionBodyStatements = 122,
-    ArrowFunctionExpressionTypeParameters = 123,
-    ArrowFunctionExpressionParams = 124,
-    ArrowFunctionExpressionReturnType = 125,
-    ArrowFunctionExpressionBody = 126,
-    YieldExpressionArgument = 127,
-    ClassDecorators = 128,
-    ClassId = 129,
-    ClassTypeParameters = 130,
-    ClassSuperClass = 131,
-    ClassSuperTypeArguments = 132,
-    ClassImplements = 133,
-    ClassBody = 134,
-    ClassBodyBody = 135,
-    MethodDefinitionDecorators = 136,
-    MethodDefinitionKey = 137,
-    MethodDefinitionValue = 138,
-    PropertyDefinitionDecorators = 139,
-    PropertyDefinitionKey = 140,
-    PropertyDefinitionTypeAnnotation = 141,
-    PropertyDefinitionValue = 142,
-    StaticBlockBody = 143,
-    AccessorPropertyDecorators = 144,
-    AccessorPropertyKey = 145,
-    AccessorPropertyTypeAnnotation = 146,
-    AccessorPropertyValue = 147,
-    ImportExpressionSource = 148,
-    ImportExpressionOptions = 149,
-    ImportDeclarationSpecifiers = 150,
-    ImportDeclarationSource = 151,
-    ImportDeclarationWithClause = 152,
-    ImportSpecifierImported = 153,
-    ImportSpecifierLocal = 154,
-    ImportDefaultSpecifierLocal = 155,
-    ImportNamespaceSpecifierLocal = 156,
-    WithClauseWithEntries = 157,
-    ImportAttributeKey = 158,
-    ImportAttributeValue = 159,
-    ExportDeclarationDeclaration = 160,
-    ExportNamedDeclarationSpecifiers = 161,
-    ExportFromDeclarationSpecifiers = 162,
-    ExportFromDeclarationSource = 163,
-    ExportFromDeclarationWithClause = 164,
-    ExportDefaultDeclarationDeclaration = 165,
-    ExportAllDeclarationExported = 166,
-    ExportAllDeclarationSource = 167,
-    ExportAllDeclarationWithClause = 168,
-    ExportSpecifierLocal = 169,
-    ExportSpecifierExported = 170,
-    V8IntrinsicExpressionName = 171,
-    V8IntrinsicExpressionArguments = 172,
-    JSXElementOpeningElement = 173,
-    JSXElementChildren = 174,
-    JSXElementClosingElement = 175,
-    JSXOpeningElementName = 176,
-    JSXOpeningElementTypeArguments = 177,
-    JSXOpeningElementAttributes = 178,
-    JSXClosingElementName = 179,
-    JSXFragmentOpeningFragment = 180,
-    JSXFragmentChildren = 181,
-    JSXFragmentClosingFragment = 182,
-    JSXNamespacedNameNamespace = 183,
-    JSXNamespacedNameName = 184,
-    JSXMemberExpressionObject = 185,
-    JSXMemberExpressionProperty = 186,
-    JSXExpressionContainerExpression = 187,
-    JSXAttributeName = 188,
-    JSXAttributeValue = 189,
-    JSXSpreadAttributeArgument = 190,
-    JSXSpreadChildExpression = 191,
-    TSThisParameterTypeAnnotation = 192,
-    TSEnumDeclarationId = 193,
-    TSEnumDeclarationBody = 194,
-    TSEnumBodyMembers = 195,
-    TSEnumMemberId = 196,
-    TSEnumMemberInitializer = 197,
-    TSTypeAnnotationTypeAnnotation = 198,
-    TSLiteralTypeLiteral = 199,
-    TSConditionalTypeCheckType = 200,
-    TSConditionalTypeExtendsType = 201,
-    TSConditionalTypeTrueType = 202,
-    TSConditionalTypeFalseType = 203,
-    TSUnionTypeTypes = 204,
-    TSIntersectionTypeTypes = 205,
-    TSParenthesizedTypeTypeAnnotation = 206,
-    TSTypeOperatorTypeAnnotation = 207,
-    TSArrayTypeElementType = 208,
-    TSIndexedAccessTypeObjectType = 209,
-    TSIndexedAccessTypeIndexType = 210,
-    TSTupleTypeElementTypes = 211,
-    TSNamedTupleMemberLabel = 212,
-    TSNamedTupleMemberElementType = 213,
-    TSOptionalTypeTypeAnnotation = 214,
-    TSRestTypeTypeAnnotation = 215,
-    TSTypeReferenceTypeName = 216,
-    TSTypeReferenceTypeArguments = 217,
-    TSQualifiedNameLeft = 218,
-    TSQualifiedNameRight = 219,
-    TSTypeParameterInstantiationParams = 220,
-    TSTypeParameterName = 221,
-    TSTypeParameterConstraint = 222,
-    TSTypeParameterDefault = 223,
-    TSTypeParameterDeclarationParams = 224,
-    TSTypeAliasDeclarationId = 225,
-    TSTypeAliasDeclarationTypeParameters = 226,
-    TSTypeAliasDeclarationTypeAnnotation = 227,
-    TSClassImplementsExpression = 228,
-    TSClassImplementsTypeArguments = 229,
-    TSInterfaceDeclarationId = 230,
-    TSInterfaceDeclarationTypeParameters = 231,
-    TSInterfaceDeclarationExtends = 232,
-    TSInterfaceDeclarationBody = 233,
-    TSInterfaceBodyBody = 234,
-    TSPropertySignatureKey = 235,
-    TSPropertySignatureTypeAnnotation = 236,
-    TSIndexSignatureParameter = 237,
-    TSIndexSignatureTypeAnnotation = 238,
-    TSCallSignatureDeclarationTypeParameters = 239,
-    TSCallSignatureDeclarationThisParam = 240,
-    TSCallSignatureDeclarationParams = 241,
-    TSCallSignatureDeclarationReturnType = 242,
-    TSMethodSignatureKey = 243,
-    TSMethodSignatureTypeParameters = 244,
-    TSMethodSignatureThisParam = 245,
-    TSMethodSignatureParams = 246,
-    TSMethodSignatureReturnType = 247,
-    TSConstructSignatureDeclarationTypeParameters = 248,
-    TSConstructSignatureDeclarationParams = 249,
-    TSConstructSignatureDeclarationReturnType = 250,
-    TSIndexSignatureNameTypeAnnotation = 251,
-    TSInterfaceHeritageExpression = 252,
-    TSInterfaceHeritageTypeArguments = 253,
-    TSTypePredicateParameterName = 254,
-    TSTypePredicateTypeAnnotation = 255,
-    TSModuleDeclarationId = 256,
-    TSModuleDeclarationBody = 257,
-    TSGlobalDeclarationBody = 258,
-    TSModuleBlockDirectives = 259,
-    TSModuleBlockBody = 260,
-    TSTypeLiteralMembers = 261,
-    TSInferTypeTypeParameter = 262,
-    TSTypeQueryExprName = 263,
-    TSTypeQueryTypeArguments = 264,
-    TSImportTypeSource = 265,
-    TSImportTypeOptions = 266,
-    TSImportTypeQualifier = 267,
-    TSImportTypeTypeArguments = 268,
-    TSImportTypeQualifiedNameLeft = 269,
-    TSImportTypeQualifiedNameRight = 270,
-    TSFunctionTypeTypeParameters = 271,
-    TSFunctionTypeThisParam = 272,
-    TSFunctionTypeParams = 273,
-    TSFunctionTypeReturnType = 274,
-    TSConstructorTypeTypeParameters = 275,
-    TSConstructorTypeParams = 276,
-    TSConstructorTypeReturnType = 277,
-    TSMappedTypeKey = 278,
-    TSMappedTypeConstraint = 279,
-    TSMappedTypeNameType = 280,
-    TSMappedTypeTypeAnnotation = 281,
-    TSTemplateLiteralTypeQuasis = 282,
-    TSTemplateLiteralTypeTypes = 283,
-    TSAsExpressionExpression = 284,
-    TSAsExpressionTypeAnnotation = 285,
-    TSSatisfiesExpressionExpression = 286,
-    TSSatisfiesExpressionTypeAnnotation = 287,
-    TSTypeAssertionTypeAnnotation = 288,
-    TSTypeAssertionExpression = 289,
-    TSImportEqualsDeclarationId = 290,
-    TSImportEqualsDeclarationModuleReference = 291,
-    TSExternalModuleReferenceExpression = 292,
-    TSNonNullExpressionExpression = 293,
-    DecoratorExpression = 294,
-    TSExportAssignmentExpression = 295,
-    TSNamespaceExportDeclarationId = 296,
-    TSInstantiationExpressionExpression = 297,
-    TSInstantiationExpressionTypeArguments = 298,
-    JSDocNullableTypeTypeAnnotation = 299,
-    JSDocNonNullableTypeTypeAnnotation = 300,
+    TryStatementClauses = 91,
+    CatchClauseParam = 92,
+    CatchClauseBody = 93,
+    CatchParameterPattern = 94,
+    CatchParameterTypeAnnotation = 95,
+    AssignmentPatternLeft = 96,
+    AssignmentPatternRight = 97,
+    ObjectPatternProperties = 98,
+    ObjectPatternRest = 99,
+    BindingPropertyKey = 100,
+    BindingPropertyValue = 101,
+    ArrayPatternElements = 102,
+    ArrayPatternRest = 103,
+    BindingRestElementArgument = 104,
+    FunctionId = 105,
+    FunctionTypeParameters = 106,
+    FunctionThisParam = 107,
+    FunctionParams = 108,
+    FunctionReturnType = 109,
+    FunctionBody = 110,
+    FormalParametersItems = 111,
+    FormalParametersRest = 112,
+    FormalParameterDecorators = 113,
+    FormalParameterPattern = 114,
+    FormalParameterTypeAnnotation = 115,
+    FormalParameterInitializer = 116,
+    FormalParameterRestDecorators = 117,
+    FormalParameterRestRest = 118,
+    FormalParameterRestTypeAnnotation = 119,
+    FunctionBodyDirectives = 120,
+    FunctionBodyStatements = 121,
+    ArrowFunctionExpressionTypeParameters = 122,
+    ArrowFunctionExpressionParams = 123,
+    ArrowFunctionExpressionReturnType = 124,
+    ArrowFunctionExpressionBody = 125,
+    YieldExpressionArgument = 126,
+    ClassDecorators = 127,
+    ClassId = 128,
+    ClassTypeParameters = 129,
+    ClassSuperClass = 130,
+    ClassSuperTypeArguments = 131,
+    ClassImplements = 132,
+    ClassBody = 133,
+    ClassBodyBody = 134,
+    MethodDefinitionDecorators = 135,
+    MethodDefinitionKey = 136,
+    MethodDefinitionValue = 137,
+    PropertyDefinitionDecorators = 138,
+    PropertyDefinitionKey = 139,
+    PropertyDefinitionTypeAnnotation = 140,
+    PropertyDefinitionValue = 141,
+    StaticBlockBody = 142,
+    AccessorPropertyDecorators = 143,
+    AccessorPropertyKey = 144,
+    AccessorPropertyTypeAnnotation = 145,
+    AccessorPropertyValue = 146,
+    ImportExpressionSource = 147,
+    ImportExpressionOptions = 148,
+    ImportDeclarationSpecifiers = 149,
+    ImportDeclarationSource = 150,
+    ImportDeclarationWithClause = 151,
+    ImportSpecifierImported = 152,
+    ImportSpecifierLocal = 153,
+    ImportDefaultSpecifierLocal = 154,
+    ImportNamespaceSpecifierLocal = 155,
+    WithClauseWithEntries = 156,
+    ImportAttributeKey = 157,
+    ImportAttributeValue = 158,
+    ExportDeclarationDeclaration = 159,
+    ExportNamedDeclarationSpecifiers = 160,
+    ExportFromDeclarationSpecifiers = 161,
+    ExportFromDeclarationSource = 162,
+    ExportFromDeclarationWithClause = 163,
+    ExportDefaultDeclarationDeclaration = 164,
+    ExportAllDeclarationExported = 165,
+    ExportAllDeclarationSource = 166,
+    ExportAllDeclarationWithClause = 167,
+    ExportSpecifierLocal = 168,
+    ExportSpecifierExported = 169,
+    V8IntrinsicExpressionName = 170,
+    V8IntrinsicExpressionArguments = 171,
+    JSXElementOpeningElement = 172,
+    JSXElementChildren = 173,
+    JSXElementClosingElement = 174,
+    JSXOpeningElementName = 175,
+    JSXOpeningElementTypeArguments = 176,
+    JSXOpeningElementAttributes = 177,
+    JSXClosingElementName = 178,
+    JSXFragmentOpeningFragment = 179,
+    JSXFragmentChildren = 180,
+    JSXFragmentClosingFragment = 181,
+    JSXNamespacedNameNamespace = 182,
+    JSXNamespacedNameName = 183,
+    JSXMemberExpressionObject = 184,
+    JSXMemberExpressionProperty = 185,
+    JSXExpressionContainerExpression = 186,
+    JSXAttributeName = 187,
+    JSXAttributeValue = 188,
+    JSXSpreadAttributeArgument = 189,
+    JSXSpreadChildExpression = 190,
+    TSThisParameterTypeAnnotation = 191,
+    TSEnumDeclarationId = 192,
+    TSEnumDeclarationBody = 193,
+    TSEnumBodyMembers = 194,
+    TSEnumMemberId = 195,
+    TSEnumMemberInitializer = 196,
+    TSTypeAnnotationTypeAnnotation = 197,
+    TSLiteralTypeLiteral = 198,
+    TSConditionalTypeCheckType = 199,
+    TSConditionalTypeExtendsType = 200,
+    TSConditionalTypeTrueType = 201,
+    TSConditionalTypeFalseType = 202,
+    TSUnionTypeTypes = 203,
+    TSIntersectionTypeTypes = 204,
+    TSParenthesizedTypeTypeAnnotation = 205,
+    TSTypeOperatorTypeAnnotation = 206,
+    TSArrayTypeElementType = 207,
+    TSIndexedAccessTypeObjectType = 208,
+    TSIndexedAccessTypeIndexType = 209,
+    TSTupleTypeElementTypes = 210,
+    TSNamedTupleMemberLabel = 211,
+    TSNamedTupleMemberElementType = 212,
+    TSOptionalTypeTypeAnnotation = 213,
+    TSRestTypeTypeAnnotation = 214,
+    TSTypeReferenceTypeName = 215,
+    TSTypeReferenceTypeArguments = 216,
+    TSQualifiedNameLeft = 217,
+    TSQualifiedNameRight = 218,
+    TSTypeParameterInstantiationParams = 219,
+    TSTypeParameterName = 220,
+    TSTypeParameterConstraint = 221,
+    TSTypeParameterDefault = 222,
+    TSTypeParameterDeclarationParams = 223,
+    TSTypeAliasDeclarationId = 224,
+    TSTypeAliasDeclarationTypeParameters = 225,
+    TSTypeAliasDeclarationTypeAnnotation = 226,
+    TSClassImplementsExpression = 227,
+    TSClassImplementsTypeArguments = 228,
+    TSInterfaceDeclarationId = 229,
+    TSInterfaceDeclarationTypeParameters = 230,
+    TSInterfaceDeclarationExtends = 231,
+    TSInterfaceDeclarationBody = 232,
+    TSInterfaceBodyBody = 233,
+    TSPropertySignatureKey = 234,
+    TSPropertySignatureTypeAnnotation = 235,
+    TSIndexSignatureParameter = 236,
+    TSIndexSignatureTypeAnnotation = 237,
+    TSCallSignatureDeclarationTypeParameters = 238,
+    TSCallSignatureDeclarationThisParam = 239,
+    TSCallSignatureDeclarationParams = 240,
+    TSCallSignatureDeclarationReturnType = 241,
+    TSMethodSignatureKey = 242,
+    TSMethodSignatureTypeParameters = 243,
+    TSMethodSignatureThisParam = 244,
+    TSMethodSignatureParams = 245,
+    TSMethodSignatureReturnType = 246,
+    TSConstructSignatureDeclarationTypeParameters = 247,
+    TSConstructSignatureDeclarationParams = 248,
+    TSConstructSignatureDeclarationReturnType = 249,
+    TSIndexSignatureNameTypeAnnotation = 250,
+    TSInterfaceHeritageExpression = 251,
+    TSInterfaceHeritageTypeArguments = 252,
+    TSTypePredicateParameterName = 253,
+    TSTypePredicateTypeAnnotation = 254,
+    TSModuleDeclarationId = 255,
+    TSModuleDeclarationBody = 256,
+    TSGlobalDeclarationBody = 257,
+    TSModuleBlockDirectives = 258,
+    TSModuleBlockBody = 259,
+    TSTypeLiteralMembers = 260,
+    TSInferTypeTypeParameter = 261,
+    TSTypeQueryExprName = 262,
+    TSTypeQueryTypeArguments = 263,
+    TSImportTypeSource = 264,
+    TSImportTypeOptions = 265,
+    TSImportTypeQualifier = 266,
+    TSImportTypeTypeArguments = 267,
+    TSImportTypeQualifiedNameLeft = 268,
+    TSImportTypeQualifiedNameRight = 269,
+    TSFunctionTypeTypeParameters = 270,
+    TSFunctionTypeThisParam = 271,
+    TSFunctionTypeParams = 272,
+    TSFunctionTypeReturnType = 273,
+    TSConstructorTypeTypeParameters = 274,
+    TSConstructorTypeParams = 275,
+    TSConstructorTypeReturnType = 276,
+    TSMappedTypeKey = 277,
+    TSMappedTypeConstraint = 278,
+    TSMappedTypeNameType = 279,
+    TSMappedTypeTypeAnnotation = 280,
+    TSTemplateLiteralTypeQuasis = 281,
+    TSTemplateLiteralTypeTypes = 282,
+    TSAsExpressionExpression = 283,
+    TSAsExpressionTypeAnnotation = 284,
+    TSSatisfiesExpressionExpression = 285,
+    TSSatisfiesExpressionTypeAnnotation = 286,
+    TSTypeAssertionTypeAnnotation = 287,
+    TSTypeAssertionExpression = 288,
+    TSImportEqualsDeclarationId = 289,
+    TSImportEqualsDeclarationModuleReference = 290,
+    TSExternalModuleReferenceExpression = 291,
+    TSNonNullExpressionExpression = 292,
+    DecoratorExpression = 293,
+    TSExportAssignmentExpression = 294,
+    TSNamespaceExportDeclarationId = 295,
+    TSInstantiationExpressionExpression = 296,
+    TSInstantiationExpressionTypeArguments = 297,
+    JSDocNullableTypeTypeAnnotation = 298,
+    JSDocNonNullableTypeTypeAnnotation = 299,
 }
 
 /// Ancestor type used in AST traversal.
@@ -508,10 +507,8 @@ pub enum Ancestor<'a, 't> {
     ThrowStatementArgument(ThrowStatementWithoutArgument<'a, 't>) =
         AncestorType::ThrowStatementArgument as u16,
     TryStatementBlock(TryStatementWithoutBlock<'a, 't>) = AncestorType::TryStatementBlock as u16,
-    TryStatementHandler(TryStatementWithoutHandler<'a, 't>) =
-        AncestorType::TryStatementHandler as u16,
-    TryStatementFinalizer(TryStatementWithoutFinalizer<'a, 't>) =
-        AncestorType::TryStatementFinalizer as u16,
+    TryStatementClauses(TryStatementWithoutClauses<'a, 't>) =
+        AncestorType::TryStatementClauses as u16,
     CatchClauseParam(CatchClauseWithoutParam<'a, 't>) = AncestorType::CatchClauseParam as u16,
     CatchClauseBody(CatchClauseWithoutBody<'a, 't>) = AncestorType::CatchClauseBody as u16,
     CatchParameterPattern(CatchParameterWithoutPattern<'a, 't>) =
@@ -1216,12 +1213,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_try_statement(self) -> bool {
-        matches!(
-            self,
-            Self::TryStatementBlock(_)
-                | Self::TryStatementHandler(_)
-                | Self::TryStatementFinalizer(_)
-        )
+        matches!(self, Self::TryStatementBlock(_) | Self::TryStatementClauses(_))
     }
 
     #[inline]
@@ -2085,6 +2077,11 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
+    pub fn is_parent_of_try_statement_clauses(self) -> bool {
+        matches!(self, Self::TryStatementClauses(_))
+    }
+
+    #[inline]
     pub fn is_parent_of_arrow_function_body(self) -> bool {
         matches!(self, Self::ArrowFunctionExpressionBody(_))
     }
@@ -2352,8 +2349,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::LabeledStatementBody(a) => a.address(),
             Self::ThrowStatementArgument(a) => a.address(),
             Self::TryStatementBlock(a) => a.address(),
-            Self::TryStatementHandler(a) => a.address(),
-            Self::TryStatementFinalizer(a) => a.address(),
+            Self::TryStatementClauses(a) => a.address(),
             Self::CatchClauseParam(a) => a.address(),
             Self::CatchClauseBody(a) => a.address(),
             Self::CatchParameterPattern(a) => a.address(),
@@ -6725,8 +6721,7 @@ impl<'a, 't> GetAddress for ThrowStatementWithoutArgument<'a, 't> {
 pub(crate) const OFFSET_TRY_STATEMENT_NODE_ID: usize = offset_of!(TryStatement, node_id);
 pub(crate) const OFFSET_TRY_STATEMENT_SPAN: usize = offset_of!(TryStatement, span);
 pub(crate) const OFFSET_TRY_STATEMENT_BLOCK: usize = offset_of!(TryStatement, block);
-pub(crate) const OFFSET_TRY_STATEMENT_HANDLER: usize = offset_of!(TryStatement, handler);
-pub(crate) const OFFSET_TRY_STATEMENT_FINALIZER: usize = offset_of!(TryStatement, finalizer);
+pub(crate) const OFFSET_TRY_STATEMENT_CLAUSES: usize = offset_of!(TryStatement, clauses);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -6749,18 +6744,10 @@ impl<'a, 't> TryStatementWithoutBlock<'a, 't> {
     }
 
     #[inline]
-    pub fn handler(self) -> &'t Option<ArenaBox<'a, CatchClause<'a>>> {
+    pub fn clauses(self) -> &'t TryStatementClauses<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_HANDLER)
-                as *const Option<ArenaBox<'a, CatchClause<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn finalizer(self) -> &'t Option<ArenaBox<'a, BlockStatement<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_FINALIZER)
-                as *const Option<ArenaBox<'a, BlockStatement<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_CLAUSES)
+                as *const TryStatementClauses<'a>)
         }
     }
 }
@@ -6774,12 +6761,12 @@ impl<'a, 't> GetAddress for TryStatementWithoutBlock<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TryStatementWithoutHandler<'a, 't>(
+pub struct TryStatementWithoutClauses<'a, 't>(
     pub(crate) *const TryStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TryStatementWithoutHandler<'a, 't> {
+impl<'a, 't> TryStatementWithoutClauses<'a, 't> {
     #[inline]
     pub fn node_id(self) -> &'t Cell<NodeId> {
         unsafe {
@@ -6799,61 +6786,9 @@ impl<'a, 't> TryStatementWithoutHandler<'a, 't> {
                 as *const ArenaBox<'a, BlockStatement<'a>>)
         }
     }
-
-    #[inline]
-    pub fn finalizer(self) -> &'t Option<ArenaBox<'a, BlockStatement<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_FINALIZER)
-                as *const Option<ArenaBox<'a, BlockStatement<'a>>>)
-        }
-    }
 }
 
-impl<'a, 't> GetAddress for TryStatementWithoutHandler<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        unsafe { Address::from_ptr(self.0) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TryStatementWithoutFinalizer<'a, 't>(
-    pub(crate) *const TryStatement<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TryStatementWithoutFinalizer<'a, 't> {
-    #[inline]
-    pub fn node_id(self) -> &'t Cell<NodeId> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_NODE_ID) as *const Cell<NodeId>)
-        }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn block(self) -> &'t ArenaBox<'a, BlockStatement<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_BLOCK)
-                as *const ArenaBox<'a, BlockStatement<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn handler(self) -> &'t Option<ArenaBox<'a, CatchClause<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_HANDLER)
-                as *const Option<ArenaBox<'a, CatchClause<'a>>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TryStatementWithoutFinalizer<'a, 't> {
+impl<'a, 't> GetAddress for TryStatementWithoutClauses<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }

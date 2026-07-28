@@ -22,6 +22,26 @@ impl Program<'_> {
     }
 }
 
+impl<'a> TryStatement<'a> {
+    /// Returns the catch clause, when present.
+    pub fn handler(&self) -> Option<&CatchClause<'a>> {
+        match &self.clauses {
+            TryStatementClauses::Catch(handler)
+            | TryStatementClauses::CatchFinally { handler, .. } => Some(handler),
+            TryStatementClauses::Finally(_) => None,
+        }
+    }
+
+    /// Returns the finally block, when present.
+    pub fn finalizer(&self) -> Option<&BlockStatement<'a>> {
+        match &self.clauses {
+            TryStatementClauses::Finally(finalizer)
+            | TryStatementClauses::CatchFinally { finalizer, .. } => Some(finalizer),
+            TryStatementClauses::Catch(_) => None,
+        }
+    }
+}
+
 impl<'a> Expression<'a> {
     /// Returns `true` if this expression is TypeScript-specific syntax.
     pub fn is_typescript_syntax(&self) -> bool {

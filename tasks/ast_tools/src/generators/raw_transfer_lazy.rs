@@ -315,8 +315,8 @@ impl<'s> WalkStatuses<'s> {
 
         let mut is_walked = false;
         for variant in enum_def.all_variants(self.schema) {
-            if let Some(variant_type) = variant.field_type(self.schema) {
-                is_walked |= self.is_walked(variant_type);
+            for field in &variant.fields {
+                is_walked |= self.is_walked(field.type_def(self.schema));
             }
         }
         is_walked
@@ -466,12 +466,16 @@ impl<'s> CacheKeyOffsets<'s> {
                 }
 
                 let offset_within_variant = offset - payload_offset;
-                enum_def.all_variants(self.schema).all(|variants| {
-                    variants.field_type(self.schema).is_none_or(|variant_type| {
-                        let is_in_padding_after_payload =
-                            offset_within_variant >= variant_type.layout_64().size;
-                        is_in_padding_after_payload
-                            || self.is_available_offset(variant_type, offset_within_variant)
+                enum_def.all_variants(self.schema).all(|variant| {
+                    variant.fields.iter().all(|field| {
+                        let field_offset = field.offset_64();
+                        if offset_within_variant < field_offset {
+                            return true;
+                        }
+                        let offset_within_field = offset_within_variant - field_offset;
+                        let field_type = field.type_def(self.schema);
+                        offset_within_field >= field_type.layout_64().size
+                            || self.is_available_offset(field_type, offset_within_field)
                     })
                 })
             }
@@ -565,8 +569,9 @@ impl<'s> LocalCacheTypes<'s> {
                 } else {
                     enum_def.all_variants(self.schema).any(|variant| {
                         variant
-                            .field_type(self.schema)
-                            .is_some_and(|field_type| self.needs_cached_prop(field_type))
+                            .fields
+                            .iter()
+                            .any(|field| self.needs_cached_prop(field.type_def(self.schema)))
                     })
                 }
             }
@@ -700,6 +705,76 @@ fn generate_struct(
             let pos = pos_offset(field.offset_64());
             write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
         }
+    }
+
+    if struct_def.name() == "TryStatement" {
+        let clauses_field = struct_def.field_by_name("clauses");
+        let clauses = clauses_field.type_def(schema).as_enum().unwrap();
+        let payload_offset = clauses.layout_64().align;
+        let catch_field = clauses.variant_by_name("Catch").field_by_name("0");
+        let finally_field = clauses.variant_by_name("Finally").field_by_name("0");
+        let catch_finally = clauses.variant_by_name("CatchFinally");
+        let handler_field = catch_finally.field_by_name("handler");
+        let finalizer_field = catch_finally.field_by_name("finalizer");
+
+        let clauses_pos = internal_pos_offset(clauses_field.offset_64());
+        let catch_pos = internal_pos_offset(
+            clauses_field.offset_64() + payload_offset + catch_field.offset_64(),
+        );
+        let finally_pos = internal_pos_offset(
+            clauses_field.offset_64() + payload_offset + finally_field.offset_64(),
+        );
+        let handler_pos = internal_pos_offset(
+            clauses_field.offset_64() + payload_offset + handler_field.offset_64(),
+        );
+        let finalizer_pos = internal_pos_offset(
+            clauses_field.offset_64() + payload_offset + finalizer_field.offset_64(),
+        );
+        let handler_constructor = handler_field.type_def(schema).constructor_name(schema);
+        let finalizer_constructor = finalizer_field.type_def(schema).constructor_name(schema);
+
+        #[rustfmt::skip]
+        write_it!(getters, "
+            get handler() {{
+                const internal = this.#internal,
+                    discriminant = internal.ast.buffer[{clauses_pos}];
+                if (discriminant === 1) return null;
+                return {handler_constructor}(discriminant === 0 ? {catch_pos} : {handler_pos}, internal.ast);
+            }}
+
+            get finalizer() {{
+                const internal = this.#internal,
+                    discriminant = internal.ast.buffer[{clauses_pos}];
+                if (discriminant === 0) return null;
+                return {finalizer_constructor}(discriminant === 1 ? {finally_pos} : {finalizer_pos}, internal.ast);
+            }}
+        ");
+        write_it!(to_json, "handler: this.handler,\nfinalizer: this.finalizer,\n");
+
+        let clauses_pos = pos_offset(clauses_field.offset_64());
+        let catch_pos =
+            pos_offset(clauses_field.offset_64() + payload_offset + catch_field.offset_64());
+        let finally_pos =
+            pos_offset(clauses_field.offset_64() + payload_offset + finally_field.offset_64());
+        let handler_pos =
+            pos_offset(clauses_field.offset_64() + payload_offset + handler_field.offset_64());
+        let finalizer_pos =
+            pos_offset(clauses_field.offset_64() + payload_offset + finalizer_field.offset_64());
+        let handler_walk = handler_field.type_def(schema).walk_name(schema);
+        let finalizer_walk = finalizer_field.type_def(schema).walk_name(schema);
+        write_it!(
+            walk_stmts,
+            "
+            switch (ast.buffer[{clauses_pos}]) {{
+                case 0: {handler_walk}({catch_pos}, ast, visitors); break;
+                case 1: {finalizer_walk}({finally_pos}, ast, visitors); break;
+                case 2:
+                    {handler_walk}({handler_pos}, ast, visitors);
+                    {finalizer_walk}({finalizer_pos}, ast, visitors);
+                    break;
+            }}
+        "
+        );
     }
 
     let type_prop_init = if !has_type_field && !struct_def.estree.no_type {

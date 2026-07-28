@@ -627,10 +627,10 @@ impl Gen for TryStatement<'_> {
         p.print_str("try");
         p.print_soft_space();
         p.print_block_statement(&self.block, ctx);
-        if let Some(handler) = &self.handler {
+        if let Some(handler) = self.handler() {
             handler.r#gen(p, ctx);
         }
-        if let Some(finalizer) = &self.finalizer {
+        if let Some(finalizer) = self.finalizer() {
             p.print_soft_space();
             p.print_str("finally");
             p.print_soft_space();

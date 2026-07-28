@@ -164,6 +164,8 @@ impl<'a> ReplaceWith<'a> for ThrowStatement<'a> {}
 
 impl<'a> ReplaceWith<'a> for TryStatement<'a> {}
 
+impl<'a> ReplaceWith<'a> for TryStatementClauses<'a> {}
+
 impl<'a> ReplaceWith<'a> for CatchClause<'a> {}
 
 impl<'a> ReplaceWith<'a> for CatchParameter<'a> {}

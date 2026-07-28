@@ -1043,8 +1043,7 @@ fn ox_codegen_terminal<'a>(
             Ok(Some(oxc_ast::ast::Statement::new_try_statement(
                 SPAN,
                 try_block,
-                Some(handler),
-                None,
+                oxc_ast::ast::TryStatementClauses::Catch(handler),
                 &cx.ast,
             )))
         }
@@ -3069,7 +3068,12 @@ fn ox_create_hook_guard<'a>(
         [ox_dispatcher_guard_stmt(ast, guard_name, after)],
         ast,
     );
-    oxc_ast::ast::Statement::new_try_statement(SPAN, try_block, None, Some(finalizer), ast)
+    oxc_ast::ast::Statement::new_try_statement(
+        SPAN,
+        try_block,
+        oxc_ast::ast::TryStatementClauses::Finally(finalizer),
+        ast,
+    )
 }
 
 /// Build a call expression for `CallExpression`/`MethodCall`, matching TS

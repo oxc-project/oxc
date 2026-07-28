@@ -6071,9 +6071,17 @@ fn lower_statement<'a>(
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
 
-            let handler_clause = match &try_stmt.handler {
-                Some(h) => h,
-                None => {
+            let handler_clause = match &try_stmt.clauses {
+                oxc::TryStatementClauses::Catch(handler) => handler,
+                oxc::TryStatementClauses::CatchFinally { handler, .. } => {
+                    builder.record_error(
+                        ErrorCategory::Todo
+                            .diagnostic("(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause")
+                            .with_labels(span),
+                    )?;
+                    handler
+                }
+                oxc::TryStatementClauses::Finally(_) => {
                     builder.record_error(
                         ErrorCategory::Todo
                             .diagnostic("(BuildHIR::lowerStatement) Handle TryStatement without a catch clause")
@@ -6082,14 +6090,6 @@ fn lower_statement<'a>(
                     return Ok(());
                 }
             };
-
-            if try_stmt.finalizer.is_some() {
-                builder.record_error(
-                    ErrorCategory::Todo
-                        .diagnostic("(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause")
-                        .with_labels(span),
-                )?;
-            }
 
             // Set up handler binding if catch has a param
             let handler_binding_info: Option<(Place, &oxc::BindingPattern)> = if let Some(param) =

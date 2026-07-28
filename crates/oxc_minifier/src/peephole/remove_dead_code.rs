@@ -284,8 +284,12 @@ impl<'a> PeepholeOptimizations {
 
     pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::TryStatement(s) = stmt else { return };
-        if let Some(handler) = &s.handler
-            && s.block.body.is_empty()
+        if s.block.body.is_empty()
+            && let Some(handler) = match &mut s.clauses {
+                TryStatementClauses::Catch(handler)
+                | TryStatementClauses::CatchFinally { handler, .. } => Some(handler),
+                TryStatementClauses::Finally(_) => None,
+            }
         {
             let body = &handler.body.body;
             let is_canonical_body =
@@ -293,7 +297,6 @@ impl<'a> PeepholeOptimizations {
             if !is_canonical_body {
                 let mut var = KeepVar::new();
                 var.visit_block_statement(&handler.body);
-                let Some(handler) = &mut s.handler else { return };
 
                 for dropped in handler.body.body.take_in(ctx) {
                     ctx.drop_statement(&dropped);
@@ -304,22 +307,30 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if let Some(finalizer) = &s.finalizer
-            && finalizer.body.is_empty()
-            && s.handler.is_some()
-        {
-            s.finalizer = None;
+        if matches!(
+            &s.clauses,
+            TryStatementClauses::CatchFinally { finalizer, .. } if finalizer.body.is_empty()
+        ) {
+            let TryStatementClauses::CatchFinally { handler, .. } = s.clauses.take_in(ctx) else {
+                unreachable!();
+            };
+            s.clauses = TryStatementClauses::Catch(handler);
         }
 
-        if s.block.body.is_empty()
-            && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
-        {
-            let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
-                std::mem::swap(finalizer, &mut block);
-                Statement::BlockStatement(block)
-            } else {
-                Statement::new_empty_statement(s.span, ctx)
+        let removable = s.block.body.is_empty()
+            && match &s.clauses {
+                TryStatementClauses::Catch(handler)
+                | TryStatementClauses::CatchFinally { handler, .. } => handler.body.body.is_empty(),
+                TryStatementClauses::Finally(_) => true,
+            };
+        if removable {
+            let span = s.span;
+            let new_stmt = match s.clauses.take_in(ctx) {
+                TryStatementClauses::Catch(_) => Statement::new_empty_statement(span, ctx),
+                TryStatementClauses::Finally(finalizer)
+                | TryStatementClauses::CatchFinally { finalizer, .. } => {
+                    Statement::BlockStatement(finalizer)
+                }
             };
             ctx.replace_statement(stmt, new_stmt);
         }

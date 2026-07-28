@@ -561,7 +561,7 @@ impl<'a, 'b> MultipleResolvedChecker<'a, 'b> {
                     self.resolve_finder.visit_expression_statement(expr_stmt);
                     resolved.append(&mut self.resolve_finder.take_resolved());
                 }
-                AstKind::TryStatement(try_stmt) if try_stmt.handler.is_some() => {
+                AstKind::TryStatement(try_stmt) if try_stmt.handler().is_some() => {
                     self.resolve_finder.try_block_start();
                 }
                 _ => {}

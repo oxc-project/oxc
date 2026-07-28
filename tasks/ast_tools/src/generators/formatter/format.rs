@@ -320,6 +320,10 @@ fn generate_struct_implementation(
 }
 
 fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    if enum_def.variants.iter().any(|variant| variant.fields.len() > 1) {
+        return TokenStream::new();
+    }
+
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
 

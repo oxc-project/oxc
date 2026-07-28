@@ -4076,13 +4076,7 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
 
     #[inline]
     pub fn block(&self) -> &AstNode<'a, BlockStatement<'a>> {
-        let following_span_start = self
-            .inner
-            .handler
-            .as_deref()
-            .map(|n| n.span().start)
-            .or_else(|| self.inner.finalizer.as_deref().map(|n| n.span().start))
-            .unwrap_or(0);
+        let following_span_start = self.inner.clauses.span().start;
         self.allocator.alloc(AstNode {
             inner: self.inner.block.as_ref(),
             allocator: self.allocator,
@@ -4092,29 +4086,14 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
     }
 
     #[inline]
-    pub fn handler(&self) -> Option<&AstNode<'a, CatchClause<'a>>> {
-        let following_span_start = self.inner.finalizer.as_deref().map_or(0, |n| n.span().start);
-        self.allocator
-            .alloc(self.inner.handler.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TryStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    #[inline]
-    pub fn finalizer(&self) -> Option<&AstNode<'a, BlockStatement<'a>>> {
+    pub fn clauses(&self) -> &AstNode<'a, TryStatementClauses<'a>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.finalizer.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TryStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.clauses,
+            allocator: self.allocator,
+            parent: AstNodes::TryStatement(transmute_self(self)),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

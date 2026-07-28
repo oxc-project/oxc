@@ -820,6 +820,21 @@ pub trait Traverse<'a> {
     fn exit_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
+    fn enter_try_statement_clauses(
+        &mut self,
+        node: &mut TryStatementClauses<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_try_statement_clauses(
+        &mut self,
+        node: &mut TryStatementClauses<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_catch_clause(&mut self, node: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_catch_clause(&mut self, node: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {}

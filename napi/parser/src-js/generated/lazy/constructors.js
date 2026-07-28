@@ -4004,13 +4004,23 @@ export class TryStatement {
   }
 
   get handler() {
-    const internal = this.#internal;
-    return constructOptionBoxCatchClause(internal.pos + 24, internal.ast);
+    const internal = this.#internal,
+      discriminant = internal.ast.buffer[internal.pos + 24];
+    if (discriminant === 1) return null;
+    return constructBoxCatchClause(
+      discriminant === 0 ? internal.pos + 32 : internal.pos + 32,
+      internal.ast,
+    );
   }
 
   get finalizer() {
-    const internal = this.#internal;
-    return constructOptionBoxBlockStatement(internal.pos + 32, internal.ast);
+    const internal = this.#internal,
+      discriminant = internal.ast.buffer[internal.pos + 24];
+    if (discriminant === 0) return null;
+    return constructBoxBlockStatement(
+      discriminant === 1 ? internal.pos + 32 : internal.pos + 40,
+      internal.ast,
+    );
   }
 
   toJSON() {
@@ -13376,16 +13386,6 @@ function constructSwitchCase(pos, ast) {
 
 function constructBoxCatchClause(pos, ast) {
   return new CatchClause(ast.buffer.int32[pos >> 2], ast);
-}
-
-function constructOptionBoxCatchClause(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
-  return constructBoxCatchClause(pos, ast);
-}
-
-function constructOptionBoxBlockStatement(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
-  return constructBoxBlockStatement(pos, ast);
 }
 
 function constructOptionCatchParameter(pos, ast) {

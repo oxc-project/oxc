@@ -13,6 +13,85 @@ use crate::ast::*;
 
 use super::{EmptyArray, Null};
 
+#[ast_meta]
+#[estree(
+    ts_type = "CatchClause | null",
+    raw_deser = "uint8[POS_OFFSET.clauses] === 1 ? null : DESER[Box<CatchClause>](uint8[POS_OFFSET.clauses] === 0 ? POS_OFFSET.clauses.Catch.0 : POS_OFFSET.clauses.CatchFinally.handler)",
+    raw_deser_inline
+)]
+pub struct TryStatementHandler<'a, 'b>(pub &'b TryStatement<'a>);
+
+impl ESTree for TryStatementHandler<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.handler().serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "BlockStatement | null",
+    raw_deser = "uint8[POS_OFFSET.clauses] === 0 ? null : DESER[Box<BlockStatement>](uint8[POS_OFFSET.clauses] === 1 ? POS_OFFSET.clauses.Finally.0 : POS_OFFSET.clauses.CatchFinally.finalizer)",
+    raw_deser_inline
+)]
+pub struct TryStatementFinalizer<'a, 'b>(pub &'b TryStatement<'a>);
+
+impl ESTree for TryStatementFinalizer<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.finalizer().serialize(serializer);
+    }
+}
+
+/// Preserve ESTree's separate nullable `handler` and `finalizer` fields while the Rust AST stores
+/// the clauses as an enum.
+#[ast_meta]
+#[estree(raw_deser = "
+    const previousParent = parent;
+    let start, end;
+    const node = parent = {
+        type: 'TryStatement',
+        block: null,
+        handler: null,
+        finalizer: null,
+        start: start = DESER[i32](POS_OFFSET.span.start),
+        end: end = DESER[i32](POS_OFFSET.span.end),
+        ...(RANGE && { range: [start, end] }),
+        ...(PARENT && { parent }),
+    };
+    node.block = DESER[Box<BlockStatement>](POS_OFFSET.block);
+    const clausesPos = POS_OFFSET.clauses;
+    switch (uint8[clausesPos]) {
+        case 0:
+            node.handler = DESER[Box<CatchClause>](POS_OFFSET.clauses.Catch.0);
+            break;
+        case 1:
+            node.finalizer = DESER[Box<BlockStatement>](POS_OFFSET.clauses.Finally.0);
+            break;
+        case 2:
+            node.handler = DESER[Box<CatchClause>](POS_OFFSET.clauses.CatchFinally.handler);
+            node.finalizer = DESER[Box<BlockStatement>](POS_OFFSET.clauses.CatchFinally.finalizer);
+            break;
+        default:
+            throw new Error(`Unexpected discriminant ${uint8[clausesPos]} for TryStatementClauses`);
+    }
+    if (PARENT) parent = previousParent;
+    node
+")]
+pub struct TryStatementConverter<'a, 'b>(pub &'b TryStatement<'a>);
+
+impl ESTree for TryStatementConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let statement = self.0;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TryStatement"));
+        state.serialize_field("block", &statement.block);
+        state.serialize_field("handler", &TryStatementHandler(statement));
+        state.serialize_field("finalizer", &TryStatementFinalizer(statement));
+        state.serialize_span(statement.span);
+        state.end();
+    }
+}
+
 // ----------------------------------------
 // Meta properties
 // ----------------------------------------

@@ -62,7 +62,7 @@ impl Rule for NoUselessCatch {
         let AstKind::TryStatement(try_stmt) = node.kind() else {
             return;
         };
-        let Some(catch_clause) = &try_stmt.handler else {
+        let Some(catch_clause) = try_stmt.handler() else {
             return;
         };
         let Some(BindingPattern::BindingIdentifier(binding_ident)) =
@@ -77,7 +77,7 @@ impl Rule for NoUselessCatch {
             return;
         };
         if binding_ident.name == throw_ident.name {
-            if try_stmt.finalizer.is_some() {
+            if try_stmt.finalizer().is_some() {
                 ctx.diagnostic(no_useless_catch_finalizer_diagnostic(
                     binding_ident.span,
                     throw_stmt.span,

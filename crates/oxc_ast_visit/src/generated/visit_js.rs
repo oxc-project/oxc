@@ -459,6 +459,11 @@ pub trait VisitJs<'a>: Sized {
     }
 
     #[inline]
+    fn visit_try_statement_clauses(&mut self, it: &TryStatementClauses<'a>) {
+        walk_try_statement_clauses(self, it);
+    }
+
+    #[inline]
     fn visit_catch_clause(&mut self, it: &CatchClause<'a>) {
         walk_catch_clause(self, it);
     }
@@ -2013,13 +2018,24 @@ pub mod walk_js {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_block_statement(&it.block);
-        if let Some(handler) = &it.handler {
-            visitor.visit_catch_clause(handler);
-        }
-        if let Some(finalizer) = &it.finalizer {
-            visitor.visit_block_statement(finalizer);
-        }
+        visitor.visit_try_statement_clauses(&it.clauses);
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_try_statement_clauses<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &TryStatementClauses<'a>,
+    ) {
+        // No `AstKind` for this type
+        match it {
+            TryStatementClauses::Catch(it) => visitor.visit_catch_clause(it),
+            TryStatementClauses::Finally(it) => visitor.visit_block_statement(it),
+            TryStatementClauses::CatchFinally { handler, finalizer } => {
+                visitor.visit_catch_clause(handler);
+                visitor.visit_block_statement(finalizer);
+            }
+        }
     }
 
     #[inline]

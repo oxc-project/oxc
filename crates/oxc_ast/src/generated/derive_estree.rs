@@ -1176,13 +1176,7 @@ impl ESTree for ThrowStatement<'_> {
 
 impl ESTree for TryStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TryStatement"));
-        state.serialize_field("block", &self.block);
-        state.serialize_field("handler", &self.handler);
-        state.serialize_field("finalizer", &self.finalizer);
-        state.serialize_span(self.span);
-        state.end();
+        crate::serialize::js::TryStatementConverter(self).serialize(serializer)
     }
 }
 

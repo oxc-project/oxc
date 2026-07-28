@@ -772,12 +772,10 @@ impl ConstructorSuper {
             Statement::TryStatement(try_stmt) => {
                 Self::has_return_with_value(&try_stmt.block.body)
                     || try_stmt
-                        .handler
-                        .as_ref()
+                        .handler()
                         .is_some_and(|handler| Self::has_return_with_value(&handler.body.body))
                     || try_stmt
-                        .finalizer
-                        .as_ref()
+                        .finalizer()
                         .is_some_and(|finalizer| Self::has_return_with_value(&finalizer.body))
             }
             Statement::WhileStatement(s) => Self::statement_returns_value(&s.body),

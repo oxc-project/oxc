@@ -776,7 +776,12 @@ impl<'a> ExplicitResourceManagement<'a> {
             let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
             let finally =
                 Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
-            Statement::new_try_statement(span, block, Some(catch), Some(finally), ctx)
+            Statement::new_try_statement(
+                span,
+                block,
+                TryStatementClauses::CatchFinally { handler: catch, finalizer: finally },
+                ctx,
+            )
         });
     }
 
@@ -908,7 +913,12 @@ impl<'a> ExplicitResourceManagement<'a> {
     ) -> Statement<'a> {
         let catch = Self::create_catch_clause(using_ctx, parent_scope_id, ctx);
         let finally = Self::create_finally_block(using_ctx, parent_scope_id, needs_await, ctx);
-        Statement::new_try_statement(span, body, Some(catch), Some(finally), ctx)
+        Statement::new_try_statement(
+            span,
+            body,
+            TryStatementClauses::CatchFinally { handler: catch, finalizer: finally },
+            ctx,
+        )
     }
 
     /// `catch (_) { _usingCtx.e = _; }`

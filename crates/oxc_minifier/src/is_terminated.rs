@@ -1,5 +1,5 @@
 use oxc_allocator::ArenaVec;
-use oxc_ast::ast::{BlockStatement, IfStatement, Statement, TryStatement};
+use oxc_ast::ast::{BlockStatement, IfStatement, Statement, TryStatement, TryStatementClauses};
 
 /// A statement that never completes normally — a direct jump, a kept block
 /// ending in a jump, an if/else where every branch jumps, or a try/catch where
@@ -30,9 +30,18 @@ impl IsTerminated for TryStatement<'_> {
         // A finalizer that aborts overrides however the other blocks complete.
         // Otherwise the try block must abort, and so must the catch block when
         // present (an exception thrown before the try block's jump lands there).
-        self.finalizer.as_ref().is_some_and(|f| f.is_terminated())
-            || (self.block.is_terminated()
-                && self.handler.as_ref().is_none_or(|h| h.body.is_terminated()))
+        match &self.clauses {
+            TryStatementClauses::Catch(handler) => {
+                self.block.is_terminated() && handler.body.is_terminated()
+            }
+            TryStatementClauses::Finally(finalizer) => {
+                finalizer.is_terminated() || self.block.is_terminated()
+            }
+            TryStatementClauses::CatchFinally { handler, finalizer } => {
+                finalizer.is_terminated()
+                    || (self.block.is_terminated() && handler.body.is_terminated())
+            }
+        }
     }
 }
 

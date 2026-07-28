@@ -163,17 +163,30 @@ fn calculate_alloc_for_enum(type_id: TypeId, schema: &mut Schema) -> Alloc {
 
     // Own variants
     for variant_index in schema.enum_def(type_id).variant_indices() {
-        let variant_type_id = schema.enum_def(type_id).variants[variant_index].field_type_id;
-        if let Some(variant_type_id) = variant_type_id {
-            let variant_alloc = calculate_alloc(variant_type_id, schema);
-            if variant_alloc < alloc {
-                alloc = variant_alloc;
-                min_variant = MinVariant::Own(variant_index);
-            }
-        } else {
+        let field_type_ids = schema.enum_def(type_id).variants[variant_index]
+            .fields
+            .iter()
+            .map(|field| field.type_id)
+            .collect::<Vec<_>>();
+        if field_type_ids.is_empty() {
             alloc = Alloc::ZERO;
             min_variant = MinVariant::Own(variant_index);
             break;
+        }
+        let mut variant_alloc = Alloc::ZERO;
+        for field_type_id in field_type_ids {
+            let field_alloc = calculate_alloc(field_type_id, schema);
+            if matches!(field_alloc, Alloc::NOT_CALCULATED | Alloc::CALCULATING) {
+                variant_alloc = field_alloc;
+                break;
+            }
+            variant_alloc.bytes_64 += field_alloc.bytes_64;
+            variant_alloc.bytes_32 += field_alloc.bytes_32;
+            variant_alloc.count += field_alloc.count;
+        }
+        if variant_alloc < alloc {
+            alloc = variant_alloc;
+            min_variant = MinVariant::Own(variant_index);
         }
     }
 
@@ -223,8 +236,15 @@ fn generate_impl_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     };
 
     let variant_ident = variant.ident();
-    let (value, should_inline) = if variant.field_type(schema).is_some() {
-        (quote!( Self::#variant_ident(Dummy::dummy(allocator)) ), false)
+    let (value, should_inline) = if variant.is_named {
+        let fields = variant.fields.iter().map(|field| {
+            let ident = field.ident();
+            quote!(#ident: Dummy::dummy(allocator))
+        });
+        (quote!( Self::#variant_ident { #(#fields),* } ), false)
+    } else if !variant.is_fieldless() {
+        let fields = variant.fields.iter().map(|_| quote!(Dummy::dummy(allocator)));
+        (quote!( Self::#variant_ident(#(#fields),*) ), false)
     } else {
         (quote!( Self::#variant_ident ), true)
     };

@@ -978,8 +978,21 @@ impl ContentEq for ThrowStatement<'_> {
 impl ContentEq for TryStatement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.block, &other.block)
-            && ContentEq::content_eq(&self.handler, &other.handler)
-            && ContentEq::content_eq(&self.finalizer, &other.finalizer)
+            && ContentEq::content_eq(&self.clauses, &other.clauses)
+    }
+}
+
+impl ContentEq for TryStatementClauses<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Catch(a), Self::Catch(b)) => a.content_eq(b),
+            (Self::Finally(a), Self::Finally(b)) => a.content_eq(b),
+            (
+                Self::CatchFinally { handler: a_handler, finalizer: a_finalizer },
+                Self::CatchFinally { handler: b_handler, finalizer: b_finalizer },
+            ) => a_handler.content_eq(b_handler) && a_finalizer.content_eq(b_finalizer),
+            _ => false,
+        }
     }
 }
 

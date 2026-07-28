@@ -96,7 +96,7 @@ impl Rule for NoUnsafeFinally {
             // Finally Block
             let parent_parent_kind = nodes.parent_kind(node_id);
             if let AstKind::TryStatement(try_stmt) = parent_parent_kind
-                && let Some(try_block_stmt) = &try_stmt.finalizer
+                && let Some(try_block_stmt) = try_stmt.finalizer()
                 && let AstKind::BlockStatement(block_stmt) = ast_kind
                 && try_block_stmt.span == block_stmt.span
             {

@@ -1795,6 +1795,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
+        let handler = stmt.handler();
+        let finalizer = stmt.finalizer();
+
         /* cfg */
 
         #[cfg(feature = "cfg")]
@@ -1805,9 +1808,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             before_try_block_graph_ix,
         ) = control_flow!(self, |cfg| {
             let before_try_statement_graph_ix = cfg.current_node_ix;
-            let error_harness =
-                stmt.handler.as_ref().map(|_| cfg.attach_error_harness(ErrorEdgeKind::Explicit));
-            let before_finalizer_graph_ix = stmt.finalizer.as_ref().map(|_| cfg.attach_finalizer());
+            let error_harness = handler.map(|_| cfg.attach_error_harness(ErrorEdgeKind::Explicit));
+            let before_finalizer_graph_ix = finalizer.map(|_| cfg.attach_finalizer());
             let before_try_block_graph_ix = cfg.new_basic_block_normal();
 
             (
@@ -1827,7 +1829,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         #[cfg(feature = "cfg")]
-        let catch_block_end_ix = if let Some(handler) = &stmt.handler {
+        let catch_block_end_ix = if let Some(handler) = handler {
             /* cfg */
             control_flow!(self, |cfg| {
                 let Some(error_harness) = error_harness else {
@@ -1849,12 +1851,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         };
 
         #[cfg(not(feature = "cfg"))]
-        if let Some(handler) = &stmt.handler {
+        if let Some(handler) = handler {
             self.visit_catch_clause(handler);
         }
 
         #[cfg(feature = "cfg")]
-        let finally_block_end_ix = if let Some(finalizer) = &stmt.finalizer {
+        let finally_block_end_ix = if let Some(finalizer) = finalizer {
             /* cfg */
             control_flow!(self, |cfg| {
                 let Some(before_finalizer_graph_ix) = before_finalizer_graph_ix else {
@@ -1876,7 +1878,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         };
 
         #[cfg(not(feature = "cfg"))]
-        if let Some(finalizer) = &stmt.finalizer {
+        if let Some(finalizer) = finalizer {
             self.visit_block_statement(finalizer);
         }
 

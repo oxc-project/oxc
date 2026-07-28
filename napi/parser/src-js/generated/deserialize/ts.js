@@ -1719,8 +1719,21 @@ function deserializeTryStatement(pos) {
     end: deserializeI32(pos + 4),
   };
   node.block = deserializeBoxBlockStatement(pos + 16);
-  node.handler = deserializeOptionBoxCatchClause(pos + 24);
-  node.finalizer = deserializeOptionBoxBlockStatement(pos + 32);
+  let clausesPos = pos + 24;
+  switch (uint8[clausesPos]) {
+    case 0:
+      node.handler = deserializeBoxCatchClause(pos + 32);
+      break;
+    case 1:
+      node.finalizer = deserializeBoxBlockStatement(pos + 32);
+      break;
+    case 2:
+      node.handler = deserializeBoxCatchClause(pos + 32);
+      node.finalizer = deserializeBoxBlockStatement(pos + 40);
+      break;
+    default:
+      throw Error(`Unexpected discriminant ${uint8[clausesPos]} for TryStatementClauses`);
+  }
   return node;
 }
 
@@ -5562,18 +5575,6 @@ function deserializeVecSwitchCase(pos) {
 
 function deserializeBoxCatchClause(pos) {
   return deserializeCatchClause(int32[pos >> 2]);
-}
-
-function deserializeOptionBoxCatchClause(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
-    ? null
-    : deserializeBoxCatchClause(pos);
-}
-
-function deserializeOptionBoxBlockStatement(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
-    ? null
-    : deserializeBoxBlockStatement(pos);
 }
 
 function deserializeOptionCatchParameter(pos) {

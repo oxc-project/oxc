@@ -183,14 +183,17 @@ impl<'s> ScopesCalculator<'s> {
         let mut state = CalculationState::Calculated(false);
         if !enum_def.is_fieldless() {
             // Check if any variant contains a scope
-            for variant_index in enum_def.variant_indices() {
+            'variants: for variant_index in enum_def.variant_indices() {
                 let variant = &self.schema.enum_def(type_id).variants[variant_index];
-                if let Some(variant_type_id) = variant.field_type_id {
-                    let variant_state = self.calculate_type(variant_type_id);
+                for field_index in variant.field_indices() {
+                    let field_type_id = self.schema.enum_def(type_id).variants[variant_index]
+                        .fields[field_index]
+                        .type_id;
+                    let variant_state = self.calculate_type(field_type_id);
                     match variant_state {
                         CalculationState::Calculated(true) => {
                             state = CalculationState::Calculated(true);
-                            break;
+                            break 'variants;
                         }
                         CalculationState::NotCalculated => {
                             state = CalculationState::NotCalculated;
@@ -463,40 +466,97 @@ fn generate_visit_method_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option
         let match_arms = enum_def
             .all_variants(schema)
             .filter_map(|variant| {
-                let variant_type = variant.field_type(schema)?;
-                let contains_scope = match variant_type.innermost_type(schema) {
-                    TypeDef::Struct(struct_def) => struct_def.visit.contains_scope,
-                    TypeDef::Enum(enum_def) => enum_def.visit.contains_scope,
-                    _ => false,
-                };
+                if !variant.is_named && variant.fields.len() == 1 {
+                    let variant_type = variant.field_type(schema).unwrap();
+                    let contains_scope = match variant_type.innermost_type(schema) {
+                        TypeDef::Struct(struct_def) => struct_def.visit.contains_scope,
+                        TypeDef::Enum(enum_def) => enum_def.visit.contains_scope,
+                        _ => false,
+                    };
+                    let visit = if contains_scope {
+                        generate_visit_type(
+                            variant_type,
+                            &Target::Reference(create_ident_tokens("it")),
+                            &variant.visit.visit_args,
+                            &create_ident_tokens("it"),
+                            &quote!(self),
+                            false,
+                            schema,
+                        )
+                        .map(|VisitOnly(visit)| visit)
+                    } else {
+                        None
+                    };
+                    if let Some(visit) = visit {
+                        match_arm_count += 1;
+                        let variant_ident = variant.ident();
+                        return Some(quote! {
+                            #enum_ident::#variant_ident(it) => #visit,
+                        });
+                    }
+                    let doc = format!("@ `{}`", variant.name());
+                    unvisited_variants.extend(quote! {
+                        #![doc = #doc]
+                    });
+                    return None;
+                }
 
-                let visit = if contains_scope {
-                    generate_visit_type(
-                        variant_type,
-                        &Target::Reference(create_ident_tokens("it")),
-                        &variant.visit.visit_args,
-                        &create_ident_tokens("it"),
-                        &quote!(self),
-                        false,
-                        schema,
-                    )
-                    .map(|VisitOnly(visit)| visit)
-                } else {
-                    None
-                };
-
-                if let Some(visit) = visit {
-                    match_arm_count += 1;
-                    let variant_ident = variant.ident();
-                    Some(quote! {
-                        #enum_ident::#variant_ident(it) => #visit,
+                let bindings = variant
+                    .fields
+                    .iter()
+                    .enumerate()
+                    .map(|(index, field)| {
+                        if variant.is_named {
+                            field.ident()
+                        } else {
+                            create_ident_tokens(&format!("field_{index}"))
+                        }
                     })
-                } else {
+                    .collect::<Vec<_>>();
+                let visits = variant
+                    .fields
+                    .iter()
+                    .zip(&bindings)
+                    .filter_map(|(field, binding)| {
+                        let variant_type = field.type_def(schema);
+                        let contains_scope = match variant_type.innermost_type(schema) {
+                            TypeDef::Struct(struct_def) => struct_def.visit.contains_scope,
+                            TypeDef::Enum(enum_def) => enum_def.visit.contains_scope,
+                            _ => false,
+                        };
+                        if !contains_scope {
+                            return None;
+                        }
+                        generate_visit_type(
+                            variant_type,
+                            &Target::Reference(binding.clone()),
+                            &variant.visit.visit_args,
+                            binding,
+                            &quote!(self),
+                            false,
+                            schema,
+                        )
+                        .map(|VisitOnly(visit)| quote!(#visit;))
+                    })
+                    .collect::<Vec<_>>();
+
+                if visits.is_empty() {
                     let doc = format!("@ `{}`", variant.name());
                     unvisited_variants.extend(quote! {
                         #![doc = #doc]
                     });
                     None
+                } else {
+                    match_arm_count += 1;
+                    let variant_ident = variant.ident();
+                    let pattern = if variant.is_named {
+                        quote!(#enum_ident::#variant_ident { #(#bindings),* })
+                    } else {
+                        quote!(#enum_ident::#variant_ident(#(#bindings),*))
+                    };
+                    Some(quote! {
+                        #pattern => { #(#visits)* }
+                    })
                 }
             })
             .collect::<TokenStream>();
