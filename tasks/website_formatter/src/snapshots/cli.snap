@@ -63,6 +63,9 @@ search: false
 
 
 ## Available options:
+- **`    --debug`**=_`OPTIONS`_ &mdash; 
+  Enable debug output options. Options are comma-separated. Possible values:
+ * `files` - Print the list of files that will be formatted.
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 
