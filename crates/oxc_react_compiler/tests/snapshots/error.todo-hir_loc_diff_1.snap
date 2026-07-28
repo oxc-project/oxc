@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-hir_loc_diff_1.js
+---
+Parse errors:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unexpected token", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(403), length: 3 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

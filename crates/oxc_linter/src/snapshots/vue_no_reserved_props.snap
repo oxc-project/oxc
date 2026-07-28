@@ -1,0 +1,219 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:17]
+ 4 │               props: {
+ 5 │                 ref: String,
+   ·                 ───
+ 6 │                 key: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:6:17]
+ 5 │                 ref: String,
+ 6 │                 key: String,
+   ·                 ───
+ 7 │                 is: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:17]
+ 4 │               props: {
+ 5 │                 ref: String,
+   ·                 ───
+ 6 │                 key: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:6:17]
+ 5 │                 ref: String,
+ 6 │                 key: String,
+   ·                 ───
+ 7 │                 is: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:17]
+ 4 │               props: [
+ 5 │                 'ref',
+   ·                 ─────
+ 6 │                 'key',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:6:17]
+ 5 │                 'ref',
+ 6 │                 'key',
+   ·                 ─────
+ 7 │                 'is',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:4:15]
+ 3 │             defineProps({
+ 4 │               ref: String,
+   ·               ───
+ 5 │               key: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:15]
+ 4 │               ref: String,
+ 5 │               key: String,
+   ·               ───
+ 6 │               is: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:4:15]
+ 3 │             defineProps([
+ 4 │               'ref',
+   ·               ─────
+ 5 │               'key',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:15]
+ 4 │               'ref',
+ 5 │               'key',
+   ·               ─────
+ 6 │               'is',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:4:15]
+ 3 │             interface Props {
+ 4 │               ref: string,
+   ·               ───
+ 5 │               key: string,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:15]
+ 4 │               ref: string,
+ 5 │               key: string,
+   ·               ───
+ 6 │               is: string,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:17]
+ 4 │               props: {
+ 5 │                 ref: String,
+   ·                 ───
+ 6 │                 key: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:6:17]
+ 5 │                 ref: String,
+ 6 │                 key: String,
+   ·                 ───
+ 7 │                 is: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'is' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:7:17]
+ 6 │                 key: String,
+ 7 │                 is: String,
+   ·                 ──
+ 8 │                 slot: String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'slot' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:8:17]
+ 7 │                 is: String,
+ 8 │                 slot: String,
+   ·                 ────
+ 9 │                 "slot-scope": String,
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'slot-scope' is a reserved attribute and cannot be used as props.
+    ╭─[no_reserved_props.tsx:9:17]
+  8 │                 slot: String,
+  9 │                 "slot-scope": String,
+    ·                 ────────────
+ 10 │               }
+    ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:17]
+ 4 │               props: [
+ 5 │                 'ref',
+   ·                 ─────
+ 6 │                 'key',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:6:17]
+ 5 │                 'ref',
+ 6 │                 'key',
+   ·                 ─────
+ 7 │                 'is',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'is' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:7:17]
+ 6 │                 'key',
+ 7 │                 'is',
+   ·                 ────
+ 8 │                 'slot',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'slot' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:8:17]
+ 7 │                 'is',
+ 8 │                 'slot',
+   ·                 ──────
+ 9 │                 "slot-scope",
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'slot-scope' is a reserved attribute and cannot be used as props.
+    ╭─[no_reserved_props.tsx:9:17]
+  8 │                 'slot',
+  9 │                 "slot-scope",
+    ·                 ────────────
+ 10 │               ]
+    ╰────
+
+  ⚠ vue(no-reserved-props): 'slot-scope' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:17]
+ 4 │               props: [
+ 5 │                 "slotScope",
+   ·                 ───────────
+ 6 │                 'class',
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'class' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:6:17]
+ 5 │                 "slotScope",
+ 6 │                 'class',
+   ·                 ───────
+ 7 │                 `style`
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'style' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:7:17]
+ 6 │                 'class',
+ 7 │                 `style`
+   ·                 ───────
+ 8 │               ]
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'ref' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:5:17]
+ 4 │               props: {
+ 5 │                 ref: String,
+   ·                 ───
+ 6 │               }
+   ╰────
+
+  ⚠ vue(no-reserved-props): 'key' is a reserved attribute and cannot be used as props.
+   ╭─[no_reserved_props.tsx:4:23]
+ 3 │             Vue.component('foo', {
+ 4 │               props: ['key']
+   ·                       ─────
+ 5 │             })
+   ╰────

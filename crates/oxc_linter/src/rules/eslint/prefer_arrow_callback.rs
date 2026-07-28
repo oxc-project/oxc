@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Function, FunctionType, IdentifierReference, MetaProperty, Super, ThisExpression,
+        Argument, Function, FunctionType, IdentifierReference, NewTarget, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -31,7 +31,9 @@ fn prefer_arrow_callback_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct PreferArrowCallbackConfig {
+    /// If this option is set to `true`, named function expressions are allowed.
     allow_named_functions: bool,
+    /// If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value.
     allow_unbound_this: bool,
 }
 
@@ -57,23 +59,6 @@ declare_oxc_lint!(
     /// - are shorter and easier to read;
     /// - cannot be used as constructors, which is desirable for callbacks.
     ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///   "prefer-arrow-callback": ["error", {
-    ///     "allowNamedFunctions": false,
-    ///     "allowUnboundThis": true
-    ///   }]
-    /// }
-    /// ```
-    ///
-    /// - `allowNamedFunctions` (default `false`) — when `true`, named function
-    ///   expressions are allowed.
-    /// - `allowUnboundThis` (default `true`) — when `false`, function
-    ///   expressions that reference `this` are reported even when they are not
-    ///   bound to a `this` value.
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -95,6 +80,7 @@ declare_oxc_lint!(
     fix,
     config = PreferArrowCallback,
     version = "1.65.0",
+    short_description = "Requires using arrow functions for callbacks.",
 );
 
 impl Rule for PreferArrowCallback {
@@ -391,10 +377,8 @@ impl<'a> Visit<'a> for ScopeScanner {
         self.sup = true;
     }
 
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        if it.meta.name == "new" && it.property.name == "target" {
-            self.meta = true;
-        }
+    fn visit_new_target(&mut self, _it: &NewTarget) {
+        self.meta = true;
     }
 
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {

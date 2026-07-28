@@ -5,7 +5,7 @@ use oxc_ast::{
         ReturnStatement, TSType, TSTypeName,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -136,6 +136,7 @@ declare_oxc_lint!(
     restriction,
     config = ExplicitFunctionReturnTypeConfig,
     version = "0.4.4",
+    short_description = "This rule enforces that functions have an explicit return type annotation.",
 );
 
 fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
@@ -653,7 +654,7 @@ struct ReturnStatementChecker {
     all_returns_are_functions: bool,
 }
 
-impl<'a> Visit<'a> for ReturnStatementChecker {
+impl<'a> VisitJs<'a> for ReturnStatementChecker {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement<'a>) {
         self.has_return = true;
         self.all_returns_are_functions &=

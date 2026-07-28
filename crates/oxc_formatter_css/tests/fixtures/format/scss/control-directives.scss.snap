@@ -1,0 +1,89 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@for $i from 1 through 8 {}
+@for  $i  from  1  through  8  {}
+@for $i from 1 to 5 {}
+@for
+$i
+from
+1
+through
+8
+{}
+@if $media == phonePortrait {
+    $k: .15625;
+} @else if $media == phoneLandscape {
+    $k: .08803;
+} @else {
+    $k: .065106;
+}
+p {
+    @if $type == ocean {
+        color: blue;
+    } @else if $type == matador {
+        color: red;
+    } @else {
+        color: green;
+    }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@for $i from 1 through 8 {
+}
+@for $i from 1 through 8 {
+}
+@for $i from 1 to 5 {
+}
+@for $i from 1 through 8 {
+}
+@if $media == phonePortrait {
+  $k: 0.15625;
+} @else if $media == phoneLandscape {
+  $k: 0.08803;
+} @else {
+  $k: 0.065106;
+}
+p {
+  @if $type == ocean {
+    color: blue;
+  } @else if $type == matador {
+    color: red;
+  } @else {
+    color: green;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@for $i from 1 through 8 {
+}
+@for $i from 1 through 8 {
+}
+@for $i from 1 to 5 {
+}
+@for $i from 1 through 8 {
+}
+@if $media == phonePortrait {
+  $k: 0.15625;
+} @else if $media == phoneLandscape {
+  $k: 0.08803;
+} @else {
+  $k: 0.065106;
+}
+p {
+  @if $type == ocean {
+    color: blue;
+  } @else if $type == matador {
+    color: red;
+  } @else {
+    color: green;
+  }
+}
+
+===================== End =====================

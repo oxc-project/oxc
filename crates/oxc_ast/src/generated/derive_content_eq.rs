@@ -31,7 +31,6 @@ impl ContentEq for Expression<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
             (Self::Super(a), Self::Super(b)) => a.content_eq(b),
             (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
             (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
@@ -57,6 +56,8 @@ impl ContentEq for Expression<'_> {
             (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
             (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
             (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::ImportMeta(a), Self::ImportMeta(b)) => a.content_eq(b),
+            (Self::NewTarget(a), Self::NewTarget(b)) => a.content_eq(b),
             (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
             (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
             (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
@@ -126,7 +127,6 @@ impl ContentEq for ArrayExpressionElement<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
             (Self::Super(a), Self::Super(b)) => a.content_eq(b),
             (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
             (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
@@ -152,6 +152,8 @@ impl ContentEq for ArrayExpressionElement<'_> {
             (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
             (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
             (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::ImportMeta(a), Self::ImportMeta(b)) => a.content_eq(b),
+            (Self::NewTarget(a), Self::NewTarget(b)) => a.content_eq(b),
             (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
             (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
             (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
@@ -218,7 +220,6 @@ impl ContentEq for PropertyKey<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
             (Self::Super(a), Self::Super(b)) => a.content_eq(b),
             (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
             (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
@@ -244,6 +245,8 @@ impl ContentEq for PropertyKey<'_> {
             (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
             (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
             (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::ImportMeta(a), Self::ImportMeta(b)) => a.content_eq(b),
+            (Self::NewTarget(a), Self::NewTarget(b)) => a.content_eq(b),
             (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
             (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
             (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
@@ -356,10 +359,15 @@ impl ContentEq for NewExpression<'_> {
     }
 }
 
-impl ContentEq for MetaProperty<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.meta, &other.meta)
-            && ContentEq::content_eq(&self.property, &other.property)
+impl ContentEq for ImportMeta {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl ContentEq for NewTarget {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
     }
 }
 
@@ -381,7 +389,6 @@ impl ContentEq for Argument<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
             (Self::Super(a), Self::Super(b)) => a.content_eq(b),
             (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
             (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
@@ -407,6 +414,8 @@ impl ContentEq for Argument<'_> {
             (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
             (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
             (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::ImportMeta(a), Self::ImportMeta(b)) => a.content_eq(b),
+            (Self::NewTarget(a), Self::NewTarget(b)) => a.content_eq(b),
             (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
             (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
             (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
@@ -825,7 +834,6 @@ impl ContentEq for ForStatementInit<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
             (Self::Super(a), Self::Super(b)) => a.content_eq(b),
             (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
             (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
@@ -851,6 +859,8 @@ impl ContentEq for ForStatementInit<'_> {
             (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
             (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
             (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::ImportMeta(a), Self::ImportMeta(b)) => a.content_eq(b),
+            (Self::NewTarget(a), Self::NewTarget(b)) => a.content_eq(b),
             (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
             (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
             (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
@@ -1400,7 +1410,6 @@ impl ContentEq for ExportDefaultDeclarationKind<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
             (Self::Super(a), Self::Super(b)) => a.content_eq(b),
             (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
             (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
@@ -1426,6 +1435,8 @@ impl ContentEq for ExportDefaultDeclarationKind<'_> {
             (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
             (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
             (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::ImportMeta(a), Self::ImportMeta(b)) => a.content_eq(b),
+            (Self::NewTarget(a), Self::NewTarget(b)) => a.content_eq(b),
             (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
             (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
             (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
@@ -1612,7 +1623,6 @@ impl ContentEq for JSXExpression<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
             (Self::Super(a), Self::Super(b)) => a.content_eq(b),
             (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
             (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
@@ -1638,6 +1648,8 @@ impl ContentEq for JSXExpression<'_> {
             (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
             (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
             (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::ImportMeta(a), Self::ImportMeta(b)) => a.content_eq(b),
+            (Self::NewTarget(a), Self::NewTarget(b)) => a.content_eq(b),
             (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
             (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
             (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),

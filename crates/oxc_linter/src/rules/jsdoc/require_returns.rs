@@ -96,6 +96,7 @@ declare_oxc_lint!(
     pending,
     config = RequireReturnsConfig,
     version = "0.4.0",
+    short_description = "Requires that return statements are documented with `@returns`.",
 );
 
 impl Rule for RequireReturns {

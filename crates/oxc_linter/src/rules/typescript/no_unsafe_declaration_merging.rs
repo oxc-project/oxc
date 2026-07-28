@@ -46,29 +46,27 @@ declare_oxc_lint!(
     typescript,
     correctness,
     version = "0.0.11",
+    short_description = "Disallow unsafe declaration merging.",
 );
 
 impl Rule for NoUnsafeDeclarationMerging {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Class(decl) => {
-                if let Some(ident) = decl.id.as_ref() {
-                    for symbol_id in ctx.scoping().get_bindings(node.scope_id()).values() {
-                        if let AstKind::TSInterfaceDeclaration(scope_interface) =
-                            get_symbol_kind(*symbol_id, ctx)
-                        {
-                            check_and_diagnostic(ident, &scope_interface.id, ctx);
-                        }
-                    }
+                if let Some(ident) = decl.id.as_ref()
+                    && let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), ident.name)
+                    && let AstKind::TSInterfaceDeclaration(scope_interface) =
+                        get_symbol_kind(symbol_id, ctx)
+                {
+                    check_and_diagnostic(ident, &scope_interface.id, ctx);
                 }
             }
             AstKind::TSInterfaceDeclaration(decl) => {
-                for symbol_id in ctx.scoping().get_bindings(node.scope_id()).values() {
-                    if let AstKind::Class(scope_class) = get_symbol_kind(*symbol_id, ctx)
-                        && let Some(scope_class_ident) = scope_class.id.as_ref()
-                    {
-                        check_and_diagnostic(&decl.id, scope_class_ident, ctx);
-                    }
+                if let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), decl.id.name)
+                    && let AstKind::Class(scope_class) = get_symbol_kind(symbol_id, ctx)
+                    && let Some(scope_class_ident) = scope_class.id.as_ref()
+                {
+                    check_and_diagnostic(&decl.id, scope_class_ident, ctx);
                 }
             }
             _ => {}

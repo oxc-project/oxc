@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::has_ambient_typescript_ancestor};
 
 fn vars_on_top_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All 'var' declarations must be at the top of the function scope.")
@@ -90,6 +90,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.15.4",
+    short_description = "Enforces that all `var` declarations are placed at the top of their containing scope.",
 );
 
 impl Rule for VarsOnTop {
@@ -102,7 +103,7 @@ impl Rule for VarsOnTop {
         }
 
         // Skip TypeScript ambient declarations (declare global, declare module, etc.)
-        if is_in_ambient_typescript_context(node, ctx) {
+        if has_ambient_typescript_ancestor(node.id(), ctx.nodes()) {
             return;
         }
 
@@ -222,15 +223,6 @@ fn check_var_on_top_in_function_scope(
     }
 
     false
-}
-
-fn is_in_ambient_typescript_context(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::TSModuleDeclaration(module) => module.declare,
-        // No need to check `declare` field, as `global` is only valid in ambient context
-        AstKind::TSGlobalDeclaration(_) => true,
-        _ => false,
-    })
 }
 
 #[test]

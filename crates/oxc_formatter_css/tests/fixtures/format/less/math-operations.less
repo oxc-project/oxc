@@ -1,0 +1,14 @@
+.ranges {
+  line-height: @picker-text-height - 2 * @border-width-base - (@padding-xs / 2);
+}
+.arrow {
+  @c-y: (@border-radius-outer-without-unit * (sqrt(2) - 1) + @border-radius-inner-without-unit * (1 / sqrt(2)));
+}
+.shorthand {
+  margin: -@padding-vertical -@padding-horizontal (@table-expand-column-width - @padding-horizontal);
+}
+.fit {
+  width: @a - @b;
+  height: @base * 2;
+  flex: @a -@b;
+}

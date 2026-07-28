@@ -1,0 +1,12 @@
+.spacing {
+  a: $a*$b;
+  b: $a+$b;
+  c: $a/$b;
+  d: $a - $b;
+  e: $a -$b;
+  f: -$a -$b;
+  g: $a*$b + $c;
+}
+.shorthand {
+  margin: -$gutter -$gutter;
+}

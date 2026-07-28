@@ -1,0 +1,13 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/rules-of-hooks-dfde14171fcd.js
+---
+// @expectNothingCompiled
+// Valid because classes can call functions.
+// We don't consider these to be hooks.
+class C {
+	m() {
+		this.useHook();
+		super.useHook();
+	}
+}

@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-round2_severity_diff.js
+---
+Parse errors:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Type argument list cannot be empty.", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(224), length: 2 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: Some("TS"), number: Some("1099") }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unexpected token", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(312), length: 3 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

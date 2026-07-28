@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use markdown::mdast::Node;
 
-use super::super::embedded::{format_embedded_js, is_js_ts_lang};
+use super::super::embedded::{format_jsdoc_js_snippet, is_js_ts_lang};
 use super::super::line_buffer::LineBuffer;
 use super::super::wrap::{format_table_block, wrap_paragraph};
 use super::SerializeOptions;
@@ -743,11 +743,17 @@ fn serialize_code(
     }
 }
 
-/// Format code block content in JSDoc descriptions.
-/// For JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or
-/// indented code blocks), the code is formatted through Prettier's parser via
-/// `format_embedded_js`. For non-JS/TS fenced code (css, html, etc.), the code
-/// is preserved verbatim.
+/// Format code block content in a JSDoc Markdown description.
+///
+/// Routing:
+/// - JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or indented blocks):
+///   formatted in-process via [`format_jsdoc_js_snippet`] (`oxc_formatter`'s own parser/formatter).
+/// - Non-JS/TS fenced code (css, html, graphql, etc.):
+///   when external callbacks are wired,
+///   routed through `ExternalCallbacks::format_embedded` (the string channel).
+///   When callbacks are absent (Rust-only conformance / pure CLI build), preserved verbatim.
+///
+/// NOTE: `@example` fences diverge here, see `tag_formatters::format_example_fenced_block`.
 fn format_code_value<'a>(
     code: &'a str,
     lang: Option<&str>,
@@ -772,7 +778,7 @@ fn format_code_value<'a>(
             return Cow::Borrowed(code);
         }
         // Fenced JS/TS, fenced with no lang, or indented code: try formatting
-        if let Some(formatted) = format_embedded_js(code, width, format_options, allocator) {
+        if let Some(formatted) = format_jsdoc_js_snippet(code, width, format_options, allocator) {
             return Cow::Owned(formatted);
         }
     }

@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/gating/dynamic-gating-invalid-multiple.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Gating: Multiple dynamic gating directives found", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(86), length: 104 }, primary: false }]), help: Some("Expected a single directive but found [use memo if(getTrue), use memo if(getFalse)]"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

@@ -1,4 +1,4 @@
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -32,9 +32,9 @@ impl<'a> PeepholeOptimizations {
             }
 
             let span = for_stmt.body.span();
-            let (first, body) = match for_stmt.body.take_in(ctx.ast) {
+            let (first, body) = match for_stmt.body.take_in(ctx) {
                 Statement::BlockStatement(mut block_stmt) => (
-                    block_stmt.body.get_mut(0).unwrap().take_in(ctx.ast),
+                    block_stmt.body.get_mut(0).unwrap().take_in(ctx),
                     Some(Statement::BlockStatement(block_stmt)),
                 ),
                 stmt => (stmt, None),
@@ -42,7 +42,7 @@ impl<'a> PeepholeOptimizations {
 
             let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
 
-            let expr = match if_stmt.test.take_in(ctx.ast) {
+            let expr = match if_stmt.test.take_in(ctx) {
                 Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                     unary_expr.unbox().argument
                 }
@@ -50,18 +50,20 @@ impl<'a> PeepholeOptimizations {
             };
 
             if let Some(test) = &mut for_stmt.test {
-                let left = test.take_in(ctx.ast);
+                let left = test.take_in(ctx);
                 let mut logical_expr =
-                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
-                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                    LogicalExpression::new(test.span(), left, LogicalOperator::And, expr, ctx);
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx).unwrap_or_else(|| {
+                    Expression::LogicalExpression(ArenaBox::new_in(logical_expr, ctx))
+                });
+                ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
             }
 
             let alternate = if_stmt.alternate.take();
-            for_stmt.body = Self::drop_first_statement(span, body, alternate, ctx);
-            ctx.state.changed = true;
+            let new_body = Self::drop_first_statement(span, body, alternate, ctx);
+            ctx.replace_statement(&mut for_stmt.body, new_body);
             return;
         }
         // "for (;;) if (x) y(); else break;" => "for (; x;) y();"
@@ -74,9 +76,9 @@ impl<'a> PeepholeOptimizations {
             }
 
             let span = for_stmt.body.span();
-            let (first, body) = match for_stmt.body.take_in(ctx.ast) {
+            let (first, body) = match for_stmt.body.take_in(ctx) {
                 Statement::BlockStatement(mut block_stmt) => (
-                    block_stmt.body.get_mut(0).unwrap().take_in(ctx.ast),
+                    block_stmt.body.get_mut(0).unwrap().take_in(ctx),
                     Some(Statement::BlockStatement(block_stmt)),
                 ),
                 stmt => (stmt, None),
@@ -84,21 +86,23 @@ impl<'a> PeepholeOptimizations {
 
             let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
 
-            let expr = if_stmt.test.take_in(ctx.ast);
+            let expr = if_stmt.test.take_in(ctx);
 
             if let Some(test) = &mut for_stmt.test {
-                let left = test.take_in(ctx.ast);
+                let left = test.take_in(ctx);
                 let mut logical_expr =
-                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
-                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                    LogicalExpression::new(test.span(), left, LogicalOperator::And, expr, ctx);
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx).unwrap_or_else(|| {
+                    Expression::LogicalExpression(ArenaBox::new_in(logical_expr, ctx))
+                });
+                ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
             }
 
-            let consequent = if_stmt.consequent.take_in(ctx.ast);
-            for_stmt.body = Self::drop_first_statement(span, body, Some(consequent), ctx);
-            ctx.state.changed = true;
+            let consequent = if_stmt.consequent.take_in(ctx);
+            let new_body = Self::drop_first_statement(span, body, Some(consequent), ctx);
+            ctx.replace_statement(&mut for_stmt.body, new_body);
         }
     }
 
@@ -115,13 +119,13 @@ impl<'a> PeepholeOptimizations {
                 } else if block_stmt.body.len() == 2
                     && !Self::statement_cares_about_scope(&block_stmt.body[1])
                 {
-                    return block_stmt.body[1].take_in(ctx.ast);
+                    return block_stmt.body[1].take_in(ctx);
                 } else {
                     block_stmt.body.remove(0);
                 }
                 Statement::BlockStatement(block_stmt)
             }
-            _ => replace.unwrap_or_else(|| ctx.ast.statement_empty(span)),
+            _ => replace.unwrap_or_else(|| Statement::new_empty_statement(span, ctx)),
         }
     }
 }

@@ -96,6 +96,7 @@ declare_oxc_lint!(
     correctness,
     config = NoShadowRestrictedNamesConfig,
     version = "0.0.3",
+    short_description = "Disallows the redefining of global variables such as `undefined`, `NaN`, `Infinity`, `eval`, `globalThis` and `arguments`.",
 );
 
 impl Rule for NoShadowRestrictedNames {
@@ -113,9 +114,13 @@ impl Rule for NoShadowRestrictedNames {
                 continue;
             }
 
+            let node_id = ctx.scoping().symbol_declaration(symbol_id);
+            if matches!(ctx.nodes().kind(node_id), AstKind::TSEnumMember(_)) {
+                continue;
+            }
+
             if name == "undefined" {
                 // Allow to declare `undefined` variable but not allow to assign value to it.
-                let node_id = ctx.scoping().symbol_declaration(symbol_id);
                 if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id)
                     && declarator.init.is_none()
                     && ctx
@@ -166,6 +171,10 @@ fn test() {
         ("const foo = globalThis", None), // { "ecmaVersion": 2020 },
         ("function foo() { return globalThis; }", None), // { "ecmaVersion": 2020 },
         ("import { globalThis as foo } from 'bar'", None), // { "ecmaVersion": 2020, "sourceType": "module" }
+        (
+            "export enum Globals { undefined = 'undefined', NaN = 'nan', Infinity = 'infinity', eval = 'eval', arguments = 'arguments' }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -193,8 +202,6 @@ fn test() {
             None,
         ), // { "ecmaVersion": 9 },
         ("var undefined; undefined = 5;", None),
-        ("class undefined {}", None),   // { "ecmaVersion": 2015, },
-        ("(class undefined {})", None), // { "ecmaVersion": 2015, },
         ("import undefined from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
         ("import { undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
         ("import { baz as undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },

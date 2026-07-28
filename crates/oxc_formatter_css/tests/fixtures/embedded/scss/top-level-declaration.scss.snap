@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// The dominant css-in-js shape: bare top-level declarations with no enclosing rule.
+// Only the embedded `format_to_ir` entry tolerates these (postcss accepts them);
+// standalone `format()` rejects them as invalid, asserted in `parse_error_is_err`.
+
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// The dominant css-in-js shape: bare top-level declarations with no enclosing rule.
+// Only the embedded `format_to_ir` entry tolerates these (postcss accepts them);
+// standalone `format()` rejects them as invalid, asserted in `parse_error_is_err`.
+
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// The dominant css-in-js shape: bare top-level declarations with no enclosing rule.
+// Only the embedded `format_to_ir` entry tolerates these (postcss accepts them);
+// standalone `format()` rejects them as invalid, asserted in `parse_error_is_err`.
+
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+===================== End =====================

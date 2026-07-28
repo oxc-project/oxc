@@ -1,31 +1,36 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
     FormatTrailingCommas,
     ast_nodes::AstNode,
-    formatter::{Buffer, Format, Formatter, GroupId, prelude::*, separated::FormatSeparatedIter},
+    formatter::{
+        Buffer, Format, GroupId, JsFormatContext, JsFormatter,
+        prelude::*,
+        separated::FormatSeparatedIter,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
+    },
     utils::array::write_array_node,
     write,
 };
 
 pub struct ArrayElementList<'a, 'b> {
-    elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+    elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
 impl<'a, 'b> ArrayElementList<'a, 'b> {
     pub fn new(
-        elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+        elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {
         Self { elements, group_id: Some(group_id) }
     }
 }
 
-impl<'a> Format<'a> for ArrayElementList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout =
             if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
                 ArrayLayout::Fill
@@ -46,7 +51,7 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                 {
                     filler.entry(
                         &format_with(|f| {
-                            if f.source_text().get_lines_before(element.span(), f.comments()) > 1 {
+                            if f.lines_before(element.span()) > 1 {
                                 write!(f, empty_line());
                             } else if f
                                 .comments()
@@ -69,6 +74,19 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                 f,
             ),
         }
+
+        // Comments that no element consumed as a trailing comment
+        // (e.g. after a trailing hole: `[,, /* comment */]`)
+        // would otherwise escape the brackets; print them right before the `]` like Prettier
+        let dangling_comments =
+            f.context().comments().comments_before(self.elements.parent().span().end);
+        write!(
+            f,
+            FormatDanglingComments::Comments {
+                comments: dangling_comments,
+                indent: DanglingIndentMode::None
+            }
+        );
     }
 }
 
@@ -106,7 +124,7 @@ enum ArrayLayout {
 pub fn can_concisely_print_array_list(
     array_expression_span: Span,
     list: &[ArrayExpressionElement<'_>],
-    f: &Formatter<'_, '_>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     if list.is_empty() {
         return false;

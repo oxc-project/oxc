@@ -165,6 +165,7 @@ declare_oxc_lint!(
     restriction,
     config = OnlyExportComponentsConfig,
     version = "1.23.0",
+    short_description = "Ensure modules only export React components (and related HMR-safe items) for Fast Refresh compatibility.",
 );
 
 static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef", "lazy"];

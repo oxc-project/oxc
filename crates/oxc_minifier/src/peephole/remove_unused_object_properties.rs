@@ -6,7 +6,7 @@ use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{TraverseCtx, state::ObjectPropertyUsageState};
+use crate::{TraverseCtx, state::ObjectPropertyUsageState, symbol_value::FreshValueKind};
 
 use super::PeepholeOptimizations;
 
@@ -17,7 +17,7 @@ impl<'a> PeepholeOptimizations {
         decl: &VariableDeclarator<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         let BindingPattern::BindingIdentifier(binding) = &decl.id else { return };
@@ -38,14 +38,19 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn can_prune_symbol(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+        if ctx.state.symbols.is_implicitly_observable(symbol_id) {
+            return false;
+        }
+        let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
             return false;
         };
 
-        symbol_value.is_fresh_value
-            && !symbol_value.exported
-            && symbol_value.write_references_count == 0
-            && !ctx.scoping().scope_flags(symbol_value.scope_id).contains_direct_eval()
+        symbol_value.kind == FreshValueKind::Object
+            && !symbol_value.references.has_writes()
+            && !ctx
+                .scoping()
+                .scope_flags(ctx.scoping().symbol_scope_id(symbol_id))
+                .contains_direct_eval()
     }
 
     fn count_prunable_object_properties(object_expr: &ObjectExpression<'a>) -> Option<u32> {
@@ -168,15 +173,21 @@ struct UnusedObjectPropertyPruner<'ctx, 'a> {
 
 impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
     fn can_prune_symbol(&self, symbol_id: SymbolId) -> bool {
-        let Some(symbol_value) = self.ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+        if self.ctx.state.symbols.is_implicitly_observable(symbol_id) {
+            return false;
+        }
+        let Some(symbol_value) = self.ctx.state.symbols.value(symbol_id) else {
             return false;
         };
 
-        symbol_value.is_fresh_value
-            && !symbol_value.exported
-            && symbol_value.write_references_count == 0
+        symbol_value.kind == FreshValueKind::Object
+            && !symbol_value.references.has_writes()
             && !self.escaped_or_unknown_symbols.contains(&symbol_id)
-            && !self.ctx.scoping().scope_flags(symbol_value.scope_id).contains_direct_eval()
+            && !self
+                .ctx
+                .scoping()
+                .scope_flags(self.ctx.scoping().symbol_scope_id(symbol_id))
+                .contains_direct_eval()
     }
 
     fn prune_declarator(&mut self, decl: &mut VariableDeclarator<'a>) {
@@ -272,7 +283,7 @@ impl<'a> PeepholeOptimizations {
         let changed = pruner.changed;
 
         if changed {
-            ctx.state.changed = true;
+            ctx.state.record_ast_change();
         }
     }
 }

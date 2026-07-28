@@ -1,0 +1,63 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:11]
+ 1 │ var foo = fs.fooSync();
+   ·           ────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:11]
+ 1 │ var foo = fs.fooSync.apply();
+   ·           ──────────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:11]
+ 1 │ var foo = fooSync();
+   ·           ─────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:11]
+ 1 │ var foo = fooSync.apply();
+   ·           ───────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:11]
+ 1 │ var foo = fs.fooSync();
+   ·           ────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:12]
+ 1 │ if (true) {fs.fooSync();}
+   ·            ────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:26]
+ 1 │ function someFunction() {fs.fooSync();}
+   ·                          ────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:26]
+ 1 │ function someFunction() {fs.fooSync();}
+   ·                          ────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:34]
+ 1 │ var a = function someFunction() {fs.fooSync();}
+   ·                                  ────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: 'fooSync'.
+   ╭─[no_sync.tsx:1:8]
+ 1 │ () => {fs.fooSync();}
+   ·        ────────────
+   ╰────

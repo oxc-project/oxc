@@ -44,6 +44,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.12.0",
+    short_description = "Prefers use of `String.raw` to avoid escaping `\\`.",
 );
 
 fn unescape_backslash(input: &str, quote: char) -> String {
@@ -103,6 +104,20 @@ impl Rule for PreferStringRaw {
                 };
 
                 if !prop.computed && string_literal.span == key.span {
+                    return;
+                }
+            }
+            AstKind::TSPropertySignature(prop) => {
+                if let PropertyKey::StringLiteral(key) = &prop.key
+                    && string_literal.span == key.span
+                {
+                    return;
+                }
+            }
+            AstKind::TSMethodSignature(method) => {
+                if let PropertyKey::StringLiteral(key) = &method.key
+                    && string_literal.span == key.span
+                {
                     return;
                 }
             }
@@ -245,6 +260,8 @@ fn test() {
         r#"declare const POSIX_REGEX_SOURCE: { ascii: "\\x00-\\x7F"; };"#,
         r#"type Foo = { path: "C:\\windows\\path"; };"#,
         r#"interface Bar { regex: "foo\\.bar"; }"#,
+        r#"interface EventSchemas { "foo\\bar": Record<string, any>; }"#,
+        r#"interface Methods { "foo\\bar"(): void; }"#,
         r#"let x: "a\\b";"#,
     ];
 

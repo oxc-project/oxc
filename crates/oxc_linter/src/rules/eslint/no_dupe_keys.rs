@@ -65,6 +65,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.3",
+    short_description = "Disallow duplicate keys in object literals.",
 );
 
 impl Rule for NoDupeKeys {

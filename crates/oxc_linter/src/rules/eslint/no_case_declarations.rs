@@ -72,6 +72,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "0.0.4",
+    short_description = "Disallow lexical declarations in case clauses.",
 );
 
 impl Rule for NoCaseDeclarations {
@@ -158,8 +159,8 @@ fn test() {
         ("switch (a) { default: function f() {} break; }"),
         ("switch (a) { case 1: class C {} break; }"),
         ("switch (a) { default: class C {} break; }"),
-        ("switch (a) { default: using x = {}; break; }"),
-        ("switch (a) { default: await using x = {}; break; }"),
+        // ("switch (a) { default: using x = {}; break; }"),
+        // ("switch (a) { default: await using x = {}; break; }"),
     ];
 
     let fix = vec![

@@ -1,0 +1,132 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// oxc-project/oxc#24193: comments inside `@use ... with (...)` were dropped.
+// Prettier's comma-group handling: a leading `//` comment gets its own line,
+// a leading block comment glues to its item, a same-line trailing comment stays
+// at the end of the item's line, and a blank line after an item's comma is
+// preserved.
+@use "bootstrap" with (
+  // Colors
+  $primary: variables.$primary,
+  $secondary: variables.$secondary,
+
+  // Components
+  $box-shadow: variables.$box-shadow,
+
+  /* Spacing */
+  $spacer: variables.$spacer
+);
+// A trailing `//` after a comma moves to its own line before the next item.
+// KNOWN DIVERGENCE (see AGENTS.md): the own-line `// before close` keeps its
+// own line, consistent with the map printer; Prettier pulls it up to the last
+// item's line (`$e: 5 // before close`).
+@use "a" with (
+  $a: 1, // trailing
+  $b: 2,
+
+  $c: 3,
+  /* block */ $d: 4,
+  $e: 5
+  // before close
+);
+// Comment between the path and `with` stays glued to the head.
+@use "b" /* c */ with (
+  $a: 1
+);
+// `@forward` shares the config printer (`!default` is allowed there).
+@forward "c" with (
+  // lead
+  $a: 1 !default,
+  $b: 2 !default // last
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// oxc-project/oxc#24193: comments inside `@use ... with (...)` were dropped.
+// Prettier's comma-group handling: a leading `//` comment gets its own line,
+// a leading block comment glues to its item, a same-line trailing comment stays
+// at the end of the item's line, and a blank line after an item's comma is
+// preserved.
+@use "bootstrap" with (
+  // Colors
+  $primary: variables.$primary,
+  $secondary: variables.$secondary,
+
+  // Components
+  $box-shadow: variables.$box-shadow,
+
+  /* Spacing */ $spacer: variables.$spacer
+);
+// A trailing `//` after a comma moves to its own line before the next item.
+// KNOWN DIVERGENCE (see AGENTS.md): the own-line `// before close` keeps its
+// own line, consistent with the map printer; Prettier pulls it up to the last
+// item's line (`$e: 5 // before close`).
+@use "a" with (
+  $a: 1,
+  // trailing
+  $b: 2,
+
+  $c: 3,
+  /* block */ $d: 4,
+  $e: 5
+  // before close
+);
+// Comment between the path and `with` stays glued to the head.
+@use "b" /* c */ with (
+  $a: 1
+);
+// `@forward` shares the config printer (`!default` is allowed there).
+@forward "c" with (
+  // lead
+  $a: 1 !default,
+  $b: 2 !default // last
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// oxc-project/oxc#24193: comments inside `@use ... with (...)` were dropped.
+// Prettier's comma-group handling: a leading `//` comment gets its own line,
+// a leading block comment glues to its item, a same-line trailing comment stays
+// at the end of the item's line, and a blank line after an item's comma is
+// preserved.
+@use "bootstrap" with (
+  // Colors
+  $primary: variables.$primary,
+  $secondary: variables.$secondary,
+
+  // Components
+  $box-shadow: variables.$box-shadow,
+
+  /* Spacing */ $spacer: variables.$spacer
+);
+// A trailing `//` after a comma moves to its own line before the next item.
+// KNOWN DIVERGENCE (see AGENTS.md): the own-line `// before close` keeps its
+// own line, consistent with the map printer; Prettier pulls it up to the last
+// item's line (`$e: 5 // before close`).
+@use "a" with (
+  $a: 1,
+  // trailing
+  $b: 2,
+
+  $c: 3,
+  /* block */ $d: 4,
+  $e: 5
+  // before close
+);
+// Comment between the path and `with` stays glued to the head.
+@use "b" /* c */ with (
+  $a: 1
+);
+// `@forward` shares the config printer (`!default` is allowed there).
+@forward "c" with (
+  // lead
+  $a: 1 !default,
+  $b: 2 !default // last
+);
+
+===================== End =====================

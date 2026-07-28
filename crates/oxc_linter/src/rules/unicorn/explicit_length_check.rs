@@ -94,6 +94,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = ExplicitLengthCheck,
     version = "0.0.19",
+    short_description = "Enforce explicitly comparing the `length` or `size` property of a value.",
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {
@@ -120,6 +121,24 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
             ..
         } if is_literal(right, value) && op == *operator
     )
+}
+
+fn expression_uses_optional_chain(expr: &Expression) -> bool {
+    let expr = expr.get_inner_expression();
+
+    if matches!(expr, Expression::ChainExpression(_)) {
+        return true;
+    }
+
+    if let Some(member_expr) = expr.as_member_expression() {
+        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
+    }
+
+    if let Expression::CallExpression(call_expr) = expr {
+        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
+    }
+
+    false
 }
 
 fn get_length_check_node<'a, 'b>(
@@ -268,6 +287,9 @@ impl Rule for ExplicitLengthCheck {
             if property.name != "length" && property.name != "size" {
                 return;
             }
+            if static_member_expr.optional || expression_uses_optional_chain(object) {
+                return;
+            }
             if let Expression::ThisExpression(_) = object {
                 return;
             }
@@ -354,6 +376,9 @@ fn test() {
             "const totalCount = tests.reduce((count, test) => count + (test.enabled ? test.maxSize : test.size), 0)",
             None,
         ),
+        ("const hasList = Boolean(foo.list?.length)", None),
+        ("const hasList = Boolean(foo?.list.length)", None),
+        ("const hasList = Boolean(foo?.list?.length)", None),
     ];
 
     let fail = vec![

@@ -1,0 +1,8 @@
+{
+  "a": 1, // trailing line
+  "b": 2, /* trailing block */
+  "c": 3 /* before-comma block */,
+  "d": 4, // line then own-line
+  // own-line leading
+  "e": 5
+}

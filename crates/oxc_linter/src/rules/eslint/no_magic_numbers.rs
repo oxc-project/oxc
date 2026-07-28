@@ -41,13 +41,14 @@ impl std::ops::Deref for NoMagicNumbers {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
 pub enum NoMagicNumbersNumber {
     Float(f64),
     BigInt(String),
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMagicNumbersConfig {
     /// An array of numbers to ignore if used as magic numbers. Can include floats or BigInt strings.
     ignore: Vec<NoMagicNumbersNumber>,
@@ -245,6 +246,7 @@ declare_oxc_lint!(
     pending, // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
     config = NoMagicNumbersConfig,
     version = "0.9.3",
+    short_description = "Disallow magic numbers.",
 );
 
 #[derive(Debug)]

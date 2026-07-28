@@ -1,0 +1,11 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/todo.invalid.invalid-rules-of-hooks-9c79feec4b9b.js
+---
+// @expectNothingCompiled @skip
+// Passed but should have failed
+(class {
+	h = () => {
+		useState();
+	};
+});

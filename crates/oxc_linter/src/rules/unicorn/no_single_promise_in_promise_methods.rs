@@ -57,6 +57,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     version = "0.2.18",
+    short_description = "Disallow passing single-element arrays to `Promise` methods.",
 );
 
 impl Rule for NoSinglePromiseInPromiseMethods {

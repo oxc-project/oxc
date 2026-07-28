@@ -1,0 +1,78 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[
+  "plain double",
+  'plain single',
+  "has 'single' inside",
+  'has "double" inside',
+  "both \" and ' here",
+  'both " and \' here',
+  "many \"\"\" doubles",
+  'many \'\'\' singles',
+  "line\nbreak"
+]
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "json5" }
+------------------------------------
+[
+  "plain double",
+  "plain single",
+  "has 'single' inside",
+  'has "double" inside',
+  "both \" and ' here",
+  "both \" and ' here",
+  'many """ doubles',
+  "many ''' singles",
+  "line\nbreak",
+]
+
+-------------------------------------
+{ printWidth: 100, variant: "json5" }
+-------------------------------------
+[
+  "plain double",
+  "plain single",
+  "has 'single' inside",
+  'has "double" inside',
+  "both \" and ' here",
+  "both \" and ' here",
+  'many """ doubles',
+  "many ''' singles",
+  "line\nbreak",
+]
+
+-------------------------------------------------------
+{ printWidth: 80, singleQuote: true, variant: "json5" }
+-------------------------------------------------------
+[
+  'plain double',
+  'plain single',
+  "has 'single' inside",
+  'has "double" inside',
+  'both " and \' here',
+  'both " and \' here',
+  'many """ doubles',
+  "many ''' singles",
+  'line\nbreak',
+]
+
+--------------------------------------------------------
+{ printWidth: 100, singleQuote: true, variant: "json5" }
+--------------------------------------------------------
+[
+  'plain double',
+  'plain single',
+  "has 'single' inside",
+  'has "double" inside',
+  'both " and \' here',
+  'both " and \' here',
+  'many """ doubles',
+  "many ''' singles",
+  'line\nbreak',
+]
+
+===================== End =====================

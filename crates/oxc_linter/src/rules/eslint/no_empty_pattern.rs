@@ -92,6 +92,7 @@ declare_oxc_lint!(
     correctness,
     config = NoEmptyPattern,
     version = "0.0.3",
+    short_description = "Disallow empty destructuring patterns.",
 );
 
 impl Rule for NoEmptyPattern {

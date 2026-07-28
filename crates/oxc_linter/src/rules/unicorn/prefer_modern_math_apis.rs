@@ -58,6 +58,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     version = "0.1.1",
+    short_description = "Checks for usage of legacy patterns for mathematical operations.",
 );
 
 impl Rule for PreferModernMathApis {

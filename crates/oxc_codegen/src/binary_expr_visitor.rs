@@ -10,7 +10,7 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{Codegen, Context, Operator, r#gen::GenExpr};
+use crate::{Codegen, Context, Operator, cjs_module_lexer, r#gen::GenExpr};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -124,7 +124,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
             };
 
             let Some(left_binary) = left_binary else {
-                left.gen_expr(p, v.left_precedence, v.ctx);
+                if !cjs_module_lexer::try_print_equality_string(p, v.operator, left) {
+                    left.gen_expr(p, v.left_precedence, v.ctx);
+                }
                 v.visit_right_and_finish(p);
                 break;
             };
@@ -198,10 +200,16 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
-                // Negative numbers are printed using a unary operator
+                // The base of `**` must be an `UpdateExpression`, so a unary/await base
+                // must be parenthesized. Negative numbers and BigInts print with a
+                // leading `-`, i.e. as a unary operator.
                 if matches!(
                     e.left(),
-                    Expression::UnaryExpression(_) | Expression::NumericLiteral(_)
+                    Expression::UnaryExpression(_)
+                        | Expression::AwaitExpression(_)
+                        | Expression::TSTypeAssertion(_)
+                        | Expression::NumericLiteral(_)
+                        | Expression::BigIntLiteral(_)
                 ) {
                     self.left_precedence = Precedence::Call;
                 }
@@ -223,7 +231,17 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.operator.r#gen(p);
         p.print_soft_space();
-        self.e.right().gen_expr(p, self.right_precedence, self.ctx);
+        let right = self.e.right();
+        if let Binaryish::Logical(e) = self.e {
+            // Annotation-gated (see the helper's doc): statements get merged
+            // into logical RHS positions on mutated ASTs. Pass the unstripped
+            // right — `Binaryish::right()` removes the paren layers the helper
+            // needs to probe.
+            p.print_annotation_comments_before_expression(&e.right);
+        }
+        if !cjs_module_lexer::try_print_equality_string(p, self.operator, right) {
+            right.gen_expr(p, self.right_precedence, self.ctx);
+        }
         if self.wrap {
             p.print_ascii_byte(b')');
         }

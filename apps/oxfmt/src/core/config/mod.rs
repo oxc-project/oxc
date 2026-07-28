@@ -21,15 +21,17 @@ use tracing::instrument;
 
 use oxc_config::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
 #[cfg(feature = "napi")]
-use oxc_formatter::FormatOptions;
+use oxc_formatter::JsFormatOptions;
 
 use self::{
     editorconfig::{apply_editorconfig, has_editorconfig_overrides, load_editorconfig},
     overrides::OxfmtrcOverrides,
 };
+#[cfg(feature = "napi")]
+use super::options::to_oxc_formatter;
 use super::{
     FormatStrategy,
-    options::to_oxc_formatter,
+    options::validate,
     oxfmtrc::{FormatConfig, Oxfmtrc},
     support::FileKind,
     utils,
@@ -38,7 +40,7 @@ use super::{
 const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: ".oxfmtrc.json",
     jsonc: ".oxfmtrc.jsonc",
-    js: "oxfmt.config.ts",
+    js: &["oxfmt.config.ts", "oxfmt.config.mts"],
     vite: "vite.config.ts",
 };
 
@@ -140,7 +142,7 @@ pub fn resolve_for_api(
     format_config.resolve_tailwind_paths(cwd);
     // Validate eagerly: `from_format_config` skips validation for `ExternalFormatter*` kinds,
     // so range-out values (e.g., `printWidth: 1000`) would otherwise silently reach Prettier.
-    let _ = to_oxc_formatter(&format_config)?;
+    validate(&format_config)?;
     if let Some(plugin) = kind.requires_plugin(&format_config) {
         return Ok(ResolveOutcome::MissingPlugin(plugin));
     }
@@ -151,7 +153,7 @@ pub fn resolve_for_api(
 #[cfg(feature = "napi")]
 #[derive(Debug)]
 pub struct EmbeddedCallbackResolved {
-    pub format_options: Box<FormatOptions>,
+    pub format_options: Box<JsFormatOptions>,
     /// Retained so nested embedded callbacks can derive Prettier options on demand.
     /// (e.g., CSS-in-JS inside the embedded JS)
     pub config: Box<FormatConfig>,
@@ -378,9 +380,8 @@ impl ConfigResolver {
     /// - `self.oxfmtrc_overrides` is set if `overrides` exists
     /// - `self.ignore_glob` is built from `ignorePatterns`
     ///
-    /// Validation runs eagerly via `to_oxc_formatter(&base_config)` so invalid
-    /// values (e.g., `printWidth: 99999`) are surfaced at config load time
-    /// regardless of which file kind is later processed.
+    /// Validation runs eagerly via `validate(&base_config)`,
+    /// so invalid values are surfaced at config load time, rather than format time.
     ///
     /// # Errors
     /// Returns error if config deserialization or validation fails.
@@ -410,8 +411,7 @@ impl ConfigResolver {
         }
 
         // Eagerly validate; see method doc for the rationale.
-        let _ = to_oxc_formatter(&format_config)?;
-
+        validate(&format_config)?;
         // Save cached snapshot for fast path: no per-file overrides
         self.base_config = Some(format_config);
 
@@ -491,7 +491,7 @@ impl ConfigResolver {
 
         // Validate the merged config; see method doc for what kinds of errors are caught
         // and why this is the only safety net for `ExternalFormatter*` kinds.
-        let _ = to_oxc_formatter(&format_config)?;
+        validate(&format_config)?;
 
         Ok(format_config)
     }
@@ -563,6 +563,8 @@ fn build_ignore_glob(
 
     let mut builder = GitignoreBuilder::new(config_dir);
     for pattern in ignore_patterns {
+        oxc_config::validate_ignore_pattern(pattern)?;
+
         if builder.add_line(None, pattern).is_err() {
             return Err(format!("Failed to add ignore pattern `{pattern}` from `ignorePatterns`"));
         }
@@ -632,33 +634,59 @@ mod tests_slow_path_validation {
     /// Smoke test: when no overrides match, `resolve()` returns successfully.
     ///
     /// `resolve_options` itself skips re-validation on the fast path
-    /// (just clones the pre-validated `base_config`), but
-    /// `FormatStrategy::from_format_config` still calls `to_oxc_formatter` for
-    /// `OxcFormatter`/`OxfmtToml`, so this test cannot directly assert "no re-validation"
-    /// — only that the overall call succeeds.
+    /// (just clones the pre-validated `base_config`),
+    /// but `FormatStrategy::from_format_config` still runs the typed conversion
+    /// (`to_oxc_formatter` / `to_oxc_toml`) for `OxcFormatter`/`OxfmtToml`,
+    /// so this test cannot directly assert "no re-validation". Only that the overall call succeeds.
     #[test]
     fn fast_path_resolve_succeeds() {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
-
         let kind = FileKind::OxfmtToml { path: Arc::from(PathBuf::from("Cargo.toml").as_path()) };
         assert!(resolver.resolve(kind).is_ok());
     }
 
     /// `resolve_for_api` must validate even for `ExternalFormatter*` kinds.
-    /// Without the eager `to_oxc_formatter` call, `printWidth: 1000` would
-    /// silently flow through to Prettier via the NAPI `format()` API.
+    /// Without the eager `validate()` call,
+    /// `printWidth: 1000` would silently flow through to Prettier via the NAPI `format()` API.
     #[test]
     #[cfg(feature = "napi")]
     fn resolve_for_api_rejects_invalid_value_for_external_formatter() {
         let kind = FileKind::ExternalFormatter {
-            path: Arc::from(PathBuf::from("style.css").as_path()),
-            parser_name: "css",
+            path: Arc::from(PathBuf::from("page.vue").as_path()),
+            parser_name: "vue",
             supports_tailwind: true,
-            supports_oxfmt: false,
+            supports_oxfmt: true,
             supports_svelte: false,
         };
         let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
             .unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
+    }
+}
+
+#[cfg(test)]
+mod tests_ignore_patterns_validation {
+    use std::path::Path;
+
+    use super::build_ignore_glob;
+
+    fn build(pattern: &str) -> Result<(), String> {
+        build_ignore_glob(Some(Path::new("/repo/config")), &[pattern.to_string()]).map(|_| ())
+    }
+
+    // Pattern-level cases are covered by `oxc_config::validate_ignore_pattern` tests;
+    // these only check that `build_ignore_glob` rejects a config containing one.
+    #[test]
+    fn rejects_parent_directory_components() {
+        let error = build("../src/skip.js").unwrap_err();
+        assert_eq!(
+            error,
+            "Invalid pattern `../src/skip.js` in `ignorePatterns`: `..` is not supported, patterns are resolved within the config file's directory"
+        );
+    }
+
+    #[test]
+    fn accepts_patterns_without_parent_directory_components() {
+        assert!(build("src/skip.js").is_ok());
     }
 }

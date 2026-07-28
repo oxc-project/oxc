@@ -1,3 +1,4 @@
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, FunctionBody, Statement},
@@ -11,7 +12,7 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     rules::PossibleJestNode,
     utils::{
         JestGeneralFnKind, convert_pattern, get_node_name, matches_assert_function_name,
@@ -29,12 +30,25 @@ fn prefer_ending_with_an_expect_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct PreferEndingWithAnExpect(Box<PreferEndingWithAnExpectConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferEndingWithAnExpectConfig {
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
     /// A list of function names that should be treated as assertion functions.
-    assert_function_names: Vec<CompactStr>,
+    /// Default: `["expect"]`
+    #[serde(deserialize_with = "deserialize_assert_function_names")]
+    #[schemars(with = "Vec<String>")]
+    assert_function_names: Vec<Regex>,
+}
+
+fn deserialize_assert_function_names<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Vec::<CompactStr>::deserialize(deserializer)?
+        .into_iter()
+        .map(|pattern| Regex::new(&convert_pattern(&pattern)).map_err(serde::de::Error::custom))
+        .collect()
 }
 
 impl std::ops::Deref for PreferEndingWithAnExpect {
@@ -46,9 +60,12 @@ impl std::ops::Deref for PreferEndingWithAnExpect {
 }
 
 impl Default for PreferEndingWithAnExpectConfig {
+    #[expect(clippy::trivial_regex)]
     fn default() -> Self {
         Self {
-            assert_function_names: vec!["expect".into()],
+            assert_function_names: vec![
+                Regex::new("expect").expect("default assertion pattern should be valid"),
+            ],
             additional_test_block_functions: vec![],
         }
     }
@@ -152,34 +169,14 @@ declare_oxc_lint!(
     jest,
     style,
     config = PreferEndingWithAnExpectConfig,
-    version = "1.60.0"
+    version = "1.60.0",
+    short_description = "Enforces that test blocks end with an assertion.",
 );
 
 impl Rule for PreferEndingWithAnExpect {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value.get(0);
-
-        let assert_function_names = config
-            .and_then(|config| config.get("assertFunctionNames"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .map(convert_pattern)
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or(vec!["expect".into()]);
-
-        let additional_test_block_functions = config
-            .and_then(|config| config.get("additionalTestBlockFunctions"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(PreferEndingWithAnExpectConfig {
-            additional_test_block_functions,
-            assert_function_names,
-        })))
+        serde_json::from_value::<DefaultRuleConfig<PreferEndingWithAnExpectConfig>>(value)
+            .map(|config| Self(Box::new(config.into_inner())))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -340,12 +337,7 @@ fn test() {
             Some(serde_json::json!([{ "assertFunctionNames": ["td.verify"] }])),
         ),
         (r#"it("should pass", async () => expect(true).toBeDefined())"#, None),
-        (
-            r#"it("should pass", () => expect(true).toBeDefined())"#,
-            Some(
-                serde_json::json!([ { "assertFunctionNames": "undefined", "additionalTestBlockFunctions": "undefined", }, ]),
-            ),
-        ),
+        (r#"it("should pass", () => expect(true).toBeDefined())"#, Some(serde_json::json!([{}]))),
         (r#"it("should pass", () => { expect(true).toBeDefined() })"#, None),
         (r#"it("should pass", function () { expect(true).toBeDefined() })"#, None),
         (

@@ -493,6 +493,25 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  // Regression test for https://github.com/oxc-project/oxc/issues/24464
+  it("should not split a class glued to an expression when preserveWhitespace is true", async () => {
+    let input = "const A = <div className={`text-white flex bg-${color}`}>Hello</div>;";
+    let result = await format("test.tsx", input, { sortTailwindcss: { preserveWhitespace: true } });
+
+    // `bg-` touches ${color} and must stay glued to it; other classes are still sorted
+    expect(result.code).toContain("`flex text-white bg-${color}`");
+    expect(result.errors).toStrictEqual([]);
+
+    input =
+      "const A = <div className={`mb-4 flex items-center rounded-full bg-${color}/10`}>Hello</div>;";
+    result = await format("test.tsx", input, { sortTailwindcss: { preserveWhitespace: true } });
+
+    // `bg-` and the `/10` modifier must stay glued to ${color}
+    expect(result.code).toContain("bg-${color}/10`");
+    expect(result.code).not.toContain("bg- ");
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should collapse newlines to single space when preserveWhitespace is false (default)", async () => {
     const input = `<div className={\`flex
 items-center
@@ -1241,6 +1260,69 @@ describe("Tailwind CSS Sorting in CSS (@apply)", () => {
     const result = await format("test.css", input, {
       sortTailwindcss: {},
     });
+
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // The cases below mirror prettier-plugin-tailwindcss's `transformCss`;
+  // every expected output was verified against prettier@3.8.3 + the plugin.
+  it("should keep a !important tail unsorted", async () => {
+    const input = `.y { @apply p-4 flex !important; }`;
+
+    const result = await format("test.css", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4 !important;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should keep a SCSS #{!important} interpolation tail unsorted", async () => {
+    const input = `.s { @apply p-4 flex #{!important}; }`;
+
+    const result = await format("test.scss", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4 #{!important};");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it('should sort inside a Less ~"..." escaped-string wrapper', async () => {
+    const input = `.z { @apply ~"p-4 flex"; }`;
+
+    const result = await format("test.less", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain('@apply ~"flex p-4";');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should dedup and collapse whitespace via the sorter", async () => {
+    const input = `.d { @apply  p-4   flex  p-4; }`;
+
+    const result = await format("test.css", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should sort @apply inside css-in-js template literals", async () => {
+    const input = ["const A = styled.div`", "  @apply p-4 flex;", "  color: red;", "`;"].join("\n");
+
+    const result = await format("test.ts", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should sort @apply in fenced css blocks in JSDoc", async () => {
+    const input = [
+      "/**",
+      " * ```css",
+      " * .c { @apply p-4 flex; }",
+      " * ```",
+      " */",
+      "export const C = 1;",
+    ].join("\n");
+
+    const result = await format("test.ts", input, { sortTailwindcss: {}, jsdoc: {} });
 
     expect(result.code).toContain("@apply flex p-4;");
     expect(result.errors).toStrictEqual([]);

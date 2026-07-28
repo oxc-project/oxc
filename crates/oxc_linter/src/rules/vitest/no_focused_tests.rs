@@ -14,7 +14,7 @@ declare_oxc_lint!(
     NoFocusedTests,
     vitest,
     correctness,
-    fix,
+    suggestion,
     docs = DOCUMENTATION,
     version = "0.0.8",
 );
@@ -31,6 +31,7 @@ impl Rule for NoFocusedTests {
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let mut pass = vec![
@@ -73,8 +74,13 @@ fn test() {
     ];
 
     let mut fix = vec![
-        ("describe.only('foo', () => {})", "describe('foo', () => {})", None),
-        ("describe['only']('foo', () => {})", "describe('foo', () => {})", None),
+        ("describe.only('foo', () => {})", "describe('foo', () => {})", None, FixKind::Suggestion),
+        (
+            "describe['only']('foo', () => {})",
+            "describe('foo', () => {})",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     let pass_vitest = vec![
@@ -100,12 +106,37 @@ fn test() {
     ];
 
     let fix_vitest = vec![
-        (r#"it.only("test", () => {});"#, r#"it("test", () => {});"#, None),
-        (r#"describe.only("test", () => {});"#, r#"describe("test", () => {});"#, None),
-        (r#"test.only("test", () => {});"#, r#"test("test", () => {});"#, None),
-        (r#"it.only.each([])("test", () => {});"#, r#"it.each([])("test", () => {});"#, None),
-        (r#"test.only.each``("test", () => {});"#, r#"test.each``("test", () => {});"#, None),
-        (r#"it.only.each``("test", () => {});"#, r#"it.each``("test", () => {});"#, None),
+        (r#"it.only("test", () => {});"#, r#"it("test", () => {});"#, None, FixKind::Suggestion),
+        (
+            r#"describe.only("test", () => {});"#,
+            r#"describe("test", () => {});"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"test.only("test", () => {});"#,
+            r#"test("test", () => {});"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"it.only.each([])("test", () => {});"#,
+            r#"it.each([])("test", () => {});"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"test.only.each``("test", () => {});"#,
+            r#"test.each``("test", () => {});"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"it.only.each``("test", () => {});"#,
+            r#"it.each``("test", () => {});"#,
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     pass.extend(pass_vitest);

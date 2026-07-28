@@ -133,6 +133,7 @@ impl GetPrecedence for PrivateFieldExpression<'_> {
 
 impl GetPrecedence for TSTypeAssertion<'_> {
     fn precedence(&self) -> Precedence {
-        Precedence::Lowest
+        // `<T>x` is a unary expression, so it binds like one (e.g. `(<T>x).foo`).
+        Precedence::Prefix
     }
 }

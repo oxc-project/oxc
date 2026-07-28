@@ -7,7 +7,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = {}; return (<Context.Provider value={foo}></Context.Provider>) }
    ·                                                                  ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = []; return (<Context.Provider value={foo}></Context.Provider>) }
    ·                                                                  ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -23,7 +23,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = () => {}; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                        ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -31,7 +31,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = function bar(){}; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                                ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = class SomeClass{}; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                                 ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = new SomeClass(); return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                               ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -55,7 +55,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { function foo() {}; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                     ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -63,7 +63,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = true ? {} : "fine"; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                                  ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = bar || {}; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                         ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -79,7 +79,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = bar && {}; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                         ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -87,7 +87,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const foo = bar ? baz ? {} : null : null; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                                            ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -95,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { let foo = {}; return (<Context.Provider value={foo}></Context.Provider>) }
    ·                                                                ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { var foo = {}; return (<Context.Provider value={foo}></Context.Provider>)}
    ·                                                                ───────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -113,7 +113,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ─────────
  6 │             }
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -123,7 +123,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ───────────
  6 │             }
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -133,7 +133,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ───────────
  5 │             }
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -141,7 +141,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { return (<Context.Provider value={{foo: "bar"}}></Context.Provider>);}
    ·                                                  ────────────────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -149,7 +149,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const Wrapper = (<SomeComp />); return (<Context.Provider value={Wrapper}></Context.Provider>);}
    ·                                                                                  ───────────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -157,7 +157,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function Component() { const someRegex = /HelloWorld/; return (<Context.Provider value={someRegex}></Context.Provider>);}
    ·                                                                                  ─────────────────
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -167,7 +167,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ───────────
  6 │             }
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -177,7 +177,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───────────
  8 │             }
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -187,7 +187,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                       ───────────
  4 │         
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.
 
   ⚠ react(jsx-no-constructed-context-values): The Context `value` prop should not be constructed.
@@ -197,5 +197,5 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                       ────────────────────
  4 │         
    ╰────
-  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary rerenders.
+  help: Wrap the `value` prop in useMemo() or useCallback(), or use a constant value to prevent unnecessary re-renders.
         Alternatively, move the value outside the render function if it doesn't depend on props or state.

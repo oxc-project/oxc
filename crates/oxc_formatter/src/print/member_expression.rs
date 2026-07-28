@@ -5,22 +5,25 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Buffer, Format, Formatter, prelude::*, trivia::FormatLeadingComments},
-    utils::member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
+    formatter::{Buffer, Format, JsFormatter, prelude::*, trivia::FormatLeadingComments},
+    utils::{
+        expression::as_call_expression_without_chain_wrappers,
+        member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
+    },
     write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, self.object());
         FormatComputedMemberExpressionWithoutObject(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_member_chain = {
             let mut recording = f.start_recording();
             write!(recording, [self.object()]);
@@ -80,7 +83,7 @@ fn operator_token(optional: bool) -> &'static str {
 fn layout<'a>(
     node: &AstNode<'a, StaticMemberExpression<'a>>,
     is_member_chain: bool,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> StaticMemberLayout {
     if f.comments().has_leading_own_line_comment(node.property.span.start) {
         return StaticMemberLayout::BreakAfterObject;
@@ -97,20 +100,8 @@ fn layout<'a>(
 
     let is_nested = match parent {
         AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_) => {
-            let no_break = match object {
-                Expression::CallExpression(call_expression) => {
-                    !call_expression.arguments.is_empty()
-                }
-                Expression::TSNonNullExpression(non_null_assertion) => {
-                    match &non_null_assertion.expression {
-                        Expression::CallExpression(call_expression) => {
-                            !call_expression.arguments.is_empty()
-                        }
-                        _ => false,
-                    }
-                }
-                _ => false,
-            };
+            let no_break = as_call_expression_without_chain_wrappers(object)
+                .is_some_and(|call| !call.arguments.is_empty());
 
             if no_break || is_member_chain {
                 return StaticMemberLayout::NoBreak;
@@ -153,7 +144,7 @@ fn layout<'a>(
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()]);
     }
 }

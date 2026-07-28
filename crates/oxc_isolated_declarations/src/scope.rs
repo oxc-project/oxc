@@ -35,12 +35,17 @@ impl Scope<'_> {
 #[derive(Debug)]
 pub struct ScopeTree<'a> {
     levels: Vec<Scope<'a>>,
+    /// Pool of scopes whose maps have been emptied. Scopes are entered and left in a stack
+    /// pattern, so rather than dropping a left scope's two `FxHashMap`s (and allocating +
+    /// re-growing fresh ones on the next `enter_scope`), keep them here to reuse their heap
+    /// allocations and retained capacity.
+    free_scopes: Vec<Scope<'a>>,
 }
 
 impl<'a> ScopeTree<'a> {
     pub fn new() -> Self {
         let levels = vec![Scope::new(ScopeFlags::Top)];
-        Self { levels }
+        Self { levels, free_scopes: Vec::new() }
     }
 
     pub fn is_ts_module_block(&self) -> bool {
@@ -73,27 +78,38 @@ impl<'a> ScopeTree<'a> {
     fn resolve_references(&mut self) {
         debug_assert!(self.levels.len() >= 2);
 
-        // Remove the current scope.
-        let current_scope = self.levels.pop().unwrap();
+        // Remove the current scope, taking ownership of its maps so they can be recycled.
+        let Scope { mut bindings, mut references, .. } = self.levels.pop().unwrap();
 
-        // Resolve references in the current scope.
-        let current_bindings = current_scope.bindings;
-        let mut current_references = current_scope.references;
-        current_references.retain(|name, reference_flags| {
-            !current_bindings.get(name).is_some_and(|flags| flags.contains(*reference_flags))
+        // Resolve references in the current scope against its own bindings.
+        references.retain(|name, reference_flags| {
+            !bindings.get(name).is_some_and(|flags| flags.contains(*reference_flags))
         });
 
-        // Merge unresolved references to the parent scope.
+        // Merge unresolved references to the parent scope. `drain` empties the map while keeping
+        // its heap allocation, so it can be reused by a later `enter_scope`.
         let parent_scope = self.levels.last_mut().unwrap();
-        for (name, flags) in current_references {
+        for (name, flags) in references.drain() {
             parent_scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
         }
+
+        // Recycle both now-empty maps (capacity retained) to avoid re-allocating + re-growing
+        // them for the next scope. `flags` is a placeholder; `enter_scope` overwrites it.
+        bindings.clear();
+        self.free_scopes.push(Scope { bindings, references, flags: ScopeFlags::empty() });
     }
 }
 
 impl<'a> Visit<'a> for ScopeTree<'a> {
     fn enter_scope(&mut self, flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
-        let scope = Scope::new(flags);
+        // Reuse a recycled scope's map allocations when one is available.
+        let scope = match self.free_scopes.pop() {
+            Some(mut scope) => {
+                scope.flags = flags;
+                scope
+            }
+            None => Scope::new(flags),
+        };
         self.levels.push(scope);
     }
 

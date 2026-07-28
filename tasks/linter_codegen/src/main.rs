@@ -8,7 +8,7 @@ use crate::{
     member_expression_kinds::get_member_expression_kinds,
     node_type_set::NodeTypeSet,
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
-    utils::{find_impl_function, find_rule_impl_block},
+    utils::{executable_stmts, find_impl_function, find_rule_impl_block},
 };
 use rustc_hash::FxHashSet;
 use std::{
@@ -183,8 +183,9 @@ fn detect_top_level_node_types(
     }
 
     // Detect if entire body is call to `run_on_regex_node` and return those node types
-    if run_func.block.stmts.len() == 1
-        && let syn::Stmt::Expr(syn::Expr::Call(call_expr), _) = &run_func.block.stmts[0]
+    let stmts = executable_stmts(&run_func.block);
+    if stmts.len() == 1
+        && let syn::Stmt::Expr(syn::Expr::Call(call_expr), _) = stmts[0]
         && call_expr.args.len() == 3
         && let syn::Expr::Path(path_expr) = &*call_expr.func
         && path_expr.path.is_ident("run_on_regex_node")
@@ -208,7 +209,15 @@ fn detect_rule_run_implementations(file: &File, rule: &RuleEntry) -> FxHashSet<S
     // functions that are implemented in the rule impl. Then, we will only remove a few known functions
     // that do not affect rule run behavior. This way, if we ever add more ways of running a rule, it should
     // be forwards compatible even if we do not change the linter codegen.
-    let ignore_funcs = FxHashSet::from_iter(["from_configuration", "should_run"]);
+    let ignore_funcs = FxHashSet::from_iter([
+        // Safe because this only deserializes the config and does not affect rule run behavior.
+        "from_configuration",
+        // Safe because this only serializes the rule config and does not affect rule run behavior.
+        "to_configuration",
+        // This function does affect rule run behavior, but is explicitly taken into account
+        // when determining whether a rule should be run on a given file.
+        "should_run",
+    ]);
 
     // Get names of all implemented functions in rule impl
     let implemented_funcs = rule_impl

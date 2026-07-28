@@ -154,6 +154,7 @@ declare_oxc_lint!(
     none,
     config = IdMatchConfig,
     version = "1.66.0",
+    short_description = "Enforces a naming convention for identifiers by requiring each checked name to match a configured regular expression.",
 );
 
 impl Rule for IdMatch {
@@ -530,7 +531,7 @@ impl IdMatch {
     }
 }
 
-fn is_known_external_global(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+pub fn is_known_external_global(ident: &IdentifierReference, ctx: &LintContext) -> bool {
     ident.is_global_reference(ctx.scoping())
         && ctx
             .get_global_variable_value(ident.name.as_str())
@@ -546,7 +547,7 @@ fn binding_is_import_local<'a>(ident: &BindingIdentifier<'a>, parent: &AstNode<'
     }
 }
 
-fn transparent_reference_parent<'a, 'b>(
+pub fn transparent_reference_parent<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> (&'b AstNode<'a>, Span) {
@@ -671,7 +672,7 @@ fn is_inside_object_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<
     false
 }
 
-fn is_dynamic_import_attribute_object_property<'a>(
+pub fn is_dynamic_import_attribute_object_property<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {

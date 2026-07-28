@@ -1,0 +1,57 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* postcss-extend-rule: Sass-style placeholders in plain CSS
+   (postcss parses `%x` as an ordinary selector) */
+%thick-border {
+  border: thick dotted red;
+}
+%a,
+.b %c:hover {
+  x: y;
+}
+.modal {
+  @extend %thick-border;
+
+  color: red;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* postcss-extend-rule: Sass-style placeholders in plain CSS
+   (postcss parses `%x` as an ordinary selector) */
+%thick-border {
+  border: thick dotted red;
+}
+%a,
+.b %c:hover {
+  x: y;
+}
+.modal {
+  @extend %thick-border;
+
+  color: red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* postcss-extend-rule: Sass-style placeholders in plain CSS
+   (postcss parses `%x` as an ordinary selector) */
+%thick-border {
+  border: thick dotted red;
+}
+%a,
+.b %c:hover {
+  x: y;
+}
+.modal {
+  @extend %thick-border;
+
+  color: red;
+}
+
+===================== End =====================

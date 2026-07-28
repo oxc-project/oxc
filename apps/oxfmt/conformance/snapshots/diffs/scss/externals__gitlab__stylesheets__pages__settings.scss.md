@@ -1,0 +1,535 @@
+# externals/gitlab/stylesheets/pages/settings.scss
+
+> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -33,9 +33,9 @@
+   max-width: px-to-rem(500px);
+ }
+ 
+ .deploy-freeze-table {
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     .truncated-container {
+       justify-content: flex-end;
+     }
+   }
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+.visibility-level-setting {
+  .option-description,
+  .option-disabled-reason {
+    color: var(--gray-700, $gray-700);
+  }
+
+  .option-disabled-reason {
+    display: none;
+  }
+
+  .disabled {
+    svg {
+      opacity: 0.5;
+    }
+
+    .option-description {
+      display: none;
+    }
+
+    .option-disabled-reason {
+      display: block;
+    }
+  }
+}
+
+.saml-settings.info-well {
+  .form-control[readonly] {
+    background: var(--white, $white);
+  }
+}
+
+.doorkeeper-authorize {
+  max-width: px-to-rem(500px);
+}
+
+.deploy-freeze-table {
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    .truncated-container {
+      justify-content: flex-end;
+    }
+  }
+}
+
+.settings-section::after {
+  content: "";
+  display: block;
+  margin-bottom: $gl-spacing-scale-7;
+}
+
+.settings-section,
+.settings-section-no-bottom ~ .settings-section {
+  padding-top: 0;
+}
+
+// Fix for sticky header when there is no search bar.
+.flash-container + .settings-section {
+  padding-top: $gl-spacing-scale-3;
+}
+
+.settings-section ~ .settings-section {
+  padding-top: $gl-spacing-scale-6;
+}
+
+.settings-section:not(.settings-section-no-bottom) ~ .settings-section {
+  @include gl-border-t;
+}
+
+.settings-section-no-bottom::after {
+  padding-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    padding-bottom: $gl-spacing-scale-5;
+  }
+}
+
+$sticky-header-z-index: 98;
+
+.settings-sticky-header,
+.settings-sticky-footer {
+  position: sticky;
+  z-index: $sticky-header-z-index;
+  background: $body-bg;
+}
+
+.settings-sticky-header {
+  top: $calc-application-header-height;
+
+  &::before {
+    content: "";
+    display: block;
+    height: $gl-padding-8;
+    position: sticky;
+    top: calc(#{$calc-application-header-height} + 36px);
+    box-shadow: 0 1px 0 $gray-100;
+  }
+}
+
+.settings-sticky-header-inner {
+  position: sticky;
+  padding: $gl-padding-12 $gl-padding $gl-padding-8;
+  margin: #{-$gl-padding} #{-$gl-padding} 0;
+  background: $body-bg;
+}
+
+.settings-sticky-footer {
+  bottom: 0;
+  padding: $gl-padding-8 0;
+  box-shadow: 0 -1px 0 $gray-100;
+}
+
+// Header shouldn't be sticky if only one section on page
+.settings-sticky-header:first-of-type:last-of-type {
+  position: static;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+.visibility-level-setting {
+  .option-description,
+  .option-disabled-reason {
+    color: var(--gray-700, $gray-700);
+  }
+
+  .option-disabled-reason {
+    display: none;
+  }
+
+  .disabled {
+    svg {
+      opacity: 0.5;
+    }
+
+    .option-description {
+      display: none;
+    }
+
+    .option-disabled-reason {
+      display: block;
+    }
+  }
+}
+
+.saml-settings.info-well {
+  .form-control[readonly] {
+    background: var(--white, $white);
+  }
+}
+
+.doorkeeper-authorize {
+  max-width: px-to-rem(500px);
+}
+
+.deploy-freeze-table {
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    .truncated-container {
+      justify-content: flex-end;
+    }
+  }
+}
+
+.settings-section::after {
+  content: "";
+  display: block;
+  margin-bottom: $gl-spacing-scale-7;
+}
+
+.settings-section,
+.settings-section-no-bottom ~ .settings-section {
+  padding-top: 0;
+}
+
+// Fix for sticky header when there is no search bar.
+.flash-container + .settings-section {
+  padding-top: $gl-spacing-scale-3;
+}
+
+.settings-section ~ .settings-section {
+  padding-top: $gl-spacing-scale-6;
+}
+
+.settings-section:not(.settings-section-no-bottom) ~ .settings-section {
+  @include gl-border-t;
+}
+
+.settings-section-no-bottom::after {
+  padding-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    padding-bottom: $gl-spacing-scale-5;
+  }
+}
+
+$sticky-header-z-index: 98;
+
+.settings-sticky-header,
+.settings-sticky-footer {
+  position: sticky;
+  z-index: $sticky-header-z-index;
+  background: $body-bg;
+}
+
+.settings-sticky-header {
+  top: $calc-application-header-height;
+
+  &::before {
+    content: "";
+    display: block;
+    height: $gl-padding-8;
+    position: sticky;
+    top: calc(#{$calc-application-header-height} + 36px);
+    box-shadow: 0 1px 0 $gray-100;
+  }
+}
+
+.settings-sticky-header-inner {
+  position: sticky;
+  padding: $gl-padding-12 $gl-padding $gl-padding-8;
+  margin: #{-$gl-padding} #{-$gl-padding} 0;
+  background: $body-bg;
+}
+
+.settings-sticky-footer {
+  bottom: 0;
+  padding: $gl-padding-8 0;
+  box-shadow: 0 -1px 0 $gray-100;
+}
+
+// Header shouldn't be sticky if only one section on page
+.settings-sticky-header:first-of-type:last-of-type {
+  position: static;
+}
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -33,9 +33,9 @@
+   max-width: px-to-rem(500px);
+ }
+ 
+ .deploy-freeze-table {
+-  @media (max-width: map-get($grid-breakpoints, lg)-1) {
++  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+     .truncated-container {
+       justify-content: flex-end;
+     }
+   }
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+.visibility-level-setting {
+  .option-description,
+  .option-disabled-reason {
+    color: var(--gray-700, $gray-700);
+  }
+
+  .option-disabled-reason {
+    display: none;
+  }
+
+  .disabled {
+    svg {
+      opacity: 0.5;
+    }
+
+    .option-description {
+      display: none;
+    }
+
+    .option-disabled-reason {
+      display: block;
+    }
+  }
+}
+
+.saml-settings.info-well {
+  .form-control[readonly] {
+    background: var(--white, $white);
+  }
+}
+
+.doorkeeper-authorize {
+  max-width: px-to-rem(500px);
+}
+
+.deploy-freeze-table {
+  @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+    .truncated-container {
+      justify-content: flex-end;
+    }
+  }
+}
+
+.settings-section::after {
+  content: "";
+  display: block;
+  margin-bottom: $gl-spacing-scale-7;
+}
+
+.settings-section,
+.settings-section-no-bottom ~ .settings-section {
+  padding-top: 0;
+}
+
+// Fix for sticky header when there is no search bar.
+.flash-container + .settings-section {
+  padding-top: $gl-spacing-scale-3;
+}
+
+.settings-section ~ .settings-section {
+  padding-top: $gl-spacing-scale-6;
+}
+
+.settings-section:not(.settings-section-no-bottom) ~ .settings-section {
+  @include gl-border-t;
+}
+
+.settings-section-no-bottom::after {
+  padding-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    padding-bottom: $gl-spacing-scale-5;
+  }
+}
+
+$sticky-header-z-index: 98;
+
+.settings-sticky-header,
+.settings-sticky-footer {
+  position: sticky;
+  z-index: $sticky-header-z-index;
+  background: $body-bg;
+}
+
+.settings-sticky-header {
+  top: $calc-application-header-height;
+
+  &::before {
+    content: "";
+    display: block;
+    height: $gl-padding-8;
+    position: sticky;
+    top: calc(#{$calc-application-header-height} + 36px);
+    box-shadow: 0 1px 0 $gray-100;
+  }
+}
+
+.settings-sticky-header-inner {
+  position: sticky;
+  padding: $gl-padding-12 $gl-padding $gl-padding-8;
+  margin: #{-$gl-padding} #{-$gl-padding} 0;
+  background: $body-bg;
+}
+
+.settings-sticky-footer {
+  bottom: 0;
+  padding: $gl-padding-8 0;
+  box-shadow: 0 -1px 0 $gray-100;
+}
+
+// Header shouldn't be sticky if only one section on page
+.settings-sticky-header:first-of-type:last-of-type {
+  position: static;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+.visibility-level-setting {
+  .option-description,
+  .option-disabled-reason {
+    color: var(--gray-700, $gray-700);
+  }
+
+  .option-disabled-reason {
+    display: none;
+  }
+
+  .disabled {
+    svg {
+      opacity: 0.5;
+    }
+
+    .option-description {
+      display: none;
+    }
+
+    .option-disabled-reason {
+      display: block;
+    }
+  }
+}
+
+.saml-settings.info-well {
+  .form-control[readonly] {
+    background: var(--white, $white);
+  }
+}
+
+.doorkeeper-authorize {
+  max-width: px-to-rem(500px);
+}
+
+.deploy-freeze-table {
+  @media (max-width: map-get($grid-breakpoints, lg)-1) {
+    .truncated-container {
+      justify-content: flex-end;
+    }
+  }
+}
+
+.settings-section::after {
+  content: "";
+  display: block;
+  margin-bottom: $gl-spacing-scale-7;
+}
+
+.settings-section,
+.settings-section-no-bottom ~ .settings-section {
+  padding-top: 0;
+}
+
+// Fix for sticky header when there is no search bar.
+.flash-container + .settings-section {
+  padding-top: $gl-spacing-scale-3;
+}
+
+.settings-section ~ .settings-section {
+  padding-top: $gl-spacing-scale-6;
+}
+
+.settings-section:not(.settings-section-no-bottom) ~ .settings-section {
+  @include gl-border-t;
+}
+
+.settings-section-no-bottom::after {
+  padding-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    padding-bottom: $gl-spacing-scale-5;
+  }
+}
+
+$sticky-header-z-index: 98;
+
+.settings-sticky-header,
+.settings-sticky-footer {
+  position: sticky;
+  z-index: $sticky-header-z-index;
+  background: $body-bg;
+}
+
+.settings-sticky-header {
+  top: $calc-application-header-height;
+
+  &::before {
+    content: "";
+    display: block;
+    height: $gl-padding-8;
+    position: sticky;
+    top: calc(#{$calc-application-header-height} + 36px);
+    box-shadow: 0 1px 0 $gray-100;
+  }
+}
+
+.settings-sticky-header-inner {
+  position: sticky;
+  padding: $gl-padding-12 $gl-padding $gl-padding-8;
+  margin: #{-$gl-padding} #{-$gl-padding} 0;
+  background: $body-bg;
+}
+
+.settings-sticky-footer {
+  bottom: 0;
+  padding: $gl-padding-8 0;
+  box-shadow: 0 -1px 0 $gray-100;
+}
+
+// Header shouldn't be sticky if only one section on page
+.settings-sticky-header:first-of-type:last-of-type {
+  position: static;
+}
+
+`````

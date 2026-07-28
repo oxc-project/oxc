@@ -1,15 +1,15 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, Formatter},
+    formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
 pub struct BindingPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+    properties: &'b AstNode<'a, ArenaVec<'a, BindingProperty<'a>>>,
     rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
 }
 
@@ -27,8 +27,8 @@ impl GetSpan for BindingPropertyListNode<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for BindingPropertyListNode<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BindingPropertyListNode<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             BindingPropertyListNode::Property(property) => property.fmt(f),
             BindingPropertyListNode::Rest(rest) => rest.fmt(f),
@@ -55,15 +55,15 @@ impl<'a, 'b> Iterator for BindingPropertyListIter<'a, 'b> {
 
 impl<'a, 'b> BindingPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+        properties: &'b AstNode<'a, ArenaVec<'a, BindingProperty<'a>>>,
         rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }
 }
 
-impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BindingPropertyList<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {
             TrailingSeparator::Disallowed

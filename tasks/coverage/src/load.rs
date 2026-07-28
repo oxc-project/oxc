@@ -89,7 +89,7 @@ fn walk_and_read(
         .collect()
 }
 
-fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
+pub fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
     let skip_path = |path: &Path| {
         let s = path.to_string_lossy();
         let s = s.cow_replace('\\', "/");

@@ -2,10 +2,10 @@ use oxc_ast::{
     AstKind,
     ast::{
         AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectExpression, ObjectPropertyKind,
+        ObjectExpression,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
@@ -13,7 +13,9 @@ use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule, utils::find_property,
+};
 
 fn no_lifecycle_after_await_diagnostic(span: Span, hook_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -68,6 +70,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.39.0",
+    short_description = "Disallow asynchronously registered lifecycle hooks.",
 );
 
 const LIFECYCLE_HOOKS: &[&str] = &[
@@ -116,12 +119,7 @@ impl Rule for NoLifecycleAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = obj_expr.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            return None;
-        };
-        obj_prop.key.static_name().is_some_and(|name| name == "setup").then_some(obj_prop)
-    }) else {
+    let Some(setup_prop) = find_property(obj_expr, "setup") else {
         return;
     };
 
@@ -183,7 +181,7 @@ impl<'a> LifecycleAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for LifecycleAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         if !self.found {
             self.found = true;
@@ -192,23 +190,23 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
 
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if !self.found {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
         if call_expr.arguments.len() >= 2 {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
         let Some(ident) = call_expr.callee.get_inner_expression().get_identifier_reference() else {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         };
 
         let reference = self.scoping.get_reference(ident.reference_id());
         let Some(symbol_id) = reference.symbol_id() else {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         };
 
@@ -217,7 +215,7 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
         {
             self.errors.push((call_expr.span, name_span.name().to_string()));
         }
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

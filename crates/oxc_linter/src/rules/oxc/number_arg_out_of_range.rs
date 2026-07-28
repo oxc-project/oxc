@@ -26,7 +26,7 @@ pub struct NumberArgOutOfRange;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks whether the radix or precision arguments of number-related functions exceeds the limit.
+    /// Checks whether the radix or precision arguments of number-related functions exceed the limit.
     ///
     /// ### Why is this bad?
     ///
@@ -52,18 +52,15 @@ declare_oxc_lint!(
     oxc,
     correctness,
     version = "0.0.3",
+    short_description = "Checks whether the radix or precision arguments of number-related functions exceed the limit.",
 );
 
 impl Rule for NumberArgOutOfRange {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(expr) = node.kind() else {
-            return;
-        };
-        let Some(member) = expr.callee.get_member_expr() else {
-            return;
-        };
-
-        if let Some(Argument::NumericLiteral(literal)) = expr.arguments.first() {
+        if let AstKind::CallExpression(expr) = node.kind()
+            && let Some(member) = expr.callee.get_member_expr()
+            && let Some(Argument::NumericLiteral(literal)) = expr.arguments.first()
+        {
             let value = literal.value;
             match member.static_property_name() {
                 Some(name @ "toString") if !(2.0_f64..=36.0_f64).contains(&value) => {

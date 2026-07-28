@@ -2,6 +2,7 @@ use napi::Either;
 use napi_derive::napi;
 
 use oxc_compat::EngineTargets;
+use oxc_str::CompactStr;
 
 #[napi(object)]
 pub struct TreeShakeOptions {
@@ -98,7 +99,7 @@ pub struct CompressOptions {
     ///
     /// @default 'esnext'
     ///
-    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    /// @see [oxc#target](https://oxc.rs/docs/guide/usage/transformer/lowering#target)
     pub target: Option<Either<String, Vec<String>>>,
 
     /// Pass true to discard calls to `console.*`.
@@ -221,6 +222,16 @@ pub struct MangleOptions {
     /// @default false
     pub keep_names: Option<Either<bool, MangleOptionsKeepNames>>,
 
+    /// Names that bindings must not be renamed to, and that bindings already
+    /// carrying them keep. Equivalent to terser's `mangle.reserved`.
+    ///
+    /// Pass `['exports', 'module']` when minifying prebuilt CommonJS / UMD files
+    /// that Node consumers `import` directly, so Node's cjs-module-lexer can still
+    /// detect the mangled module's named exports.
+    ///
+    /// @default []
+    pub reserved: Option<Vec<String>>,
+
     /// Debug mangled names.
     pub debug: Option<bool>,
 }
@@ -236,6 +247,9 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
                 Some(Either::B(o)) => oxc_minifier::MangleOptionsKeepNames::from(o),
                 None => default.keep_names,
             },
+            reserved: o.reserved.as_ref().map_or(default.reserved, |names| {
+                names.iter().map(|name| CompactStr::from(name.as_str())).collect()
+            }),
             debug: o.debug.unwrap_or(default.debug),
         }
     }
@@ -260,28 +274,83 @@ impl From<&MangleOptionsKeepNames> for oxc_minifier::MangleOptionsKeepNames {
     }
 }
 
+#[napi(string_enum = "lowercase")]
+pub enum LegalCommentsMode {
+    /// Do not preserve any legal comments.
+    None,
+    /// Preserve all legal comments inline.
+    Inline,
+    /// Move all legal comments to the end of the file.
+    Eof,
+    /// Extract legal comments without linking.
+    External,
+}
+
+#[napi(object)]
+pub struct LegalCommentsLinked {
+    /// Extract legal comments and write them to the given path, with a link
+    /// comment appended to the generated code.
+    pub linked: String,
+}
+
 #[napi(object)]
 pub struct CodegenOptions {
     /// Remove whitespace.
     ///
     /// @default true
     pub remove_whitespace: Option<bool>,
+
+    /// How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
+    ///
+    /// * `"none"` - Do not preserve any legal comments.
+    /// * `"inline"` - Preserve all legal comments inline.
+    /// * `"eof"` - Move all legal comments to the end of the file.
+    /// * `"external"` - Extract legal comments without linking.
+    /// * `{ linked: "path/to/legal.txt" }` - Extract legal comments and add a link comment to the given path.
+    ///
+    /// @default "none" (when minifying)
+    #[napi(ts_type = "'none' | 'inline' | 'eof' | 'external' | { linked: string }")]
+    pub legal_comments: Option<Either<LegalCommentsMode, LegalCommentsLinked>>,
 }
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { remove_whitespace: Some(true) }
+        Self { remove_whitespace: Some(true), legal_comments: None }
     }
 }
 
-impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
-    fn from(o: &CodegenOptions) -> Self {
-        if o.remove_whitespace.is_some_and(|b| b) {
+impl CodegenOptions {
+    /// Convert N-API codegen options into codegen options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `linked` variant is given an empty path.
+    pub fn to_codegen_options(&self) -> Result<oxc_codegen::CodegenOptions, String> {
+        let mut opts = if self.remove_whitespace.unwrap_or(true) {
             oxc_codegen::CodegenOptions::minify()
         } else {
             // Need to remove all comments.
             oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
+        };
+
+        if let Some(legal) = &self.legal_comments {
+            opts.comments.legal = match legal {
+                Either::A(mode) => match mode {
+                    LegalCommentsMode::None => oxc_codegen::LegalComment::None,
+                    LegalCommentsMode::Inline => oxc_codegen::LegalComment::Inline,
+                    LegalCommentsMode::Eof => oxc_codegen::LegalComment::Eof,
+                    LegalCommentsMode::External => oxc_codegen::LegalComment::External,
+                },
+                Either::B(linked) => {
+                    if linked.linked.is_empty() {
+                        return Err("legalComments.linked must be a non-empty path.".into());
+                    }
+                    oxc_codegen::LegalComment::Linked(linked.linked.clone())
+                }
+            };
         }
+
+        Ok(opts)
     }
 }
 

@@ -1,0 +1,121 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@supports (transform-origin: 5% 5%) {}
+@supports (transform-origin:5% 5%) {}
+@supports (  transform-origin  :  5%  5%  ) {}
+@supports
+(
+transform-origin
+:
+5%
+5%
+) {}
+@supports not (transform-origin: 10em 10em 10em) {}
+@supports not(transform-origin: 10em 10em 10em) {}
+@supports (display: grid) and (not (display: inline-grid)) {}
+@supports (display: flexbox) and (display: grid) {}
+@supports (display: table-cell) or (display: list-item) {}
+@supports (display: table-cell) and ((display: list-item) or (display: contents)) {}
+@supports (--foo: green) {}
+@supports selector(A > B) {}
+@supports selector(A       >      B) {}
+@supports selector(.a:not(.b)) {}
+@supports not selector(:after) {
+}
+@supports (--foo:green) and selector(:after) {}
+a {
+  b: c;
+  @supports (position: sticky) {
+    position: sticky;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@supports (transform-origin: 5% 5%) {
+}
+@supports (transform-origin: 5% 5%) {
+}
+@supports (transform-origin: 5% 5%) {
+}
+@supports (transform-origin: 5% 5%) {
+}
+@supports not (transform-origin: 10em 10em 10em) {
+}
+@supports not (transform-origin: 10em 10em 10em) {
+}
+@supports (display: grid) and (not (display: inline-grid)) {
+}
+@supports (display: flexbox) and (display: grid) {
+}
+@supports (display: table-cell) or (display: list-item) {
+}
+@supports (display: table-cell) and
+  ((display: list-item) or (display: contents)) {
+}
+@supports (--foo: green) {
+}
+@supports selector(A > B) {
+}
+@supports selector(A > B) {
+}
+@supports selector(.a:not(.b)) {
+}
+@supports not selector(:after) {
+}
+@supports (--foo: green) and selector(:after) {
+}
+a {
+  b: c;
+  @supports (position: sticky) {
+    position: sticky;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@supports (transform-origin: 5% 5%) {
+}
+@supports (transform-origin: 5% 5%) {
+}
+@supports (transform-origin: 5% 5%) {
+}
+@supports (transform-origin: 5% 5%) {
+}
+@supports not (transform-origin: 10em 10em 10em) {
+}
+@supports not (transform-origin: 10em 10em 10em) {
+}
+@supports (display: grid) and (not (display: inline-grid)) {
+}
+@supports (display: flexbox) and (display: grid) {
+}
+@supports (display: table-cell) or (display: list-item) {
+}
+@supports (display: table-cell) and ((display: list-item) or (display: contents)) {
+}
+@supports (--foo: green) {
+}
+@supports selector(A > B) {
+}
+@supports selector(A > B) {
+}
+@supports selector(.a:not(.b)) {
+}
+@supports not selector(:after) {
+}
+@supports (--foo: green) and selector(:after) {
+}
+a {
+  b: c;
+  @supports (position: sticky) {
+    position: sticky;
+  }
+}
+
+===================== End =====================

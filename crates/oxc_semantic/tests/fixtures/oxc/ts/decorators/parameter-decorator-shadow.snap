@@ -1,0 +1,141 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decorator-shadow.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(Inject)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "token",
+            "node": "FormalParameter(token)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function | Constructor)",
+            "id": 3,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 4,
+                "name": "foo",
+                "node": "FormalParameter(foo)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(C)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function | Constructor)",
+            "id": 5,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 6,
+                "name": "foo",
+                "node": "FormalParameter(foo)",
+                "references": []
+              },
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 7,
+                "name": "bar",
+                "node": "FormalParameter(bar)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 4,
+        "node": "Class(D)",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "foo",
+        "node": "VariableDeclarator(foo)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 2,
+            "name": "foo",
+            "node_id": 31,
+            "scope_id": 2
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 4,
+            "name": "foo",
+            "node_id": 54,
+            "scope_id": 4
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function | Ambient)",
+        "id": 1,
+        "name": "Inject",
+        "node": "Function(Inject)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "Inject",
+            "node_id": 29,
+            "scope_id": 2
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "Inject",
+            "node_id": 52,
+            "scope_id": 4
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 3,
+        "name": "C",
+        "node": "Class(C)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 5,
+        "name": "D",
+        "node": "Class(D)",
+        "references": []
+      }
+    ]
+  }
+]

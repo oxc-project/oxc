@@ -92,6 +92,7 @@ declare_oxc_lint!(
     react,
     correctness,
     version = "0.2.0",
+    short_description = "Disallow direct mutation of `this.state`.",
 );
 
 impl Rule for NoDirectMutationState {

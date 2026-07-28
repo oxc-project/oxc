@@ -43,8 +43,9 @@ fn test_undefined() {
     test("for (undefined in {}) {}", "for(undefined in {});");
     test("undefined++;", "undefined++");
     test("undefined += undefined;", "undefined+=void 0");
-    // shadowed
-    test_same("(function(undefined) { let x = typeof undefined; })()");
+    // shadowed: a parameter named `undefined` must not be substituted with
+    // `void 0`. `foo()` keeps the IIFE from being dropped as dead code.
+    test_same("(function(undefined) { foo(typeof undefined); })()");
     // destructuring throw error side effect
     test_same("var {} = void 0");
     test_same("var [] = void 0");
@@ -262,20 +263,26 @@ fn test_fold_new_expressions() {
 
 #[test]
 fn test_compress_typed_array_constructor() {
-    test("new Int8Array(0)", "new Int8Array()");
-    test("new Uint8Array(0)", "new Uint8Array()");
-    test("new Uint8ClampedArray(0)", "new Uint8ClampedArray()");
-    test("new Int16Array(0)", "new Int16Array()");
-    test("new Uint16Array(0)", "new Uint16Array()");
-    test("new Int32Array(0)", "new Int32Array()");
-    test("new Uint32Array(0)", "new Uint32Array()");
-    test("new Float32Array(0)", "new Float32Array()");
-    test("new Float64Array(0)", "new Float64Array()");
-    test("new BigInt64Array(0)", "new BigInt64Array()");
-    test("new BigUint64Array(0)", "new BigUint64Array()");
+    // `new Int8Array(0)` is equivalent to `new Int8Array()`: the `0` arg is folded
+    // away and the pure empty construction is dropped when its result is unused.
+    test("new Int8Array(0)", "");
+    test("new Uint8Array(0)", "");
+    test("new Uint8ClampedArray(0)", "");
+    test("new Int16Array(0)", "");
+    test("new Uint16Array(0)", "");
+    test("new Int32Array(0)", "");
+    test("new Uint32Array(0)", "");
+    test("new Float32Array(0)", "");
+    test("new Float64Array(0)", "");
+    test("new BigInt64Array(0)", "");
+    test("new BigUint64Array(0)", "");
+    test("new Int8Array()", "");
+    // A numeric-literal length is pure (or a droppable max-length RangeError).
+    test("new Int8Array(8)", "");
 
+    // Not optimized when shadowed, or with a negative / non-literal / extra length.
     test_same("var Int8Array; new Int8Array(0)");
-    test_same("new Int8Array(1)");
+    test_same("new Int8Array(-1)");
     test_same("new Int8Array(a)");
     test_same("new Int8Array(0, a)");
 }
@@ -328,6 +335,7 @@ fn test_template_string_to_string() {
     test("x = `hello ${'foo'}`", "x = 'hello foo'");
     test("x = `${2} bananas`", "x = '2 bananas'");
     test("x = `This is ${true}`", "x = 'This is true'");
+    test_same("x = `a${void f()}b`");
 }
 
 #[test]
@@ -529,6 +537,17 @@ fn test_fold_is_object_and_not_null() {
     test_same("v = typeof foo == 'object' && foo !== null"); // cannot be folded because accessing foo might have a side effect
     test_same("var foo, bar; v = typeof foo == 'object' && bar !== null");
     test_same("var foo; v = typeof foo == 'string' && foo !== null");
+}
+
+#[test]
+fn test_fold_is_object_and_not_null_minted_then_dropped() {
+    // Exercises same-pass mint-then-drop through `DroppedSubtreeCollector`'s capacity guard.
+    // The fresh references carry their semantic scope, so post-flush
+    // reachability observes them without a separate mint log.
+    test(
+        "function f(a) { return 1; if (typeof a === 'object' && a !== null) b(a); } f();",
+        "function f(a) { return 1; }",
+    );
 }
 
 #[test]
@@ -739,6 +758,8 @@ fn test_fold_number_constructor() {
     test("x = Number(true)", "x = 1");
     test("x = Number(false)", "x = 0");
     test("x = Number('foo')", "x = NaN");
+    test_same("x = Number(void f())");
+    test_same("x = Number([f(), 1])");
 }
 
 #[test]
@@ -767,10 +788,9 @@ fn optional_catch_binding() {
 
     // var inside a function does NOT interact with the catch parameter;
     // var doesn't hoist out of functions, so the catch param can be removed.
-    test(
-        "try { foo } catch(e) { (function() { var e = 2 })() }",
-        "try { foo } catch { (function() { var e = 2;})();}",
-    );
+    // The side-effect-free IIFE itself is then dropped; the empty `catch`
+    // still proves the param was safely removed.
+    test("try { foo } catch(e) { (function() { var e = 2 })() }", "try { foo } catch {}");
     test(
         "try { foo } catch(e) { function f() { var e = 2 } }",
         "try { foo } catch { function f() { var e = 2 } }",
@@ -1000,4 +1020,29 @@ fn test_flatten_array_spread_elements() {
     test("var x=[30,40];var y = [10,...[],20,...x,50];", "var y = [10,20,30,40,50]");
     test_same("var y = [0, ...[1, , , 3]]");
     test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
+}
+
+#[test]
+fn fold_sequence_expression() {
+    test("(a(), b) + c", "a(), b + c");
+    test("(a(), b, c) + d", "a(), b, c + d");
+
+    test("(a(), b) || c", "a(), b || c");
+    test("(a(), b) && c", "a(), b && c");
+    test("(a(), b, c) || d", "a(), b, c || d");
+
+    test("-(a(), b)", "a(), -b");
+    test("~(a(), b)", "a(), ~b");
+    test("-(a(), b, c)", "a(), b, -c");
+
+    test("function* a() { yield (c(1), 2) }", "function* a() { c(1), yield 2 }");
+    test("function* a() { b(yield (c(1), 2)) }", "function* a() { b((c(1), yield 2)) }");
+    test("function* a() { yield (c(1), d(2), 3) }", "function* a() { c(1), d(2), yield 3 }");
+
+    test("async function a() { await (c(1), 2) }", "async function a() { c(1), await 2 }");
+    test("async function a() { b(await (c(1), 2)) }", "async function a() { b((c(1), await 2)) }");
+    test(
+        "async function a() { await (c(1), d(2), 3) }",
+        "async function a() { c(1), d(2), await 3 }",
+    );
 }

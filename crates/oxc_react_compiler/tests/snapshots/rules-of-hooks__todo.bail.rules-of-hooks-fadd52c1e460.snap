@@ -1,0 +1,38 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/todo.bail.rules-of-hooks-fadd52c1e460.js
+---
+// @skip
+// Unsupported input
+// Currently invalid.
+// These are variations capturing the current heuristic--
+// we only allow hooks in PascalCase or useFoo functions.
+// We *could* make some of these valid. But before doing it,
+// consider specific cases documented above that contain reasoning.
+function a() {
+	useState();
+}
+const whatever = function b() {
+	useState();
+};
+const c = () => {
+	useState();
+};
+let d = () => {
+	return useState();
+};
+e = () => {
+	useState();
+};
+({ f: () => {
+	useState();
+} });
+({ g() {
+	useState();
+} });
+const { j = () => {
+	useState();
+} } = {};
+({k = () => {
+	useState();
+}} = {});

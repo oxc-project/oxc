@@ -77,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.16.10",
+    short_description = "Disallows backreferences in regular expressions that will always be ignored.",
 );
 
 impl Rule for NoUselessBackreference {

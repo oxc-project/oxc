@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "a": 1,
+  // leading comment
+  "b": 2,
+  /* leading block */
+  "c": 3,
+
+  // intentional blank line before this comment
+  "d": 4
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  "a": 1,
+  // leading comment
+  "b": 2,
+  /* leading block */
+  "c": 3,
+
+  // intentional blank line before this comment
+  "d": 4
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  "a": 1,
+  // leading comment
+  "b": 2,
+  /* leading block */
+  "c": 3,
+
+  // intentional blank line before this comment
+  "d": 4
+}
+
+===================== End =====================

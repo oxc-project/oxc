@@ -29,6 +29,16 @@ type Source = {
   resolveFilePath?: (name: string) => string;
 };
 
+// Shared note strings for deliberate Prettier divergences (deduped).
+const NOTE_LESS_MATH_FILL =
+  "Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md";
+const NOTE_MQ_OP_SPACING =
+  "Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)";
+const NOTE_INLINE_COMMENT_WIDTH =
+  "Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it.";
+const NOTE_EMBEDDED_EXPRESSION_INDENT =
+  "We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently";
+
 const categories: Category[] = [
   {
     name: "js-in-vue",
@@ -58,7 +68,11 @@ const categories: Category[] = [
       { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {},
+    notes: {
+      "externals/prettier/js/multiparser-graphql/graphql-tag.js":
+        "Prettier moves `query Test { # c` own-line comment to next line, we keep",
+      "edge-cases/gql-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
+    },
   },
   {
     name: "css-in-js",
@@ -79,6 +93,7 @@ const categories: Category[] = [
     notes: {
       "externals/prettier/js/multiparser-css/styled-components.js":
         "`Xxx.extend` not recognized as tag",
+      "edge-cases/css-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
   {
@@ -99,6 +114,11 @@ const categories: Category[] = [
     notes: {
       "externals/prettier/js/multiparser-html/issue-10691.js":
         "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
+      "externals/webawesome/number-input/number-input.styles.ts":
+        "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md",
+      "externals/webawesome/page/page.styles.ts":
+        "Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md",
+      "edge-cases/html-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
   {
@@ -173,6 +193,84 @@ const categories: Category[] = [
     ],
     notes: {},
   },
+  {
+    name: "graphql",
+    sources: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {},
+  },
+  {
+    name: "less",
+    sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {
+      // Nested Less math: core fill fit-check semantics (biome vs Prettier).
+      "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_LESS_MATH_FILL,
+      "externals/ng-zorro-antd/components/style/themes/default.less": [
+        NOTE_LESS_MATH_FILL,
+        NOTE_INLINE_COMMENT_WIDTH,
+      ].join("\n"),
+      "externals/ng-zorro-antd/components/style/themes/variable.less": [
+        NOTE_LESS_MATH_FILL,
+        NOTE_INLINE_COMMENT_WIDTH,
+      ].join("\n"),
+      "externals/ng-zorro-antd/components/style/themes/dark.less": NOTE_INLINE_COMMENT_WIDTH,
+      "externals/ng-zorro-antd/components/table/style/index.less": NOTE_LESS_MATH_FILL,
+      "externals/ng-zorro-antd/components/table/style/rtl.less": NOTE_LESS_MATH_FILL,
+    },
+  },
+  {
+    name: "css",
+    sources: [
+      { dir: join(EXTERNALS_DIR, "mantine"), ext: ".css" },
+      { dir: join(EXTERNALS_DIR, "docusaurus"), ext: ".css" },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {},
+  },
+  {
+    name: "yaml",
+    sources: [
+      { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yaml" },
+      { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yml" },
+      { dir: join(EXTERNALS_DIR, "gitlab-ci-templates"), ext: ".yml" },
+      { dir: join(EXTERNALS_DIR, "gitlab"), ext: ".yml" },
+    ],
+    optionSets: [
+      { printWidth: 80 },
+      { printWidth: 100, tabWidth: 4, proseWrap: "always" },
+      { printWidth: 120, singleQuote: true, bracketSpacing: false, trailingComma: "none" },
+    ],
+    notes: {
+      "externals/aws-cloudformation-templates/RainModules/load-balancer.yml":
+        "Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md",
+    },
+  },
+  {
+    name: "scss",
+    sources: [
+      { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".scss" },
+      { dir: join(EXTERNALS_DIR, "gitlab"), ext: ".scss" },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {
+      "externals/gitlab/stylesheets/framework/diffs.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/editor.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/issuable_list.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/labels.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/environments.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/merge_requests.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/settings.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/pages/settings.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/page_bundles/projects.scss": NOTE_MQ_OP_SPACING,
+      "externals/gitlab/stylesheets/highlight/conflict_colors.scss":
+        "Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824)",
+      "externals/gitlab/stylesheets/framework/sidebar.scss": "long-expr line-break position",
+      "externals/gitlab/stylesheets/framework/variables_overrides.scss":
+        "Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md",
+      "externals/gitlab/stylesheets/pages/profile.scss": NOTE_INLINE_COMMENT_WIDTH,
+    },
+  },
 ];
 
 // ---
@@ -228,7 +326,10 @@ function collectFixtures(sources: Source[]): Fixture[] {
   for (const source of sources) {
     if (!existsSync(source.dir)) continue;
 
-    for (const entry of readdirSync(source.dir, { withFileTypes: true, recursive: true })) {
+    for (const entry of readdirSync(source.dir, {
+      withFileTypes: true,
+      recursive: true,
+    })) {
       if (!entry.isFile()) continue;
       if (source.ext && !entry.name.endsWith(source.ext)) continue;
 
@@ -271,7 +372,12 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
       }
     }
 
-    optionSetResults.push({ options, passed, total: fixtures.length, failures });
+    optionSetResults.push({
+      options,
+      passed,
+      total: fixtures.length,
+      failures,
+    });
   }
 
   return { name: category.name, optionSetResults };
@@ -318,7 +424,11 @@ function writeReport(results: CategoryResult[]) {
     // Collect all failures per fixture across option sets
     const failuresByFixture = new Map<
       string,
-      { optionIndex: number; options: Record<string, unknown>; failure: Failure }[]
+      {
+        optionIndex: number;
+        options: Record<string, unknown>;
+        failure: Failure;
+      }[]
     >();
     for (let i = 0; i < result.optionSetResults.length; i++) {
       for (const failure of result.optionSetResults[i].failures) {
@@ -327,7 +437,11 @@ function writeReport(results: CategoryResult[]) {
           entries = [];
           failuresByFixture.set(failure.name, entries);
         }
-        entries.push({ optionIndex: i + 1, options: result.optionSetResults[i].options, failure });
+        entries.push({
+          optionIndex: i + 1,
+          options: result.optionSetResults[i].options,
+          failure,
+        });
       }
     }
 
@@ -353,7 +467,9 @@ function writeReport(results: CategoryResult[]) {
           const safeName = failure.name.replaceAll("/", "__");
           const diffRelPath = `diffs/${result.name}/${safeName}.md`;
           const diffLink = `[${failure.name}](${diffRelPath})`;
-          lines.push(`| ${diffLink} | ${failure.note ?? ""} |`);
+          // Notes may be multi-line (joined constants); `<br>` keeps the table cell intact.
+          const noteCell = (failure.note ?? "").replaceAll("\n", "<br>");
+          lines.push(`| ${diffLink} | ${noteCell} |`);
         }
         lines.push("");
       }
@@ -371,7 +487,11 @@ function writeDiffFile(
   diffsDir: string,
   categoryName: string,
   fixtureName: string,
-  entries: { optionIndex: number; options: Record<string, unknown>; failure: Failure }[],
+  entries: {
+    optionIndex: number;
+    options: Record<string, unknown>;
+    failure: Failure;
+  }[],
 ) {
   const safeName = fixtureName.replaceAll("/", "__");
   const dir = join(diffsDir, categoryName);
@@ -385,7 +505,8 @@ function writeDiffFile(
     failure: { note },
   } = entries[0];
   if (note) {
-    lines.push(`> ${note}`);
+    // Multi-line notes keep the blockquote prefix on every line.
+    lines.push(`> ${note.replaceAll("\n", "\n> ")}`);
     lines.push("");
   }
 

@@ -53,6 +53,7 @@ declare_oxc_lint!(
     react,
     style,
     version = "0.5.2",
+    short_description = "Disallow the usage of `this.setState` in React components.",
 );
 
 impl Rule for NoSetState {

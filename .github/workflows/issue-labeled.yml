@@ -14,31 +14,43 @@ jobs:
     steps:
       - name: contribution welcome
         if: github.event.label.name == 'good first issue' || github.event.label.name == 'E-Help Wanted'
-        uses: actions-cool/issues-helper@200c78641dbf33838311e5a1e0c31bbdb92d7cf0 # v3.8.0
-        with:
-          actions: "remove-labels"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.issue.number }}
-          labels: "pending triage, needs reproduction"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          mapfile -t labels < <(gh issue view "$ISSUE_NUMBER" --json labels --jq '.labels[].name | select(. == "pending triage" or . == "needs reproduction")')
+          if (( ${#labels[@]} > 0 )); then
+            args=()
+            for label in "${labels[@]}"; do
+              args+=(--remove-label "$label")
+            done
+            gh issue edit "$ISSUE_NUMBER" "${args[@]}"
+          fi
 
       - name: needs reproduction
         if: github.event.label.name == 'needs reproduction'
-        uses: actions-cool/issues-helper@200c78641dbf33838311e5a1e0c31bbdb92d7cf0 # v3.8.0
-        with:
-          actions: "create-comment, remove-labels"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.issue.number }}
-          labels: "pending triage"
-          body: |
-            Hello @${{ github.event.issue.user.login }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
+          printf '%s\n' \
+            "Hello @$ISSUE_AUTHOR" \
+            "" \
+            "Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository or a link to the [Oxc Playground](https://playground.oxc.rs). This helps us understand and resolve your issue much faster." \
+            "" \
+            "**A good reproduction should be:**" \
+            "- **Minimal** - include only the code necessary to demonstrate the issue" \
+            "- **Complete** - contain everything needed to run and observe the problem" \
+            "- **Reproducible** - consistently show the issue with clear steps" \
+            "" \
+            'If no reproduction is provided, issues labeled `needs reproduction` will be closed after 3 days of inactivity.' \
+            "" \
+            "For more context on why this is required, please read: https://antfu.me/posts/why-reproductions-are-required" \
+            | gh issue comment "$ISSUE_NUMBER" --body-file -
 
-            Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository or a link to the [Oxc Playground](https://playground.oxc.rs). This helps us understand and resolve your issue much faster.
-
-            **A good reproduction should be:**
-            - **Minimal** - include only the code necessary to demonstrate the issue
-            - **Complete** - contain everything needed to run and observe the problem
-            - **Reproducible** - consistently show the issue with clear steps
-
-            If no reproduction is provided, issues labeled `needs reproduction` will be closed after 3 days of inactivity.
-
-            For more context on why this is required, please read: https://antfu.me/posts/why-reproductions-are-required
+          if [[ "$(gh issue view "$ISSUE_NUMBER" --json labels --jq 'any(.labels[].name; . == "pending triage")')" == "true" ]]; then
+            gh issue edit "$ISSUE_NUMBER" --remove-label "pending triage"
+          fi

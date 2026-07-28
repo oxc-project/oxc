@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -6,14 +6,14 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Formatter, prelude::*},
+    formatter::prelude::*,
     write,
 };
 
 use super::FormatWrite;
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.is_empty() {
             return;
         }
@@ -68,7 +68,7 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["@"]);
 
         // Determine if parentheses are required around decorator expressions
@@ -98,8 +98,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
 /// Check if decorators should expand (have newlines between them)
 #[inline]
 fn should_expand_decorators<'a>(
-    decorators: &AstNode<'a, Vec<'a, Decorator<'a>>>,
-    f: &Formatter<'_, 'a>,
+    decorators: &AstNode<'a, ArenaVec<'a, Decorator<'a>>>,
+    f: &JsFormatter<'_, 'a>,
 ) -> bool {
-    decorators.iter().any(|decorator| f.source_text().has_newline_after(decorator.span().end))
+    decorators
+        .iter()
+        .any(|decorator| f.source_text().has_line_terminator_after(decorator.span().end))
 }

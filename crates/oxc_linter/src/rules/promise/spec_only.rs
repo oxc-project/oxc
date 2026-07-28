@@ -61,6 +61,7 @@ declare_oxc_lint!(
     restriction,
     config = SpecOnlyConfig,
     version = "0.9.2",
+    short_description = "Disallow use of non-standard Promise static methods.",
 );
 
 impl Rule for SpecOnly {
@@ -104,6 +105,7 @@ fn test() {
         ("Promise.all()", None),
         ("Promise.all()", Some(serde_json::json!([{ "allowedMethods": [] }]))),
         ("Promise.race()", None),
+        ("Promise.try()", None),
         ("Promise.withResolvers()", None),
         ("new Promise(function (resolve, reject) {})", None),
         ("SomeClass.resolve()", None),

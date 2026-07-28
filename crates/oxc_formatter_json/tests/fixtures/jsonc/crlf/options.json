@@ -1,0 +1,4 @@
+[
+  { "variant": "jsonc", "endOfLine": "lf" },
+  { "variant": "jsonc", "endOfLine": "crlf" }
+]

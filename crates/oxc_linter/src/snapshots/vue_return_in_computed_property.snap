@@ -153,3 +153,12 @@ source: crates/oxc_linter/src/tester.rs
  7 │                       }
    ╰────
   help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:5:24]
+ 4 │                       computed: {
+ 5 │ ╭─▶                     foo() {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+  help: All code paths inside a computed getter must return a value.

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     none,
     config = NoReturnAssignMode,
     version = "0.9.10",
+    short_description = "Disallows assignment operators in return statements.",
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {

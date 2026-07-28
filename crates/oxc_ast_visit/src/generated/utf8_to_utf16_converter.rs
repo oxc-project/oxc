@@ -113,9 +113,15 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_meta_property(&mut self, it: &mut MetaProperty<'a>) {
+    fn visit_import_meta(&mut self, it: &mut ImportMeta) {
         self.convert_offset(&mut it.span.start);
-        walk_mut::walk_meta_property(self, it);
+        walk_mut::walk_import_meta(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_new_target(&mut self, it: &mut NewTarget) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_new_target(self, it);
         self.convert_offset(&mut it.span.end);
     }
 

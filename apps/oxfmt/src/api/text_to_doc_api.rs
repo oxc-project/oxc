@@ -5,19 +5,18 @@ use serde_json::Value;
 use tracing::{debug, instrument};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::*;
-use oxc_formatter::{
-    AstNode, AstNodes, FormatOptions, FormatVueBindingParams, FormatVueScriptGeneric, Formatter,
-    enable_jsx_source_type, get_parse_options,
-};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_formatter::FragmentContext;
+use oxc_formatter_css::CssVariant;
 use oxc_span::SourceType;
 
 use crate::{
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
         JsSortTailwindClassesCb,
-        options::{inject_filepath, inject_tailwind_plugin_payload, to_prettier},
+        options::{
+            inject_filepath, inject_tailwind_plugin_payload, to_oxc_formatter_css,
+            to_oxc_formatter_graphql, to_prettier,
+        },
         oxfmtrc::FormatConfig,
         resolve_for_embedded_js,
     },
@@ -117,10 +116,8 @@ fn run_full(
         sort_tailwind_classes_cb,
     );
 
-    let source_type = enable_jsx_source_type(
-        SourceType::from_extension(source_ext)
-            .expect("source_ext should be a valid JS/TS extension"),
-    );
+    let source_type = SourceType::from_extension(source_ext)
+        .expect("source_ext should be a valid JS/TS extension");
 
     let resolved = resolve_for_embedded_js(config, parent_filepath)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
@@ -132,23 +129,40 @@ fn run_full(
     inject_filepath(&mut external_options, &resolved.parent_filepath);
     inject_tailwind_plugin_payload(&mut external_options, &resolved.config);
 
-    let external_callbacks =
-        external_formatter.to_external_callbacks(&resolved.format_options, external_options);
+    // Dual mapping of the same resolved config for the dispatcher's Rust branches.
+    // Cannot fail here: `resolve_for_embedded_js()` already built `JsFormatOptions`
+    // from this config, and both share the same `to_core_options()` validation.
+    let graphql_options = to_oxc_formatter_graphql(&resolved.config)
+        .expect("config was already validated by `resolve_for_embedded_js()`");
+    // CSS-in-JS is always parsed as SCSS, mirroring Prettier's embed.
+    let css_options = to_oxc_formatter_css(&resolved.config, CssVariant::Scss)
+        .expect("config was already validated by `resolve_for_embedded_js()`");
+
+    let external_callbacks = external_formatter.to_external_callbacks(
+        &resolved.format_options,
+        external_options,
+        graphql_options,
+        css_options,
+    );
     let format_options = resolved.format_options;
 
     let allocator = Allocator::default();
-    let ret =
-        Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
-    if !ret.errors.is_empty() {
-        debug!("`Parser::new().parse()` failed: {:?}", ret.errors);
-        external_formatter.cleanup();
-        return None;
-    }
-
-    let base_formatter = Formatter::new(&allocator, *format_options);
-    let formatted = tokio::task::block_in_place(|| {
-        base_formatter.format_with_external_callbacks(&ret.program, Some(external_callbacks))
-    });
+    let formatted = match tokio::task::block_in_place(|| {
+        oxc_formatter::format(
+            &allocator,
+            source_text,
+            source_type,
+            *format_options,
+            Some(external_callbacks),
+        )
+    }) {
+        Ok(formatted) => formatted,
+        Err(err) => {
+            debug!("`oxc_formatter::format()` failed: {err:?}");
+            external_formatter.cleanup();
+            return None;
+        }
+    };
 
     let (elements, sorted_tailwind_classes) =
         formatted.into_document().into_elements_and_tailwind_classes();
@@ -187,73 +201,26 @@ fn run_fragment(
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
     let format_options = resolved.format_options;
 
+    // Map the Prettier-side fragment kind to the formatter's usage context.
+    // The parens-vs-no-parens / quote-style decisions live inside `format_fragment`.
+    let context = match kind {
+        FragmentKind::VueForBindingLeft => FragmentContext::FunctionParamsAsBindingLhs,
+        FragmentKind::VueBindings => FragmentContext::FunctionParamsAsBinding,
+        FragmentKind::VueScriptGeneric => FragmentContext::TypeParameters,
+    };
+
     let allocator = Allocator::default();
-    let ParserReturn { program, errors, .. } =
-        Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
-    if !errors.is_empty() {
-        debug!("`Parser::new().parse()` failed: {errors:?}");
-        return None;
-    }
-
-    let formatter = Formatter::new(
+    let formatted = match oxc_formatter::format_fragment(
         &allocator,
-        FormatOptions {
-            // TODO: Fragments inside of Vue attributes should always use single quotes,
-            // since double quotes are used for the attribute value itself.
-            //
-            // Prettier also replaces double quotes with `&quot;` in this case,
-            // but to reduce the diff, we set the quote style to single, regardless of the user config.
-            //
-            // However, this option is just a preference, so `singleQuote: true` is not enough.
-            // But it works for most cases, so leave it for now...
-            quote_style: oxc_formatter::QuoteStyle::Single,
-            ..*format_options
-        },
-    );
-
-    let formatted = match kind {
-        FragmentKind::VueForBindingLeft | FragmentKind::VueBindings => {
-            let params = {
-                let Some(Statement::FunctionDeclaration(func)) = program.body.first() else {
-                    unreachable!("Prettier wraps v-for/v-slot as `function _(...) {{}}`");
-                };
-                &*func.params
-            };
-            let node = AstNode::new(params, AstNodes::Dummy(), &allocator);
-            let content = FormatVueBindingParams::new(
-                &node,
-                matches!(kind, FragmentKind::VueForBindingLeft)
-                    && (1 < params.items.len() || params.rest.is_some()),
-            );
-
-            formatter.format_node(
-                &content,
-                program.source_text,
-                source_type,
-                &program.comments,
-                None,
-            )
-        }
-        FragmentKind::VueScriptGeneric => {
-            let type_params = {
-                let Some(Statement::TSTypeAliasDeclaration(decl)) = program.body.first() else {
-                    unreachable!("Prettier wraps script-generic as `type T<...> = any`");
-                };
-                let Some(type_params) = decl.type_parameters.as_deref() else {
-                    unreachable!("Prettier wraps script-generic as `type T<...> = any`");
-                };
-                type_params
-            };
-            let node = AstNode::new(type_params, AstNodes::Dummy(), &allocator);
-            let content = FormatVueScriptGeneric::new(&node);
-
-            formatter.format_node(
-                &content,
-                program.source_text,
-                source_type,
-                &program.comments,
-                None,
-            )
+        source_text,
+        source_type,
+        *format_options,
+        context,
+    ) {
+        Ok(formatted) => formatted,
+        Err(err) => {
+            debug!("`oxc_formatter::format_fragment()` failed: {err:?}");
+            return None;
         }
     };
 

@@ -41,6 +41,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "0.16.12",
+    short_description = "Disallows passing `1` to `Array.prototype.flat`.",
 );
 
 impl Rule for NoUnnecessaryArrayFlatDepth {

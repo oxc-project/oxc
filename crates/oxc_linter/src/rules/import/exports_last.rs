@@ -48,6 +48,7 @@ declare_oxc_lint!(
     import,
     style,
     version = "0.15.14",
+    short_description = "Enforce that all exports are declared at the bottom of the file.",
 );
 
 impl Rule for ExportsLast {

@@ -99,3 +99,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ╰── It can not be redeclared here
  4 │                 export namespace Foo { }
    ╰────
+
+  ⚠ import(export): Multiple exports of name 'foo'.
+   ╭─[index.ts:1:14]
+ 1 │ export const foo = function () {};
+   ·              ───
+ 2 │ function bar() {}
+ 3 │ export { bar as foo };
+   ·                 ───
+   ╰────
+  help: Rename or remove the duplicate export so each name is exported only once.
+
+  ⚠ import(export): Multiple exports of name 'foo'.
+   ╭─[index.ts:1:14]
+ 1 │ export const foo = 1;
+   ·              ───
+ 2 │ export /* comment */ { foo };
+   ·                        ───
+   ╰────
+  help: Rename or remove the duplicate export so each name is exported only once.
+
+  ⚠ import(export): Multiple exports of name 'value'.
+   ╭─[index.ts:1:14]
+ 1 │ export const value = 1;
+   ·              ─────
+ 2 │ export { value };
+   ·          ─────
+   ╰────
+  help: Rename or remove the duplicate export so each name is exported only once.

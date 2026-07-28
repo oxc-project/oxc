@@ -1,8 +1,7 @@
-import fs from "node:fs";
-import { join as pathJoin, relative as pathRelative, dirname } from "node:path";
 import { Visitor } from "oxc-parser";
 import { parse } from "./utils.ts";
 
+import type { Expression, MemberExpression } from "@oxc-project/types";
 import type { Plugin } from "rolldown";
 
 // Globals.
@@ -17,32 +16,74 @@ const GLOBALS = new Set([
   "TextDecoder", "BroadcastChannel", "MessageChannel", "MessagePort", "Blob", "File"
 ]);
 
-// Global properties which cannot be converted to top-level vars, because they're methods which use `this`.
+// Global properties which cannot be converted to top-level vars when used as callee of a `CallExpression`,
+// because they're methods which use `this`.
 // e.g. `const r = Promise.resolve; r(1);` throws "TypeError: PromiseResolve called on non-object".
-const SKIP_GLOBALS = new Set(["Promise.resolve", "Promise.allSettled"]);
+const SKIP_WHEN_CALLEE = new Set(["Promise.resolve", "Promise.allSettled"]);
 
-// Path to file which exports global vars
-const GLOBALS_PATH = pathJoin(import.meta.dirname, "../src-js/utils/globals.ts");
-
-// Parse the file to get the list of global vars it exports
-const availableGlobals = getAvailableGlobals(GLOBALS_PATH);
+// `Function.prototype` methods which use the function they're called on as `this`, so break when detached.
+// A trailing one is left attached rather than folded into the var name, e.g. `Array.prototype.slice.call(x)`
+// becomes `ArrayPrototypeSlice.call(x)`, not `ArrayPrototypeSliceCall(x)`.
+const BOUND_METHODS = new Set(["call", "apply", "bind"]);
 
 /**
- * Plugin to replace usage of properties of globals with global vars defined in `utils/globals.ts`.
- *
- * This is more performant, due to reduced property lookups, and minifies better.
+ * Plugin to replace usage of properties of globals with top-level vars.
  *
  * ```ts
  * // Original code
- * const keys = Object.keys(obj);
+ * function f(obj) {
+ *   return Object.keys(obj);
+ * }
  *
  * // After transform
- * import { ObjectKeys } from "../utils/globals.ts";
- * const keys = ObjectKeys(obj);
+ * const ObjectKeys = Object.keys;
+ * function f(obj) {
+ *   return ObjectKeys(obj);
+ * }
  * ```
  *
- * If TSDown produces any errors about missing imports, likely you need to add the missing global(s)
- * to `utils/globals.ts`.
+ * This has several advantages:
+ *
+ * 1. Slightly more performant, due to reduced book-keeping to check if globals are mutated.
+ * 2. Minifies better.
+ * 3. Code is resilient in face of user code (plugins) re-assigning global methods
+ *    e.g. `Object.keys = function myWeirdFunction() {}`.
+ *
+ * Accesses on globals listed in `GLOBALS` are replaced, including chained accesses.
+ * Each level of a chain becomes its own var, referencing the var for the level above.
+ * e.g. `Object.prototype.toString` becomes `ObjectPrototypeToString`, declared as:
+ *
+ * ```ts
+ * const ObjectPrototype = Object.prototype;
+ * const ObjectPrototypeToString = ObjectPrototype.toString;
+ * ```
+ *
+ * All properties are assumed to work when detached from their global.
+ * Any methods which rely on `this` (e.g. `Promise.resolve`, or `Uint8Array.from`) must be added to `SKIP_WHEN_CALLEE`,
+ * otherwise the generated `const` will throw when called.
+ *
+ * A trailing `.call` / `.apply` / `.bind` is left attached rather than detached into a var, since those rely
+ * on their receiver, e.g. `Array.prototype.slice.call(arguments)` becomes `ArrayPrototypeSlice.call(arguments)`.
+ *
+ * This replacement is simplistic. It does not do scope analysis, so care must be taken not to break it.
+ * Patterns which will break code:
+ *
+ * ```ts
+ * // Transform adds `const ObjectKeys = Object.keys;` which clashes with existing var.
+ * let ObjectKeys = 123; Object.keys({x: 1});
+ *
+ * // Transform replaces `Object.keys` with `ObjectKeys` but that var is shadowed by function param
+ * function f(obj, ObjectKeys) {
+ *   return Object.keys(obj);
+ * }
+ *
+ * // Transform wrongly identifies `Object.keys` as a global property access
+ * function g(Object) {
+ *   return Object.keys;
+ * }
+ * ```
+ *
+ * These patterns are all pretty weird, so problems are unlikely in practice.
  */
 const plugin: Plugin = {
   name: "replace-globals",
@@ -50,103 +91,102 @@ const plugin: Plugin = {
     // Only process JS and TS files in `src-js` directory
     filter: { id: /\/src-js\/.+(?<!\.d)\.[jt]s$/ },
 
-    async handler(code, path, meta) {
+    handler(code, path, meta) {
       const magicString = meta.magicString!;
       const program = parse(path, code);
 
-      // Visit AST and replace all references to globals with top-level vars
-      const varNames = new Set<string>(),
-        visitedMemberExpressions = new Set(),
-        missingGlobalVars = new Set<string>();
+      // Map of global access (e.g. `Object.keys`) to the var it's replaced with (e.g. `ObjectKeys`).
+      // Dedupes declarations, and lets each level of a chain reference the var for the level above.
+      const accesses = new Map<string, string>();
+
+      // Inner member expressions of a chain (e.g. `Object.prototype` within `Object.prototype.toString`).
+      // They're subsumed by the outer access, so must not be replaced on their own.
+      const consumed = new Set<MemberExpression>();
+
+      // Declarations to prepend, e.g. `const ObjectKeys = Object.keys;`
+      let declarations = "";
+
+      // Callee of most recently visited `CallExpression` or `TaggedTemplateExpression` - both pass `this`
+      // into the callee. Wrappers around it are unwrapped, so e.g. `(Promise.resolve)(x)` still matches.
+      let lastCallee: Expression | null = null;
 
       const visitor = new Visitor({
+        CallExpression(node) {
+          lastCallee = unwrapExpression(node.callee);
+        },
+
+        TaggedTemplateExpression(node) {
+          lastCallee = unwrapExpression(node.tag);
+        },
+
         MemberExpression(node) {
-          // Skip nested `MemberExpression`s e.g. `Object.prototype` in `Object.prototype.toString`
-          if (visitedMemberExpressions.has(node)) return;
+          // Skip if already handled as an inner part of an enclosing chain
+          if (consumed.has(node)) return;
 
-          // Exit if computed (`obj[prop]`) or private property (`obj.#prop`).
-          let { object, property } = node;
-          if (node.computed || property.type !== "Identifier") return;
-
-          // Gather all properties in reverse order.
-          // e.g. `Object.prototype.toString` -> `propNames = ["toString", "prototype"]`.
-          const propNames: string[] = [property.name];
-          while (true) {
-            // If `object` is an identifier, `node` is a member expression of form `a.b`, `a.b.c`, etc.
-            if (object.type === "Identifier") break;
-
-            // If `object` is not a member expression, exit e.g. `foo().x`
-            if (object.type !== "MemberExpression") return;
-
-            // We can't handle deep nesting yet
-            // oxlint-disable-next-line no-constant-condition
-            if (1) return;
-
-            // Avoid processing the nested member expression again when it's visited later
-            visitedMemberExpressions.add(object);
-
-            // Exit if computed (`obj[prop]`) or private property (`obj.#prop`).
-            property = object.property;
-            if (object.computed || property.type !== "Identifier") return;
-
-            // `node` of form `<SOMETHING>.a.b` or `<SOMETHING>.a.b.c`.
-            // Loop round to process the `<SOMETHING>` part.
-            propNames.push(property.name);
-
-            object = object.object;
+          // A trailing `.call` / `.apply` / `.bind` is bound to its receiver, so leave it attached and convert
+          // the chain it's called on instead. e.g. `Array.prototype.slice.call` -> `ArrayPrototypeSlice.call`.
+          if (node.computed || node.property.type !== "Identifier") return;
+          if (BOUND_METHODS.has(node.property.name)) {
+            if (node.object.type !== "MemberExpression") return; // Nothing to convert e.g. `x.call`
+            node = node.object;
+            consumed.add(node);
           }
 
-          // Found a member expression of form `obj.a`, or `obj.a.b`, `obj.a.b.c`, etc.
-          // Exit if `obj` is not a global.
+          // Walk down `node`'s chain to its root, recording prop names (leaf-first).
+          // e.g. `Object.prototype.toString` -> root `Object`, props `["toString", "prototype"]`.
+          const propNames: string[] = [];
+          let object: Expression = node;
+          do {
+            // Bail on computed (`obj[x]`) or private (`obj.#x`) access.
+            // Any inner static chain (e.g. `Object.prototype` in `Object.prototype[x].y`)
+            // is converted when visited as its own node.
+            if (object.computed || object.property.type !== "Identifier") return;
+            propNames.push(object.property.name);
+            if (object !== node) consumed.add(object);
+            object = object.object;
+          } while (object.type === "MemberExpression");
+
+          // Bail if root of chain is not a global e.g. `foo().x` or `notAGlobal.x`
+          if (object.type !== "Identifier") return;
           const globalName = object.name;
           if (!GLOBALS.has(globalName)) return;
 
-          const propName = propNames.reverse().join(".");
+          propNames.reverse();
 
-          const fullName = `${object.name}.${propName}`;
-          if (SKIP_GLOBALS.has(fullName)) return;
-
-          const mapping = availableGlobals.get(globalName);
-          if (!mapping) {
-            missingGlobalVars.add(`\`${fullName}\``);
+          // Bail if needs to be skipped because is used as callee and method requires `this`
+          // e.g. `Promise.resolve(x)`
+          if (lastCallee === node && SKIP_WHEN_CALLEE.has(`${globalName}.${propNames.join(".")}`)) {
             return;
           }
 
-          const varName = mapping.get(propName);
-          if (!varName) {
-            missingGlobalVars.add(`\`${fullName}\``);
-            return;
+          // Create a var for each level from root to leaf.
+          // Each references the var above e.g. `const ObjectPrototype = Object.prototype;`,
+          // then `const ObjectPrototypeToString = ObjectPrototype.toString;`.
+          let varName = globalName,
+            access = globalName;
+          for (const propName of propNames) {
+            access += `.${propName}`;
+
+            const existingVarName = accesses.get(access);
+            if (existingVarName === undefined) {
+              const init = `${varName}.${propName}`;
+              varName += `${propName[0].toUpperCase()}${propName.slice(1)}`;
+              accesses.set(access, varName);
+              declarations += `const ${varName} = ${init};\n`;
+            } else {
+              varName = existingVarName;
+            }
           }
 
-          // Add var name (e.g. `ObjectHasOwn`) to set of vars to import
-          varNames.add(varName);
-
-          // Replace `Object.hasOwn` with `ObjectHasOwn`
+          // Replace the access
           magicString.overwrite(node.start, node.end, varName);
         },
       });
       visitor.visit(program);
 
-      // Log any globals that were not converted because `utils/globals.ts` has no export for them
-      if (missingGlobalVars.size > 0) {
-        // oxlint-disable-next-line no-console
-        console.error(
-          "--------------------------------------------------------------------------------\n" +
-            `WARNING: Unable to convert ${[...missingGlobalVars].join(" or ")} to global vars.\n` +
-            `Add exports to \`utils/globals.ts\` for them.\n` +
-            "--------------------------------------------------------------------------------",
-        );
-      }
+      if (declarations === "") return;
 
-      if (varNames.size === 0) return;
-
-      // Some globals were found. Import them from `utils/globals.ts`.
-      let relativePath = pathRelative(dirname(path), GLOBALS_PATH);
-      relativePath = relativePath.replace(/\\/g, "/");
-      relativePath = relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
-      const importStmt = `import { ${[...varNames].join(", ")} } from ${JSON.stringify(relativePath)};\n`;
-
-      magicString.prepend(importStmt);
+      magicString.prepend(declarations);
 
       return { code: magicString };
     },
@@ -156,47 +196,20 @@ const plugin: Plugin = {
 export default plugin;
 
 /**
- * Parse `utils/globals.ts` and return a list of globals and global vars it exports.
- * @param path - Path to `utils/globals.ts`
- * @returns Mapping from global name (e.g. `Object`) to mapping of properties of that global to var names
- *   (e.g. `hasOwn` -> `ObjectHasOwn`).
+ * Unwrap transparent wrappers around an `Expression` - parentheses and TS type assertions.
+ * These still pass `this` into a callee, e.g. the callee of `(Promise.resolve)(x)`,
+ * `Promise.resolve!(x)`, or `(Promise.resolve as T)(x)`.
+ * @param expr - Expression to unwrap
+ * @returns `expr` with any enclosing parentheses and TS type assertions removed
  */
-function getAvailableGlobals(path: string): Map<string, Map<string, string>> {
-  const code = fs.readFileSync(path, "utf8");
-  const program = parse(path, code);
-
-  const globals = new Map<string, Map<string, string>>();
-
-  const visitor = new Visitor({
-    ExportNamedDeclaration(node) {
-      const { declaration } = node;
-      if (declaration == null || declaration.type !== "VariableDeclaration") return;
-      const declarator = declaration.declarations[0];
-      if (!declarator) return;
-      const { init } = declarator;
-      if (!init || init.type !== "Identifier") return;
-
-      const obj = declarator.id;
-      if (obj.type !== "ObjectPattern") return;
-
-      const globalName = init.name;
-      let mapping = globals.get(globalName);
-      if (!mapping) {
-        mapping = new Map();
-        globals.set(globalName, mapping);
-      }
-
-      for (const prop of obj.properties) {
-        if (prop.type !== "Property" || prop.method || prop.computed) continue;
-
-        const { key, value } = prop;
-        if (key.type !== "Identifier" || value.type !== "Identifier") continue;
-
-        mapping.set(key.name, value.name);
-      }
-    },
-  });
-  visitor.visit(program);
-
-  return globals;
+function unwrapExpression(expr: Expression): Expression {
+  while (
+    expr.type === "ParenthesizedExpression" ||
+    expr.type === "TSNonNullExpression" ||
+    expr.type === "TSAsExpression" ||
+    expr.type === "TSSatisfiesExpression"
+  ) {
+    expr = expr.expression;
+  }
+  return expr;
 }

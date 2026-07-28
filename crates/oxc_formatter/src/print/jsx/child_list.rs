@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Comments, FormatElement, Formatter, VecBuffer,
+        Buffer, Comments, FormatElement, JsFormatContext, ScratchBuffer,
         prelude::{tag::GroupMode, *},
     },
     utils::{
@@ -34,7 +34,7 @@ impl FormatJsxChildList {
     pub fn fmt_children<'a, 'b>(
         &self,
         children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) -> FormatChildrenResult<'a, 'b> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
         let children_meta = Self::children_meta(children, f.context().comments());
@@ -47,8 +47,6 @@ impl FormatJsxChildList {
         };
 
         let mut force_multiline = layout.is_multiline();
-        let mut flat = FlatBuilder::new(force_multiline, f.context().allocator());
-        let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
 
         let mut children = jsx_split_children(children, f.context().comments());
 
@@ -63,6 +61,9 @@ impl FormatJsxChildList {
                 force_multiline,
             });
         }
+
+        let mut flat = FlatBuilder::new(force_multiline);
+        let mut multiline = MultilineBuilder::new(multiline_layout);
 
         let mut is_next_child_suppressed = false;
         let mut last: Option<&JsxChild> = None;
@@ -504,8 +505,8 @@ impl WordSeparator {
     }
 }
 
-impl<'a> Format<'a> for WordSeparator {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for WordSeparator {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::BetweenWords => soft_line_break_or_space().fmt(f),
             Self::EndOfText { is_soft_line_break } => {
@@ -553,72 +554,76 @@ enum MultilineLayout {
 #[derive(Debug)]
 struct MultilineBuilder<'a> {
     layout: MultilineLayout,
-    result: ArenaVec<'a, FormatElement<'a>>,
+    /// Heap accumulator; the flat and multiline builders write alternately,
+    /// so each owns its own (see [`ScratchBuffer::writer`]).
+    result: ScratchBuffer<'a>,
 }
 
 impl<'a> MultilineBuilder<'a> {
-    fn new(layout: MultilineLayout, allocator: &'a Allocator) -> Self {
-        Self { layout, result: ArenaVec::new_in(allocator) }
+    fn new(layout: MultilineLayout) -> Self {
+        Self { layout, result: ScratchBuffer::new() }
     }
 
     /// Formats an element that does not require a separator
     /// It is safe to omit the separator because at the call side we must guarantee that we have reached the end of the iterator
     /// or the next element is a space/newline that should be written into the separator "slot".
-    fn write_content(&mut self, content: &dyn Format<'a>, f: &mut Formatter<'_, 'a>) {
+    fn write_content(
+        &mut self,
+        content: &dyn Format<'a, JsFormatContext<'a>>,
+        f: &mut JsFormatter<'_, 'a>,
+    ) {
         self.write(content, None, f);
     }
 
     /// Formatting a separator does not require any element in the separator slot
-    fn write_separator(&mut self, separator: &dyn Format<'a>, f: &mut Formatter<'_, 'a>) {
+    fn write_separator(
+        &mut self,
+        separator: &dyn Format<'a, JsFormatContext<'a>>,
+        f: &mut JsFormatter<'_, 'a>,
+    ) {
         self.write(separator, None, f);
     }
 
     fn write_with_separator(
         &mut self,
-        content: &dyn Format<'a>,
-        separator: &dyn Format<'a>,
-        f: &mut Formatter<'_, 'a>,
+        content: &dyn Format<'a, JsFormatContext<'a>>,
+        separator: &dyn Format<'a, JsFormatContext<'a>>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
         self.write(content, Some(separator), f);
     }
 
     fn write(
         &mut self,
-        content: &dyn Format<'a>,
-        separator: Option<&dyn Format<'a>>,
-        f: &mut Formatter<'_, 'a>,
+        content: &dyn Format<'a, JsFormatContext<'a>>,
+        separator: Option<&dyn Format<'a, JsFormatContext<'a>>>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
-        let elements =
-            std::mem::replace(&mut self.result, ArenaVec::new_in(f.context().allocator()));
+        let mut buffer = self.result.writer(f.state_mut());
+        match self.layout {
+            MultilineLayout::Fill => {
+                // Make sure that the separator and content only ever write a single element
+                buffer.write_element(FormatElement::Tag(Tag::StartEntry));
+                write!(buffer, [content]);
+                buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        self.result = {
-            let mut buffer = VecBuffer::new_with_vec(f.state_mut(), elements);
-            match self.layout {
-                MultilineLayout::Fill => {
-                    // Make sure that the separator and content only ever write a single element
+                if let Some(separator) = separator {
                     buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-                    write!(buffer, [content]);
+                    write!(buffer, [separator]);
                     buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-                    if let Some(separator) = separator {
-                        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-                        write!(buffer, [separator]);
-                        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-                    }
-                }
-                MultilineLayout::NoFill => {
-                    write!(buffer, [content, separator]);
                 }
             }
-            buffer.into_vec()
-        };
+            MultilineLayout::NoFill => {
+                write!(buffer, [content, separator]);
+            }
+        }
     }
 
     /// Writes a separator into the last entry if it is an entry.
     fn write_separator_in_last_entry(
         &mut self,
-        separator: &dyn Format<'a>,
-        f: &mut Formatter<'_, 'a>,
+        separator: &dyn Format<'a, JsFormatContext<'a>>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
         if self.result.last().is_some_and(|element| element.end_tag(TagKind::Entry).is_some()) {
             let last_index = self.result.len() - 1;
@@ -636,15 +641,13 @@ impl<'a> MultilineBuilder<'a> {
 #[derive(Debug)]
 pub struct FormatMultilineChildren<'a> {
     layout: MultilineLayout,
-    elements: RefCell<ArenaVec<'a, FormatElement<'a>>>,
+    elements: RefCell<ScratchBuffer<'a>>,
 }
 
-impl<'a> Format<'a> for FormatMultilineChildren<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatMultilineChildren<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| {
-            if let Some(elements) =
-                f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
-            {
+            if let Some(elements) = f.intern_elements(&mut self.elements.borrow_mut()) {
                 match self.layout {
                     MultilineLayout::Fill => f.write_elements([
                         FormatElement::Tag(Tag::StartFill),
@@ -690,34 +693,32 @@ impl<'a> Format<'a> for FormatMultilineChildren<'a> {
 
 #[derive(Debug)]
 struct FlatBuilder<'a> {
-    result: ArenaVec<'a, FormatElement<'a>>,
+    /// Heap accumulator; see [`MultilineBuilder::result`].
+    result: ScratchBuffer<'a>,
     disabled: bool,
 }
 
 impl<'a> FlatBuilder<'a> {
-    fn new(disabled: bool, allocator: &'a Allocator) -> Self {
-        Self { result: ArenaVec::new_in(allocator), disabled }
+    fn new(disabled: bool) -> Self {
+        Self { result: ScratchBuffer::new(), disabled }
     }
 
-    fn write(&mut self, content: &dyn Format<'a>, f: &mut Formatter<'_, 'a>) {
+    fn write(
+        &mut self,
+        content: &dyn Format<'a, JsFormatContext<'a>>,
+        f: &mut JsFormatter<'_, 'a>,
+    ) {
         if self.disabled {
             return;
         }
 
-        let result = std::mem::replace(&mut self.result, ArenaVec::new_in(f.context().allocator()));
-
-        self.result = {
-            let elements = result;
-            let mut buffer = VecBuffer::new_with_vec(f.state_mut(), elements);
-
-            write!(buffer, [content]);
-
-            buffer.into_vec()
-        }
+        let mut buffer = self.result.writer(f.state_mut());
+        write!(buffer, [content]);
     }
 
     fn disable(&mut self) {
         self.disabled = true;
+        self.result.discard();
     }
 
     fn finish(self) -> FormatFlatChildren<'a> {
@@ -732,14 +733,12 @@ impl<'a> FlatBuilder<'a> {
 
 #[derive(Debug)]
 pub struct FormatFlatChildren<'a> {
-    elements: RefCell<ArenaVec<'a, FormatElement<'a>>>,
+    elements: RefCell<ScratchBuffer<'a>>,
 }
 
-impl<'a> Format<'a> for FormatFlatChildren<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if let Some(elements) =
-            f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
-        {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatFlatChildren<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if let Some(elements) = f.intern_elements(&mut self.elements.borrow_mut()) {
             f.write_element(elements);
         }
     }
@@ -757,8 +756,8 @@ pub struct FormatSingleChild<'a, 'b> {
     force_multiline: bool,
 }
 
-impl<'a> Format<'a> for FormatSingleChild<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatSingleChild<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| match &self.child {
             JsxChild::Word(word) => {
                 word.fmt(f);

@@ -1,0 +1,22 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// https://github.com/oxc-project/oxc/issues/23668
+m.//
+O.e()
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// https://github.com/oxc-project/oxc/issues/23668
+m.O.e(); //
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// https://github.com/oxc-project/oxc/issues/23668
+m.O.e(); //
+
+===================== End =====================

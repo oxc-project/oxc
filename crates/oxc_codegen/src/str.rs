@@ -30,7 +30,15 @@ impl Codegen<'_> {
     /// Print a [`StringLiteral`].
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.add_source_mapping(s.span);
+        self.print_string_impl(s.value.as_str(), s.lone_surrogates, allow_backtick);
+    }
 
+    pub(super) fn print_string_impl(
+        &mut self,
+        s: &str,
+        lone_surrogates: bool,
+        allow_backtick: bool,
+    ) {
         // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
         // What is the best quote to use will be determined when first character needing escape is found.
         // This avoids iterating through the string twice if it contains no quotes (common case).
@@ -47,12 +55,12 @@ impl Codegen<'_> {
 
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
-        let bytes = s.value.as_bytes().iter();
+        let bytes = s.as_bytes().iter();
         let mut state = PrintStringState {
             chunk_start: bytes.ptr(),
             bytes,
             quote,
-            lone_surrogates: s.lone_surrogates,
+            lone_surrogates,
             allow_backtick,
         };
 

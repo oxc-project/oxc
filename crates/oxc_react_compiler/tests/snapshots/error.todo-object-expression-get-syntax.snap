@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-object-expression-get-syntax.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Handle get functions in ObjectExpression", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(53), length: 39 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     restriction,
     config = NoProcessEnvConfig,
     version = "1.23.0",
+    short_description = "Disallows use of `process.env`.",
 );
 
 fn is_process_global_object(object_expr: &oxc_ast::ast::Expression, ctx: &LintContext) -> bool {

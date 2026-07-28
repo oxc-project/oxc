@@ -3,12 +3,13 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 
+#[cfg(not(feature = "sourcemap"))]
+use std::marker::PhantomData;
 use std::{borrow::Cow, cmp, slice};
-
-use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
+use oxc_ecmascript::with_number_literal;
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -22,6 +23,7 @@ use oxc_syntax::{
 use rustc_hash::FxHashMap;
 
 mod binary_expr_visitor;
+mod cjs_module_lexer;
 mod comment;
 mod context;
 mod r#gen;
@@ -47,7 +49,7 @@ pub use oxc_data_structures::code_buffer::IndentChar;
 
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
-pub struct CodegenReturn {
+pub struct CodegenReturn<'a> {
     /// The generated source code.
     pub code: String,
 
@@ -55,7 +57,10 @@ pub struct CodegenReturn {
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     #[cfg(feature = "sourcemap")]
-    pub map: Option<oxc_sourcemap::SourceMap>,
+    pub map: Option<oxc_sourcemap::SourceMap<'a>>,
+
+    #[cfg(not(feature = "sourcemap"))]
+    _source_map_lifetime: PhantomData<&'a ()>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
     pub legal_comments: Vec<Comment>,
@@ -74,7 +79,7 @@ pub struct CodegenReturn {
 /// let allocator = Allocator::default();
 /// let source = "const a = 1 + 2;";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 ///
 /// let js = Codegen::new().build(&parsed.program);
 /// assert_eq!(js.code, "const a = 1 + 2;\n");
@@ -123,9 +128,20 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
-    /// Sorted, deduped `attached_to` keys for pending legal comments. Lets
-    /// `print_legal_orphans_before` flush via `partition_point` + `drain`.
-    legal_comment_keys: Vec<u32>,
+    /// Pure / no-side-effects annotation comments keyed by `attached_to`,
+    /// so the emission site can recover verbatim source text instead of a
+    /// canonicalised literal (rolldown#9408). The emission site falls back
+    /// to the canonical literal when (a) no comment is stashed, (b) the
+    /// stashed comment's kind doesn't match the emission site (mixed
+    /// `@__PURE__` and `@__NO_SIDE_EFFECTS__` on the same `attached_to`),
+    /// (c) the comment is a line comment but the site can't break the line,
+    /// or (d) source text isn't available.
+    annotation_comments: FxHashMap<u32, Comment>,
+
+    /// Sorted, deduped `attached_to` keys for comments that must survive a
+    /// removed anchor. Lets `print_orphan_comments_before` flush via
+    /// `partition_point` + `drain`.
+    orphan_comment_keys: Vec<u32>,
 
     #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
@@ -179,7 +195,8 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
-            legal_comment_keys: Vec::new(),
+            annotation_comments: FxHashMap::default(),
+            orphan_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
         }
@@ -234,7 +251,7 @@ impl<'a> Codegen<'a> {
     ///
     /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
-    pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
+    pub fn build(mut self, program: &Program<'a>) -> CodegenReturn<'a> {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = Some(program.source_text);
         self.indent = self.options.initial_indent;
@@ -253,6 +270,8 @@ impl<'a> Codegen<'a> {
             code,
             #[cfg(feature = "sourcemap")]
             map,
+            #[cfg(not(feature = "sourcemap"))]
+            _source_map_lifetime: PhantomData,
             legal_comments,
         }
     }
@@ -310,7 +329,7 @@ impl<'a> Codegen<'a> {
             loop {
                 // SAFETY: `ptr` is always less than or equal to `last_ptr`.
                 // `last_ptr` is within bounds of `bytes`, so safe to read a byte at `ptr`.
-                let byte = unsafe { *ptr.as_ref().unwrap_unchecked() };
+                let byte = unsafe { *ptr.as_ref_unchecked() };
                 if byte == b'<' {
                     // SAFETY: `ptr <= last_ptr`, and `last_ptr` points to no later than
                     // 8 bytes before end of string, so safe to read 8 bytes from `ptr`
@@ -402,6 +421,11 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.print_expr(self, Precedence::Lowest, Context::empty());
+    }
+
+    /// Print a string as a JavaScript string literal.
+    pub fn print_string(&mut self, s: &str) {
+        self.print_string_impl(s, false, false);
     }
 }
 
@@ -507,12 +531,12 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn current_class_ids(&self) -> impl Iterator<Item = ClassId> {
+    fn current_class_ids(&self) -> impl ExactSizeIterator<Item = ClassId> {
         self.class_stack.iter().rev().copied()
     }
 
     #[inline]
-    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
+    fn wrap<F: FnOnce(&mut Self)>(&mut self, wrap: bool, f: F) {
         if wrap {
             self.print_ascii_byte(b'(');
         }
@@ -541,7 +565,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn consume_pending_indent_space(&mut self) -> bool {
         if self.print_next_indent_as_space {
-            self.print_hard_space();
+            self.print_soft_space();
             self.print_next_indent_as_space = false;
             true
         } else {
@@ -618,7 +642,7 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'}');
     }
 
-    fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
+    fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
         match stmt {
             Statement::BlockStatement(stmt) => {
                 self.print_soft_space();
@@ -630,9 +654,10 @@ impl<'a> Codegen<'a> {
                 self.print_soft_newline();
             }
             stmt => {
-                if need_space && self.options.minify {
-                    self.print_hard_space();
-                }
+                // The statement's first token inserts a hard space itself (via
+                // `print_space_before_identifier`) when it would merge with a preceding
+                // identifier char (e.g. `else`), so `else{...}`/`else++x`/`else[0]` stay
+                // tight while `else x` keeps its space.
                 self.print_next_indent_as_space = true;
                 stmt.print(self, ctx);
             }
@@ -640,14 +665,14 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        let single_line = stmt.body.is_empty() && !self.has_legal_orphans_before(stmt.span.end);
+        let single_line = stmt.body.is_empty() && !self.has_orphan_comments_before(stmt.span.end);
         self.print_curly_braces(stmt.span, single_line, |p| {
             p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
         });
         self.needs_semicolon = false;
     }
 
-    /// Print `stmts`, flushing legal-comment orphans before each and at `scope_end`.
+    /// Print `stmts`, flushing orphan comments before each and at `scope_end`.
     fn print_stmts_with_orphan_flush(
         &mut self,
         stmts: &[Statement<'_>],
@@ -655,11 +680,11 @@ impl<'a> Codegen<'a> {
         ctx: Context,
     ) {
         for stmt in stmts {
-            self.print_legal_orphans_before(stmt.span().start);
+            self.print_orphan_comments_before(stmt.span().start);
             self.print_semicolon_if_needed();
             stmt.print(self, ctx);
         }
-        self.print_legal_orphans_before(scope_end);
+        self.print_orphan_comments_before(scope_end);
     }
 
     fn print_directives_and_statements(
@@ -673,11 +698,11 @@ impl<'a> Codegen<'a> {
             directive.print(self, ctx);
         }
         let Some((first, rest)) = stmts.split_first() else {
-            self.print_legal_orphans_before(scope_end);
+            self.print_orphan_comments_before(scope_end);
             return;
         };
 
-        self.print_legal_orphans_before(first.span().start);
+        self.print_orphan_comments_before(first.span().start);
 
         // Ensure first string literal is not a directive.
         let mut first_needs_parens = false;
@@ -813,133 +838,53 @@ impl<'a> Codegen<'a> {
         // "x + + y" => "x+ +y"
         // "x ++ + y" => "x+++y"
         // "x + ++ y" => "x+ ++y"
-        // "-- >" => "-- >"
         // "< ! --" => "<! --"
+        // Note: `a-- > b` does not need a space (`a-->b` is `(a--) > b`); `-->` is
+        // only an HTML close comment at the start of a line, and a postfix `--`
+        // always has an operand before it.
         let bin_op_add = Operator::Binary(BinaryOperator::Addition);
         let bin_op_sub = Operator::Binary(BinaryOperator::Subtraction);
         let un_op_pos = Operator::Unary(UnaryOperator::UnaryPlus);
         let un_op_pre_inc = Operator::Update(UpdateOperator::Increment);
         let un_op_neg = Operator::Unary(UnaryOperator::UnaryNegation);
         let un_op_pre_dec = Operator::Update(UpdateOperator::Decrement);
-        let un_op_post_dec = Operator::Update(UpdateOperator::Decrement);
-        let bin_op_gt = Operator::Binary(BinaryOperator::GreaterThan);
         let un_op_not = Operator::Unary(UnaryOperator::LogicalNot);
         if ((prev == bin_op_add || prev == un_op_pos)
             && (next == bin_op_add || next == un_op_pos || next == un_op_pre_inc))
             || ((prev == bin_op_sub || prev == un_op_neg)
                 && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
-            || (prev == un_op_post_dec && next == bin_op_gt)
             || (prev == un_op_not
                 && next == un_op_pre_dec
                 // `prev == UnaryOperator::LogicalNot` which means last byte is ASCII,
                 // and therefore previous character is 1 byte from end of buffer
                 && self.code.peek_nth_byte_back(1) == Some(b'<'))
+            // `a! == b`: keep the non-null `!` from gluing to `=` as `!=`/`!==`.
+            || (prev == un_op_not
+                && matches!(
+                    next,
+                    Operator::Binary(BinaryOperator::Equality | BinaryOperator::StrictEquality)
+                ))
         {
             self.print_hard_space();
         }
     }
 
     fn print_non_negative_float(&mut self, num: f64) {
-        // Inline the buffer here to avoid heap allocation on `buffer.format(*self).to_string()`.
-        let mut buffer = dragonbox_ecma::Buffer::new();
-        if num < 1000.0 && num.fract() == 0.0 {
-            self.print_str(buffer.format(num));
-            self.need_space_before_dot = self.code_len();
-        } else {
-            self.print_minified_number(num, &mut buffer);
-        }
+        with_number_literal(num, |literal| {
+            self.print_str(literal);
+            if !literal.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.need_space_before_dot = self.code_len();
+            }
+        });
     }
 
     fn print_decorators(&mut self, decorators: &[Decorator<'_>], ctx: Context) {
         for decorator in decorators {
             decorator.print(self, ctx);
-            self.print_hard_space();
-        }
-    }
-
-    // Optimized version of `get_minified_number` from terser
-    // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
-    // Instead of building all candidates and finding the shortest, we track the shortest as we go
-    // and use self.print_str directly instead of returning intermediate strings
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
-        if num < 1000.0 && num.fract() == 0.0 {
-            self.print_str(buffer.format(num));
-            self.need_space_before_dot = self.code_len();
-            return;
-        }
-
-        let mut s = buffer.format(num);
-
-        if s.starts_with("0.") {
-            s = &s[1..];
-        }
-
-        let mut best_candidate = s.cow_replacen("e+", "e", 1);
-        let mut is_hex = false;
-
-        // Track the best candidate found so far
-        if num.fract() == 0.0 {
-            // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_candidate.len() {
-                is_hex = true;
-                best_candidate = hex_candidate.into();
-            }
-        }
-        // Check for scientific notation optimizations for numbers starting with ".0"
-        else if best_candidate.starts_with(".0") {
-            // Skip the first '0' since we know it's there from the starts_with check
-            if let Some(i) = best_candidate.bytes().skip(2).position(|c| c != b'0') {
-                let len = i + 2; // `+2` to include the dot and first zero.
-                let digits = &best_candidate[len..];
-                let exp = digits.len() + len - 1;
-                let exp_str_len = itoa::Buffer::new().format(exp).len();
-                // Calculate expected length: digits + 'e-' + exp_length
-                let expected_len = digits.len() + 2 + exp_str_len;
-                if expected_len < best_candidate.len() {
-                    best_candidate = format!("{digits}e-{exp}").into();
-                    debug_assert_eq!(best_candidate.len(), expected_len);
-                }
-            }
-        }
-
-        // Check for numbers ending with zeros (but not hex numbers)
-        // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
-        // from being incorrectly converted to scientific notation
-        if !is_hex
-            && best_candidate.ends_with('0')
-            && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
-        {
-            let base = &best_candidate[0..best_candidate.len() - len];
-            let exp_str_len = itoa::Buffer::new().format(len).len();
-            // Calculate expected length: base + 'e' + len
-            let expected_len = base.len() + 1 + exp_str_len;
-            if expected_len < best_candidate.len() {
-                best_candidate = format!("{base}e{len}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
-            }
-        }
-
-        // Check for scientific notation optimization: `1.2e101` -> `12e100`
-        if let Some((integer, point, exponent)) = best_candidate
-            .split_once('.')
-            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
-        {
-            let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
-            let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
-            // Calculate expected length: integer + point + 'e' + new_exp_str_len
-            let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
-            if expected_len < best_candidate.len() {
-                best_candidate = format!("{integer}{point}e{new_expr}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
-            }
-        }
-
-        // Print the best candidate and update need_space_before_dot
-        self.print_str(&best_candidate);
-        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-            self.need_space_before_dot = self.code_len();
+            // Only separate from the following token when the decorator ends in an
+            // identifier char (`@dec class`); `@dec() class` can be `@dec()class`.
+            self.print_soft_space();
+            self.print_space_before_identifier();
         }
     }
 
@@ -979,6 +924,31 @@ impl<'a> Codegen<'a> {
     #[inline]
     #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_end(&mut self, _span: Span) {}
+
+    /// A postfix operand ending in `)` or `]` (a call or index result) leaves no
+    /// trailing identifier for a source-map consumer to anchor on, so the chain
+    /// punctuation after it (`.`/`[`/`(`/`` ` ``) would be unmapped and V8 would
+    /// resolve the stack frame one column too far left — the off-by-one in
+    /// `f(a)(b)` and `expect(x).resolves`. Map that punctuation back to the
+    /// operand's `span.end`. Called from `print_expr`, mirroring how Babel and TSC
+    /// give every node a trailing end-mapping. Synthesized nodes whose `span.end`
+    /// has no source byte are skipped.
+    #[cfg(feature = "sourcemap")]
+    fn add_source_mapping_after_postfix(&mut self, span: Span, precedence: Precedence) {
+        if precedence == Precedence::Postfix
+            && let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+            && matches!(self.code.as_bytes().last(), Some(b')' | b']'))
+            && self.source_text.is_none_or(|src| (span.end as usize) < src.len())
+        {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+        }
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping_after_postfix(&mut self, _span: Span, _precedence: Precedence) {}
 
     #[cfg(feature = "sourcemap")]
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {

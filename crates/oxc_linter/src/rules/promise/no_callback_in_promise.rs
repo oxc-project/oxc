@@ -21,9 +21,10 @@ fn no_callback_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCallbackInPromiseConfig {
     /// List of callback function names to check for within Promise `then` and `catch` methods.
+    #[serde(skip)]
     callbacks: Vec<CompactStr>,
     /// List of callback function names to allow within Promise `then` and `catch` methods.
     exceptions: Vec<CompactStr>,
@@ -87,6 +88,7 @@ declare_oxc_lint!(
     correctness,
     config = NoCallbackInPromiseConfig,
     version = "0.10.0",
+    short_description = "Disallows calling a callback function (`cb()`) inside a `Promise.prototype.then()` or `Promise.prototype.catch()`.",
 );
 
 const TIMEOUT_WHITELIST: [&str; 4] =

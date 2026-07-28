@@ -9,3 +9,55 @@ for (let i of [
   1, 2, 3
   // comment2
 ]);
+
+for (const [
+  item1,
+  item2,
+  item3,
+  item4,
+  // comment at the end
+] of someIterable) {
+  //
+}
+
+for (const [
+  // comment at the start
+  item1,
+  item2,
+  // comment in the middle
+  item3,
+  item4,
+  // comment at the end
+] of someIterable) {
+  //
+}
+
+for (const {
+  item1,
+  item2,
+  item3,
+  item4,
+  // comment at the end
+} of someIterable) {
+  //
+}
+
+for (const [
+  item1,
+  item2,
+  item3,
+  item4,
+  // comment at the end
+] in someObject) {
+  //
+}
+
+for (const {
+  item1,
+  item2,
+  item3,
+  item4,
+  // comment at the end
+} in someObject) {
+  //
+}

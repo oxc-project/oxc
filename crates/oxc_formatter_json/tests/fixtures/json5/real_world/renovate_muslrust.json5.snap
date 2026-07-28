@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:base",
+    ":gitSignOff",
+    ":disableDependencyDashboard",
+    "customManagers:dockerfileVersions", // _VERSION vars in Dockerfiles
+  ],
+  packageRules: [],
+}
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "json5" }
+------------------------------------
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:base",
+    ":gitSignOff",
+    ":disableDependencyDashboard",
+    "customManagers:dockerfileVersions", // _VERSION vars in Dockerfiles
+  ],
+  packageRules: [],
+}
+
+-------------------------------------
+{ printWidth: 100, variant: "json5" }
+-------------------------------------
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:base",
+    ":gitSignOff",
+    ":disableDependencyDashboard",
+    "customManagers:dockerfileVersions", // _VERSION vars in Dockerfiles
+  ],
+  packageRules: [],
+}
+
+===================== End =====================

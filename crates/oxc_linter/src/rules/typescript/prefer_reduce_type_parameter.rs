@@ -61,6 +61,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.12.0",
+    short_description = "This rule prefers using a type parameter for the accumulator in `Array#reduce()` instead of casting.",
 );
 
 impl Rule for PreferReduceTypeParameter {}

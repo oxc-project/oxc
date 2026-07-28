@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target": "es2016"
+
+    // trailing leading comment with blank above
+  }
+}

@@ -100,8 +100,8 @@ pub fn binding_element_export(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn enum_member_initializers(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS9020: Enum member initializers must be computable without references to external symbols with --isolatedDeclarations.")
+pub fn const_enum_member_initializers(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("TS2474: const enum member initializers must be constant expressions.")
         .with_label(span)
 }
 

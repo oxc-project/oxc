@@ -334,8 +334,8 @@ export function getTokensAndComments(): TokenOrComment[] {
 
   // General case: Deserialize all entries into `cachedTokens` / `cachedComments`,
   // but skip building the `tokens` and `comments` arrays (they aren't needed here)
-  if (!allTokensDeserialized) deserializeTokens();
-  if (!allCommentsDeserialized) deserializeComments();
+  if (allTokensDeserialized === false) deserializeTokens();
+  if (allCommentsDeserialized === false) deserializeComments();
 
   // Ensure merged buffer is built
   if (tokensAndCommentsInt32 === null) initTokensAndCommentsBuffer();

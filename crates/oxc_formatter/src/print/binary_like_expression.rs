@@ -5,7 +5,7 @@ use oxc_syntax::precedence::{GetPrecedence, Precedence};
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::Formatter,
+    formatter::JsFormatter,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -28,8 +28,8 @@ impl From<LogicalOperator> for BinaryLikeOperator {
     }
 }
 
-impl Format<'_> for BinaryLikeOperator {
-    fn fmt(&self, f: &mut Formatter<'_, '_>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeOperator {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let operator = match self {
             Self::BinaryOperator(op) => op.as_str(),
             Self::LogicalOperator(op) => op.as_str(),
@@ -158,7 +158,8 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     | AstNodes::CallExpression(_)
                     | AstNodes::NewExpression(_)
                     | AstNodes::ImportExpression(_)
-                    | AstNodes::MetaProperty(_)
+                    | AstNodes::ImportMeta(_)
+                    | AstNodes::NewTarget(_)
             ),
             // For argument of `Boolean()` calls.
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
@@ -192,8 +193,8 @@ impl<'a, 'b> TryFrom<&'b AstNode<'a, Expression<'a>>> for BinaryLikeExpression<'
     }
 }
 
-impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let parent = self.parent();
         let is_inside_condition = self.is_inside_condition(parent);
 
@@ -326,12 +327,12 @@ enum BinaryLeftOrRightSide<'a, 'b> {
 fn format_flattened_logical_expression<'a>(
     binary: BinaryLikeExpression<'a, '_>,
     inside_condition: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     fn format_recursive<'a>(
         binary: BinaryLikeExpression<'a, '_>,
         inside_condition: bool,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
         let left = binary.left();
 
@@ -350,8 +351,8 @@ fn format_flattened_logical_expression<'a>(
     format_recursive(binary, inside_condition, f);
 }
 
-impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::Left { parent } => write!(f, group(parent.left())),
             Self::Right {

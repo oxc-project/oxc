@@ -3,13 +3,25 @@
 //! This module provides methods and utilities for working with [`AstKind`],
 //! including type checking, conversions, and tree traversal helpers.
 
+use std::ptr::NonNull;
+
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
 use oxc_str::{Ident, Str};
 
-use super::{AstKind, ast::*};
+use super::{AstKind, AstType, ast::*};
 
 impl<'a> AstKind<'a> {
+    /// Get the [`AstType`] of an [`AstKind`].
+    #[inline]
+    pub fn ty(&self) -> AstType {
+        // SAFETY: `AstKind` is `#[repr(C, u8)]`, so discriminant is stored in first byte,
+        // and it's valid to read it.
+        // `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
+        // discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
+        unsafe { *NonNull::from_ref(self).cast::<AstType>().as_ref() }
+    }
+
     /// Check if this AST node is a statement
     ///
     /// Returns `true` for all statement types including iteration statements,
@@ -249,7 +261,8 @@ impl<'a> AstKind<'a> {
             Expression::StringLiteral(e) => Self::StringLiteral(e),
             Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
             Expression::Identifier(e) => Self::IdentifierReference(e),
-            Expression::MetaProperty(e) => Self::MetaProperty(e),
+            Expression::ImportMeta(e) => Self::ImportMeta(e),
+            Expression::NewTarget(e) => Self::NewTarget(e),
             Expression::Super(e) => Self::Super(e),
             Expression::ArrayExpression(e) => Self::ArrayExpression(e),
             Expression::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
@@ -355,13 +368,13 @@ impl AstKind<'_> {
     pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
         use std::borrow::Cow;
 
-        const COMPUTED: Cow<'static, str> = Cow::Borrowed("<computed>");
-        const ANONYMOUS: Cow<'static, str> = Cow::Borrowed("<anonymous>");
-        const DESTRUCTURE: Cow<'static, str> = Cow::Borrowed("<destructure>");
+        const COMPUTED: &str = "<computed>";
+        const ANONYMOUS: &str = "<anonymous>";
+        const DESTRUCTURE: &str = "<destructure>";
 
         #[inline]
         fn or_anonymous<'a>(id: Option<&BindingIdentifier<'a>>) -> Cow<'a, str> {
-            id.map_or_else(|| ANONYMOUS.as_ref(), |id| id.name.as_str()).into()
+            id.map_or(ANONYMOUS, |id| id.name.as_str()).into()
         }
 
         match self {
@@ -393,7 +406,7 @@ impl AstKind<'_> {
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(
                 "VariableDeclarator({})",
-                v.id.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
+                v.id.get_identifier_name().map_or(DESTRUCTURE, |name| name.as_str())
             )
             .into(),
 
@@ -416,7 +429,8 @@ impl AstKind<'_> {
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
 
-            Self::MetaProperty(_) => "MetaProperty".into(),
+            Self::ImportMeta(_) => "ImportMeta".into(),
+            Self::NewTarget(_) => "NewTarget".into(),
             Self::Super(_) => "Super".into(),
 
             Self::AccessorProperty(_) => "AccessorProperty".into(),
@@ -431,7 +445,7 @@ impl AstKind<'_> {
                 format!("BinaryExpression({})", b.operator.as_str()).into()
             }
             Self::CallExpression(c) => {
-                format!("CallExpression({})", c.callee_name().unwrap_or(&COMPUTED)).into()
+                format!("CallExpression({})", c.callee_name().unwrap_or(COMPUTED)).into()
             }
             Self::ChainExpression(_) => "ChainExpression".into(),
             Self::ComputedMemberExpression(_) => "ComputedMemberExpression".into(),
@@ -445,7 +459,7 @@ impl AstKind<'_> {
                     }
                     _ => None,
                 };
-                format!("NewExpression({})", callee.unwrap_or(&COMPUTED)).into()
+                format!("NewExpression({})", callee.unwrap_or(COMPUTED)).into()
             }
             Self::ObjectExpression(_) => "ObjectExpression".into(),
             Self::ParenthesizedExpression(_) => "ParenthesizedExpression".into(),
@@ -461,7 +475,7 @@ impl AstKind<'_> {
             Self::PrivateInExpression(_) => "PrivateInExpression".into(),
 
             Self::ObjectProperty(p) => {
-                format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
+                format!("ObjectProperty({})", p.key.name().as_deref().unwrap_or(COMPUTED)).into()
             }
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
@@ -475,7 +489,7 @@ impl AstKind<'_> {
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(p) => format!(
                 "FormalParameter({})",
-                p.pattern.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
+                p.pattern.get_identifier_name().map_or(DESTRUCTURE, |name| name.as_str())
             )
             .into(),
             Self::FormalParameterRest(_) => "FormalParameterRest".into(),
@@ -560,7 +574,7 @@ impl AstKind<'_> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression".into(),
 
-            Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
+            Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", decl.id.name).into(),
             Self::TSEnumBody(_) => "TSEnumBody".into(),
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 

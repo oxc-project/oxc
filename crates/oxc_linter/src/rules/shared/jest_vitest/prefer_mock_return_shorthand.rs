@@ -5,7 +5,7 @@ use oxc_ast::{
         Statement, TaggedTemplateExpression, VariableDeclarationKind,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, VisitJs};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -225,7 +225,7 @@ struct CallLikeExpressionVisitor {
     contains_call_like_expression: bool,
 }
 
-impl<'a> Visit<'a> for CallLikeExpressionVisitor {
+impl<'a> VisitJs<'a> for CallLikeExpressionVisitor {
     fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
         self.contains_call_like_expression = true;
     }

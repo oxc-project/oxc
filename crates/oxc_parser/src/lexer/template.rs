@@ -1,6 +1,7 @@
 use std::{cmp::max, str};
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
+use oxc_data_structures::branch_hints::cold_path;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
@@ -66,7 +67,8 @@ impl<'a, C: Config> Lexer<'a, C> {
                         } else {
                             // This is last byte in file. Continue to `handle_eof`.
                             // This is illegal in valid JS, so mark this branch cold.
-                            cold_branch(|| true)
+                            cold_path();
+                            true
                         }
                     },
                     b'`' => {
@@ -83,7 +85,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                     }
                     _ => {
                         // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
-                        debug_assert!(next_byte == b'\\');
+                        debug_assert_eq!(next_byte, b'\\');
                         // SAFETY: Byte at `pos` is `\`.
                         // `pos` has only been advanced relative to `self.source.position()`.
                         return unsafe { self.template_literal_backslash(pos, substitute, tail) };
@@ -195,14 +197,17 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
-    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> StringBuilder<'a> {
+    unsafe fn template_literal_create_string(
+        &self,
+        pos: SourcePosition<'a>,
+    ) -> ArenaStringBuilder<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
         // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let so_far = unsafe { self.source.str_from_current_to_pos_unchecked(pos) };
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_TEMPLATE_LIT_LEN);
-        let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
+        let mut str = ArenaStringBuilder::with_capacity_in(capacity, self.allocator);
         str.push_str(so_far);
         str
     }
@@ -213,7 +218,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// `chunk_start` must not be after `pos`.
     unsafe fn template_literal_escaped(
         &mut self,
-        mut str: StringBuilder<'a>,
+        mut str: ArenaStringBuilder<'a>,
         pos: SourcePosition<'a>,
         mut chunk_start: SourcePosition<'a>,
         mut is_valid_escape_sequence: bool,
@@ -253,7 +258,8 @@ impl<'a, C: Config> Lexer<'a, C> {
                     } else {
                         // This is last byte in file. Continue to `handle_eof`.
                         // This is illegal in valid JS, so mark this branch cold.
-                        cold_branch(|| true)
+                        cold_path();
+                        true
                     }
                 } else {
                     // Next byte is '`', `\r`, `\`, or first byte of lossy replacement character.
@@ -306,7 +312,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                             } else {
                                 // This is last byte in file. Continue to `handle_eof`.
                                 // This is illegal in valid JS, so mark this branch cold.
-                                cold_branch(|| {});
+                                cold_path();
                             }
 
                             // Continue searching
@@ -337,7 +343,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                         _ => {
                             // `TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE` only matches `$`, '`', `\r`, `\`,
                             // or first byte of lossy replacement character
-                            debug_assert!(next_byte == LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
+                            debug_assert_eq!(next_byte, LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
 
                             // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
                             // so there must be 2 more bytes to read

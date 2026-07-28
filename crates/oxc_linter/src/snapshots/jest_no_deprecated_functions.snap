@@ -30,12 +30,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `require.requireMock` with `jest.requireMock`.
 
-  ⚠ jest(no-deprecated-functions): "require.requireActual" has been deprecated in favor of "jest.requireMock"
+  ⚠ jest(no-deprecated-functions): "require.requireActual" has been deprecated in favor of "jest.requireActual"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ require.requireActual
    · ─────────────────────
    ╰────
-  help: Replace `require.requireActual` with `jest.requireMock`.
+  help: Replace `require.requireActual` with `jest.requireActual`.
 
   ⚠ jest(no-deprecated-functions): "jest.runTimersToTime" has been deprecated in favor of "jest.advanceTimersByTime"
    ╭─[no_deprecated_functions.tsx:1:1]

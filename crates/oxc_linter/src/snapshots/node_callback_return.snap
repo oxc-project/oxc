@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
   ⚠ node(callback-return): Expected return with your callback function.

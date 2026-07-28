@@ -1472,6 +1472,17 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+        const foo = { KEY: 'token' };
+        declare function Inject(token: unknown): ParameterDecorator;
+
+        export class C {
+          constructor(@Inject(foo.KEY) private readonly foo: number) {}
+        }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -2176,6 +2187,18 @@ fn test_autofixer_imports() {
             "
             import Used, { Used2 } from 'module';
             export { Used, Used2 };
+                    ",
+        ),
+        (
+            "
+            import React, { useEffect } from 'react';
+            const OrderDetails = () => <div>OrderDetails</div>;
+            export default OrderDetails;
+                    ",
+            "
+            import React from 'react';
+            const OrderDetails = () => <div>OrderDetails</div>;
+            export default OrderDetails;
                     ",
         ),
         (

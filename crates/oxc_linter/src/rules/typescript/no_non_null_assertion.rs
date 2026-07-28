@@ -41,6 +41,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     version = "0.5.0",
+    short_description = "Disallow non-null assertions using the `!` postfix operator.",
 );
 
 fn no_non_null_assertion_diagnostic(span: Span, is_member_expression: bool) -> OxcDiagnostic {

@@ -1,7 +1,5 @@
 import { instantiateNapiModuleSync, MessageHandler, WASI } from '@napi-rs/wasm-runtime'
 
-const errorOutputs = []
-
 const handler = new MessageHandler({
   onLoad({ wasmModule, wasmMemory }) {
     const wasi = new WASI({

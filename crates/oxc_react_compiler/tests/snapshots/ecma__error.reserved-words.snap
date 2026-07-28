@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/ecma/error.reserved-words.ts
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Handle ThisExpression expressions", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(228), length: 4 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Refs: Cannot access refs during render", labels: One([LabeledSpan { label: Some("Cannot access ref value during render"), span: SourceSpan { offset: SourceOffset(264), length: 11 }, primary: false }]), help: Some("React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef)"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

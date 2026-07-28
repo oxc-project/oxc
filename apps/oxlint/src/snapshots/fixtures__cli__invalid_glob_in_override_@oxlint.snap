@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/invalid_glob_in_override
+----------
+Failed to parse oxlint configuration file.
+
+  x Failed to parse config with error Error("Invalid glob pattern `src/**/*.{js,ts`: unclosed brace expansion at byte 9; missing '}' (to match a literal '{', escape it as '\\{' or '[{]')", line: 0,
+  | column: 0)
+
+----------
+CLI result: InvalidOptionConfig
+----------

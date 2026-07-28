@@ -3,6 +3,8 @@
 Node.js runtime tests for transformer and minifier.
 
 ```
-pnpm run build-dev
-pnpm run test
+# From repo root
+pnpm --filter "./napi/minify" --filter "./napi/transform" run build-test
+cd tasks/e2e
+pnpm test
 ```

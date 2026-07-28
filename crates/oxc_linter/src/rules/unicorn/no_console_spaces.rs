@@ -50,6 +50,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.0.14",
+    short_description = "Disallows leading/trailing space inside `console.log()` and similar methods.",
 );
 
 impl Rule for NoConsoleSpaces {

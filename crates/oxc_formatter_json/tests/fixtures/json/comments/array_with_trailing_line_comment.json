@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2020", "ESNext.Disposable"], // ES2020 is very conservative target choice
+    "target": "ES2020"
+  }
+}

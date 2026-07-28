@@ -504,7 +504,6 @@ function walkNode(node, visitors) {
         break;
       case "TSUnionType":
         walkTSUnionType(node, visitors);
-        break;
     }
 }
 

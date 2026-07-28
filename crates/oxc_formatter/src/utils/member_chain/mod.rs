@@ -8,12 +8,13 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Comments, Format, Formatter, prelude::*},
+    formatter::{Buffer, Comments, Format, JsFormatter, prelude::*},
+    parentheses::NeedsParentheses,
     utils::{
         is_long_curried_call,
         member_chain::{
             chain_member::{CallExpressionPosition, ChainMember},
-            groups::{MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
+            groups::{ChainMembers, MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
             simple_argument::SimpleArgument,
         },
     },
@@ -22,7 +23,7 @@ use crate::{
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use super::typecast::is_type_cast_node;
+use super::typecast::classify_type_cast;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -34,9 +35,9 @@ pub struct MemberChain<'a, 'b> {
 impl<'a, 'b> MemberChain<'a, 'b> {
     pub(crate) fn from_call_expression(
         call_expression: &'b AstNode<'a, CallExpression<'a>>,
-        f: &Formatter<'_, 'a>,
+        f: &JsFormatter<'_, 'a>,
     ) -> Self {
-        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression, f).collect::<ChainMembers>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
@@ -59,7 +60,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
     /// Here we check if the first group can be merged to the head. If so, then
     /// we move out the first group out of the groups
-    fn maybe_merge_with_first_group(&mut self, parent: &AstNodes<'a>, f: &Formatter<'_, 'a>) {
+    fn maybe_merge_with_first_group(&mut self, parent: &AstNodes<'a>, f: &JsFormatter<'_, 'a>) {
         if self.should_merge_tail_with_head(parent, f) {
             let group = self.tail.pop_first().unwrap();
             self.head.extend_members(group.into_members());
@@ -67,7 +68,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// This function checks if the current grouping should be merged with the first group.
-    fn should_merge_tail_with_head(&self, parent: &AstNodes<'a>, f: &Formatter<'_, 'a>) -> bool {
+    fn should_merge_tail_with_head(&self, parent: &AstNodes<'a>, f: &JsFormatter<'_, 'a>) -> bool {
         let Some(first_group) = self.tail.first() else {
             return false;
         };
@@ -106,7 +107,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// To keep the formatting order consistent, we need to inspect all member chain groups in order.
-    fn inspect_member_chain_groups(&self, f: &mut Formatter<'_, 'a>) {
+    fn inspect_member_chain_groups(&self, f: &mut JsFormatter<'_, 'a>) {
         self.head.inspect(false, f);
 
         for member in self.tail.iter() {
@@ -115,7 +116,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// It tells if the groups should break on multiple lines
-    fn groups_should_break(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn groups_should_break(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let mut call_expressions = self
             .members()
             .filter_map(|member| match member {
@@ -156,7 +157,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
     /// We retrieve all the call expressions inside the group and we check if
     /// their arguments are not simple.
-    fn last_call_breaks(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn last_call_breaks(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
         if matches!(last_group.members().last(), Some(ChainMember::CallExpression { .. })) {
@@ -184,7 +185,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         )
     }
 
-    fn has_comment(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn has_comment(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let comments = f.comments();
 
         for member in self.members() {
@@ -197,8 +198,8 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for MemberChain<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
             f.join().entries(iter::once(&self.head).chain(self.tail.iter()));
@@ -209,7 +210,10 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         let has_new_line_or_comment_between =
             self.tail.iter().any(MemberChainGroup::needs_empty_line);
 
-        if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
+        // If `tail` is empty (merged into `head`), early-return; any comment lives in `head`
+        if self.tail.is_empty()
+            || (self.tail.len() == 1 && !has_comment && !has_new_line_or_comment_between)
+        {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line]);
             } else {
@@ -298,7 +302,7 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 /// computes groups coming after the first group
 fn compute_remaining_groups<'a, 'b>(
     members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
@@ -387,7 +391,7 @@ fn is_factory(token: &str) -> bool {
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
 pub fn is_member_call_chain<'a>(
     expression: &AstNode<'a, CallExpression<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> bool {
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
 }
@@ -398,7 +402,7 @@ fn has_short_name(name: &str, tab_width: u8) -> bool {
 
 fn chain_members_iter<'a, 'b>(
     root: &'b AstNode<'a, CallExpression<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> impl Iterator<Item = ChainMember<'a, 'b>> {
     let mut is_root = true;
     let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
@@ -431,11 +435,25 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if is_type_cast_node(expression, f).is_some() {
+        if classify_type_cast(expression.span(), f).is_target() {
             return ChainMember::Node(expression).into();
         }
 
-        let member = match expression.as_ast_nodes() {
+        // A nested `ChainExpression` whose parentheses do not survive
+        // (e.g. the head of `(a?.b!)?.c`) is transparent:
+        // flatten through it so the whole chain is laid out as one, matching Prettier's `printMemberChain`.
+        // The type-cast case is already handled above:
+        // on the first iteration `chain` is `expression` itself,
+        // and a `ChainElement` can never be another `ChainExpression`, so no re-check is needed here.
+        let mut node = expression.as_ast_nodes();
+        while let AstNodes::ChainExpression(chain) = node {
+            if chain.needs_parentheses(f) {
+                break;
+            }
+            node = chain.expression().as_ast_nodes();
+        }
+
+        let member = match node {
             AstNodes::CallExpression(expr) => {
                 let callee = expr.callee();
                 let is_chain = matches!(

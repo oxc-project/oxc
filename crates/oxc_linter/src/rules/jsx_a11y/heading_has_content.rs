@@ -70,6 +70,7 @@ declare_oxc_lint!(
     correctness,
     config = HeadingHasContentConfig,
     version = "0.0.19",
+    short_description = "Enforce that heading elements have content that is accessible to screen readers.",
 );
 
 // always including <h1> thru <h6>

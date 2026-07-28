@@ -35,6 +35,7 @@ declare_oxc_lint!(
     typescript,
     style,
     version = "1.49.0",
+    short_description = "Disallow namespace qualifiers when the referenced name is already in scope.",
 );
 
 impl Rule for NoUnnecessaryQualifier {}

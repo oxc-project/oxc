@@ -93,6 +93,7 @@ declare_oxc_lint!(
     fix,
     config = SwitchCaseBracesConfig,
     version = "0.0.15",
+    short_description = "Enforce consistent use of braces in switch case clauses.",
 );
 
 impl Rule for SwitchCaseBraces {

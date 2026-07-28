@@ -26,7 +26,7 @@ impl Deref for NoAsyncEndpointHandlers {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAsyncEndpointHandlersConfig {
     /// An array of names that are allowed to be async.
     allowed_names: Vec<CompactStr>,
@@ -179,6 +179,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoAsyncEndpointHandlersConfig,
     version = "0.9.2",
+    short_description = "Disallows the use of `async` functions as Express endpoint handlers.",
 );
 
 impl Rule for NoAsyncEndpointHandlers {
@@ -197,8 +198,8 @@ impl Rule for NoAsyncEndpointHandlers {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-        let Some((endpoint, args)) = utils::as_endpoint_registration(&kind) else {
+        let AstKind::CallExpression(call) = node.kind() else { return };
+        let Some((endpoint, args)) = utils::as_endpoint_registration(call) else {
             return;
         };
         for arg in

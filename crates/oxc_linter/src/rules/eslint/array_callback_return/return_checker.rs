@@ -1,9 +1,6 @@
-use oxc_allocator::Vec as AllocatorVec;
-use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, Function, FunctionBody, ReturnStatement, Statement,
-    UnaryOperator,
-};
-use oxc_ast_visit::Visit;
+use oxc_allocator::ArenaVec;
+use oxc_ast::ast::{ArrowFunctionExpression, Function, FunctionBody, ReturnStatement, Statement};
+use oxc_ast_visit::VisitJs;
 use oxc_cfg::{
     EdgeType, InstructionKind, ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
@@ -213,13 +210,13 @@ struct ReturnStatementFinder {
     has_void_expression: bool,
 }
 
-impl Visit<'_> for ReturnStatementFinder {
+impl VisitJs<'_> for ReturnStatementFinder {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement) {
         let Some(argument) = &return_statement.argument else {
             return;
         };
 
-        if is_expression_void(argument) {
+        if argument.is_void() {
             self.has_void_expression = true;
             if !self.allow_void {
                 self.spans.push(argument.span());
@@ -234,7 +231,7 @@ impl Visit<'_> for ReturnStatementFinder {
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {}
 }
 
-pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
+pub fn is_void_arrow_return(statements: &ArenaVec<'_, Statement>) -> bool {
     if statements.is_empty() {
         return false;
     }
@@ -251,14 +248,5 @@ pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
         return false;
     };
 
-    is_expression_void(&expression_return.expression)
-}
-
-fn is_expression_void(statement_expression: &Expression<'_>) -> bool {
-    match statement_expression {
-        Expression::UnaryExpression(void_expression) => {
-            void_expression.operator == UnaryOperator::Void
-        }
-        _ => false,
-    }
+    expression_return.expression.is_void()
 }

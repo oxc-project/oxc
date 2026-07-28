@@ -1,17 +1,16 @@
-use std::{borrow::Cow, cell::Cell, ops::Deref};
+use std::{borrow::Cow, ops::Deref};
 
-use oxc_allocator::{Address, UnstableAddress};
+use oxc_allocator::{Address, ArenaVec, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{
-    Visit,
-    walk::{self, walk_expression},
+    VisitJs,
+    walk_js::{self, walk_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
-use oxc_str::{CompactStr, Ident};
-use oxc_syntax::node::NodeId;
+use oxc_str::CompactStr;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -170,6 +169,7 @@ declare_oxc_lint!(
     restriction,
     config = ExplicitModuleBoundaryTypesConfig,
     version = "1.9.0",
+    short_description = "Require explicit return and argument types on exported functions' and classes' public class methods.",
 );
 
 impl Rule for ExplicitModuleBoundaryTypes {
@@ -188,7 +188,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
                 }
                 if let Some(decl) = &export.declaration {
                     let mut checker = ExplicitTypesChecker::new(self, ctx);
-                    walk::walk_declaration(&mut checker, decl);
+                    walk_js::walk_declaration(&mut checker, decl);
                 } else {
                     let mut checker = ExplicitTypesChecker::new(self, ctx);
                     for specifier in &export.specifiers {
@@ -209,7 +209,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(class) => {
                         let mut checker = ExplicitTypesChecker::new(self, ctx);
-                        walk::walk_class(&mut checker, class);
+                        walk_js::walk_class(&mut checker, class);
                     }
                     ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                         // nada
@@ -226,6 +226,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
         ctx.source_type().is_typescript()
     }
 }
+
 impl ExplicitModuleBoundaryTypes {
     fn run_on_exported_expression<'a>(&self, ctx: &LintContext<'a>, expr: &Expression<'a>) {
         self.run_on_exported_expression_inner(ctx, expr, true);
@@ -277,16 +278,16 @@ impl ExplicitModuleBoundaryTypes {
         let decl = ctx.nodes().get_node(s.symbol_declaration(symbol_id));
         match decl.kind() {
             AstKind::VariableDeclaration(it) => {
-                walk::walk_variable_declaration(checker, it);
+                walk_js::walk_variable_declaration(checker, it);
             }
             AstKind::VariableDeclarator(it) => {
                 checker.visit_variable_declarator(it);
-                // walk::walk_variable_declarator(&mut checker, it)
+                // walk_js::walk_variable_declarator(&mut checker, it)
             }
             AstKind::Function(it) => {
                 checker.visit_function(it, ScopeFlags::Function);
             }
-            AstKind::Class(it) => walk::walk_class(checker, it),
+            AstKind::Class(it) => walk_js::walk_class(checker, it),
             _ => {}
         }
     }
@@ -311,10 +312,21 @@ impl Fn<'_> {
     }
 }
 
+/// Name and span of the symbol an anonymous function or arrow is assigned to - a variable binding,
+/// class property, or object property key.
+///
+/// Used so that diagnostics point at, and refer to, that name rather than the anonymous function
+/// expression itself, and so the name can be checked against the `allowedNames` option.
+#[derive(Clone, Copy)]
+struct TargetSymbol<'a> {
+    span: Span,
+    name: &'a str,
+}
+
 struct ExplicitTypesChecker<'a, 'c> {
     rule: &'c ExplicitModuleBoundaryTypes,
     ctx: &'c LintContext<'a>,
-    target_symbol: Option<IdentifierName<'a>>,
+    target_symbol: Option<TargetSymbol<'a>>,
     // note: we avoid allocations by reserving space on the stack. Yes this
     // struct is large, but reserving space for it is just a offset op from the
     // stack pointer.
@@ -341,37 +353,32 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             overloaded_methods: FxHashSet::default(),
         }
     }
+
     // fn target_span(&self) -> Option<Span> {
     //     self.target_symbol.as_ref().map(|id| id.span)
     // }
 
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
-            self.target_symbol.replace(IdentifierName {
-                span: id.span,
-                node_id: Cell::new(NodeId::DUMMY),
-                name: id.name,
-            });
+            self.target_symbol = Some(TargetSymbol { span: id.span, name: id.name.as_str() });
             true
         } else {
             false
         }
     }
+
     fn with_target_property(&mut self, prop: Option<&PropertyKey<'a>>) -> bool {
         let Some(id) = prop else {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol.replace(IdentifierName {
-                span: id.span(),
-                node_id: Cell::new(NodeId::DUMMY),
-                name: Ident::from(name),
-            });
+            self.target_symbol = Some(TargetSymbol { span: id.span(), name });
             true
         } else {
             false
         }
     }
+
     #[inline]
     fn reset_target(&mut self, had_target: bool) {
         if had_target {
@@ -382,12 +389,13 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn check_function_without_return(&mut self, func: &Function<'a>) {
         debug_assert!(func.return_type.is_none());
 
-        let target_span = self.target_symbol.as_ref();
-        let target_name = target_span.map(|t| t.name);
+        let target = self.target_symbol.as_ref();
+        let target_name = target.map(|t| t.name);
         #[expect(clippy::cast_possible_truncation)]
-        let span =
-            target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
-        let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
+        let span = target.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
+        let is_allowed = || {
+            self.rule.is_some_allowed_name(func.name().map(|name| name.as_str()).or(target_name))
+        };
 
         if self.rule.allow_overload_functions && self.function_has_overload_signatures(func) {
             return;
@@ -407,7 +415,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return;
         };
 
-        walk::walk_function_body(self, body);
+        walk_js::walk_function_body(self, body);
 
         // AST is immutable in linter, so `unstable_address` produces stable `Address`es
         let is_hof = self.is_higher_order_function(func.unstable_address());
@@ -489,9 +497,9 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
 
     fn check_arrow_without_return(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         debug_assert!(arrow.return_type.is_none());
-        let target_span = self.target_symbol.as_ref();
-        let target_name = target_span.map(|t| t.name);
-        let span = target_span.map_or(arrow.params.span, |t| t.span);
+        let target = self.target_symbol.as_ref();
+        let target_name = target.map(|t| t.name);
+        let span = target.map_or(arrow.params.span, |t| t.span);
         let is_allowed = || self.rule.is_some_allowed_name(target_name);
 
         if !self.rule.allow_higher_order_functions {
@@ -527,7 +535,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     // `export const foo = () => () => (): number => 1`
                     Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
                         debug_assert!(self.rule.allow_higher_order_functions);
-                        walk::walk_function_body(self, &arrow.body);
+                        walk_js::walk_function_body(self, &arrow.body);
                         return;
                     }
                     _ => {
@@ -537,7 +545,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                 }
             }
         } else {
-            walk::walk_function_body(self, &arrow.body);
+            walk_js::walk_function_body(self, &arrow.body);
 
             // AST is immutable in linter, so `unstable_address` produces stable `Address`es
             let is_hof = self.is_higher_order_function(arrow.unstable_address());
@@ -560,7 +568,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     }
 }
 
-impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
+impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::Function(f) => self.fns.push(Fn::Fn(f)),
@@ -604,7 +612,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
 
-    fn visit_statements(&mut self, it: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn visit_statements(&mut self, it: &ArenaVec<'a, Statement<'a>>) {
         for stmt in it {
             match stmt {
                 Statement::ReturnStatement(_) => {
@@ -660,9 +668,6 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         // not part of the module boundary. Still inspect the callee so class
         // expressions used with `new` continue to be checked.
         self.visit_expression(&it.callee);
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
     }
 
     fn visit_jsx_element(&mut self, _it: &JSXElement<'a>) {
@@ -674,10 +679,10 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         if self.rule.allow_overload_functions {
             let prev_overloaded = std::mem::take(&mut self.overloaded_methods);
             self.collect_overloaded_methods(class.body.as_ref());
-            walk::walk_class_body(self, class.body.as_ref());
+            walk_js::walk_class_body(self, class.body.as_ref());
             self.overloaded_methods = prev_overloaded;
         } else {
-            walk::walk_class_body(self, class.body.as_ref());
+            walk_js::walk_class_body(self, class.body.as_ref());
         }
         self.reset_target(had_id);
     }
@@ -700,9 +705,10 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
 
         let is_target = self.with_target_property(el.property_key());
-        walk::walk_class_element(self, el);
+        walk_js::walk_class_element(self, el);
         self.reset_target(is_target);
     }
+
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         let is_set = it.kind == PropertyKind::Set;
         let prev_flags = self.scope_flags;
@@ -710,7 +716,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             self.scope_flags.set(ScopeFlags::SetAccessor, true);
         }
         let had_name = self.with_target_property(Some(&it.key));
-        walk::walk_object_property(self, it);
+        walk_js::walk_object_property(self, it);
         self.scope_flags = prev_flags;
         self.reset_target(had_name);
     }
@@ -734,7 +740,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
                     self.reset_target(had_name);
                     return;
                 }
-                walk::walk_method_definition(self, m);
+                walk_js::walk_method_definition(self, m);
             }
         }
     }
@@ -806,21 +812,21 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         if is_skippable_typed_expression(&it.expression) {
             return;
         }
-        walk::walk_ts_as_expression(self, it);
+        walk_js::walk_ts_as_expression(self, it);
     }
 
     fn visit_ts_satisfies_expression(&mut self, it: &TSSatisfiesExpression<'a>) {
         if is_skippable_typed_expression(&it.expression) {
             return;
         }
-        walk::walk_ts_satisfies_expression(self, it);
+        walk_js::walk_ts_satisfies_expression(self, it);
     }
 
     fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
         if is_skippable_typed_expression(&it.expression) {
             return;
         }
-        walk::walk_ts_type_assertion(self, it);
+        walk_js::walk_ts_type_assertion(self, it);
     }
 }
 
@@ -900,7 +906,7 @@ mod test {
               get prop(): void {
                 return 1;
               }
-              set prop(one: string): void {}
+              set prop(one: string) {}
               method(one: string): void {
                 return;
               }
@@ -922,7 +928,7 @@ mod test {
                 return;
               }
               private arrow = one => 'arrow';
-              private abstract abs(one);
+              private abs(one) {}
             }
             ",
                 None,

@@ -4,6 +4,122 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 💥 BREAKING CHANGES
+
+- 1ac5ac7 ast: [**BREAKING**] Tighten bound on `AstBuild` trait (#24925) (overlookmotel)
+
+### 🚀 Features
+
+- ec08afc ast: Re-export `Ident` from `oxc_ast` crate (#24861) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- e80574f estree: Handle empty spans serializing `ImportMeta` and `NewTarget` (#24775) (overlookmotel)
+
+### ⚡ Performance
+
+- b287f29 estree: Avoid ident hash calculations when serializing (#24774) (overlookmotel)
+
+### 📚 Documentation
+
+- 4d2e2bf ast: Fix incorrect return value in `common_js_require` docs (#24945) (connorshea)
+- b539e74 estree: Document custom serializers for `ImportMeta` and `NewTarget` (#24777) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 94f99b3 ast: Allow `NONE` to be passed to AST builder methods where `Option<ArenaVec>` is expected (#24629) (overlookmotel)
+- 77230c5 ast: Accept arrays for `ArenaVec` params of AST builder methods (#24621) (overlookmotel)
+
+### ⚡ Performance
+
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- f85f0d8 ast: Delegate inherited enum variants in clone_in and estree derives (#23555) (Boshen)
+
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 61fbf10 ast: Implement `ReplaceWith` on all AST types (#24013) (overlookmotel)
+- 26dd9e2 ast: Add method to widen inherited enum ref to parent ref (#23961) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0b25582 ast: Type binding node `typeAnnotation` as `TSTypeAnnotation | null` (#23113) (Boshen)
+
+### 📚 Documentation
+
+- 675e6a8 ast: Correct doc comment for `PrivateFieldExpression` (#24008) (overlookmotel)
+- 4de3e54 ast: Correct doc comment (#23948) (overlookmotel)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+- bd74f9d allocator: [**BREAKING**] Rename `AllocatorAccessor` trait to `GetAllocator` (#23675) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+- 785461b ast: Add custom builder methods to AST types (#23651) (overlookmotel)
+- 05d1357 ast: Add AST creation methods to AST types (#23650) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0ab64ec ast: Silence deprecation warnings within files defining deprecated `AstBuilder` methods (#23889) (overlookmotel)
+- 3800f01 ast: Legacy `AstBuilder` methods take `self` not `&self` (#23891) (overlookmotel)
+- 025045d ast: `ExportNamedDeclaration` plain builder methods return boxed nodes (#23783) (overlookmotel)
+- 7537c58 ast: Fix name of `AstBuilder` method for `Expression::V8IntrinsicExpression` (#23766) (overlookmotel)
+
+### 📚 Documentation
+
+- aa1ad74 ast: Add `#[deprecated]` to legacy `AstBuilder` methods (#23877) (overlookmotel)
+- a4676db ast: Correct doc comment for `NONE` (#23765) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+- e7b6b68 estree: [**BREAKING**] `ESTree` config use methods not consts (#23573) (overlookmotel)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 4e44969 ast: Fix UB in `escape_template_element_raw` (#23052) (overlookmotel)
+- 786d96f codegen: Give `TSTypeAssertion` unary precedence (#23002) (Boshen)
+
+### ⚡ Performance
+
+- 1f9d8eb ast: `AstBuilder::template_element_escape_raw` avoid allocation if no escape required (#23053) (overlookmotel)
+
+## [0.134.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

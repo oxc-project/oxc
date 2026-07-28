@@ -74,6 +74,7 @@ declare_oxc_lint!(
     react,
     perf,
     version = "1.66.0",
+    short_description = "Disallows using object, array, function, class, regex, JSX, or `new`-constructed values as default values for destructured React component props.",
 );
 
 impl Rule for NoObjectTypeAsDefaultProp {

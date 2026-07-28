@@ -28,8 +28,8 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
-use oxc_allocator::{Box as ArenaBox, TakeIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ReplaceWith};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
@@ -46,26 +46,26 @@ impl NullishCoalescingOperator {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
-        if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
+        if matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
         {
-            return;
+            Self::transform_logical_expression(expr, ctx);
         }
-
-        // Take ownership of the `LogicalExpression`
-        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx.ast) else {
-            unreachable!()
-        };
-
-        *expr = self.transform_logical_expression(logical_expr, ctx);
     }
 }
 
 impl<'a> NullishCoalescingOperator {
-    #[expect(clippy::unused_self)]
-    fn transform_logical_expression(
-        &self,
+    #[cold] // Most `Expression`s are not `??` `LogicalExpression`s
+    fn transform_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        expr.replace_with(|expr| {
+            let Expression::LogicalExpression(logical_expr) = expr else { unreachable!() };
+            Self::transform_logical_expression_impl(logical_expr, ctx)
+        });
+    }
+
+    fn transform_logical_expression_impl(
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -77,8 +77,8 @@ impl<'a> NullishCoalescingOperator {
                 let this_span = this.span;
                 return Self::create_conditional_expression(
                     logical_expr.left,
-                    ctx.ast.expression_this(this_span),
-                    ctx.ast.expression_this(this_span),
+                    Expression::new_this_expression(this_span, ctx),
+                    Expression::new_this_expression(this_span, ctx),
                     logical_expr.right,
                     logical_expr.span,
                     ctx,
@@ -125,11 +125,12 @@ impl<'a> NullishCoalescingOperator {
             SymbolFlags::FunctionScopedVariable,
         );
 
-        let assignment = ctx.ast.expression_assignment(
+        let assignment = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
             logical_expr.left,
+            ctx,
         );
         let mut new_expr = Self::create_conditional_expression(
             assignment,
@@ -144,44 +145,39 @@ impl<'a> NullishCoalescingOperator {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
             // so the temporary variable can be injected in correct scope
             let id = binding.create_binding_pattern(ctx);
-            let param = ctx.ast.formal_parameter(
-                SPAN,
-                ctx.ast.vec(),
-                id,
-                NONE,
-                NONE,
-                false,
-                None,
-                false,
-                false,
-            );
-            let params = ctx.ast.formal_parameters(
+            let param =
+                FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
+            let params = FormalParameters::new(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
-                ctx.ast.vec1(param),
+                [param],
                 NONE,
+                ctx,
             );
-            let body = ctx.ast.function_body(
+            let body = FunctionBody::new(
                 SPAN,
-                ctx.ast.vec(),
-                ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
+                [],
+                [Statement::new_expression_statement(SPAN, new_expr, ctx)],
+                ctx,
             );
-            let arrow_function = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
-                SPAN,
-                true,
-                false,
-                NONE,
-                params,
-                NONE,
-                body,
-                current_scope_id,
-                false,
-                false,
-            );
+            let arrow_function =
+                Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+                    SPAN,
+                    true,
+                    false,
+                    NONE,
+                    params,
+                    NONE,
+                    body,
+                    current_scope_id,
+                    false,
+                    false,
+                    ctx,
+                );
             // `(x) => x;` -> `((x) => x)();`
-            new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
+            new_expr = Expression::new_call_expression(SPAN, arrow_function, NONE, [], false, ctx);
         } else {
-            ctx.state.var_declarations.insert_var(&binding, ctx.ast);
+            ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
         }
 
         new_expr
@@ -217,11 +213,17 @@ impl<'a> NullishCoalescingOperator {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let op = BinaryOperator::StrictInequality;
-        let null = ctx.ast.expression_null_literal(SPAN);
-        let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
-        let right = ctx.ast.expression_binary(SPAN, reference1, op, ctx.ast.void_0(SPAN));
-        let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
+        let null = Expression::new_null_literal(SPAN, ctx);
+        let left = Expression::new_binary_expression(SPAN, assignment, op, null, ctx);
+        let right = Expression::new_binary_expression(
+            SPAN,
+            reference1,
+            op,
+            Expression::new_void_0(SPAN, ctx),
+            ctx,
+        );
+        let test = Expression::new_logical_expression(SPAN, left, LogicalOperator::And, right, ctx);
 
-        ctx.ast.expression_conditional(span, test, reference2, default)
+        Expression::new_conditional_expression(span, test, reference2, default, ctx)
     }
 }

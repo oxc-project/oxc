@@ -106,6 +106,7 @@ declare_oxc_lint!(
     style,
     config = NoMultiAssign,
     version = "0.15.4",
+    short_description = "Disallow use of chained assignment expressions.",
 );
 
 impl Rule for NoMultiAssign {

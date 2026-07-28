@@ -104,3 +104,11 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                   }
  6 │                     })
    ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:25]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────

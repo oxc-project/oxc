@@ -16,11 +16,18 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
-use oxc_parser::Parser;
+use oxc_formatter::JsFormatOptions;
+use oxc_formatter_css::CssFormatOptions;
+use oxc_formatter_graphql::GraphqlFormatOptions;
+use oxc_formatter_json::JsonFormatOptions;
+use oxc_formatter_yaml::YamlFormatOptions;
 use oxc_span::SourceType;
 
-use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
+use crate::{
+    ignore_list::IGNORE_TESTS,
+    options::TestRunnerOptions,
+    spec::{SpecOptions, parse_spec},
+};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -50,6 +57,14 @@ const FORMAT_TEST_SPEC_NAME: &str = "format.test.js";
 const SNAPSHOT_DIR_NAME: &str = "__snapshots__";
 const SNAPSHOT_FILE_NAME: &str = "format.test.js.snap";
 
+#[derive(Default)]
+struct SnapshotResults {
+    /// `(path, (failed_count, passed_count, diff_ratio))` per file with at least one mismatch
+    failed_files: Vec<(PathBuf, (usize, usize, f32))>,
+    /// Files the formatter failed to parse for at least one options combination
+    skipped_files: Vec<PathBuf>,
+}
+
 pub struct TestRunner {
     options: TestRunnerOptions,
 }
@@ -72,7 +87,7 @@ impl TestRunner {
                 // If filter is set, many of the tests can be skipped
                 if !inputs.is_empty() {
                     // This will print the diff
-                    let _failed_test_files = self.test_snapshots(dir, &inputs, true);
+                    let _results = self.test_snapshots(dir, &inputs, true);
                 }
             }
 
@@ -82,6 +97,7 @@ impl TestRunner {
         // Otherwise, run all tests and generate coverage reports
         let mut total_tested_file_count = 0;
         let mut total_failed_file_count = 0;
+        let mut total_skipped_files = vec![];
         let mut failed_reports = String::new();
         failed_reports.push_str("# Failed\n");
         failed_reports.push('\n');
@@ -89,12 +105,13 @@ impl TestRunner {
         failed_reports.push_str("| :-------- | :--------------: | :---------: |\n");
         for dir in &test_dirs {
             let inputs = Self::collect_test_files(dir, None);
-            let failed_test_files = self.test_snapshots(dir, &inputs, false);
+            let results = self.test_snapshots(dir, &inputs, false);
 
             total_tested_file_count += inputs.len();
-            total_failed_file_count += failed_test_files.len();
+            total_failed_file_count += results.failed_files.len();
+            total_skipped_files.extend(results.skipped_files);
 
-            for (path, (failed, passed, ratio)) in failed_test_files {
+            for (path, (failed, passed, ratio)) in results.failed_files {
                 writeln!(
                     failed_reports,
                     "| {} | {}{} | {:.2}% |",
@@ -110,14 +127,29 @@ impl TestRunner {
         let passed = total_tested_file_count - total_failed_file_count;
         #[expect(clippy::cast_precision_loss)]
         let percentage = (passed as f64 / total_tested_file_count as f64) * 100.0;
+        // Files our formatter cannot parse are counted as passed above
+        // (they have no diff to report); surface them so the gap is visible.
         let summary = format!(
-            "{test_lang} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%)"
+            "{test_lang} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%), {} files skipped",
+            total_skipped_files.len()
         );
 
         // Print summary
         println!("{summary}");
         // And generate coverage reports
-        let snapshot = format!("{summary}\n\n{failed_reports}");
+        let mut snapshot = format!("{summary}\n\n{failed_reports}");
+        if !total_skipped_files.is_empty() {
+            snapshot
+                .push_str("\n# Skipped (parse error, TODO: should be ignored or supported)\n\n");
+            for path in &total_skipped_files {
+                writeln!(
+                    snapshot,
+                    "- {}",
+                    path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                )
+                .unwrap();
+            }
+        }
         std::fs::write(snap_root().join(format!("prettier.{test_lang}.snap.md")), snapshot)
             .unwrap();
     }
@@ -199,10 +231,10 @@ impl TestRunner {
         dir: &Path,
         test_files: &Vec<PathBuf>,
         has_debug_filter: bool,
-    ) -> Vec<(PathBuf, (usize, usize, f32))> {
+    ) -> SnapshotResults {
         // Parse all `runFormatTest()` calls and collect format options
         let spec_path = &dir.join(FORMAT_TEST_SPEC_NAME);
-        let spec_calls = parse_spec(spec_path);
+        let spec_calls = parse_spec(spec_path, self.options.language);
         debug_assert!(
             !spec_calls.is_empty(),
             "There is no `runFormatTest()` in {}, please check if it is correct?",
@@ -211,18 +243,23 @@ impl TestRunner {
 
         let spec_calls = spec_calls
             .into_iter()
-            .filter(|call| {
-                let options = &call.0;
-                // Skip all options that are not supported yet
-                !options.experimental_operator_position.is_start()
-                    && !options.experimental_ternaries
+            .filter(|call| match &call.0 {
+                SpecOptions::Js(options) => {
+                    // Skip all options that are not supported yet
+                    !options.experimental_operator_position.is_start()
+                        && !options.experimental_ternaries
+                }
+                SpecOptions::Json(_)
+                | SpecOptions::Graphql(_)
+                | SpecOptions::Css(_)
+                | SpecOptions::Yaml(_) => true,
             })
             .collect::<Vec<_>>();
 
         let snapshots =
             std::fs::read_to_string(dir.join(SNAPSHOT_DIR_NAME).join(SNAPSHOT_FILE_NAME)).unwrap();
 
-        let mut failed_test_files = vec![];
+        let mut results = SnapshotResults::default();
         for path in test_files {
             if self.options.debug || has_debug_filter {
                 println!("Test: {}", path.to_string_lossy());
@@ -231,6 +268,7 @@ impl TestRunner {
             let source_text = std::fs::read_to_string(path).unwrap();
 
             let mut failed_count = 0;
+            let mut skipped_count = 0;
             let mut total_diff_ratio = 0.0;
             // Check every combination of options!
             for (format_options, snapshot_options) in &spec_calls {
@@ -239,14 +277,13 @@ impl TestRunner {
                     &snapshots,
                     path.file_name().unwrap().to_string_lossy().as_ref(),
                     snapshot_options,
-                    format_options.line_width.value() as usize,
                 )
                 .unwrap();
 
-                let Some(actual) =
-                    Self::run_oxc_formatter(path, &source_text, format_options.clone())
+                let Some(actual) = Self::run_formatter(path, &source_text, format_options.clone())
                 else {
                     // Skip the test if parsing failed
+                    skipped_count += 1;
                     if self.options.debug {
                         println!("  => Skipped (parsing failed)");
                     }
@@ -292,14 +329,17 @@ impl TestRunner {
                 let passed_count = total_count - failed_count;
                 #[expect(clippy::cast_precision_loss)]
                 let max_diff_ratio = total_count as f32;
-                failed_test_files.push((
+                results.failed_files.push((
                     path.clone(),
                     (failed_count, passed_count, total_diff_ratio / max_diff_ratio),
                 ));
             }
+            if skipped_count != 0 {
+                results.skipped_files.push(path.clone());
+            }
         }
 
-        failed_test_files
+        results
     }
 
     /// Extract single output section from snapshot file which contains multiple test cases.
@@ -330,25 +370,41 @@ impl TestRunner {
         snap_content: &str,
         file_name: &str,
         snapshot_options: &[(String, String)],
-        print_width: usize,
     ) -> Option<String> {
         let filename_started = snap_content.find(&format!("exports[`{file_name} "))?;
-        let expected = &snap_content[filename_started..];
+        let after_filename = &snap_content[filename_started..];
 
-        let options_started = expected.find(&format!(
+        // Anchor on the options block (header + key:value lines). The line that
+        // follows is a `printWidth` visualization whose exact rendering varies by
+        // Prettier version, so we skip it by jumping to the following
+        // `=====input=====`. To disambiguate between blocks where one options
+        // list is a prefix of another (e.g. `parsers: [...]` vs
+        // `parsers: [...] + singleQuote: true`), we require the gap between the
+        // matched options and the input marker to be exactly one line (the
+        // visualization), retrying past the false match otherwise.
+        let options_pattern = format!(
             "====================================options=====================================
 {}
-{}| printWidth
-=====================================input======================================
 ",
             snapshot_options
                 .iter()
                 .map(|(k, v)| format!("{k}: {v}"))
                 .collect::<Vec<_>>()
                 .join("\n"),
-            " ".repeat(print_width)
-        ))?;
-        let expected = &expected[options_started..];
+        );
+        let input_marker =
+            "\n=====================================input======================================\n";
+        let mut search_from = 0;
+        let expected = loop {
+            let pos = after_filename[search_from..].find(&options_pattern)?;
+            let after_options = search_from + pos + options_pattern.len();
+            let input_pos = after_filename[after_options..].find(input_marker)?;
+            let between = &after_filename[after_options..after_options + input_pos];
+            if !between.contains('\n') {
+                break &after_filename[after_options + input_pos..];
+            }
+            search_from = after_options;
+        };
 
         let output_start_line =
             "=====================================output=====================================\n";
@@ -401,24 +457,66 @@ impl TestRunner {
         input
     }
 
-    fn run_oxc_formatter(
+    /// Dispatches by language: JS/TS via `oxc_formatter`, JSON via `oxc_formatter_json`,
+    /// GraphQL via `oxc_formatter_graphql`, YAML via `oxc_formatter_yaml`.
+    fn run_formatter(
         path: &Path,
         source_text: &str,
-        format_options: FormatOptions,
+        format_options: SpecOptions,
+    ) -> Option<String> {
+        match format_options {
+            SpecOptions::Js(opts) => Self::run_js_formatter(path, source_text, *opts),
+            SpecOptions::Json(opts) => Self::run_json_formatter(source_text, opts),
+            SpecOptions::Graphql(opts) => Self::run_graphql_formatter(source_text, opts),
+            SpecOptions::Css(opts) => Self::run_css_formatter(source_text, opts),
+            SpecOptions::Yaml(opts) => Self::run_yaml_formatter(source_text, opts),
+        }
+    }
+
+    fn run_js_formatter(
+        path: &Path,
+        source_text: &str,
+        format_options: JsFormatOptions,
     ) -> Option<String> {
         let allocator = Allocator::default();
-
         let source_type = SourceType::from_path(path).unwrap();
-        let source_type = enable_jsx_source_type(source_type);
 
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
-        if !ret.errors.is_empty() {
-            return None;
-        }
+        let formatted =
+            oxc_formatter::format(&allocator, source_text, source_type, format_options, None)
+                .ok()?;
+        Some(formatted.print().ok()?.into_code())
+    }
 
-        let formatted = Formatter::new(&allocator, format_options).build(&ret.program);
-        Some(formatted)
+    fn run_json_formatter(source_text: &str, format_options: JsonFormatOptions) -> Option<String> {
+        let allocator = Allocator::default();
+        let formatted = oxc_formatter_json::format(&allocator, source_text, format_options).ok()?;
+        let printed = formatted.print().ok()?;
+        Some(printed.into_code())
+    }
+
+    fn run_graphql_formatter(
+        source_text: &str,
+        format_options: GraphqlFormatOptions,
+    ) -> Option<String> {
+        let allocator = Allocator::default();
+        let formatted =
+            oxc_formatter_graphql::format(&allocator, source_text, format_options).ok()?;
+        let printed = formatted.print().ok()?;
+        Some(printed.into_code())
+    }
+
+    fn run_css_formatter(source_text: &str, format_options: CssFormatOptions) -> Option<String> {
+        let allocator = Allocator::default();
+        let formatted =
+            oxc_formatter_css::format(&allocator, source_text, format_options, None).ok()?;
+        let printed = formatted.print().ok()?;
+        Some(printed.into_code())
+    }
+
+    fn run_yaml_formatter(source_text: &str, format_options: YamlFormatOptions) -> Option<String> {
+        let allocator = Allocator::default();
+        let formatted = oxc_formatter_yaml::format(&allocator, source_text, format_options).ok()?;
+        let printed = formatted.print().ok()?;
+        Some(printed.into_code())
     }
 }

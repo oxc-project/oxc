@@ -39,3 +39,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ╰── The prop was declared here
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
+   ╭─[jsx_no_jsx_as_prop.tsx:1:29]
+ 1 │ const Foo = () => <div jsx={<SubItem />} />
+   ·                             ───────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
+   ╭─[jsx_no_jsx_as_prop.tsx:1:30]
+ 1 │ const Foo = () => <Item jsx={<SubItem />} />
+   ·                              ───────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).

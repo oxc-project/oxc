@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.invalid-missing-nonreactive-dep.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] MemoDependencies: Found missing memoization dependencies", labels: One([LabeledSpan { label: Some("Missing dependency `object`"), span: SourceSpan { offset: SourceOffset(227), length: 6 }, primary: false }]), help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

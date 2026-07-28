@@ -159,7 +159,16 @@ impl WalkRunner {
 
         // Run scoped walks (root + nested) sends entries to `tx_entry` and errors to `tx_error`.
         // Manually drop after the walk to signal the formatting service that no more entries will be sent.
-        let any_config_found = match ScopedWalker::new(cwd, &paths).run(
+        let walker = match ScopedWalker::new(cwd, &paths) {
+            Ok(walker) => walker,
+            Err(err) => {
+                drop(tx_entry);
+                drop(tx_error);
+                utils::print_and_flush(stderr, &format!("{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+        let any_config_found = match walker.run(
             root_config_resolver,
             &resolved_ignore_paths,
             ignore_options.with_node_modules,

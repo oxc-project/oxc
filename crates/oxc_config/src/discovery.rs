@@ -45,8 +45,9 @@ pub struct ConfigFileNames {
     pub json: &'static str,
     /// JSONC config file name, such as `.oxlintrc.jsonc`.
     pub jsonc: &'static str,
-    /// JavaScript or TypeScript config file name, such as `oxlint.config.ts`.
-    pub js: &'static str,
+    /// JavaScript or TypeScript config file names, such as `oxlint.config.ts`
+    /// and `oxlint.config.mts`.
+    pub js: &'static [&'static str],
     /// Vite config file name used when Vite mode is enabled.
     pub vite: &'static str,
 }
@@ -74,7 +75,9 @@ impl ConfigDiscovery {
             return vec![self.config_file_names.vite];
         }
 
-        vec![self.config_file_names.json, self.config_file_names.jsonc, self.config_file_names.js]
+        let mut names = vec![self.config_file_names.json, self.config_file_names.jsonc];
+        names.extend_from_slice(self.config_file_names.js);
+        names
     }
 
     /// Find the unique config file directly inside `dir` using a single `read_dir`.
@@ -108,7 +111,7 @@ impl ConfigDiscovery {
             let name_supported = if self.vite_plus_mode {
                 name == names.vite
             } else {
-                name == names.json || name == names.jsonc || name == names.js
+                name == names.json || name == names.jsonc || names.js.iter().any(|js| name == *js)
             };
             if !name_supported {
                 continue;
@@ -158,7 +161,7 @@ impl ConfigDiscovery {
         if file_name == self.config_file_names.jsonc {
             return Some(DiscoveredConfigFile::Jsonc(candidate.to_path_buf()));
         }
-        if file_name == self.config_file_names.js {
+        if self.config_file_names.js.iter().any(|js| file_name == *js) {
             return Some(DiscoveredConfigFile::Js(candidate.to_path_buf()));
         }
         None
@@ -259,7 +262,7 @@ mod test {
     const NAMES: ConfigFileNames = ConfigFileNames {
         json: ".oxlintrc.json",
         jsonc: ".oxlintrc.jsonc",
-        js: "oxlint.config.ts",
+        js: &["oxlint.config.ts", "oxlint.config.mts"],
         vite: "vite.config.ts",
     };
 
@@ -317,6 +320,26 @@ mod test {
 
         let found = discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
         assert!(matches!(found, Some(DiscoveredConfigFile::Json(p)) if p == cfg_path));
+    }
+
+    #[test]
+    fn readdir_finds_unique_mts_config() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let cfg_path = temp_dir.path().join(NAMES.js[1]);
+        fs::write(&cfg_path, "export default {};").unwrap();
+
+        let found = discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
+        assert!(matches!(found, Some(DiscoveredConfigFile::Js(p)) if p == cfg_path));
+    }
+
+    #[test]
+    fn readdir_returns_conflict_for_multiple_js_configs() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        for name in NAMES.js {
+            fs::write(temp_dir.path().join(name), "export default {};").unwrap();
+        }
+
+        assert!(discovery().find_unique_config_by_readdir(temp_dir.path(), false).is_err());
     }
 
     #[test]

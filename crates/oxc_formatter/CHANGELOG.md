@@ -4,6 +4,150 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.61.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- e037709 formatter: Stop preserving indent for embedded template exprs (#24972) (leaysgur)
+- 143fd1f formatter: Align quoted `new` signature (#24883) (leaysgur)
+- d076b40 formatter: Check calee chain is_simple (#24871) (leaysgur)
+- 8eb9eca formatter/jsdoc: Respect `singleQuote` option in `@import` (#24787) (leaysgur)
+- 6f05ac4 formatter: Fix template literal formatting (#24786) (leaysgur)
+
+### ⚡ Performance
+
+- bb73b23 formatter_core: Bound the thread-local scratch cache (#24793) (leaysgur)
+- a5f7b15 formatter: Stage assignment-like left hand side on the heap (#24613) (leaysgur)
+- 94de05f formatter: Accumulate JSX child-list builders on the heap (#24585) (leaysgur)
+- c191f51 formatter_core: Stage IR buffers on the heap to reduce arena memory (#24582) (leaysgur)
+
+## [0.60.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 6fe866a oxfmt: Keep tailwind classes glued to template expr with `preserveWhitespace` (#24609) (leaysgur)
+
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- df250df formatter: Support `quoteProps` for TS enum and methods (#24309) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 162bddf formatter: Add required parens for conditional type in type parameter constraint (#24450) (leaysgur)
+- 2d22a91 formatter: Determine type cast target from span instead of lexical scan (#24447) (leaysgur)
+- 25306e9 formatter: Do not add extra parens with type cast comment (#24444) (leaysgur)
+- bd6edfe formatter: Break arrow signature that exactly fills the line when cond body may hug (#24440) (leaysgur)
+- a99ef41 formatter: Keep quotes on method signature named new (#24432) (leaysgur)
+- b7c7e15 formatter: Add parens for import and private field in new callee chain (#24320) (leaysgur)
+- 0c8f6e4 formatter: Update detect_code_removal for #24309 (#24314) (leaysgur)
+- a85aad0 formatter: Fix member-chain and non-null parens (#24312) (leaysgur)
+- 1c29c73 formatter: Preserve `TSNonNullExpression` in chain expression (#24311) (leaysgur)
+- 8933c0e formatter: Keep comment inside of empty `switch` block (#24308) (leaysgur)
+- ec26af2 formatter: Preserve blank lines between JSX attrs (#24290) (leaysgur)
+- 70bd54d formatter: Keep arrow function body comment (#24287) (leaysgur)
+- 42ec8de formatter: Keep comments inside surviving parens and suppressed statement terminators (#24253) (leaysgur)
+- 1343779 formatter: Keep comment inline for empty statements (#24249) (leaysgur)
+- b996579 formatter: Print ; before trailing comments part 2 (#24246) (leaysgur)
+- 4f86e8c formatter: Print `;` before trailing comments (#24244) (leaysgur)
+- 01252e4 formatter: Add or remove parens for `let` declaration (#24215) (leaysgur)
+
+### ⚡ Performance
+
+- a2f255b formatter: Use `SmallVec` for `MemberChain` collections (#23776) (Marius Schulz)
+
+### 📚 Documentation
+
+- b52d0f5 formatter: Add TODO comment about unsound code (#24372) (overlookmotel)
+
+## [0.58.0] - 2026-07-06
+
+### 🚀 Features
+
+- 89ec3d9 formatter_core: Add literal line and root indention primitives (#24051) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 1fe6546 formatter: Omit unneeded `;` for type members with `no-semi` (#24212) (leaysgur)
+- 0ad7316 formatter: Print space for `ForStatement`.`update` only if exists (#24211) (leaysgur)
+- 3abbed5 formatter: Print `;` before jsdoc type-cast parens with no-semi (#24208) (leaysgur)
+- d3b9591 formatter: Add parens around `await/yield` with `<T>` (#24202) (leaysgur)
+
+## [0.57.0] - 2026-06-29
+
+### 🐛 Bug Fixes
+
+- 8c07cad all: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate in tests (#23888) (overlookmotel)
+
+### 📚 Documentation
+
+- b4d0dc9 oxfmt,formatter,formatter_css,formatter_core: Update AGENTS.md (#23814) (leaysgur)
+
+## [0.56.0] - 2026-06-22
+
+### 💥 BREAKING CHANGES
+
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7cd1737 formatter: Normalize CRLF for suppressed text (#23701) (leaysgur)
+- a36e444 formatter: Member chain panic when tail is merged with comment in dev build (#23698) (leaysgur)
+- 600d306 formatter: Preserve parens with default export and type cast (#23697) (leaysgur)
+- 61290f2 formatter: Single-member intersection/union type with comment formatting (#21915) (Leonabcd123)
+- 5a1b0b4 formatter: Parenthesize a type assertion used as the base of `**` (#23633) (Jerry Zhao)
+- 91827e2 formatter: Use `Ordering::reverse()` with `order: desc` for idempotency (#23543) (leaysgur)
+
+### ⚡ Performance
+
+- 80f1697 formatter: Avoid arena copy for already-lowercase bigint literals (#23534) (Yunfei He)
+- 1a40b71 formatter: Avoid arena copy for borrowed numeric-literal text (#23512) (Yunfei He)
+- 12e4451 formatter: Avoid arena copy for borrowed string-literal text (#23465) (Yunfei He)
+
+## [0.54.0] - 2026-06-08
+
+### 🚀 Features
+
+- 27a6db8 formatter_json: Implement jsonc variant (#22912) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 01e0871 formatter,formatter_json: Handle PS/LS as line terminator (#22978) (leaysgur)
+
+## [0.53.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
+### 🐛 Bug Fixes
+
+- 23f0cc8 formatter: Don't move comments inside variable declaration in for in loop (#22776) (leaysgur)
+- f200c40 formatter: Don't move comments inside variable declaration in for of loop (#22773) (Leonabcd123)
+
+### 📚 Documentation
+
+- 845f393 oxfmt,formatter,formatter_json,formatter_core: Add/update AGENTS.md (#22873) (leaysgur)
+
+## [0.52.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 5a26479 formatter: Preserve import phases (#22692) (Cameron)
+
+### ⚡ Performance
+
+- 78cf83f formatter: Pre-size output buffer using source text length (#22594) (Dunqing)
+
 ## [0.51.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

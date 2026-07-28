@@ -28,7 +28,6 @@ impl GetSpan for Expression<'_> {
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::Identifier(it) => GetSpan::span(&**it),
-            Self::MetaProperty(it) => GetSpan::span(&**it),
             Self::Super(it) => GetSpan::span(&**it),
             Self::ArrayExpression(it) => GetSpan::span(&**it),
             Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
@@ -52,6 +51,8 @@ impl GetSpan for Expression<'_> {
             Self::UpdateExpression(it) => GetSpan::span(&**it),
             Self::YieldExpression(it) => GetSpan::span(&**it),
             Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
             Self::JSXElement(it) => GetSpan::span(&**it),
             Self::JSXFragment(it) => GetSpan::span(&**it),
             Self::TSAsExpression(it) => GetSpan::span(&**it),
@@ -122,7 +123,6 @@ impl GetSpan for ArrayExpressionElement<'_> {
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::Identifier(it) => GetSpan::span(&**it),
-            Self::MetaProperty(it) => GetSpan::span(&**it),
             Self::Super(it) => GetSpan::span(&**it),
             Self::ArrayExpression(it) => GetSpan::span(&**it),
             Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
@@ -146,6 +146,8 @@ impl GetSpan for ArrayExpressionElement<'_> {
             Self::UpdateExpression(it) => GetSpan::span(&**it),
             Self::YieldExpression(it) => GetSpan::span(&**it),
             Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
             Self::JSXElement(it) => GetSpan::span(&**it),
             Self::JSXFragment(it) => GetSpan::span(&**it),
             Self::TSAsExpression(it) => GetSpan::span(&**it),
@@ -204,7 +206,6 @@ impl GetSpan for PropertyKey<'_> {
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::Identifier(it) => GetSpan::span(&**it),
-            Self::MetaProperty(it) => GetSpan::span(&**it),
             Self::Super(it) => GetSpan::span(&**it),
             Self::ArrayExpression(it) => GetSpan::span(&**it),
             Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
@@ -228,6 +229,8 @@ impl GetSpan for PropertyKey<'_> {
             Self::UpdateExpression(it) => GetSpan::span(&**it),
             Self::YieldExpression(it) => GetSpan::span(&**it),
             Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
             Self::JSXElement(it) => GetSpan::span(&**it),
             Self::JSXFragment(it) => GetSpan::span(&**it),
             Self::TSAsExpression(it) => GetSpan::span(&**it),
@@ -309,7 +312,14 @@ impl GetSpan for NewExpression<'_> {
     }
 }
 
-impl GetSpan for MetaProperty<'_> {
+impl GetSpan for ImportMeta {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for NewTarget {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -335,7 +345,6 @@ impl GetSpan for Argument<'_> {
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::Identifier(it) => GetSpan::span(&**it),
-            Self::MetaProperty(it) => GetSpan::span(&**it),
             Self::Super(it) => GetSpan::span(&**it),
             Self::ArrayExpression(it) => GetSpan::span(&**it),
             Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
@@ -359,6 +368,8 @@ impl GetSpan for Argument<'_> {
             Self::UpdateExpression(it) => GetSpan::span(&**it),
             Self::YieldExpression(it) => GetSpan::span(&**it),
             Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
             Self::JSXElement(it) => GetSpan::span(&**it),
             Self::JSXFragment(it) => GetSpan::span(&**it),
             Self::TSAsExpression(it) => GetSpan::span(&**it),
@@ -725,7 +736,6 @@ impl GetSpan for ForStatementInit<'_> {
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::Identifier(it) => GetSpan::span(&**it),
-            Self::MetaProperty(it) => GetSpan::span(&**it),
             Self::Super(it) => GetSpan::span(&**it),
             Self::ArrayExpression(it) => GetSpan::span(&**it),
             Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
@@ -749,6 +759,8 @@ impl GetSpan for ForStatementInit<'_> {
             Self::UpdateExpression(it) => GetSpan::span(&**it),
             Self::YieldExpression(it) => GetSpan::span(&**it),
             Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
             Self::JSXElement(it) => GetSpan::span(&**it),
             Self::JSXFragment(it) => GetSpan::span(&**it),
             Self::TSAsExpression(it) => GetSpan::span(&**it),
@@ -1159,7 +1171,6 @@ impl GetSpan for ExportDefaultDeclarationKind<'_> {
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::Identifier(it) => GetSpan::span(&**it),
-            Self::MetaProperty(it) => GetSpan::span(&**it),
             Self::Super(it) => GetSpan::span(&**it),
             Self::ArrayExpression(it) => GetSpan::span(&**it),
             Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
@@ -1183,6 +1194,8 @@ impl GetSpan for ExportDefaultDeclarationKind<'_> {
             Self::UpdateExpression(it) => GetSpan::span(&**it),
             Self::YieldExpression(it) => GetSpan::span(&**it),
             Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
             Self::JSXElement(it) => GetSpan::span(&**it),
             Self::JSXFragment(it) => GetSpan::span(&**it),
             Self::TSAsExpression(it) => GetSpan::span(&**it),
@@ -1354,7 +1367,6 @@ impl GetSpan for JSXExpression<'_> {
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::Identifier(it) => GetSpan::span(&**it),
-            Self::MetaProperty(it) => GetSpan::span(&**it),
             Self::Super(it) => GetSpan::span(&**it),
             Self::ArrayExpression(it) => GetSpan::span(&**it),
             Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
@@ -1378,6 +1390,8 @@ impl GetSpan for JSXExpression<'_> {
             Self::UpdateExpression(it) => GetSpan::span(&**it),
             Self::YieldExpression(it) => GetSpan::span(&**it),
             Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
             Self::JSXElement(it) => GetSpan::span(&**it),
             Self::JSXFragment(it) => GetSpan::span(&**it),
             Self::TSAsExpression(it) => GetSpan::span(&**it),

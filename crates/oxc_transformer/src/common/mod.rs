@@ -1,8 +1,9 @@
 //! Utility transforms which are in common between other transforms.
 
 use arrow_function_converter::ArrowFunctionConverter;
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_str::static_ident;
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{EnvOptions, context::TraverseCtx, state::TransformState};
@@ -42,7 +43,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
                     .collect();
                 ctx.state.top_level_statements.insert_statements(stmts);
             } else {
-                let require_symbol_id = ctx.scoping().get_root_binding(ctx.ast.ident("require"));
+                let require_symbol_id = ctx.scoping().get_root_binding(static_ident!("require"));
                 let stmts: Vec<_> = imports
                     .into_iter()
                     .map(|(source, names)| {
@@ -56,7 +57,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         // Var declarations: insert var/let statements at program level.
         // Pop from the stack into a local, then build statements.
         {
-            let var_stmt = ctx.state.var_declarations.get_var_statement(ctx.ast);
+            let var_stmt = ctx.state.var_declarations.get_var_statement(&ctx.ast);
             if let Some((var_statement, let_statement)) = var_stmt {
                 let stmts: Vec<Statement<'a>> =
                     var_statement.into_iter().chain(let_statement).collect();
@@ -87,8 +88,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let is_program_body = matches!(ctx.parent(), Ancestor::ProgramBody(_));
-        ctx.state.var_declarations.insert_into_statements(stmts, is_program_body, ctx.ast);
-        ctx.state.statement_injector.insert_into_statements(stmts, ctx.ast);
+        ctx.state.var_declarations.insert_into_statements(stmts, is_program_body, &ctx.ast);
+        ctx.state.statement_injector.insert_into_statements(stmts, &ctx.ast);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {

@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -5,7 +6,7 @@ use oxc_ast::{
         SimpleAssignmentTarget, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{Visit, VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
@@ -127,7 +128,7 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
 }
 
 fn process_statements<'a>(
-    statements: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+    statements: &'a ArenaVec<'a, Statement<'a>>,
     pending_promises: &mut FxHashMap<CompactStr, Span>,
     return_found: &mut bool,
     ctx: &LintContext<'a>,
@@ -229,7 +230,7 @@ fn ident_name_of<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 /// the arguments of the innermost `expect(...)` call.
 fn find_expect_args<'a>(
     call_expr: &'a CallExpression<'a>,
-) -> Option<&'a oxc_allocator::Vec<'a, Argument<'a>>> {
+) -> Option<&'a ArenaVec<'a, Argument<'a>>> {
     if let Expression::Identifier(ident) = &call_expr.callee
         && ident.name == "expect"
     {
@@ -238,9 +239,7 @@ fn find_expect_args<'a>(
     find_inner_expect(&call_expr.callee)
 }
 
-fn find_inner_expect<'a>(
-    expr: &'a Expression<'a>,
-) -> Option<&'a oxc_allocator::Vec<'a, Argument<'a>>> {
+fn find_inner_expect<'a>(expr: &'a Expression<'a>) -> Option<&'a ArenaVec<'a, Argument<'a>>> {
     match expr {
         Expression::CallExpression(call) => find_expect_args(call),
         _ => find_inner_expect(expr.as_member_expression()?.object()),
@@ -372,7 +371,7 @@ fn is_promise_call_expression(call_expr: &CallExpression<'_>) -> bool {
         .is_some_and(|prop| matches!(prop, "then" | "catch" | "finally"))
 }
 
-impl<'a> Visit<'a> for PromiseExpectScanner {
+impl<'a> VisitJs<'a> for PromiseExpectScanner {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         // Check for `expect(promise).resolves/rejects` — resolves the promise variable
         let callee_name = get_node_name_vec(&call_expr.callee);
@@ -412,14 +411,14 @@ impl<'a> Visit<'a> for PromiseExpectScanner {
             return;
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_await_expression(&mut self, await_expr: &oxc_ast::ast::AwaitExpression<'a>) {
         self.resolve_ident(&await_expr.argument);
         let was_in_await = self.in_await;
         self.in_await = true;
-        walk::walk_await_expression(self, await_expr);
+        walk_js::walk_await_expression(self, await_expr);
         self.in_await = was_in_await;
     }
 }

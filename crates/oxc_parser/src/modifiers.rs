@@ -7,12 +7,15 @@ use std::{
 
 use oxc_ast::ast::TSAccessibility;
 use oxc_data_structures::fieldless_enum;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    ParserConfig as Config, ParserImpl,
+    diagnostics::{self, ParserDiagnostic},
+    lexer::Kind,
+};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Modifier {
     pub span_start: u32,
     pub kind: ModifierKind,
@@ -25,7 +28,7 @@ impl Modifier {
     }
 
     #[inline]
-    pub const fn span(&self) -> Span {
+    pub const fn span(self) -> Span {
         Span::sized(self.span_start, self.kind.len())
     }
 }
@@ -493,34 +496,31 @@ impl<C: Config> ParserImpl<'_, C> {
         while let Some(modifier_kind) = self.get_modifier() {
             let modifier = Modifier::new(self.start_span(), modifier_kind);
             self.bump_any();
-            self.check_modifier(modifiers.kinds(), &modifier);
+            self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.span_start);
         }
         modifiers
     }
 
     fn get_modifier(&mut self) -> Option<ModifierKind> {
-        let modifier_kind = ModifierKind::try_from(self.cur_kind()).ok()?;
-        if self.lookahead(Self::get_modifier_worker) { Some(modifier_kind) } else { None }
-    }
-
-    fn get_modifier_worker(&mut self) -> bool {
-        match self.cur_kind() {
-            Kind::Const => {
-                self.bump_any();
-                self.at(Kind::Enum)
-            }
+        let cur_kind = self.cur_kind();
+        let modifier_kind = ModifierKind::try_from(cur_kind).ok()?;
+        // Peek the token after the modifier keyword to decide whether the keyword really is a
+        // modifier (e.g. distinguish `static x` from `static` used as an identifier).
+        // `peek_token` performs a single lexer-level re-lex, avoiding the heavier parser-level
+        // `lookahead` (checkpoint + `bump_any` + rewind) that this previously used.
+        let next = self.lexer.peek_token();
+        let next_kind = next.kind();
+        let is_modifier = match cur_kind {
+            Kind::Const => next_kind == Kind::Enum,
+            // These modifiers can cross line.
             Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                // These modifiers can cross line.
-                self.bump_any();
-                self.can_follow_modifier()
+                Self::can_follow_modifier(next_kind)
             }
             // Rest modifiers cannot cross line
-            _ => {
-                self.bump_any();
-                self.can_follow_modifier() && !self.cur_token().is_on_new_line()
-            }
-        }
+            _ => Self::can_follow_modifier(next_kind) && !next.is_on_new_line(),
+        };
+        if is_modifier { Some(modifier_kind) } else { None }
     }
 
     fn modifier(&mut self, kind: Kind, span_start: u32) -> Modifier {
@@ -543,7 +543,7 @@ impl<C: Config> ParserImpl<'_, C> {
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            self.check_modifier(modifiers.kinds(), &modifier);
+            self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.span_start);
         }
 
@@ -567,27 +567,34 @@ impl<C: Config> ParserImpl<'_, C> {
             // We need to ensure that any subsequent modifiers appear on the same line
             // so that when 'const' is a standalone declaration, we don't issue
             // an error.
-            if !self.lookahead(Self::next_token_is_on_same_line_and_can_follow_modifier) {
+            if !self.next_token_is_on_same_line_and_can_follow_modifier() {
                 return None;
             }
             self.bump_any();
-        } else if
-        // we're at the start of a static block
-        (stop_on_start_of_class_static_block
-            && kind == Kind::Static
-            && self.lexer.peek_token().kind() == Kind::LCurly)
-            // we may be at the start of a static block
-            || (kind == Kind::Static && seen_modifier_kinds.contains(ModifierKind::Static))
+        } else if kind == Kind::Static {
+            // ClassStaticBlock : `static { ClassStaticBlockBody }`   e.g. `static { x = 1; }`
+            // member named `static`                                  e.g. `static() {}`, `static = 1`, `static;`
+            // repeated `static`                                      e.g. `static static x`
+            //
+            // Peek once and reuse it — `peek_token` is not cached, so checking `== LCurly` separately
+            // from the peek inside `next_token_can_follow_modifier` re-lexed this token twice.
+            let next_kind = self.lexer.peek_token().kind();
+            if (stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
+                || seen_modifier_kinds.contains(ModifierKind::Static)
+                || !Self::can_follow_modifier(next_kind)
+            {
+                return None;
+            }
+            self.bump_any();
+        } else if !self.parse_any_contextual_modifier() {
             // next token is not a modifier
-            || (!self.parse_any_contextual_modifier())
-        {
             return None;
         }
         Some(self.modifier(kind, span_start))
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        if self.at(kind) && self.lookahead(Self::next_token_can_follow_modifier) {
+        if self.at(kind) && self.next_token_can_follow_modifier() {
             self.bump_any();
             true
         } else {
@@ -596,9 +603,7 @@ impl<C: Config> ParserImpl<'_, C> {
     }
 
     fn parse_any_contextual_modifier(&mut self) -> bool {
-        if self.cur_kind().is_modifier_kind()
-            && self.lookahead(Self::next_token_can_follow_modifier)
-        {
+        if self.cur_kind().is_modifier_kind() && self.next_token_can_follow_modifier() {
             self.bump_any();
             true
         } else {
@@ -606,41 +611,40 @@ impl<C: Config> ParserImpl<'_, C> {
         }
     }
 
+    /// Returns `true` if the token following the current (modifier) token can follow a modifier,
+    /// i.e. the current token really is a modifier rather than an identifier/expression.
+    ///
+    /// Inspects the single peeked next token via `peek_token` (one lexer-level re-lex) instead of
+    /// the heavier parser-level `lookahead` (checkpoint + `bump_any` + rewind). The result is
+    /// identical: the speculative `bump_any` in the old form could push an escaped-keyword error,
+    /// but `lookahead`'s rewind always discarded it, and the real error still fires on the
+    /// non-speculative bump performed by the caller once this returns `true`.
     pub(crate) fn next_token_can_follow_modifier(&mut self) -> bool {
-        match self.cur_kind() {
-            Kind::Const => {
-                self.bump_any();
-                self.at(Kind::Enum)
-            }
-            Kind::Static => {
-                self.bump_any();
-                self.can_follow_modifier()
-            }
-            Kind::Get | Kind::Set => {
-                self.bump_any();
-                self.can_follow_get_or_set_keyword()
-            }
-            _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
+        let cur_kind = self.cur_kind();
+        let next = self.lexer.peek_token();
+        let next_kind = next.kind();
+        match cur_kind {
+            Kind::Const => next_kind == Kind::Enum,
+            Kind::Static => Self::can_follow_modifier(next_kind),
+            Kind::Get | Kind::Set => Self::can_follow_get_or_set_keyword(next_kind),
+            // Other modifiers cannot cross a line.
+            _ => !next.is_on_new_line() && Self::can_follow_modifier(next_kind),
         }
     }
 
     fn next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> bool {
-        self.bump_any();
-        if self.cur_token().is_on_new_line() {
-            return false;
-        }
-        self.can_follow_modifier()
+        let next = self.lexer.peek_token();
+        !next.is_on_new_line() && Self::can_follow_modifier(next.kind())
     }
 
-    fn can_follow_modifier(&self) -> bool {
-        match self.cur_kind() {
+    fn can_follow_modifier(kind: Kind) -> bool {
+        match kind {
             Kind::PrivateIdentifier | Kind::LBrack | Kind::LCurly | Kind::Star | Kind::Dot3 => true,
             kind => kind.is_identifier_or_keyword(),
         }
     }
 
-    fn can_follow_get_or_set_keyword(&self) -> bool {
-        let kind = self.cur_kind();
+    fn can_follow_get_or_set_keyword(kind: Kind) -> bool {
         kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
     }
 }
@@ -687,17 +691,21 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Async,
             ModifierKind::Accessor,
             ModifierKind::Override,
+            ModifierKind::Abstract,
         ]),
         ModifierKind::Override => ModifierKinds::new([
             ModifierKind::Override,
             ModifierKind::Readonly,
             ModifierKind::Accessor,
             ModifierKind::Async,
+            ModifierKind::Declare,
         ]),
         ModifierKind::Abstract => ModifierKinds::new([
             ModifierKind::Abstract,
             ModifierKind::Override,
             ModifierKind::Accessor,
+            ModifierKind::Static,
+            ModifierKind::Private,
         ]),
         ModifierKind::Export => ModifierKinds::new([
             ModifierKind::Export,
@@ -705,13 +713,16 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Abstract,
             ModifierKind::Async,
         ]),
+        ModifierKind::Declare => {
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Override])
+        }
         _ => ModifierKinds::new([kind]),
     }
 }
 
-impl<C: Config> ParserImpl<'_, C> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
-    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         // Do a quick check that this modifier is not illegal in this position.
         //
         // This is just 2 instructions:
@@ -731,12 +742,13 @@ impl<C: Config> ParserImpl<'_, C> {
     /// Create an error for an illegal modifier.
     #[cold]
     #[inline(never)]
-    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         const ACCESSIBILITY_KINDS: ModifierKinds = ModifierKinds::new([
             ModifierKind::Public,
             ModifierKind::Private,
             ModifierKind::Protected,
         ]);
+        use ModifierKind::{Abstract, Declare, Override, Private, Static};
 
         let this_kind = modifier.kind;
         let this_kinds = ModifierKinds::new([this_kind]);
@@ -763,7 +775,29 @@ impl<C: Config> ParserImpl<'_, C> {
         // If multiple illegal kinds, it's arbitrary which one the error is raised for.
         let illegal_kinds = illegal_preceding_modifier_kinds.intersection(existing_kinds);
         let illegal_kind = illegal_kinds.iter().next().unwrap();
-        self.error(diagnostics::modifier_must_precede_other_modifier(modifier, illegal_kind));
+        // Some pairs are mutually exclusive in either order. TypeScript reports them as TS1243
+        // ("cannot be used with") or TS1040 ("cannot be used in an ambient context") rather than
+        // as an ordering error (TS1029). Wording and codes follow `typescript-go`'s
+        // `checkGrammarModifiers`.
+        let span = modifier.span();
+        let error = match (this_kind, illegal_kind) {
+            (Static, Abstract) | (Abstract, Static) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Static, Abstract)
+            }
+            (Private, Abstract) | (Abstract, Private) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Private, Abstract)
+            }
+            // `declare override`
+            (Override, Declare) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Override, Declare)
+            }
+            // `override declare`
+            (Declare, Override) => {
+                diagnostics::modifier_cannot_be_used_in_ambient_context(span, Override)
+            }
+            _ => diagnostics::modifier_must_precede_other_modifier(modifier, illegal_kind),
+        };
+        self.error(error);
     }
 
     #[inline]
@@ -776,33 +810,43 @@ impl<C: Config> ParserImpl<'_, C> {
         strict: bool,
         create_diagnostic: F,
     ) where
-        F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
+        F: Fn(Modifier, Option<ModifierKinds>) -> ParserDiagnostic<'a>,
     {
         if modifiers.kinds().has_any_not_in(allowed) {
             // Invalid modifiers are rare, so handle this case in `#[cold]` function.
             // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.
+            // Non-generic, so the heavy collect + sort code (including the sort implementation)
+            // is compiled only once, rather than once per `report` instantiation
+            // (caller closure `F` × parser `Config` = ~39 copies).
             #[cold]
             #[inline(never)]
-            fn report<C: Config, F>(
-                parser: &mut ParserImpl<'_, C>,
-                modifiers: &Modifiers,
-                allowed: ModifierKinds,
-                strict: bool,
-                create_diagnostic: F,
-            ) where
-                F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
-            {
+            fn collect_disallowed(modifiers: &Modifiers, allowed: ModifierKinds) -> Vec<Modifier> {
                 // Sort modifiers to produce errors in source code order
                 let mut disallowed_modifiers = modifiers
                     .iter()
                     .filter(|modifier| !allowed.contains(modifier.kind))
                     .collect::<Vec<_>>();
                 disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span_start);
+                disallowed_modifiers
+            }
+
+            #[cold]
+            #[inline(never)]
+            fn report<'a, C: Config, F>(
+                parser: &mut ParserImpl<'a, C>,
+                modifiers: &Modifiers,
+                allowed: ModifierKinds,
+                strict: bool,
+                create_diagnostic: F,
+            ) where
+                F: Fn(Modifier, Option<ModifierKinds>) -> ParserDiagnostic<'a>,
+            {
+                let disallowed_modifiers = collect_disallowed(modifiers, allowed);
 
                 debug_assert!(!disallowed_modifiers.is_empty());
 
                 for modifier in &disallowed_modifiers {
-                    parser.error(create_diagnostic(modifier, strict.then_some(allowed)));
+                    parser.error(create_diagnostic(*modifier, strict.then_some(allowed)));
                 }
             }
             report(self, modifiers, allowed, strict, create_diagnostic);

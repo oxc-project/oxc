@@ -11,6 +11,7 @@ mod ast_kind;
 mod estree_visit;
 mod formatter;
 mod get_id;
+mod inherit_variants;
 mod minifier_traverse;
 #[cfg(feature = "generate-js")]
 mod oxlint_envs;
@@ -24,14 +25,16 @@ mod traverse;
 mod typescript;
 mod utf8_to_utf16;
 mod visit;
+mod visit_js;
 
-pub use assert_layouts::AssertLayouts;
+pub use assert_layouts::AssertLayoutsGenerator;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
 #[cfg(feature = "generate-js")]
 pub use estree_visit::ESTreeVisitGenerator;
 pub use formatter::{FormatterAstNodesGenerator, FormatterFormatGenerator};
 pub use get_id::GetIdGenerator;
+pub use inherit_variants::InheritVariantsGenerator;
 pub use minifier_traverse::MinifierTraverseGenerator;
 #[cfg(feature = "generate-js")]
 pub use oxlint_envs::OxlintEnvsGenerator;
@@ -45,6 +48,7 @@ pub use traverse::TraverseGenerator;
 pub use typescript::TypescriptGenerator;
 pub use utf8_to_utf16::Utf8ToUtf16ConverterGenerator;
 pub use visit::VisitGenerator;
+pub use visit_js::VisitJsGenerator;
 
 /// Trait to define a generator.
 pub trait Generator: Runner {
@@ -143,8 +147,8 @@ pub trait Generator: Runner {
 ///
 /// # Example
 /// ```
-/// struct AssertLayouts;
-/// define_generator!(AssertLayouts);
+/// struct AssertLayoutsGenerator;
+/// define_generator!(AssertLayoutsGenerator);
 /// ```
 macro_rules! define_generator {
     ($ident:ident $($lifetime:lifetime)?) => {

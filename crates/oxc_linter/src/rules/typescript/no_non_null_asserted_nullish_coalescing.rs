@@ -68,6 +68,7 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     version = "0.5.0",
+    short_description = "Disallow non-null assertions in the left operand of a nullish coalescing operator.",
 );
 
 impl Rule for NoNonNullAssertedNullishCoalescing {

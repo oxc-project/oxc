@@ -148,7 +148,7 @@ fn change_extension(name: &str) -> String {
         .to_string()
 }
 
-fn transpile(path: &Path, source_text: &str) -> (String, Vec<oxc::diagnostics::OxcDiagnostic>) {
+fn transpile(path: &Path, source_text: &str) -> (String, oxc::diagnostics::Diagnostics) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap_or_default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -162,5 +162,5 @@ fn transpile(path: &Path, source_text: &str) -> (String, Vec<oxc::diagnostics::O
         })
         .build(&ret.program)
         .code;
-    (printed, ret.errors)
+    (printed, ret.diagnostics)
 }

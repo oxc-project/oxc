@@ -46,6 +46,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     version = "0.0.16",
+    short_description = "It warns when you use a non-function value as the second argument of `removeEventListener`.",
 );
 
 impl Rule for NoInvalidRemoveEventListener {

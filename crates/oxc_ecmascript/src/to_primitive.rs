@@ -1,9 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::{
-    GlobalContext,
-    constant_evaluation::{DetermineValueType, ValueType},
-};
+use crate::{DetermineValueType, GlobalContext, ValueType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToPrimitiveResult {

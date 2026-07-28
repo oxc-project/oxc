@@ -1,0 +1,40 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment between a SassList element and its comma stays BEFORE the comma
+$x: aa /* c1 */, bb /* c2 */, cc;
+a {
+  $y: 1px 2px /* c */, 3px 4px;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment between a SassList element and its comma stays BEFORE the comma
+$x:
+  aa /* c1 */,
+  bb /* c2 */,
+  cc;
+a {
+  $y:
+    1px 2px /* c */,
+    3px 4px;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment between a SassList element and its comma stays BEFORE the comma
+$x:
+  aa /* c1 */,
+  bb /* c2 */,
+  cc;
+a {
+  $y:
+    1px 2px /* c */,
+    3px 4px;
+}
+
+===================== End =====================

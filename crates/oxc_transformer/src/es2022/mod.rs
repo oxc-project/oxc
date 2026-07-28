@@ -50,6 +50,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         }
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);

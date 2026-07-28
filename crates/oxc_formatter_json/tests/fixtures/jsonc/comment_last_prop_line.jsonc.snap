@@ -1,0 +1,68 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "a": 1,
+  "b": 2, // trailing line comment on last prop
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, but the value stays inline
+    }
+  }
+}
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "jsonc" }
+------------------------------------
+{
+  "a": 1,
+  "b": 2, // trailing line comment on last prop
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"], // long comment keeps the line > 80, but the value stays inline
+    },
+  },
+}
+
+-------------------------------------
+{ printWidth: 100, variant: "jsonc" }
+-------------------------------------
+{
+  "a": 1,
+  "b": 2, // trailing line comment on last prop
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"], // long comment keeps the line > 80, but the value stays inline
+    },
+  },
+}
+
+-----------------------------------------------------------
+{ printWidth: 80, trailingComma: "none", variant: "jsonc" }
+-----------------------------------------------------------
+{
+  "a": 1,
+  "b": 2, // trailing line comment on last prop
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, but the value stays inline
+    }
+  }
+}
+
+------------------------------------------------------------
+{ printWidth: 100, trailingComma: "none", variant: "jsonc" }
+------------------------------------------------------------
+{
+  "a": 1,
+  "b": 2, // trailing line comment on last prop
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, but the value stays inline
+    }
+  }
+}
+
+===================== End =====================

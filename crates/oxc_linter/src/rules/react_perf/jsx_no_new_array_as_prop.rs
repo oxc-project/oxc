@@ -1,25 +1,41 @@
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode, LintContext,
     ast_util::is_method_call,
-    utils::{ReactPerfRule, find_initialized_binding, is_constructor_matching_name},
+    context::ContextHost,
+    rule::Rule,
+    utils::{
+        NativeAllowList, ReactPerfConfig, find_initialized_binding, is_constructor_matching_name,
+        react_perf_from_configuration, run_react_perf_rule, should_run_react_perf,
+    },
 };
 
-#[derive(Debug, Default, Clone)]
-pub struct JsxNoNewArrayAsProp;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct JsxNoNewArrayAsProp(Box<ReactPerfConfig>);
+
+impl std::ops::Deref for JsxNoNewArrayAsProp {
+    type Target = ReactPerfConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent Arrays that are local to the current method from being used
+    /// Prevent arrays that are local to the current method from being used
     /// as values of JSX props.
     ///
     /// ### Why is this bad?
     ///
-    /// Using locally defined Arrays as values for props can lead to unintentional
+    /// Using locally defined arrays as values for props can lead to unintentional
     /// re-renders and performance issues. Every time the parent component renders,
     /// a new instance of the Array is created, causing unnecessary re-renders of
     /// child components. This also leads to harder-to-maintain code as the
@@ -43,19 +59,24 @@ declare_oxc_lint!(
     JsxNoNewArrayAsProp,
     react_perf,
     perf,
+    config = ReactPerfConfig,
     version = "0.2.3",
+    short_description = "Prevent arrays that are local to the current method from being used as values of JSX props.",
 );
 
-impl ReactPerfRule for JsxNoNewArrayAsProp {
+impl JsxNoNewArrayAsProp {
     const MESSAGE: &'static str =
         "JSX attribute values should not contain Arrays created in the same scope.";
 
-    fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
+    fn native_allow_list(&self) -> &NativeAllowList {
+        self.0.native_allow_list()
+    }
+
+    fn check_for_violation_on_expr(expr: &Expression<'_>) -> Option<Span> {
         check_expression(expr)
     }
 
     fn check_for_violation_on_ast_kind(
-        &self,
         kind: &AstKind<'_>,
         symbol_id: SymbolId,
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
@@ -73,6 +94,32 @@ impl ReactPerfRule for JsxNoNewArrayAsProp {
             }
             _ => None,
         }
+    }
+}
+
+impl Rule for JsxNoNewArrayAsProp {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        react_perf_from_configuration(value)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXAttribute(attr) = node.kind() else {
+            return;
+        };
+
+        run_react_perf_rule(
+            attr,
+            node.scope_id(),
+            ctx,
+            Self::MESSAGE,
+            self.native_allow_list(),
+            Self::check_for_violation_on_expr,
+            Self::check_for_violation_on_ast_kind,
+        );
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        should_run_react_perf(ctx)
     }
 }
 
@@ -113,33 +160,43 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
-        r"<Item list={this.props.list} />",
-        r"<Item list={[]} />",
-        r"<Item list={new Array()} />",
-        r"<Item list={Array()} />",
-        r"<Item list={this.props.list || []} />",
-        r"<Item list={this.props.list ? this.props.list : []} />",
-        r"<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />",
-        r"const Foo = () => <Item list={this.props.list} />",
-        r"const x = []; const Foo = () => <Item list={x} />",
-        r"const DEFAULT_X = []; const Foo = ({ x = DEFAULT_X }) => <Item list={x} />",
+        (r"<Item list={this.props.list} />", None),
+        (r"<Item list={[]} />", None),
+        (r"<Item list={new Array()} />", None),
+        (r"<Item list={Array()} />", None),
+        (r"<Item list={this.props.list || []} />", None),
+        (r"<Item list={this.props.list ? this.props.list : []} />", None),
+        (r"<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />", None),
+        (r"const Foo = () => <Item list={this.props.list} />", None),
+        (r"const x = []; const Foo = () => <Item list={x} />", None),
+        (r"const DEFAULT_X = []; const Foo = ({ x = DEFAULT_X }) => <Item list={x} />", None),
+        (r"const Foo = () => <div list={[]} />", Some(json!([{ "nativeAllowList": "all" }]))),
+        (r"const Foo = () => <div list={[]} />", Some(json!([{ "nativeAllowList": ["list"] }]))),
     ];
 
     let fail = vec![
-        r"const Foo = () => (<Item list={[]} />)",
-        r"const Foo = () => (<Item list={new Array()} />)",
-        r"const Foo = () => (<Item list={Array()} />)",
-        r"const Foo = () => (<Item list={arr1.concat(arr2)} />)",
-        r"const Foo = () => (<Item list={arr1.filter(x => x > 0)} />)",
-        r"const Foo = () => (<Item list={arr1.map(x => x * x)} />)",
-        r"const Foo = () => (<Item list={this.props.list || []} />)",
-        r"const Foo = () => (<Item list={this.props.list ? this.props.list : []} />)",
-        r"const Foo = () => (<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />)",
-        r"const Foo = () => { let x = []; return <Item list={x} /> }",
-        r"const Foo = ({ x = [] }) => <Item list={x} />",
+        (r"const Foo = () => (<Item list={[]} />)", None),
+        (r"const Foo = () => (<Item list={new Array()} />)", None),
+        (r"const Foo = () => (<Item list={Array()} />)", None),
+        (r"const Foo = () => (<Item list={arr1.concat(arr2)} />)", None),
+        (r"const Foo = () => (<Item list={arr1.filter(x => x > 0)} />)", None),
+        (r"const Foo = () => (<Item list={arr1.map(x => x * x)} />)", None),
+        (r"const Foo = () => (<Item list={this.props.list || []} />)", None),
+        (r"const Foo = () => (<Item list={this.props.list ? this.props.list : []} />)", None),
+        (
+            r"const Foo = () => (<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />)",
+            None,
+        ),
+        (r"const Foo = () => { let x = []; return <Item list={x} /> }", None),
+        (r"const Foo = ({ x = [] }) => <Item list={x} />", None),
+        (r"const Foo = () => <div list={[]} />", Some(json!([{ "nativeAllowList": ["style"] }]))),
+        // components are never exempt, even with `"all"`
+        (r"const Foo = () => <Item list={[]} />", Some(json!([{ "nativeAllowList": "all" }]))),
     ];
 
     Tester::new(JsxNoNewArrayAsProp::NAME, JsxNoNewArrayAsProp::PLUGIN, pass, fail)

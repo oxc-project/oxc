@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-fn too_many_describes(max: usize, repeat: &str, span: Span) -> OxcDiagnostic {
+fn too_many_describes(max: u32, repeat: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
         .with_help(format!(
             "There should not be more than {max:?} describe{repeat} at the top level."
@@ -91,12 +91,12 @@ describe('test suite', () => {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireTopLevelDescribeConfig {
     /// The maximum number of top-level `describe` blocks allowed in a test file.
-    pub max_number_of_top_level_describes: usize,
+    pub max_number_of_top_level_describes: u32,
 }
 
 impl Default for RequireTopLevelDescribeConfig {
     fn default() -> Self {
-        Self { max_number_of_top_level_describes: usize::MAX }
+        Self { max_number_of_top_level_describes: u32::MAX }
     }
 }
 
@@ -106,7 +106,7 @@ impl RequireTopLevelDescribeConfig {
     }
 
     pub fn run_once(&self, ctx: &LintContext) {
-        let mut describe_contexts: FxHashMap<ScopeId, usize> = FxHashMap::default();
+        let mut describe_contexts: FxHashMap<ScopeId, u32> = FxHashMap::default();
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
         possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
@@ -118,7 +118,7 @@ impl RequireTopLevelDescribeConfig {
     fn run<'a>(
         &self,
         possible_jest_node: &PossibleJestNode<'a, '_>,
-        describe_contexts: &mut FxHashMap<ScopeId, usize>,
+        describe_contexts: &mut FxHashMap<ScopeId, u32>,
         ctx: &LintContext<'a>,
     ) {
         let node = possible_jest_node.node;

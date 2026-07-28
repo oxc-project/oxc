@@ -18,29 +18,21 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::{Visit, walk::walk_call_expression};
-use oxc_semantic::Scoping;
-use oxc_syntax::{
-    scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
-};
-use rustc_hash::FxHashSet;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
-use oxc_allocator::{Allocator, BitSet, Vec};
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
-use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
+use crate::{Traverse, TraverseCtx, state::BodyFrame};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
-/// Stateless peephole optimizer. The `dce` flag and `changed` state are stored in `MinifierState`.
+/// Stateless peephole optimizer. Configuration and the per-pass
+/// `PassChanges` accumulator live on `MinifierState`.
 pub struct PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn run_once(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
         pair: (&'x A, &'x A),
         check_a: F,
@@ -67,6 +59,95 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
+    /// A body-level statement is "declarative" if executing it cannot run user
+    /// code that observes a subsequent hoisted `var x = <literal>;` as
+    /// `undefined`. Module loaders (`import`, `export * from`, `export … from`)
+    /// can evaluate foreign modules but only observe our bindings on an actual
+    /// cycle — handled at program scope by starting the root prelude unsafe when
+    /// the module has loaders (see `enter_program`).
+    /// Type-only declarations (`type`, `interface`) are erased and never run.
+    fn is_declarative_body_statement(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::EmptyStatement(_)
+            | Statement::ImportDeclaration(_)
+            | Statement::ExportAllDeclaration(_) => true,
+            // `export { foo }`, `export { foo } from './x'`, `export type T = …` —
+            // no executable code at the statement itself. The cyclic-eval hazard
+            // from a `from` source is gated separately at program scope (see
+            // `enter_program`).
+            Statement::ExportNamedDeclaration(e) => {
+                e.declaration.as_ref().is_none_or(Self::is_declarative_declaration)
+            }
+            // `export default function() {}` is hoisted; `export default <expr>`
+            // or `export default class C extends … {}` runs user code.
+            Statement::ExportDefaultDeclaration(e) => {
+                matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(_))
+            }
+            // Bare declarations route through the shared classifier; anything else
+            // (blocks, expressions, control flow) can run user code.
+            _ => stmt.as_declaration().is_some_and(Self::is_declarative_declaration),
+        }
+    }
+
+    /// A `Declaration` runs no user code at evaluation: function/type/interface
+    /// declarations are inert, and a `var`/`let`/`const` is declarative only when
+    /// every declarator is a simple binding with a literal (or no) initializer.
+    /// Classes, enums, and TS modules run user code, so they are not declarative.
+    fn is_declarative_declaration(decl: &Declaration<'a>) -> bool {
+        match decl {
+            Declaration::FunctionDeclaration(_)
+            | Declaration::TSTypeAliasDeclaration(_)
+            | Declaration::TSInterfaceDeclaration(_) => true,
+            Declaration::VariableDeclaration(decl) => {
+                Self::is_declarative_variable_declaration(decl)
+            }
+            _ => false,
+        }
+    }
+
+    /// A `VariableDeclaration` is declarative when every declarator is a simple
+    /// `BindingIdentifier` (no destructuring / defaults / computed keys, all of
+    /// which can run user code) with either no initializer or a primitive
+    /// literal initializer.
+    fn is_declarative_variable_declaration(decl: &VariableDeclaration<'a>) -> bool {
+        decl.declarations.iter().all(Self::is_declarative_variable_declarator)
+    }
+
+    /// Note: only AST `Literal`s qualify. Constant-but-non-literal initializers
+    /// (`-1`, `void 0`, `1 + 2`) run no user code either, but conservatively end
+    /// the prelude here — a missed optimization, never a correctness risk.
+    fn is_declarative_variable_declarator(decl: &VariableDeclarator<'a>) -> bool {
+        matches!(decl.id, BindingPattern::BindingIdentifier(_))
+            && decl.init.as_ref().is_none_or(Expression::is_literal)
+    }
+
+    /// Mark the current function/program body as no longer in its declarative
+    /// prelude. No-op if the flag is already set, or if `current_scope_id` is
+    /// some inner scope (a block/for/etc.) — those don't end the prelude.
+    fn mark_current_body_unsafe(ctx: &mut TraverseCtx<'a>) {
+        let current_scope_id = ctx.current_scope_id();
+        let frame = ctx.state.body_frames.last_mut();
+        if !frame.hoisted_var_inlining_unsafe && frame.scope_id == current_scope_id {
+            frame.hoisted_var_inlining_unsafe = true;
+        }
+    }
+
+    /// End offset of the first unconditional `super()` call in an expression.
+    /// A sequence remains unconditional, but nested conditionals and functions do not.
+    fn unconditional_super_call_end(expr: &Expression<'a>) -> Option<u32> {
+        match expr {
+            Expression::CallExpression(call) if call.callee.is_super() => Some(call.span.end),
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().find_map(Self::unconditional_super_call_end)
+            }
+            _ => None,
+        }
+    }
+
+    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
+        Self::unconditional_super_call_end(expr).is_some()
+    }
+
     /// Checks if a member expression's base object may be mutated.
     ///
     /// This is used to prevent incorrect transformations like:
@@ -91,106 +172,196 @@ impl<'a> PeepholeOptimizations {
     /// Checks if an expression's reference may change due to mutation.
     ///
     /// Returns `true` if the expression references a symbol that may be mutated,
-    /// or if the expression is not a simple identifier/this reference.
+    /// is externally mutable through an ESM import or Script global, or is not a
+    /// simple identifier/this reference.
     pub fn is_expression_that_reference_may_change(
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::Identifier(id) => {
-                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                {
-                    Self::is_symbol_mutated(symbol_id, ctx)
-                } else {
-                    true
-                }
+                let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id();
+                symbol_id.is_none_or(|symbol_id| Self::symbol_value_may_change(symbol_id, ctx))
             }
             Expression::ThisExpression(_) => false,
             _ => true,
         }
     }
 
-    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
-    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
-    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    /// Whether reading a resolved symbol again could produce a different value.
+    /// Imported bindings and Script-root globals can change externally.
+    ///
+    /// Uses the O(1) cached reference counts from `SymbolValue` when available,
+    /// falling back to the O(num_refs) scan in `Scoping::symbol_is_mutated` for
+    /// symbols without cached values.
     ///
     /// Only variable declarators have cached values (populated during
     /// `exit_variable_declarator` → `init_symbol_value`); function declarations
     /// and other binding kinds still take the fallback path.
-    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
-            sv.write_references_count > 0
+    fn symbol_value_may_change(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if scoping.symbol_flags(symbol_id).is_import()
+            || (ctx.source_type().is_script()
+                && scoping.symbol_scope_id(symbol_id) == scoping.root_scope_id())
+        {
+            return true;
+        }
+
+        if let Some(sv) = ctx.state.symbols.value(symbol_id) {
+            sv.references.has_writes()
         } else {
-            ctx.scoping().symbol_is_mutated(symbol_id)
+            scoping.symbol_is_mutated(symbol_id)
         }
     }
 
-    /// Refresh `ScopeFlags::DirectEval` from live direct-eval call sites.
+    /// Whether the current read closes over a block-scoped binding.
     ///
-    /// `direct_eval_scopes` lists scopes that still contain a direct `eval(...)` call.
-    /// Clears `DirectEval` from every scope, then re-propagates from each scope in the
-    /// set up to the root.
+    /// This is a structural test, not proof that the binding is currently in its
+    /// Temporal Dead Zone. Moving such a read before an `await`/`yield` can expose
+    /// the TDZ while outer code is still initializing the binding. A same-function
+    /// binding cannot be initialized mid-suspension, so it stays inlinable.
     ///
-    /// Skipping this leaves `DirectEval` set on scopes whose only eval call was just
-    /// DCE'd, which keeps unused-declaration removal conservative until reparse.
-    fn refresh_direct_eval_flags(scoping: &mut Scoping, direct_eval_scopes: &FxHashSet<ScopeId>) {
-        // Semantic propagates `DirectEval` to the root, so an empty live set plus a
-        // clean root means no scope has the flag — nothing to clear or set.
-        if direct_eval_scopes.is_empty() && !scoping.root_scope_flags().contains_direct_eval() {
-            return;
+    /// <https://github.com/rolldown/rolldown/issues/9959>
+    fn is_closed_over_block_scoped_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        if !scoping.symbol_flags(symbol_id).is_block_scoped() {
+            return false;
         }
 
-        for index in 0..scoping.scopes_len() {
-            scoping.scope_flags_mut(ScopeId::from_usize(index)).remove(ScopeFlags::DirectEval);
-        }
+        let binding_scope = scoping.symbol_scope_id(symbol_id);
+        Self::read_crosses_function_boundary(ctx.current_scope_id(), binding_scope, ctx)
+    }
 
-        for &scope_id in direct_eval_scopes {
-            let mut ancestor = Some(scope_id);
-            while let Some(scope_id) = ancestor {
-                let flags = scoping.scope_flags_mut(scope_id);
-                // An earlier iteration already flagged this chain; stop walking up.
-                if flags.contains_direct_eval() {
-                    break;
-                }
-                flags.insert(ScopeFlags::DirectEval);
-                ancestor = scoping.scope_parent_id(scope_id);
+    /// Whether moving this identifier read earlier could observe a different
+    /// value or enter a closed-over lexical's TDZ.
+    fn identifier_read_blocks_reorder(id: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id();
+        symbol_id.is_none_or(|symbol_id| {
+            Self::symbol_value_may_change(symbol_id, ctx)
+                || Self::is_closed_over_block_scoped_read(symbol_id, ctx)
+        })
+    }
+
+    /// Whether evaluating a member assignment-target part earlier could observe
+    /// a different binding value. This includes ordinary mutation and closed-over
+    /// lexicals that could still be in their TDZ (e.g. `v.x = await f()` or
+    /// `obj[v] = await f()`).
+    fn member_part_blocks_reorder(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match expr {
+            Expression::Identifier(id) => Self::identifier_read_blocks_reorder(id, ctx),
+            Expression::ThisExpression(this_expr) => {
+                let Some(this_scope) = Self::derived_constructor_this_scope(ctx) else {
+                    return false;
+                };
+                // Parameter defaults are visited before their function body, so a missing
+                // owner frame means this derived constructor's `this` is uninitialized.
+                let Some(owner_index) =
+                    ctx.state.body_frames.iter().rposition(|frame| frame.scope_id == this_scope)
+                else {
+                    return true;
+                };
+                // Source offsets stand in for execution order here. This assumes upstream
+                // transforms do not reorder `super()` and `this` without updating their spans;
+                // the current Rolldown and oxc-minify pipelines satisfy this assumption.
+                // Arrow body frames above the owner share its lexical `this`, so `super()`
+                // in any of those frames initializes the same binding.
+                !ctx.state.body_frames[owner_index..].iter().any(|frame| {
+                    frame
+                        .this_initialized_at
+                        .is_some_and(|initialized_at| this_expr.span.start >= initialized_at)
+                })
             }
+            _ => true,
         }
+    }
+
+    /// Whether evaluating a computed member key before a side-effecting
+    /// replacement could observe a different value.
+    ///
+    /// The key expression and `GetValue` move before the assignment RHS, but
+    /// `ToPropertyKey` still happens afterward. A scope-independent literal or
+    /// a stable simple reference is therefore safe regardless of its value type.
+    /// <https://tc39.es/ecma262/#sec-evaluate-property-access-with-expression-key>
+    fn computed_key_blocks_reorder(key: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        !key.is_literal_value(false, ctx) && Self::member_part_blocks_reorder(key, ctx)
+    }
+
+    /// True if the scope chain from `read_scope` up to (excluding) `stop_scope`
+    /// crosses a function boundary — i.e. the read is in a closure relative to
+    /// `stop_scope`. Async/generator/arrow scopes are all `Function`.
+    fn read_crosses_function_boundary(
+        read_scope: ScopeId,
+        stop_scope: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let scoping = ctx.scoping();
+        scoping
+            .scope_ancestors(read_scope)
+            .take_while(|&scope_id| scope_id != stop_scope)
+            .any(|scope_id| scoping.scope_flags(scope_id).is_function())
     }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
-    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.symbol_values.reset();
-        ctx.state.proto_write_symbols.clear();
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Any module loader (`import`, `export * from`, `export … from`) can, on a
+        // cycle, evaluate a foreign module that observes a not-yet-assigned binding
+        // our exports close over. So the program root starts its prelude "unsafe"
+        // when the body has any loader — bailing every program-scope var inline.
+        // Loaders are hoisted, so scan the whole current body each pass (an
+        // import may follow a leading var, or an earlier pass may remove one).
+        let module_has_loaders = program
+            .body
+            .iter()
+            .any(|s| s.as_module_declaration().is_some_and(|m| m.source().is_some()));
+        // `enter`/`exit_function_body` are balanced, so the stack is back to its
+        // single program-root entry by the next pass; reset it in place rather
+        // than reallocating (matching the `reset`/`clear` above).
+        *ctx.state.body_frames.last_mut() = BodyFrame {
+            scope_id: ctx.scoping().root_scope_id(),
+            hoisted_var_inlining_unsafe: module_has_loaders,
+            this_initialized_at: None,
+        };
         ctx.state.object_property_usage = crate::state::ObjectPropertyUsageState::default();
-        ctx.state.changed = false;
+        // `PassChanges` is managed by pass completion, not reset per
+        // traversal.
+    }
+
+    fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        let initialized_at = if Self::derived_constructor_this_scope(ctx).is_some() {
+            body.statements.iter().find_map(|stmt| match stmt {
+                Statement::ExpressionStatement(stmt) => {
+                    Self::unconditional_super_call_end(&stmt.expression)
+                }
+                _ => None,
+            })
+        } else {
+            None
+        };
+        ctx.state.body_frames.push(BodyFrame {
+            scope_id: ctx.current_scope_id(),
+            hoisted_var_inlining_unsafe: false,
+            this_initialized_at: initialized_at,
+        });
+    }
+
+    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.body_frames.pop();
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::remove_unused_object_properties(program, ctx);
-
-        if ctx.state.changed {
-            // Walk the live AST to collect data the peephole pass left stale:
-            // - Live `IdentifierReference` IDs, so dead references can be batch-pruned
-            //   from each symbol's reference list (individual deletion via
-            //   `delete_resolved_reference` is O(n) per call, O(n²) over many removals,
-            //   which shows up in bundler output with thousands of unused
-            //   `var import_X = __toESM(require_Y())` declarations).
-            // - Scopes that still contain a direct `eval()` call, needed by
-            //   `refresh_direct_eval_flags`.
-            let mut collector = LiveUsageCollector::new(ctx.scoping(), ctx.ast.allocator);
-            collector.visit_program(program);
-            let LiveUsageCollector { refs, direct_eval_scopes, .. } = collector;
-            let scoping = ctx.scoping_mut();
-            scoping.retain_resolved_references(&refs);
-            Self::refresh_direct_eval_flags(scoping, &direct_eval_scopes);
+        if !ctx.is_tree_shake_only() {
+            Self::remove_unused_object_properties(program, ctx);
         }
-        // Only check class_symbols_stack in full optimization mode (not DCE mode)
-        debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
+        // Private member usage is collected only in full optimization mode.
+        debug_assert!(ctx.is_tree_shake_only() || ctx.state.private_member_usage.is_at_root());
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         Self::minimize_statements(stmts, ctx);
     }
 
@@ -199,7 +370,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
                 Statement::IfStatement(_) => Self::try_fold_if(stmt, ctx),
@@ -229,8 +400,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     if let Statement::IfStatement(if_stmt) = stmt
                         && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
                     {
-                        *stmt = folded_stmt;
-                        ctx.state.changed = true;
+                        ctx.replace_statement(stmt, folded_stmt);
                     }
                 }
                 Statement::WhileStatement(s) => {
@@ -260,10 +430,16 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             }
             Self::try_fold_expression_stmt(stmt, ctx);
         }
+
+        // Maintain the per-body declarative-prelude flag used by
+        // `is_hoisted_var_inlineable`.
+        if !Self::is_declarative_body_statement(stmt) {
+            Self::mark_current_body_unsafe(ctx);
+        }
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_for_statement(stmt, ctx);
@@ -271,7 +447,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_return_statement(stmt, ctx);
@@ -282,7 +458,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_variable_declaration(decl, ctx);
@@ -295,10 +471,24 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     ) {
         Self::init_symbol_value(decl, ctx);
         Self::collect_object_property_candidate(decl, ctx);
+        // Per-declarator update of the body-unsafe flag. Catches multi-declarator
+        // statements (`var [x=call()] = '', flag = true;`, possibly produced by
+        // join-vars) where an earlier declarator runs user code via a
+        // destructuring default or non-literal init — the per-statement check
+        // would fire too late for subsequent declarators' `init_symbol_value`.
+        if !Self::is_declarative_variable_declarator(decl) {
+            Self::mark_current_body_unsafe(ctx);
+        }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        // Tree-shaking mode: fewer passes than full minify below. Only the ones
+        // that remove code, plus the constant folds those removals need. The
+        // folds stay on because the removal passes don't evaluate compound
+        // conditions themselves: `if ('production' === 'production')` must fold
+        // to `true` before the dead branch can be dropped. Passes that only
+        // shrink code (`substitute_*`, `minimize_*`) are left out.
+        if ctx.is_tree_shake_only() {
             match expr {
                 Expression::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
@@ -344,6 +534,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_swap_binary_expressions(e);
                     Self::fold_binary_expr(expr, ctx);
                     Self::fold_binary_typeof_comparison(expr, ctx);
+                    Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_loose_boolean(expr, ctx);
                     Self::minimize_binary(expr, ctx);
                     Self::substitute_loose_equals_undefined(expr, ctx);
@@ -354,6 +545,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::fold_unary_expr(expr, ctx);
                     Self::minimize_unary(expr, ctx);
                     Self::substitute_unary_plus(expr, ctx);
+                    Self::fold_sequence_expression(expr, ctx);
+                }
+                Expression::YieldExpression(_) | Expression::AwaitExpression(_) => {
+                    Self::fold_sequence_expression(expr, ctx);
                 }
                 Expression::StaticMemberExpression(_) => {
                     Self::fold_static_member_expr(expr, ctx);
@@ -365,6 +560,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Expression::LogicalExpression(_) => {
                     Self::fold_logical_expr(expr, ctx);
+                    Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_logical_expression(expr, ctx);
                     Self::substitute_is_object_and_not_null(expr, ctx);
                     Self::substitute_rotate_logical_expression(expr, ctx);
@@ -386,8 +582,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
-                        *expr = changed;
-                        ctx.state.changed = true;
+                        ctx.replace_expression(expr, changed);
                     }
                     Self::try_fold_conditional_expression(expr, ctx);
                 }
@@ -418,7 +613,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         if expr.operator.is_not() {
@@ -427,26 +622,28 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
+        if !ctx.is_tree_shake_only() {
+            Self::substitute_call_expression(e, ctx);
+            Self::remove_empty_spread_arguments(&mut e.arguments);
+            // A method call receives the object as `this`, so the callee can inspect any property.
+            Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
         }
-        Self::substitute_call_expression(e, ctx);
-        Self::remove_empty_spread_arguments(&mut e.arguments);
-        // A method call receives the object as `this`, so the callee can inspect any property.
-        Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
+        // Re-evaluate each iteration: peephole folding/inlining may expose a
+        // pure-eligible arg shape that `Normalize`'s one-shot pass missed.
+        Normalize::set_no_side_effects_to_call_expr(e, ctx);
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
+        if !ctx.is_tree_shake_only() {
+            Self::substitute_new_expression(e, ctx);
+            Self::remove_empty_spread_arguments(&mut e.arguments);
+            Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
         }
-        Self::substitute_new_expression(e, ctx);
-        Self::remove_empty_spread_arguments(&mut e.arguments);
-        Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
+        Normalize::set_pure_or_no_side_effects_to_new_expr(e, ctx);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_object_property(prop, ctx);
@@ -457,7 +654,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_assignment_target_property(node, ctx);
@@ -468,14 +665,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_assignment_target_property_property(prop, ctx);
     }
 
     fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_binding_property(prop, ctx);
@@ -486,7 +683,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_method_definition(prop, ctx);
@@ -497,7 +694,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_property_definition(prop, ctx);
@@ -508,7 +705,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         prop: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_accessor_property(prop, ctx);
@@ -519,7 +716,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::convert_to_dotted_properties(expr, ctx);
@@ -540,23 +737,23 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.class_symbols_stack.push_class_scope();
+        ctx.state.private_member_usage.enter_class();
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::remove_dead_code_exit_class_body(body, ctx);
         Self::remove_unused_private_members(body, ctx);
-        ctx.state.class_symbols_stack.pop_class_scope(Self::get_declared_private_symbols(body));
+        ctx.state.private_member_usage.exit_class(Self::declared_private_member_names(body));
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
         Self::substitute_catch_clause(catch, ctx);
@@ -567,10 +764,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name.into());
+        ctx.state.private_member_usage.record_use(node.field.name.into());
     }
 
     fn exit_private_in_expression(
@@ -578,46 +775,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         node: &mut PrivateInExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name.into());
-    }
-}
-
-struct LiveUsageCollector<'a, 's> {
-    scoping: &'s Scoping,
-    /// Bitset of live `ReferenceId`s. Sized to `scoping.references_len()` at construction.
-    /// Replaces a `FxHashSet<ReferenceId>`: insert + contains drop from ~25 cycles to ~5,
-    /// and the per-file memory footprint goes from MB-scale to KB-scale.
-    refs: BitSet<'a>,
-    direct_eval_scopes: FxHashSet<ScopeId>,
-}
-
-impl<'a, 's> LiveUsageCollector<'a, 's> {
-    fn new(scoping: &'s Scoping, allocator: &'a Allocator) -> Self {
-        Self {
-            scoping,
-            refs: BitSet::new_in(scoping.references_len(), allocator),
-            direct_eval_scopes: FxHashSet::default(),
-        }
-    }
-}
-
-impl<'a> Visit<'a> for LiveUsageCollector<'_, '_> {
-    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
-        if !it.optional
-            && let Some(ident) = it.callee.get_identifier_reference()
-            && ident.name == "eval"
-        {
-            let scope_id = self.scoping.get_reference(ident.reference_id()).scope_id();
-            self.direct_eval_scopes.insert(scope_id);
-        }
-        // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
-        walk_call_expression(self, it);
-    }
-
-    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-        self.refs.set_bit(it.reference_id().index());
+        ctx.state.private_member_usage.record_use(node.left.name.into());
     }
 }

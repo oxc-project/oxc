@@ -1,0 +1,7 @@
+{
+  "workspaces": {
+    "packages/test-dev-server/tests/fixtures/*": {
+      "entry": ["dev.config.mjs", "src/*.js"] // no @rolldown/test-dev-server plugin
+    }
+  }
+}

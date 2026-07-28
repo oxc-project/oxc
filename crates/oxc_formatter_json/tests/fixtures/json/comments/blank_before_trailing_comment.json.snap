@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "compilerOptions": {
+    "target": "es2016"
+
+    // trailing leading comment with blank above
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  "compilerOptions": {
+    "target": "es2016"
+
+    // trailing leading comment with blank above
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  "compilerOptions": {
+    "target": "es2016"
+
+    // trailing leading comment with blank above
+  }
+}
+
+===================== End =====================

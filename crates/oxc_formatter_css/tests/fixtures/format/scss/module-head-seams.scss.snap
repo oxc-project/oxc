@@ -1,0 +1,73 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// `@use`/`@forward` prelude heads are one fill: an overflow breaks at the
+// token seams (`as`, `show`/`hide`, member commas) with a +2 continuation.
+// The last chunk's fit excludes the trailing `;` (so a line that only exceeds
+// the width by the `;` stays intact, like Prettier).
+@use "some/deeply/nested/module/path/design-tokens/colors" as really-long-namespace-alias-name-here;
+@forward "some/deeply/nested/module/path/library" as extremely-long-prefix-for-all-members-*;
+@forward "some/deeply/nested/path" show one-single-very-long-member-name-that-overflows-the-width;
+@use "some/deeply/nested/module/path/tokens" as really-long-namespace-alias-name;
+@use "x" as *;
+// Comments glue to the token that follows them (or to the member before a `,`).
+@forward "a" show x, /* c */ y;
+@use "a" /* c */ as b;
+@forward "a" as p-* /* before show */ show x, y;
+// KNOWN DIVERGENCE (see AGENTS.md): when the FIRST member alone overflows,
+// Prettier puts it at +4 and every later member on its own line at +2 (an
+// artifact of its nested comma-chunk fill); our flat fill packs members at +2.
+// The next statement deviates from Prettier in that way.
+@forward "path" show extremely-long-first-member-name-that-overflows-the-print-width, second-one;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// `@use`/`@forward` prelude heads are one fill: an overflow breaks at the
+// token seams (`as`, `show`/`hide`, member commas) with a +2 continuation.
+// The last chunk's fit excludes the trailing `;` (so a line that only exceeds
+// the width by the `;` stays intact, like Prettier).
+@use "some/deeply/nested/module/path/design-tokens/colors" as
+  really-long-namespace-alias-name-here;
+@forward "some/deeply/nested/module/path/library" as
+  extremely-long-prefix-for-all-members-*;
+@forward "some/deeply/nested/path" show
+  one-single-very-long-member-name-that-overflows-the-width;
+@use "some/deeply/nested/module/path/tokens" as really-long-namespace-alias-name;
+@use "x" as *;
+// Comments glue to the token that follows them (or to the member before a `,`).
+@forward "a" show x, /* c */ y;
+@use "a" /* c */ as b;
+@forward "a" as p-* /* before show */ show x, y;
+// KNOWN DIVERGENCE (see AGENTS.md): when the FIRST member alone overflows,
+// Prettier puts it at +4 and every later member on its own line at +2 (an
+// artifact of its nested comma-chunk fill); our flat fill packs members at +2.
+// The next statement deviates from Prettier in that way.
+@forward "path" show
+  extremely-long-first-member-name-that-overflows-the-print-width, second-one;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// `@use`/`@forward` prelude heads are one fill: an overflow breaks at the
+// token seams (`as`, `show`/`hide`, member commas) with a +2 continuation.
+// The last chunk's fit excludes the trailing `;` (so a line that only exceeds
+// the width by the `;` stays intact, like Prettier).
+@use "some/deeply/nested/module/path/design-tokens/colors" as really-long-namespace-alias-name-here;
+@forward "some/deeply/nested/module/path/library" as extremely-long-prefix-for-all-members-*;
+@forward "some/deeply/nested/path" show one-single-very-long-member-name-that-overflows-the-width;
+@use "some/deeply/nested/module/path/tokens" as really-long-namespace-alias-name;
+@use "x" as *;
+// Comments glue to the token that follows them (or to the member before a `,`).
+@forward "a" show x, /* c */ y;
+@use "a" /* c */ as b;
+@forward "a" as p-* /* before show */ show x, y;
+// KNOWN DIVERGENCE (see AGENTS.md): when the FIRST member alone overflows,
+// Prettier puts it at +4 and every later member on its own line at +2 (an
+// artifact of its nested comma-chunk fill); our flat fill packs members at +2.
+// The next statement deviates from Prettier in that way.
+@forward "path" show extremely-long-first-member-name-that-overflows-the-print-width, second-one;
+
+===================== End =====================

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     correctness,
     config = NoUnsafeOptionalChaining,
     version = "0.0.5",
+    short_description = "Disallow use of optional chaining in contexts where the `undefined` value is not allowed.",
 );
 
 impl Rule for NoUnsafeOptionalChaining {

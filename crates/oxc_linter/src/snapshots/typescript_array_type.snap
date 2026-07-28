@@ -712,6 +712,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `ReadonlyArray<new (...args: any[]) => void>` with `readonly (new (...args: any[]) => void)[]`.
 
+  ⚠ typescript(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
+   ╭─[array_type.ts:1:23]
+ 1 │ type Conditional<T> = Array<T extends string ? string : number>;
+   ·                       ─────────────────────────────────────────
+   ╰────
+  help: Replace `Array<T extends string ? string : number>` with `(T extends string ? string : number)[]`.
+
+  ⚠ typescript(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
+   ╭─[array_type.ts:1:23]
+ 1 │ type Conditional<T> = (T extends string ? string : number)[];
+   ·                       ──────────────────────────────────────
+   ╰────
+  help: Replace `(T extends string ? string : number)[]` with `Array<T extends string ? string : number>`.
+
+  ⚠ typescript(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
+   ╭─[array_type.ts:1:23]
+ 1 │ type Conditional<T> = (T extends string ? string : number)[];
+   ·                       ──────────────────────────────────────
+   ╰────
+  help: Replace `(T extends string ? string : number)[]` with `Array<T extends string ? string : number>`.
+
   ⚠ typescript(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:1:16]
  1 │ let a: Promise<string[]> = Promise.resolve([]);

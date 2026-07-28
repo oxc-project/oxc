@@ -1,0 +1,11 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.useMemo-callback-generator.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] VoidUseMemo: useMemo() callbacks must return a value", labels: One([LabeledSpan { label: Some("useMemo() callbacks must return a value"), span: SourceSpan { offset: SourceOffset(206), length: 31 }, primary: false }]), help: Some("This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Handle YieldExpression expressions", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(225), length: 7 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] UseMemo: useMemo() callbacks may not be async or generator functions", labels: One([LabeledSpan { label: Some("Async and generator functions are not supported"), span: SourceSpan { offset: SourceOffset(206), length: 31 }, primary: false }]), help: Some("useMemo() callbacks are called once and must synchronously return a value"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

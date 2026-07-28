@@ -1,0 +1,25 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fbt/repro-separately-memoized-fbt-param.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { fbt } from "fbt";
+import { useState } from "react";
+const MIN = 10;
+function Component() {
+	const $ = _c(2);
+	const [count] = useState(0);
+	let t0;
+	if ($[0] !== count) {
+		t0 = fbt("Expected at least " + fbt.param("min", MIN, { number: true }) + " items, but got " + fbt.param("count", count, { number: true }) + " items.", "Error description");
+		$[0] = count;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{}]
+};

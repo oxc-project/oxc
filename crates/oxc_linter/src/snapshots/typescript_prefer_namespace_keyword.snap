@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_namespace_keyword.tsx:2:9]
  1 │     
  2 │ ╭─▶         declare module foo {
- 3 │ │             declare module bar {}
+ 3 │ │             module bar {}
  4 │ ╰─▶         }
  5 │             
    ╰────
@@ -40,8 +40,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ typescript(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
    ╭─[prefer_namespace_keyword.tsx:3:11]
  2 │         declare module foo {
- 3 │           declare module bar {}
-   ·           ─────────────────────
+ 3 │           module bar {}
+   ·           ─────────────
  4 │         }
    ╰────
   help: Replace `module` with `namespace` for internal declarations.

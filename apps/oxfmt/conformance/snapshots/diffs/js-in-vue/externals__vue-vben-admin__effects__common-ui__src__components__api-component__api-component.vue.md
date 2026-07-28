@@ -14,7 +14,22 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -274,9 +274,9 @@
+@@ -64,9 +64,13 @@
+    * - 函数：自定义选择逻辑，函数的参数为请求的结果数组，返回值为选择的选项
+    * - false：不自动选择(默认)
+    */
+   autoSelect?:
+-    "first" | "last" | "one" | ((item: OptionsItem[]) => OptionsItem) | false;
++    | "first"
++    | "last"
++    | "one"
++    | ((item: OptionsItem[]) => OptionsItem)
++    | false;
+ }
+ 
+ defineOptions({ name: "ApiComponent", inheritAttrs: false });
+ 
+@@ -270,9 +274,9 @@
    getOptions: () => unref(getOptions),
    /** 获取当前值 */
    getValue: () => unref(modelValue),
@@ -403,11 +418,7 @@ interface Props {
    * - false：不自动选择(默认)
    */
   autoSelect?:
-    | "first"
-    | "last"
-    | "one"
-    | ((item: OptionsItem[]) => OptionsItem)
-    | false;
+    "first" | "last" | "one" | ((item: OptionsItem[]) => OptionsItem) | false;
 }
 
 defineOptions({ name: "ApiComponent", inheritAttrs: false });

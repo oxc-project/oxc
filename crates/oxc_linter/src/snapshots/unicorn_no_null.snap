@@ -91,6 +91,57 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:13]
+ 1 │ const foo = null;
+   ·             ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:2:20]
+ 1 │ function foo() {
+ 2 │             return null;
+   ·                    ────
+ 3 │             }
+   ╰────
+  help: Delete this code.
+
+  ⚠ unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:1:13]
+ 1 │ if (foo === null) {}
+   ·             ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:1:6]
+ 1 │ foo([null])
+   ·      ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:1:12]
+ 1 │ foo(bar ?? null)
+   ·            ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:1:9]
+ 1 │ foo(...[null])
+   ·         ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:1:19]
+ 1 │ new HttpResponse([null])
+   ·                   ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:1:13]
  1 │ if (foo === null) {}
    ·             ────
    ╰────

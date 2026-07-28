@@ -1,4 +1,3 @@
-use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
     ast::{Argument, BindingPattern, Expression, IdentifierReference},
@@ -52,30 +51,29 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     version = "0.0.18",
+    short_description = "Prefer `EventTarget` over `EventEmitter`.",
 );
 
 impl Rule for PreferEventTarget {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::IdentifierReference(ident) = node.kind() else {
-            return;
+        let ident = match node.kind() {
+            AstKind::Class(class) => {
+                let Some(Expression::Identifier(ident)) = &class.super_class else {
+                    return;
+                };
+                ident
+            }
+            AstKind::NewExpression(new_expr) => {
+                let Expression::Identifier(ident) = &new_expr.callee else {
+                    return;
+                };
+                ident
+            }
+            _ => return,
         };
 
         if ident.name.as_str() != "EventEmitter" {
             return;
-        }
-
-        match ctx.nodes().parent_kind(node.id()) {
-            AstKind::Class(_) => {}
-            AstKind::NewExpression(new_expr) => {
-                let Expression::Identifier(callee_ident) = &new_expr.callee else {
-                    return;
-                };
-
-                if ident.unstable_address() != callee_ident.address() {
-                    return;
-                }
-            }
-            _ => return,
         }
 
         if is_event_emitter_from_ignored_package(ident, ctx) {

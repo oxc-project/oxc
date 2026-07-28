@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.invalid-exhaustive-deps-disallow-unused-stable-types.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] MemoDependencies: Found extra memoization dependencies", labels: One([LabeledSpan { label: Some("Unnecessary dependency `setState`"), span: SourceSpan { offset: SourceOffset(318), length: 8 }, primary: false }]), help: Some("Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

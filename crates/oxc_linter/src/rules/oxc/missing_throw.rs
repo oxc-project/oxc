@@ -41,14 +41,15 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.0.3",
+    short_description = "Checks whether the `throw` keyword is missing in front of a `new` expression.",
 );
 
 impl Rule for MissingThrow {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(new_expr) = node.kind() else {
-            return;
-        };
-        if new_expr.callee.is_specific_id("Error") && Self::has_missing_throw(node, ctx) {
+        if let AstKind::NewExpression(new_expr) = node.kind()
+            && new_expr.callee.is_specific_id("Error")
+            && Self::has_missing_throw(node, ctx)
+        {
             ctx.diagnostic_with_suggestion(missing_throw_diagnostic(new_expr.span), |fixer| {
                 fixer.insert_text_before(node, "throw ")
             });
@@ -58,27 +59,20 @@ impl Rule for MissingThrow {
 
 impl MissingThrow {
     fn has_missing_throw<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-        let mut node_ancestors = ctx.nodes().ancestor_ids(node.id());
-
-        let Some(node_id) = node_ancestors.next() else {
+        if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExpressionStatement(_)) {
             return false;
-        };
+        }
 
-        if matches!(ctx.nodes().kind(node_id), AstKind::ExpressionStatement(_)) {
-            for node_id in node_ancestors {
-                match ctx.nodes().kind(node_id) {
-                    // ignore arrow `const foo = () => new Error()`
-                    AstKind::ArrowFunctionExpression(arrow_expr) if arrow_expr.expression => {
-                        return false;
-                    }
-                    AstKind::ArrayExpression(_) | AstKind::Function(_) => break,
-                    _ => {}
-                }
-            }
+        let expression_statement_id = ctx.nodes().parent_id(node.id());
+        let expression_statement_parent_id = ctx.nodes().parent_id(expression_statement_id);
+        if !matches!(ctx.nodes().kind(expression_statement_parent_id), AstKind::FunctionBody(_)) {
             return true;
         }
 
-        false
+        !matches!(
+            ctx.nodes().parent_kind(expression_statement_parent_id),
+            AstKind::ArrowFunctionExpression(arrow_expr) if arrow_expr.expression
+        )
     }
 }
 

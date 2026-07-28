@@ -1,16 +1,17 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, ReturnStatement, Statement,
-    },
+    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement, Statement},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule,
+    utils::is_vue_component_options_object,
+};
 
 fn expected_boolean_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -70,7 +71,8 @@ declare_oxc_lint!(
     ReturnInEmitsValidator,
     vue,
     correctness,
-    version = "next",
+    version = "1.67.0",
+    short_description = "Enforce that a `return` statement is present in `emits` validators (in Vue.js 3.0.0+).",
 );
 
 impl Rule for ReturnInEmitsValidator {
@@ -142,33 +144,6 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
     None
 }
 
-fn is_vue_component_options_object(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let AstKind::ObjectExpression(obj) = node.kind() else { return false };
-    ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::ExportDefaultDeclaration(decl) => decl.declaration.span() == obj.span,
-        AstKind::CallExpression(call) => {
-            call.arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|e| e.span() == obj.span))
-                && is_vue_component_factory_call(call)
-        }
-        _ => false,
-    })
-}
-
-fn is_vue_component_factory_call(call: &CallExpression<'_>) -> bool {
-    if call
-        .callee
-        .get_identifier_reference()
-        .is_some_and(|ident| matches!(ident.name.as_str(), "createApp" | "defineComponent"))
-    {
-        return true;
-    }
-    call.callee.get_member_expr().is_some_and(|member_expr| {
-        member_expr.static_property_name().is_some_and(|name| name == "component")
-    })
-}
-
 /// Walks the body of an emits validator and reports whether at least one
 /// return statement carries a value, and whether at least one of those values
 /// can be truthy. Mirrors the upstream eslint-plugin-vue logic, with nested
@@ -216,16 +191,16 @@ struct ReturnVisitor {
     possible_of_return_true: bool,
 }
 
-impl<'a> Visit<'a> for ReturnVisitor {
+impl<'a> VisitJs<'a> for ReturnVisitor {
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.nested_depth += 1;
-        walk::walk_function(self, func, flags);
+        walk_js::walk_function(self, func, flags);
         self.nested_depth -= 1;
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         self.nested_depth += 1;
-        walk::walk_arrow_function_expression(self, arrow);
+        walk_js::walk_arrow_function_expression(self, arrow);
         self.nested_depth -= 1;
     }
 
@@ -238,7 +213,7 @@ impl<'a> Visit<'a> for ReturnVisitor {
                 self.possible_of_return_true = true;
             }
         }
-        walk::walk_return_statement(self, stmt);
+        walk_js::walk_return_statement(self, stmt);
     }
 }
 
@@ -559,6 +534,21 @@ fn test() {
                 <script setup>
                 defineEmits({
                   foo () {
+                  }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.mixin({
+                  emits: {
+                    foo () {
+                    }
                   }
                 })
                 </script>

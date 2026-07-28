@@ -138,11 +138,9 @@ impl Tool for FakeTool {
 
     fn get_code_actions_or_commands(
         &self,
-        uri: &Uri,
-        _range: &Range,
-        _context: &CodeActionContext,
+        params: &crate::CodeActionParams,
     ) -> Vec<CodeActionOrCommand> {
-        if uri.as_str().ends_with("code_action.config") {
+        if params.uri.as_str().ends_with("code_action.config") {
             return vec![CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Code Action title".to_string(),
                 kind: Some(CodeActionKind::QUICKFIX),
@@ -201,6 +199,7 @@ struct TestServer {
     req_stream: DuplexStream,
     res_stream: DuplexStream,
     responses: VecDeque<String>,
+    response_buffer: Vec<u8>,
 }
 
 impl TestServer {
@@ -228,29 +227,58 @@ impl TestServer {
 
         tokio::spawn(Server::new(req_server, res_server, socket).serve(service));
 
-        Self { req_stream: req_client, res_stream: res_client, responses: VecDeque::new() }
+        Self {
+            req_stream: req_client,
+            res_stream: res_client,
+            responses: VecDeque::new(),
+            response_buffer: Vec::new(),
+        }
     }
 
     fn encode(payload: &str) -> String {
         format!("Content-Length: {}\r\n\r\n{}", payload.len(), payload)
     }
 
-    fn decode(text: &str) -> Vec<String> {
+    fn decode(buffer: &mut Vec<u8>) -> Vec<String> {
         let mut ret = Vec::new();
-        let mut temp = text;
 
-        while !temp.is_empty() {
-            let p = temp.find("\r\n\r\n").unwrap();
-            let (header, body) = temp.split_at(p + 4);
+        while !buffer.is_empty() {
+            let Some(p) = buffer.windows(4).position(|window| window == b"\r\n\r\n") else {
+                break;
+            };
+
+            let header = std::str::from_utf8(&buffer[..p + 4]).unwrap();
             let len =
                 header.strip_prefix("Content-Length: ").unwrap().strip_suffix("\r\n\r\n").unwrap();
             let len: usize = len.parse().unwrap();
-            let (body, rest) = body.split_at(len);
-            ret.push(body.to_string());
-            temp = rest;
+            let body_start = p + 4;
+            let body_end = body_start + len;
+            if buffer.len() < body_end {
+                break;
+            }
+
+            let body = String::from_utf8(buffer[body_start..body_end].to_vec()).unwrap();
+            ret.push(body);
+            buffer.drain(..body_end);
         }
 
         ret
+    }
+
+    async fn read_more_messages(&mut self) {
+        let mut buf = vec![0; 1024];
+        let n = self.res_stream.read(&mut buf).await.unwrap();
+        assert_ne!(n, 0);
+        self.response_buffer.extend_from_slice(&buf[..n]);
+        for x in Self::decode(&mut self.response_buffer) {
+            self.responses.push_front(x);
+        }
+    }
+
+    async fn read_until_message(&mut self) {
+        while self.responses.is_empty() {
+            self.read_more_messages().await;
+        }
     }
 
     async fn send_request(&mut self, req: Request) {
@@ -274,48 +302,27 @@ impl TestServer {
 
     async fn recv_response(&mut self) -> Response {
         if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+            self.read_until_message().await;
         }
         let res = self.responses.pop_back().unwrap();
         serde_json::from_str(&res).unwrap()
     }
 
     async fn recv_notification(&mut self) -> Request {
-        if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
-        }
-        let res = self.responses.pop_back().unwrap();
-        // If the next payload is a response (no `method`), keep it queued for recv_response
-        // and attempt to return the next available notification without looping.
-        let val: serde_json::Value = serde_json::from_str(&res).unwrap();
-        if val.get("method").is_some() {
-            serde_json::from_value(val).unwrap()
-        } else {
-            // Put back the response for recv_response to consume
-            self.responses.push_front(res);
-            // If another message is already queued, return it
-            if let Some(next) = self.responses.pop_back() {
-                return serde_json::from_str(&next).unwrap();
-            }
-            // Otherwise perform a single read to fetch the notification
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+        let mut skipped_responses = Vec::new();
+        loop {
+            self.read_until_message().await;
+
             let res = self.responses.pop_back().unwrap();
-            serde_json::from_str(&res).unwrap()
+            let val: serde_json::Value = serde_json::from_str(&res).unwrap();
+            if val.get("method").is_some() {
+                for response in skipped_responses.into_iter().rev() {
+                    self.responses.push_back(response);
+                }
+                return serde_json::from_value(val).unwrap();
+            }
+
+            skipped_responses.push(res);
         }
     }
 
@@ -893,7 +900,7 @@ mod test_suite {
         let execute_command_response = server.recv_response().await;
         assert!(execute_command_response.is_ok());
         assert!(execute_command_response.result().is_some());
-        assert!(execute_command_response.id() == &Id::Number(3));
+        assert_eq!(execute_command_response.id(), &Id::Number(3));
         assert_eq!(execute_command_response.result().unwrap(), &json!(null));
 
         // shutdown request
@@ -1175,6 +1182,55 @@ mod test_suite {
         acknowledge_unregistrations(&mut server).await;
         // New watcher registration expected
         acknowledge_registrations(&mut server).await;
+
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_watched_file_changed_triggers_both_workspaces() {
+        let init_options = InitializeRequestOptions {
+            dynamic_watchers: true,
+            workspace_folders: Some(vec![
+                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
+                WorkspaceFolder {
+                    uri: WORKSPACE_2.parse().unwrap(),
+                    name: "workspace_2".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request_workspace_folders(init_options),
+        )
+        .await;
+
+        acknowledge_registrations(&mut server).await;
+
+        let file_change_notification =
+            did_change_watched_files(format!("{WORKSPACE}/watcher.config").as_str());
+        server.send_request(file_change_notification).await;
+
+        // Old watcher unregistration expected
+        acknowledge_unregistrations(&mut server).await;
+
+        let register_request = server.recv_notification().await;
+        assert_eq!(register_request.method(), "client/registerCapability");
+        let register_params: Value = register_request.params().unwrap().clone();
+        let registrations = register_params["registrations"].as_array().unwrap();
+        assert_eq!(registrations.len(), 2);
+        assert!(
+            registrations
+                .iter()
+                .any(|registration| { registration["id"] == format!("watcher-{WORKSPACE}") })
+        );
+        assert!(
+            registrations
+                .iter()
+                .any(|registration| { registration["id"] == format!("watcher-{WORKSPACE_2}") })
+        );
+        server.send_ack(register_request.id().unwrap()).await;
 
         server.shutdown(3).await;
     }
@@ -1535,7 +1591,7 @@ mod test_suite {
         server.send_request(code_action(3, &file)).await;
         let response = server.recv_response().await;
         assert!(response.is_ok());
-        assert!(response.id() == &Id::Number(3));
+        assert_eq!(response.id(), &Id::Number(3));
         assert!(response.result().is_some_and(|result| *result == Value::Null));
 
         server.shutdown(4).await;
@@ -1557,7 +1613,7 @@ mod test_suite {
         server.send_request(code_action(3, &file)).await;
         let response = server.recv_response().await;
         assert!(response.is_ok());
-        assert!(response.id() == &Id::Number(3));
+        assert_eq!(response.id(), &Id::Number(3));
         let actions: Vec<serde_json::Value> =
             serde_json::from_value(response.result().unwrap().clone()).unwrap();
         assert_eq!(actions.len(), 1);

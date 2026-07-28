@@ -1,0 +1,10 @@
+{
+  "a": 1,
+  // leading comment
+  "b": 2,
+  /* leading block */
+  "c": 3,
+
+  // intentional blank line before this comment
+  "d": 4
+}

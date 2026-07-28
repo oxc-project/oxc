@@ -2,14 +2,15 @@ use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Format, Formatter, prelude::*},
+    formatter::{Format, JsFormatter, prelude::*},
+    print::semicolon::write_trailing_comments_inside_parens,
     write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_arrow_body = matches!(
             self.parent(),
             AstNodes::ExpressionStatement(statement) if statement.is_arrow_function_body()
@@ -42,6 +43,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
             } else {
                 rest.fmt(f);
             }
+
+            // Print the comments before the closing paren inside the group,
+            // so they stay on the last expression's line.
+            write_trailing_comments_inside_parens(f, self.parent(), self.span.end, true);
         });
 
         // For arrow bodies, own the `soft_block_indent` so the break decision is made

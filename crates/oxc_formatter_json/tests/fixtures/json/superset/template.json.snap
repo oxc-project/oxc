@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[
+  ``,
+  `foo`,
+  `
+  multiple-line
+`,
+  `\u{1F409}\`'"\${}`,
+  { "as-object-value": `foo` }
+]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+[
+  ``,
+  `foo`,
+  `
+  multiple-line
+`,
+  `\u{1F409}\`'"\${}`,
+  { "as-object-value": `foo` }
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+[
+  ``,
+  `foo`,
+  `
+  multiple-line
+`,
+  `\u{1F409}\`'"\${}`,
+  { "as-object-value": `foo` }
+]
+
+===================== End =====================

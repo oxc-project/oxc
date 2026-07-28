@@ -34,15 +34,15 @@ fn extension_only_for_jsx_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-enum AllowType {
-    /// Always allow a `.jsx` file extension.
+enum JsxFilenameExtensionAllowMode {
+    /// Always allow a JSX filename extension.
     #[default]
     Always,
-    /// Only allow `.jsx` file extension for files that contain JSX syntax.
+    /// Only allow JSX filename extension for files that contain JSX syntax.
     AsNeeded,
 }
 
-impl AllowType {
+impl JsxFilenameExtensionAllowMode {
     pub fn from(raw: &str) -> Self {
         match raw {
             "as-needed" => Self::AsNeeded,
@@ -55,11 +55,11 @@ impl AllowType {
 pub struct JsxFilenameExtension(Box<JsxFilenameExtensionConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxFilenameExtensionConfig {
     /// When to allow a JSX filename extension. By default all files may have a JSX extension.
     /// Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
-    allow: AllowType,
+    allow: JsxFilenameExtensionAllowMode,
     /// The set of allowed file extensions.
     /// Can include or exclude the leading dot (e.g., "jsx" and ".jsx" are both valid).
     extensions: Vec<CompactStr>,
@@ -70,7 +70,7 @@ pub struct JsxFilenameExtensionConfig {
 impl Default for JsxFilenameExtensionConfig {
     fn default() -> Self {
         Self {
-            allow: AllowType::Always,
+            allow: JsxFilenameExtensionAllowMode::Always,
             extensions: vec![CompactStr::from("jsx")],
             ignore_files_without_code: false,
         }
@@ -118,6 +118,7 @@ declare_oxc_lint!(
     pending,
     config = JsxFilenameExtensionConfig,
     version = "0.15.14",
+    short_description = "Enforces consistent use of the `.jsx` file extension.",
 );
 
 impl Rule for JsxFilenameExtension {
@@ -132,7 +133,7 @@ impl Rule for JsxFilenameExtension {
         let allow = config
             .and_then(|config| config.get("allow"))
             .and_then(Value::as_str)
-            .map(AllowType::from)
+            .map(JsxFilenameExtensionAllowMode::from)
             .unwrap_or_default();
 
         let extensions = config
@@ -173,7 +174,7 @@ impl Rule for JsxFilenameExtension {
             return;
         }
 
-        if matches!(self.allow, AllowType::AsNeeded) {
+        if matches!(self.allow, JsxFilenameExtensionAllowMode::AsNeeded) {
             if self.ignore_files_without_code && ctx.nodes().len() == 1 {
                 return;
             }

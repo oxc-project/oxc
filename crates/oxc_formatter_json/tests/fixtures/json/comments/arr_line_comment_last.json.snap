@@ -1,0 +1,25 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[1, 2 // trailing line comment
+]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+[
+  1,
+  2 // trailing line comment
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+[
+  1,
+  2 // trailing line comment
+]
+
+===================== End =====================

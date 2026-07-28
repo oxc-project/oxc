@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, ObjectPropertyKind, TSType},
+    ast::{CallExpression, Expression, IdentifierReference, ObjectPropertyKind},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -39,7 +39,7 @@ pub struct ValidDefineOptions;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce valid `defineOptions` compiler macro.
+    /// Enforce valid use of the `defineOptions` compiler macro.
     ///
     /// ### Why is this bad?
     ///
@@ -70,7 +70,8 @@ declare_oxc_lint!(
     ValidDefineOptions,
     vue,
     correctness,
-    version = "next",
+    version = "1.67.0",
+    short_description = "Enforce valid use of the `defineOptions` compiler macro.",
 );
 
 const DISALLOWED_PROPS: &[(&str, &str)] = &[
@@ -152,14 +153,14 @@ impl<'a> DefineOptionsChecker<'a, '_> {
     }
 }
 
-impl<'a> Visit<'a> for DefineOptionsChecker<'a, '_> {
+impl<'a> VisitJs<'a> for DefineOptionsChecker<'a, '_> {
     fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
         if let Some(ident) = call.callee.get_identifier_reference()
             && ident.name == "defineOptions"
         {
             self.check_call(call);
         }
-        walk::walk_call_expression(self, call);
+        walk_js::walk_call_expression(self, call);
     }
 }
 
@@ -175,15 +176,12 @@ impl<'a> LocalReferenceChecker<'a, '_> {
     }
 }
 
-impl<'a> Visit<'a> for LocalReferenceChecker<'a, '_> {
+impl<'a> VisitJs<'a> for LocalReferenceChecker<'a, '_> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         if !is_non_local_reference(ident, self.ctx, self.options_span) {
             self.errors.push(ident.span);
         }
     }
-
-    // Skip TS type nodes. `as X` and `typeof str` are statically resolvable.
-    fn visit_ts_type(&mut self, _ty: &TSType<'a>) {}
 }
 
 fn is_non_local_reference(

@@ -18,6 +18,9 @@ class Cls {
   accessor d: string;
   private accessor e: string;
   private static accessor f: string;
+  accessor g!: string;
+  private accessor h!: string;
+  public accessor i!: string;
 }
 
 // Incorrect
@@ -66,4 +69,27 @@ class GlobalSymbol4 {
   }
 }
 
+// Accessor pairs use equivalent JavaScript property keys.
+class ComputedStringGetter {
+  get value() {
+    return "value";
+  }
+  set ["value"](v) {
+  }
+}
 
+class ComputedStringSetter {
+  get ["count"]() {
+    return "not-the-declaration-type";
+  }
+  set count(v: number) {
+  }
+}
+
+class ComputedNumericGetter {
+  get [1]() {
+    return true;
+  }
+  set [`1`](v) {
+  }
+}

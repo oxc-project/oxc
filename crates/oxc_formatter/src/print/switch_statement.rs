@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -7,7 +7,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Formatter,
+        JsFormatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
@@ -18,11 +18,22 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let discriminant = self.discriminant();
         let cases = self.cases();
-        let format_cases =
-            format_with(|f| if cases.is_empty() { hard_line_break().fmt(f) } else { cases.fmt(f) });
+        let format_cases = format_with(|f| {
+            if cases.is_empty() {
+                // Comments inside empty braces (`switch (a) { /* comment */ }`)
+                // would otherwise leak behind the closing brace.
+                if f.context().comments().has_comment_before(self.span.end) {
+                    format_dangling_comments(self.span).fmt(f);
+                } else {
+                    hard_line_break().fmt(f);
+                }
+            } else {
+                cases.fmt(f);
+            }
+        });
         write!(
             f,
             [
@@ -40,14 +51,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, SwitchCase<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(self);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_default = if let Some(test) = self.test() {
             write!(f, ["case", space(), test, ":"]);
             false

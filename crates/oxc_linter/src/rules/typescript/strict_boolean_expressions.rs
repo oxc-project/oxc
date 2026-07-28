@@ -121,6 +121,7 @@ declare_oxc_lint!(
     pending,
     config = StrictBooleanExpressionsConfig,
     version = "1.25.0",
+    short_description = "Disallow certain types in boolean expressions.",
 );
 
 impl Rule for StrictBooleanExpressions {

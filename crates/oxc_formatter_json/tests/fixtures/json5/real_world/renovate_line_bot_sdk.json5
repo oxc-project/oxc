@@ -1,0 +1,36 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+    'helpers:pinGitHubActionDigestsToSemver',
+  ],
+  timezone: 'Asia/Tokyo',
+  automerge: true,
+  platformAutomerge: true,
+  'git-submodules': {
+    enabled: true,
+  },
+  labels: [
+    'dependency upgrade',
+  ],
+  minimumReleaseAge : "7 days",
+  packageRules: [
+    {
+      labels: [
+        'dependency upgrade',
+        'line-openapi-update',
+      ],
+      // In many cases, we would like to update line-openapi by dispatching the GitHub workflow during working
+      // hours, as there are code changes.
+      // If that is forgotten, there's a possibility that line-openapi updates or code changes won't happen at
+      // all, so we allow it to run at night just in case.
+      schedule: [
+        'after 11pm',
+        'before 4am',
+      ],
+      matchPackageNames: [
+        '/line-openapi/',
+      ],
+    },
+  ],
+}

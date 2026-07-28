@@ -116,12 +116,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        match self {
-            Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void => {
-                matches!(&expr.argument, Self::NumericLiteral(lit) if lit.value == 0.0)
-            }
-            _ => false,
-        }
+        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void && expr.argument.is_number_0())
     }
 
     /// Returns `true` for [numeric literals](NumericLiteral)
@@ -797,13 +792,18 @@ impl CallExpression<'_> {
         }
     }
 
-    /// Returns `true` if this looks like a call to `require` in CommonJS (has a single string argument):
+    /// Returns the required module's [`StringLiteral`] if this looks like a call to `require` in
+    /// CommonJS (a single string literal argument), or [`None`] otherwise.
+    ///
     /// ```js
-    /// require('string') // => true
-    /// require('string', 'string') // => false
-    /// require() // => false
-    /// require(123) // => false
+    /// require('string') // => Some("string")
+    /// require('string', 'string') // => None
+    /// require() // => None
+    /// require(123) // => None
     /// ```
+    ///
+    /// The callee is matched with [`Expression::is_specific_id`], which looks through parentheses
+    /// and TypeScript wrappers such as `as`, `satisfies`, and `!`.
     pub fn common_js_require(&self) -> Option<&StringLiteral<'_>> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;
@@ -1284,10 +1284,7 @@ impl<'a> BindingPattern<'a> {
         }
     }
 
-    fn append_binding_identifiers<'b>(
-        &'b self,
-        idents: &mut std::vec::Vec<&'b BindingIdentifier<'a>>,
-    ) {
+    fn append_binding_identifiers<'b>(&'b self, idents: &mut Vec<&'b BindingIdentifier<'a>>) {
         match self {
             Self::BindingIdentifier(ident) => idents.push(ident),
             Self::AssignmentPattern(assign) => assign.left.append_binding_identifiers(idents),
@@ -1319,13 +1316,13 @@ impl<'a> BindingPattern<'a> {
     /// - `let {} = obj` would return `[]`
     /// - `let {a, b} = obj` would return `[a, b]`
     /// - `let {a = 1, b: c} = obj` would return `[a, c]`
-    pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
+    pub fn get_binding_identifiers(&self) -> Vec<&BindingIdentifier<'a>> {
         let mut idents = vec![];
         self.append_binding_identifiers(&mut idents);
         idents
     }
 
-    fn append_symbol_ids(&self, symbol_ids: &mut std::vec::Vec<SymbolId>) {
+    fn append_symbol_ids(&self, symbol_ids: &mut Vec<SymbolId>) {
         match self {
             Self::BindingIdentifier(ident) => {
                 symbol_ids.push(ident.symbol_id());
@@ -1351,7 +1348,7 @@ impl<'a> BindingPattern<'a> {
     }
 
     /// Returns the [`SymbolId`]s of the bound identifiers in this binding pattern.
-    pub fn get_symbol_ids(&self) -> std::vec::Vec<SymbolId> {
+    pub fn get_symbol_ids(&self) -> Vec<SymbolId> {
         let mut symbol_ids = vec![];
         self.append_symbol_ids(&mut symbol_ids);
         symbol_ids
@@ -1950,8 +1947,8 @@ impl<'a> ImportDeclarationSpecifier<'a> {
     /// - `import { foo } from "lib"` => `"foo"`
     /// - `import * as foo from "lib"` => `"foo"`
     /// - `import foo from "lib"` => `"foo"`
-    pub fn name(&self) -> Cow<'a, str> {
-        Cow::Borrowed(self.local().name.as_str())
+    pub fn name(&self) -> Ident<'a> {
+        self.local().name
     }
 }
 
@@ -2063,6 +2060,16 @@ impl ImportPhase {
         match self {
             Self::Source => "source",
             Self::Defer => "defer",
+        }
+    }
+}
+
+impl WithClauseKeyword {
+    /// Returns the syntax associated with this [`WithClauseKeyword`].
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::With => "with",
+            Self::Assert => "assert",
         }
     }
 }

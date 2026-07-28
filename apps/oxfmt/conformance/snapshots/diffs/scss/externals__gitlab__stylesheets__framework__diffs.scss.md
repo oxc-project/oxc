@@ -1,0 +1,4039 @@
+# externals/gitlab/stylesheets/framework/diffs.scss
+
+> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -21,9 +21,9 @@
+     .dropdown-menu {
+       cursor: auto;
+     }
+ 
+-    @media (max-width: map-get($grid-breakpoints, sm)-1) {
++    @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+       .file-header-content {
+         width: 0;
+         flex: 1;
+       }
+@@ -934,9 +934,9 @@
+     display: none;
+   }
+ }
+ 
+-@media (max-width: map-get($grid-breakpoints, lg)-1) {
++@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+   .diffs .files {
+     flex-direction: column;
+   }
+ 
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+$diff-file-header: 41px;
+
+// Common
+.diff-file {
+  margin-bottom: $gl-padding;
+
+  &.has-body {
+    .file-title {
+      box-shadow: 0 -2px 0 0 var(--white);
+    }
+  }
+
+  table.code tr:last-of-type td:last-of-type {
+    border-bottom-right-radius: $border-radius-default - 1px;
+  }
+
+  .file-title,
+  .file-title-flex-parent {
+    cursor: pointer;
+
+    .dropdown-menu {
+      cursor: auto;
+    }
+
+    @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+      .file-header-content {
+        width: 0;
+        flex: 1;
+      }
+
+      .file-actions {
+        margin-left: $gl-spacing-scale-2;
+      }
+    }
+
+    @media (min-width: map-get($grid-breakpoints, md)) {
+      position: sticky;
+      top: calc(
+        #{$calc-application-header-height} + #{$mr-sticky-header-height} -
+          #{$gl-border-size-1}
+      );
+      z-index: 120;
+
+      + .diff-content .md-header-preview {
+        top: calc(
+          #{$calc-application-header-height} + #{$mr-sticky-header-height} +
+            #{$diff-file-header} - #{$gl-border-size-1}
+        );
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -11px;
+        width: 10px;
+        height: calc(100% + 1px);
+        background: $body-bg;
+        pointer-events: none;
+      }
+
+      &.is-commit,
+      &.is-compare,
+      &.is-wiki {
+        top: calc(#{$calc-application-header-height});
+        border-top: 0;
+      }
+    }
+
+    &:hover {
+      background-color: $gray-normal;
+    }
+
+    svg {
+      vertical-align: middle;
+      top: -1px;
+    }
+  }
+
+  @media (min-width: map-get($grid-breakpoints, md)) {
+    &.conflict .file-title,
+    &.conflict .file-title-flex-parent {
+      top: $calc-application-header-height;
+    }
+  }
+
+  .diff-content {
+    background: $white;
+    color: $gl-text-color;
+
+    .unfold {
+      cursor: pointer;
+    }
+
+    .file-mode-changed {
+      padding: 10px;
+      color: $gray-500;
+    }
+
+    .suppressed-container {
+      padding: ($padding-base-vertical + 5px) $padding-base-horizontal;
+      text-align: center;
+
+      // "Changes suppressed. Click to show." link
+      .show-suppressed-diff {
+        font-size: 110%;
+        font-weight: $gl-font-weight-bold;
+      }
+    }
+
+    .diff-loading-error-block {
+      padding: $gl-padding * 2 $gl-padding;
+      text-align: center;
+    }
+  }
+
+  .image {
+    background: $gray-darker;
+    text-align: center;
+    padding: 30px;
+
+    .wrap {
+      display: inline-block;
+    }
+
+    .frame {
+      display: inline-block;
+      background-color: $white;
+      line-height: 0;
+
+      img {
+        border: 1px solid $white;
+        background-image:
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          ),
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          );
+        background-size: 10px 10px;
+        background-position:
+          0 0,
+          5px 5px;
+        max-width: 100%;
+      }
+
+      &.deleted {
+        border: 1px solid $deleted;
+      }
+
+      &.added {
+        border: 1px solid $added;
+      }
+    }
+
+    .image-info {
+      font-size: 12px;
+      margin: 5px 0 0;
+      color: $diff-image-info-color;
+    }
+
+    .view.swipe {
+      position: relative;
+
+      .swipe-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .swipe-wrap {
+        overflow: hidden;
+        border-right: 1px solid $gray-300;
+        position: absolute;
+        display: block;
+        top: 13px;
+        right: 7px;
+
+        &.left-oriented {
+          /* only for commit view (different swipe viewer) */
+          border-right: 0;
+          border-left: 1px solid $gray-300;
+        }
+      }
+
+      .frame {
+        top: 0;
+        right: 0;
+
+        &.old-diff {
+          /* only for commit / compare view */
+          position: absolute;
+        }
+
+        &.deleted {
+          margin: 0;
+          display: block;
+          top: 13px;
+          right: 7px;
+        }
+      }
+
+      .swipe-bar {
+        display: block;
+        height: 100%;
+        width: 15px;
+        z-index: 100;
+        position: absolute;
+        cursor: pointer;
+
+        &:hover {
+          .top-handle {
+            background-position: -15px 3px;
+          }
+
+          .bottom-handle {
+            background-position: -15px -11px;
+          }
+        }
+
+        .top-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          top: 0;
+          background: url("swipemode_sprites.gif") 0 3px no-repeat;
+        }
+
+        .bottom-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          bottom: 0;
+          background: url("swipemode_sprites.gif") 0 -11px no-repeat;
+        }
+      }
+    }
+
+    //.view.swipe
+    .view.onion-skin {
+      .onion-skin-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .frame.added,
+      .frame.deleted {
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+      }
+
+      .controls {
+        display: block;
+        height: 14px;
+        width: 300px;
+        z-index: 100;
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        margin-left: -150px;
+
+        .drag-track {
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 12px;
+          height: 10px;
+          width: 276px;
+          background: url("onion_skin_sprites.gif") -4px -20px repeat-x;
+        }
+
+        .dragger {
+          display: block;
+          position: absolute;
+          left: 0;
+          top: 0;
+          height: 14px;
+          width: 14px;
+          background: url("onion_skin_sprites.gif") 0 -34px repeat-x;
+          cursor: pointer;
+        }
+
+        .transparent {
+          display: block;
+          position: absolute;
+          top: 2px;
+          right: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px 0 no-repeat;
+        }
+
+        .opaque {
+          display: block;
+          position: absolute;
+          top: 2px;
+          left: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px -10px no-repeat;
+        }
+      }
+    }
+
+    //.view.onion-skin
+  }
+
+  .view-modes {
+    padding: 10px;
+    text-align: center;
+    background: $gray-darker;
+
+    ul,
+    li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+    }
+
+    li {
+      color: $diff-view-modes-color;
+      border-left: 1px solid $diff-view-modes-border;
+      padding: 0 12px 0 16px;
+      cursor: pointer;
+
+      &:first-child {
+        border-left: 0;
+      }
+
+      &:hover {
+        text-decoration: underline;
+      }
+
+      &.active {
+        cursor: default;
+        color: $gl-text-color;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+
+      &.disabled {
+        display: none;
+      }
+    }
+  }
+
+  .diff-file-container {
+    .frame.deleted {
+      border: 1px solid $deleted;
+      background-color: inherit;
+    }
+
+    .frame.added {
+      border: 1px solid $added;
+      background-color: inherit;
+    }
+
+    .swipe.view,
+    .onion-skin.view {
+      .swipe-wrap {
+        top: 0;
+        left: 0;
+      }
+
+      .frame.deleted {
+        top: 0;
+        right: 0;
+      }
+
+      .swipe-bar {
+        top: 0;
+
+        .top-handle {
+          top: -14px;
+          left: -7px;
+        }
+
+        .bottom-handle {
+          bottom: -14px;
+          left: -7px;
+        }
+      }
+
+      .file-container {
+        display: inline-block;
+
+        .file-content {
+          padding: 0;
+
+          img {
+            max-width: none;
+          }
+        }
+      }
+    }
+
+    .onion-skin.view .controls {
+      bottom: -25px;
+    }
+  }
+
+  .discussion-notes .discussion-notes {
+    margin-left: 0;
+    border-left: 0;
+  }
+}
+
+.code .diff-grid-row.line_holder.diff-tr .diff-td.commented:not(.hll) {
+  --highlight-border-color: #{$blue-300};
+  background-color: $blue-50;
+
+  .gl-dark & {
+    --highlight-border-color: #{$blue-600};
+    background-color: $blue-900;
+  }
+}
+
+.diff-table.code,
+table.code {
+  width: 100%;
+  font-family: $monospace-font;
+  border: 0;
+  border-collapse: separate;
+  margin: 0;
+  padding: 0;
+  table-layout: fixed;
+  border-radius: 0 0 $border-radius-default $border-radius-default;
+
+  .diff-td.highlight-top {
+    box-shadow: 0 -1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-bottom {
+    box-shadow: 0 1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-top.highlight-bottom {
+    box-shadow:
+      0 -1px var(--highlight-border-color, $blue-300),
+      0 1px var(--highlight-border-color, $blue-300);
+    z-index: 2;
+  }
+
+  .diff-tr.line_holder .diff-td,
+  tr.line_holder td {
+    line-height: $code-line-height;
+    font-size: $code-font-size;
+    vertical-align: top;
+
+    span {
+      white-space: break-spaces;
+
+      &.context-cell {
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+      }
+
+      &.line {
+        word-wrap: break-word;
+      }
+    }
+
+    &.diff-line-num {
+      user-select: none;
+      margin: 0;
+      padding: 0 10px 0 5px;
+      text-align: right;
+      width: 50px;
+      position: relative;
+      white-space: nowrap;
+
+      &:nth-of-type(2) {
+        border-right-width: 1px;
+        border-right-style: solid;
+      }
+
+      a {
+        transition: none;
+        float: left;
+        width: 100%;
+        font-weight: $gl-font-weight-normal;
+
+        &[disabled] {
+          cursor: default;
+
+          &:hover,
+          &:active {
+            text-decoration: none;
+          }
+        }
+      }
+
+      &:not(.js-unfold-bottom) a::before {
+        content: attr(data-linenumber);
+      }
+    }
+
+    &.line_content {
+      display: block;
+      margin: 0;
+      padding: 0 1.5em;
+      border: 0;
+      position: relative;
+      white-space: pre-wrap;
+
+      &.parallel {
+        display: table-cell;
+        width: 46%;
+      }
+
+      &.old {
+        &::before {
+          content: "-";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      &.new {
+        &::before {
+          content: "+";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      img {
+        max-width: 100%;
+      }
+    }
+  }
+
+  .line_holder:last-of-type {
+    .diff-td:first-child,
+    td:first-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+    }
+  }
+
+  &.left-side-selected {
+    .diff-td.line_content.parallel.right-side,
+    td.line_content.parallel.right-side {
+      user-select: none;
+    }
+  }
+
+  &.right-side-selected {
+    .diff-td.line_content.parallel.left-side,
+    td.line_content.parallel.left-side {
+      user-select: none;
+    }
+  }
+}
+
+.diff-stats {
+  align-items: center;
+  padding: 0 1rem;
+
+  .diff-stats-contents {
+    display: contents;
+  }
+
+  .diff-stats-group {
+    padding: 0 0.25rem;
+  }
+
+  svg.diff-stats-icon {
+    vertical-align: text-bottom;
+  }
+
+  &.is-compare-versions-header {
+    .diff-stats-group {
+      padding: 0 0.25rem;
+    }
+  }
+}
+
+.file-content .diff-file {
+  margin: 0;
+  border: 0;
+}
+
+.diff-wrap-lines .line_content {
+  white-space: pre-wrap;
+}
+
+.inline-parallel-buttons {
+  float: right;
+}
+
+.merge-request-details .file-content.image_file img {
+  max-height: 50vh;
+}
+
+// Mobile
+@media (max-width: 480px) {
+  .diff-title {
+    margin: 0;
+
+    .file-mode {
+      display: none;
+    }
+  }
+
+  .diff-controls {
+    position: static;
+    text-align: center;
+  }
+}
+
+// Bigger screens
+@media (min-width: 481px) {
+  .diff-title {
+    margin-right: 200px;
+
+    .file-mode {
+      margin-left: 10px;
+    }
+  }
+
+  .diff-controls {
+    float: right;
+    position: absolute;
+    top: 5px;
+    right: 15px;
+  }
+}
+
+.files {
+  .diff-file:not(.is-virtual-scrolling):last-child {
+    margin-bottom: 0;
+  }
+}
+
+.diff-comments-more-count,
+.diff-notes-collapse,
+.inline-findings-collapse {
+  @include avatar-counter(50%);
+}
+
+.diff-notes-collapse,
+.inline-findings-collapse {
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 0.1s ease-out;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  @include code-icon-size();
+
+  .collapse-icon {
+    height: 50%;
+    width: 100%;
+  }
+
+  svg {
+    vertical-align: middle;
+  }
+
+  .collapse-icon,
+  path {
+    fill: $white;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+.note-container {
+  background-color: $gray-light;
+  border-top: 1px solid $gray-50;
+
+  // double jagged line divider
+  .discussion-notes + .discussion-notes::before,
+  .diff-file-discussions + .discussion-form::before {
+    content: "";
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 10px;
+    background-color: $white;
+    background-image:
+      linear-gradient(
+        45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        225deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        135deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      );
+    background-position:
+      5px 5px,
+      0 5px,
+      0 5px,
+      5px 5px;
+    background-size: 10px 10px;
+    background-repeat: repeat;
+  }
+
+  .diff-file-discussions + .discussion-form {
+    padding: $gl-padding;
+
+    &::before {
+      width: auto;
+      margin-left: -$gl-padding;
+      margin-right: -$gl-padding;
+      margin-bottom: $gl-padding;
+    }
+  }
+
+  .notes {
+    position: relative;
+  }
+
+  .diff-notes-collapse,
+  .inline-findings-collapse {
+    position: absolute;
+    left: -12px;
+  }
+}
+
+.diff-file .note-container > .new-note,
+.note-container .discussion-notes.diff-discussions {
+  margin-left: 100px;
+  border-left: 1px solid $gray-50;
+}
+
+.notes.active {
+  .diff-file .note-container > .new-note,
+  .note-container .discussion-notes {
+    // Override our margin and border (set for diff tab)
+    // when user is on the discussion tab for MR
+    margin-left: inherit;
+    border-left: inherit;
+  }
+}
+
+.files:not([data-can-create-note]) .frame {
+  cursor: auto;
+}
+
+.frame.click-to-comment,
+.btn-transparent.image-diff-overlay-add-comment {
+  position: relative;
+  cursor:
+    url("illustrations/image_comment_light_cursor.svg")
+      $image-comment-cursor-left-offset $image-comment-cursor-top-offset,
+    auto;
+
+  // Retina cursor
+  cursor:
+    image-set(
+        url("illustrations/image_comment_light_cursor.svg") 1x,
+        url("illustrations/image_comment_light_cursor@2x.svg") 2x
+      )
+      $image-comment-cursor-left-offset $image-comment-cursor-top-offset,
+    auto;
+
+  .comment-indicator {
+    position: absolute;
+    padding: 0;
+    width: (2px * $image-comment-cursor-left-offset);
+    height: (2px * $image-comment-cursor-top-offset);
+    color: $blue-400;
+    // center the indicator to match the top left click region
+    margin-top: (-1px * $image-comment-cursor-top-offset) + 2;
+    margin-left: (-1px * $image-comment-cursor-left-offset) + 1;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.frame .image-comment-badge,
+.frame .comment-indicator {
+  // Center align badges on the frame
+  transform: translate(-50%, -50%);
+}
+
+.image-comment-badge {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+
+  > svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.image-diff-avatar-link,
+.user-avatar-link {
+  position: relative;
+
+  .badge.badge-pill,
+  .image-comment-badge {
+    top: 25px;
+    right: 8px;
+  }
+}
+
+.discussion-notes {
+  min-height: 35px;
+  background-color: transparent;
+
+  &:first-child {
+    // First child does not have the jagged borders
+    min-height: 25px;
+  }
+
+  .diff-notes-expand {
+    display: none;
+  }
+
+  &.collapsed {
+    background-color: $white;
+
+    .diff-notes-expand {
+      display: initial;
+    }
+
+    .diff-notes-collapse,
+    .inline-findings-collapse,
+    .note,
+    .discussion-reply-holder {
+      display: none;
+    }
+  }
+
+  ul.notes {
+    li.toggle-replies-widget,
+    .discussion-reply-holder {
+      margin-left: 2.5rem;
+
+      .reply-author-avatar {
+        height: 1.5rem;
+      }
+    }
+  }
+}
+
+.discussion-body .image .frame {
+  position: relative;
+}
+
+.discussion-collapsible {
+  margin: 0 $gl-padding $gl-padding;
+
+  .notes {
+    border-radius: $border-radius-default;
+  }
+}
+
+.image-diff-overlay,
+.image-diff-overlay-add-comment {
+  top: 0;
+  left: 0;
+
+  &:active,
+  &:focus {
+    outline: 0;
+  }
+}
+
+.diff-suggest-popover {
+  &.popover {
+    width: 250px;
+    min-width: 250px;
+    z-index: 610;
+  }
+
+  .popover-header {
+    display: none;
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+  .diffs .files {
+    flex-direction: column;
+  }
+
+  .discussion-collapsible {
+    margin: $gl-padding;
+    margin-top: 0;
+  }
+}
+
+// Note: Prevents tall files from appearing above sticky tabs
+.diff-files-holder .vue-recycle-scroller__item-view > div:not(.active) {
+  position: absolute;
+  bottom: 100vh;
+}
+
+.diff-grid-row.expansion.match {
+  border-top: 1px solid var(--diff-expansion-background-color);
+  border-bottom: 1px solid var(--diff-expansion-background-color);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.tooltip {
+  &.coverage {
+    left: -3px !important;
+  }
+
+  &.no-coverage {
+    left: -2px !important;
+  }
+}
+
+.diff-file.pinned-file .file-title {
+  background-color: $blue-50;
+  border-color: $blue-200;
+}
+
+.diff-file.pinned-file .diff-content {
+  border-color: $blue-200;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+$diff-file-header: 41px;
+
+// Common
+.diff-file {
+  margin-bottom: $gl-padding;
+
+  &.has-body {
+    .file-title {
+      box-shadow: 0 -2px 0 0 var(--white);
+    }
+  }
+
+  table.code tr:last-of-type td:last-of-type {
+    border-bottom-right-radius: $border-radius-default - 1px;
+  }
+
+  .file-title,
+  .file-title-flex-parent {
+    cursor: pointer;
+
+    .dropdown-menu {
+      cursor: auto;
+    }
+
+    @media (max-width: map-get($grid-breakpoints, sm)-1) {
+      .file-header-content {
+        width: 0;
+        flex: 1;
+      }
+
+      .file-actions {
+        margin-left: $gl-spacing-scale-2;
+      }
+    }
+
+    @media (min-width: map-get($grid-breakpoints, md)) {
+      position: sticky;
+      top: calc(
+        #{$calc-application-header-height} + #{$mr-sticky-header-height} -
+          #{$gl-border-size-1}
+      );
+      z-index: 120;
+
+      + .diff-content .md-header-preview {
+        top: calc(
+          #{$calc-application-header-height} + #{$mr-sticky-header-height} +
+            #{$diff-file-header} - #{$gl-border-size-1}
+        );
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -11px;
+        width: 10px;
+        height: calc(100% + 1px);
+        background: $body-bg;
+        pointer-events: none;
+      }
+
+      &.is-commit,
+      &.is-compare,
+      &.is-wiki {
+        top: calc(#{$calc-application-header-height});
+        border-top: 0;
+      }
+    }
+
+    &:hover {
+      background-color: $gray-normal;
+    }
+
+    svg {
+      vertical-align: middle;
+      top: -1px;
+    }
+  }
+
+  @media (min-width: map-get($grid-breakpoints, md)) {
+    &.conflict .file-title,
+    &.conflict .file-title-flex-parent {
+      top: $calc-application-header-height;
+    }
+  }
+
+  .diff-content {
+    background: $white;
+    color: $gl-text-color;
+
+    .unfold {
+      cursor: pointer;
+    }
+
+    .file-mode-changed {
+      padding: 10px;
+      color: $gray-500;
+    }
+
+    .suppressed-container {
+      padding: ($padding-base-vertical + 5px) $padding-base-horizontal;
+      text-align: center;
+
+      // "Changes suppressed. Click to show." link
+      .show-suppressed-diff {
+        font-size: 110%;
+        font-weight: $gl-font-weight-bold;
+      }
+    }
+
+    .diff-loading-error-block {
+      padding: $gl-padding * 2 $gl-padding;
+      text-align: center;
+    }
+  }
+
+  .image {
+    background: $gray-darker;
+    text-align: center;
+    padding: 30px;
+
+    .wrap {
+      display: inline-block;
+    }
+
+    .frame {
+      display: inline-block;
+      background-color: $white;
+      line-height: 0;
+
+      img {
+        border: 1px solid $white;
+        background-image:
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          ),
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          );
+        background-size: 10px 10px;
+        background-position:
+          0 0,
+          5px 5px;
+        max-width: 100%;
+      }
+
+      &.deleted {
+        border: 1px solid $deleted;
+      }
+
+      &.added {
+        border: 1px solid $added;
+      }
+    }
+
+    .image-info {
+      font-size: 12px;
+      margin: 5px 0 0;
+      color: $diff-image-info-color;
+    }
+
+    .view.swipe {
+      position: relative;
+
+      .swipe-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .swipe-wrap {
+        overflow: hidden;
+        border-right: 1px solid $gray-300;
+        position: absolute;
+        display: block;
+        top: 13px;
+        right: 7px;
+
+        &.left-oriented {
+          /* only for commit view (different swipe viewer) */
+          border-right: 0;
+          border-left: 1px solid $gray-300;
+        }
+      }
+
+      .frame {
+        top: 0;
+        right: 0;
+
+        &.old-diff {
+          /* only for commit / compare view */
+          position: absolute;
+        }
+
+        &.deleted {
+          margin: 0;
+          display: block;
+          top: 13px;
+          right: 7px;
+        }
+      }
+
+      .swipe-bar {
+        display: block;
+        height: 100%;
+        width: 15px;
+        z-index: 100;
+        position: absolute;
+        cursor: pointer;
+
+        &:hover {
+          .top-handle {
+            background-position: -15px 3px;
+          }
+
+          .bottom-handle {
+            background-position: -15px -11px;
+          }
+        }
+
+        .top-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          top: 0;
+          background: url("swipemode_sprites.gif") 0 3px no-repeat;
+        }
+
+        .bottom-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          bottom: 0;
+          background: url("swipemode_sprites.gif") 0 -11px no-repeat;
+        }
+      }
+    }
+
+    //.view.swipe
+    .view.onion-skin {
+      .onion-skin-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .frame.added,
+      .frame.deleted {
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+      }
+
+      .controls {
+        display: block;
+        height: 14px;
+        width: 300px;
+        z-index: 100;
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        margin-left: -150px;
+
+        .drag-track {
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 12px;
+          height: 10px;
+          width: 276px;
+          background: url("onion_skin_sprites.gif") -4px -20px repeat-x;
+        }
+
+        .dragger {
+          display: block;
+          position: absolute;
+          left: 0;
+          top: 0;
+          height: 14px;
+          width: 14px;
+          background: url("onion_skin_sprites.gif") 0 -34px repeat-x;
+          cursor: pointer;
+        }
+
+        .transparent {
+          display: block;
+          position: absolute;
+          top: 2px;
+          right: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px 0 no-repeat;
+        }
+
+        .opaque {
+          display: block;
+          position: absolute;
+          top: 2px;
+          left: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px -10px no-repeat;
+        }
+      }
+    }
+
+    //.view.onion-skin
+  }
+
+  .view-modes {
+    padding: 10px;
+    text-align: center;
+    background: $gray-darker;
+
+    ul,
+    li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+    }
+
+    li {
+      color: $diff-view-modes-color;
+      border-left: 1px solid $diff-view-modes-border;
+      padding: 0 12px 0 16px;
+      cursor: pointer;
+
+      &:first-child {
+        border-left: 0;
+      }
+
+      &:hover {
+        text-decoration: underline;
+      }
+
+      &.active {
+        cursor: default;
+        color: $gl-text-color;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+
+      &.disabled {
+        display: none;
+      }
+    }
+  }
+
+  .diff-file-container {
+    .frame.deleted {
+      border: 1px solid $deleted;
+      background-color: inherit;
+    }
+
+    .frame.added {
+      border: 1px solid $added;
+      background-color: inherit;
+    }
+
+    .swipe.view,
+    .onion-skin.view {
+      .swipe-wrap {
+        top: 0;
+        left: 0;
+      }
+
+      .frame.deleted {
+        top: 0;
+        right: 0;
+      }
+
+      .swipe-bar {
+        top: 0;
+
+        .top-handle {
+          top: -14px;
+          left: -7px;
+        }
+
+        .bottom-handle {
+          bottom: -14px;
+          left: -7px;
+        }
+      }
+
+      .file-container {
+        display: inline-block;
+
+        .file-content {
+          padding: 0;
+
+          img {
+            max-width: none;
+          }
+        }
+      }
+    }
+
+    .onion-skin.view .controls {
+      bottom: -25px;
+    }
+  }
+
+  .discussion-notes .discussion-notes {
+    margin-left: 0;
+    border-left: 0;
+  }
+}
+
+.code .diff-grid-row.line_holder.diff-tr .diff-td.commented:not(.hll) {
+  --highlight-border-color: #{$blue-300};
+  background-color: $blue-50;
+
+  .gl-dark & {
+    --highlight-border-color: #{$blue-600};
+    background-color: $blue-900;
+  }
+}
+
+.diff-table.code,
+table.code {
+  width: 100%;
+  font-family: $monospace-font;
+  border: 0;
+  border-collapse: separate;
+  margin: 0;
+  padding: 0;
+  table-layout: fixed;
+  border-radius: 0 0 $border-radius-default $border-radius-default;
+
+  .diff-td.highlight-top {
+    box-shadow: 0 -1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-bottom {
+    box-shadow: 0 1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-top.highlight-bottom {
+    box-shadow:
+      0 -1px var(--highlight-border-color, $blue-300),
+      0 1px var(--highlight-border-color, $blue-300);
+    z-index: 2;
+  }
+
+  .diff-tr.line_holder .diff-td,
+  tr.line_holder td {
+    line-height: $code-line-height;
+    font-size: $code-font-size;
+    vertical-align: top;
+
+    span {
+      white-space: break-spaces;
+
+      &.context-cell {
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+      }
+
+      &.line {
+        word-wrap: break-word;
+      }
+    }
+
+    &.diff-line-num {
+      user-select: none;
+      margin: 0;
+      padding: 0 10px 0 5px;
+      text-align: right;
+      width: 50px;
+      position: relative;
+      white-space: nowrap;
+
+      &:nth-of-type(2) {
+        border-right-width: 1px;
+        border-right-style: solid;
+      }
+
+      a {
+        transition: none;
+        float: left;
+        width: 100%;
+        font-weight: $gl-font-weight-normal;
+
+        &[disabled] {
+          cursor: default;
+
+          &:hover,
+          &:active {
+            text-decoration: none;
+          }
+        }
+      }
+
+      &:not(.js-unfold-bottom) a::before {
+        content: attr(data-linenumber);
+      }
+    }
+
+    &.line_content {
+      display: block;
+      margin: 0;
+      padding: 0 1.5em;
+      border: 0;
+      position: relative;
+      white-space: pre-wrap;
+
+      &.parallel {
+        display: table-cell;
+        width: 46%;
+      }
+
+      &.old {
+        &::before {
+          content: "-";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      &.new {
+        &::before {
+          content: "+";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      img {
+        max-width: 100%;
+      }
+    }
+  }
+
+  .line_holder:last-of-type {
+    .diff-td:first-child,
+    td:first-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+    }
+  }
+
+  &.left-side-selected {
+    .diff-td.line_content.parallel.right-side,
+    td.line_content.parallel.right-side {
+      user-select: none;
+    }
+  }
+
+  &.right-side-selected {
+    .diff-td.line_content.parallel.left-side,
+    td.line_content.parallel.left-side {
+      user-select: none;
+    }
+  }
+}
+
+.diff-stats {
+  align-items: center;
+  padding: 0 1rem;
+
+  .diff-stats-contents {
+    display: contents;
+  }
+
+  .diff-stats-group {
+    padding: 0 0.25rem;
+  }
+
+  svg.diff-stats-icon {
+    vertical-align: text-bottom;
+  }
+
+  &.is-compare-versions-header {
+    .diff-stats-group {
+      padding: 0 0.25rem;
+    }
+  }
+}
+
+.file-content .diff-file {
+  margin: 0;
+  border: 0;
+}
+
+.diff-wrap-lines .line_content {
+  white-space: pre-wrap;
+}
+
+.inline-parallel-buttons {
+  float: right;
+}
+
+.merge-request-details .file-content.image_file img {
+  max-height: 50vh;
+}
+
+// Mobile
+@media (max-width: 480px) {
+  .diff-title {
+    margin: 0;
+
+    .file-mode {
+      display: none;
+    }
+  }
+
+  .diff-controls {
+    position: static;
+    text-align: center;
+  }
+}
+
+// Bigger screens
+@media (min-width: 481px) {
+  .diff-title {
+    margin-right: 200px;
+
+    .file-mode {
+      margin-left: 10px;
+    }
+  }
+
+  .diff-controls {
+    float: right;
+    position: absolute;
+    top: 5px;
+    right: 15px;
+  }
+}
+
+.files {
+  .diff-file:not(.is-virtual-scrolling):last-child {
+    margin-bottom: 0;
+  }
+}
+
+.diff-comments-more-count,
+.diff-notes-collapse,
+.inline-findings-collapse {
+  @include avatar-counter(50%);
+}
+
+.diff-notes-collapse,
+.inline-findings-collapse {
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 0.1s ease-out;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  @include code-icon-size();
+
+  .collapse-icon {
+    height: 50%;
+    width: 100%;
+  }
+
+  svg {
+    vertical-align: middle;
+  }
+
+  .collapse-icon,
+  path {
+    fill: $white;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+.note-container {
+  background-color: $gray-light;
+  border-top: 1px solid $gray-50;
+
+  // double jagged line divider
+  .discussion-notes + .discussion-notes::before,
+  .diff-file-discussions + .discussion-form::before {
+    content: "";
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 10px;
+    background-color: $white;
+    background-image:
+      linear-gradient(
+        45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        225deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        135deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      );
+    background-position:
+      5px 5px,
+      0 5px,
+      0 5px,
+      5px 5px;
+    background-size: 10px 10px;
+    background-repeat: repeat;
+  }
+
+  .diff-file-discussions + .discussion-form {
+    padding: $gl-padding;
+
+    &::before {
+      width: auto;
+      margin-left: -$gl-padding;
+      margin-right: -$gl-padding;
+      margin-bottom: $gl-padding;
+    }
+  }
+
+  .notes {
+    position: relative;
+  }
+
+  .diff-notes-collapse,
+  .inline-findings-collapse {
+    position: absolute;
+    left: -12px;
+  }
+}
+
+.diff-file .note-container > .new-note,
+.note-container .discussion-notes.diff-discussions {
+  margin-left: 100px;
+  border-left: 1px solid $gray-50;
+}
+
+.notes.active {
+  .diff-file .note-container > .new-note,
+  .note-container .discussion-notes {
+    // Override our margin and border (set for diff tab)
+    // when user is on the discussion tab for MR
+    margin-left: inherit;
+    border-left: inherit;
+  }
+}
+
+.files:not([data-can-create-note]) .frame {
+  cursor: auto;
+}
+
+.frame.click-to-comment,
+.btn-transparent.image-diff-overlay-add-comment {
+  position: relative;
+  cursor:
+    url("illustrations/image_comment_light_cursor.svg")
+      $image-comment-cursor-left-offset $image-comment-cursor-top-offset,
+    auto;
+
+  // Retina cursor
+  cursor:
+    image-set(
+        url("illustrations/image_comment_light_cursor.svg") 1x,
+        url("illustrations/image_comment_light_cursor@2x.svg") 2x
+      )
+      $image-comment-cursor-left-offset $image-comment-cursor-top-offset,
+    auto;
+
+  .comment-indicator {
+    position: absolute;
+    padding: 0;
+    width: (2px * $image-comment-cursor-left-offset);
+    height: (2px * $image-comment-cursor-top-offset);
+    color: $blue-400;
+    // center the indicator to match the top left click region
+    margin-top: (-1px * $image-comment-cursor-top-offset) + 2;
+    margin-left: (-1px * $image-comment-cursor-left-offset) + 1;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.frame .image-comment-badge,
+.frame .comment-indicator {
+  // Center align badges on the frame
+  transform: translate(-50%, -50%);
+}
+
+.image-comment-badge {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+
+  > svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.image-diff-avatar-link,
+.user-avatar-link {
+  position: relative;
+
+  .badge.badge-pill,
+  .image-comment-badge {
+    top: 25px;
+    right: 8px;
+  }
+}
+
+.discussion-notes {
+  min-height: 35px;
+  background-color: transparent;
+
+  &:first-child {
+    // First child does not have the jagged borders
+    min-height: 25px;
+  }
+
+  .diff-notes-expand {
+    display: none;
+  }
+
+  &.collapsed {
+    background-color: $white;
+
+    .diff-notes-expand {
+      display: initial;
+    }
+
+    .diff-notes-collapse,
+    .inline-findings-collapse,
+    .note,
+    .discussion-reply-holder {
+      display: none;
+    }
+  }
+
+  ul.notes {
+    li.toggle-replies-widget,
+    .discussion-reply-holder {
+      margin-left: 2.5rem;
+
+      .reply-author-avatar {
+        height: 1.5rem;
+      }
+    }
+  }
+}
+
+.discussion-body .image .frame {
+  position: relative;
+}
+
+.discussion-collapsible {
+  margin: 0 $gl-padding $gl-padding;
+
+  .notes {
+    border-radius: $border-radius-default;
+  }
+}
+
+.image-diff-overlay,
+.image-diff-overlay-add-comment {
+  top: 0;
+  left: 0;
+
+  &:active,
+  &:focus {
+    outline: 0;
+  }
+}
+
+.diff-suggest-popover {
+  &.popover {
+    width: 250px;
+    min-width: 250px;
+    z-index: 610;
+  }
+
+  .popover-header {
+    display: none;
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, lg)-1) {
+  .diffs .files {
+    flex-direction: column;
+  }
+
+  .discussion-collapsible {
+    margin: $gl-padding;
+    margin-top: 0;
+  }
+}
+
+// Note: Prevents tall files from appearing above sticky tabs
+.diff-files-holder .vue-recycle-scroller__item-view > div:not(.active) {
+  position: absolute;
+  bottom: 100vh;
+}
+
+.diff-grid-row.expansion.match {
+  border-top: 1px solid var(--diff-expansion-background-color);
+  border-bottom: 1px solid var(--diff-expansion-background-color);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.tooltip {
+  &.coverage {
+    left: -3px !important;
+  }
+
+  &.no-coverage {
+    left: -2px !important;
+  }
+}
+
+.diff-file.pinned-file .file-title {
+  background-color: $blue-50;
+  border-color: $blue-200;
+}
+
+.diff-file.pinned-file .diff-content {
+  border-color: $blue-200;
+}
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -21,9 +21,9 @@
+     .dropdown-menu {
+       cursor: auto;
+     }
+ 
+-    @media (max-width: map-get($grid-breakpoints, sm)-1) {
++    @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+       .file-header-content {
+         width: 0;
+         flex: 1;
+       }
+@@ -933,9 +933,9 @@
+     display: none;
+   }
+ }
+ 
+-@media (max-width: map-get($grid-breakpoints, lg)-1) {
++@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+   .diffs .files {
+     flex-direction: column;
+   }
+ 
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+$diff-file-header: 41px;
+
+// Common
+.diff-file {
+  margin-bottom: $gl-padding;
+
+  &.has-body {
+    .file-title {
+      box-shadow: 0 -2px 0 0 var(--white);
+    }
+  }
+
+  table.code tr:last-of-type td:last-of-type {
+    border-bottom-right-radius: $border-radius-default - 1px;
+  }
+
+  .file-title,
+  .file-title-flex-parent {
+    cursor: pointer;
+
+    .dropdown-menu {
+      cursor: auto;
+    }
+
+    @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+      .file-header-content {
+        width: 0;
+        flex: 1;
+      }
+
+      .file-actions {
+        margin-left: $gl-spacing-scale-2;
+      }
+    }
+
+    @media (min-width: map-get($grid-breakpoints, md)) {
+      position: sticky;
+      top: calc(
+        #{$calc-application-header-height} + #{$mr-sticky-header-height} - #{$gl-border-size-1}
+      );
+      z-index: 120;
+
+      + .diff-content .md-header-preview {
+        top: calc(
+          #{$calc-application-header-height} + #{$mr-sticky-header-height} + #{$diff-file-header} -
+            #{$gl-border-size-1}
+        );
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -11px;
+        width: 10px;
+        height: calc(100% + 1px);
+        background: $body-bg;
+        pointer-events: none;
+      }
+
+      &.is-commit,
+      &.is-compare,
+      &.is-wiki {
+        top: calc(#{$calc-application-header-height});
+        border-top: 0;
+      }
+    }
+
+    &:hover {
+      background-color: $gray-normal;
+    }
+
+    svg {
+      vertical-align: middle;
+      top: -1px;
+    }
+  }
+
+  @media (min-width: map-get($grid-breakpoints, md)) {
+    &.conflict .file-title,
+    &.conflict .file-title-flex-parent {
+      top: $calc-application-header-height;
+    }
+  }
+
+  .diff-content {
+    background: $white;
+    color: $gl-text-color;
+
+    .unfold {
+      cursor: pointer;
+    }
+
+    .file-mode-changed {
+      padding: 10px;
+      color: $gray-500;
+    }
+
+    .suppressed-container {
+      padding: ($padding-base-vertical + 5px) $padding-base-horizontal;
+      text-align: center;
+
+      // "Changes suppressed. Click to show." link
+      .show-suppressed-diff {
+        font-size: 110%;
+        font-weight: $gl-font-weight-bold;
+      }
+    }
+
+    .diff-loading-error-block {
+      padding: $gl-padding * 2 $gl-padding;
+      text-align: center;
+    }
+  }
+
+  .image {
+    background: $gray-darker;
+    text-align: center;
+    padding: 30px;
+
+    .wrap {
+      display: inline-block;
+    }
+
+    .frame {
+      display: inline-block;
+      background-color: $white;
+      line-height: 0;
+
+      img {
+        border: 1px solid $white;
+        background-image:
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          ),
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          );
+        background-size: 10px 10px;
+        background-position:
+          0 0,
+          5px 5px;
+        max-width: 100%;
+      }
+
+      &.deleted {
+        border: 1px solid $deleted;
+      }
+
+      &.added {
+        border: 1px solid $added;
+      }
+    }
+
+    .image-info {
+      font-size: 12px;
+      margin: 5px 0 0;
+      color: $diff-image-info-color;
+    }
+
+    .view.swipe {
+      position: relative;
+
+      .swipe-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .swipe-wrap {
+        overflow: hidden;
+        border-right: 1px solid $gray-300;
+        position: absolute;
+        display: block;
+        top: 13px;
+        right: 7px;
+
+        &.left-oriented {
+          /* only for commit view (different swipe viewer) */
+          border-right: 0;
+          border-left: 1px solid $gray-300;
+        }
+      }
+
+      .frame {
+        top: 0;
+        right: 0;
+
+        &.old-diff {
+          /* only for commit / compare view */
+          position: absolute;
+        }
+
+        &.deleted {
+          margin: 0;
+          display: block;
+          top: 13px;
+          right: 7px;
+        }
+      }
+
+      .swipe-bar {
+        display: block;
+        height: 100%;
+        width: 15px;
+        z-index: 100;
+        position: absolute;
+        cursor: pointer;
+
+        &:hover {
+          .top-handle {
+            background-position: -15px 3px;
+          }
+
+          .bottom-handle {
+            background-position: -15px -11px;
+          }
+        }
+
+        .top-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          top: 0;
+          background: url("swipemode_sprites.gif") 0 3px no-repeat;
+        }
+
+        .bottom-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          bottom: 0;
+          background: url("swipemode_sprites.gif") 0 -11px no-repeat;
+        }
+      }
+    }
+
+    //.view.swipe
+    .view.onion-skin {
+      .onion-skin-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .frame.added,
+      .frame.deleted {
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+      }
+
+      .controls {
+        display: block;
+        height: 14px;
+        width: 300px;
+        z-index: 100;
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        margin-left: -150px;
+
+        .drag-track {
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 12px;
+          height: 10px;
+          width: 276px;
+          background: url("onion_skin_sprites.gif") -4px -20px repeat-x;
+        }
+
+        .dragger {
+          display: block;
+          position: absolute;
+          left: 0;
+          top: 0;
+          height: 14px;
+          width: 14px;
+          background: url("onion_skin_sprites.gif") 0 -34px repeat-x;
+          cursor: pointer;
+        }
+
+        .transparent {
+          display: block;
+          position: absolute;
+          top: 2px;
+          right: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px 0 no-repeat;
+        }
+
+        .opaque {
+          display: block;
+          position: absolute;
+          top: 2px;
+          left: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px -10px no-repeat;
+        }
+      }
+    }
+
+    //.view.onion-skin
+  }
+
+  .view-modes {
+    padding: 10px;
+    text-align: center;
+    background: $gray-darker;
+
+    ul,
+    li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+    }
+
+    li {
+      color: $diff-view-modes-color;
+      border-left: 1px solid $diff-view-modes-border;
+      padding: 0 12px 0 16px;
+      cursor: pointer;
+
+      &:first-child {
+        border-left: 0;
+      }
+
+      &:hover {
+        text-decoration: underline;
+      }
+
+      &.active {
+        cursor: default;
+        color: $gl-text-color;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+
+      &.disabled {
+        display: none;
+      }
+    }
+  }
+
+  .diff-file-container {
+    .frame.deleted {
+      border: 1px solid $deleted;
+      background-color: inherit;
+    }
+
+    .frame.added {
+      border: 1px solid $added;
+      background-color: inherit;
+    }
+
+    .swipe.view,
+    .onion-skin.view {
+      .swipe-wrap {
+        top: 0;
+        left: 0;
+      }
+
+      .frame.deleted {
+        top: 0;
+        right: 0;
+      }
+
+      .swipe-bar {
+        top: 0;
+
+        .top-handle {
+          top: -14px;
+          left: -7px;
+        }
+
+        .bottom-handle {
+          bottom: -14px;
+          left: -7px;
+        }
+      }
+
+      .file-container {
+        display: inline-block;
+
+        .file-content {
+          padding: 0;
+
+          img {
+            max-width: none;
+          }
+        }
+      }
+    }
+
+    .onion-skin.view .controls {
+      bottom: -25px;
+    }
+  }
+
+  .discussion-notes .discussion-notes {
+    margin-left: 0;
+    border-left: 0;
+  }
+}
+
+.code .diff-grid-row.line_holder.diff-tr .diff-td.commented:not(.hll) {
+  --highlight-border-color: #{$blue-300};
+  background-color: $blue-50;
+
+  .gl-dark & {
+    --highlight-border-color: #{$blue-600};
+    background-color: $blue-900;
+  }
+}
+
+.diff-table.code,
+table.code {
+  width: 100%;
+  font-family: $monospace-font;
+  border: 0;
+  border-collapse: separate;
+  margin: 0;
+  padding: 0;
+  table-layout: fixed;
+  border-radius: 0 0 $border-radius-default $border-radius-default;
+
+  .diff-td.highlight-top {
+    box-shadow: 0 -1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-bottom {
+    box-shadow: 0 1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-top.highlight-bottom {
+    box-shadow:
+      0 -1px var(--highlight-border-color, $blue-300),
+      0 1px var(--highlight-border-color, $blue-300);
+    z-index: 2;
+  }
+
+  .diff-tr.line_holder .diff-td,
+  tr.line_holder td {
+    line-height: $code-line-height;
+    font-size: $code-font-size;
+    vertical-align: top;
+
+    span {
+      white-space: break-spaces;
+
+      &.context-cell {
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+      }
+
+      &.line {
+        word-wrap: break-word;
+      }
+    }
+
+    &.diff-line-num {
+      user-select: none;
+      margin: 0;
+      padding: 0 10px 0 5px;
+      text-align: right;
+      width: 50px;
+      position: relative;
+      white-space: nowrap;
+
+      &:nth-of-type(2) {
+        border-right-width: 1px;
+        border-right-style: solid;
+      }
+
+      a {
+        transition: none;
+        float: left;
+        width: 100%;
+        font-weight: $gl-font-weight-normal;
+
+        &[disabled] {
+          cursor: default;
+
+          &:hover,
+          &:active {
+            text-decoration: none;
+          }
+        }
+      }
+
+      &:not(.js-unfold-bottom) a::before {
+        content: attr(data-linenumber);
+      }
+    }
+
+    &.line_content {
+      display: block;
+      margin: 0;
+      padding: 0 1.5em;
+      border: 0;
+      position: relative;
+      white-space: pre-wrap;
+
+      &.parallel {
+        display: table-cell;
+        width: 46%;
+      }
+
+      &.old {
+        &::before {
+          content: "-";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      &.new {
+        &::before {
+          content: "+";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      img {
+        max-width: 100%;
+      }
+    }
+  }
+
+  .line_holder:last-of-type {
+    .diff-td:first-child,
+    td:first-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+    }
+  }
+
+  &.left-side-selected {
+    .diff-td.line_content.parallel.right-side,
+    td.line_content.parallel.right-side {
+      user-select: none;
+    }
+  }
+
+  &.right-side-selected {
+    .diff-td.line_content.parallel.left-side,
+    td.line_content.parallel.left-side {
+      user-select: none;
+    }
+  }
+}
+
+.diff-stats {
+  align-items: center;
+  padding: 0 1rem;
+
+  .diff-stats-contents {
+    display: contents;
+  }
+
+  .diff-stats-group {
+    padding: 0 0.25rem;
+  }
+
+  svg.diff-stats-icon {
+    vertical-align: text-bottom;
+  }
+
+  &.is-compare-versions-header {
+    .diff-stats-group {
+      padding: 0 0.25rem;
+    }
+  }
+}
+
+.file-content .diff-file {
+  margin: 0;
+  border: 0;
+}
+
+.diff-wrap-lines .line_content {
+  white-space: pre-wrap;
+}
+
+.inline-parallel-buttons {
+  float: right;
+}
+
+.merge-request-details .file-content.image_file img {
+  max-height: 50vh;
+}
+
+// Mobile
+@media (max-width: 480px) {
+  .diff-title {
+    margin: 0;
+
+    .file-mode {
+      display: none;
+    }
+  }
+
+  .diff-controls {
+    position: static;
+    text-align: center;
+  }
+}
+
+// Bigger screens
+@media (min-width: 481px) {
+  .diff-title {
+    margin-right: 200px;
+
+    .file-mode {
+      margin-left: 10px;
+    }
+  }
+
+  .diff-controls {
+    float: right;
+    position: absolute;
+    top: 5px;
+    right: 15px;
+  }
+}
+
+.files {
+  .diff-file:not(.is-virtual-scrolling):last-child {
+    margin-bottom: 0;
+  }
+}
+
+.diff-comments-more-count,
+.diff-notes-collapse,
+.inline-findings-collapse {
+  @include avatar-counter(50%);
+}
+
+.diff-notes-collapse,
+.inline-findings-collapse {
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 0.1s ease-out;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  @include code-icon-size();
+
+  .collapse-icon {
+    height: 50%;
+    width: 100%;
+  }
+
+  svg {
+    vertical-align: middle;
+  }
+
+  .collapse-icon,
+  path {
+    fill: $white;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+.note-container {
+  background-color: $gray-light;
+  border-top: 1px solid $gray-50;
+
+  // double jagged line divider
+  .discussion-notes + .discussion-notes::before,
+  .diff-file-discussions + .discussion-form::before {
+    content: "";
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 10px;
+    background-color: $white;
+    background-image:
+      linear-gradient(
+        45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        225deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        135deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      );
+    background-position:
+      5px 5px,
+      0 5px,
+      0 5px,
+      5px 5px;
+    background-size: 10px 10px;
+    background-repeat: repeat;
+  }
+
+  .diff-file-discussions + .discussion-form {
+    padding: $gl-padding;
+
+    &::before {
+      width: auto;
+      margin-left: -$gl-padding;
+      margin-right: -$gl-padding;
+      margin-bottom: $gl-padding;
+    }
+  }
+
+  .notes {
+    position: relative;
+  }
+
+  .diff-notes-collapse,
+  .inline-findings-collapse {
+    position: absolute;
+    left: -12px;
+  }
+}
+
+.diff-file .note-container > .new-note,
+.note-container .discussion-notes.diff-discussions {
+  margin-left: 100px;
+  border-left: 1px solid $gray-50;
+}
+
+.notes.active {
+  .diff-file .note-container > .new-note,
+  .note-container .discussion-notes {
+    // Override our margin and border (set for diff tab)
+    // when user is on the discussion tab for MR
+    margin-left: inherit;
+    border-left: inherit;
+  }
+}
+
+.files:not([data-can-create-note]) .frame {
+  cursor: auto;
+}
+
+.frame.click-to-comment,
+.btn-transparent.image-diff-overlay-add-comment {
+  position: relative;
+  cursor:
+    url("illustrations/image_comment_light_cursor.svg") $image-comment-cursor-left-offset
+      $image-comment-cursor-top-offset,
+    auto;
+
+  // Retina cursor
+  cursor:
+    image-set(
+        url("illustrations/image_comment_light_cursor.svg") 1x,
+        url("illustrations/image_comment_light_cursor@2x.svg") 2x
+      )
+      $image-comment-cursor-left-offset $image-comment-cursor-top-offset,
+    auto;
+
+  .comment-indicator {
+    position: absolute;
+    padding: 0;
+    width: (2px * $image-comment-cursor-left-offset);
+    height: (2px * $image-comment-cursor-top-offset);
+    color: $blue-400;
+    // center the indicator to match the top left click region
+    margin-top: (-1px * $image-comment-cursor-top-offset) + 2;
+    margin-left: (-1px * $image-comment-cursor-left-offset) + 1;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.frame .image-comment-badge,
+.frame .comment-indicator {
+  // Center align badges on the frame
+  transform: translate(-50%, -50%);
+}
+
+.image-comment-badge {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+
+  > svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.image-diff-avatar-link,
+.user-avatar-link {
+  position: relative;
+
+  .badge.badge-pill,
+  .image-comment-badge {
+    top: 25px;
+    right: 8px;
+  }
+}
+
+.discussion-notes {
+  min-height: 35px;
+  background-color: transparent;
+
+  &:first-child {
+    // First child does not have the jagged borders
+    min-height: 25px;
+  }
+
+  .diff-notes-expand {
+    display: none;
+  }
+
+  &.collapsed {
+    background-color: $white;
+
+    .diff-notes-expand {
+      display: initial;
+    }
+
+    .diff-notes-collapse,
+    .inline-findings-collapse,
+    .note,
+    .discussion-reply-holder {
+      display: none;
+    }
+  }
+
+  ul.notes {
+    li.toggle-replies-widget,
+    .discussion-reply-holder {
+      margin-left: 2.5rem;
+
+      .reply-author-avatar {
+        height: 1.5rem;
+      }
+    }
+  }
+}
+
+.discussion-body .image .frame {
+  position: relative;
+}
+
+.discussion-collapsible {
+  margin: 0 $gl-padding $gl-padding;
+
+  .notes {
+    border-radius: $border-radius-default;
+  }
+}
+
+.image-diff-overlay,
+.image-diff-overlay-add-comment {
+  top: 0;
+  left: 0;
+
+  &:active,
+  &:focus {
+    outline: 0;
+  }
+}
+
+.diff-suggest-popover {
+  &.popover {
+    width: 250px;
+    min-width: 250px;
+    z-index: 610;
+  }
+
+  .popover-header {
+    display: none;
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+  .diffs .files {
+    flex-direction: column;
+  }
+
+  .discussion-collapsible {
+    margin: $gl-padding;
+    margin-top: 0;
+  }
+}
+
+// Note: Prevents tall files from appearing above sticky tabs
+.diff-files-holder .vue-recycle-scroller__item-view > div:not(.active) {
+  position: absolute;
+  bottom: 100vh;
+}
+
+.diff-grid-row.expansion.match {
+  border-top: 1px solid var(--diff-expansion-background-color);
+  border-bottom: 1px solid var(--diff-expansion-background-color);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.tooltip {
+  &.coverage {
+    left: -3px !important;
+  }
+
+  &.no-coverage {
+    left: -2px !important;
+  }
+}
+
+.diff-file.pinned-file .file-title {
+  background-color: $blue-50;
+  border-color: $blue-200;
+}
+
+.diff-file.pinned-file .diff-content {
+  border-color: $blue-200;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+$diff-file-header: 41px;
+
+// Common
+.diff-file {
+  margin-bottom: $gl-padding;
+
+  &.has-body {
+    .file-title {
+      box-shadow: 0 -2px 0 0 var(--white);
+    }
+  }
+
+  table.code tr:last-of-type td:last-of-type {
+    border-bottom-right-radius: $border-radius-default - 1px;
+  }
+
+  .file-title,
+  .file-title-flex-parent {
+    cursor: pointer;
+
+    .dropdown-menu {
+      cursor: auto;
+    }
+
+    @media (max-width: map-get($grid-breakpoints, sm)-1) {
+      .file-header-content {
+        width: 0;
+        flex: 1;
+      }
+
+      .file-actions {
+        margin-left: $gl-spacing-scale-2;
+      }
+    }
+
+    @media (min-width: map-get($grid-breakpoints, md)) {
+      position: sticky;
+      top: calc(
+        #{$calc-application-header-height} + #{$mr-sticky-header-height} - #{$gl-border-size-1}
+      );
+      z-index: 120;
+
+      + .diff-content .md-header-preview {
+        top: calc(
+          #{$calc-application-header-height} + #{$mr-sticky-header-height} + #{$diff-file-header} -
+            #{$gl-border-size-1}
+        );
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -11px;
+        width: 10px;
+        height: calc(100% + 1px);
+        background: $body-bg;
+        pointer-events: none;
+      }
+
+      &.is-commit,
+      &.is-compare,
+      &.is-wiki {
+        top: calc(#{$calc-application-header-height});
+        border-top: 0;
+      }
+    }
+
+    &:hover {
+      background-color: $gray-normal;
+    }
+
+    svg {
+      vertical-align: middle;
+      top: -1px;
+    }
+  }
+
+  @media (min-width: map-get($grid-breakpoints, md)) {
+    &.conflict .file-title,
+    &.conflict .file-title-flex-parent {
+      top: $calc-application-header-height;
+    }
+  }
+
+  .diff-content {
+    background: $white;
+    color: $gl-text-color;
+
+    .unfold {
+      cursor: pointer;
+    }
+
+    .file-mode-changed {
+      padding: 10px;
+      color: $gray-500;
+    }
+
+    .suppressed-container {
+      padding: ($padding-base-vertical + 5px) $padding-base-horizontal;
+      text-align: center;
+
+      // "Changes suppressed. Click to show." link
+      .show-suppressed-diff {
+        font-size: 110%;
+        font-weight: $gl-font-weight-bold;
+      }
+    }
+
+    .diff-loading-error-block {
+      padding: $gl-padding * 2 $gl-padding;
+      text-align: center;
+    }
+  }
+
+  .image {
+    background: $gray-darker;
+    text-align: center;
+    padding: 30px;
+
+    .wrap {
+      display: inline-block;
+    }
+
+    .frame {
+      display: inline-block;
+      background-color: $white;
+      line-height: 0;
+
+      img {
+        border: 1px solid $white;
+        background-image:
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          ),
+          linear-gradient(
+            45deg,
+            $border-color 25%,
+            transparent 25%,
+            transparent 75%,
+            $border-color 75%,
+            $border-color 100%
+          );
+        background-size: 10px 10px;
+        background-position:
+          0 0,
+          5px 5px;
+        max-width: 100%;
+      }
+
+      &.deleted {
+        border: 1px solid $deleted;
+      }
+
+      &.added {
+        border: 1px solid $added;
+      }
+    }
+
+    .image-info {
+      font-size: 12px;
+      margin: 5px 0 0;
+      color: $diff-image-info-color;
+    }
+
+    .view.swipe {
+      position: relative;
+
+      .swipe-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .swipe-wrap {
+        overflow: hidden;
+        border-right: 1px solid $gray-300;
+        position: absolute;
+        display: block;
+        top: 13px;
+        right: 7px;
+
+        &.left-oriented {
+          /* only for commit view (different swipe viewer) */
+          border-right: 0;
+          border-left: 1px solid $gray-300;
+        }
+      }
+
+      .frame {
+        top: 0;
+        right: 0;
+
+        &.old-diff {
+          /* only for commit / compare view */
+          position: absolute;
+        }
+
+        &.deleted {
+          margin: 0;
+          display: block;
+          top: 13px;
+          right: 7px;
+        }
+      }
+
+      .swipe-bar {
+        display: block;
+        height: 100%;
+        width: 15px;
+        z-index: 100;
+        position: absolute;
+        cursor: pointer;
+
+        &:hover {
+          .top-handle {
+            background-position: -15px 3px;
+          }
+
+          .bottom-handle {
+            background-position: -15px -11px;
+          }
+        }
+
+        .top-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          top: 0;
+          background: url("swipemode_sprites.gif") 0 3px no-repeat;
+        }
+
+        .bottom-handle {
+          display: block;
+          height: 14px;
+          width: 15px;
+          position: absolute;
+          bottom: 0;
+          background: url("swipemode_sprites.gif") 0 -11px no-repeat;
+        }
+      }
+    }
+
+    //.view.swipe
+    .view.onion-skin {
+      .onion-skin-frame {
+        display: block;
+        margin: auto;
+        position: relative;
+      }
+
+      .frame.added,
+      .frame.deleted {
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+      }
+
+      .controls {
+        display: block;
+        height: 14px;
+        width: 300px;
+        z-index: 100;
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        margin-left: -150px;
+
+        .drag-track {
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 12px;
+          height: 10px;
+          width: 276px;
+          background: url("onion_skin_sprites.gif") -4px -20px repeat-x;
+        }
+
+        .dragger {
+          display: block;
+          position: absolute;
+          left: 0;
+          top: 0;
+          height: 14px;
+          width: 14px;
+          background: url("onion_skin_sprites.gif") 0 -34px repeat-x;
+          cursor: pointer;
+        }
+
+        .transparent {
+          display: block;
+          position: absolute;
+          top: 2px;
+          right: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px 0 no-repeat;
+        }
+
+        .opaque {
+          display: block;
+          position: absolute;
+          top: 2px;
+          left: 0;
+          height: 10px;
+          width: 10px;
+          background: url("onion_skin_sprites.gif") -2px -10px no-repeat;
+        }
+      }
+    }
+
+    //.view.onion-skin
+  }
+
+  .view-modes {
+    padding: 10px;
+    text-align: center;
+    background: $gray-darker;
+
+    ul,
+    li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+    }
+
+    li {
+      color: $diff-view-modes-color;
+      border-left: 1px solid $diff-view-modes-border;
+      padding: 0 12px 0 16px;
+      cursor: pointer;
+
+      &:first-child {
+        border-left: 0;
+      }
+
+      &:hover {
+        text-decoration: underline;
+      }
+
+      &.active {
+        cursor: default;
+        color: $gl-text-color;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+
+      &.disabled {
+        display: none;
+      }
+    }
+  }
+
+  .diff-file-container {
+    .frame.deleted {
+      border: 1px solid $deleted;
+      background-color: inherit;
+    }
+
+    .frame.added {
+      border: 1px solid $added;
+      background-color: inherit;
+    }
+
+    .swipe.view,
+    .onion-skin.view {
+      .swipe-wrap {
+        top: 0;
+        left: 0;
+      }
+
+      .frame.deleted {
+        top: 0;
+        right: 0;
+      }
+
+      .swipe-bar {
+        top: 0;
+
+        .top-handle {
+          top: -14px;
+          left: -7px;
+        }
+
+        .bottom-handle {
+          bottom: -14px;
+          left: -7px;
+        }
+      }
+
+      .file-container {
+        display: inline-block;
+
+        .file-content {
+          padding: 0;
+
+          img {
+            max-width: none;
+          }
+        }
+      }
+    }
+
+    .onion-skin.view .controls {
+      bottom: -25px;
+    }
+  }
+
+  .discussion-notes .discussion-notes {
+    margin-left: 0;
+    border-left: 0;
+  }
+}
+
+.code .diff-grid-row.line_holder.diff-tr .diff-td.commented:not(.hll) {
+  --highlight-border-color: #{$blue-300};
+  background-color: $blue-50;
+
+  .gl-dark & {
+    --highlight-border-color: #{$blue-600};
+    background-color: $blue-900;
+  }
+}
+
+.diff-table.code,
+table.code {
+  width: 100%;
+  font-family: $monospace-font;
+  border: 0;
+  border-collapse: separate;
+  margin: 0;
+  padding: 0;
+  table-layout: fixed;
+  border-radius: 0 0 $border-radius-default $border-radius-default;
+
+  .diff-td.highlight-top {
+    box-shadow: 0 -1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-bottom {
+    box-shadow: 0 1px var(--highlight-border-color, $blue-300);
+    z-index: 1;
+  }
+
+  .diff-td.highlight-top.highlight-bottom {
+    box-shadow:
+      0 -1px var(--highlight-border-color, $blue-300),
+      0 1px var(--highlight-border-color, $blue-300);
+    z-index: 2;
+  }
+
+  .diff-tr.line_holder .diff-td,
+  tr.line_holder td {
+    line-height: $code-line-height;
+    font-size: $code-font-size;
+    vertical-align: top;
+
+    span {
+      white-space: break-spaces;
+
+      &.context-cell {
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+      }
+
+      &.line {
+        word-wrap: break-word;
+      }
+    }
+
+    &.diff-line-num {
+      user-select: none;
+      margin: 0;
+      padding: 0 10px 0 5px;
+      text-align: right;
+      width: 50px;
+      position: relative;
+      white-space: nowrap;
+
+      &:nth-of-type(2) {
+        border-right-width: 1px;
+        border-right-style: solid;
+      }
+
+      a {
+        transition: none;
+        float: left;
+        width: 100%;
+        font-weight: $gl-font-weight-normal;
+
+        &[disabled] {
+          cursor: default;
+
+          &:hover,
+          &:active {
+            text-decoration: none;
+          }
+        }
+      }
+
+      &:not(.js-unfold-bottom) a::before {
+        content: attr(data-linenumber);
+      }
+    }
+
+    &.line_content {
+      display: block;
+      margin: 0;
+      padding: 0 1.5em;
+      border: 0;
+      position: relative;
+      white-space: pre-wrap;
+
+      &.parallel {
+        display: table-cell;
+        width: 46%;
+      }
+
+      &.old {
+        &::before {
+          content: "-";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      &.new {
+        &::before {
+          content: "+";
+          position: absolute;
+          left: 0.5em;
+        }
+
+        &.with-coverage::before {
+          left: 0;
+        }
+      }
+
+      img {
+        max-width: 100%;
+      }
+    }
+  }
+
+  .line_holder:last-of-type {
+    .diff-td:first-child,
+    td:first-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+    }
+  }
+
+  &.left-side-selected {
+    .diff-td.line_content.parallel.right-side,
+    td.line_content.parallel.right-side {
+      user-select: none;
+    }
+  }
+
+  &.right-side-selected {
+    .diff-td.line_content.parallel.left-side,
+    td.line_content.parallel.left-side {
+      user-select: none;
+    }
+  }
+}
+
+.diff-stats {
+  align-items: center;
+  padding: 0 1rem;
+
+  .diff-stats-contents {
+    display: contents;
+  }
+
+  .diff-stats-group {
+    padding: 0 0.25rem;
+  }
+
+  svg.diff-stats-icon {
+    vertical-align: text-bottom;
+  }
+
+  &.is-compare-versions-header {
+    .diff-stats-group {
+      padding: 0 0.25rem;
+    }
+  }
+}
+
+.file-content .diff-file {
+  margin: 0;
+  border: 0;
+}
+
+.diff-wrap-lines .line_content {
+  white-space: pre-wrap;
+}
+
+.inline-parallel-buttons {
+  float: right;
+}
+
+.merge-request-details .file-content.image_file img {
+  max-height: 50vh;
+}
+
+// Mobile
+@media (max-width: 480px) {
+  .diff-title {
+    margin: 0;
+
+    .file-mode {
+      display: none;
+    }
+  }
+
+  .diff-controls {
+    position: static;
+    text-align: center;
+  }
+}
+
+// Bigger screens
+@media (min-width: 481px) {
+  .diff-title {
+    margin-right: 200px;
+
+    .file-mode {
+      margin-left: 10px;
+    }
+  }
+
+  .diff-controls {
+    float: right;
+    position: absolute;
+    top: 5px;
+    right: 15px;
+  }
+}
+
+.files {
+  .diff-file:not(.is-virtual-scrolling):last-child {
+    margin-bottom: 0;
+  }
+}
+
+.diff-comments-more-count,
+.diff-notes-collapse,
+.inline-findings-collapse {
+  @include avatar-counter(50%);
+}
+
+.diff-notes-collapse,
+.inline-findings-collapse {
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 0.1s ease-out;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  @include code-icon-size();
+
+  .collapse-icon {
+    height: 50%;
+    width: 100%;
+  }
+
+  svg {
+    vertical-align: middle;
+  }
+
+  .collapse-icon,
+  path {
+    fill: $white;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+.note-container {
+  background-color: $gray-light;
+  border-top: 1px solid $gray-50;
+
+  // double jagged line divider
+  .discussion-notes + .discussion-notes::before,
+  .diff-file-discussions + .discussion-form::before {
+    content: "";
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 10px;
+    background-color: $white;
+    background-image:
+      linear-gradient(
+        45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        225deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        135deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent,
+        transparent 73%,
+        $diff-jagged-border-gradient-color 75%,
+        $white 80%
+      );
+    background-position:
+      5px 5px,
+      0 5px,
+      0 5px,
+      5px 5px;
+    background-size: 10px 10px;
+    background-repeat: repeat;
+  }
+
+  .diff-file-discussions + .discussion-form {
+    padding: $gl-padding;
+
+    &::before {
+      width: auto;
+      margin-left: -$gl-padding;
+      margin-right: -$gl-padding;
+      margin-bottom: $gl-padding;
+    }
+  }
+
+  .notes {
+    position: relative;
+  }
+
+  .diff-notes-collapse,
+  .inline-findings-collapse {
+    position: absolute;
+    left: -12px;
+  }
+}
+
+.diff-file .note-container > .new-note,
+.note-container .discussion-notes.diff-discussions {
+  margin-left: 100px;
+  border-left: 1px solid $gray-50;
+}
+
+.notes.active {
+  .diff-file .note-container > .new-note,
+  .note-container .discussion-notes {
+    // Override our margin and border (set for diff tab)
+    // when user is on the discussion tab for MR
+    margin-left: inherit;
+    border-left: inherit;
+  }
+}
+
+.files:not([data-can-create-note]) .frame {
+  cursor: auto;
+}
+
+.frame.click-to-comment,
+.btn-transparent.image-diff-overlay-add-comment {
+  position: relative;
+  cursor:
+    url("illustrations/image_comment_light_cursor.svg") $image-comment-cursor-left-offset
+      $image-comment-cursor-top-offset,
+    auto;
+
+  // Retina cursor
+  cursor:
+    image-set(
+        url("illustrations/image_comment_light_cursor.svg") 1x,
+        url("illustrations/image_comment_light_cursor@2x.svg") 2x
+      )
+      $image-comment-cursor-left-offset $image-comment-cursor-top-offset,
+    auto;
+
+  .comment-indicator {
+    position: absolute;
+    padding: 0;
+    width: (2px * $image-comment-cursor-left-offset);
+    height: (2px * $image-comment-cursor-top-offset);
+    color: $blue-400;
+    // center the indicator to match the top left click region
+    margin-top: (-1px * $image-comment-cursor-top-offset) + 2;
+    margin-left: (-1px * $image-comment-cursor-left-offset) + 1;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.frame .image-comment-badge,
+.frame .comment-indicator {
+  // Center align badges on the frame
+  transform: translate(-50%, -50%);
+}
+
+.image-comment-badge {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+
+  > svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.image-diff-avatar-link,
+.user-avatar-link {
+  position: relative;
+
+  .badge.badge-pill,
+  .image-comment-badge {
+    top: 25px;
+    right: 8px;
+  }
+}
+
+.discussion-notes {
+  min-height: 35px;
+  background-color: transparent;
+
+  &:first-child {
+    // First child does not have the jagged borders
+    min-height: 25px;
+  }
+
+  .diff-notes-expand {
+    display: none;
+  }
+
+  &.collapsed {
+    background-color: $white;
+
+    .diff-notes-expand {
+      display: initial;
+    }
+
+    .diff-notes-collapse,
+    .inline-findings-collapse,
+    .note,
+    .discussion-reply-holder {
+      display: none;
+    }
+  }
+
+  ul.notes {
+    li.toggle-replies-widget,
+    .discussion-reply-holder {
+      margin-left: 2.5rem;
+
+      .reply-author-avatar {
+        height: 1.5rem;
+      }
+    }
+  }
+}
+
+.discussion-body .image .frame {
+  position: relative;
+}
+
+.discussion-collapsible {
+  margin: 0 $gl-padding $gl-padding;
+
+  .notes {
+    border-radius: $border-radius-default;
+  }
+}
+
+.image-diff-overlay,
+.image-diff-overlay-add-comment {
+  top: 0;
+  left: 0;
+
+  &:active,
+  &:focus {
+    outline: 0;
+  }
+}
+
+.diff-suggest-popover {
+  &.popover {
+    width: 250px;
+    min-width: 250px;
+    z-index: 610;
+  }
+
+  .popover-header {
+    display: none;
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, lg)-1) {
+  .diffs .files {
+    flex-direction: column;
+  }
+
+  .discussion-collapsible {
+    margin: $gl-padding;
+    margin-top: 0;
+  }
+}
+
+// Note: Prevents tall files from appearing above sticky tabs
+.diff-files-holder .vue-recycle-scroller__item-view > div:not(.active) {
+  position: absolute;
+  bottom: 100vh;
+}
+
+.diff-grid-row.expansion.match {
+  border-top: 1px solid var(--diff-expansion-background-color);
+  border-bottom: 1px solid var(--diff-expansion-background-color);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.tooltip {
+  &.coverage {
+    left: -3px !important;
+  }
+
+  &.no-coverage {
+    left: -2px !important;
+  }
+}
+
+.diff-file.pinned-file .file-title {
+  background-color: $blue-50;
+  border-color: $blue-200;
+}
+
+.diff-file.pinned-file .diff-content {
+  border-color: $blue-200;
+}
+
+`````

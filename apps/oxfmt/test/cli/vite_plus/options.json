@@ -21,6 +21,6 @@
     "args": ["--check", "test.ts"],
     "env": { "VP_VERSION": "1" }
   },
-  { "cwd": "skip_fn_export", "args": ["--check", "test.ts"], "env": { "VP_VERSION": "1" } },
+  { "cwd": "fn_export", "args": ["--check", "test.ts"], "env": { "VP_VERSION": "1" } },
   { "cwd": "priority", "args": ["--check", "test.ts"], "env": { "VP_VERSION": "1" } }
 ]

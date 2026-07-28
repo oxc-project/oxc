@@ -144,6 +144,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
+   ╭─[consistent_indexed_object_style.tsx:1:12]
+ 1 │ type Foo = Record<string /* c */, Bar>;
+   ·            ───────────────────────────
+   ╰────
+  help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
+
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
+   ╭─[consistent_indexed_object_style.tsx:1:12]
+ 1 │ type Foo = Record<string, /* c */ Bar>;
+   ·            ───────────────────────────
+   ╰────
+  help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
+
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
+   ╭─[consistent_indexed_object_style.tsx:1:12]
+ 1 │ type Foo = Record<string, Bar /* c */>;
+   ·            ───────────────────────────
+   ╰────
+  help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
+
   ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:14]
  1 │ type Foo = { [k: string]: A.Foo };

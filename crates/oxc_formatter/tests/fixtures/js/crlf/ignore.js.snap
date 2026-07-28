@@ -1,0 +1,77 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+//prettier-ignore
+{
+}
+
+// prettier-ignore
+Object.defineProperties    (    exports    , {
+})
+
+if (ok) logger(  payload  ); // prettier-ignore
+else done();
+
+==================== Output ====================
+-----------------------------------
+{ endOfLine: "lf", printWidth: 80 }
+-----------------------------------
+//prettier-ignore
+{
+}
+
+// prettier-ignore
+Object.defineProperties    (    exports    , {
+})
+
+if (ok)
+  logger(  payload  ); // prettier-ignore
+else done();
+
+------------------------------------
+{ endOfLine: "lf", printWidth: 100 }
+------------------------------------
+//prettier-ignore
+{
+}
+
+// prettier-ignore
+Object.defineProperties    (    exports    , {
+})
+
+if (ok)
+  logger(  payload  ); // prettier-ignore
+else done();
+
+-------------------------------------
+{ endOfLine: "crlf", printWidth: 80 }
+-------------------------------------
+//prettier-ignore
+{
+}
+
+// prettier-ignore
+Object.defineProperties    (    exports    , {
+})
+
+if (ok)
+  logger(  payload  ); // prettier-ignore
+else done();
+
+--------------------------------------
+{ endOfLine: "crlf", printWidth: 100 }
+--------------------------------------
+//prettier-ignore
+{
+}
+
+// prettier-ignore
+Object.defineProperties    (    exports    , {
+})
+
+if (ok)
+  logger(  payload  ); // prettier-ignore
+else done();
+
+===================== End =====================

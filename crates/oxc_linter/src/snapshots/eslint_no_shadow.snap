@@ -1426,8 +1426,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ╰── shadowed declaration is here
  3 │                         enum Test {
  4 │                             A = 1,
-   ·                             ──┬──
-   ·                               ╰── 'A' is declared here
+   ·                             ┬
+   ·                             ╰── 'A' is declared here
  5 │                             B = A,
    ╰────
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.

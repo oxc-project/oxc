@@ -1,35 +1,7 @@
-use std::{
-    borrow::Cow,
-    path::{Component, Path, PathBuf},
-};
+use std::borrow::Cow;
 
 use oxc_diagnostics::OxcCode;
 use tower_lsp_server::ls_types::Range;
-
-/// Normalize a path by removing `.` and resolving `..` components,
-/// without touching the filesystem.
-pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
-    let mut result = PathBuf::new();
-
-    for component in path.as_ref().components() {
-        match component {
-            Component::ParentDir => {
-                result.pop();
-            }
-            Component::CurDir => {
-                // Skip current directory component
-            }
-            Component::Normal(c) => {
-                result.push(c);
-            }
-            Component::RootDir | Component::Prefix(_) => {
-                result.push(component.as_os_str());
-            }
-        }
-    }
-
-    result
-}
 
 /// Returns `true` if LSP ranges `a` and `b` overlap or touch (share a boundary point).
 ///
@@ -59,22 +31,12 @@ pub fn get_full_rule_name(rule_code: &OxcCode) -> Option<Cow<'_, str>> {
 
 #[cfg(test)]
 mod test {
-    use std::path::Path;
-
     use tower_lsp_server::ls_types::{Position, Range};
 
-    use crate::lsp::utils::{normalize_path, range_overlaps};
+    use crate::lsp::utils::range_overlaps;
 
     fn range(sl: u32, sc: u32, el: u32, ec: u32) -> Range {
         Range::new(Position::new(sl, sc), Position::new(el, ec))
-    }
-
-    #[test]
-    fn test_normalize_path() {
-        assert_eq!(
-            normalize_path(Path::new("/root/directory/./.oxlintrc.json")),
-            Path::new("/root/directory/.oxlintrc.json")
-        );
     }
 
     #[test]

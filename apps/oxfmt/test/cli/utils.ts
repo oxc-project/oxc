@@ -91,6 +91,10 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
       input = await fs.readFile(join(fixture.fixturesPath, testCase.stdin), "utf8");
     }
 
+    // Drop `CI` and `FORCE_COLOR` so oxc-miette always renders with the ASCII theme;
+    // otherwise CI runs emit unicode markers that diverge from locally generated snapshots
+    const { CI: _ci, FORCE_COLOR: _forceColor, ...inheritedEnv } = process.env;
+
     // Execute
     const { stdout, stderr, exitCode } = await execa(
       "node",
@@ -100,7 +104,9 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
         reject: false,
         timeout: 5000,
         input,
-        env: { ...process.env, ...testCase.env },
+        // `extendEnv: false` prevents execa from merging `process.env` back in
+        env: { ...inheritedEnv, ...testCase.env },
+        extendEnv: false,
       },
     );
 
@@ -316,19 +322,14 @@ function normalizeOutput(output: string, cwd: string): string {
 
   return (
     output
+      // oxlint-disable-next-line no-control-regex
+      .replace(/\x1b\[[0-9;]*m/g, "")
       .replace(/\d+(?:\.\d+)?s|\d+ms/g, "<time>")
+      .replace(/\.timestamp-[0-9a-f-]+/g, ".timestamp-<timestamp-hash>")
+      .replace(/vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯\n?/g, "<Vite+ diagnostic>\n")
       .replace(/\\/g, "/")
       .replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>")
       .replace(new RegExp(RegExp.escape(rootPath), "g"), "<root>")
-      // oxlint-disable-next-line no-control-regex
-      .replace(/\x1b\[[0-9;]*m/g, "")
-      .replace(/×/g, "x")
-      .replace(/╭/g, ",")
-      .replace(/─/g, "-")
-      .replace(/│/g, "|")
-      .replace(/·/g, ":")
-      .replace(/┬/g, "|")
-      .replace(/╰/g, "`")
       .replace(/[^\S\n]+$/gm, "")
   );
 }

@@ -28,7 +28,6 @@ impl GetSpanMut for Expression<'_> {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::Super(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -52,6 +51,8 @@ impl GetSpanMut for Expression<'_> {
             Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportMeta(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewTarget(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -122,7 +123,6 @@ impl GetSpanMut for ArrayExpressionElement<'_> {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::Super(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -146,6 +146,8 @@ impl GetSpanMut for ArrayExpressionElement<'_> {
             Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportMeta(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewTarget(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -204,7 +206,6 @@ impl GetSpanMut for PropertyKey<'_> {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::Super(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -228,6 +229,8 @@ impl GetSpanMut for PropertyKey<'_> {
             Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportMeta(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewTarget(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -309,7 +312,14 @@ impl GetSpanMut for NewExpression<'_> {
     }
 }
 
-impl GetSpanMut for MetaProperty<'_> {
+impl GetSpanMut for ImportMeta {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for NewTarget {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -335,7 +345,6 @@ impl GetSpanMut for Argument<'_> {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::Super(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -359,6 +368,8 @@ impl GetSpanMut for Argument<'_> {
             Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportMeta(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewTarget(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -725,7 +736,6 @@ impl GetSpanMut for ForStatementInit<'_> {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::Super(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -749,6 +759,8 @@ impl GetSpanMut for ForStatementInit<'_> {
             Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportMeta(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewTarget(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1159,7 +1171,6 @@ impl GetSpanMut for ExportDefaultDeclarationKind<'_> {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::Super(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1183,6 +1194,8 @@ impl GetSpanMut for ExportDefaultDeclarationKind<'_> {
             Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportMeta(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewTarget(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1354,7 +1367,6 @@ impl GetSpanMut for JSXExpression<'_> {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::Super(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1378,6 +1390,8 @@ impl GetSpanMut for JSXExpression<'_> {
             Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportMeta(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewTarget(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
             Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),

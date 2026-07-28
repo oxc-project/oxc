@@ -8,6 +8,8 @@ export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
+export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
+export type LineWrappingStyleConfig = "greedy" | "balance";
 export type ObjectWrapConfig = "preserve" | "collapse";
 /**
  * A set of glob patterns.
@@ -34,6 +36,7 @@ export interface Oxfmtrc {
   /**
    * Include parentheses around a sole arrow function parameter.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: `"always"`
    */
   arrowParens?: ArrowParensConfig;
@@ -41,20 +44,21 @@ export interface Oxfmtrc {
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
    * - Default: `false`
    */
   bracketSameLine?: boolean;
   /**
    * Print spaces between brackets in object literals.
    *
+   * - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML
    * - Default: `true`
    */
   bracketSpacing?: boolean;
   /**
    * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
    *
-   * NOTE: XXX-in-JS support is incomplete.
-   *
+   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
@@ -63,6 +67,7 @@ export interface Oxfmtrc {
    *
    * NOTE: `"auto"` is not supported.
    *
+   * - Languages: All
    * - Default: `"lf"`
    * - Overrides `.editorconfig.end_of_line`
    */
@@ -70,12 +75,14 @@ export interface Oxfmtrc {
   /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
+   * - Languages: HTML, Angular, Vue, Handlebars, Svelte
    * - Default: `"css"`
    */
   htmlWhitespaceSensitivity?: HtmlWhitespaceSensitivityConfig;
   /**
    * Ignore files matching these glob patterns.
-   * Patterns are based on the location of the Oxfmt configuration file.
+   * Patterns use gitignore-style matching, rooted at the directory containing the configuration file.
+   * Files outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.
    *
    * - Default: `[]`
    */
@@ -83,6 +90,7 @@ export interface Oxfmtrc {
   /**
    * Whether to insert a final newline at the end of the file.
    *
+   * - Languages: All
    * - Default: `true`
    * - Overrides `.editorconfig.insert_final_newline`
    */
@@ -96,12 +104,14 @@ export interface Oxfmtrc {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: Disabled
    */
   jsdoc?: JsdocUserConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
+   * - Languages: JSX, TSX
    * - Default: `false`
    */
   jsxSingleQuote?: boolean;
@@ -111,6 +121,7 @@ export interface Oxfmtrc {
    * By default, formats objects as multi-line if there is a newline prior to the first property.
    * Authors can use this heuristic to contextually improve readability, though it has some downsides.
    *
+   * - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5
    * - Default: `"preserve"`
    */
   objectWrap?: ObjectWrapConfig;
@@ -126,6 +137,7 @@ export interface Oxfmtrc {
    *
    * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
    *
+   * - Languages: All
    * - Default: `100`
    * - Overrides `.editorconfig.max_line_length`
    */
@@ -137,24 +149,28 @@ export interface Oxfmtrc {
    * To wrap prose to the print width, change this option to "always".
    * If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
    *
+   * - Languages: Markdown, MDX, YAML
    * - Default: `"preserve"`
    */
   proseWrap?: ProseWrapConfig;
   /**
    * Change when properties in objects are quoted.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: `"as-needed"`
    */
   quoteProps?: QuotePropsConfig;
   /**
    * Print semicolons at the ends of statements.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: `true`
    */
   semi?: boolean;
   /**
    * Enforce single attribute per line in HTML, Vue, and JSX.
    *
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
    * - Default: `false`
    */
   singleAttributePerLine?: boolean;
@@ -163,6 +179,7 @@ export interface Oxfmtrc {
    *
    * For JSX, you can set the `jsxSingleQuote` option.
    *
+   * - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte
    * - Default: `false`
    * - Overrides `.editorconfig.quote_type`
    */
@@ -175,6 +192,7 @@ export interface Oxfmtrc {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: Disabled
    */
   sortImports?: SortImportsUserConfig;
@@ -185,6 +203,7 @@ export interface Oxfmtrc {
    * But we believe it is clearer and easier to navigate.
    * For details, see each field's documentation.
    *
+   * - Languages: JSON (`package.json` only)
    * - Default: `true`
    */
   sortPackageJson?: SortPackageJsonUserConfig;
@@ -197,6 +216,7 @@ export interface Oxfmtrc {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
+   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte
    * - Default: Disabled
    */
   sortTailwindcss?: SortTailwindcssUserConfig;
@@ -211,12 +231,14 @@ export interface Oxfmtrc {
    * but Oxfmt does NOT bundle or auto-install it.
    * You must install `svelte` yourself in your project, formatting will fail at runtime otherwise.
    *
+   * - Languages: Svelte
    * - Default: Disabled
    */
   svelte?: SvelteUserConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
+   * - Languages: All
    * - Default: `2`
    * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
@@ -226,12 +248,14 @@ export interface Oxfmtrc {
    *
    * A single-line array, for example, never gets trailing commas.
    *
+   * - Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML
    * - Default: `"all"`
    */
   trailingComma?: TrailingCommaConfig;
   /**
    * Indent lines with tabs instead of spaces.
    *
+   * - Languages: All
    * - Default: `false`
    * - Overrides `.editorconfig.indent_style`
    */
@@ -239,6 +263,7 @@ export interface Oxfmtrc {
   /**
    * Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
    *
+   * - Languages: Vue
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;
@@ -272,7 +297,7 @@ export interface JsdocConfig {
    *
    * - Default: `"singleLine"`
    */
-  commentLineStrategy?: string;
+  commentLineStrategy?: CommentLineStrategyConfig;
   /**
    * Emit `@description` tag instead of inline description.
    *
@@ -299,7 +324,7 @@ export interface JsdocConfig {
    *
    * - Default: `"greedy"`
    */
-  lineWrappingStyle?: string;
+  lineWrappingStyle?: LineWrappingStyleConfig;
   /**
    * Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
    *
@@ -339,6 +364,7 @@ export interface FormatConfig {
   /**
    * Include parentheses around a sole arrow function parameter.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: `"always"`
    */
   arrowParens?: ArrowParensConfig;
@@ -346,20 +372,21 @@ export interface FormatConfig {
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
    * - Default: `false`
    */
   bracketSameLine?: boolean;
   /**
    * Print spaces between brackets in object literals.
    *
+   * - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML
    * - Default: `true`
    */
   bracketSpacing?: boolean;
   /**
    * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
    *
-   * NOTE: XXX-in-JS support is incomplete.
-   *
+   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
@@ -368,6 +395,7 @@ export interface FormatConfig {
    *
    * NOTE: `"auto"` is not supported.
    *
+   * - Languages: All
    * - Default: `"lf"`
    * - Overrides `.editorconfig.end_of_line`
    */
@@ -375,12 +403,14 @@ export interface FormatConfig {
   /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
+   * - Languages: HTML, Angular, Vue, Handlebars, Svelte
    * - Default: `"css"`
    */
   htmlWhitespaceSensitivity?: HtmlWhitespaceSensitivityConfig;
   /**
    * Whether to insert a final newline at the end of the file.
    *
+   * - Languages: All
    * - Default: `true`
    * - Overrides `.editorconfig.insert_final_newline`
    */
@@ -394,12 +424,14 @@ export interface FormatConfig {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: Disabled
    */
   jsdoc?: JsdocUserConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
+   * - Languages: JSX, TSX
    * - Default: `false`
    */
   jsxSingleQuote?: boolean;
@@ -409,6 +441,7 @@ export interface FormatConfig {
    * By default, formats objects as multi-line if there is a newline prior to the first property.
    * Authors can use this heuristic to contextually improve readability, though it has some downsides.
    *
+   * - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5
    * - Default: `"preserve"`
    */
   objectWrap?: ObjectWrapConfig;
@@ -417,6 +450,7 @@ export interface FormatConfig {
    *
    * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
    *
+   * - Languages: All
    * - Default: `100`
    * - Overrides `.editorconfig.max_line_length`
    */
@@ -428,24 +462,28 @@ export interface FormatConfig {
    * To wrap prose to the print width, change this option to "always".
    * If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
    *
+   * - Languages: Markdown, MDX, YAML
    * - Default: `"preserve"`
    */
   proseWrap?: ProseWrapConfig;
   /**
    * Change when properties in objects are quoted.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: `"as-needed"`
    */
   quoteProps?: QuotePropsConfig;
   /**
    * Print semicolons at the ends of statements.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: `true`
    */
   semi?: boolean;
   /**
    * Enforce single attribute per line in HTML, Vue, and JSX.
    *
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
    * - Default: `false`
    */
   singleAttributePerLine?: boolean;
@@ -454,6 +492,7 @@ export interface FormatConfig {
    *
    * For JSX, you can set the `jsxSingleQuote` option.
    *
+   * - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte
    * - Default: `false`
    * - Overrides `.editorconfig.quote_type`
    */
@@ -466,6 +505,7 @@ export interface FormatConfig {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
+   * - Languages: JS, JSX, TS, TSX
    * - Default: Disabled
    */
   sortImports?: SortImportsUserConfig;
@@ -476,6 +516,7 @@ export interface FormatConfig {
    * But we believe it is clearer and easier to navigate.
    * For details, see each field's documentation.
    *
+   * - Languages: JSON (`package.json` only)
    * - Default: `true`
    */
   sortPackageJson?: SortPackageJsonUserConfig;
@@ -488,6 +529,7 @@ export interface FormatConfig {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
+   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte
    * - Default: Disabled
    */
   sortTailwindcss?: SortTailwindcssUserConfig;
@@ -502,12 +544,14 @@ export interface FormatConfig {
    * but Oxfmt does NOT bundle or auto-install it.
    * You must install `svelte` yourself in your project, formatting will fail at runtime otherwise.
    *
+   * - Languages: Svelte
    * - Default: Disabled
    */
   svelte?: SvelteUserConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
+   * - Languages: All
    * - Default: `2`
    * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
@@ -517,12 +561,14 @@ export interface FormatConfig {
    *
    * A single-line array, for example, never gets trailing commas.
    *
+   * - Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML
    * - Default: `"all"`
    */
   trailingComma?: TrailingCommaConfig;
   /**
    * Indent lines with tabs instead of spaces.
    *
+   * - Languages: All
    * - Default: `false`
    * - Overrides `.editorconfig.indent_style`
    */
@@ -530,6 +576,7 @@ export interface FormatConfig {
   /**
    * Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
    *
+   * - Languages: Vue
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;

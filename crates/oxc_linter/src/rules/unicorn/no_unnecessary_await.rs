@@ -1,7 +1,12 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{AwaitExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodes;
 use oxc_span::Span;
+use oxc_syntax::operator::{UnaryOperator, UpdateOperator};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -43,6 +48,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     version = "0.0.12",
+    short_description = "Disallow awaiting non-promise values.",
 );
 
 impl Rule for NoUnnecessaryAwait {
@@ -51,29 +57,13 @@ impl Rule for NoUnnecessaryAwait {
             if !not_promise(&expr.argument) {
                 return;
             }
-            if {
-                // Removing `await` may change them to a declaration, if there is no `id` will cause SyntaxError
-                matches!(expr.argument, Expression::FunctionExpression(_))
-                    || matches!(expr.argument, Expression::ClassExpression(_))
-            } || {
-                // `+await +1` -> `++1`
-                let parent = ctx.nodes().parent_node(node.id());
-                if let (
-                    AstKind::UnaryExpression(parent_unary),
-                    Expression::UnaryExpression(inner_unary),
-                ) = (parent.kind(), &expr.argument)
-                {
-                    parent_unary.operator == inner_unary.operator
-                } else {
-                    false
-                }
-            } {
-                ctx.diagnostic(no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)));
-            } else {
+            if is_fixable(expr, ctx.nodes()) {
                 ctx.diagnostic_with_fix(
                     no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)),
                     |fixer| fixer.replace_with(expr, &expr.argument),
                 );
+            } else {
+                ctx.diagnostic(no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)));
             }
         }
     }
@@ -101,6 +91,33 @@ fn not_promise(expr: &Expression) -> bool {
         Expression::SequenceExpression(expr) => not_promise(expr.expressions.last().unwrap()),
         Expression::ParenthesizedExpression(expr) => not_promise(&expr.expression),
         _ => false,
+    }
+}
+
+fn is_fixable(expr: &AwaitExpression, nodes: &AstNodes<'_>) -> bool {
+    // Removing `await` may change them to a declaration, if there is no `id` will cause SyntaxError
+    if matches!(expr.argument, Expression::FunctionExpression(_) | Expression::ClassExpression(_)) {
+        return false;
+    }
+
+    // Removing `await` would paste the parent unary operator onto the argument's
+    // leading operator and change tokenization into a syntax error:
+    // `+await +1` -> `++1`, `+await ++a` -> `+++a`, `-await --a` -> `---a`.
+    // Skip the fix in those cases (the diagnostic is still reported).
+    let parent = nodes.parent_node(expr.node_id());
+    match (parent.kind(), &expr.argument) {
+        (AstKind::UnaryExpression(parent_unary), Expression::UnaryExpression(inner_unary)) => {
+            parent_unary.operator != inner_unary.operator
+        }
+        (AstKind::UnaryExpression(parent_unary), Expression::UpdateExpression(inner_update)) => {
+            !(inner_update.prefix
+                && matches!(
+                    (parent_unary.operator, inner_update.operator),
+                    (UnaryOperator::UnaryPlus, UpdateOperator::Increment)
+                        | (UnaryOperator::UnaryNegation, UpdateOperator::Decrement)
+                ))
+        }
+        _ => true,
     }
 }
 
@@ -158,6 +175,8 @@ fn test() {
         "async function foo() {+await -1}",
         // https://github.com/oxc-project/oxc/issues/1718
         "await await this.assertTotalDocumentCount(expectedFormattedTotalDocCount);",
+        "async function foo() {+await ++a}",
+        "async function foo() {-await --a}",
     ];
 
     let fix = vec![
@@ -169,6 +188,10 @@ fn test() {
         ("await class {}", "await class {}"),           // no autofix
         ("+await +1", "+await +1"),                     // no autofix
         ("-await -1", "-await -1"),                     // no autofix
+        ("+await ++a", "+await ++a"), // no autofix: `+++a` would be a syntax error
+        ("-await --a", "-await --a"), // no autofix: `---a` would be a syntax error
+        ("+await --a", "+--a"),       // safe: `+--a` parses as `+(--a)`
+        ("-await ++a", "-++a"),       // safe: `-++a` parses as `-(++a)`
     ];
 
     Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::PLUGIN, pass, fail)

@@ -1,0 +1,10 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:base",
+    ":gitSignOff",
+    ":disableDependencyDashboard",
+    "customManagers:dockerfileVersions", // _VERSION vars in Dockerfiles
+  ],
+  packageRules: [],
+}

@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 pub mod child_list;
@@ -19,26 +19,29 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
-    utils::tailwindcss::is_tailwind_jsx_attribute,
+    utils::{
+        expression::as_call_expression_without_chain_wrappers,
+        tailwindcss::is_tailwind_jsx_attribute,
+    },
     write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         AnyJsxTagWithChildren::Element(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningElement<'a>> {
-    fn write(&self, _f: &mut Formatter<'_, 'a>) {
+    fn write(&self, _f: &mut JsFormatter<'_, 'a>) {
         unreachable!("`AnyJsxTagWithChildren` will print it.")
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let name = self.name();
         let mut name_has_leading_comment = false;
         let mut name_has_own_line_leading_comment = false;
@@ -66,13 +69,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         AnyJsxTagWithChildren::Fragment(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
 
         if comments.is_empty() {
@@ -101,7 +104,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
 
         if comments.is_empty() {
@@ -137,20 +140,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXNamespacedName<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.namespace(), ":", self.name()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.object(), ".", self.property()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let has_comment = |f: &mut Formatter<'_, '_>| {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        let has_comment = |f: &mut JsFormatter<'_, '_>| {
             let expression_span = self.expression.span();
             f.comments().has_comment_before(expression_span.start)
                 || f.comments().has_comment_in_range(expression_span.end, self.span.end)
@@ -277,12 +280,15 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
         | JSXExpression::ArrowFunctionExpression(_)
         | JSXExpression::CallExpression(_)
         | JSXExpression::ImportExpression(_)
-        | JSXExpression::MetaProperty(_)
+        | JSXExpression::ImportMeta(_)
+        | JSXExpression::NewTarget(_)
         | JSXExpression::FunctionExpression(_)
         | JSXExpression::TemplateLiteral(_)
         | JSXExpression::TaggedTemplateExpression(_) => true,
-        JSXExpression::ChainExpression(chain_expression) => {
-            matches!(chain_expression.expression, ChainElement::CallExpression(_))
+        // A call wrapped in `?.` chains and/or `!` assertions still inlines.
+        JSXExpression::ChainExpression(_) | JSXExpression::TSNonNullExpression(_) => {
+            as_call_expression_without_chain_wrappers(container.expression.to_expression())
+                .is_some()
         }
         JSXExpression::AwaitExpression(await_expression) => {
             matches!(
@@ -292,7 +298,8 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
                     | Expression::ArrowFunctionExpression(_)
                     | Expression::CallExpression(_)
                     | Expression::ImportExpression(_)
-                    | Expression::MetaProperty(_)
+                    | Expression::ImportMeta(_)
+                    | Expression::NewTarget(_)
                     | Expression::FunctionExpression(_)
                     | Expression::TemplateLiteral(_)
                     | Expression::TaggedTemplateExpression(_)
@@ -305,23 +312,21 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
-    fn write(&self, _f: &mut Formatter<'_, 'a>) {}
+    fn write(&self, _f: &mut JsFormatter<'_, 'a>) {}
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let line_break = if f.options().attribute_position == AttributePosition::Multiline {
-            hard_line_break()
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.options().attribute_position == AttributePosition::Multiline {
+            f.join_nodes_with_hardline().entries(self.iter());
         } else {
-            soft_line_break_or_space()
-        };
-
-        f.join_with(&line_break).entries(self.iter());
+            f.join_nodes_with_soft_line().entries(self.iter());
+        }
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, self.name());
 
         if let Some(value) = &self.value() {
@@ -348,7 +353,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments();
         let has_comment = comments.has_comment_before(self.argument.span().start)
             || comments.has_comment_in_range(self.argument.span().end, self.span.end);
@@ -370,13 +375,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXIdentifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, text_without_whitespace(self.name().as_str()));
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments();
         let has_comment = comments.has_comment_before(self.expression.span().start)
             || comments.has_comment_in_range(self.expression.span().end, self.span.end);
@@ -398,7 +403,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, text(self.value().as_str()));
     }
 }

@@ -7,18 +7,38 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
-    Semicolons, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
+    OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
+use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_css::{CssFormatOptions, CssVariant};
+use oxc_formatter_graphql::GraphqlFormatOptions;
+use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
+use oxc_formatter_yaml::{ProseWrap, YamlFormatOptions};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
+
+use crate::options::TestLanguage;
 
 /// Vec<(key, value)>
 type SnapshotOptions = Vec<(String, String)>;
 
-pub fn parse_spec(spec: &Path) -> Vec<(FormatOptions, SnapshotOptions)> {
-    let mut parser = SpecParser::default();
+/// Format options carried per-spec.
+///
+/// `runFormatTest(import.meta, parsers, opts)` calls in Prettier specs may target
+/// JS or JSON. We branch here so the conformance runner can dispatch to the
+/// matching formatter without sharing option structs across languages.
+#[derive(Clone)]
+pub enum SpecOptions {
+    Js(Box<JsFormatOptions>),
+    Json(JsonFormatOptions),
+    Graphql(GraphqlFormatOptions),
+    Css(CssFormatOptions),
+    Yaml(YamlFormatOptions),
+}
+
+pub fn parse_spec(spec: &Path, language: TestLanguage) -> Vec<(SpecOptions, SnapshotOptions)> {
+    let mut parser = SpecParser { language, ..SpecParser::default() };
     parser.parse(spec);
     parser.calls
 }
@@ -27,7 +47,8 @@ pub fn parse_spec(spec: &Path) -> Vec<(FormatOptions, SnapshotOptions)> {
 struct SpecParser {
     source_text: String,
     parsers: Vec<String>,
-    calls: Vec<(FormatOptions, SnapshotOptions)>,
+    calls: Vec<(SpecOptions, SnapshotOptions)>,
+    language: TestLanguage,
 }
 
 impl SpecParser {
@@ -43,7 +64,7 @@ impl SpecParser {
         }
 
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         self.visit_program(&mut ret.program);
     }
 }
@@ -83,11 +104,6 @@ impl VisitMut<'_> for SpecParser {
 
         let mut snapshot_options: SnapshotOptions = vec![];
         let mut parsers = vec![];
-        let mut options = FormatOptions {
-            // Use Prettier's default printWidth(80) instead of our default(100)
-            line_width: LineWidth::try_from(80).unwrap(),
-            ..Default::default()
-        };
 
         // Get parsers
         if let Some(argument) = expr.arguments.get(1) {
@@ -115,6 +131,59 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
+        // NOTE: The JSON-family languages (and GraphQL) each accept only their own parser's calls
+        // (the parser name is exactly `TestLanguage::as_str()`).
+        // A single `format.test.js` may list several parsers (e.g. `with-comment/`),
+        // so we filter per-language.
+        let is_exact_parser_language = matches!(
+            self.language,
+            TestLanguage::Json
+                | TestLanguage::Jsonc
+                | TestLanguage::Json5
+                | TestLanguage::JsonStringify
+                | TestLanguage::Graphql
+                | TestLanguage::Css
+                | TestLanguage::Scss
+                | TestLanguage::Less
+                | TestLanguage::Yaml
+        );
+        if is_exact_parser_language && !parsers.iter().any(|p| p == self.language.as_str()) {
+            return;
+        }
+
+        let mut js_options = JsFormatOptions {
+            // Use Prettier's default printWidth(80) instead of our default(100)
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
+        let mut json_options = JsonFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            variant: match self.language {
+                TestLanguage::Jsonc => JsonVariant::Jsonc,
+                TestLanguage::Json5 => JsonVariant::Json5,
+                TestLanguage::JsonStringify => JsonVariant::JsonStringify,
+                _ => JsonVariant::Json,
+            },
+            ..Default::default()
+        };
+        let mut graphql_options = GraphqlFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
+        let mut css_options = CssFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            variant: match self.language {
+                TestLanguage::Scss => CssVariant::Scss,
+                TestLanguage::Less => CssVariant::Less,
+                _ => CssVariant::Css,
+            },
+            ..Default::default()
+        };
+        let mut yaml_options = YamlFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
+
         // Get options
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
             obj_expr.properties.iter().for_each(|item| {
@@ -124,41 +193,51 @@ impl VisitMut<'_> for SpecParser {
                     match &obj_prop.value {
                         Expression::BooleanLiteral(literal) => {
                             if name == "semi" {
-                                options.semicolons = if literal.value {
+                                js_options.semicolons = if literal.value {
                                     Semicolons::Always
                                 } else {
                                     Semicolons::AsNeeded
                                 }
                             } else if name == "bracketSpacing" {
-                                options.bracket_spacing = BracketSpacing::from(literal.value);
+                                js_options.bracket_spacing = BracketSpacing::from(literal.value);
+                                graphql_options.bracket_spacing = literal.value.into();
+                                yaml_options.bracket_spacing = literal.value.into();
                             } else if matches!(
                                 name.as_ref(),
                                 "jsxBracketSameLine" | "bracketSameLine"
                             ) && literal.value
                             {
-                                options.bracket_same_line = BracketSameLine::from(literal.value);
+                                js_options.bracket_same_line = BracketSameLine::from(literal.value);
                             } else if name == "singleQuote" {
-                                options.quote_style = if literal.value {
+                                js_options.quote_style = if literal.value {
                                     QuoteStyle::Single
                                 } else {
                                     QuoteStyle::Double
                                 };
+                                json_options.single_quote = literal.value.into();
+                                css_options.single_quote = literal.value.into();
+                                yaml_options.single_quote = literal.value.into();
                             } else if name == "jsxSingleQuote" {
-                                options.jsx_quote_style = if literal.value {
+                                js_options.jsx_quote_style = if literal.value {
                                     QuoteStyle::Single
                                 } else {
                                     QuoteStyle::Double
                                 };
                             } else if name == "useTabs" {
-                                options.indent_style = if literal.value {
+                                let style = if literal.value {
                                     IndentStyle::Tab
                                 } else {
                                     IndentStyle::Space
                                 };
+                                js_options.indent_style = style;
+                                json_options.indent_style = style;
+                                graphql_options.indent_style = style;
+                                css_options.indent_style = style;
+                                yaml_options.indent_style = style;
                             } else if name == "experimentalTernaries" {
-                                options.experimental_ternaries = literal.value;
+                                js_options.experimental_ternaries = literal.value;
                             } else if name == "singleAttributePerLine" {
-                                options.attribute_position = if literal.value {
+                                js_options.attribute_position = if literal.value {
                                     AttributePosition::Multiline
                                 } else {
                                     AttributePosition::Auto
@@ -168,12 +247,20 @@ impl VisitMut<'_> for SpecParser {
                         #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
                         Expression::NumericLiteral(literal) => match name.as_ref() {
                             "printWidth" => {
-                                options.line_width =
-                                    LineWidth::try_from(literal.value as u16).unwrap();
+                                let width = LineWidth::try_from(literal.value as u16).unwrap();
+                                js_options.line_width = width;
+                                json_options.line_width = width;
+                                graphql_options.line_width = width;
+                                css_options.line_width = width;
+                                yaml_options.line_width = width;
                             }
                             "tabWidth" => {
-                                options.indent_width =
-                                    IndentWidth::try_from(literal.value as u8).unwrap();
+                                let w = IndentWidth::try_from(literal.value as u8).unwrap();
+                                js_options.indent_width = w;
+                                json_options.indent_width = w;
+                                graphql_options.indent_width = w;
+                                css_options.indent_width = w;
+                                yaml_options.indent_width = w;
                             }
                             _ => {}
                         },
@@ -181,21 +268,53 @@ impl VisitMut<'_> for SpecParser {
                             let s = literal.value.as_str();
                             match name.as_ref() {
                                 "trailingComma" => {
-                                    options.trailing_commas = TrailingCommas::from_str(s).unwrap();
+                                    js_options.trailing_commas =
+                                        TrailingCommas::from_str(s).unwrap();
+                                    json_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_json::TrailingCommas::Always,
+                                        "none" => oxc_formatter_json::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
+                                    css_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_css::TrailingCommas::Always,
+                                        "none" => oxc_formatter_css::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
+                                    yaml_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_yaml::TrailingCommas::Always,
+                                        "none" => oxc_formatter_yaml::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.line_ending =
-                                        LineEnding::from_str(s).unwrap_or_default();
+                                    let ending = LineEnding::from_str(s).unwrap_or_default();
+                                    js_options.line_ending = ending;
+                                    json_options.line_ending = ending;
+                                    graphql_options.line_ending = ending;
+                                    css_options.line_ending = ending;
+                                    yaml_options.line_ending = ending;
+                                }
+                                "proseWrap" => {
+                                    yaml_options.prose_wrap = match s {
+                                        "always" => ProseWrap::Always,
+                                        "never" => ProseWrap::Never,
+                                        _ => ProseWrap::Preserve,
+                                    };
                                 }
                                 "quoteProps" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.quote_properties =
+                                    js_options.quote_properties =
                                         QuoteProperties::from_str(s).unwrap_or_default();
+                                    json_options.quote_props = match s {
+                                        "consistent" => QuoteProps::Consistent,
+                                        "preserve" => QuoteProps::Preserve,
+                                        _ => QuoteProps::AsNeeded,
+                                    };
                                 }
                                 "objectWrap" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.expand = Expand::from_str(
+                                    js_options.expand = Expand::from_str(
                                         // Prettier uses "preserve"/"collapse", but we use "auto"/"never"
                                         match s {
                                             "preserve" => "auto",
@@ -207,7 +326,7 @@ impl VisitMut<'_> for SpecParser {
                                 }
                                 "arrowParens" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.arrow_parentheses = ArrowParentheses::from_str(
+                                    js_options.arrow_parentheses = ArrowParentheses::from_str(
                                         // Prettier uses "avoid", but we use "as-needed"
                                         if s == "avoid" { "as-needed" } else { s },
                                     )
@@ -215,7 +334,7 @@ impl VisitMut<'_> for SpecParser {
                                 }
                                 "experimentalOperatorPosition" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.experimental_operator_position =
+                                    js_options.experimental_operator_position =
                                         OperatorPosition::from_str(s).unwrap_or_default();
                                 }
                                 _ => {}
@@ -242,12 +361,22 @@ impl VisitMut<'_> for SpecParser {
             ),
         ));
 
-        if !snapshot_options.iter().any(|item| item.0 == "printWidth") {
-            snapshot_options.push(("printWidth".to_string(), "80".into()));
-        }
-
+        // Prettier omits `printWidth` from the options block when it equals the
+        // default (80); the value is only shown in the trailing visualization line.
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
+        let options = match self.language {
+            TestLanguage::Json
+            | TestLanguage::Jsonc
+            | TestLanguage::Json5
+            | TestLanguage::JsonStringify => SpecOptions::Json(json_options),
+            TestLanguage::Graphql => SpecOptions::Graphql(graphql_options),
+            TestLanguage::Css | TestLanguage::Scss | TestLanguage::Less => {
+                SpecOptions::Css(css_options)
+            }
+            TestLanguage::Yaml => SpecOptions::Yaml(yaml_options),
+            TestLanguage::Js | TestLanguage::Ts => SpecOptions::Js(Box::new(js_options)),
+        };
         self.calls.push((options, snapshot_options));
     }
 }

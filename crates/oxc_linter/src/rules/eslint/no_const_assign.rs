@@ -1,5 +1,6 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::Span;
@@ -54,15 +55,14 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.3",
+    short_description = "Disallow reassigning `const` variables.",
 );
 
 impl Rule for NoConstAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(decl) if decl.kind.is_const() || decl.kind.is_using() => {
-                for symbol_id in decl.id.get_symbol_ids() {
-                    check_symbol_id(symbol_id, ctx);
-                }
+                decl.id.bound_names(&mut |ident| check_symbol_id(ident.symbol_id(), ctx));
             }
             _ => {}
         }

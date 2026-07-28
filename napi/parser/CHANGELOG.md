@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- 11f5d1f ast_visit: Add `Utf8ToUtf16::convert_program_and_comments` (#24859) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e80574f estree: Handle empty spans serializing `ImportMeta` and `NewTarget` (#24775) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7b045cd minfier: Drop last break from last switch case (#24673) (Armano)
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+## [0.138.0] - 2026-06-29
+
+### 🛡️ Security
+
+- 3cdd18f deps: Update npm packages (#23690) (renovate[bot])
+
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- ae02b4e ci/parser: Use `minimal` for vitest reporter (#23457) (camc314)
+
+## [0.136.0] - 2026-06-15
+
+### ⚡ Performance
+
+- da1a6c6 diagnostics: Migrate to allocation-optimized oxc-miette (#23094) (Boshen)
+
 ## [0.130.0] - 2026-05-11
 
 ### 📚 Documentation

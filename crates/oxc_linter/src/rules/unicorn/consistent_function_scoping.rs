@@ -1,5 +1,3 @@
-use rustc_hash::FxHashSet;
-
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -158,6 +156,7 @@ declare_oxc_lint!(
     pending,
     config = ConsistentFunctionScoping,
     version = "0.8.0",
+    short_description = "Disallow functions that are declared in a scope which does not capture any variables from the outer scope.",
 );
 
 impl Rule for ConsistentFunctionScoping {
@@ -267,16 +266,6 @@ impl Rule for ConsistentFunctionScoping {
             return;
         }
 
-        let parent_scope_ids = {
-            let mut current_scope_id = function_scope_id;
-            let mut parent_scope_ids = FxHashSet::default();
-            while let Some(parent_scope_id) = ctx.scoping().scope_parent_id(current_scope_id) {
-                parent_scope_ids.insert(parent_scope_id);
-                current_scope_id = parent_scope_id;
-            }
-            parent_scope_ids
-        };
-
         for reference_id in function_body_var_references {
             let reference = ctx.scoping().get_reference(reference_id);
             let Some(symbol_id) = reference.symbol_id() else { continue };
@@ -284,7 +273,9 @@ impl Rule for ConsistentFunctionScoping {
                 continue;
             }
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-            if parent_scope_ids.contains(&scope_id) && symbol_id != function_declaration_symbol_id {
+            if ctx.scoping().scope_is_descendant_of(function_scope_id, scope_id)
+                && symbol_id != function_declaration_symbol_id
+            {
                 return;
             }
         }

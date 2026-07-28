@@ -1,0 +1,259 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:34]
+ 2 │                   <script setup lang="ts">
+ 3 │                   type Props = { foo?: number }
+   ·                                  ────────────
+ 4 │                   withDefaults(defineProps<Props>(), {})
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:33]
+ 2 │                   <script setup lang="ts">
+ 3 │                   interface A { foo?: number }
+   ·                                 ────────────
+ 4 │                   interface B { bar?: number }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'bar' requires default value to be set.
+   ╭─[require_default_prop.tsx:4:33]
+ 3 │                   interface A { foo?: number }
+ 4 │                   interface B { bar?: number }
+   ·                                 ────────────
+ 5 │                   withDefaults(defineProps<A & B>(), {})
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:34]
+ 2 │                   <script setup lang="ts">
+ 3 │                   type Props = { foo?: number } | { bar?: number }
+   ·                                  ────────────
+ 4 │                   withDefaults(defineProps<Props>(), {})
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'bar' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:53]
+ 2 │                   <script setup lang="ts">
+ 3 │                   type Props = { foo?: number } | { bar?: number }
+   ·                                                     ────────────
+ 4 │                   withDefaults(defineProps<Props>(), {})
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'a' requires default value to be set.
+   ╭─[require_default_prop.tsx:5:25]
+ 4 │                       props: {
+ 5 │                         a: Number,
+   ·                         ─────────
+ 6 │                         b: [Number, String],
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'b' requires default value to be set.
+   ╭─[require_default_prop.tsx:6:25]
+ 5 │                         a: Number,
+ 6 │                         b: [Number, String],
+   ·                         ───────────────────
+ 7 │                         c: {
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'c' requires default value to be set.
+    ╭─[require_default_prop.tsx:7:25]
+  6 │                             b: [Number, String],
+  7 │ ╭─▶                         c: {
+  8 │ │                             type: Number
+  9 │ ╰─▶                         },
+ 10 │                             d: {
+    ╰────
+
+  ⚠ vue(require-default-prop): Prop 'd' requires default value to be set.
+    ╭─[require_default_prop.tsx:10:25]
+  9 │                             },
+ 10 │ ╭─▶                         d: {
+ 11 │ │                             type: Number,
+ 12 │ │                             required: false
+ 13 │ ╰─▶                         },
+ 14 │                             e: [Boolean, String],
+    ╰────
+
+  ⚠ vue(require-default-prop): Prop 'e' requires default value to be set.
+    ╭─[require_default_prop.tsx:14:25]
+ 13 │                         },
+ 14 │                         e: [Boolean, String],
+    ·                         ────────────────────
+ 15 │                         f: {
+    ╰────
+
+  ⚠ vue(require-default-prop): Prop 'f' requires default value to be set.
+    ╭─[require_default_prop.tsx:15:25]
+ 14 │                             e: [Boolean, String],
+ 15 │ ╭─▶                         f: {
+ 16 │ │                             type: [Boolean, String],
+ 17 │ ╰─▶                         }
+ 18 │                           }
+    ╰────
+
+  ⚠ vue(require-default-prop): Prop 'a' requires default value to be set.
+   ╭─[require_default_prop.tsx:5:25]
+ 4 │                           props: {
+ 5 │ ╭─▶                         a: {
+ 6 │ │                             type: String
+ 7 │ ╰─▶                         } as PropOptions<string>
+ 8 │                           }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'a' requires default value to be set.
+   ╭─[require_default_prop.tsx:5:25]
+ 4 │                           props: {
+ 5 │ ╭─▶                         a: {
+ 6 │ │                             type: String
+ 7 │ ╰─▶                         } as PropOptions<string>
+ 8 │                           }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'a' requires default value to be set.
+   ╭─[require_default_prop.tsx:5:25]
+ 4 │                       props: {
+ 5 │                         a: String,
+   ·                         ─────────
+ 6 │                         'b': String,
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'b' requires default value to be set.
+   ╭─[require_default_prop.tsx:6:25]
+ 5 │                         a: String,
+ 6 │                         'b': String,
+   ·                         ───────────
+ 7 │                         ['c']: String,
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'c' requires default value to be set.
+   ╭─[require_default_prop.tsx:7:25]
+ 6 │                         'b': String,
+ 7 │                         ['c']: String,
+   ·                         ─────────────
+ 8 │                         [`d`]: String,
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'd' requires default value to be set.
+   ╭─[require_default_prop.tsx:8:25]
+ 7 │                         ['c']: String,
+ 8 │                         [`d`]: String,
+   ·                         ─────────────
+ 9 │                       }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop '[foo]' requires default value to be set.
+   ╭─[require_default_prop.tsx:5:25]
+ 4 │                       props: {
+ 5 │                         [foo]: String,
+   ·                         ─────────────
+ 6 │                         [bar()]: String,
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop '[bar()]' requires default value to be set.
+   ╭─[require_default_prop.tsx:6:25]
+ 5 │                         [foo]: String,
+ 6 │                         [bar()]: String,
+   ·                         ───────────────
+ 7 │                         [baz.baz]: String,
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop '[baz.baz]' requires default value to be set.
+   ╭─[require_default_prop.tsx:7:25]
+ 6 │                         [bar()]: String,
+ 7 │                         [baz.baz]: String,
+   ·                         ─────────────────
+ 8 │                       }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:5:25]
+ 4 │                           props: {
+ 5 │ ╭─▶                         foo: {
+ 6 │ │                             ...foo
+ 7 │ ╰─▶                         },
+ 8 │                           }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:5:25]
+ 4 │                           props: {
+ 5 │ ╭─▶                         foo: {
+ 6 │ │                             [bar]: true
+ 7 │ ╰─▶                         },
+ 8 │                           }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'baz' requires default value to be set.
+   ╭─[require_default_prop.tsx:6:25]
+ 5 │                         bar,
+ 6 │                         baz: prop?.foo,
+   ·                         ──────────────
+ 7 │                         bar1: foo?.(),
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'bar1' requires default value to be set.
+   ╭─[require_default_prop.tsx:7:25]
+ 6 │                         baz: prop?.foo,
+ 7 │                         bar1: foo?.(),
+   ·                         ─────────────
+ 8 │                       }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:4:21]
+ 3 │                   defineProps({
+ 4 │                     foo: String
+   ·                     ───────────
+ 5 │                   })
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'bar' requires default value to be set.
+   ╭─[require_default_prop.tsx:8:21]
+ 7 │                     foo: string;
+ 8 │                     bar?: number;
+   ·                     ─────────────
+ 9 │                   }>(), {
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:4:21]
+ 3 │                   interface Props {
+ 4 │                     foo?: number
+   ·                     ────────────
+ 5 │                   }
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'bar' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:64]
+ 2 │                   <script setup>
+ 3 │                   const {foo,bar} = defineProps({foo: Boolean, bar: {type: String}})
+   ·                                                                ───────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:50]
+ 2 │                   <script setup>
+ 3 │                   const {foo,bar} = defineProps({foo: Number, bar: {type: Number}})
+   ·                                                  ───────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'bar' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:63]
+ 2 │                   <script setup>
+ 3 │                   const {foo,bar} = defineProps({foo: Number, bar: {type: Number}})
+   ·                                                               ───────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(require-default-prop): Prop 'foo' requires default value to be set.
+   ╭─[require_default_prop.tsx:3:51]
+ 2 │                   <script setup lang="ts">
+ 3 │                   const {foo, bar} = defineProps<{foo?: number; bar: number}>()
+   ·                                                   ─────────────
+ 4 │                   </script>
+   ╰────

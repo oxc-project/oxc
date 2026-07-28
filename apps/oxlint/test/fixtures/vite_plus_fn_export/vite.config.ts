@@ -1,4 +1,4 @@
-const defineConfig = (config: unknown) => config;
+import { defineConfig } from "vite-plus";
 
 export default defineConfig(() => ({
   plugins: [],

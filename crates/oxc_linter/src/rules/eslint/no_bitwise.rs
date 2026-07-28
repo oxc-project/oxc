@@ -97,6 +97,7 @@ declare_oxc_lint!(
     restriction,
     config = NoBitwiseConfig,
     version = "0.0.3",
+    short_description = "Disallow bitwise operators.",
 );
 
 impl Rule for NoBitwise {

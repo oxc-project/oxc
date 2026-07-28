@@ -62,7 +62,8 @@ impl Rule for PreferExpectAssertions {
         // Resolve the file-level expect local name once (e.g. `"expect"` or `"e"`
         // for `import { expect as e }`). Per-callback vitest fixture overrides
         // are handled in `resolve_expect_source`.
-        let file_expect_prefix = resolve_expect_local_name(ctx, &["vitest", "vite-plus/test"]);
+        let file_expect_prefix =
+            resolve_expect_local_name(ctx, &["vitest", "vite-plus/test", "@effect/vitest"]);
 
         let mut covered_describe_ids: Vec<NodeId> = Vec::new();
 
@@ -221,6 +222,14 @@ fn test() {
         (
             r#"import { expect } from 'vite-plus/test';
             test("re-exported vitest global", () => {
+                expect.assertions(1);
+                expect(true).toBe(true);
+              });"#,
+            None,
+        ),
+        (
+            r#"import { expect } from '@effect/vitest';
+            test("re-exported effect vitest global", () => {
                 expect.assertions(1);
                 expect(true).toBe(true);
               });"#,
@@ -399,6 +408,11 @@ fn test() {
         (
             r#"import { expect as e } from 'vite-plus/test';
             test("re-exported missing", () => { e(true).toBe(true); });"#,
+            None,
+        ),
+        (
+            r#"import { expect as e } from '@effect/vitest';
+            test("re-exported effect missing", () => { e(true).toBe(true); });"#,
             None,
         ),
         (

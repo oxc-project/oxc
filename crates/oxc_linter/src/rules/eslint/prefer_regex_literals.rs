@@ -130,6 +130,7 @@ declare_oxc_lint!(
     pending,
     config = PreferRegexLiterals,
     version = "1.64.0",
+    short_description = "Disallow use of the RegExp constructor in favor of regular expression literals.",
 );
 
 impl Rule for PreferRegexLiterals {

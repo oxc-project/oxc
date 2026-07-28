@@ -57,31 +57,29 @@ impl StylishReporter {
         let mut total_errors = 0;
         let mut total_warnings = 0;
 
-        let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
-        let mut sorted = self.diagnostics.iter().collect::<Vec<_>>();
+        let mut entries: Vec<(Info, &Error)> =
+            self.diagnostics.iter().map(|diagnostic| (Info::new(diagnostic), diagnostic)).collect();
 
-        sorted.sort_by_key(|diagnostic| Info::new(diagnostic).start.line);
+        entries.sort_by_key(|(info, _)| info.start.line);
 
-        for diagnostic in sorted {
-            let info = Info::new(diagnostic);
-            grouped.entry(info.filename).or_default().push(diagnostic);
+        let mut grouped: FxHashMap<String, Vec<(Info, &Error)>> = FxHashMap::default();
+        for (info, diagnostic) in entries {
+            grouped.entry(info.filename.clone()).or_default().push((info, diagnostic));
         }
 
         for diagnostics in grouped.values() {
-            let diagnostic = diagnostics[0];
-            let info = Info::new(diagnostic);
-            let filename = info.filename;
+            let filename = &diagnostics[0].0.filename;
             let filename = if let Some(path) =
-                std::env::current_dir().ok().and_then(|d| d.join(&filename).canonicalize().ok())
+                std::env::current_dir().ok().and_then(|d| d.join(filename).canonicalize().ok())
             {
                 path.display().to_string()
             } else {
-                filename
+                filename.clone()
             };
             let max_len_width = diagnostics
                 .iter()
-                .map(|diagnostic| {
-                    let start = Info::new(diagnostic).start;
+                .map(|(info, _)| {
+                    let start = &info.start;
                     format!("{}:{}", start.line, start.column).len()
                 })
                 .max()
@@ -93,7 +91,7 @@ impl StylishReporter {
                 writeln!(output, "\n\u{1b}[4m{filename}\u{1b}[0m").unwrap();
             }
 
-            for diagnostic in diagnostics {
+            for (info, diagnostic) in diagnostics {
                 match diagnostic.severity() {
                     Some(Severity::Error) => total_errors += 1,
                     _ => total_warnings += 1,
@@ -105,7 +103,6 @@ impl StylishReporter {
                     if no_color { "warning" } else { "\u{1b}[33mwarning\u{1b}[0m" }
                 };
 
-                let info = Info::new(diagnostic);
                 let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
                 let position = format!("{}:{}", info.start.line, info.start.column);
                 if no_color {

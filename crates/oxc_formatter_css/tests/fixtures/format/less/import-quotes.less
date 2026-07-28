@@ -1,0 +1,8 @@
+@import (reference) '../../themes/index';
+@import (reference, optional) './shared';
+@import './@{root-entry-name}.less';
+@import "./util";
+
+.a[class^=~'@{ant-prefix}-'] {
+  color: red;
+}

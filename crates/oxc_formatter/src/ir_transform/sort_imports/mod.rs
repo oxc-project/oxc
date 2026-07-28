@@ -6,12 +6,12 @@ mod partitioned_chunk;
 mod sortable_imports;
 mod source_line;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     Buffer, JsLabels, SortImportsOptions,
     formatter::{
-        Formatter,
+        JsFormatter,
         format_element::{
             FormatElement, LineMode,
             tag::{LabelId, Tag},
@@ -39,7 +39,7 @@ use crate::{
 ///
 /// # Panics
 /// Panics if `sort_imports` option is not enabled.
-pub fn sort_imports_chunk(formatter: &mut Formatter<'_, '_>, chunk_start: usize) {
+pub fn sort_imports_chunk(formatter: &mut JsFormatter<'_, '_>, chunk_start: usize) {
     let elements = &formatter.elements()[chunk_start..];
     let options = formatter.options().sort_imports.as_ref().unwrap();
 
@@ -108,13 +108,15 @@ fn transform<'a>(
     // and any `Line(_)` inside is for output positioning, not a real line boundary.
     // e.g. ```import "a"; <StartLineSuffix> Line(Empty) Text("// trailing") <EndLineSuffix>```
     let mut inside_line_suffix = false;
+    let comment_label = LabelId::of(JsLabels::Comment);
+    let import_label = LabelId::of(JsLabels::ImportDeclaration);
     for (idx, el) in prev_elements.iter().enumerate() {
         if let FormatElement::Tag(tag) = el {
             match tag {
                 Tag::StartLabelled(id) => {
-                    if *id == LabelId::of(JsLabels::Comment) {
+                    if *id == comment_label {
                         inside_comment = true;
-                    } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                    } else if *id == import_label {
                         inside_multiline_import = true;
                     }
                 }
@@ -233,7 +235,7 @@ fn transform<'a>(
 
     // Finally, sort import lines within each chunk.
     // After sorting, flatten everything back to `FormatElement`s.
-    let mut next_elements = ArenaVec::with_capacity_in(prev_elements.len(), allocator);
+    let mut next_elements = ArenaVec::with_capacity_in(prev_elements.len(), &allocator);
 
     let mut chunks_iter = chunks.into_iter().peekable();
     while let Some(chunk) = chunks_iter.next() {

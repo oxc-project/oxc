@@ -1,0 +1,6 @@
+{
+  "extends": ["./parent_default_plugins.json"],
+  "plugins": [
+    "jest"
+  ]
+}

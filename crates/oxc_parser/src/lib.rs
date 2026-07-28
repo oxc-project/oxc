@@ -87,12 +87,12 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    AstBuilder,
-    ast::{Expression, Program},
+    ast::{Expression, Program, Statement},
+    builder::{AstBuilder, GetAstBuilder},
 };
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
@@ -102,6 +102,7 @@ use crate::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
     context::{Context, StatementContext},
+    diagnostics::ParserDiagnostic,
     error_handler::FatalError,
     lexer::Lexer,
     module_record::ModuleRecordBuilder,
@@ -128,14 +129,14 @@ pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
 ///
 /// [`program`] will always contain a structurally valid AST, even if there are syntax errors.
 /// However, the AST may be semantically invalid. To ensure a valid AST,
-/// 1. Check that [`errors`] is empty
+/// 1. Check that [`diagnostics`] is empty
 /// 2. Run semantic analysis with [syntax error checking
 ///    enabled](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error)
 ///
 /// ## Errors
 /// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing. When this
 /// happens,
-/// 1. [`errors`] will be non-empty
+/// 1. [`diagnostics`] will be non-empty
 /// 2. [`program`] will contain a full AST
 /// 3. [`panicked`] will be false
 ///
@@ -143,7 +144,7 @@ pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
 /// be empty and [`panicked`] will be `true`.
 ///
 /// [`program`]: ParserReturn::program
-/// [`errors`]: ParserReturn::errors
+/// [`diagnostics`]: ParserReturn::diagnostics
 /// [`panicked`]: ParserReturn::panicked
 #[non_exhaustive]
 pub struct ParserReturn<'a> {
@@ -156,7 +157,7 @@ pub struct ParserReturn<'a> {
     /// 1. The [`Parser`] encounters a recoverable syntax error
     /// 2. The logic for checking the violation is in the semantic analyzer
     ///
-    /// To ensure a valid AST, check that [`errors`](ParserReturn::errors) is empty. Then, run
+    /// To ensure a valid AST, check that [`diagnostics`](ParserReturn::diagnostics) is empty. Then, run
     /// semantic analysis with syntax error checking enabled.
     pub program: Program<'a>,
 
@@ -168,7 +169,7 @@ pub struct ParserReturn<'a> {
     /// This list is not comprehensive. Oxc offloads more-expensive checks to [semantic
     /// analysis](https://docs.rs/oxc_semantic), which can be enabled using
     /// [`SemanticBuilder::with_check_syntax_error`](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error).
-    pub errors: Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
 
     /// Irregular whitespaces for `Oxlint`
     pub irregular_whitespaces: Box<[Span]>,
@@ -176,16 +177,16 @@ pub struct ParserReturn<'a> {
     /// Lexed tokens in source order.
     ///
     /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
-    pub tokens: oxc_allocator::Vec<'a, Token>,
+    pub tokens: ArenaVec<'a, Token>,
 
     /// Whether the parser panicked and terminated early.
     ///
     /// This will be `false` if parsing was successful, or if parsing was able to recover from a
-    /// syntax error. When `true`, [`program`] will be empty and [`errors`] will contain at least
+    /// syntax error. When `true`, [`program`] will be empty and [`diagnostics`] will contain at least
     /// one error.
     ///
     /// [`program`]: ParserReturn::program
-    /// [`errors`]: ParserReturn::errors
+    /// [`diagnostics`]: ParserReturn::diagnostics
     pub panicked: bool,
 
     /// Whether the file is [flow](https://flow.org).
@@ -231,6 +232,19 @@ pub struct ParseOptions {
     ///
     /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
     pub allow_v8_intrinsics: bool,
+
+    /// Precompute hashes for identifier names (`Ident`s) in the AST.
+    ///
+    /// Precomputed hashes speed up `Ident`-keyed hash map operations in semantic analysis
+    /// and later compilation stages, at a small cost to parsing speed.
+    ///
+    /// Only disable this for parse-only pipelines that never rely on `Ident` hashing, such as
+    /// parse + serialize or formatting. Unhashed `Ident`s do not compare equal to hashed ones,
+    /// so semantic analysis and anything else relying on `Ident` hashing must not run on an AST
+    /// parsed with this option disabled.
+    ///
+    /// Default: `true`
+    pub enable_ident_hashes: bool,
 }
 
 impl Default for ParseOptions {
@@ -241,6 +255,7 @@ impl Default for ParseOptions {
             allow_return_outside_function: false,
             preserve_parens: true,
             allow_v8_intrinsics: false,
+            enable_ident_hashes: true,
         }
     }
 }
@@ -404,7 +419,7 @@ mod parser_parse {
         //
         // # Implementation note
         // Dispatches via `Any`, same as `parse` does.
-        pub fn parse_expression(self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        pub fn parse_expression(self) -> Result<Expression<'a>, Diagnostics> {
             let config: &dyn Any = &self.config;
             if config.is::<NoTokensParserConfig>() {
                 parse_expression_with_no_tokens_config(
@@ -530,7 +545,7 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-    ) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<NoTokensParserConfig>::new(
             allocator,
             source_text,
@@ -548,7 +563,7 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-    ) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<TokensParserConfig>::new(
             allocator,
             source_text,
@@ -567,7 +582,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
         config: RuntimeParserConfig,
-    ) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<RuntimeParserConfig>::new(
             allocator,
             source_text,
@@ -597,16 +612,18 @@ struct ParserImpl<'a, C: ParserConfig> {
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
-    errors: Vec<OxcDiagnostic>,
+    ///
+    /// Stored in deferred (unmaterialized) form and materialized once at parse exit.
+    errors: Vec<ParserDiagnostic<'a>>,
 
     /// Errors that are only valid if the file is determined to be a Script (not a Module).
     /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
     /// until we know whether the file is ESM or Script.
     /// If resolved to Module → discard these errors.
     /// If resolved to Script → emit these errors.
-    deferred_script_errors: Vec<OxcDiagnostic>,
+    deferred_script_errors: Vec<ParserDiagnostic<'a>>,
 
-    fatal_error: Option<FatalError>,
+    fatal_error: Option<FatalError<'a>>,
 
     /// The current parsing token
     token: Token,
@@ -681,7 +698,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 self.error(fatal_error.error);
             }
 
-            program = Program::dummy(self.ast.allocator);
+            program = Program::dummy(self.allocator());
             program.source_type = self.source_type;
             program.source_text = self.source_text;
         }
@@ -696,20 +713,20 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let mut is_flow_language = false;
-        let mut errors = vec![];
+        let mut errors = Diagnostics::new();
         // only check for `@flow` if the file failed to parse.
         if (!self.lexer.errors.is_empty() || !self.errors.is_empty())
             && let Some(error) = self.flow_error()
         {
             is_flow_language = true;
-            errors.push(error);
+            errors.push(error.into_diagnostic());
         }
         let (module_record, mut module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
             errors
                 .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
-            errors.append(&mut self.lexer.errors);
-            errors.append(&mut self.errors);
+            errors.extend(self.lexer.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
+            errors.extend(self.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
             errors.append(&mut module_record_errors);
         }
         let irregular_whitespaces =
@@ -721,27 +738,31 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
                 // but emit deferred module errors (HTML comments are invalid in ESM)
                 program.source_type = source_type.with_module(true);
-                errors.append(&mut self.lexer.deferred_module_errors);
+                errors.extend(
+                    self.lexer
+                        .deferred_module_errors
+                        .drain(..)
+                        .map(ParserDiagnostic::into_diagnostic),
+                );
             } else {
                 // Resolved to Script - emit deferred script errors
                 // discard deferred module errors (HTML comments are valid in scripts)
                 program.source_type = source_type.with_script(true);
-                errors.extend(self.deferred_script_errors);
+                errors.extend(
+                    self.deferred_script_errors.into_iter().map(ParserDiagnostic::into_diagnostic),
+                );
             }
         }
 
-        let tokens = if panicked {
-            ArenaVec::new_in(self.ast.allocator)
-        } else {
-            self.lexer.finalize_tokens()
-        };
+        let tokens =
+            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
         program.comments = self.lexer.trivia_builder.comments;
 
         ParserReturn {
             program,
             module_record,
-            errors,
+            diagnostics: errors,
             irregular_whitespaces,
             tokens,
             panicked,
@@ -749,15 +770,21 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    pub fn parse_expression(mut self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
-            return Err(vec![error]);
+            return Err(error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
-        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        let errors = self
+            .lexer
+            .errors
+            .into_iter()
+            .chain(self.errors)
+            .map(ParserDiagnostic::into_diagnostic)
+            .collect::<Diagnostics>();
         if !errors.is_empty() {
             return Err(errors);
         }
@@ -772,7 +799,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
-        let (directives, mut statements) = self.parse_directives_and_statements();
+        let (directives, mut statements) =
+            self.parse_directives_and_statements(/* in_ts_namespace_body */ false);
 
         // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
         // we need to reparse statements that were originally parsed with `await` as identifier.
@@ -786,16 +814,16 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
-        // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
-        let comments = self.ast.vec();
-        self.ast.program(
+        Program::new(
             span,
             self.source_type,
             self.source_text,
-            comments,
+            // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`
+            [],
             hashbang,
             directives,
             statements,
+            self,
         )
     }
 
@@ -804,10 +832,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// In unambiguous mode, statements like `await /x/u` are initially parsed as
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(
-        &mut self,
-        statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
-    ) {
+    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
         // Token stream is already complete from the first parse.
         // Reparsing here is only to patch AST nodes, so keep the original token stream.
         let original_tokens =
@@ -840,16 +865,20 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
-        // CommonJS files are wrapped in a function, so return is allowed at top-level
+        // CommonJS files are wrapped in a function, so return and `new.target`
+        // are allowed at top-level
         if options.allow_return_outside_function || source_type.is_commonjs() {
             ctx = ctx.and_return(true);
+        }
+        if source_type.is_commonjs() {
+            ctx = ctx.and_new_target(true);
         }
         ctx
     }
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&mut self) -> Option<OxcDiagnostic> {
+    fn flow_error(&mut self) -> Option<ParserDiagnostic<'a>> {
         if !self.source_type.is_javascript() {
             return None;
         }
@@ -874,7 +903,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
     /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
     #[cold]
-    fn overlong_error(&self) -> Option<OxcDiagnostic> {
+    fn overlong_error(&self) -> Option<ParserDiagnostic<'a>> {
         if self.source_text.len() > MAX_LEN {
             return Some(diagnostics::overlong_source());
         }
@@ -883,7 +912,23 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
     #[inline]
     fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
-        self.ast.alloc(value)
+        ArenaBox::new_in(value, self)
+    }
+}
+
+impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
+    }
+}
+
+impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }
 
@@ -903,7 +948,7 @@ mod test {
         let source = "";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         assert!(!ret.is_flow_language);
     }
 
@@ -933,8 +978,8 @@ mod test {
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.is_flow_language);
-            assert_eq!(ret.errors.len(), 1);
-            assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Flow is not supported");
         }
     }
 
@@ -944,7 +989,7 @@ mod test {
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
         let source = "declare module 'test'\n";
         let ret = Parser::new(&allocator, source, source_type).parse();
-        assert_eq!(ret.errors.len(), 0);
+        assert_eq!(ret.diagnostics.len(), 0);
     }
 
     #[test]
@@ -971,7 +1016,7 @@ mod test {
             let source = "%DebugPrint('Raging against the Dying Light')";
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert!(ret.errors.is_empty());
+            assert!(ret.diagnostics.is_empty());
 
             if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
                 if let Expression::V8IntrinsicExpression(expr) = &expr_stmt.expression {
@@ -987,17 +1032,17 @@ mod test {
             let source = "%DebugPrint(...illegalSpread)";
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
             assert_eq!(
-                ret.errors[0].to_string(),
+                ret.diagnostics[0].to_string(),
                 "V8 runtime calls cannot have spread elements as arguments"
             );
         }
         {
             let source = "%DebugPrint('~~')";
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert_eq!(ret.errors.len(), 1);
-            assert_eq!(ret.errors[0].to_string(), "Unexpected token");
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(ret.diagnostics[0].to_string(), "Unexpected token");
         }
         {
             // https://github.com/oxc-project/oxc/issues/12121
@@ -1006,9 +1051,9 @@ mod test {
             // Should not panic whether `allow_v8_intrinsics` is set or not.
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
         }
     }
 
@@ -1067,13 +1112,13 @@ mod test {
         // U+FFFD as a standalone token — file appears to be binary
         let ret = Parser::new(&allocator, "\u{FFFD}", source_type).parse();
         assert!(ret.program.is_empty());
-        assert_eq!(ret.errors.len(), 1);
-        assert_eq!(ret.errors[0].to_string(), "File appears to be binary.");
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics[0].to_string(), "File appears to be binary.");
 
         // U+FFFD inside string literals — should parse fine
         let ret = Parser::new(&allocator, "\"oops \u{FFFD} oops\";", source_type).parse();
         assert!(!ret.program.is_empty());
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
     }
 
     #[test]
@@ -1153,8 +1198,11 @@ mod test {
         // Parsing should fail
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
-        assert_eq!(ret.errors.len(), 1);
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(
+            ret.diagnostics.first().unwrap().to_string(),
+            "Source length exceeds 4 GiB limit"
+        );
     }
 
     // Source with length MAX_LEN parses OK.
@@ -1176,7 +1224,7 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(!ret.panicked);
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
     }
 }

@@ -8,9 +8,9 @@ fn get_enum_member_value(source: &str, member_name: &str) -> Option<ConstantValu
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
     let parser_ret = Parser::new(&allocator, source, source_type).parse();
-    assert!(parser_ret.errors.is_empty(), "Parse errors: {:?}", parser_ret.errors);
+    assert!(parser_ret.diagnostics.is_empty(), "Parse errors: {:?}", parser_ret.diagnostics);
     let semantic_ret = SemanticBuilder::new().with_enum_eval(true).build(&parser_ret.program);
-    assert!(semantic_ret.errors.is_empty(), "Semantic errors: {:?}", semantic_ret.errors);
+    assert!(semantic_ret.diagnostics.is_empty(), "Semantic errors: {:?}", semantic_ret.diagnostics);
     let scoping = semantic_ret.semantic.into_scoping();
 
     for symbol_id in scoping.symbol_ids() {
@@ -115,6 +115,19 @@ fn auto_increment_after_string_fails() {
         Some(ConstantValue::String("hello".into()))
     );
     debug_assert_eq!(get_enum_member_value(source, "Y"), None);
+}
+
+#[test]
+fn auto_increment_after_unresolvable_fails() {
+    // Auto-increment must propagate the "unknown" state of the previous member,
+    // not silently restart at 0.
+    let source = "enum A { X = foo(), Y }";
+    debug_assert_eq!(get_enum_member_value(source, "X"), None);
+    debug_assert_eq!(get_enum_member_value(source, "Y"), None);
+
+    let source = "enum A { X = foo(), Y, Z }";
+    debug_assert_eq!(get_enum_member_value(source, "Y"), None);
+    debug_assert_eq!(get_enum_member_value(source, "Z"), None);
 }
 
 #[test]

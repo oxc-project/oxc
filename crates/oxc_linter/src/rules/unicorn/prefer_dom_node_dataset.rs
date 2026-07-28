@@ -1,13 +1,12 @@
 use cow_utils::CowUtils;
-use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
@@ -61,6 +60,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     version = "0.0.18",
+    short_description = "Use `.dataset` on DOM elements over `getAttribute(…)`, `.setAttribute(…)`, `.removeAttribute(…)` and `.hasAttribute(…)`.",
 );
 
 impl Rule for PreferDomNodeDataset {
@@ -142,6 +142,10 @@ impl Rule for PreferDomNodeDataset {
             }
             "getAttribute" => {
                 ctx.diagnostic_with_fix(get(span), |fixer| {
+                    if call_expr.optional {
+                        return fixer.noop();
+                    }
+
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -149,6 +153,7 @@ impl Rule for PreferDomNodeDataset {
                         fixer,
                         call_expr.span,
                         object_span,
+                        member_expr.optional(),
                         &dataset_property_name_camel,
                         ctx,
                     )
@@ -156,9 +161,13 @@ impl Rule for PreferDomNodeDataset {
             }
             "removeAttribute" => {
                 ctx.diagnostic_with_fix(remove(string_lit.span), |fixer| {
+                    if call_expr.optional {
+                        return fixer.noop();
+                    }
                     if !is_value_not_usable(node, ctx) {
                         return fixer.noop();
                     }
+
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -166,6 +175,7 @@ impl Rule for PreferDomNodeDataset {
                         fixer,
                         call_expr.span,
                         object_span,
+                        member_expr.optional(),
                         &dataset_property_name_camel,
                         ctx,
                     )
@@ -258,9 +268,7 @@ fn expression_uses_optional_chain(expr: &Expression) -> bool {
 
 fn to_string_literal_text(fixer: RuleFixer, text: &str) -> String {
     let mut codegen = fixer.codegen().with_options(CodegenOptions::default());
-    let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
-    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.str(text), None));
+    codegen.print_string(text);
     codegen.into_source_text()
 }
 
@@ -290,12 +298,14 @@ fn fix_to_dataset_access(
     fixer: RuleFixer,
     call_span: Span,
     object_span: Span,
+    optional: bool,
     property_name: &str,
     ctx: &LintContext,
 ) -> RuleFix {
     let object_text = ctx.source_range(object_span);
+    let access = if optional { "?." } else { "." };
     let property_access = dataset_property_text(fixer, property_name);
-    let fixed = format!("{object_text}.dataset{property_access}");
+    let fixed = format!("{object_text}{access}dataset{property_access}");
     fixer.replace(call_span, fixed)
 }
 
@@ -303,12 +313,14 @@ fn fix_to_dataset_delete(
     fixer: RuleFixer,
     call_span: Span,
     object_span: Span,
+    optional: bool,
     property_name: &str,
     ctx: &LintContext,
 ) -> RuleFix {
     let object_text = ctx.source_range(object_span);
+    let access = if optional { "?." } else { "." };
     let property_access = dataset_property_text(fixer, property_name);
-    let fixed = format!("delete {object_text}.dataset{property_access}");
+    let fixed = format!("delete {object_text}{access}dataset{property_access}");
     fixer.replace(call_span, fixed)
 }
 
@@ -410,6 +422,7 @@ fn test() {
         r#"element.setAttribute("DATA-Foo-bar", "🦄");"#,
         r#"element.setAttribute('data-a"b', "zaz");"#,
         r#"optional?.element.setAttribute("data-unicorn", "🦄");"#,
+        r#"element.optional?.setAttribute("data-unicorn", "🦄");"#,
         r#"console.log(element.setAttribute("data-unicorn", "🦄"))"#,
         r"element.removeAttribute('data-unicorn');",
         r#"element.removeAttribute("data-unicorn");"#,
@@ -426,6 +439,7 @@ fn test() {
         r##"element.querySelector("#selector").removeAttribute("data-AllowAccess");"##,
         r#"element.removeAttribute("data-");"#,
         r#"optional?.element.removeAttribute("data-unicorn");"#,
+        r#"element.optional?.removeAttribute("data-unicorn");"#,
         r#"element.removeAttribute("data-unicorn")?.property"#,
         r"element.hasAttribute('data-unicorn');",
         r#"element.hasAttribute("data-unicorn");"#,
@@ -441,6 +455,7 @@ fn test() {
         r##"element.querySelector("#selector").hasAttribute("data-AllowAccess");"##,
         r#"element.hasAttribute('data-a"b');"#,
         r#"optional?.element.hasAttribute("data-unicorn");"#,
+        r#"element.optional?.hasAttribute("data-unicorn");"#,
         r#"element.hasAttribute("data-unicorn").toString()"#,
         r"element.getAttribute('data-unicorn');",
         r#"element.getAttribute("data-unicorn");"#,
@@ -456,6 +471,8 @@ fn test() {
         r##"element.querySelector("#selector").getAttribute("data-AllowAccess");"##,
         r#"element.getAttribute('data-a"b');"#,
         r#"optional?.element.getAttribute("data-unicorn");"#,
+        r#"element.optional?.getAttribute("data-unicorn");"#,
+        r#"element.optional?.getAttribute("data-unicorn")?.length;"#,
         r#"element.getAttribute("data-unicorn").toString()"#,
         r#"(await promise).getAttribute("data-foo")"#,
     ];
@@ -490,6 +507,10 @@ fn test() {
             r#"optional?.element.setAttribute("data-unicorn", "🦄");"#,
             r#"optional?.element.setAttribute("data-unicorn", "🦄");"#,
         ),
+        (
+            r#"element.optional?.setAttribute("data-unicorn", "🦄");"#,
+            r#"element.optional?.setAttribute("data-unicorn", "🦄");"#,
+        ),
         (r"element.removeAttribute('data-unicorn');", r"delete element.dataset.unicorn;"),
         (r#"element.removeAttribute("data-unicorn");"#, r"delete element.dataset.unicorn;"),
         (r#"element.removeAttribute("data-unicorn",);"#, r"delete element.dataset.unicorn;"),
@@ -509,6 +530,14 @@ fn test() {
         (
             r#"optional?.element.removeAttribute("data-unicorn");"#,
             r"delete optional?.element.dataset.unicorn;",
+        ),
+        (
+            r#"element.optional?.removeAttribute("data-unicorn");"#,
+            r"delete element.optional?.dataset.unicorn;",
+        ),
+        (
+            r#"element.removeAttribute?.("data-unicorn");"#,
+            r#"element.removeAttribute?.("data-unicorn");"#,
         ),
         (r"element.hasAttribute('data-unicorn');", r#"Object.hasOwn(element.dataset, "unicorn");"#),
         (
@@ -545,6 +574,10 @@ fn test() {
             r#"optional?.element.hasAttribute("data-unicorn");"#,
         ),
         (
+            r#"element.optional?.hasAttribute("data-unicorn");"#,
+            r#"element.optional?.hasAttribute("data-unicorn");"#,
+        ),
+        (
             r#"element.hasAttribute("data-unicorn").toString()"#,
             r#"Object.hasOwn(element.dataset, "unicorn").toString()"#,
         ),
@@ -566,6 +599,18 @@ fn test() {
         (
             r#"optional?.element.getAttribute("data-unicorn");"#,
             r"optional?.element.dataset.unicorn;",
+        ),
+        (
+            r#"element.optional?.getAttribute("data-unicorn");"#,
+            r"element.optional?.dataset.unicorn;",
+        ),
+        (
+            r#"element.optional?.getAttribute("data-unicorn")?.length;"#,
+            r"element.optional?.dataset.unicorn?.length;",
+        ),
+        (
+            r#"element.getAttribute?.("data-unicorn");"#,
+            r#"element.getAttribute?.("data-unicorn");"#,
         ),
         (
             r#"element.getAttribute("data-unicorn").toString()"#,

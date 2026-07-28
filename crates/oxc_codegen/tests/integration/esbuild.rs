@@ -498,7 +498,8 @@ fn test_for() {
     test("for (x(a in b);;);", "for (x(a in b);;);\n");
     test("for (x[a in b];;);", "for (x[a in b];;);\n");
     test("for (x?.[a in b];;);", "for (x?.[a in b];;);\n");
-    test("for ((x => a in b);;);", "for (((x) => (a in b));;);\n");
+    // `in` is allowed in an arrow body, so no inner parens are needed (matches esbuild).
+    test("for ((x => a in b);;);", "for (((x) => a in b);;);\n");
 
     // Make sure for-of loops with commas are wrapped in parentheses
     test("for (let a in b, c);", "for (let a in b, c);\n");
@@ -559,7 +560,7 @@ fn test_pure_comment() {
 
     test("new (function() {})", "new (function() {})();\n");
     test("new (function() {})()", "new (function() {})();\n");
-    test("/*@__PURE__*/new (function() {})()", "/* @__PURE__ */ new (function() {})();\n");
+    test("/*@__PURE__*/new (function() {})()", "/*@__PURE__*/ new (function() {})();\n");
 
     test("export default (function() { foo() })", "export default (function() {\n\tfoo();\n});\n");
     test(
@@ -568,7 +569,7 @@ fn test_pure_comment() {
     );
     test(
         "export default /*@__PURE__*/(function() { foo() })()",
-        "export default /* @__PURE__ */ (function() {\n\tfoo();\n})();\n",
+        "export default /*@__PURE__*/ (function() {\n\tfoo();\n})();\n",
     );
 }
 
@@ -793,7 +794,14 @@ fn test_whitespace() {
     test_minify("x - ++y", "x-++y;");
     test_minify("x + ++y", "x+ ++y;");
 
-    test_minify("x-- > y", "x-- >y;");
+    // Postfix update operand: no space, the trailing `++`/`--` doesn't follow the `+`.
+    test_minify("x + y++", "x+y++;");
+    test_minify("x + y--", "x+y--;");
+    test_minify("x - y--", "x-y--;");
+
+    // `-->` is only an HTML close comment at the start of a line, and `x--` always
+    // has an operand before it, so no space is needed.
+    test_minify("x-- > y", "x-->y;");
     test_minify("x < !--y", "x<! --y;");
     test_minify("x > !--y", "x>!--y;");
     test_minify("!--y", "!--y;");

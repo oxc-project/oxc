@@ -45,6 +45,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.12.0",
+    short_description = "Require template literals instead of string concatenation.",
 );
 
 impl Rule for PreferTemplate {
@@ -302,7 +303,7 @@ fn escape_dollar_and_backtick(raw: &str) -> String {
             if is_backtick || is_dollar_brace {
                 // Push all the original backslashes
                 result.push_str(&raw[start..i]);
-                if num_backslashes % 2 == 0 {
+                if num_backslashes.is_multiple_of(2) {
                     // Even backslashes → target is unescaped → add escape
                     result.push('\\');
                 }

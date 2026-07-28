@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-reassign-local-variable-in-hook-argument.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot reassign variable after render completes", labels: One([LabeledSpan { label: Some("Cannot reassign `local` after render completes"), span: SourceSpan { offset: SourceOffset(157), length: 5 }, primary: false }]), help: Some("Reassigning `local` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot modify local variables after render completes", labels: Two([LabeledSpan { label: Some("This function may (indirectly) reassign or modify `local` after render"), span: SourceSpan { offset: SourceOffset(1114), length: 27 }, primary: false }, LabeledSpan { label: Some("This modifies `local`"), span: SourceSpan { offset: SourceOffset(157), length: 5 }, primary: false }]), help: Some("This argument is a function which may reassign or mutate `local` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

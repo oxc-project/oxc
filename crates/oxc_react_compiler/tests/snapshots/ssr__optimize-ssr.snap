@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/ssr/optimize-ssr.js
+---
+// @outputMode:"ssr"
+function Component() {
+	const state = 0;
+	return <input value={state} />;
+}

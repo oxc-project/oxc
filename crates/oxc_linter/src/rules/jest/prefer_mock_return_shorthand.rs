@@ -1,3 +1,4 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 
 use crate::{
@@ -21,6 +22,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferMockReturnShorthand {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else {
+            return;
+        };
         run(node, ctx);
     }
 }

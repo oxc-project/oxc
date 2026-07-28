@@ -56,6 +56,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoVoid,
     version = "0.2.5",
+    short_description = "Disallows the use of the `void` operator.",
 );
 
 impl Rule for NoVoid {

@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     formatter::{
-        Format, Formatter,
+        Format, JsFormatContext, JsFormatter,
         prelude::{group, if_group_breaks},
     },
     options::TrailingSeparator,
@@ -37,8 +37,10 @@ impl<T: GetSpan> GetSpan for FormatSeparatedElement<T> {
     }
 }
 
-impl<'a, E: Format<'a> + GetSpan> Format<'a> for FormatSeparatedElement<E> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a, E: Format<'a, JsFormatContext<'a>> + GetSpan> Format<'a, JsFormatContext<'a>>
+    for FormatSeparatedElement<E>
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.options.nodes_grouped {
             group(&self.element).fmt(f);
         } else {
@@ -76,17 +78,20 @@ where
     }
 
     /// Wraps every node inside of a group
+    #[must_use]
     #[expect(unused)]
     pub fn nodes_grouped(mut self) -> Self {
         self.options.nodes_grouped = true;
         self
     }
 
+    #[must_use]
     pub fn with_trailing_separator(mut self, separator: TrailingSeparator) -> Self {
         self.options.trailing_separator = separator;
         self
     }
 
+    #[must_use]
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.options.group_id = group_id;
         self

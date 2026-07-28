@@ -72,6 +72,7 @@ declare_oxc_lint!(
     fix,
     config = NoUnsafeNegation,
     version = "0.0.3",
+    short_description = "Disallow negating the left side of relational operators.",
 );
 
 impl Rule for NoUnsafeNegation {

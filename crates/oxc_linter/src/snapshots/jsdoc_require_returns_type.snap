@@ -9,7 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────────
  4 │                        */
    ╰────
-  help: Add {type} to `@returns` tag.
+  help: Add {type} to the `@returns` tag.
 
   ⚠ jsdoc(require-returns-type): Missing JSDoc `@returns` type.
    ╭─[require_returns_type.tsx:3:17]
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────────
  4 │                        */
    ╰────
-  help: Add {type} to `@returns` tag.
+  help: Add {type} to the `@returns` tag.
 
   ⚠ jsdoc(require-returns-type): Missing JSDoc `@returns` type.
    ╭─[require_returns_type.tsx:3:17]
@@ -27,4 +27,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
  4 │                        */
    ╰────
-  help: Add {type} to `@returns` tag.
+  help: Add {type} to the `@returns` tag.

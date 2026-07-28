@@ -54,6 +54,7 @@ declare_oxc_lint!(
     nursery,
     config = NoUndef,
     version = "0.0.8",
+    short_description = "Disallow the use of undeclared variables.",
 );
 
 impl Rule for NoUndef {

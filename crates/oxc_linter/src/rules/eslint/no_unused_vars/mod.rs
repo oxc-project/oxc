@@ -11,6 +11,7 @@ mod usage;
 
 use std::ops::Deref;
 
+use allowed::FunctionParameterKind;
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
 use oxc_ast::{AstKind, ast::CatchParameter};
@@ -18,12 +19,22 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use symbol::Symbol;
 
 use crate::{
     context::{ContextHost, LintContext},
     rule::Rule,
+    rules::eslint::no_unused_vars::options::VarsOption,
 };
+
+#[derive(JsonSchema, Debug)]
+#[serde(untagged)]
+#[expect(unused)] // only for schemars generation, not actually used in code
+pub enum NoUnusedVarsConfig {
+    Vars(VarsOption),
+    Options(NoUnusedVarsOptions),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedVars(Box<NoUnusedVarsOptions>);
@@ -192,8 +203,9 @@ declare_oxc_lint!(
     eslint,
     correctness,
     fix = conditional_dangerous_fix_or_suggestion,
-    config = NoUnusedVarsOptions,
+    config = NoUnusedVarsConfig,
     version = "0.7.0",
+    short_description = "Disallows variable declarations, imports, or type declarations that are not used in code.",
 );
 
 impl Deref for NoUnusedVars {
@@ -206,17 +218,21 @@ impl Deref for NoUnusedVars {
 
 impl Rule for NoUnusedVars {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap_or_default())))
+        NoUnusedVarsOptions::try_from(value)
+            .map(|options| Self(Box::new(options)))
+            .map_err(|error| <serde_json::Error as serde::de::Error>::custom(error.to_string()))
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let precomputed_exported_names = Symbol::collect_exported_local_names(ctx.module_record());
+
         for symbol in ctx.scoping().symbol_ids() {
             let symbol = Symbol::new(ctx, ctx.module_record(), symbol);
             if Self::should_skip_symbol(&symbol) {
                 continue;
             }
 
-            self.run_on_symbol_internal(&symbol, ctx);
+            self.run_on_symbol_internal(&symbol, ctx, &precomputed_exported_names);
         }
     }
 
@@ -233,15 +249,19 @@ impl Rule for NoUnusedVars {
 }
 
 impl NoUnusedVars {
-    fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
+    fn run_on_symbol_internal<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        ctx: &LintContext<'a>,
+        exported_names: &rustc_hash::FxHashSet<&str>,
+    ) {
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored.is_some() && !self.report_used_ignore_pattern {
             return;
         }
 
-        // Order matters. We want to call cheap/high "yield" functions first.
-        let is_used = symbol.is_exported() || symbol.has_usages(self);
+        let is_used = symbol.is_exported(exported_names) || symbol.has_usages(self);
 
         match (is_used, *is_ignored) {
             // used, ignored because variable name matches one of several
@@ -275,7 +295,7 @@ impl NoUnusedVars {
 
                 if let Some(declaration) = declaration {
                     Self::report_with_fix_mode(self.fix.imports, ctx, diagnostic, |fixer| {
-                        self.remove_unused_import_declaration(fixer, symbol, declaration)
+                        self.remove_unused_import_declaration(fixer, ctx, symbol, declaration)
                     });
                 } else {
                     ctx.diagnostic(diagnostic);
@@ -304,7 +324,12 @@ impl NoUnusedVars {
                 });
             }
             AstKind::FormalParameter(param) => {
-                if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param) {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Normal(param),
+                ) {
                     return;
                 }
                 Self::report_with_fix_mode(
@@ -319,8 +344,13 @@ impl NoUnusedVars {
                     |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
                 );
             }
-            AstKind::FormalParameterRest(_) => {
-                if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
+            AstKind::FormalParameterRest(param) => {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Rest(param),
+                ) {
                     return;
                 }
                 ctx.diagnostic(diagnostic::param(

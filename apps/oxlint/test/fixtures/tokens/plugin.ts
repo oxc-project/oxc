@@ -19,8 +19,13 @@ const rule: Rule = {
     for (const tokenOrComment of tokensAndComments) {
       // Check getting `range` / `loc` properties twice results in same objects
       const { range, loc } = tokenOrComment;
-      assert(range === tokenOrComment.range);
-      assert(loc === tokenOrComment.loc);
+      assert(tokenOrComment.range === range);
+      assert(tokenOrComment.loc === loc);
+
+      // Cloning comment with spread should include `loc` and it should be the same object
+      const clone = { ...tokenOrComment };
+      assert(Object.hasOwn(clone, "loc"));
+      assert(clone.loc === loc);
 
       // Check `getRange` and `getLoc` return the same objects too
       assert(sourceCode.getRange(tokenOrComment) === range);

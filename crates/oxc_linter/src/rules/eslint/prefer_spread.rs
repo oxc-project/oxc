@@ -66,6 +66,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.0.17",
+    short_description = "Require spread operators instead of `.apply()`",
 );
 
 impl Rule for PreferSpread {

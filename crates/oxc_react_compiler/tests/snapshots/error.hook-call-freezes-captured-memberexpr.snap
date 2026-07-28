@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.hook-call-freezes-captured-memberexpr.jsx
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: One([LabeledSpan { label: Some("value cannot be modified"), span: SourceSpan { offset: SourceOffset(297), length: 1 }, primary: false }]), help: Some("Modifying a value previously passed as an argument to a hook is not allowed. Consider moving the modification before calling the hook"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot modify local variables after render completes", labels: Two([LabeledSpan { label: Some("This function may (indirectly) reassign or modify `x` after render"), span: SourceSpan { offset: SourceOffset(265), length: 26 }, primary: false }, LabeledSpan { label: Some("This modifies `x`"), span: SourceSpan { offset: SourceOffset(277), length: 1 }, primary: false }]), help: Some("This argument is a function which may reassign or mutate `x` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

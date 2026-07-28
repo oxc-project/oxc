@@ -4,6 +4,175 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- c7c5696 minifier: Fold parenthesized boolean ternary tests (#24968) (Dunqing)
+- 82c5806 minifier: Fold sequence branches in boolean ternaries (#24943) (Dunqing)
+- b31713a minifier: Add new IsTerminated trait and use it in exit-point optimization (#24950) (Armano)
+- e9e0f24 minifier: Shorten integer zero comparisons (#24933) (Dunqing)
+- 34f5559 minifier: Convert switch with one case to if statement (#24611) (Armano)
+
+### 🐛 Bug Fixes
+
+- cb5acfb minifier: Optimize termination statements in labeled statements (#24813) (Armano)
+- 4618300 minifier: Avoid longer numeric constant folds (#24875) (Dunqing)
+- f7971f1 minifier: Keep side effects in typeof comparisons (#24940) (sapphi-red)
+- 4597d6f minifier: Keep side effects when compressing `== true` to `== 1` (#24939) (sapphi-red)
+- c3a48df minifier: Keep side effects values in template literals (#24938) (sapphi-red)
+- e19f183 minifier: Keep side effects when folding `Number` call (#24937) (sapphi-red)
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- 07e9acc ecmascript: Keep side effects in parent of `toString` calls (#24846) (sapphi-red)
+- 16a40ad ecmascript: Detect side effects in unused arguments to `charCodeAt` (#24845) (sapphi-red)
+- df230d0 minifier: Avoid reordering this in nested class keys (#24785) (Dunqing)
+- d24b76b minifier: Isolate derived constructor this state (#24784) (Dunqing)
+- 23b904f minifier: Preserve default parameter side effects (#24791) (Dunqing)
+- 4b12840 minifier: Do not fold a `-0` ternary branch to `+a` (loses the sign) (#23637) (Jerry Zhao)
+- 133bb35 ecmascript: Detect side effects of `foo().#bar` correctly when PropertyReadSideEffects::None (#24769) (sapphi-red)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7b045cd minfier: Drop last break from last switch case (#24673) (Armano)
+- 7d3c178 minifier: Remove unreachable recursive functions (#24125) (Dunqing)
+- 3acf4c1 minifier: Expand switch optimiation to remove empty cases (#24520) (Armano)
+- 4d0c601 minifier: Fold arithmetic over undefined and null operands (#24485) (Dunqing)
+- 91541dd minifier: Drop empty switch statements  (#24527) (Armano)
+
+### 🐛 Bug Fixes
+
+- 64c2241 minifier: Align class heritage removal with assumptions (#24533) (Dunqing)
+- e750a82 ecmascript: Fix false negative for may_have_side_effects on dynamic property access (#24709) (sapphi-red)
+- f145d73 minifier: Guard reordered identifier reads (#24698) (Dunqing)
+- b1bcf72 minifier: Invalidate facts for redeclared bindings (#24658) (Dunqing)
+- 921b834 minifier: Don't treat a conditionally-assigned var as write-once (#24650) (Dunqing)
+- 061af1f minifier: Avoid stale pure function summaries (#24636) (Dunqing)
+- 128b385 minifier: Clippy warning with no-debug-assertions (#24547) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- 616bfa2 minifier: Remove unreachable code after terminating statements (#24441) (Dunqing)
+- b79eef7 minifier: Apply De Morgan's law to negated comparison chains in jump guards and loop tests (#24279) (Dunqing)
+- 34ff7b4 minifier: Drop write-only property assignments to unused local bindings by default (#24112) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 7d33363 minifier: Preserve guaranteed throws from class heritage evaluation (#24349) (Dunqing)
+- 40f769d minifier: Make `__proto__` write tracking execution-order independent (#24280) (Dunqing)
+
+### ⚡ Performance
+
+- b227a06 minifier: Use `ReplaceWith` instead of `TakeIn` (#24017) (overlookmotel)
+
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 2d9b0b3 minifier: Fold boolean-literal ternary branches in value contexts (#24110) (Dunqing)
+- 4eb074e mangler: Add `reserved` option for names that must not be mangled (#24041) (Dunqing)
+- 60e7160 minifier: Drop side-effect-free IIFEs whose result is unused (#23967) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 652fbaf mangler: Keep names of destructured exported bindings (#24036) (Dunqing)
+- e274415 minifier: Don't drop global calls that throw despite pure arguments (#23917) (Dunqing)
+- 59abb30 minifier: Only merge string literals in `try_fold_add` when the inner operator is `+` (#23622) (Jerry Zhao)
+
+### ⚡ Performance
+
+- c59f2fe rust: Return impl ExactSizeIterator from slice-backed accessors (#24144) (Boshen)
+
+### 📚 Documentation
+
+- e4c30e6 minifier: Explain what `dce` mode means (#23994) (Dunqing)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 8de5122 ecmascript: [**BREAKING**] Switch to new `AstBuilder` (#23834) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+- 6883fcf minifier: Fold write-once falsy var to false in boolean context (#23540) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- da0e5bf minifier: Don't reorder a closed-over TDZ read when inlining a var (#23771) (Dunqing)
+- 3f574f5 traverse: Fix unsoundness in `Traverse` walk functions (#23745) (overlookmotel)
+
+### ⚡ Performance
+
+- e71609d minifier: Bail member-expr folding before the side-effect walk (#23924) (Lawrence Lin)
+- e1f89ab minifier: Reduce string allocations folding addition (#23846) (overlookmotel)
+- e1886a0 transformer, minifier: Use `static_ident!` macro to create static `Ident`s (#23727) (overlookmotel)
+- 3855f0c minifier: Allocate AST nodes in arena directly (#23710) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+- 09762d9 minifier: Inline const value for read-only vars (#22593) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 31bfd9b minifier: Keep Object introspection calls on a possible Proxy (#23483) (Dunqing)
+- e409fe0 minifier: Keep `new Map`/`WeakSet`/`WeakMap` with a string argument (#23470) (Dunqing)
+
+### ⚡ Performance
+
+- 970e09a minifier: Compute template-literal inline checks in a single pass (#23467) (Yunfei He)
+- 3170c0e semantic,mangler,minifier: Fix `Semantic::stats` node count and reuse stats in mangler builds (#23352) (Boshen)
+- d1fa6e0 minifier: Evaluate ternary branches once in minimize_conditional_expression (#23479) (Yunfei He)
+- bcb3894 minifier: Incremental scoping refresh, delete LiveUsageCollector (#23197) (Dunqing)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🚀 Features
+
+- 85efabf semantic: Make building the class table optional, off by default (#22862) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 4ac0fca minifier: Preserve `0 && (module.exports = { ... })` cjs-module-lexer hint (#22729) (Dunqing)
+- 40ff611 minifier: Mark peephole loop changed when dropping dead-after-throw statement (#22722) (Dunqing)
+- 9ea4d64 minifier: Re-evaluate pure/no-side-effects flags after peephole inlining (#22595) (Dunqing)
+- 07afbb6 minifier: Drop empty-body IIFE wrapper when called with arguments (#22589) (Dunqing)
+- 702b14e minifier: Preserve IIFE structure in DCE-only mode (#22547) (Dunqing)
+
+### ⚡ Performance
+
+- 04d3065 minifier: Drop per-call buffers in try_fold_concat (#22596) (Dunqing)
+
 ## [0.132.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

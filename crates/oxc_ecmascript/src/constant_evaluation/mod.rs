@@ -3,19 +3,17 @@ mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
 mod url_encoding;
-mod value;
-mod value_type;
 
+pub use crate::{ConstantValue, DetermineValueType, ValueType};
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
-pub use value::ConstantValue;
-pub use value_type::{DetermineValueType, ValueType};
 
 use std::borrow::Cow;
 
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_allocator::GetAllocator;
+use oxc_ast::{ast::*, builder::GetAstBuilder};
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 
@@ -26,8 +24,9 @@ use crate::{
     to_numeric::ToNumeric,
 };
 
-pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
-    fn ast(&self) -> AstBuilder<'a>;
+pub trait ConstantEvaluationCtx<'a>:
+    MayHaveSideEffectsContext<'a> + GetAstBuilder<'a> + GetAllocator<'a>
+{
 }
 
 pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {

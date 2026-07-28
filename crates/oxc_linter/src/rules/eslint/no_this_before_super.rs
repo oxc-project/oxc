@@ -52,6 +52,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.2.6",
+    short_description = "Require calling `super()` before using `this` or `super`.",
 );
 
 #[derive(Default, Copy, Clone, Debug)]
@@ -63,7 +64,8 @@ enum DefinitelyCallsThisBeforeSuper {
 }
 
 /// Node types that should be in the file in order to run this analysis. Otherwise, the AST
-/// will be skipped for linting.
+/// will be skipped for linting. A violation can only occur in the constructor of a class
+/// with a superclass, so a `Class` node must be present alongside `this`/`super`.
 const NEEDED_NODE_TYPES: &AstTypesBitset =
     &AstTypesBitset::from_types(&[AstType::ThisExpression, AstType::Super]);
 
@@ -143,7 +145,8 @@ impl Rule for NoThisBeforeSuper {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.semantic().nodes().contains_any(NEEDED_NODE_TYPES)
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::Class) && nodes.contains_any(NEEDED_NODE_TYPES)
     }
 }
 

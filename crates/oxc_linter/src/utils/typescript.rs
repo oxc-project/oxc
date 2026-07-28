@@ -3,6 +3,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use oxc_ast::AstKind;
+use oxc_semantic::AstNodes;
+use oxc_syntax::node::NodeId;
+
 /// Type or value specifier for matching specific declarations
 ///
 /// Supports four types of specifiers:
@@ -46,7 +50,7 @@ pub enum TypeOrValueSpecifier {
 
 /// Describes specific types or values declared in local files.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FileSpecifier {
     /// Must be "file"
     pub from: FileFrom,
@@ -66,7 +70,7 @@ pub enum FileFrom {
 
 /// Describes specific types or values declared in TypeScript's built-in lib.*.d.ts types.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LibSpecifier {
     /// Must be "lib"
     pub from: LibFrom,
@@ -82,7 +86,7 @@ pub enum LibFrom {
 
 /// Describes specific types or values imported from packages.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PackageSpecifier {
     /// Must be "package"
     pub from: PackageFrom,
@@ -106,4 +110,17 @@ pub enum NameSpecifier {
     Single(String),
     /// Multiple names
     Multiple(Vec<String>),
+}
+
+/// Returns `true` when `node_id` has a TypeScript ambient declaration ancestor
+/// such as `declare module`, `declare namespace`, or `declare global`,
+/// including `global {}` nested inside ambient modules or namespaces.
+pub fn has_ambient_typescript_ancestor(node_id: NodeId, nodes: &AstNodes) -> bool {
+    nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
+        AstKind::TSModuleDeclaration(module) => module.declare,
+        // `TSGlobalDeclaration`s are only valid inside ambient declarations, hence
+        // we do not need to check `declare` as it only tracks an explicit `declare global`.
+        AstKind::TSGlobalDeclaration(_) => true,
+        _ => false,
+    })
 }
