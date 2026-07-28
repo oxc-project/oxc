@@ -213,7 +213,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             block.set_scope_id(static_block_new_scope_id);
             block.body = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
                     &using_ctx,
                     static_block_new_scope_id,
                     needs_await,
@@ -278,7 +278,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
             body.statements = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
                     &using_ctx,
                     current_scope_id,
                     needs_await,
@@ -341,7 +341,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
             node.block.body = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
                     &using_ctx,
                     block_stmt_scope_id,
                     needs_await,
@@ -633,7 +633,7 @@ impl<'a> ExplicitResourceManagement<'a> {
             let current_scope_id = ctx.current_scope_id();
 
             *stmt = Self::create_try_stmt(
-                BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt.scope_id(), ctx),
+                BlockStatement::boxed_with_scope_id(SPAN, new_stmts, block_stmt.scope_id(), ctx),
                 &using_ctx,
                 current_scope_id,
                 needs_await,
@@ -774,7 +774,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                     ctx,
                 );
 
-                BlockStatement::new_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
+                BlockStatement::boxed_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
             };
 
             let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
@@ -903,7 +903,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     }
 
     fn create_try_stmt(
-        body: BlockStatement<'a>,
+        body: ArenaBox<'a, BlockStatement<'a>>,
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
         needs_await: bool,
@@ -961,7 +961,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         CatchClause::boxed_with_scope_id(
             SPAN,
             Some(catch_parameter),
-            BlockStatement::new_with_scope_id(SPAN, [stmt], block_scope_id, ctx),
+            BlockStatement::boxed_with_scope_id(SPAN, [stmt], block_scope_id, ctx),
             catch_scope_id,
             ctx,
         )

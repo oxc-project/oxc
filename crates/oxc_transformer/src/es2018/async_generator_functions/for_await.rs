@@ -372,7 +372,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 ctx,
             );
 
-            BlockStatement::new_with_scope_id(SPAN, [for_statement], block_scope_id, ctx)
+            BlockStatement::boxed_with_scope_id(SPAN, [for_statement], block_scope_id, ctx)
         };
 
         let catch_clause = {
@@ -383,11 +383,11 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
-            Some(CatchClause::new_with_scope_id(
+            Some(CatchClause::boxed_with_scope_id(
                 SPAN,
                 Some(CatchParameter::new(SPAN, err_ident.create_binding_pattern(ctx), NONE, ctx)),
                 {
-                    BlockStatement::new_with_scope_id(
+                    BlockStatement::boxed_with_scope_id(
                         SPAN,
                         [
                             Statement::new_expression_statement(
@@ -482,7 +482,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                         ctx,
                     )
                 };
-                let block = BlockStatement::new_with_scope_id(
+                let block = BlockStatement::boxed_with_scope_id(
                     SPAN,
                     [if_statement],
                     try_block_scope_id,
@@ -511,13 +511,13 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                             ctx,
                         )
                     };
-                    BlockStatement::new_with_scope_id(SPAN, [if_statement], finally_scope_id, ctx)
+                    BlockStatement::boxed_with_scope_id(SPAN, [if_statement], finally_scope_id, ctx)
                 };
                 Statement::new_try_statement(SPAN, block, NONE, Some(finally), ctx)
             };
 
             let block_statement =
-                BlockStatement::new_with_scope_id(SPAN, [try_statement], finally_scope_id, ctx);
+                BlockStatement::boxed_with_scope_id(SPAN, [try_statement], finally_scope_id, ctx);
             Some(block_statement)
         };
 

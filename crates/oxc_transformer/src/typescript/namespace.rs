@@ -297,7 +297,7 @@ impl<'a> TypeScriptNamespace {
                 parent_stmts.push(Statement::from(declaration));
             }
         }
-        let func_body = FunctionBody::new(SPAN, directives, new_stmts, ctx);
+        let func_body = FunctionBody::boxed(SPAN, directives, new_stmts, ctx);
 
         parent_stmts.push(Self::transform_namespace(
             span,
@@ -339,7 +339,7 @@ impl<'a> TypeScriptNamespace {
         param_binding: &BoundIdentifier<'a>,
         binding: &BoundIdentifier<'a>,
         parent_binding: Option<&BoundIdentifier<'a>>,
-        func_body: FunctionBody<'a>,
+        func_body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -349,7 +349,13 @@ impl<'a> TypeScriptNamespace {
             let params = {
                 let pattern = param_binding.create_binding_pattern(ctx);
                 let item = FormalParameter::new_plain(SPAN, pattern, ctx);
-                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, [item], NONE, ctx)
+                FormalParameters::boxed(
+                    SPAN,
+                    FormalParameterKind::FormalParameter,
+                    [item],
+                    NONE,
+                    ctx,
+                )
             };
             let function_expr =
                 Expression::FunctionExpression(Function::boxed_plain_with_scope_id(

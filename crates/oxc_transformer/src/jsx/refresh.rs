@@ -653,8 +653,8 @@ impl<'a> ReactRefresh<'a> {
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
             let formal_parameters =
-                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
-            let function_body = FunctionBody::new(
+                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
+            let function_body = FunctionBody::boxed(
                 SPAN,
                 [],
                 [Statement::new_return_statement(

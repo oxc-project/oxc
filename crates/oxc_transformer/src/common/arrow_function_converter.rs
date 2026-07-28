@@ -977,7 +977,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             );
         }
 
-        let params = FormalParameters::new(
+        let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             items,
@@ -985,7 +985,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             ctx,
         );
         let statement = Statement::new_expression_statement(SPAN, init, ctx);
-        let body = FunctionBody::new(SPAN, [], [statement], ctx);
+        let body = FunctionBody::boxed(SPAN, [], [statement], ctx);
         let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN, true, false, NONE, params, NONE, body, scope_id, false, false, ctx,
         );

@@ -147,14 +147,14 @@ impl<'a> NullishCoalescingOperator {
             let id = binding.create_binding_pattern(ctx);
             let param =
                 FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
-            let params = FormalParameters::new(
+            let params = FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
                 [param],
                 NONE,
                 ctx,
             );
-            let body = FunctionBody::new(
+            let body = FunctionBody::boxed(
                 SPAN,
                 [],
                 [Statement::new_expression_statement(SPAN, new_expr, ctx)],
