@@ -48,6 +48,18 @@ const sources = [
     repo: "NG-ZORRO/ng-zorro-antd",
     version: "21.3.1",
   },
+  // yaml
+  {
+    name: "aws-cloudformation-templates",
+    repo: "aws-cloudformation/aws-cloudformation-templates",
+    // No maintained tags; pin to a commit (2026-07 main)
+    version: "a0f43bc6d20813052892546f445037cf84c75b54",
+  },
+  {
+    name: "gitlab-ci-templates",
+    repo: "gitlabhq/gitlabhq/lib/gitlab/ci/templates",
+    version: "v16.9.0",
+  },
   // css (css modules)
   {
     name: "mantine",
