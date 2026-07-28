@@ -92,7 +92,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
                             // union with `undefined`
-                            return TSTypeAnnotation::new(
+                            return TSTypeAnnotation::boxed(
                                 SPAN,
                                 TSType::new_ts_union_type(
                                     SPAN,
@@ -104,7 +104,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
 
-                    TSTypeAnnotation::new(SPAN, ts_type, self)
+                    TSTypeAnnotation::boxed(SPAN, ts_type, self)
                 });
 
             let optional =

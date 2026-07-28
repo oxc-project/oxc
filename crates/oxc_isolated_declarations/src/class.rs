@@ -711,7 +711,7 @@ impl<'a> IsolatedDeclarations<'a> {
             elements.insert(0, element);
         }
 
-        let body = ClassBody::new(decl.body.span, elements, self);
+        let body = ClassBody::boxed(decl.body.span, elements, self);
 
         Class::boxed(
             decl.span,

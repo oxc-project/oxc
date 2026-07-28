@@ -99,7 +99,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         let type_annotation =
-            binding_type.map(|ts_type| TSTypeAnnotation::new(SPAN, ts_type, self));
+            binding_type.map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
 
         Some(VariableDeclarator::new(
             decl.span,
