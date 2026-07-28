@@ -65,6 +65,12 @@ pub fn run(
         _ => None,
     };
 
+    // Only the markdown/mdx embeds format under a synthetic JS/TS `filepath`
+    // (Prettier overrides it to `dummy.ts(x)`); every other host (vue, svelte,
+    // html) passes its own non-JS/TS filepath through, which drives Prettier's
+    // path-keyed layout rules (see `embedded_source_type`).
+    let host_is_js_ts_file = matches!(parent_context, "markdown" | "mdx");
+
     let doc_json = if let Some(kind) = fragment_kind {
         run_fragment(source_ext, source_text, oxfmt_plugin_options_json, kind)?
     } else {
@@ -72,6 +78,7 @@ pub fn run(
             source_ext,
             source_text,
             oxfmt_plugin_options_json,
+            host_is_js_ts_file,
             format_file_cb,
             format_embedded_cb,
             format_embedded_doc_cb,
@@ -100,6 +107,7 @@ fn run_full(
     source_ext: &str,
     source_text: &str,
     oxfmt_plugin_options_json: &str,
+    host_is_js_ts_file: bool,
     format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
@@ -116,8 +124,7 @@ fn run_full(
         sort_tailwind_classes_cb,
     );
 
-    let source_type = SourceType::from_extension(source_ext)
-        .expect("source_ext should be a valid JS/TS extension");
+    let source_type = embedded_source_type(source_ext, host_is_js_ts_file);
 
     let resolved = resolve_for_embedded_js(config, parent_filepath)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
@@ -191,8 +198,9 @@ fn run_fragment(
     oxfmt_plugin_options_json: &str,
     kind: FragmentKind,
 ) -> Option<Value> {
-    let source_type = SourceType::from_extension(source_ext)
-        .expect("source_ext should be a valid JS/TS extension");
+    // Fragments only occur in vue hosts, which never format under a JS/TS
+    // filepath — so the source type is always the extension-less form.
+    let source_type = embedded_source_type(source_ext, false);
 
     let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
     // Reuses the same config resolver as `run_full()`, but only `format_options` is needed here,
@@ -235,6 +243,31 @@ fn run_fragment(
 // ---
 
 /// Deserialize `_oxfmtPluginOptionsJson` into the typed config + parent filepath.
+/// [`SourceType`] for an embedded JS/TS block or fragment.
+///
+/// When the *host* file is not itself a JS/TS file (`.vue`, `.svelte`,
+/// `.html`), the source type keeps the language/variant of the requested
+/// extension but drops the extension itself: Prettier's tsx generic
+/// trailing-comma rule keys on the formatted file's path
+/// (`/\.ts$/.test(options.filepath)` in `shouldForceTrailingComma`,
+/// language-js/print/type-parameters.js), and the host's path is not `.ts` —
+/// so `<T = any,>() => ...` keeps its comma inside a `.vue` file.
+/// Markdown/mdx embeds are the exception: Prettier overrides their `filepath`
+/// to a synthetic `dummy.ts(x)`, so they behave like real `.ts(x)` files.
+fn embedded_source_type(source_ext: &str, host_is_js_ts_file: bool) -> SourceType {
+    let source_type = SourceType::from_extension(source_ext)
+        .expect("source_ext should be a valid JS/TS extension");
+    if host_is_js_ts_file {
+        return source_type;
+    }
+    // Same language / variant / module kind as `from_extension`, extension-less.
+    match source_ext {
+        "ts" => SourceType::ts(),
+        "tsx" => SourceType::tsx(),
+        _ => SourceType::unambiguous().with_jsx(true),
+    }
+}
+
 fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, PathBuf) {
     #[derive(Deserialize)]
     struct Payload {

@@ -134,4 +134,21 @@ const q = graphql\`
     expect(result2.code).toBe(result.code);
     expect(result2.errors).toStrictEqual([]);
   });
+
+  it("should keep the trailing comma of a single generic param in .vue scripts", async () => {
+    // Prettier's tsx disambiguation rule keys on the formatted file's path:
+    // a .vue file is not a .ts file, so `<T = any,>` keeps its comma
+    // (removing it would be invalid if the script were treated as tsx).
+    const input = `
+<script setup lang="ts">
+const getOptions = <T = any,>(list: T[]) => list;
+const constrained = <T extends object>(list: T[]) => list;
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toContain(`<T = any,>(list: T[]) => list`);
+    expect(result.code).toContain(`<T extends object>(list: T[]) => list`);
+    expect(result.errors).toStrictEqual([]);
+  });
 });
