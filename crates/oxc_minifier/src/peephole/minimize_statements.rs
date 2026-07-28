@@ -855,12 +855,9 @@ impl<'a> PeepholeOptimizations {
                     //   if (a(() => b)) return; let b;
                     //   if (a(() => b)) { let b; }
                     //
-                    let mut can_move_branch_condition_outside_scope = true;
-                    if let Some(alternate) = &if_stmt.alternate
-                        && Self::statement_cares_about_scope(alternate)
-                    {
-                        can_move_branch_condition_outside_scope = false;
-                    }
+                    let mut can_move_branch_condition_outside_scope =
+                        !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope);
+
                     if let Some(stmts) = stmts.get(i + 1..) {
                         for stmt in stmts {
                             if Self::statement_cares_about_scope(stmt) {
@@ -906,11 +903,14 @@ impl<'a> PeepholeOptimizations {
                 }
             }
 
-            if if_stmt.alternate.is_some() && if_stmt.consequent.is_terminated() {
+            if !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
+                && if_stmt.consequent.is_terminated()
+            {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 result.push(Statement::IfStatement(if_stmt));
                 loop {
                     if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                        && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
                         && if_stmt.consequent.is_terminated()
                         && let Some(stmt) = if_stmt.alternate.take()
                     {
