@@ -113,6 +113,8 @@ static FUNCTION_NAMES: &[&str] = &[
     "toEqual",
     "toHaveBeenCalledWith",
     "unshift",
+    // `React.useRef(undefined)`
+    "useRef",
 ];
 
 fn is_match_ignore_func_name(name: &str) -> bool {
@@ -418,6 +420,8 @@ fn test() {
         ("array.unshift(undefined);", None),
         ("createContext(undefined);", None),
         ("React.createContext(undefined);", None),
+        ("useRef(undefined);", None),
+        ("React.useRef(undefined);", None),
         ("setState(undefined)", None),
         ("setState?.(undefined)", None),
         ("props.setState(undefined)", None),
@@ -556,6 +560,8 @@ fn test() {
         ),
         ("createContext<T>(undefined);", None),
         ("React.createContext<T>(undefined);", None),
+        ("useRef<T>(undefined);", None),
+        ("React.useRef<T>(undefined);", None),
         (
             "
             const y: any = {}
