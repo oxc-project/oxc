@@ -796,13 +796,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
+    pub(crate) fn parse_ts_this_parameter(&mut self) -> ArenaBox<'a, TSThisParameter<'a>> {
         let span = self.start_span();
         self.bump_any();
         let this_span = self.end_span(span);
 
         let type_annotation = self.parse_ts_type_annotation();
-        TSThisParameter::new(self.end_span(span), this_span, type_annotation, self)
+        TSThisParameter::boxed(self.end_span(span), this_span, type_annotation, self)
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {

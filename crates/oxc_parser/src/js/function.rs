@@ -46,7 +46,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         func_kind: FunctionKind,
         params_kind: FormalParameterKind,
-    ) -> (Option<TSThisParameter<'a>>, ArenaBox<'a, FormalParameters<'a>>) {
+    ) -> (Option<ArenaBox<'a, TSThisParameter<'a>>>, ArenaBox<'a, FormalParameters<'a>>) {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
@@ -219,7 +219,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     pattern.span(),
                 ));
             }
-            Some(init)
+            Some(ArenaBox::new_in(init, self))
         } else {
             None
         };

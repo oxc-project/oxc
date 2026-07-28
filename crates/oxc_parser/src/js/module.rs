@@ -361,7 +361,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
-    fn parse_import_attributes(&mut self) -> Option<WithClause<'a>> {
+    fn parse_import_attributes(&mut self) -> Option<ArenaBox<'a, WithClause<'a>>> {
         let keyword_kind = self.cur_kind();
         let keyword = match keyword_kind {
             Kind::With => WithClauseKeyword::With,
@@ -392,7 +392,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        Some(WithClause::new(self.end_span(span), keyword, with_entries, self))
+        Some(WithClause::boxed(self.end_span(span), keyword, with_entries, self))
     }
 
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {
